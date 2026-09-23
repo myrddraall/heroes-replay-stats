@@ -30,7 +30,7 @@ import { injectPlatform } from '../../platform/platform';
       margin-bottom: 16px;
       border: 1px solid var(--hrs-border);
       border-radius: 16px;
-      background: rgba(14, 21, 38, 0.6);
+      background: rgba(22, 15, 58, 0.6);
     }
     .hint {
       color: var(--mat-sys-on-surface-variant);

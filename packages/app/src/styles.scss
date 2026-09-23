@@ -1,8 +1,10 @@
 @use '@angular/material' as mat;
 @use './theme/theme-colors' as palettes;
 
-// The Heroes of the Storm look: a deep-space navy, Nexus blue, and the gold of the
-// game's UI chrome — as a Material 3 dark theme built from generated palettes.
+// The Heroes of the Storm look, taken from heroesofthestorm.blizzard.com and the game:
+// deep indigo (#130c38, #0d0119) rather than black, Nexus blue (#0075ff) as the
+// primary, the site's purple (#7b3fc8) as tertiary, its cyan→indigo glow on borders,
+// and bronze-orange (#e0994b) — not yellow gold — for calls to action.
 html {
   color-scheme: dark;
   @include mat.theme(
@@ -12,34 +14,41 @@ html {
         tertiary: palettes.$tertiary-palette,
         theme-type: dark,
       ),
+      // Multi-word families must reach the CSS `font` shorthand quoted, or the whole
+      // declaration is invalid and headings fall back to body size.
       typography: (
-        plain-family: 'Inter',
-        brand-family: 'Cinzel',
+        plain-family: "'Source Sans 3', sans-serif",
+        brand-family: "'Exo 2', sans-serif",
         bold-weight: 600,
       ),
       density: 0,
     )
   );
 
-  // App-level tokens over the Material ones: darker surfaces than M3's defaults, and gold as
-  // the highlight colour for headings and active navigation.
-  --hrs-bg: #070b16;
-  --hrs-surface: #0e1526;
-  --hrs-surface-raised: #141d33;
-  --hrs-border: rgba(148, 163, 204, 0.16);
-  --hrs-gold: #f5b301;
-  --hrs-gold-dim: #b8860b;
-  --hrs-blue: #3b82f6;
+  --hrs-bg: #0d0119;
+  --hrs-bg-2: #130c38;
+  --hrs-surface: #160f3a;
+  --hrs-surface-raised: #1c1450;
+  --hrs-border: rgba(153, 200, 255, 0.14);
+  --hrs-glow-from: rgba(27, 228, 255, 0.6);
+  --hrs-glow-to: rgba(91, 97, 255, 0.6);
+  --hrs-blue: #0075ff;
+  --hrs-blue-soft: #99c8ff;
+  --hrs-purple: #7b3fc8;
+  --hrs-bronze: #e0994b;
+  --hrs-bronze-deep: #d3802e;
+  --hrs-bronze-hot: #e65d08;
+  --hrs-team-blue: #1b3874;
+  --hrs-team-red: #660730;
+
   --mat-sys-background: var(--hrs-bg);
   --mat-sys-surface: var(--hrs-surface);
   --mat-sys-surface-container: var(--hrs-surface-raised);
   --mat-sys-surface-container-low: var(--hrs-surface);
-  --mat-sys-surface-container-high: #1a2540;
+  --mat-sys-surface-container-high: #241a5e;
   --mat-sys-outline-variant: var(--hrs-border);
-  --mat-sys-secondary: var(--hrs-gold);
-  --mat-sys-on-secondary: #1a1400;
-  --mat-sys-secondary-container: #3a2f00;
-  --mat-sys-on-secondary-container: #ffe08a;
+  --mat-sys-on-surface: #e9eefc;
+  --mat-sys-on-surface-variant: #a9b4d9;
 }
 
 html,
@@ -50,9 +59,9 @@ body {
 
 body {
   background:
-    radial-gradient(1200px 600px at 20% -10%, rgba(59, 130, 246, 0.18), transparent 60%),
-    radial-gradient(900px 500px at 110% 10%, rgba(139, 92, 246, 0.14), transparent 60%),
-    var(--mat-sys-background);
+    radial-gradient(1100px 560px at 15% -10%, rgba(0, 117, 255, 0.22), transparent 60%),
+    radial-gradient(900px 520px at 105% 0%, rgba(123, 63, 200, 0.28), transparent 60%),
+    linear-gradient(180deg, var(--hrs-bg-2), var(--hrs-bg) 60%);
   color: var(--mat-sys-on-surface);
   font: var(--mat-sys-body-medium);
   -webkit-font-smoothing: antialiased;
@@ -61,38 +70,45 @@ body {
 h1,
 h2,
 h3 {
-  font-family: 'Cinzel', serif;
-  letter-spacing: 0.02em;
-  color: var(--hrs-gold);
+  font-family: 'Exo 2', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #fff;
   margin: 0 0 0.5em;
 }
 h1 {
   font: var(--mat-sys-headline-medium);
-  font-family: 'Cinzel', serif;
+  font-family: 'Exo 2', sans-serif;
+  font-weight: 600;
 }
 h2 {
   font: var(--mat-sys-title-large);
-  font-family: 'Cinzel', serif;
+  font-family: 'Exo 2', sans-serif;
+  font-weight: 600;
 }
 
 a {
-  color: var(--mat-sys-primary);
+  color: var(--hrs-blue-soft);
 }
 
-// Gold call-to-action buttons: `class="hrs-gold"` on any mat-button variant.
-.hrs-gold {
+// Call-to-action buttons in the site's bronze: `class="hrs-cta"` on a mat-flat-button.
+.hrs-cta {
   @include mat.button-overrides(
     (
-      filled-container-color: var(--hrs-gold),
-      filled-label-text-color: #1a1400,
-      outlined-label-text-color: var(--hrs-gold),
-      outlined-outline-color: var(--hrs-gold-dim),
-      text-label-text-color: var(--hrs-gold),
+      filled-container-color: var(--hrs-bronze),
+      filled-label-text-color: #1a0d00,
+      outlined-label-text-color: var(--hrs-bronze),
+      outlined-outline-color: var(--hrs-bronze-deep),
+      text-label-text-color: var(--hrs-bronze),
     )
   );
   @include mat.icon-button-overrides(
     (
-      icon-color: var(--hrs-gold),
+      icon-color: var(--hrs-bronze),
     )
   );
+  &.mat-mdc-unelevated-button {
+    background: linear-gradient(180deg, var(--hrs-bronze-deep), var(--hrs-bronze-hot));
+    box-shadow: 0 0 0 1px var(--hrs-bronze) inset;
+  }
 }

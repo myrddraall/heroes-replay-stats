@@ -23,13 +23,13 @@ import { MatIconModule } from '@angular/material/icon';
       padding: 64px 16px;
       border: 1px dashed var(--hrs-border);
       border-radius: 16px;
-      background: rgba(14, 21, 38, 0.6);
+      background: rgba(22, 15, 58, 0.6);
     }
     .empty__icon {
       font-size: 56px;
       width: 56px;
       height: 56px;
-      color: var(--hrs-gold-dim);
+      color: var(--hrs-blue-soft);
     }
     .empty__text {
       color: var(--mat-sys-on-surface-variant);
