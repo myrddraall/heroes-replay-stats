@@ -1,0 +1,11 @@
+# devutil dev-link package map: local checkouts overlaid onto node_modules after
+# install, only when DEV_LOCAL=true and not CI.
+packages:
+  "@cpdevtools/git-flow": ../git-flow/packages/git-flow
+  "@cpdevtools/git-flow-cli": ../git-flow/packages/git-flow-cli
+  "@cpdevtools/ts-dev-utilities": ../ts-dev-utilities/packages/ts-dev-utilities
+  "@cpdevtools/ts-dev-utilities-cli": ../ts-dev-utilities/packages/cli
+  "@myrddraall/heroprotocol": ../heroprotocol/packages/heroprotocol
+  "@myrddraall/heroprotocol-db": ../heroprotocol/packages/heroprotocol-db
+  "@myrddraall/heroprotocol-analysis": ../heroprotocol/packages/heroprotocol-analysis
+  "@myrddraall/hero-data": ../heroprotocol/packages/hero-data

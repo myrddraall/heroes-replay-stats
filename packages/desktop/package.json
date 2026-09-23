@@ -1,0 +1,49 @@
+{
+  "name": "@myrddraall/heroes-replay-stats-desktop",
+  "version": "0.0.0-MAIN",
+  "private": true,
+  "description": "Electron shell for Heroes Replay Stats \u2014 loads the shared Angular app and exposes the filesystem through a small preload bridge",
+  "main": "out/main.js",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup && electron . --dev",
+    "typecheck": "tsc --noEmit -p .",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "github.actions.build": "pnpm build",
+    "lint": "eslint src"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.20.0",
+    "@typescript-eslint/parser": "^8.20.0",
+    "electron": "^44.4.5",
+    "electron-builder": "^26.15.3",
+    "eslint": "^10.9.1",
+    "prettier": "^3.8.1",
+    "tsup": "^8.5.1",
+    "typescript": "~6.0.2"
+  },
+  "build": {
+    "appId": "ca.conceptual.heroes-replay-stats",
+    "productName": "Heroes Replay Stats",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "out/**",
+      "app/**",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.games"
+    },
+    "linux": {
+      "target": "AppImage",
+      "category": "Game"
+    }
+  }
+}

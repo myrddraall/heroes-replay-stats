@@ -1,0 +1,98 @@
+@use '@angular/material' as mat;
+@use './theme/theme-colors' as palettes;
+
+// The Heroes of the Storm look: a deep-space navy, Nexus blue, and the gold of the
+// game's UI chrome — as a Material 3 dark theme built from generated palettes.
+html {
+  color-scheme: dark;
+  @include mat.theme(
+    (
+      color: (
+        primary: palettes.$primary-palette,
+        tertiary: palettes.$tertiary-palette,
+        theme-type: dark,
+      ),
+      typography: (
+        plain-family: 'Inter',
+        brand-family: 'Cinzel',
+        bold-weight: 600,
+      ),
+      density: 0,
+    )
+  );
+
+  // App-level tokens over the Material ones: darker surfaces than M3's defaults, and gold as
+  // the highlight colour for headings and active navigation.
+  --hrs-bg: #070b16;
+  --hrs-surface: #0e1526;
+  --hrs-surface-raised: #141d33;
+  --hrs-border: rgba(148, 163, 204, 0.16);
+  --hrs-gold: #f5b301;
+  --hrs-gold-dim: #b8860b;
+  --hrs-blue: #3b82f6;
+  --mat-sys-background: var(--hrs-bg);
+  --mat-sys-surface: var(--hrs-surface);
+  --mat-sys-surface-container: var(--hrs-surface-raised);
+  --mat-sys-surface-container-low: var(--hrs-surface);
+  --mat-sys-surface-container-high: #1a2540;
+  --mat-sys-outline-variant: var(--hrs-border);
+  --mat-sys-secondary: var(--hrs-gold);
+  --mat-sys-on-secondary: #1a1400;
+  --mat-sys-secondary-container: #3a2f00;
+  --mat-sys-on-secondary-container: #ffe08a;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background:
+    radial-gradient(1200px 600px at 20% -10%, rgba(59, 130, 246, 0.18), transparent 60%),
+    radial-gradient(900px 500px at 110% 10%, rgba(139, 92, 246, 0.14), transparent 60%),
+    var(--mat-sys-background);
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-body-medium);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: 'Cinzel', serif;
+  letter-spacing: 0.02em;
+  color: var(--hrs-gold);
+  margin: 0 0 0.5em;
+}
+h1 {
+  font: var(--mat-sys-headline-medium);
+  font-family: 'Cinzel', serif;
+}
+h2 {
+  font: var(--mat-sys-title-large);
+  font-family: 'Cinzel', serif;
+}
+
+a {
+  color: var(--mat-sys-primary);
+}
+
+// Gold call-to-action buttons: `class="hrs-gold"` on any mat-button variant.
+.hrs-gold {
+  @include mat.button-overrides(
+    (
+      filled-container-color: var(--hrs-gold),
+      filled-label-text-color: #1a1400,
+      outlined-label-text-color: var(--hrs-gold),
+      outlined-outline-color: var(--hrs-gold-dim),
+      text-label-text-color: var(--hrs-gold),
+    )
+  );
+  @include mat.icon-button-overrides(
+    (
+      icon-color: var(--hrs-gold),
+    )
+  );
+}

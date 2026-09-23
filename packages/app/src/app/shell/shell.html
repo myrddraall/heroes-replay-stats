@@ -1,0 +1,67 @@
+<mat-sidenav-container class="shell">
+  <mat-sidenav
+    #nav
+    class="shell__nav"
+    [mode]="handset() ? 'over' : 'side'"
+    [opened]="!handset()"
+    [fixedInViewport]="handset()"
+  >
+    <a class="shell__brand" routerLink="/replays" (click)="handset() && nav.close()">
+      <span class="shell__brand-mark" aria-hidden="true"></span>
+      <span class="shell__brand-text">Heroes<br />Replay Stats</span>
+    </a>
+    <mat-nav-list>
+      @for (item of items; track item.path) {
+        <a
+          mat-list-item
+          [routerLink]="item.path"
+          routerLinkActive="shell__link--active"
+          [activated]="false"
+          (click)="handset() && nav.close()"
+        >
+          <mat-icon matListItemIcon class="material-symbols-outlined">{{ item.icon }}</mat-icon>
+          <span matListItemTitle>{{ item.label }}</span>
+        </a>
+      }
+    </mat-nav-list>
+    <div class="shell__nav-footer">
+      <span class="shell__platform" [matTooltip]="'Running as ' + platform.kind">
+        <mat-icon class="material-symbols-outlined" inline>{{
+          platform.kind === 'desktop' ? 'desktop_windows' : 'public'
+        }}</mat-icon>
+        {{ platform.version }}
+      </span>
+    </div>
+  </mat-sidenav>
+
+  <mat-sidenav-content class="shell__content">
+    <mat-toolbar class="shell__toolbar">
+      @if (handset()) {
+        <button mat-icon-button (click)="nav.toggle()" aria-label="Toggle navigation">
+          <mat-icon class="material-symbols-outlined">menu</mat-icon>
+        </button>
+      }
+      <span class="shell__toolbar-title">Heroes Replay Stats</span>
+      <span class="shell__spacer"></span>
+      @if (handset()) {
+        <a
+          mat-icon-button
+          class="hrs-gold"
+          routerLink="/import"
+          aria-label="Import replays"
+          matTooltip="Import replays"
+        >
+          <mat-icon class="material-symbols-outlined">upload_file</mat-icon>
+        </a>
+      } @else {
+        <a mat-flat-button class="hrs-gold" routerLink="/import">
+          <mat-icon class="material-symbols-outlined">upload_file</mat-icon>
+          Import replays
+        </a>
+      }
+    </mat-toolbar>
+    <main class="shell__page">
+      <router-outlet />
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>

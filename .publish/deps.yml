@@ -1,0 +1,23 @@
+# Pinned dependency versions enforced across the workspace.
+# `pnpm check` validates and `pnpm fix` applies these versions.
+npm:
+  '@types/node': '^24.0.0'
+  '@typescript-eslint/eslint-plugin': '^8.20.0'
+  '@typescript-eslint/parser': '^8.20.0'
+  eslint: '^9.18.0'
+  dexie: '^4.4.6'
+  'fake-indexeddb': '^6.0.0'
+  husky: '^9.1.7'
+  prettier: '^3.8.1'
+  syncpack: '^13.0.0'
+  tsup: '^8.5.1'
+  electron: '^44.4.5'
+  electron-builder: '^26.15.3'
+  # Angular 22 supports TypeScript >=5.9 <6.1; tilde keeps 6.1 out until Angular allows it.
+  typescript: '~6.0.2'
+  vitest: '^4.0.8'
+
+github-actions:
+  actions/checkout: v7
+  actions/setup-node: v6
+  pnpm/action-setup: v6

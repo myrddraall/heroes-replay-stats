@@ -1,0 +1,25 @@
+node_modules/
+dist/
+coverage/
+.DS_Store
+*.log
+.env
+.env.local
+.wireit/
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+*.launch
+.settings/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+
+# Angular
+.angular/
+# Electron
+packages/desktop/out/
+packages/desktop/release/
