@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { describe, expect, it, beforeEach } from 'vitest';
 import { App } from './app';
 import { routes } from './app.routes';
+import { REPLAY_DB } from './data/replays/provide-replay-db';
 import { PLATFORM, type Platform } from './platform/platform';
 import { NAV_ITEMS } from './shell/shell';
 
@@ -17,7 +18,19 @@ describe('App shell', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideRouter(routes), { provide: PLATFORM, useValue: fakePlatform }],
+      providers: [
+        provideRouter(routes),
+        { provide: PLATFORM, useValue: fakePlatform },
+        {
+          provide: REPLAY_DB,
+          useValue: {
+            listReplays: async () => [],
+            ingest: () => {
+              throw new Error('not in this test');
+            },
+          },
+        },
+      ],
     }).compileComponents();
   });
 

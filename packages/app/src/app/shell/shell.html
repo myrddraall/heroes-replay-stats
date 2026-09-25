@@ -44,20 +44,20 @@
       <span class="shell__toolbar-title">Heroes Replay Stats</span>
       <span class="shell__spacer"></span>
       @if (handset()) {
-        <a
+        <button
           mat-icon-button
           class="hrs-cta"
-          routerLink="/import"
+          (click)="replays.import()"
           aria-label="Import replays"
           matTooltip="Import replays"
         >
           <mat-icon class="material-symbols-outlined">upload_file</mat-icon>
-        </a>
+        </button>
       } @else {
-        <a mat-flat-button class="hrs-cta" routerLink="/import">
+        <button mat-flat-button class="hrs-cta" (click)="replays.import()">
           <mat-icon class="material-symbols-outlined">upload_file</mat-icon>
           Import replays
-        </a>
+        </button>
       }
     </mat-toolbar>
     <main class="shell__page">

@@ -9,6 +9,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { map } from 'rxjs';
+import { ReplaysStore } from '../data/replays/replays.store';
 import { injectPlatform } from '../platform/platform';
 
 export interface NavItem {
@@ -44,6 +45,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
 })
 export class Shell {
   protected readonly platform = injectPlatform();
+  protected readonly replays = inject(ReplaysStore);
   protected readonly items = NAV_ITEMS;
   protected readonly handset = toSignal(
     inject(BreakpointObserver)
