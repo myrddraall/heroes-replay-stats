@@ -11,7 +11,7 @@
 .shell__nav {
   width: 248px;
   border-right: 1px solid var(--hrs-border);
-  background: linear-gradient(180deg, rgba(20, 29, 51, 0.95), rgba(7, 11, 22, 0.98));
+  background: linear-gradient(180deg, rgba(19, 12, 56, 0.96), rgba(13, 1, 25, 0.98));
   display: flex;
   flex-direction: column;
 }
@@ -22,21 +22,20 @@
   gap: 12px;
   padding: 20px 16px 12px;
   text-decoration: none;
-  color: var(--hrs-gold);
-  font-family: 'Cinzel', serif;
+  color: #fff;
+  font-family: 'Exo 2', sans-serif;
   font-weight: 600;
   font-size: 15px;
   line-height: 1.15;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
 
 .shell__brand-mark {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   flex: none;
-  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
-  background: linear-gradient(160deg, var(--hrs-gold), var(--hrs-gold-dim) 60%, #6b4f00);
-  box-shadow: 0 0 18px rgba(245, 179, 1, 0.35);
+  filter: drop-shadow(0 0 10px rgba(54, 174, 234, 0.55));
 }
 
 mat-nav-list {
@@ -44,10 +43,10 @@ mat-nav-list {
 }
 
 .shell__link--active {
-  --mat-list-list-item-label-text-color: var(--hrs-gold);
-  --mat-list-list-item-leading-icon-color: var(--hrs-gold);
-  background: rgba(245, 179, 1, 0.08);
-  box-shadow: inset 3px 0 0 var(--hrs-gold);
+  --mat-list-list-item-label-text-color: #fff;
+  --mat-list-list-item-leading-icon-color: var(--hrs-blue-soft);
+  background: linear-gradient(90deg, rgba(0, 117, 255, 0.22), rgba(0, 117, 255, 0));
+  box-shadow: inset 3px 0 0 var(--hrs-blue);
 }
 
 .shell__nav-footer {
@@ -68,17 +67,19 @@ mat-nav-list {
   position: sticky;
   top: 0;
   z-index: 2;
-  background: rgba(7, 11, 22, 0.7);
+  background: rgba(13, 1, 25, 0.72);
   backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--hrs-border);
+  border-bottom: 1px solid transparent;
+  border-image: linear-gradient(90deg, var(--hrs-glow-from), var(--hrs-glow-to), transparent) 1;
   gap: 8px;
 }
 
 .shell__toolbar-title {
-  font-family: 'Cinzel', serif;
+  font-family: 'Exo 2', sans-serif;
   font-weight: 600;
-  letter-spacing: 0.04em;
-  color: var(--hrs-gold);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #fff;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;

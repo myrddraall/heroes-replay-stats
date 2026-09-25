@@ -23,6 +23,10 @@
     "@angular/material": "^22.1.0",
     "@angular/platform-browser": "^22.1.0",
     "@angular/router": "^22.1.0",
+    "@myrddraall/heroprotocol-analysis": "^0.3.0",
+    "@myrddraall/heroprotocol-db": "^0.3.0",
+    "@ngrx/signals": "^22.0.1",
+    "dexie": "^4.4.6",
     "rxjs": "^7.8.0",
     "tslib": "^2.3.0"
   },
@@ -40,5 +44,5 @@
     "typescript-eslint": "^8.69.0",
     "vitest": "^4.0.8"
   },
-  "description": "Heroes of the Storm replay statistics — the Angular app shared by the web and desktop shells"
+  "description": "Heroes of the Storm replay statistics \u2014 the Angular app shared by the web and desktop shells"
 }

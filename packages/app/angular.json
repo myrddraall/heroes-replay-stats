@@ -5,7 +5,8 @@
     "packageManager": "pnpm",
     "schematicCollections": [
       "angular-eslint"
-    ]
+    ],
+    "analytics": false
   },
   "newProjectRoot": "projects",
   "projects": {
@@ -30,6 +31,11 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "{worker,chunk-*,protocol-*}.js",
+                "input": "node_modules/@myrddraall/heroprotocol-analysis/dist",
+                "output": "hero-worker"
               }
             ],
             "styles": [
@@ -70,7 +76,11 @@
               "buildTarget": "heroes-replay-stats:build:development"
             }
           },
-          "defaultConfiguration": "development"
+          "defaultConfiguration": "development",
+          "options": {
+            "host": "0.0.0.0",
+            "port": 4200
+          }
         },
         "test": {
           "builder": "@angular/build:unit-test"

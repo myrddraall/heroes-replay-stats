@@ -7,7 +7,7 @@
     [fixedInViewport]="handset()"
   >
     <a class="shell__brand" routerLink="/replays" (click)="handset() && nav.close()">
-      <span class="shell__brand-mark" aria-hidden="true"></span>
+      <img class="shell__brand-mark" src="heroes-icon.svg" alt="" width="40" height="40" />
       <span class="shell__brand-text">Heroes<br />Replay Stats</span>
     </a>
     <mat-nav-list>
@@ -44,20 +44,20 @@
       <span class="shell__toolbar-title">Heroes Replay Stats</span>
       <span class="shell__spacer"></span>
       @if (handset()) {
-        <a
+        <button
           mat-icon-button
-          class="hrs-gold"
-          routerLink="/import"
+          class="hrs-cta"
+          (click)="replays.import()"
           aria-label="Import replays"
           matTooltip="Import replays"
         >
           <mat-icon class="material-symbols-outlined">upload_file</mat-icon>
-        </a>
+        </button>
       } @else {
-        <a mat-flat-button class="hrs-gold" routerLink="/import">
+        <button mat-flat-button class="hrs-cta" (click)="replays.import()">
           <mat-icon class="material-symbols-outlined">upload_file</mat-icon>
           Import replays
-        </a>
+        </button>
       }
     </mat-toolbar>
     <main class="shell__page">
