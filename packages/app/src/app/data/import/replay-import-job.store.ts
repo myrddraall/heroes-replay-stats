@@ -110,6 +110,12 @@ export function analysersOf(s: IngestStatus): ImportAnalyserState[] {
 
 let nextId = 1;
 
+/** The `N` in a job's `job-N` id: strictly increasing in creation order, so it doubles
+ * as a tie-breaker for "newest first" without depending on wall-clock time. */
+function sequenceOf(job: ImportJob): number {
+  return Number(job.id.slice(job.id.lastIndexOf('-') + 1)) || 0;
+}
+
 export const IMPORT_JOBS_STORAGE_KEY = 'hrs.import-jobs';
 export const INTERRUPTED = 'Interrupted: the page was reloaded during the import';
 
@@ -130,7 +136,8 @@ function loadJobs(): ImportJob[] {
   try {
     const raw = sessionStorage.getItem(IMPORT_JOBS_STORAGE_KEY);
     const parsed: unknown = raw === null ? [] : JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as ImportJob[]).map(interrupt) : [];
+    if (!Array.isArray(parsed)) return [];
+    return (parsed as ImportJob[]).map(interrupt);
   } catch {
     return [];
   }
@@ -164,7 +171,20 @@ export const ReplayImportJobStore = signalStore(
     },
   }),
   withComputed(({ entities }) => ({
-    jobs: computed(() => entities()),
+      /**
+     * Newest first (by creation order, via each job's id sequence); jobs still in
+     * progress (queued, running or ready) are always shown above finished ones
+     * (complete or failed), each group newest first.
+     */
+    jobs: computed(() => {
+      const inProgress = (j: ImportJob) =>
+        j.status === 'queued' || j.status === 'running' || j.status === 'ready';
+      return [...entities()].sort((a, b) => {
+        const rank = (j: ImportJob) => (inProgress(j) ? 0 : 1);
+        const byRank = rank(a) - rank(b);
+        return byRank !== 0 ? byRank : sequenceOf(b) - sequenceOf(a);
+      });
+    }),
     overall: computed((): ImportOverall => {
       const jobs = entities();
       const count = (status: ImportJobStatus) => jobs.filter((j) => j.status === status).length;

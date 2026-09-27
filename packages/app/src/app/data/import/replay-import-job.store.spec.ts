@@ -105,12 +105,13 @@ describe('ReplayImportJobStore', () => {
       { name: 'b.StormReplay', bytes: new Uint8Array(20) },
     ];
     const store = TestBed.inject(ReplayImportJobStore);
+    const byName = (name: string) => store.jobs().find((j) => j.fileName === name)!;
     const done = store.import();
     await tick();
-    expect(store.jobs().map((j) => [j.fileName, j.status, j.bytes])).toEqual([
-      ['a.StormReplay', 'running', 10],
-      ['b.StormReplay', 'queued', 20],
-    ]);
+    expect(byName('a.StormReplay')).toMatchObject({ status: 'running', bytes: 10 });
+    expect(byName('b.StormReplay')).toMatchObject({ status: 'queued', bytes: 20 });
+    // Both jobs are in progress; b is newer (queued after a), so it sorts on top.
+    expect(store.jobs().map((j) => j.fileName)).toEqual(['b.StormReplay', 'a.StormReplay']);
     expect(scripted).toHaveLength(1); // b has not been handed to the worker yet
     expect(store.overall()).toMatchObject({
       total: 2,
@@ -122,7 +123,7 @@ describe('ReplayImportJobStore', () => {
     });
 
     scripted[0]!.status(status({ replayId: 'r-a' }));
-    let a = store.jobs()[0]!;
+    let a = byName('a.StormReplay');
     expect(a.phase).toBe('parsing');
     expect(a.replayId).toBe('r-a');
     expect(a.progress).toBeGreaterThan(0.3);
@@ -138,7 +139,7 @@ describe('ReplayImportJobStore', () => {
         },
       }),
     );
-    a = store.jobs()[0]!;
+    a = byName('a.StormReplay');
     expect(a.analysers).toEqual([
       { id: 'x', mode: 'ready', state: 'done', progress: null, ms: 3, error: null },
       { id: 'y', mode: 'ready', state: 'running', progress: 0.25, ms: null, error: null },
@@ -148,12 +149,18 @@ describe('ReplayImportJobStore', () => {
 
     scripted[0]!.ready('r-a');
     await tick();
-    expect(store.jobs()[0]!.status).toBe('ready');
+    expect(byName('a.StormReplay').status).toBe('ready');
     scripted[0]!.complete('r-a');
     await tick();
     await tick();
-    expect(store.jobs()[0]).toMatchObject({ status: 'complete', phase: 'complete', progress: 1 });
-    expect(store.jobs()[1]!.status).toBe('running'); // b started only after a finished
+    expect(byName('a.StormReplay')).toMatchObject({
+      status: 'complete',
+      phase: 'complete',
+      progress: 1,
+    });
+    expect(byName('b.StormReplay').status).toBe('running'); // b started only after a finished
+    // a finished, so b (running) stays on top even though a was queued first.
+    expect(store.jobs().map((j) => j.fileName)).toEqual(['b.StormReplay', 'a.StormReplay']);
     expect(scripted).toHaveLength(2);
 
     scripted[1]!.fail('parse failed: not a replay');
@@ -175,11 +182,16 @@ describe('ReplayImportJobStore', () => {
     const store = TestBed.inject(ReplayImportJobStore);
     const finishAll = async (p: Promise<unknown>) => {
       await tick();
-      while (scripted.some((s, i) => store.jobs()[i]?.status === 'running')) {
-        const i = store.jobs().findIndex((j) => j.status === 'running');
-        scripted[i]!.complete(`r${i}`);
+      // Look the running job up by name rather than position: jobs() is sorted
+      // (in-progress first, newest first), so its index has no fixed relation to
+      // `scripted`'s push order.
+      let running = store.jobs().find((j) => j.status === 'running');
+      while (running) {
+        const i = scripted.findIndex((s) => s.fileName === running!.fileName);
+        scripted[i]!.complete(`r-${running.id}`);
         await tick();
         await tick();
+        running = store.jobs().find((j) => j.status === 'running');
       }
       return p;
     };
@@ -191,17 +203,18 @@ describe('ReplayImportJobStore', () => {
       getFile: async () => new File([new Uint8Array([3])], 'handle.StormReplay'),
     } as unknown as FileSystemFileHandle;
     await finishAll(store.import([handle]));
+    // All three finished, each imported after the last, so the newest is on top.
     expect(store.jobs().map((j) => j.fileName)).toEqual([
-      'bytes.StormReplay',
-      'file.StormReplay',
       'handle.StormReplay',
+      'file.StormReplay',
+      'bytes.StormReplay',
     ]);
     expect(store.jobs().every((j) => j.status === 'complete')).toBe(true);
     expect(await store.import()).toEqual([]);
     expect(store.jobs()).toHaveLength(3);
 
-    store.dismiss(store.jobs()[0]!.id);
-    expect(store.jobs()).toHaveLength(2);
+    store.dismiss(store.jobs()[0]!.id); // the newest, handle.StormReplay
+    expect(store.jobs().map((j) => j.fileName)).toEqual(['file.StormReplay', 'bytes.StormReplay']);
     store.clearFinished();
     expect(store.jobs()).toEqual([]);
     expect(store.overall()).toMatchObject({ total: 0, progress: 1, active: false });
@@ -230,6 +243,8 @@ describe('ReplayImportJobStore', () => {
     TestBed.tick();
     const saved = JSON.parse(sessionStorage.getItem(IMPORT_JOBS_STORAGE_KEY)!) as unknown[];
     expect(saved).toHaveLength(2);
+    // b is still running (in progress), so it sorts above the already-complete a.
+    expect(store.jobs().map((j) => j.fileName)).toEqual(['b.StormReplay', 'a.StormReplay']);
     const ids = store.jobs().map((j) => j.id);
 
     // A fresh app in the same tab: same providers, new store instance.
@@ -243,11 +258,12 @@ describe('ReplayImportJobStore', () => {
       ],
     });
     const restored = TestBed.inject(ReplayImportJobStore);
+    // Both jobs are now finished; b is newer than a (queued after it), so it stays on top.
     expect(restored.jobs().map((j) => [j.id, j.fileName, j.status, j.error])).toEqual([
-      [ids[0], 'a.StormReplay', 'complete', null],
-      [ids[1], 'b.StormReplay', 'failed', INTERRUPTED],
+      [ids[0], 'b.StormReplay', 'failed', INTERRUPTED],
+      [ids[1], 'a.StormReplay', 'complete', null],
     ]);
-    expect(restored.jobs()[1]!.analysers.map((a) => [a.id, a.state, a.error])).toEqual([
+    expect(restored.jobs()[0]!.analysers.map((a) => [a.id, a.state, a.error])).toEqual([
       ['x', 'done', null],
       ['y', 'failed', INTERRUPTED],
     ]);
@@ -266,6 +282,50 @@ describe('ReplayImportJobStore', () => {
         (j) => j.status,
       ),
     ).toEqual(['complete', 'failed', 'complete']);
+  });
+
+  it('orders jobs newest to oldest, with in-progress jobs always on top', async () => {
+    const store = TestBed.inject(ReplayImportJobStore);
+
+    pick = [{ name: 'first.StormReplay', bytes: new Uint8Array(1) }];
+    const p1 = store.import();
+    await tick();
+    scripted[0]!.complete('r1');
+    await p1;
+    expect(store.jobs().map((j) => j.fileName)).toEqual(['first.StormReplay']);
+
+    pick = [{ name: 'second.StormReplay', bytes: new Uint8Array(1) }];
+    const p2 = store.import();
+    await tick();
+    // second is in progress, so it jumps above the already-finished first.
+    expect(store.jobs().map((j) => j.fileName)).toEqual([
+      'second.StormReplay',
+      'first.StormReplay',
+    ]);
+    scripted[1]!.complete('r2');
+    await p2;
+    // both finished now: second was imported after first, so it stays newest-first.
+    expect(store.jobs().map((j) => j.fileName)).toEqual([
+      'second.StormReplay',
+      'first.StormReplay',
+    ]);
+
+    pick = [{ name: 'third.StormReplay', bytes: new Uint8Array(1) }];
+    const p3 = store.import();
+    await tick();
+    // third is in progress, so it jumps above both finished jobs.
+    expect(store.jobs().map((j) => j.fileName)).toEqual([
+      'third.StormReplay',
+      'second.StormReplay',
+      'first.StormReplay',
+    ]);
+    scripted[2]!.complete('r3');
+    await p3;
+    expect(store.jobs().map((j) => j.fileName)).toEqual([
+      'third.StormReplay',
+      'second.StormReplay',
+      'first.StormReplay',
+    ]);
   });
 
   it('maps every phase onto the 0..1 line in order', () => {
