@@ -4,6 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { ReplayImportJobStore } from '../../data/import/replay-import-job.store';
 import { injectPlatform } from '../../platform/platform';
 
@@ -16,6 +17,7 @@ import { injectPlatform } from '../../platform/platform';
     MatIconModule,
     MatProgressBarModule,
     MatExpansionModule,
+    MatTooltipModule,
   ],
   template: `
     <h1>Import replays</h1>
@@ -67,7 +69,9 @@ import { injectPlatform } from '../../platform/platform';
                 <mat-icon class="material-symbols-outlined job__icon">{{
                   icon(job.status)
                 }}</mat-icon>
-                {{ job.fileName }}
+                <span class="job__name" [matTooltip]="job.fileName">{{
+                  displayName(job.fileName)
+                }}</span>
               </mat-panel-title>
               <mat-panel-description>
                 <span class="job__phase">{{ job.error ?? job.phase ?? 'queued' }}</span>
@@ -132,8 +136,20 @@ import { injectPlatform } from '../../platform/platform';
     .jobs {
       display: block;
     }
+    mat-panel-title {
+      min-width: 0;
+      flex-grow: 3;
+      flex-basis: 0;
+    }
     .job__icon {
       margin-right: 8px;
+      flex: none;
+    }
+    .job__name {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     .job--complete .job__icon {
       color: var(--hrs-blue-soft);
@@ -143,10 +159,14 @@ import { injectPlatform } from '../../platform/platform';
       color: var(--mat-sys-error);
     }
     mat-panel-description {
-      justify-content: space-between;
+      flex-grow: 0;
+      flex-shrink: 0;
+      flex-basis: auto;
+      justify-content: flex-end;
       gap: 12px;
     }
     .job__phase {
+      max-width: 40vw;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -195,6 +215,11 @@ import { injectPlatform } from '../../platform/platform';
 export class ImportPage {
   protected readonly platform = injectPlatform();
   protected readonly imports = inject(ReplayImportJobStore);
+
+  /** The file name without its extension, for display; the full name is kept in a tooltip. */
+  protected displayName(fileName: string): string {
+    return fileName.replace(/\.[^./]+$/, '');
+  }
 
   protected icon(status: string): string {
     return (
