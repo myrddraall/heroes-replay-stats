@@ -7,7 +7,14 @@
     [fixedInViewport]="handset()"
   >
     <a class="shell__brand" routerLink="/replays" (click)="handset() && nav.close()">
-      <img class="shell__brand-mark" src="heroes-icon.svg" alt="" width="40" height="40" />
+      <img
+        class="shell__brand-mark"
+        ngSrc="heroes-icon.svg"
+        alt=""
+        width="40"
+        height="40"
+        priority
+      />
       <span class="shell__brand-text">Heroes<br />Replay Stats</span>
     </a>
     <mat-nav-list>
@@ -47,14 +54,14 @@
         <button
           mat-icon-button
           class="hrs-cta"
-          (click)="replays.import()"
+          (click)="imports.import()"
           aria-label="Import replays"
           matTooltip="Import replays"
         >
           <mat-icon class="material-symbols-outlined">upload_file</mat-icon>
         </button>
       } @else {
-        <button mat-flat-button class="hrs-cta" (click)="replays.import()">
+        <button mat-flat-button class="hrs-cta" (click)="imports.import()">
           <mat-icon class="material-symbols-outlined">upload_file</mat-icon>
           Import replays
         </button>

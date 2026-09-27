@@ -1,6 +1,7 @@
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { NgOptimizedImage } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
@@ -9,7 +10,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { map } from 'rxjs';
-import { ReplaysStore } from '../data/replays/replays.store';
+import { ReplayImportJobStore } from '../data/import/replay-import-job.store';
 import { injectPlatform } from '../platform/platform';
 
 export interface NavItem {
@@ -35,17 +36,17 @@ export const NAV_ITEMS: readonly NavItem[] = [
     MatIconModule,
     MatButtonModule,
     MatTooltipModule,
+    NgOptimizedImage,
     RouterOutlet,
     RouterLink,
     RouterLinkActive,
   ],
   templateUrl: './shell.html',
   styleUrl: './shell.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Shell {
   protected readonly platform = injectPlatform();
-  protected readonly replays = inject(ReplaysStore);
+  protected readonly imports = inject(ReplayImportJobStore);
   protected readonly items = NAV_ITEMS;
   protected readonly handset = toSignal(
     inject(BreakpointObserver)

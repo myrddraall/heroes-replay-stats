@@ -1,6 +1,6 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter, withComponentInputBinding, withViewTransitions } from '@angular/router';
-import { provideReplayDb } from './data/replays/provide-replay-db';
+import { provideReplayDb } from './data/import/provide-replay-db';
 import { providePlatform } from './platform/provide-platform';
 import { routes } from './app.routes';
 

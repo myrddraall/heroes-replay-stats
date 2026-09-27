@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { Component } from '@angular/core';
 import { EmptyState } from '../empty-state';
 
 @Component({
@@ -11,6 +11,5 @@ import { EmptyState } from '../empty-state';
       highlighted everywhere.
     </hrs-empty-state>
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PlayersPage {}

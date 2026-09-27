@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 
 /** A titled, iconed empty state; pages use it until they have data to show. */
@@ -37,7 +37,6 @@ import { MatIconModule } from '@angular/material/icon';
       margin: 0;
     }
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EmptyState {
   readonly icon = input.required<string>();

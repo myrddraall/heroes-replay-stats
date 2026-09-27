@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { Component } from '@angular/core';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { injectPlatform } from '../../platform/platform';
 
@@ -37,7 +37,6 @@ import { injectPlatform } from '../../platform/platform';
       margin: 8px 0 0;
     }
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SettingsPage {
   protected readonly platform = injectPlatform();
