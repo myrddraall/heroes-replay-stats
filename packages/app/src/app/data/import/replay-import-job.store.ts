@@ -171,7 +171,7 @@ export const ReplayImportJobStore = signalStore(
     },
   }),
   withComputed(({ entities }) => ({
-      /**
+    /**
      * Newest first (by creation order, via each job's id sequence); jobs still in
      * progress (queued, running or ready) are always shown above finished ones
      * (complete or failed), each group newest first.
