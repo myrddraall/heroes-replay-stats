@@ -90,6 +90,51 @@ mat-nav-list {
   flex: 1;
 }
 
+.shell__pod {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 4px 0 6px;
+  border-radius: 20px;
+  border: 1px solid var(--hrs-border);
+  background: linear-gradient(90deg, rgba(0, 117, 255, 0.24), rgba(123, 63, 200, 0.18));
+  box-shadow: 0 0 14px rgba(27, 228, 255, 0.18);
+}
+
+.shell__pod-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 100%;
+  padding: 0 8px 0 4px;
+  border-radius: 20px;
+  color: #fff;
+  text-decoration: none;
+  font: var(--mat-sys-label-large);
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    background: rgba(255, 255, 255, 0.08);
+    outline: none;
+  }
+}
+
+.shell__pod-ring {
+  --mat-progress-spinner-active-indicator-color: var(--hrs-blue-soft);
+  flex: none;
+}
+
+.shell__pod-add {
+  --mat-icon-button-icon-color: #fff;
+  --mat-icon-button-state-layer-size: 32px;
+  --mat-icon-button-icon-size: 20px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+}
+
 .shell__page {
   padding: 24px;
   max-width: 1400px;

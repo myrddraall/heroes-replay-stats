@@ -1,10 +1,11 @@
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NgOptimizedImage } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -36,6 +37,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
     MatIconModule,
     MatButtonModule,
     MatTooltipModule,
+    MatProgressSpinnerModule,
     NgOptimizedImage,
     RouterOutlet,
     RouterLink,
@@ -48,6 +50,17 @@ export class Shell {
   protected readonly platform = injectPlatform();
   protected readonly imports = inject(ReplayImportJobStore);
   protected readonly items = NAV_ITEMS;
+  /** The toolbar pod while imports are running; null when the plain button should show. */
+  protected readonly importPod = computed(() => {
+    const o = this.imports.overall();
+    if (!o.active) return null;
+    const percent = Math.round(o.progress * 100);
+    return {
+      percent,
+      short: `${percent}%`,
+      label: `Importing ${o.done + o.failed + o.running} of ${o.total} · ${percent}%`,
+    };
+  });
   protected readonly handset = toSignal(
     inject(BreakpointObserver)
       .observe([Breakpoints.Handset, Breakpoints.TabletPortrait])

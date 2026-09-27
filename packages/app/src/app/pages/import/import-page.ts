@@ -40,7 +40,9 @@ import { injectPlatform } from '../../platform/platform';
         <div class="overall__line">
           <span>
             @if (imports.overall().active) {
-              Importing {{ imports.overall().done + imports.overall().running }} of
+              Importing
+              {{ imports.overall().done + imports.overall().failed + imports.overall().running }}
+              of
               {{ imports.overall().total }}
             } @else {
               {{ imports.overall().done }} imported

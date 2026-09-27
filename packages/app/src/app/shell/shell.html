@@ -50,7 +50,34 @@
       }
       <span class="shell__toolbar-title">Heroes Replay Stats</span>
       <span class="shell__spacer"></span>
-      @if (handset()) {
+      @if (importPod(); as pod) {
+        <div class="shell__pod" role="status" aria-live="polite">
+          <a
+            class="shell__pod-status"
+            routerLink="/import"
+            [attr.aria-label]="pod.label + ', show imports'"
+            matTooltip="Show imports"
+          >
+            <mat-progress-spinner
+              class="shell__pod-ring"
+              mode="determinate"
+              [value]="pod.percent"
+              diameter="22"
+              strokeWidth="3"
+            />
+            <span class="shell__pod-text">{{ handset() ? pod.short : pod.label }}</span>
+          </a>
+          <button
+            mat-icon-button
+            class="shell__pod-add"
+            (click)="imports.import()"
+            aria-label="Import more replays"
+            matTooltip="Import more replays"
+          >
+            <mat-icon class="material-symbols-outlined">add</mat-icon>
+          </button>
+        </div>
+      } @else if (handset()) {
         <button
           mat-icon-button
           class="hrs-cta"
