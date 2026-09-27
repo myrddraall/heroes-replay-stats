@@ -146,3 +146,33 @@ mat-nav-list {
     padding: 16px;
   }
 }
+
+.shell__drop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  pointer-events: none;
+  display: grid;
+  place-items: center;
+  background: rgba(13, 1, 25, 0.7);
+  backdrop-filter: blur(4px);
+  outline: 3px dashed var(--hrs-blue-soft);
+  outline-offset: -16px;
+}
+
+.shell__drop-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 28px;
+  border-radius: 12px;
+  border: 1px solid var(--hrs-border);
+  background: linear-gradient(90deg, rgba(0, 117, 255, 0.35), rgba(123, 63, 200, 0.3));
+  box-shadow: 0 0 24px var(--hrs-glow-from);
+  color: #fff;
+  font: var(--mat-sys-title-medium);
+
+  mat-icon {
+    color: var(--hrs-blue-soft);
+  }
+}

@@ -216,21 +216,21 @@ export const ReplayImportJobStore = signalStore(
     /** Runs one job to completion; failures land in the job, never thrown. */
     async function run(job: ImportJob, bytes: Uint8Array): Promise<void> {
       update(job.id, { status: 'running', startedAt: Date.now() });
-      const handle = db.ingest(bytes, {
-        fileName: job.fileName,
-        onStatus: (s) =>
-          update(job.id, {
-            phase: s.phase,
-            progress: progressOf(s),
-            replayId: s.replayId,
-            analysers: analysersOf(s),
-          }),
-      });
-      handle.ready.then(
-        (r) => update(job.id, { status: 'ready', replayId: r.replayId }),
-        () => undefined,
-      );
       try {
+        const handle = db.ingest(bytes, {
+          fileName: job.fileName,
+          onStatus: (s) =>
+            update(job.id, {
+              phase: s.phase,
+              progress: progressOf(s),
+              replayId: s.replayId,
+              analysers: analysersOf(s),
+            }),
+        });
+        handle.ready.then(
+          (r) => update(job.id, { status: 'ready', replayId: r.replayId }),
+          () => undefined,
+        );
         const r = await handle.complete;
         update(job.id, {
           status: 'complete',

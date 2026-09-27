@@ -99,3 +99,11 @@
     </main>
   </mat-sidenav-content>
 </mat-sidenav-container>
+@if (dragging()) {
+  <div class="shell__drop" aria-hidden="true">
+    <div class="shell__drop-card">
+      <mat-icon class="material-symbols-outlined">upload_file</mat-icon>
+      <span>Drop .StormReplay files to import them</span>
+    </div>
+  </div>
+}
