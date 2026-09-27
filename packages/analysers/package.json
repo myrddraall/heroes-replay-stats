@@ -1,0 +1,38 @@
+{
+  "name": "@myrddraall/heroes-replay-stats-analysers",
+  "version": "0.0.0-MAIN",
+  "private": true,
+  "description": "The replay analysers specific to Heroes Replay Stats (timeline, points of interest), run in the app's ingest worker next to the heroprotocol built-ins",
+  "types": "./src/index.ts",
+  "scripts": {
+    "format": "prettier --write \"{src,test,tools}/**/*.ts\"",
+    "github.actions.test": "pnpm test",
+    "goldens:generate": "tsx tools/generate-goldens.ts",
+    "lint": "eslint src test tools",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@myrddraall/heroprotocol-db": "^0.4.0"
+  },
+  "devDependencies": {
+    "@myrddraall/heroprotocol": "^0.4.0",
+    "@types/node": "^24.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.20.0",
+    "@typescript-eslint/parser": "^8.20.0",
+    "dexie": "^4.4.6",
+    "eslint": "^10.9.1",
+    "prettier": "^3.8.1",
+    "tsx": "^4.19.2",
+    "typescript": "~6.0.2",
+    "vitest": "^4.0.8"
+  },
+  "peerDependencies": {
+    "dexie": "^4.4.6"
+  },
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "type": "module"
+}

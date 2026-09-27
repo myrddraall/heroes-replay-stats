@@ -7,6 +7,7 @@ npm:
   eslint: '^10.9.1'
   dexie: '^4.4.6'
   '@ngrx/signals': '^22.0.1'
+  '@myrddraall/heroprotocol': '^0.4.0'
   '@myrddraall/heroprotocol-db': '^0.4.0'
   '@myrddraall/heroprotocol-analysis': '^0.4.0'
   'fake-indexeddb': '^6.0.0'
@@ -14,6 +15,7 @@ npm:
   prettier: '^3.8.1'
   syncpack: '^13.0.0'
   tsup: '^8.5.1'
+  tsx: '^4.19.2'
   electron: '^44.4.5'
   electron-builder: '^26.15.3'
   # Angular 22 supports TypeScript >=5.9 <6.1; tilde keeps 6.1 out until Angular allows it.

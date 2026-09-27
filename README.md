@@ -5,13 +5,15 @@ browser and, through a thin Electron shell, on the desktop. Everything happens o
 device: replays are parsed locally and stored in IndexedDB; there is no account, no
 login and no server.
 
-| Package                                                         | What it is                                                            |
-| --------------------------------------------------------------- | --------------------------------------------------------------------- |
-| [`@myrddraall/heroes-replay-stats`](./packages/app)             | the Angular 22 + Material app, themed after the game                  |
-| [`@myrddraall/heroes-replay-stats-desktop`](./packages/desktop) | the Electron shell: a window, and a preload bridge for the filesystem |
+| Package                                                             | What it is                                                            |
+| ------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| [`@myrddraall/heroes-replay-stats`](./packages/app)                 | the Angular 22 + Material app, themed after the game                  |
+| [`@myrddraall/heroes-replay-stats-desktop`](./packages/desktop)     | the Electron shell: a window, and a preload bridge for the filesystem |
+| [`@myrddraall/heroes-replay-stats-analysers`](./packages/analysers) | the app's own replay analysers: timeline and points of interest       |
 
-The replay parsing, the model and the analysers come from
-[myrddraall/heroprotocol](https://github.com/myrddraall/heroprotocol).
+The replay parsing, the model and the generic analysers come from
+[myrddraall/heroprotocol](https://github.com/myrddraall/heroprotocol). The app's ingest
+worker runs those next to its own analysers from `packages/analysers`.
 
 ## Working on it
 
@@ -24,6 +26,7 @@ pnpm test           # every package with tests
 pnpm lint
 pnpm typecheck
 pnpm check          # pinned dependency versions agree
+pnpm run generate.analysis-goldens  # after changing an app analyser's output
 ```
 
 The app talks to its host through one seam, `Platform` (`packages/app/src/app/platform`):

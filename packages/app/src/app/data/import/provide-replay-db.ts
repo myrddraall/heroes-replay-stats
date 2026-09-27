@@ -5,13 +5,15 @@ import { createReplayDb, type ReplayDbClient } from '@myrddraall/heroprotocol-db
 export const REPLAY_DB = new InjectionToken<ReplayDbClient>('hrs.replay-db');
 
 /**
- * The batteries-included ingest worker from @myrddraall/heroprotocol-analysis, served
- * from `hero-worker/` by the assets rule in angular.json. Relative, so it also resolves
- * under the desktop shell's file:// origin.
+ * The app's own ingest worker (replay.worker.ts), bundled by the Angular builder. The
+ * `new Worker(new URL(...), ...)` shape is what the builder recognises, so it stays inline.
  */
 export function provideReplayDb(): Provider {
   return {
     provide: REPLAY_DB,
-    useFactory: () => createReplayDb({ workerUrl: 'hero-worker/worker.js' }),
+    useFactory: () =>
+      createReplayDb({
+        worker: () => new Worker(new URL('./replay.worker', import.meta.url), { type: 'module' }),
+      }),
   };
 }
