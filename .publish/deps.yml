@@ -4,7 +4,7 @@ npm:
   '@types/node': '^24.0.0'
   '@typescript-eslint/eslint-plugin': '^8.20.0'
   '@typescript-eslint/parser': '^8.20.0'
-  eslint: '^9.18.0'
+  eslint: '^10.9.1'
   dexie: '^4.4.6'
   '@ngrx/signals': '^22.0.1'
   '@myrddraall/heroprotocol-db': '^0.4.0'

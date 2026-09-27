@@ -1,10 +1,11 @@
-import { computed, inject } from '@angular/core';
+import { computed, effect, inject } from '@angular/core';
 import type { IngestPhase, IngestStatus } from '@myrddraall/heroprotocol-db/ingest';
-import { patchState, signalStore, withComputed, withMethods } from '@ngrx/signals';
+import { patchState, signalStore, withComputed, withHooks, withMethods } from '@ngrx/signals';
 import {
   addEntity,
   removeEntities,
   removeEntity,
+  setAllEntities,
   updateEntity,
   withEntities,
 } from '@ngrx/signals/entities';
@@ -24,7 +25,7 @@ export interface ImportAnalyserState {
   readonly error: string | null;
 }
 
-/** One replay file being imported. Kept for the session only — nothing here is persisted. */
+/** One replay file being imported. Kept in `sessionStorage` for the life of the tab. */
 export interface ImportJob {
   readonly id: string;
   readonly fileName: string;
@@ -109,13 +110,59 @@ export function analysersOf(s: IngestStatus): ImportAnalyserState[] {
 
 let nextId = 1;
 
+export const IMPORT_JOBS_STORAGE_KEY = 'hrs.import-jobs';
+export const INTERRUPTED = 'Interrupted: the page was reloaded during the import';
+
+/** A job read back from storage cannot resume — the bytes and the worker are gone. */
+function interrupt(job: ImportJob): ImportJob {
+  const analysers = job.analysers.map((a) =>
+    a.state === 'queued' || a.state === 'running'
+      ? { ...a, state: 'failed' as const, error: INTERRUPTED }
+      : a,
+  );
+  if (job.status === 'queued' || job.status === 'running') {
+    return { ...job, status: 'failed', phase: 'failed', error: INTERRUPTED, analysers };
+  }
+  return job.status === 'ready' ? { ...job, analysers } : job;
+}
+
+function loadJobs(): ImportJob[] {
+  try {
+    const raw = sessionStorage.getItem(IMPORT_JOBS_STORAGE_KEY);
+    const parsed: unknown = raw === null ? [] : JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as ImportJob[]).map(interrupt) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveJobs(jobs: readonly ImportJob[]): void {
+  try {
+    sessionStorage.setItem(IMPORT_JOBS_STORAGE_KEY, JSON.stringify(jobs));
+  } catch {
+    // storage unavailable or full: the list still works for this page load
+  }
+}
+
 /**
  * Imports replays and tracks each import as a job with its phase, progress and the
- * state of every analyser the worker runs. Jobs live in memory for the session.
+ * state of every analyser the worker runs. Jobs are kept in `sessionStorage`, so they
+ * survive a reload but not the tab; a job that was still running is shown as failed.
  */
 export const ReplayImportJobStore = signalStore(
   { providedIn: 'root' },
   withEntities<ImportJob>(),
+  withHooks({
+    onInit(store) {
+      const jobs = loadJobs();
+      for (const job of jobs) {
+        const n = Number(job.id.replace(/^job-/, ''));
+        if (Number.isInteger(n) && n >= nextId) nextId = n + 1;
+      }
+      patchState(store, setAllEntities(jobs));
+      effect(() => saveJobs(store.entities()));
+    },
+  }),
   withComputed(({ entities }) => ({
     jobs: computed(() => entities()),
     overall: computed((): ImportOverall => {

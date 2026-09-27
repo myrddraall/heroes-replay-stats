@@ -4,7 +4,12 @@ import type { IngestStatus } from '@myrddraall/heroprotocol-db/ingest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { PLATFORM, type PickedReplay, type Platform } from '../../platform/platform';
 import { REPLAY_DB } from './provide-replay-db';
-import { ReplayImportJobStore, progressOf } from './replay-import-job.store';
+import {
+  IMPORT_JOBS_STORAGE_KEY,
+  INTERRUPTED,
+  ReplayImportJobStore,
+  progressOf,
+} from './replay-import-job.store';
 
 /** A scripted worker: each ingest is driven by the test through `drive`. */
 interface Scripted {
@@ -39,6 +44,7 @@ describe('ReplayImportJobStore', () => {
   let pick: PickedReplay[];
 
   beforeEach(() => {
+    sessionStorage.clear();
     scripted = [];
     pick = [];
     const db = {
@@ -199,6 +205,67 @@ describe('ReplayImportJobStore', () => {
     store.clearFinished();
     expect(store.jobs()).toEqual([]);
     expect(store.overall()).toMatchObject({ total: 0, progress: 1, active: false });
+  });
+
+  it('keeps jobs in sessionStorage; a job still running at reload comes back as failed', async () => {
+    pick = [
+      { name: 'a.StormReplay', bytes: new Uint8Array(1) },
+      { name: 'b.StormReplay', bytes: new Uint8Array(1) },
+    ];
+    const store = TestBed.inject(ReplayImportJobStore);
+    void store.import();
+    await tick();
+    scripted[0]!.complete('r-a');
+    await tick();
+    await tick();
+    scripted[1]!.status(
+      status({
+        phase: 'analysing-ready',
+        analysers: {
+          x: { state: 'done', mode: 'ready', ms: 1 },
+          y: { state: 'running', mode: 'ready' },
+        },
+      }),
+    );
+    TestBed.tick();
+    const saved = JSON.parse(sessionStorage.getItem(IMPORT_JOBS_STORAGE_KEY)!) as unknown[];
+    expect(saved).toHaveLength(2);
+    const ids = store.jobs().map((j) => j.id);
+
+    // A fresh app in the same tab: same providers, new store instance.
+    const providers = TestBed.inject(REPLAY_DB);
+    const platform = TestBed.inject(PLATFORM);
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: REPLAY_DB, useValue: providers },
+        { provide: PLATFORM, useValue: platform },
+      ],
+    });
+    const restored = TestBed.inject(ReplayImportJobStore);
+    expect(restored.jobs().map((j) => [j.id, j.fileName, j.status, j.error])).toEqual([
+      [ids[0], 'a.StormReplay', 'complete', null],
+      [ids[1], 'b.StormReplay', 'failed', INTERRUPTED],
+    ]);
+    expect(restored.jobs()[1]!.analysers.map((a) => [a.id, a.state, a.error])).toEqual([
+      ['x', 'done', null],
+      ['y', 'failed', INTERRUPTED],
+    ]);
+
+    // New jobs never reuse a restored id.
+    pick = [{ name: 'c.StormReplay', bytes: new Uint8Array(1) }];
+    void restored.import();
+    await tick();
+    expect(new Set(restored.jobs().map((j) => j.id)).size).toBe(3);
+    scripted.at(-1)!.complete('r-c');
+    await tick();
+    await tick();
+    TestBed.tick();
+    expect(
+      (JSON.parse(sessionStorage.getItem(IMPORT_JOBS_STORAGE_KEY)!) as { status: string }[]).map(
+        (j) => j.status,
+      ),
+    ).toEqual(['complete', 'failed', 'complete']);
   });
 
   it('maps every phase onto the 0..1 line in order', () => {
