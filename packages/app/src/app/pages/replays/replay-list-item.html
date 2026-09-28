@@ -14,7 +14,7 @@
   </p>
   <div class="replay__teams">
     @for (team of teams(); track team.team) {
-      <div class="team" [class.team--won]="team.won" [class]="'team--' + team.team">
+      <div class="team" [class.team--won]="team.won" [hrsTeam]="team.team">
         <span class="team__name">
           {{ team.name }}
           @if (team.won !== null) {

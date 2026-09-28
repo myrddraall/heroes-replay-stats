@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { describe, expect, it } from 'vitest';
 import type { ReplaySummary } from '../../data/replays/replay.service';
+import { SettingsStore } from '../../data/settings/settings.store';
 import { formatDuration, ReplayListItem } from './replay-list-item';
 
 const replay: ReplaySummary = {
@@ -15,6 +16,7 @@ const replay: ReplaySummary = {
   players: [
     {
       slot: 0,
+      toonHandle: '1-Hero-1-1',
       name: 'Alice',
       hero: 'Sonya',
       heroId: 'Barbarian',
@@ -22,8 +24,18 @@ const replay: ReplaySummary = {
       won: false,
       kind: 'player',
     },
-    { slot: 5, name: 'Bob', hero: 'Jaina', heroId: 'Jaina', team: 1, won: true, kind: 'player' },
+    {
+      slot: 5,
+      toonHandle: '1-Hero-1-5',
+      name: 'Bob',
+      hero: 'Jaina',
+      heroId: 'Jaina',
+      team: 1,
+      won: true,
+      kind: 'player',
+    },
   ],
+  recorderToonHandle: '1-Hero-1-5',
 };
 
 describe('ReplayListItem', () => {
@@ -52,10 +64,59 @@ describe('ReplayListItem', () => {
         t(p, '.player__name'),
       ]),
     ]);
+    // Bob recorded it, so his team is blue and listed first
     expect(teams).toEqual([
-      ['Defeat', [['Sonya', 'Alice']]],
       ['Victory', [['Jaina', 'Bob']]],
+      ['Defeat', [['Sonya', 'Alice']]],
     ]);
-    expect(el.querySelector('.team--1')!.classList).toContain('team--won');
+    expect(el.querySelectorAll('.team')[0]!.classList).toContain('team--won');
+  });
+
+  it("colours the teams from the recorder's point of view, or yours once marked", async () => {
+    localStorage.clear();
+    const fixture = TestBed.createComponent(ReplayListItem);
+    fixture.componentRef.setInput('replay', replay);
+    await fixture.whenStable();
+    const el: HTMLElement = fixture.nativeElement;
+    const rows = () =>
+      [...el.querySelectorAll('.team')].map((t) => [
+        t.querySelector('.team__name')!.firstChild!.textContent!.trim(),
+        t.classList.contains('hrs-team-blue') ? 'blue' : 'red',
+      ]);
+    // Bob recorded it, so his team (1) is blue, and blue is on top
+    expect(rows()).toEqual([
+      ['Blue team', 'blue'],
+      ['Red team', 'red'],
+    ]);
+
+    TestBed.inject(SettingsStore).setMe('1-Hero-1-1', true);
+    await fixture.whenStable();
+    expect(rows()).toEqual([
+      ['Blue team', 'blue'],
+      ['Red team', 'red'],
+    ]);
+    localStorage.clear();
+  });
+
+  it('lists you first on your team, then the rest in slot order', async () => {
+    localStorage.clear();
+    const [alice, bob] = replay.players;
+    const fixture = TestBed.createComponent(ReplayListItem);
+    fixture.componentRef.setInput('replay', {
+      ...replay,
+      players: [
+        alice!,
+        { ...alice!, slot: 1, toonHandle: '1-Hero-1-2', name: 'Carol', hero: 'Raynor' },
+        { ...alice!, slot: 2, toonHandle: '1-Hero-1-3', name: 'Dave', hero: 'Muradin' },
+        bob!,
+      ],
+      recorderToonHandle: '1-Hero-1-3',
+    });
+    await fixture.whenStable();
+    const el: HTMLElement = fixture.nativeElement;
+    const names = [...el.querySelectorAll('.team')].map((t) =>
+      [...t.querySelectorAll('.player__name')].map((n) => n.textContent!.trim()),
+    );
+    expect(names).toEqual([['Dave', 'Alice', 'Carol'], ['Bob']]);
   });
 });

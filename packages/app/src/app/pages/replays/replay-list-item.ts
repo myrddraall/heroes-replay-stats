@@ -1,7 +1,11 @@
 import { DatePipe } from '@angular/common';
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import type { GameMode, Team } from '@myrddraall/heroprotocol-db';
 import type { ReplaySummary } from '../../data/replays/replay.service';
+import { SettingsStore } from '../../data/settings/settings.store';
+import { resolveYou } from '../../data/you/resolve-you';
+import { teamColor, type TeamColor, TeamPerspective } from '../../team/team-color';
+import { TeamTheme } from '../../team/team-theme';
 
 const MODE_LABELS: Readonly<Record<GameMode, string>> = {
   practice: 'Practice',
@@ -18,7 +22,7 @@ const MODE_LABELS: Readonly<Record<GameMode, string>> = {
   unknown: 'Unknown mode',
 };
 
-const TEAM_NAMES: Readonly<Record<Team, string>> = { 0: 'Blue team', 1: 'Red team' };
+const TEAM_NAMES: Readonly<Record<TeamColor, string>> = { blue: 'Blue team', red: 'Red team' };
 
 /** `m:ss`, or `h:mm:ss` past an hour. */
 export function formatDuration(seconds: number): string {
@@ -32,23 +36,44 @@ export function formatDuration(seconds: number): string {
 /** One replay in the list: where and when, and who played what on each side. */
 @Component({
   selector: 'hrs-replay-list-item',
-  imports: [DatePipe],
+  imports: [DatePipe, TeamTheme],
+  providers: [TeamPerspective],
   templateUrl: './replay-list-item.html',
   styleUrl: './replay-list-item.scss',
 })
 export class ReplayListItem {
   readonly replay = input.required<ReplaySummary>();
+  private readonly settings = inject(SettingsStore);
+  private readonly perspective = inject(TeamPerspective);
+  private readonly me = computed(() => new Set(this.settings.meToonHandles()));
+  private readonly you = computed(() => resolveYou(this.replay(), this.me()));
+
+  constructor() {
+    this.perspective.follow(computed(() => this.you().team));
+  }
 
   protected readonly mode = computed(() => MODE_LABELS[this.replay().mode]);
   protected readonly duration = computed(() => formatDuration(this.replay().durationSeconds));
   protected readonly teams = computed(() => {
     const r = this.replay();
-    return ([0, 1] as const).map((team) => ({
-      team,
-      name: TEAM_NAMES[team],
-      won: r.winningTeam === null ? null : r.winningTeam === team,
-      players: r.players.filter((p) => p.team === team),
-    }));
+    const yourTeam = this.perspective.yourTeam();
+    const mode = this.perspective.mode();
+    const yours = new Set(this.you().slots);
+    return ([0, 1] as const)
+      .map((team: Team) => {
+        const color = teamColor(team, yourTeam, mode);
+        return {
+          team,
+          color,
+          name: TEAM_NAMES[color],
+          won: r.winningTeam === null ? null : r.winningTeam === team,
+          // you first, then slot order
+          players: r.players
+            .filter((p) => p.team === team)
+            .sort((a, b) => Number(yours.has(b.slot)) - Number(yours.has(a.slot))),
+        };
+      })
+      .sort((a, b) => (a.color === b.color ? 0 : a.color === 'blue' ? -1 : 1)); // blue on top
   });
   protected readonly label = computed(() => `${this.replay().map}, ${this.mode()}`);
 }

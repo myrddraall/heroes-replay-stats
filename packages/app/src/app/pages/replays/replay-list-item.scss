@@ -45,20 +45,13 @@
   gap: 8px 12px;
   padding: 8px 12px;
   border-radius: 8px;
-  border-left: 3px solid transparent;
-}
-.team--0 {
-  background: rgba(27, 56, 116, 0.35);
-  border-left-color: #3d7bff;
-}
-.team--1 {
-  background: rgba(102, 7, 48, 0.35);
-  border-left-color: #ff4d7d;
+  border-left: 3px solid var(--mat-sys-primary);
+  background: var(--mat-sys-surface-container);
 }
 .team__name {
   display: grid;
   font: var(--mat-sys-label-large);
-  color: #fff;
+  color: var(--mat-sys-on-surface);
 }
 .team__result {
   font: var(--mat-sys-label-small);
@@ -83,7 +76,7 @@
 }
 .player__hero {
   font: var(--mat-sys-body-medium);
-  color: #fff;
+  color: var(--mat-sys-on-surface);
 }
 .player__name {
   font: var(--mat-sys-body-small);

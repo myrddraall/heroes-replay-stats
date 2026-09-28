@@ -83,6 +83,7 @@ describe('ReplayService', () => {
         { slot: 0, name: 'A', hero: 'Sonya', heroId: 'Barbarian', team: 0, won: true, kind: 'ai' },
         { slot: 1, name: 'B', hero: 'Jaina', heroId: 'Jaina', team: 0, won: true, kind: 'player' },
       ],
+      recorderToonHandle: null, // the record predates the recorder fields
     });
     expect(service.error()).toBeNull();
   });

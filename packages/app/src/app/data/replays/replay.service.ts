@@ -27,6 +27,8 @@ export interface ReplaySummary {
   readonly status: Extract<ReplayStatus, 'ready' | 'complete'>;
   /** Participants in slot order. */
   readonly players: readonly ReplayPlayer[];
+  /** The account that recorded the replay, when known. */
+  readonly recorderToonHandle: string | null;
 }
 
 /** Whether a stored replay can be shown: written, with its ready analysers done. */
@@ -47,6 +49,8 @@ function toSummary(r: ReplayRecord & { status: 'ready' | 'complete' }): ReplaySu
     players: r.players
       .filter((p): p is PlayerSummary & { kind: 'player' | 'ai' } => p.kind !== 'observer')
       .sort((a, b) => a.slot - b.slot),
+    // absent on replays imported before the recorder was stored
+    recorderToonHandle: r.recorderToonHandle ?? null,
   };
 }
 
