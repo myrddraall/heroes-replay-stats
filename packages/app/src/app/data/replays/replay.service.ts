@@ -19,6 +19,8 @@ export interface ReplaySummary {
   readonly mode: GameMode;
   /** ISO-8601, UTC. */
   readonly playedAt: string;
+  /** ISO-8601, when the replay was imported. */
+  readonly importedAt: string;
   readonly durationSeconds: number;
   readonly winningTeam: Team | null;
   /** The game build, e.g. 85267. */
@@ -42,6 +44,7 @@ function toSummary(r: ReplayRecord & { status: 'ready' | 'complete' }): ReplaySu
     map: r.map,
     mode: r.mode,
     playedAt: r.playedAt,
+    importedAt: r.ingestedAt,
     durationSeconds: r.durationSeconds,
     winningTeam: r.winningTeam,
     build: r.version.build,

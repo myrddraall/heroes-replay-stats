@@ -1,7 +1,9 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgOptimizedImage } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import type { GameMode, Team } from '@myrddraall/heroprotocol-db';
+import { LatestHeroData } from '../../data/heroes/hero-data';
 import type { ReplaySummary } from '../../data/replays/replay.service';
+import { HeroMinimapIcon } from '../../heroes/hero-minimap-icon';
 import { SettingsStore } from '../../data/settings/settings.store';
 import { resolveYou } from '../../data/you/resolve-you';
 import { teamColor, type TeamColor, TeamPerspective } from '../../team/team-color';
@@ -36,7 +38,7 @@ export function formatDuration(seconds: number): string {
 /** One replay in the list: where and when, and who played what on each side. */
 @Component({
   selector: 'hrs-replay-list-item',
-  imports: [DatePipe, TeamTheme],
+  imports: [DatePipe, HeroMinimapIcon, NgOptimizedImage, TeamTheme],
   providers: [TeamPerspective],
   templateUrl: './replay-list-item.html',
   styleUrl: './replay-list-item.scss',
@@ -45,6 +47,7 @@ export class ReplayListItem {
   readonly replay = input.required<ReplaySummary>();
   private readonly settings = inject(SettingsStore);
   private readonly perspective = inject(TeamPerspective);
+  private readonly heroData = inject(LatestHeroData);
   private readonly me = computed(() => new Set(this.settings.meToonHandles()));
   private readonly you = computed(() => resolveYou(this.replay(), this.me()));
 
@@ -74,6 +77,12 @@ export class ReplayListItem {
         };
       })
       .sort((a, b) => (a.color === b.color ? 0 : a.color === 'blue' ? -1 : 1)); // blue on top
+  });
+  /** The map's replay preview image, behind the card. */
+  protected readonly preview = computed(() => {
+    const data = this.heroData.data;
+    const map = data.hasValue() ? data.value().map(this.replay().map) : undefined;
+    return map ? this.heroData.images.map(map, 'replayPreview') : null;
   });
   protected readonly label = computed(() => `${this.replay().map}, ${this.mode()}`);
 }

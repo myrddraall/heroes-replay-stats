@@ -1,8 +1,27 @@
 .replay {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   padding: 16px 20px;
   border: 1px solid var(--hrs-border);
   border-radius: 12px;
   background: var(--hrs-surface);
+}
+// the map's replay preview: full card height, square, fading into the card colour
+.replay__preview {
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: -1;
+  aspect-ratio: 1;
+  img {
+    object-fit: cover;
+  }
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to right, transparent, var(--hrs-surface));
+  }
 }
 .replay__head {
   display: flex;
@@ -21,10 +40,17 @@
   color: var(--hrs-bronze);
   font: var(--mat-sys-label-large);
 }
-.replay__when {
+.replay__dates {
+  display: grid;
+  justify-items: end;
   margin-left: auto;
   color: var(--mat-sys-on-surface-variant);
+}
+.replay__played {
   font: var(--mat-sys-body-medium);
+}
+.replay__imported {
+  font: var(--mat-sys-body-small);
 }
 .replay__meta {
   margin: 4px 0 12px;
@@ -46,7 +72,8 @@
   padding: 8px 12px;
   border-radius: 8px;
   border-left: 3px solid var(--mat-sys-primary);
-  background: var(--mat-sys-surface-container);
+  // partly see-through, so the map preview shows behind the rows
+  background: color-mix(in srgb, var(--mat-sys-surface-container) 70%, transparent);
 }
 .team__name {
   display: grid;
@@ -72,7 +99,13 @@
 }
 .player {
   display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 8px;
   min-width: 0;
+}
+.player__icon {
+  grid-row: span 2;
 }
 .player__hero {
   font: var(--mat-sys-body-medium);
@@ -90,7 +123,8 @@
   .replay {
     padding: 12px 14px;
   }
-  .replay__when {
+  .replay__dates {
+    justify-items: start;
     margin-left: 0;
     width: 100%;
   }

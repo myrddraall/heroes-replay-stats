@@ -108,6 +108,9 @@ importers:
       '@angular/router':
         specifier: ^22.1.0
         version: 22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(rxjs@7.8.2)
+      '@myrddraall/hero-data':
+        specifier: ^0.4.0
+        version: 0.4.0
       '@myrddraall/heroes-replay-stats-analysers':
         specifier: workspace:*
         version: link:../analysers
@@ -1304,6 +1307,10 @@ packages:
     resolution: {integrity: sha512-CmCXPQrkbwExx3j946/PtHWHbYJiCRBRDl4BlkRQcJB/YOwQxJRTpoo7aTsortjgoJ1x7opzTSxn7C+ASSLVjQ==}
     cpu: [x64]
     os: [win32]
+
+  '@myrddraall/hero-data@0.4.0':
+    resolution: {integrity: sha512-0XL3Xt1skIqZXh2pvyBgacfYX0ELcFH4vukPTk9KvYjo9biMXDd5uguTdPp5nx8c1sR6TUJ8DJ3Vbx9gEDhKyg==, tarball: https://npm.pkg.github.com/download/@myrddraall/hero-data/0.4.0/f64747235ca8e6f4ff8d3cccb8cc0fe22de83d10}
+    engines: {node: '>=24'}
 
   '@myrddraall/heroprotocol-analysis@0.4.0':
     resolution: {integrity: sha512-zv85nss5eVjfH4j2/ouzdsgcDr9Zrd9958B6k7dVlGBSPOjkQBsfcux+KSuLzi9lEXwbvOmq+tG3g+mGjKOVkQ==, tarball: https://npm.pkg.github.com/download/@myrddraall/heroprotocol-analysis/0.4.0/5aa99d50d07e274fd0f2a16c7fc365d2f8eb823f}
@@ -5988,6 +5995,8 @@ snapshots:
 
   '@msgpackr-extract/msgpackr-extract-win32-x64@3.0.4':
     optional: true
+
+  '@myrddraall/hero-data@0.4.0': {}
 
   '@myrddraall/heroprotocol-analysis@0.4.0(dexie@4.4.6)':
     dependencies:

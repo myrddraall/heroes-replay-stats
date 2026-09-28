@@ -23,6 +23,7 @@
     "@angular/material": "^22.1.0",
     "@angular/platform-browser": "^22.1.0",
     "@angular/router": "^22.1.0",
+    "@myrddraall/hero-data": "^0.4.0",
     "@myrddraall/heroes-replay-stats-analysers": "workspace:*",
     "@myrddraall/heroprotocol-analysis": "^0.4.0",
     "@myrddraall/heroprotocol-db": "^0.4.0",

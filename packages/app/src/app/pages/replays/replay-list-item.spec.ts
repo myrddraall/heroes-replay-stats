@@ -1,5 +1,7 @@
 import { TestBed } from '@angular/core/testing';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { HERO_DATA } from '../../data/heroes/hero-data';
+import { fakeHeroData } from '../../data/heroes/hero-data.fake';
 import type { ReplaySummary } from '../../data/replays/replay.service';
 import { SettingsStore } from '../../data/settings/settings.store';
 import { formatDuration, ReplayListItem } from './replay-list-item';
@@ -9,6 +11,7 @@ const replay: ReplaySummary = {
   map: 'Towers of Doom',
   mode: 'storm-league',
   playedAt: '2024-06-01T18:30:00.000Z',
+  importedAt: '2024-06-02T09:15:00.000Z',
   durationSeconds: 1234,
   winningTeam: 1,
   build: 85267,
@@ -39,6 +42,10 @@ const replay: ReplaySummary = {
 };
 
 describe('ReplayListItem', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [{ provide: HERO_DATA, useValue: fakeHeroData }] });
+  });
+
   it('formats durations as m:ss, and h:mm:ss past an hour', () => {
     expect(formatDuration(65)).toBe('1:05');
     expect(formatDuration(1234)).toBe('20:34');
@@ -55,7 +62,14 @@ describe('ReplayListItem', () => {
     expect(text('.replay__map')).toBe('Towers of Doom');
     expect(text('.replay__mode')).toBe('Storm League');
     expect(text('.replay__meta')).toBe('20:34 · build 85267 · analysing…');
-    expect(el.querySelector('time')?.getAttribute('datetime')).toBe(replay.playedAt);
+    expect(el.querySelector('.replay__played time')?.getAttribute('datetime')).toBe(
+      replay.playedAt,
+    );
+    expect(text('.replay__played')).toMatch(/^Played Jun [12], 2024, \d\d:30$/);
+    expect(el.querySelector('.replay__imported time')?.getAttribute('datetime')).toBe(
+      replay.importedAt,
+    );
+    expect(text('.replay__imported')).toMatch(/^Imported Jun 2, 2024, \d\d:15$/);
     const t = (node: Element, sel: string) => node.querySelector(sel)?.textContent?.trim();
     const teams = [...el.querySelectorAll('.team')].map((team) => [
       t(team, '.team__result'),
@@ -70,6 +84,28 @@ describe('ReplayListItem', () => {
       ['Defeat', [['Sonya', 'Alice']]],
     ]);
     expect(el.querySelectorAll('.team')[0]!.classList).toContain('team--won');
+    // each player has their hero's minimap icon; Sonya is the only hero the fake data knows
+    const icons = [...el.querySelectorAll('.player')].map((p) => [
+      p.querySelector('hrs-hero-minimap-icon') !== null,
+      p.querySelector('img')?.alt,
+    ]);
+    expect(icons).toEqual([
+      [true, undefined],
+      [true, 'Sonya'],
+    ]);
+    // the map's replay preview sits behind the card, decorative
+    const preview = el.querySelector<HTMLImageElement>('.replay__preview img');
+    expect(preview?.getAttribute('src')).toBe(
+      'https://cdn.jsdelivr.net/gh/HeroesToolChest/heroes-images@main/heroesimages/replaypreviews/replayspreviewimage_towersofdoom.png',
+    );
+    expect(preview?.alt).toBe('');
+  });
+
+  it('has no preview for a map the data does not know', async () => {
+    const fixture = TestBed.createComponent(ReplayListItem);
+    fixture.componentRef.setInput('replay', { ...replay, map: 'Nowhere' });
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('.replay__preview')).toBeNull();
   });
 
   it("colours the teams from the recorder's point of view, or yours once marked", async () => {

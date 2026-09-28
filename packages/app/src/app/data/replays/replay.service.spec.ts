@@ -75,6 +75,7 @@ describe('ReplayService', () => {
       map: 'Cursed Hollow',
       mode: 'quick-match',
       playedAt: '2024-06-01T00:00:00.000Z',
+      importedAt: '2024-01-02T00:00:00.000Z',
       durationSeconds: 1200,
       winningTeam: 0,
       build: 85267,
