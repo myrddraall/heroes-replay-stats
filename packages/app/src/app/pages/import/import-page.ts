@@ -5,7 +5,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { ReplayImportJobStore } from '../../data/import/replay-import-job.store';
+import { ReplayImportJobStore, type ImportJob } from '../../data/import/replay-import-job.store';
 import { injectPlatform } from '../../platform/platform';
 
 @Component({
@@ -74,7 +74,11 @@ import { injectPlatform } from '../../platform/platform';
                 }}</span>
               </mat-panel-title>
               <mat-panel-description>
-                <span class="job__phase">{{ job.error ?? job.phase ?? 'queued' }}</span>
+                <span
+                  class="job__phase"
+                  [class.job__phase--waiting]="job.store?.state === 'waiting'"
+                  >{{ job.error ?? phaseLabel(job) }}</span
+                >
                 <span>{{ job.progress | percent: '1.0-0' }}</span>
               </mat-panel-description>
             </mat-expansion-panel-header>
@@ -165,6 +169,9 @@ import { injectPlatform } from '../../platform/platform';
       justify-content: flex-end;
       gap: 12px;
     }
+    .job__phase--waiting {
+      font-style: italic;
+    }
     .job__phase {
       max-width: 40vw;
       overflow: hidden;
@@ -219,6 +226,12 @@ export class ImportPage {
   /** The file name without its extension, for display; the full name is kept in a tooltip. */
   protected displayName(fileName: string): string {
     return fileName.replace(/\.[^./]+$/, '');
+  }
+
+  /** What the job is doing, in words; a queued database write reads as waiting. */
+  protected phaseLabel(job: ImportJob): string {
+    if (job.store?.state === 'waiting') return 'waiting for database';
+    return job.phase ?? 'queued';
   }
 
   protected icon(status: string): string {

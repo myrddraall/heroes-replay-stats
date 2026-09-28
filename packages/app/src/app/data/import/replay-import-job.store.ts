@@ -39,6 +39,11 @@ export interface ImportJob {
   readonly replayId: string | null;
   readonly error: string | null;
   readonly analysers: readonly ImportAnalyserState[];
+  /**
+   * The database write in flight: `waiting` while another import holds the tables,
+   * `writing` with rows added so far. Null when nothing is being written.
+   */
+  readonly store: StoreWrite | null;
   readonly startedAt: number | null;
   readonly finishedAt: number | null;
 }
@@ -76,6 +81,18 @@ const PHASE_SPAN: Readonly<Record<IngestPhase, readonly [number, number]>> = {
   failed: [0, 0],
 };
 
+/** Where a database write is; heroprotocol-db ≥ 0.5 reports it on the status snapshot. */
+export interface StoreWrite {
+  readonly state: 'waiting' | 'writing';
+  readonly current: number;
+  readonly total: number;
+}
+
+/** The snapshot's store write, if the worker reports one (older versions do not). */
+export function storeOf(s: IngestStatus): StoreWrite | null {
+  return (s as IngestStatus & { store?: StoreWrite }).store ?? null;
+}
+
 /** A job's progress from one status snapshot. */
 export function progressOf(s: IngestStatus): number {
   const [from, to] = PHASE_SPAN[s.phase];
@@ -87,6 +104,9 @@ export function progressOf(s: IngestStatus): number {
     ).length;
     const partial = measured.reduce((a, x) => a + Math.min(1, (x.current ?? 0) / x.total!), 0);
     fraction = Math.max(done, partial) / Math.max(1, Object.keys(s.sections).length);
+  } else if (s.phase === 'writing') {
+    const w = storeOf(s);
+    fraction = w && w.state === 'writing' && w.total > 0 ? w.current / w.total : 0;
   } else if (s.phase === 'analysing-ready' || s.phase === 'analysing-background') {
     const mode = s.phase === 'analysing-ready' ? 'ready' : 'background';
     const mine = Object.values(s.analysers).filter((a) => a.mode === mode);
@@ -128,9 +148,16 @@ function interrupt(job: ImportJob): ImportJob {
       : a,
   );
   if (job.status === 'queued' || job.status === 'running') {
-    return { ...job, status: 'failed', phase: 'failed', error: INTERRUPTED, analysers };
+    return {
+      ...job,
+      status: 'failed',
+      phase: 'failed',
+      error: INTERRUPTED,
+      analysers,
+      store: null,
+    };
   }
-  return job.status === 'ready' ? { ...job, analysers } : job;
+  return { ...job, analysers, store: null };
 }
 
 function loadJobs(): ImportJob[] {
@@ -260,6 +287,7 @@ export const ReplayImportJobStore = signalStore(
                 progress: progressOf(s),
                 replayId: s.replayId,
                 analysers: analysersOf(s),
+                store: storeOf(s),
               }),
           });
           handle.ready.then(
@@ -272,6 +300,7 @@ export const ReplayImportJobStore = signalStore(
             phase: 'complete',
             progress: 1,
             replayId: r.replayId,
+            store: null,
             finishedAt: Date.now(),
           });
         } catch (err) {
@@ -279,6 +308,7 @@ export const ReplayImportJobStore = signalStore(
             status: 'failed',
             phase: 'failed',
             error: err instanceof Error ? err.message : String(err),
+            store: null,
             finishedAt: Date.now(),
           });
         } finally {
@@ -342,6 +372,7 @@ export const ReplayImportJobStore = signalStore(
               replayId: null,
               error: null,
               analysers: [],
+              store: null,
               startedAt: null,
               finishedAt: null,
             };

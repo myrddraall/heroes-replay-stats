@@ -452,6 +452,30 @@ describe('ReplayImportJobStore', () => {
     expect(scripted).toHaveLength(1); // b never reached a worker
   });
 
+  it('shows a database write waiting, then its rows as progress through the writing phase', async () => {
+    pick = [{ name: 'a.StormReplay', bytes: new Uint8Array(1) }];
+    const store = TestBed.inject(ReplayImportJobStore);
+    void store.import();
+    await tick();
+    const job = () => store.jobs()[0]!;
+    const writing = (store: object) =>
+      ({ ...status({ phase: 'writing' }), store }) as unknown as IngestStatus;
+
+    scripted[0]!.status(writing({ state: 'waiting', current: 0, total: 30000 }));
+    expect(job().store).toEqual({ state: 'waiting', current: 0, total: 30000 });
+    expect(job().progress).toBeCloseTo(0.6, 5); // the start of the writing span
+
+    scripted[0]!.status(writing({ state: 'writing', current: 15000, total: 30000 }));
+    expect(job().progress).toBeCloseTo(0.65, 5); // halfway through 0.6–0.7
+
+    scripted[0]!.status(status({ phase: 'analysing-ready' })); // no write in flight
+    expect(job().store).toBeNull();
+    scripted[0]!.complete('r');
+    await tick();
+    await tick();
+    expect(job()).toMatchObject({ status: 'complete', store: null });
+  });
+
   it('maps every phase onto the 0..1 line in order', () => {
     const phases = [
       'parsing',
