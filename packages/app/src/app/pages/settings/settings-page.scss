@@ -1,0 +1,24 @@
+.card {
+  padding: 20px;
+  margin-bottom: 16px;
+  border: 1px solid var(--hrs-border);
+  border-radius: 16px;
+  background: rgba(22, 15, 58, 0.6);
+}
+.setting {
+  display: flex;
+  justify-content: space-between;
+  font: var(--mat-sys-body-large);
+}
+.setting__value {
+  color: var(--hrs-bronze);
+  font-variant-numeric: tabular-nums;
+}
+.slider {
+  width: 100%;
+  max-width: 480px;
+}
+.hint {
+  color: var(--mat-sys-on-surface-variant);
+  margin: 8px 0 0;
+}

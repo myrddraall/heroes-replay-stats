@@ -1,0 +1,25 @@
+<header class="head">
+  <h1>Replays</h1>
+  @if (replays.replays().length > 0) {
+    <span class="count"
+      >{{ replays.replays().length }}
+      {{ replays.replays().length === 1 ? 'replay' : 'replays' }}</span
+    >
+  }
+</header>
+@if (replays.error(); as error) {
+  <p class="error" role="alert">The replay database could not be read: {{ message(error) }}</p>
+} @else if (!replays.loaded()) {
+  <mat-progress-bar mode="indeterminate" aria-label="Loading replays" />
+} @else if (replays.replays().length === 0) {
+  <hrs-empty-state icon="history" title="No replays yet">
+    Import a few .StormReplay files and they will be parsed, stored locally and listed here.
+    <br /><button mat-stroked-button class="cta" (click)="imports.import()">Import replays</button>
+  </hrs-empty-state>
+} @else {
+  <ul class="list">
+    @for (replay of replays.replays(); track replay.id) {
+      <li><hrs-replay-list-item [replay]="replay" /></li>
+    }
+  </ul>
+}
