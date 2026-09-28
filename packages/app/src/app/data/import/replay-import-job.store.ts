@@ -1,4 +1,4 @@
-import { computed, effect, inject } from '@angular/core';
+import { computed, effect, inject, untracked } from '@angular/core';
 import type { IngestPhase, IngestStatus } from '@myrddraall/heroprotocol-db/ingest';
 import { patchState, signalStore, withComputed, withHooks, withMethods } from '@ngrx/signals';
 import {
@@ -11,7 +11,8 @@ import {
 } from '@ngrx/signals/entities';
 import { injectPlatform } from '../../platform/platform';
 import type { PickedReplay } from '../../platform/platform';
-import { REPLAY_DB } from './provide-replay-db';
+import { SettingsStore } from '../settings/settings.store';
+import { IngestPool } from './ingest-pool';
 
 export type ImportJobStatus = 'queued' | 'running' | 'ready' | 'complete' | 'failed';
 
@@ -205,124 +206,175 @@ export const ReplayImportJobStore = signalStore(
       };
     }),
   })),
-  withMethods((store, db = inject(REPLAY_DB), platform = injectPlatform()) => {
-    let chain: Promise<void> = Promise.resolve();
+  withMethods(
+    (
+      store,
+      pool = inject(IngestPool),
+      settings = inject(SettingsStore),
+      platform = injectPlatform(),
+    ) => {
+      /** Queued jobs' bytes (never persisted) and the callback that settles their `import()`. */
+      const pending = new Map<string, { bytes: Uint8Array; settle: () => void }>();
+      let active = 0;
 
-    async function toPicked(input: ReplayInput, fileName?: string): Promise<PickedReplay[]> {
-      if (input instanceof Uint8Array || input instanceof ArrayBuffer) {
-        return [
-          {
-            name: fileName ?? 'replay.StormReplay',
-            bytes: input instanceof Uint8Array ? input : new Uint8Array(input),
-          },
-        ];
-      }
-      const items: (File | FileSystemFileHandle | PickedReplay)[] =
-        input instanceof FileList
-          ? [...input]
-          : Array.isArray(input)
-            ? [...input]
-            : [input as File | FileSystemFileHandle | PickedReplay];
-      return Promise.all(
-        items.map(async (item): Promise<PickedReplay> => {
-          const file =
-            item instanceof File ? item : 'getFile' in item ? await item.getFile() : undefined;
-          if (file === undefined) return item as PickedReplay;
-          return { name: file.name, bytes: new Uint8Array(await file.arrayBuffer()) };
-        }),
-      );
-    }
-
-    const update = (id: string, changes: Partial<ImportJob>): void => {
-      if (store.entityMap()[id]) patchState(store, updateEntity({ id, changes }));
-    };
-
-    /** Runs one job to completion; failures land in the job, never thrown. */
-    async function run(job: ImportJob, bytes: Uint8Array): Promise<void> {
-      update(job.id, { status: 'running', startedAt: Date.now() });
-      try {
-        const handle = db.ingest(bytes, {
-          fileName: job.fileName,
-          onStatus: (s) =>
-            update(job.id, {
-              phase: s.phase,
-              progress: progressOf(s),
-              replayId: s.replayId,
-              analysers: analysersOf(s),
-            }),
-        });
-        handle.ready.then(
-          (r) => update(job.id, { status: 'ready', replayId: r.replayId }),
-          () => undefined,
-        );
-        const r = await handle.complete;
-        update(job.id, {
-          status: 'complete',
-          phase: 'complete',
-          progress: 1,
-          replayId: r.replayId,
-          finishedAt: Date.now(),
-        });
-      } catch (err) {
-        update(job.id, {
-          status: 'failed',
-          phase: 'failed',
-          error: err instanceof Error ? err.message : String(err),
-          finishedAt: Date.now(),
-        });
-      }
-    }
-
-    return {
-      /**
-       * Import replays. With no argument, opens the platform's file dialog; otherwise takes
-       * replay bytes (with an optional file name), `File`s, a `FileList`,
-       * `FileSystemFileHandle`s, or already-picked replays — singly or as arrays. Every
-       * file becomes a queued job at once; jobs run one at a time. Resolves with the jobs
-       * once they have all finished, one way or the other.
-       */
-      async import(input?: ReplayInput, fileName?: string): Promise<ImportJob[]> {
-        const picked =
-          input === undefined ? await platform.pickReplays() : await toPicked(input, fileName);
-        const ids: string[] = [];
-        for (const file of picked) {
-          const id = `job-${nextId++}`;
-          ids.push(id);
-          const created: ImportJob = {
-            id,
-            fileName: file.name,
-            bytes: file.bytes.byteLength,
-            status: 'queued',
-            phase: null,
-            progress: 0,
-            replayId: null,
-            error: null,
-            analysers: [],
-            startedAt: null,
-            finishedAt: null,
-          };
-          patchState(store, addEntity(created));
-          const job = store.entityMap()[id]!;
-          chain = chain.then(() => (store.entityMap()[id] ? run(job, file.bytes) : undefined));
+      async function toPicked(input: ReplayInput, fileName?: string): Promise<PickedReplay[]> {
+        if (input instanceof Uint8Array || input instanceof ArrayBuffer) {
+          return [
+            {
+              name: fileName ?? 'replay.StormReplay',
+              bytes: input instanceof Uint8Array ? input : new Uint8Array(input),
+            },
+          ];
         }
-        await chain;
-        return ids
-          .map((id) => store.entityMap()[id])
-          .filter((j): j is ImportJob => j !== undefined);
-      },
-
-      /** Drop one job from the list (a running job keeps running in the worker). */
-      dismiss(id: string): void {
-        patchState(store, removeEntity(id));
-      },
-
-      /** Drop every finished job. */
-      clearFinished(): void {
-        patchState(
-          store,
-          removeEntities((j) => j.status === 'complete' || j.status === 'failed'),
+        const items: (File | FileSystemFileHandle | PickedReplay)[] =
+          input instanceof FileList
+            ? [...input]
+            : Array.isArray(input)
+              ? [...input]
+              : [input as File | FileSystemFileHandle | PickedReplay];
+        return Promise.all(
+          items.map(async (item): Promise<PickedReplay> => {
+            const file =
+              item instanceof File ? item : 'getFile' in item ? await item.getFile() : undefined;
+            if (file === undefined) return item as PickedReplay;
+            return { name: file.name, bytes: new Uint8Array(await file.arrayBuffer()) };
+          }),
         );
-      },
-    };
-  }),
+      }
+
+      const update = (id: string, changes: Partial<ImportJob>): void => {
+        if (store.entityMap()[id]) patchState(store, updateEntity({ id, changes }));
+      };
+
+      /** Runs one job on a free worker to completion; failures land in the job, never thrown. */
+      async function run(job: ImportJob, bytes: Uint8Array, limit: number): Promise<void> {
+        update(job.id, { status: 'running', startedAt: Date.now() });
+        let slot: Awaited<ReturnType<IngestPool['acquire']>> | undefined;
+        try {
+          slot = await pool.acquire(limit);
+          const handle = slot.client.ingest(bytes, {
+            fileName: job.fileName,
+            onStatus: (s) =>
+              update(job.id, {
+                phase: s.phase,
+                progress: progressOf(s),
+                replayId: s.replayId,
+                analysers: analysersOf(s),
+              }),
+          });
+          handle.ready.then(
+            (r) => update(job.id, { status: 'ready', replayId: r.replayId }),
+            () => undefined,
+          );
+          const r = await handle.complete;
+          update(job.id, {
+            status: 'complete',
+            phase: 'complete',
+            progress: 1,
+            replayId: r.replayId,
+            finishedAt: Date.now(),
+          });
+        } catch (err) {
+          update(job.id, {
+            status: 'failed',
+            phase: 'failed',
+            error: err instanceof Error ? err.message : String(err),
+            finishedAt: Date.now(),
+          });
+        } finally {
+          if (slot) pool.release(slot, settings.parallelImports());
+        }
+      }
+
+      /** Start queued jobs, oldest first, while fewer than the parallel limit are running. */
+      function pump(): void {
+        const limit = settings.parallelImports();
+        while (active < limit) {
+          const next = store
+            .entities()
+            .filter((j) => j.status === 'queued' && pending.has(j.id))
+            .sort((a, b) => sequenceOf(a) - sequenceOf(b))[0];
+          if (!next) return;
+          const { bytes, settle } = pending.get(next.id)!;
+          pending.delete(next.id);
+          active++;
+          void run(next, bytes, limit).finally(() => {
+            active--;
+            settle();
+            pump();
+          });
+        }
+      }
+
+      // A higher limit starts waiting jobs at once; a lower one closes idle workers.
+      effect(() => {
+        const limit = settings.parallelImports();
+        untracked(() => {
+          pool.trim(limit);
+          pump();
+        });
+      });
+
+      return {
+        /**
+         * Import replays. With no argument, opens the platform's file dialog; otherwise takes
+         * replay bytes (with an optional file name), `File`s, a `FileList`,
+         * `FileSystemFileHandle`s, or already-picked replays — singly or as arrays. Every
+         * file becomes a queued job at once; up to the "parallel imports" setting run at the
+         * same time, each in its own worker, oldest first. Resolves with the jobs once they
+         * have all finished, one way or the other (or were dismissed while queued).
+         */
+        async import(input?: ReplayInput, fileName?: string): Promise<ImportJob[]> {
+          const picked =
+            input === undefined ? await platform.pickReplays() : await toPicked(input, fileName);
+          const ids: string[] = [];
+          const settled: Promise<void>[] = [];
+          for (const file of picked) {
+            const id = `job-${nextId++}`;
+            ids.push(id);
+            const created: ImportJob = {
+              id,
+              fileName: file.name,
+              bytes: file.bytes.byteLength,
+              status: 'queued',
+              phase: null,
+              progress: 0,
+              replayId: null,
+              error: null,
+              analysers: [],
+              startedAt: null,
+              finishedAt: null,
+            };
+            patchState(store, addEntity(created));
+            settled.push(
+              new Promise((settle) =>
+                pending.set(id, { bytes: file.bytes, settle: () => settle() }),
+              ),
+            );
+          }
+          pump();
+          await Promise.all(settled);
+          return ids
+            .map((id) => store.entityMap()[id])
+            .filter((j): j is ImportJob => j !== undefined);
+        },
+
+        /** Drop one job from the list (a running job keeps running in its worker; a queued one never starts). */
+        dismiss(id: string): void {
+          const queued = pending.get(id);
+          pending.delete(id);
+          queued?.settle();
+          patchState(store, removeEntity(id));
+        },
+
+        /** Drop every finished job. */
+        clearFinished(): void {
+          patchState(
+            store,
+            removeEntities((j) => j.status === 'complete' || j.status === 'failed'),
+          );
+        },
+      };
+    },
+  ),
 );

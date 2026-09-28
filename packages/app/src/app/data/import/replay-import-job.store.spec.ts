@@ -3,7 +3,8 @@ import type { IngestJob, ReplayDbClient } from '@myrddraall/heroprotocol-db/clie
 import type { IngestStatus } from '@myrddraall/heroprotocol-db/ingest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { PLATFORM, type PickedReplay, type Platform } from '../../platform/platform';
-import { REPLAY_DB } from './provide-replay-db';
+import { SettingsStore } from '../settings/settings.store';
+import { REPLAY_DB, REPLAY_DB_FACTORY } from './provide-replay-db';
 import {
   IMPORT_JOBS_STORAGE_KEY,
   INTERRUPTED,
@@ -42,11 +43,15 @@ const status = (over: Partial<IngestStatus>): IngestStatus => ({
 describe('ReplayImportJobStore', () => {
   let scripted: Scripted[];
   let pick: PickedReplay[];
+  /** Extra clients the pool created for parallel imports, and how many were closed. */
+  let extra: { closed: boolean }[];
 
   beforeEach(() => {
     sessionStorage.clear();
+    localStorage.clear();
     scripted = [];
     pick = [];
+    extra = [];
     const db = {
       ingest: (
         _bytes: Uint8Array | ArrayBuffer,
@@ -82,7 +87,21 @@ describe('ReplayImportJobStore', () => {
           latest: undefined,
         } as unknown as IngestJob;
       },
+      ready: Promise.resolve({ analysers: [], tables: {} }),
+      close: async () => undefined,
     } as unknown as ReplayDbClient;
+    // Extra workers share the scripted ingest, so tests drive every slot the same way.
+    const factory = () => {
+      const client = { closed: false };
+      extra.push(client);
+      return {
+        ...db,
+        ingest: db.ingest,
+        close: async () => {
+          client.closed = true;
+        },
+      } as ReplayDbClient;
+    };
     const platform: Platform = {
       kind: 'web',
       version: 't',
@@ -92,9 +111,12 @@ describe('ReplayImportJobStore', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: REPLAY_DB, useValue: db },
+        { provide: REPLAY_DB_FACTORY, useValue: factory },
         { provide: PLATFORM, useValue: platform },
       ],
     });
+    // One at a time unless a test says otherwise.
+    TestBed.inject(SettingsStore).setParallelImports(1);
   });
 
   const tick = () => new Promise((r) => setTimeout(r, 0));
@@ -249,11 +271,13 @@ describe('ReplayImportJobStore', () => {
 
     // A fresh app in the same tab: same providers, new store instance.
     const providers = TestBed.inject(REPLAY_DB);
+    const factory = TestBed.inject(REPLAY_DB_FACTORY);
     const platform = TestBed.inject(PLATFORM);
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       providers: [
         { provide: REPLAY_DB, useValue: providers },
+        { provide: REPLAY_DB_FACTORY, useValue: factory },
         { provide: PLATFORM, useValue: platform },
       ],
     });
@@ -368,6 +392,64 @@ describe('ReplayImportJobStore', () => {
       ['two.StormReplay', 'complete'],
       ['one.StormReplay', 'complete'],
     ]);
+  });
+
+  it('runs up to the parallel limit at once, each on its own worker, and follows changes to it', async () => {
+    const settings = TestBed.inject(SettingsStore);
+    settings.setParallelImports(2);
+    pick = ['a', 'b', 'c', 'd'].map((n) => ({
+      name: `${n}.StormReplay`,
+      bytes: new Uint8Array(1),
+    }));
+    const store = TestBed.inject(ReplayImportJobStore);
+    const done = store.import();
+    await tick();
+    const status = (name: string) =>
+      store.jobs().find((j) => j.fileName === `${name}.StormReplay`)!.status;
+    const byName = (name: string) => scripted.find((s) => s.fileName === `${name}.StormReplay`)!;
+    // oldest first: a and b start, c and d wait
+    expect(['a', 'b', 'c', 'd'].map(status)).toEqual(['running', 'running', 'queued', 'queued']);
+    expect(extra).toHaveLength(1); // the main worker plus one more
+    expect(store.overall()).toMatchObject({ running: 2, queued: 2 });
+
+    // raising the limit starts the next job straight away, on a third worker
+    settings.setParallelImports(3);
+    await tick();
+    expect(status('c')).toBe('running');
+    expect(extra).toHaveLength(2);
+
+    // lowering it lets running jobs finish; nothing new starts until fewer are running
+    settings.setParallelImports(1);
+    await tick();
+    byName('a').complete('ra');
+    await tick();
+    await tick();
+    expect(status('d')).toBe('queued');
+    byName('b').complete('rb');
+    await tick();
+    await tick();
+    expect(status('d')).toBe('queued');
+    byName('c').complete('rc');
+    await tick();
+    await tick();
+    expect(status('d')).toBe('running');
+    expect(extra.every((c) => c.closed)).toBe(true); // workers beyond the limit are closed
+    byName('d').complete('rd');
+    const jobs = await done;
+    expect(jobs.map((j) => j.status)).toEqual(['complete', 'complete', 'complete', 'complete']);
+  });
+
+  it('settles import() when a queued job is dismissed', async () => {
+    pick = ['a', 'b'].map((n) => ({ name: `${n}.StormReplay`, bytes: new Uint8Array(1) }));
+    const store = TestBed.inject(ReplayImportJobStore);
+    const done = store.import();
+    await tick();
+    const b = store.jobs().find((j) => j.fileName === 'b.StormReplay')!;
+    store.dismiss(b.id);
+    scripted[0]!.complete('ra');
+    const jobs = await done;
+    expect(jobs.map((j) => j.fileName)).toEqual(['a.StormReplay']);
+    expect(scripted).toHaveLength(1); // b never reached a worker
   });
 
   it('maps every phase onto the 0..1 line in order', () => {

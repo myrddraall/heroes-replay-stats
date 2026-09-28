@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { describe, expect, it, beforeEach } from 'vitest';
 import { App } from './app';
 import { routes } from './app.routes';
-import { REPLAY_DB } from './data/import/provide-replay-db';
+import { REPLAY_DB, REPLAY_DB_FACTORY } from './data/import/provide-replay-db';
 import { PLATFORM, type Platform } from './platform/platform';
 import { ReplayImportJobStore } from './data/import/replay-import-job.store';
 import { NAV_ITEMS } from './shell/shell';
@@ -32,6 +32,12 @@ describe('App shell', () => {
       providers: [
         provideRouter(routes),
         { provide: PLATFORM, useValue: fakePlatform },
+        {
+          provide: REPLAY_DB_FACTORY,
+          useValue: () => {
+            throw new Error('not in this test');
+          },
+        },
         {
           provide: REPLAY_DB,
           useValue: {
