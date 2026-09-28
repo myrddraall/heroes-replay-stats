@@ -6,6 +6,7 @@ coverage/
 .env
 .env.local
 .wireit/
+tmp/
 
 # IDEs and editors
 /.idea

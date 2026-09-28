@@ -48,4 +48,37 @@ describe('SettingsStore', () => {
       defaultParallelImports(deviceCores()),
     );
   });
+
+  it('remembers the accounts marked as me, and drops the rest when unmarked', () => {
+    const store = TestBed.inject(SettingsStore);
+    expect(store.meToonHandles()).toEqual([]);
+
+    store.setMe('1-Hero-1-5750', true);
+    store.setMe('2-Hero-1-42', true);
+    store.setMe('1-Hero-1-5750', true); // already me: no duplicate
+    expect(store.meToonHandles()).toEqual(['2-Hero-1-42', '1-Hero-1-5750']);
+
+    store.setMe('2-Hero-1-42', false);
+    expect(store.meToonHandles()).toEqual(['1-Hero-1-5750']);
+
+    TestBed.resetTestingModule();
+    expect(TestBed.inject(SettingsStore).meToonHandles()).toEqual(['1-Hero-1-5750']);
+  });
+
+  it('keeps each setting when the other is changed, and ignores malformed handles', () => {
+    const store = TestBed.inject(SettingsStore);
+    store.setParallelImports(5);
+    store.setMe('1-Hero-1-5750', true);
+    expect(JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY)!)).toEqual({
+      parallelImports: 5,
+      meToonHandles: ['1-Hero-1-5750'],
+    });
+
+    localStorage.setItem(
+      SETTINGS_STORAGE_KEY,
+      JSON.stringify({ meToonHandles: ['1-Hero-1-5750', 7, null, '1-Hero-1-5750'] }),
+    );
+    TestBed.resetTestingModule();
+    expect(TestBed.inject(SettingsStore).meToonHandles()).toEqual(['1-Hero-1-5750']);
+  });
 });

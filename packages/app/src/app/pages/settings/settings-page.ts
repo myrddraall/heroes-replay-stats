@@ -1,6 +1,5 @@
 import { Component, inject } from '@angular/core';
 import { MatSliderModule } from '@angular/material/slider';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import {
   defaultParallelImports,
   deviceCores,
@@ -12,7 +11,7 @@ import { injectPlatform } from '../../platform/platform';
 
 @Component({
   selector: 'hrs-settings-page',
-  imports: [MatSliderModule, MatSlideToggleModule],
+  imports: [MatSliderModule],
   template: `
     <h1>Settings</h1>
     <section class="card">
@@ -33,15 +32,6 @@ import { injectPlatform } from '../../platform/platform';
         How many replays are imported at the same time, each in its own worker. More is faster on a
         machine with many cores but uses more memory. The default for this device is
         {{ deviceDefault }}{{ cores ? ', a quarter of its ' + cores + ' cores' : '' }}.
-      </p>
-    </section>
-    <section class="card">
-      <h2>Privacy</h2>
-      <mat-slide-toggle [checked]="false" disabled
-        >Keep the original replay files on this device</mat-slide-toggle
-      >
-      <p class="hint">
-        Off by default: only the extracted statistics are stored. Wired up with the import step.
       </p>
     </section>
     <section class="card">

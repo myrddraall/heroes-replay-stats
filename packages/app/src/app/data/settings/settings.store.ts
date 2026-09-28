@@ -9,6 +9,12 @@ export const FALLBACK_PARALLEL_IMPORTS = 2;
 export interface Settings {
   /** How many replays are imported at the same time, each in its own worker. */
   readonly parallelImports: number;
+  /**
+   * The toon handles (`1-Hero-1-5750`) of the accounts that are the user; any number,
+   * since one person can have an account per region. Empty means "the recorder of each
+   * replay".
+   */
+  readonly meToonHandles: readonly string[];
 }
 
 /** What the user chose; an absent value means "this device's default". */
@@ -36,13 +42,20 @@ export function deviceCores(): number | undefined {
   return globalThis.navigator?.hardwareConcurrency;
 }
 
+function handles(v: unknown): readonly string[] {
+  return Array.isArray(v) ? [...new Set(v.filter((h): h is string => typeof h === 'string'))] : [];
+}
+
 function load(): SavedSettings {
   try {
     const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
     const saved = (raw === null ? {} : JSON.parse(raw)) as Partial<Record<keyof Settings, unknown>>;
-    return saved.parallelImports === undefined
-      ? {}
-      : { parallelImports: clampParallel(saved.parallelImports) };
+    return {
+      ...(saved.parallelImports === undefined
+        ? {}
+        : { parallelImports: clampParallel(saved.parallelImports) }),
+      ...(saved.meToonHandles === undefined ? {} : { meToonHandles: handles(saved.meToonHandles) }),
+    };
   } catch {
     return {};
   }
@@ -62,13 +75,20 @@ function save(settings: SavedSettings): void {
  */
 export const SettingsStore = signalStore(
   { providedIn: 'root' },
-  withState<Settings>({ parallelImports: FALLBACK_PARALLEL_IMPORTS }),
+  withState<Settings>({ parallelImports: FALLBACK_PARALLEL_IMPORTS, meToonHandles: [] }),
   withMethods((store) => ({
     /** Rounded, kept within 1–16, and remembered on this device. */
     setParallelImports(n: number): void {
       const parallelImports = clampParallel(n);
       patchState(store, { parallelImports });
       save({ ...load(), parallelImports });
+    },
+    /** Mark or unmark an account (by toon handle) as the user, and remember it on this device. */
+    setMe(toonHandle: string, isMe: boolean): void {
+      const others = store.meToonHandles().filter((h) => h !== toonHandle);
+      const meToonHandles = isMe ? [...others, toonHandle] : others;
+      patchState(store, { meToonHandles });
+      save({ ...load(), meToonHandles });
     },
   })),
   withHooks({

@@ -1,8 +1,9 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { ReplayImportJobStore } from '../../data/import/replay-import-job.store';
 import { PlayerService, type PlayerSummary } from '../../data/players/player.service';
+import { SettingsStore } from '../../data/settings/settings.store';
 import { PlayersPage } from './players-page';
 
 const ann: PlayerSummary = {
@@ -38,6 +39,8 @@ async function render(players: PlayerSummary[]) {
 }
 
 describe('PlayersPage', () => {
+  beforeEach(() => localStorage.clear());
+
   it('lists each player with region, games, record, last played and top heroes', async () => {
     const el = await render([ann]);
     const text = (sel: string) => el.querySelector(sel)?.textContent?.replace(/\s+/g, ' ').trim();
@@ -57,5 +60,19 @@ describe('PlayersPage', () => {
     const el = await render([]);
     expect(el.querySelector('table')).toBeNull();
     expect(el.querySelector('hrs-empty-state h2')?.textContent).toBe('Nobody here yet');
+  });
+
+  it('marks and unmarks a player as me', async () => {
+    const el = await render([ann, { ...ann, id: 'name:Bot', name: 'Bot' }]);
+    const settings = TestBed.inject(SettingsStore);
+    const boxes = el.querySelectorAll<HTMLInputElement>('.me input[type="checkbox"]');
+    expect(boxes).toHaveLength(1); // no toon handle, no checkbox
+    expect(boxes[0]!.getAttribute('aria-label')).toBe('Ann is me');
+    expect(boxes[0]!.checked).toBe(false);
+
+    boxes[0]!.click();
+    expect(settings.meToonHandles()).toEqual(['2-Hero-1-1']);
+    boxes[0]!.click();
+    expect(settings.meToonHandles()).toEqual([]);
   });
 });
