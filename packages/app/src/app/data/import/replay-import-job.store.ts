@@ -172,16 +172,20 @@ export const ReplayImportJobStore = signalStore(
   }),
   withComputed(({ entities }) => ({
     /**
-     * Newest first (by creation order, via each job's id sequence); jobs still in
-     * progress (queued, running or ready) are always shown above finished ones
-     * (complete or failed), each group newest first.
+     * In groups: jobs in progress (running, or ready with background analysers still
+     * going), then queued ones, then finished ones (complete or failed). Newest first
+     * within each group, by creation order via each job's id sequence.
      */
     jobs: computed(() => {
-      const inProgress = (j: ImportJob) =>
-        j.status === 'queued' || j.status === 'running' || j.status === 'ready';
+      const GROUP: Readonly<Record<ImportJobStatus, number>> = {
+        running: 0,
+        ready: 0,
+        queued: 1,
+        complete: 2,
+        failed: 2,
+      };
       return [...entities()].sort((a, b) => {
-        const rank = (j: ImportJob) => (inProgress(j) ? 0 : 1);
-        const byRank = rank(a) - rank(b);
+        const byRank = GROUP[a.status] - GROUP[b.status];
         return byRank !== 0 ? byRank : sequenceOf(b) - sequenceOf(a);
       });
     }),

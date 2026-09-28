@@ -110,8 +110,8 @@ describe('ReplayImportJobStore', () => {
     await tick();
     expect(byName('a.StormReplay')).toMatchObject({ status: 'running', bytes: 10 });
     expect(byName('b.StormReplay')).toMatchObject({ status: 'queued', bytes: 20 });
-    // Both jobs are in progress; b is newer (queued after a), so it sorts on top.
-    expect(store.jobs().map((j) => j.fileName)).toEqual(['b.StormReplay', 'a.StormReplay']);
+    // a is running, so it sorts above b, which is only queued.
+    expect(store.jobs().map((j) => j.fileName)).toEqual(['a.StormReplay', 'b.StormReplay']);
     expect(scripted).toHaveLength(1); // b has not been handed to the worker yet
     expect(store.overall()).toMatchObject({
       total: 2,
@@ -325,6 +325,48 @@ describe('ReplayImportJobStore', () => {
       'third.StormReplay',
       'second.StormReplay',
       'first.StormReplay',
+    ]);
+  });
+
+  it('orders running and ready jobs, then queued ones, then finished ones', async () => {
+    pick = [
+      { name: 'one.StormReplay', bytes: new Uint8Array(1) },
+      { name: 'two.StormReplay', bytes: new Uint8Array(1) },
+      { name: 'three.StormReplay', bytes: new Uint8Array(1) },
+    ];
+    const store = TestBed.inject(ReplayImportJobStore);
+    const done = store.import();
+    await tick();
+    const names = () => store.jobs().map((j) => [j.fileName, j.status]);
+    // one runs; the queued ones follow, newest first
+    expect(names()).toEqual([
+      ['one.StormReplay', 'running'],
+      ['three.StormReplay', 'queued'],
+      ['two.StormReplay', 'queued'],
+    ]);
+
+    scripted[0]!.ready('r1'); // ready still counts as in progress
+    await tick();
+    expect(names()[0]).toEqual(['one.StormReplay', 'ready']);
+
+    scripted[0]!.complete('r1');
+    await tick();
+    await tick();
+    expect(names()).toEqual([
+      ['two.StormReplay', 'running'],
+      ['three.StormReplay', 'queued'],
+      ['one.StormReplay', 'complete'],
+    ]);
+
+    scripted[1]!.complete('r2');
+    await tick();
+    await tick();
+    scripted[2]!.fail('bad');
+    await done;
+    expect(names()).toEqual([
+      ['three.StormReplay', 'failed'],
+      ['two.StormReplay', 'complete'],
+      ['one.StormReplay', 'complete'],
     ]);
   });
 
