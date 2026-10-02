@@ -1,0 +1,82 @@
+<header class="head">
+  <h1>Players</h1>
+  @if (players.players().length > 0) {
+    <span class="count"
+      >{{ players.players().length }}
+      {{ players.players().length === 1 ? 'player' : 'players' }}</span
+    >
+  }
+</header>
+@if (players.error(); as error) {
+  <p class="error" role="alert">The replay database could not be read: {{ message(error) }}</p>
+} @else if (!players.loaded()) {
+  <mat-progress-bar mode="indeterminate" aria-label="Loading players" />
+} @else if (players.players().length === 0) {
+  <hrs-empty-state icon="groups" title="Nobody here yet">
+    Players appear once replays are imported.
+    <br /><button mat-stroked-button class="cta" (click)="imports.import()">Import replays</button>
+  </hrs-empty-state>
+} @else {
+  <table class="players">
+    <thead>
+      <tr>
+        <th scope="col">Player</th>
+        <th scope="col" class="num">Games</th>
+        <th scope="col">Record</th>
+        <th scope="col">Last played</th>
+        <th scope="col">Heroes</th>
+        <th scope="col" class="me">Me</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (p of players.players(); track p.id) {
+        <tr>
+          <th scope="row" class="player">
+            <span class="player__name">{{ p.name }}</span>
+            @if (region(p); as r) {
+              <span class="player__region">{{ r }}</span>
+            }
+          </th>
+          <td class="num" data-label="Games">{{ p.games }}</td>
+          <td data-label="Record">
+            <span class="record">
+              <span class="record__wl">{{ p.wins }}–{{ p.losses }}</span>
+              @if (p.winRate !== null) {
+                <span class="record__rate" [class.record__rate--good]="p.winRate >= 0.5">{{
+                  p.winRate | percent: '1.0-0'
+                }}</span>
+              }
+            </span>
+          </td>
+          <td data-label="Last played">
+            <time [attr.datetime]="p.lastPlayedAt">{{ p.lastPlayedAt | date: 'MMM d, y' }}</time>
+          </td>
+          <td data-label="Heroes" class="heroes-cell">
+            <div class="heroes">
+              @for (h of topHeroes(p); track h.hero) {
+                <span class="hero"
+                  >{{ h.hero }}
+                  @if (h.games > 1) {
+                    <span class="hero__games">×{{ h.games }}</span>
+                  }
+                </span>
+              }
+              @if (moreHeroes(p) > 0) {
+                <span class="hero hero--more">+{{ moreHeroes(p) }} more</span>
+              }
+            </div>
+          </td>
+          <td data-label="Me" class="me">
+            @if (hasHandle(p)) {
+              <mat-checkbox
+                [checked]="isMe(p)"
+                (change)="settings.setMe(p.id, $event.checked)"
+                [aria-label]="p.name + ' is me'"
+              />
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+}

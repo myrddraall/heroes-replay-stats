@@ -1,23 +1,22 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { RouterLink } from '@angular/router';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { ReplayImportJobStore } from '../../data/import/replay-import-job.store';
+import { ReplayService } from '../../data/replays/replay.service';
 import { EmptyState } from '../empty-state';
+import { ReplayListItem } from './replay-list-item';
 
 @Component({
   selector: 'hrs-replays-page',
-  imports: [EmptyState, MatButtonModule, RouterLink],
-  template: `
-    <h1>Replays</h1>
-    <hrs-empty-state icon="history" title="No replays yet">
-      Import a few .StormReplay files and they will be parsed, stored locally and listed here.
-      <br /><a mat-stroked-button routerLink="/import" class="cta">Import replays</a>
-    </hrs-empty-state>
-  `,
-  styles: `
-    .cta {
-      margin-top: 16px;
-    }
-  `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [EmptyState, MatButtonModule, MatProgressBarModule, ReplayListItem],
+  templateUrl: './replays-page.html',
+  styleUrl: './replays-page.scss',
 })
-export class ReplaysPage {}
+export class ReplaysPage {
+  protected readonly imports = inject(ReplayImportJobStore);
+  protected readonly replays = inject(ReplayService);
+
+  protected message(error: unknown): string {
+    return error instanceof Error ? error.message : String(error);
+  }
+}

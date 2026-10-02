@@ -1,0 +1,141 @@
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.count {
+  color: var(--mat-sys-on-surface-variant);
+}
+.cta {
+  margin-top: 16px;
+}
+.error {
+  color: var(--mat-sys-error);
+}
+.players {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--hrs-border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--hrs-surface);
+}
+th,
+td {
+  padding: 10px 16px;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--hrs-border);
+}
+tbody tr:last-child > * {
+  border-bottom: none;
+}
+thead th {
+  font: var(--mat-sys-label-medium);
+  color: var(--mat-sys-on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: var(--hrs-surface-raised);
+}
+.me {
+  width: 1%;
+  text-align: center;
+}
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.player {
+  font-weight: normal;
+}
+.player__name {
+  color: #fff;
+  font: var(--mat-sys-title-small);
+}
+.player__region {
+  margin-left: 8px;
+  font: var(--mat-sys-label-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+.record {
+  display: inline-flex;
+  gap: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.record__rate {
+  color: var(--mat-sys-on-surface-variant);
+}
+.record__rate--good {
+  color: var(--hrs-bronze);
+}
+time {
+  color: var(--mat-sys-on-surface-variant);
+}
+.heroes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.hero {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(0, 117, 255, 0.16);
+  font: var(--mat-sys-body-small);
+  color: #fff;
+  white-space: nowrap;
+}
+.hero__games {
+  color: var(--hrs-blue-soft);
+}
+.hero--more {
+  background: transparent;
+  color: var(--mat-sys-on-surface-variant);
+}
+@media (max-width: 700px) {
+  .players,
+  .players tbody,
+  .players tr,
+  .players th,
+  .players td {
+    display: block;
+  }
+  .players thead {
+    display: none;
+  }
+  .players {
+    border: none;
+    background: none;
+  }
+  .players tbody {
+    display: grid;
+    gap: 12px;
+  }
+  .players tr {
+    padding: 12px 14px;
+    border: 1px solid var(--hrs-border);
+    border-radius: 12px;
+    background: var(--hrs-surface);
+  }
+  .players th,
+  .players td {
+    padding: 2px 0;
+    border: none;
+    text-align: left;
+  }
+  .players td::before {
+    content: attr(data-label);
+    display: inline-block;
+    min-width: 7rem;
+    font: var(--mat-sys-label-small);
+    color: var(--mat-sys-on-surface-variant);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .players .heroes-cell {
+    padding-top: 6px;
+  }
+  .players .heroes-cell::before {
+    display: none;
+  }
+}

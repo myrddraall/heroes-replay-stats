@@ -1,0 +1,98 @@
+.lead {
+  color: var(--mat-sys-on-surface-variant);
+  max-width: 60ch;
+}
+.actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.overall {
+  margin: 20px 0 12px;
+}
+.overall__line {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  color: var(--mat-sys-on-surface-variant);
+}
+.jobs {
+  display: block;
+}
+mat-panel-title {
+  min-width: 0;
+  flex-grow: 3;
+  flex-basis: 0;
+}
+.job__icon {
+  margin-right: 8px;
+  flex: none;
+}
+.job__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.job--complete .job__icon {
+  color: var(--hrs-blue-soft);
+}
+.job--failed .job__icon,
+.job--failed .job__phase {
+  color: var(--mat-sys-error);
+}
+mat-panel-description {
+  flex-grow: 0;
+  flex-shrink: 0;
+  flex-basis: auto;
+  justify-content: flex-end;
+  gap: 12px;
+}
+.job__phase--waiting {
+  font-style: italic;
+}
+.job__phase {
+  max-width: 40vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.analysers {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.analyser {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+  font: var(--mat-sys-body-small);
+}
+.analyser__id {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.analyser__mode,
+.analyser__state {
+  color: var(--mat-sys-on-surface-variant);
+}
+.analyser--done .analyser__icon,
+.analyser--cached .analyser__icon {
+  color: var(--hrs-blue-soft);
+}
+.analyser--failed .analyser__icon,
+.analyser--failed .analyser__state {
+  color: var(--mat-sys-error);
+}
+.job__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-small);
+}
