@@ -15,6 +15,10 @@ The replay parsing, the model and the generic analysers come from
 [myrddraall/heroprotocol](https://github.com/myrddraall/heroprotocol). The app's ingest
 worker runs those next to its own analysers from `packages/analysers`.
 
+The tool that renders the battleground maps (transparent map images, sky layers, a parallax
+viewer), which began here as `tools/map-capture`, is now
+[myrddraall/heroes-capture](https://github.com/myrddraall/heroes-capture).
+
 ## Working on it
 
 ```bash
