@@ -1,8 +1,7 @@
 import { NgOptimizedImage } from '@angular/common';
-import { Component, computed, inject, input } from '@angular/core';
-import { LatestHeroData } from '../data/heroes/hero-data';
+import { Component, input } from '@angular/core';
 
-/** A hero's minimap icon, by the hero id a replay records (`Barbarian`). */
+/** A hero's minimap icon (`src`), named for the hero; nothing without a picture. */
 @Component({
   selector: 'hrs-hero-minimap-icon',
   imports: [NgOptimizedImage],
@@ -22,15 +21,6 @@ import { LatestHeroData } from '../data/heroes/hero-data';
   `,
 })
 export class HeroMinimapIcon {
-  readonly heroId = input.required<string>();
-  private readonly heroData = inject(LatestHeroData);
-  private readonly hero = computed(() => {
-    const data = this.heroData.data;
-    return data.hasValue() ? data.value().hero(this.heroId()) : undefined;
-  });
-  protected readonly src = computed(() => {
-    const hero = this.hero();
-    return hero ? this.heroData.images.portrait(hero, 'minimap') : null;
-  });
-  protected readonly name = computed(() => this.hero()?.name ?? this.heroId());
+  readonly src = input<string | null>(null);
+  readonly name = input.required<string>();
 }

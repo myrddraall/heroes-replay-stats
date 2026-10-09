@@ -25,10 +25,12 @@
     "@angular/router": "^22.1.0",
     "@myrddraall/hero-data": "^0.4.0",
     "@myrddraall/heroes-replay-stats-analysers": "workspace:*",
+    "@myrddraall/heroes-replay-stats-map": "workspace:*",
     "@myrddraall/heroprotocol-analysis": "^0.4.0",
     "@myrddraall/heroprotocol-db": "^0.4.0",
     "@ngrx/signals": "^22.0.1",
     "dexie": "^4.4.6",
+    "pmtiles": "^4.5.0",
     "rxjs": "^7.8.0",
     "tslib": "^2.3.0"
   },

@@ -1,0 +1,93 @@
+<h1>Import replays</h1>
+<p class="lead">
+  Replays are parsed in the background and kept on this device only.
+  @if (desktop()) {
+    The desktop app can watch your Heroes of the Storm replay folder.
+  }
+</p>
+<div class="actions">
+  <button mat-flat-button class="hrs-cta" (click)="importRequested.emit()">
+    <mat-icon class="material-symbols-outlined">upload_file</mat-icon>
+    Choose .StormReplay files
+  </button>
+  @if (overall().done + overall().failed > 0) {
+    <button mat-button (click)="clearFinished.emit()">Clear finished</button>
+  }
+</div>
+
+@if (overall().total > 0) {
+  <section class="overall" aria-live="polite">
+    <div class="overall__line">
+      <span>
+        @if (overall().active) {
+          Importing
+          {{ overall().done + overall().failed + overall().running }}
+          of
+          {{ overall().total }}
+        } @else {
+          {{ overall().done }} imported
+          @if (overall().failed > 0) {
+            · {{ overall().failed }} failed
+          }
+        }
+      </span>
+      <span>{{ overall().progress | percent: '1.0-0' }}</span>
+    </div>
+    <mat-progress-bar
+      [mode]="overall().active ? 'buffer' : 'determinate'"
+      [value]="overall().progress * 100"
+    />
+  </section>
+
+  <mat-accordion multi class="jobs">
+    @for (job of jobs(); track job.id) {
+      <mat-expansion-panel [class]="'job job--' + job.status">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            <mat-icon class="material-symbols-outlined job__icon">{{ icon(job.status) }}</mat-icon>
+            <span class="job__name" [matTooltip]="job.fileName">{{
+              displayName(job.fileName)
+            }}</span>
+          </mat-panel-title>
+          <mat-panel-description>
+            <span class="job__phase" [class.job__phase--waiting]="job.store?.state === 'waiting'">{{
+              job.error ?? phaseLabel(job)
+            }}</span>
+            <span>{{ job.progress | percent: '1.0-0' }}</span>
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+        <mat-progress-bar mode="determinate" [value]="job.progress * 100" />
+        @if (job.analysers.length > 0) {
+          <ul class="analysers">
+            @for (a of job.analysers; track a.id) {
+              <li [class]="'analyser analyser--' + a.state">
+                <mat-icon class="material-symbols-outlined analyser__icon" inline>{{
+                  analyserIcon(a.state)
+                }}</mat-icon>
+                <span class="analyser__id">{{ a.id }}</span>
+                <span class="analyser__mode">{{ a.mode }}</span>
+                <span class="analyser__state">
+                  {{ a.error ?? a.state }}
+                  @if (a.progress !== null && a.state === 'running') {
+                    · {{ a.progress | percent: '1.0-0' }}
+                  }
+                  @if (a.ms !== null && a.state === 'done') {
+                    · {{ a.ms | number: '1.0-0' }} ms
+                  }
+                </span>
+              </li>
+            }
+          </ul>
+        }
+        <div class="job__footer">
+          <span
+            >{{ job.bytes / 1024 | number: '1.0-0' }} KB{{
+              job.replayId ? ' · ' + job.replayId.slice(0, 12) : ''
+            }}</span
+          >
+          <button mat-button (click)="dismiss.emit(job.id)">Dismiss</button>
+        </div>
+      </mat-expansion-panel>
+    }
+  </mat-accordion>
+}

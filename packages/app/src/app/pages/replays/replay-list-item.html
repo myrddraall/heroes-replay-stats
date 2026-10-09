@@ -40,7 +40,11 @@
         <ul class="team__players">
           @for (p of team.players; track p.slot) {
             <li class="player">
-              <hrs-hero-minimap-icon class="player__icon" [heroId]="p.heroId" />
+              <hrs-hero-minimap-icon
+                class="player__icon"
+                [src]="icons()[p.slot]?.src ?? null"
+                [name]="icons()[p.slot]?.name ?? p.hero"
+              />
               <span class="player__hero">{{ p.hero }}</span>
               <span class="player__name">{{ p.name }}</span>
             </li>

@@ -10,6 +10,7 @@ login and no server.
 | [`@myrddraall/heroes-replay-stats`](./packages/app)                 | the Angular 22 + Material app, themed after the game                  |
 | [`@myrddraall/heroes-replay-stats-desktop`](./packages/desktop)     | the Electron shell: a window, and a preload bridge for the filesystem |
 | [`@myrddraall/heroes-replay-stats-analysers`](./packages/analysers) | the app's own replay analysers: timeline and points of interest       |
+| [`@myrddraall/heroes-replay-stats-map`](./packages/map)             | the map viewer: a map pack drawn by a viewer and its layer directives |
 
 The replay parsing, the model and the generic analysers come from
 [myrddraall/heroprotocol](https://github.com/myrddraall/heroprotocol). The app's ingest

@@ -1,0 +1,11 @@
+<hrs-map-viewer
+  class="heroes-map__viewer"
+  [map]="store.map()"
+  [loading]="store.loading()"
+  [error]="store.error()"
+  [arena]="store.arena()"
+  [hiddenLayers]="store.hiddenLayers()"
+  [elementStates]="store.elementStates()"
+  (elementClick)="store.cycleElement($event)"
+  (minimapFaded)="store.minimapFaded()"
+/>

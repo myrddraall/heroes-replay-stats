@@ -28,6 +28,7 @@ function hasFiles(event: DragEvent): boolean {
 export const NAV_ITEMS: readonly NavItem[] = [
   { path: '/replays', label: 'Replays', icon: 'history' },
   { path: '/players', label: 'Players', icon: 'groups' },
+  { path: '/maps', label: 'Maps', icon: 'map' },
   { path: '/import', label: 'Import', icon: 'upload_file' },
   { path: '/settings', label: 'Settings', icon: 'settings' },
 ];

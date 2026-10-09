@@ -1,13 +1,10 @@
 import { DatePipe, NgOptimizedImage } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import type { GameMode, Team } from '@myrddraall/heroprotocol-db';
-import { LatestHeroData } from '../../data/heroes/hero-data';
-import type { ReplaySummary } from '../../data/replays/replay.service';
 import { HeroMinimapIcon } from '../../heroes/hero-minimap-icon';
-import { SettingsStore } from '../../data/settings/settings.store';
-import { resolveYou } from '../../data/you/resolve-you';
 import { teamColor, type TeamColor, TeamPerspective } from '../../team/team-color';
 import { TeamTheme } from '../../team/team-theme';
+import type { ReplayCard } from './replay-card';
 
 const MODE_LABELS: Readonly<Record<GameMode, string>> = {
   practice: 'Practice',
@@ -35,7 +32,10 @@ export function formatDuration(seconds: number): string {
   return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${m}:${ss}`;
 }
 
-/** One replay in the list: where and when, and who played what on each side. */
+/**
+ * One replay in the list (presentational): where and when, and who played what on each side,
+ * coloured from your point of view.
+ */
 @Component({
   selector: 'hrs-replay-list-item',
   imports: [DatePipe, HeroMinimapIcon, NgOptimizedImage, TeamTheme],
@@ -44,12 +44,10 @@ export function formatDuration(seconds: number): string {
   styleUrl: './replay-list-item.scss',
 })
 export class ReplayListItem {
-  readonly replay = input.required<ReplaySummary>();
-  private readonly settings = inject(SettingsStore);
+  readonly card = input.required<ReplayCard>();
   private readonly perspective = inject(TeamPerspective);
-  private readonly heroData = inject(LatestHeroData);
-  private readonly me = computed(() => new Set(this.settings.meToonHandles()));
-  private readonly you = computed(() => resolveYou(this.replay(), this.me()));
+  protected readonly replay = computed(() => this.card().replay);
+  private readonly you = computed(() => this.card().you);
 
   constructor() {
     this.perspective.follow(computed(() => this.you().team));
@@ -79,10 +77,7 @@ export class ReplayListItem {
       .sort((a, b) => (a.color === b.color ? 0 : a.color === 'blue' ? -1 : 1)); // blue on top
   });
   /** The map's replay preview image, behind the card. */
-  protected readonly preview = computed(() => {
-    const data = this.heroData.data;
-    const map = data.hasValue() ? data.value().map(this.replay().map) : undefined;
-    return map ? this.heroData.images.map(map, 'replayPreview') : null;
-  });
+  protected readonly preview = computed(() => this.card().preview);
+  protected readonly icons = computed(() => this.card().icons);
   protected readonly label = computed(() => `${this.replay().map}, ${this.mode()}`);
 }

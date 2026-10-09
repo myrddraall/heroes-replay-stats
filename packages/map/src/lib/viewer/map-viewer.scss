@@ -1,0 +1,40 @@
+// The layers stack inside the viewer, each one filling it (they position themselves).
+:host {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  background: #202024;
+  isolation: isolate;
+}
+
+:host(:focus-visible) {
+  outline: 2px solid #8fb4ff;
+  outline-offset: -2px;
+}
+
+:host(.map-viewer--over-element) {
+  cursor: pointer;
+}
+
+:host(.map-viewer--dragging) {
+  cursor: grabbing;
+}
+
+.map-viewer__status {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 10000;
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(16, 16, 20, 0.78);
+  color: #e8e8ec;
+  font:
+    14px/1.4 system-ui,
+    sans-serif;
+  pointer-events: none;
+}

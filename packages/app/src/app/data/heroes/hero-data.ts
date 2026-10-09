@@ -1,10 +1,11 @@
-import { inject, InjectionToken, type Provider, resource, Service } from '@angular/core';
+import { computed, inject, InjectionToken, type Provider, resource, Service } from '@angular/core';
 import {
   heroesImages,
   heroesToolChestProvider,
   type HeroDataProvider,
   type TextCache,
 } from '@myrddraall/hero-data';
+import { heroLookup } from './hero-lookup';
 
 /** Hero, talent and award data, loaded from HeroesToolChest at runtime. */
 export const HERO_DATA = new InjectionToken<HeroDataProvider>('hrs.hero-data');
@@ -44,4 +45,8 @@ export class LatestHeroData {
   private readonly provider = inject(HERO_DATA);
   readonly data = resource({ loader: () => this.provider.latest() });
   readonly images = heroesImages();
+  /** Heroes' icons and maps' previews from this data; knows nothing until it has loaded. */
+  readonly lookup = computed(() =>
+    heroLookup(this.data.hasValue() ? this.data.value() : undefined, this.images),
+  );
 }

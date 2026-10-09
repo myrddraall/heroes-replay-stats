@@ -1,0 +1,45 @@
+@for (layer of store.stack(); track layer.id) {
+  @switch (layer.kind) {
+    @case ('fixed') {
+      <div
+        hrsMapFixedLayer
+        [order]="layer.order"
+        [rate]="layer.rate"
+        [visible]="!hidden().has(layer.id)"
+      ></div>
+    }
+    @case ('tiles') {
+      <canvas
+        [hrsMapTileLayer]="layer.id"
+        [order]="layer.order"
+        [rate]="layer.rate"
+        [visible]="!hidden().has(layer.id)"
+      ></canvas>
+    }
+    @case ('elements') {
+      <canvas
+        hrsMapElementsLayer
+        [order]="layer.order"
+        [rate]="layer.rate"
+        [visible]="!hidden().has(layer.id)"
+        [states]="elementStates()"
+        (elementClick)="elementClick.emit($event)"
+      ></canvas>
+    }
+    @case ('minimap') {
+      <hrs-map-minimap-layer
+        [order]="layer.order"
+        [rate]="layer.rate"
+        [visible]="!hidden().has(layer.id)"
+        [overTerrain]="!hidden().has('map')"
+        (faded)="minimapFaded.emit()"
+      />
+    }
+  }
+}
+<ng-content />
+@if (error(); as error) {
+  <p class="map-viewer__status" role="alert">The map couldn't be shown: {{ error }}</p>
+} @else if (loading()) {
+  <p class="map-viewer__status" role="status">Loading the map…</p>
+}

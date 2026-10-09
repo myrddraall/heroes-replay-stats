@@ -1,0 +1,15 @@
+// The map fills the page below the toolbar.
+.title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.map {
+  height: calc(100dvh - 64px - 48px);
+  min-height: 360px;
+  border: 1px solid var(--hrs-border);
+  border-radius: 12px;
+}

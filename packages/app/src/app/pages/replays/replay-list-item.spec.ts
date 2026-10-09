@@ -1,9 +1,10 @@
 import { TestBed } from '@angular/core/testing';
-import { beforeEach, describe, expect, it } from 'vitest';
-import { HERO_DATA } from '../../data/heroes/hero-data';
+import { heroesImages } from '@myrddraall/hero-data';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { fakeHeroData } from '../../data/heroes/hero-data.fake';
+import { heroLookup, type HeroLookup } from '../../data/heroes/hero-lookup';
 import type { ReplaySummary } from '../../data/replays/replay.service';
-import { SettingsStore } from '../../data/settings/settings.store';
+import { toReplayCard } from './replay-card';
 import { formatDuration, ReplayListItem } from './replay-list-item';
 
 const replay: ReplaySummary = {
@@ -41,9 +42,19 @@ const replay: ReplaySummary = {
   recorderToonHandle: '1-Hero-1-5',
 };
 
+let heroes: HeroLookup;
+
+/** The item showing a replay's card, for the accounts marked as me. */
+async function render(r: ReplaySummary, me: readonly string[] = []) {
+  const fixture = TestBed.createComponent(ReplayListItem);
+  fixture.componentRef.setInput('card', toReplayCard(r, new Set(me), heroes));
+  await fixture.whenStable();
+  return fixture;
+}
+
 describe('ReplayListItem', () => {
-  beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [{ provide: HERO_DATA, useValue: fakeHeroData }] });
+  beforeAll(async () => {
+    heroes = heroLookup(await fakeHeroData.latest(), heroesImages());
   });
 
   it('formats durations as m:ss, and h:mm:ss past an hour', () => {
@@ -53,9 +64,7 @@ describe('ReplayListItem', () => {
   });
 
   it('shows map, mode, duration, build and each team with its result and heroes', async () => {
-    const fixture = TestBed.createComponent(ReplayListItem);
-    fixture.componentRef.setInput('replay', replay);
-    await fixture.whenStable();
+    const fixture = await render(replay);
     const el: HTMLElement = fixture.nativeElement;
     const text = (sel: string) => el.querySelector(sel)?.textContent?.replace(/\s+/g, ' ').trim();
 
@@ -102,43 +111,32 @@ describe('ReplayListItem', () => {
   });
 
   it('has no preview for a map the data does not know', async () => {
-    const fixture = TestBed.createComponent(ReplayListItem);
-    fixture.componentRef.setInput('replay', { ...replay, map: 'Nowhere' });
-    await fixture.whenStable();
+    const fixture = await render({ ...replay, map: 'Nowhere' });
     expect(fixture.nativeElement.querySelector('.replay__preview')).toBeNull();
   });
 
   it("colours the teams from the recorder's point of view, or yours once marked", async () => {
-    localStorage.clear();
-    const fixture = TestBed.createComponent(ReplayListItem);
-    fixture.componentRef.setInput('replay', replay);
-    await fixture.whenStable();
-    const el: HTMLElement = fixture.nativeElement;
-    const rows = () =>
+    const rows = (el: HTMLElement) =>
       [...el.querySelectorAll('.team')].map((t) => [
         t.querySelector('.team__name')!.firstChild!.textContent!.trim(),
         t.classList.contains('hrs-team-blue') ? 'blue' : 'red',
+        t.querySelector('.player__name')!.textContent!.trim(),
       ]);
     // Bob recorded it, so his team (1) is blue, and blue is on top
-    expect(rows()).toEqual([
-      ['Blue team', 'blue'],
-      ['Red team', 'red'],
+    expect(rows((await render(replay)).nativeElement)).toEqual([
+      ['Blue team', 'blue', 'Bob'],
+      ['Red team', 'red', 'Alice'],
     ]);
-
-    TestBed.inject(SettingsStore).setMe('1-Hero-1-1', true);
-    await fixture.whenStable();
-    expect(rows()).toEqual([
-      ['Blue team', 'blue'],
-      ['Red team', 'red'],
+    // Alice marked as me: her team is blue now
+    expect(rows((await render(replay, ['1-Hero-1-1'])).nativeElement)).toEqual([
+      ['Blue team', 'blue', 'Alice'],
+      ['Red team', 'red', 'Bob'],
     ]);
-    localStorage.clear();
   });
 
   it('lists you first on your team, then the rest in slot order', async () => {
-    localStorage.clear();
     const [alice, bob] = replay.players;
-    const fixture = TestBed.createComponent(ReplayListItem);
-    fixture.componentRef.setInput('replay', {
+    const fixture = await render({
       ...replay,
       players: [
         alice!,
@@ -148,7 +146,6 @@ describe('ReplayListItem', () => {
       ],
       recorderToonHandle: '1-Hero-1-3',
     });
-    await fixture.whenStable();
     const el: HTMLElement = fixture.nativeElement;
     const names = [...el.querySelectorAll('.team')].map((t) =>
       [...t.querySelectorAll('.player__name')].map((n) => n.textContent!.trim()),

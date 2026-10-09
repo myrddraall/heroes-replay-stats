@@ -1,0 +1,42 @@
+{
+  "name": "@myrddraall/heroes-replay-stats-map",
+  "version": "0.0.0-MAIN",
+  "private": true,
+  "description": "The map viewer: a heroes-capture map pack (heroes-maps) drawn by a viewer component and the layer directives placed in it",
+  "types": "./src/index.ts",
+  "scripts": {
+    "format": "prettier --write \"{src,test}/**/*.{ts,html,scss}\"",
+    "github.actions.test": "pnpm test",
+    "lint": "eslint src test",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "pmtiles": "^4.5.0",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@angular/common": "^22.1.0",
+    "@angular/compiler": "^22.1.0",
+    "@angular/core": "^22.1.0",
+    "@eslint/js": "^10.0.1",
+    "@ngrx/signals": "^22.0.1",
+    "angular-eslint": "^22.5.0",
+    "eslint": "^10.9.1",
+    "prettier": "^3.8.1",
+    "rxjs": "^7.8.0",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "^8.69.0",
+    "vitest": "^4.0.8"
+  },
+  "peerDependencies": {
+    "@angular/common": "^22.1.0",
+    "@angular/core": "^22.1.0",
+    "@ngrx/signals": "^22.0.1"
+  },
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "type": "module"
+}
