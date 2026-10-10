@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "noEmit": true,
+    // Runs in the ingest worker and in Node for tests: no DOM.
+    "lib": ["ES2022"],
+    "types": ["node"],
+    "moduleResolution": "bundler",
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "verbatimModuleSyntax": true
+  },
+  "include": ["src/**/*.ts", "test/**/*.ts", "tools/**/*.ts", "vitest.config.ts"],
+  // Restated on purpose: the root config's `exclude` lists `packages`, which would
+  // exclude this whole project if inherited.
+  "exclude": ["node_modules"]
+}

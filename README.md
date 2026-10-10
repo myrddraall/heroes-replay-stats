@@ -5,13 +5,20 @@ browser and, through a thin Electron shell, on the desktop. Everything happens o
 device: replays are parsed locally and stored in IndexedDB; there is no account, no
 login and no server.
 
-| Package                                                         | What it is                                                            |
-| --------------------------------------------------------------- | --------------------------------------------------------------------- |
-| [`@myrddraall/heroes-replay-stats`](./packages/app)             | the Angular 22 + Material app, themed after the game                  |
-| [`@myrddraall/heroes-replay-stats-desktop`](./packages/desktop) | the Electron shell: a window, and a preload bridge for the filesystem |
+| Package                                                             | What it is                                                            |
+| ------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| [`@myrddraall/heroes-replay-stats`](./packages/app)                 | the Angular 22 + Material app, themed after the game                  |
+| [`@myrddraall/heroes-replay-stats-desktop`](./packages/desktop)     | the Electron shell: a window, and a preload bridge for the filesystem |
+| [`@myrddraall/heroes-replay-stats-analysers`](./packages/analysers) | the app's own replay analysers: timeline and points of interest       |
+| [`@myrddraall/heroes-replay-stats-map`](./packages/map)             | the map viewer: a map pack drawn by a viewer and its layer directives |
 
-The replay parsing, the model and the analysers come from
-[myrddraall/heroprotocol](https://github.com/myrddraall/heroprotocol).
+The replay parsing, the model and the generic analysers come from
+[myrddraall/heroprotocol](https://github.com/myrddraall/heroprotocol). The app's ingest
+worker runs those next to its own analysers from `packages/analysers`.
+
+The tool that renders the battleground maps (transparent map images, sky layers, a parallax
+viewer), which began here as `tools/map-capture`, is now
+[myrddraall/heroes-capture](https://github.com/myrddraall/heroes-capture).
 
 ## Working on it
 
@@ -24,12 +31,31 @@ pnpm test           # every package with tests
 pnpm lint
 pnpm typecheck
 pnpm check          # pinned dependency versions agree
+pnpm run generate.analysis-goldens  # after changing an app analyser's output
 ```
 
 The app talks to its host through one seam, `Platform` (`packages/app/src/app/platform`):
 the browser build picks files with an `<input type=file>`, the desktop build through
 Electron's dialog and knows the game's replay folder. Nothing else in the app knows
 where it runs.
+
+## Maps rendered on this machine
+
+The app reads its maps from [heroes-maps](https://github.com/myrddraall/heroes-maps). In the
+devcontainer (`DEV_LOCAL` is true there) `pnpm start` and `pnpm build` add the app's `local`
+configuration instead, which reads them from this machine:
+
+```bash
+pnpm run serve.maps                 # heroes-capture's output next to this repository (../heroes-capture/tmp/results/maps)
+pnpm run serve.maps <folder> [port] # another folder of renders
+pnpm start                          # the app on http://localhost:4200, its /maps-local/ proxied to the maps server
+```
+
+The maps server (port 4208) serves whatever renders are in the folder (a catalog, each pack, byte
+ranges), read afresh on every request, so a new render shows on the next reload. The dev server
+proxies `/maps-local/` to it, so from outside the container only port 4200 is needed.
+`pnpm start -- --configuration production` serves the production bundle the same way. CI builds,
+where `DEV_LOCAL` isn't set, read heroes-maps as before; nothing changes at check-in.
 
 ## Releasing
 

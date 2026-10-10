@@ -1,0 +1,9 @@
+<hrs-layout>
+  <hrs-players-table
+    [rows]="store.rows()"
+    [loaded]="store.loaded()"
+    [error]="store.error()"
+    (meChange)="store.setMe($event.id, $event.isMe)"
+    (importRequested)="store.importReplays()"
+  />
+</hrs-layout>

@@ -7,7 +7,14 @@
     [fixedInViewport]="handset()"
   >
     <a class="shell__brand" routerLink="/replays" (click)="handset() && nav.close()">
-      <span class="shell__brand-mark" aria-hidden="true"></span>
+      <img
+        class="shell__brand-mark"
+        ngSrc="heroes-icon.svg"
+        alt=""
+        width="40"
+        height="40"
+        priority
+      />
       <span class="shell__brand-text">Heroes<br />Replay Stats</span>
     </a>
     <mat-nav-list>
@@ -43,21 +50,48 @@
       }
       <span class="shell__toolbar-title">Heroes Replay Stats</span>
       <span class="shell__spacer"></span>
-      @if (handset()) {
-        <a
+      @if (importPod(); as pod) {
+        <div class="shell__pod" role="status" aria-live="polite">
+          <a
+            class="shell__pod-status"
+            routerLink="/import"
+            [attr.aria-label]="pod.label + ', show imports'"
+            matTooltip="Show imports"
+          >
+            <mat-progress-spinner
+              class="shell__pod-ring"
+              mode="determinate"
+              [value]="pod.percent"
+              diameter="22"
+              strokeWidth="3"
+            />
+            <span class="shell__pod-text">{{ handset() ? pod.short : pod.label }}</span>
+          </a>
+          <button
+            mat-icon-button
+            class="shell__pod-add"
+            (click)="imports.import()"
+            aria-label="Import more replays"
+            matTooltip="Import more replays"
+          >
+            <mat-icon class="material-symbols-outlined">add</mat-icon>
+          </button>
+        </div>
+      } @else if (handset()) {
+        <button
           mat-icon-button
-          class="hrs-gold"
-          routerLink="/import"
+          class="hrs-cta"
+          (click)="imports.import()"
           aria-label="Import replays"
           matTooltip="Import replays"
         >
           <mat-icon class="material-symbols-outlined">upload_file</mat-icon>
-        </a>
+        </button>
       } @else {
-        <a mat-flat-button class="hrs-gold" routerLink="/import">
+        <button mat-flat-button class="hrs-cta" (click)="imports.import()">
           <mat-icon class="material-symbols-outlined">upload_file</mat-icon>
           Import replays
-        </a>
+        </button>
       }
     </mat-toolbar>
     <main class="shell__page">
@@ -65,3 +99,11 @@
     </main>
   </mat-sidenav-content>
 </mat-sidenav-container>
+@if (dragging()) {
+  <div class="shell__drop" aria-hidden="true">
+    <div class="shell__drop-card">
+      <mat-icon class="material-symbols-outlined">upload_file</mat-icon>
+      <span>Drop .StormReplay files to import them</span>
+    </div>
+  </div>
+}

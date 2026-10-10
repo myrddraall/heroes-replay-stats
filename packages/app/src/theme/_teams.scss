@@ -1,0 +1,32 @@
+@use '@angular/material' as mat;
+@use './team-blue-colors' as team-blue;
+@use './team-red-colors' as team-red;
+
+// Team themes. An element with one of these classes re-themes everything inside it:
+// the `--mat-sys-*` colour tokens are redefined there, so Material components and our
+// own styles that use those tokens take the team's colours. Surfaces are tinted too
+// (the neutral palettes are seeded navy and maroon), so a row that paints
+// `--mat-sys-surface-container` is already the team's row. Only colour is themed;
+// typography and density stay the app's. Apply them through the `hrsTeam` directive,
+// which decides which team is blue.
+
+@mixin _team($primary, $tertiary) {
+  @include mat.theme(
+    (
+      color: (
+        primary: $primary,
+        tertiary: $tertiary,
+        theme-type: dark,
+      ),
+    )
+  );
+  color: var(--mat-sys-on-surface);
+}
+
+.hrs-team-blue {
+  @include _team(team-blue.$primary-palette, team-blue.$tertiary-palette);
+}
+
+.hrs-team-red {
+  @include _team(team-red.$primary-palette, team-red.$tertiary-palette);
+}

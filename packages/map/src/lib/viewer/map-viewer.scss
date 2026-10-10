@@ -1,0 +1,71 @@
+// The layers stack inside the view, each one filling it (they position themselves). The view is
+// the whole viewer, or less, centred, where the sky can't fill all of it: the rest is the bars,
+// two elements beside it (--hrs-map-viewer-bars, black, or an ng-template[hrsMapViewerBar]). The
+// viewer itself has no background: the page shows through the view until the map is drawn, and
+// wherever the map is transparent.
+:host {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  isolation: isolate;
+}
+
+// A bar, beside the view (map-viewer.html places it). Part of the map: it fades in with it.
+.map-viewer__bar {
+  position: absolute;
+  display: grid; // its template's element fills it
+  background: var(--hrs-map-viewer-bars, #000);
+  opacity: 0;
+  transition: opacity var(--hrs-map-viewer-fade, 600ms) ease;
+}
+
+.map-viewer__view {
+  position: absolute;
+  overflow: hidden;
+  isolation: isolate;
+
+  // Until the first view is fully drawn only the minimap's loading screen shows: the other layers
+  // are there at alpha 0, and cross-fade in as it fades away (the minimap layer's own transition
+  // runs the same time).
+  > :not(hrs-map-minimap-layer) {
+    opacity: 0;
+    transition: opacity var(--hrs-map-viewer-fade, 600ms) ease;
+  }
+}
+
+:host(.map-viewer--settled) .map-viewer__view > :not(hrs-map-minimap-layer),
+:host(.map-viewer--settled) .map-viewer__bar {
+  opacity: 1;
+}
+
+:host(:focus-visible) {
+  outline: 2px solid #8fb4ff;
+  outline-offset: -2px;
+}
+
+:host(.map-viewer--over-element) {
+  cursor: pointer;
+}
+
+:host(.map-viewer--dragging) {
+  cursor: grabbing;
+}
+
+.map-viewer__status {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 10000;
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(16, 16, 20, 0.78);
+  color: #e8e8ec;
+  font:
+    14px/1.4 system-ui,
+    sans-serif;
+  pointer-events: none;
+}

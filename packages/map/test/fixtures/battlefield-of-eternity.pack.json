@@ -1,0 +1,4322 @@
+{
+  "format": 3,
+  "tool": "heroes-capture 0.0.0-dev",
+  "gameBuild": 98348,
+  "map": {
+    "id": "battlefield-of-eternity",
+    "name": "Battlefield of Eternity",
+    "category": "Battleground",
+    "validated": true,
+    "structures": "elements",
+    "sizeCells": [
+      248,
+      208
+    ],
+    "cameraBounds": {
+      "left": 20.0,
+      "bottom": 28.0,
+      "right": 228.0,
+      "top": 178.0
+    }
+  },
+  "capture": {
+    "pxPerCell": 48,
+    "screen": [
+      3440,
+      1440
+    ],
+    "fov": 8.019003082878507
+  },
+  "arenas": null,
+  "layers": [
+    {
+      "id": "fixed",
+      "kind": "fixed",
+      "file": "fixed.webp",
+      "size": [
+        3376,
+        1440
+      ]
+    },
+    {
+      "id": "background",
+      "kind": "parallax",
+      "file": "background.pmtiles",
+      "size": [
+        14200,
+        7152
+      ],
+      "rate": 0.4573651791148446,
+      "centreCell": [
+        124.0,
+        103.0
+      ],
+      "centrePixel": [
+        7093.0,
+        4959.0
+      ],
+      "pxPerCell": 22.144707242382545,
+      "levels": 6,
+      "tileSize": 512,
+      "overview": {
+        "file": "background-overview.webp",
+        "level": 2,
+        "size": [
+          1775,
+          894
+        ]
+      }
+    },
+    {
+      "id": "haze",
+      "kind": "parallax",
+      "file": "haze.pmtiles",
+      "size": [
+        14368,
+        7320
+      ],
+      "rate": 0.47906313227025044,
+      "centreCell": [
+        124.0,
+        103.0
+      ],
+      "centrePixel": [
+        7181.0,
+        5063.0
+      ],
+      "pxPerCell": 23.195278738260985,
+      "levels": 6,
+      "tileSize": 512,
+      "overview": {
+        "file": "haze-overview.webp",
+        "level": 2,
+        "size": [
+          1796,
+          915
+        ]
+      }
+    },
+    {
+      "id": "map",
+      "kind": "map",
+      "file": "map.pmtiles",
+      "size": [
+        12865,
+        9260
+      ],
+      "rate": 1.0,
+      "originCell": [
+        -2.2520540992672387,
+        204.4410579105443
+      ],
+      "pxPerCell": 48.40025825110766,
+      "levels": 6,
+      "tileSize": 512,
+      "overview": {
+        "file": "map-overview.webp",
+        "level": 2,
+        "size": [
+          1609,
+          1158
+        ]
+      }
+    }
+  ],
+  "images": {
+    "thumbnail": {
+      "file": "thumbnail.webp",
+      "size": [
+        512,
+        369
+      ]
+    },
+    "minimap": {
+      "file": "images/minimap.png",
+      "size": [
+        512,
+        512
+      ],
+      "source": "Minimap.tga"
+    },
+    "customMinimap": {
+      "file": "images/custom-minimap.png",
+      "size": [
+        496,
+        416
+      ],
+      "source": "CustomMiniMap.dds"
+    },
+    "customMinimapHover": {
+      "file": "images/custom-minimap-hover.png",
+      "size": [
+        496,
+        416
+      ],
+      "source": "CustomMiniMap_Hover.dds"
+    },
+    "replayPreview": {
+      "file": "images/replay-preview.png",
+      "size": [
+        417,
+        234
+      ],
+      "source": "ReplaysPreviewImage.tga"
+    },
+    "mapSelect": {
+      "file": "images/map-select.png",
+      "size": [
+        572,
+        348
+      ],
+      "source": "Storm_UI_Gamemode_MapSelect_BattleOfEternity.png"
+    },
+    "customMinimapSvg": {
+      "file": "images/custom-minimap.svg",
+      "size": [
+        496,
+        416
+      ],
+      "source": "CustomMiniMap.dds",
+      "boundsCells": {
+        "left": 0.0,
+        "bottom": -3.25,
+        "right": 248.0,
+        "top": 204.75
+      }
+    }
+  },
+  "data": {
+    "elements": {
+      "layer": "map",
+      "structures": [
+        {
+          "id": 210,
+          "type": "KingsCore",
+          "cell": [
+            49,
+            100
+          ],
+          "owner": "order",
+          "town": null,
+          "core": true,
+          "states": {
+            "rubble": {
+              "rect": [
+                1661,
+                4521,
+                1854,
+                1084
+              ],
+              "atlas": "rubble",
+              "at": [
+                1973,
+                0
+              ],
+              "small": [
+                247,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                2260,
+                4837,
+                457,
+                440
+              ],
+              "atlas": "standing",
+              "at": [
+                459,
+                0
+              ],
+              "small": [
+                1791,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 346,
+          "type": "KingsCore",
+          "cell": [
+            199,
+            108
+          ],
+          "owner": "chaos",
+          "town": null,
+          "core": true,
+          "states": {
+            "rubble": {
+              "rect": [
+                8753,
+                4157,
+                1973,
+                1154
+              ],
+              "atlas": "rubble",
+              "at": [
+                0,
+                0
+              ],
+              "small": [
+                0,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                9512,
+                4442,
+                459,
+                462
+              ],
+              "atlas": "standing",
+              "at": [
+                0,
+                0
+              ],
+              "small": [
+                1644,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 21,
+          "type": "TownCannonTowerL2",
+          "cell": [
+            140,
+            148
+          ],
+          "owner": "chaos",
+          "town": 6,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                6727,
+                2626,
+                279,
+                417
+              ],
+              "atlas": "rubble",
+              "at": [
+                3187,
+                2761
+              ],
+              "small": [
+                1952,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                6815,
+                2673,
+                143,
+                116
+              ],
+              "hiddenBy": [
+                {
+                  "id": 19,
+                  "at": [
+                    973,
+                    621
+                  ]
+                },
+                {
+                  "id": 736214455,
+                  "at": [
+                    1116,
+                    621
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                420,
+                968
+              ],
+              "small": [
+                424,
+                145
+              ]
+            }
+          }
+        },
+        {
+          "id": 44,
+          "type": "TownCannonTowerL2",
+          "cell": [
+            143,
+            70
+          ],
+          "owner": "chaos",
+          "town": 8,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                6961,
+                6446,
+                127,
+                119
+              ],
+              "atlas": "rubble",
+              "at": [
+                115,
+                3942
+              ],
+              "small": [
+                442,
+                145
+              ]
+            },
+            "standing": {
+              "rect": [
+                6961,
+                6446,
+                140,
+                119
+              ],
+              "hiddenBy": [
+                {
+                  "id": 22,
+                  "at": [
+                    548,
+                    621
+                  ]
+                },
+                {
+                  "id": 24,
+                  "at": [
+                    688,
+                    621
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                135,
+                968
+              ],
+              "small": [
+                458,
+                145
+              ]
+            }
+          }
+        },
+        {
+          "id": 47,
+          "type": "TownCannonTowerL2",
+          "cell": [
+            145,
+            62
+          ],
+          "owner": "chaos",
+          "town": 8,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                7057,
+                6835,
+                128,
+                117
+              ],
+              "atlas": "rubble",
+              "at": [
+                660,
+                3942
+              ],
+              "small": [
+                476,
+                145
+              ]
+            },
+            "standing": {
+              "rect": [
+                7057,
+                6835,
+                145,
+                117
+              ],
+              "hiddenBy": [
+                {
+                  "id": 22,
+                  "at": [
+                    828,
+                    621
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                275,
+                968
+              ],
+              "small": [
+                492,
+                145
+              ]
+            }
+          }
+        },
+        {
+          "id": 57,
+          "type": "TownCannonTowerL2",
+          "cell": [
+            138,
+            140
+          ],
+          "owner": "chaos",
+          "town": 6,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                6726,
+                3057,
+                116,
+                125
+              ],
+              "atlas": "rubble",
+              "at": [
+                3950,
+                3685
+              ],
+              "small": [
+                293,
+                145
+              ]
+            },
+            "standing": {
+              "rect": [
+                6726,
+                3057,
+                139,
+                125
+              ],
+              "hiddenBy": [
+                {
+                  "id": 19,
+                  "at": [
+                    0,
+                    621
+                  ]
+                },
+                {
+                  "id": 1971096376,
+                  "at": [
+                    139,
+                    621
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                3464,
+                750
+              ],
+              "small": [
+                308,
+                145
+              ]
+            }
+          }
+        },
+        {
+          "id": 85,
+          "type": "TownCannonTowerL2",
+          "cell": [
+            110,
+            68
+          ],
+          "owner": "order",
+          "town": 4,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                5281,
+                6501,
+                301,
+                237
+              ],
+              "atlas": "rubble",
+              "at": [
+                282,
+                3685
+              ],
+              "small": [
+                3325,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                5375,
+                6547,
+                115,
+                112
+              ],
+              "hiddenBy": [
+                {
+                  "id": 146,
+                  "at": [
+                    1259,
+                    621
+                  ]
+                },
+                {
+                  "id": 1263872499,
+                  "at": [
+                    1374,
+                    621
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                563,
+                968
+              ],
+              "small": [
+                581,
+                145
+              ]
+            }
+          }
+        },
+        {
+          "id": 86,
+          "type": "TownCannonTowerL2",
+          "cell": [
+            103,
+            146
+          ],
+          "owner": "order",
+          "town": 2,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                4938,
+                2704,
+                282,
+                257
+              ],
+              "atlas": "rubble",
+              "at": [
+                0,
+                3685
+              ],
+              "small": [
+                3172,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                5029,
+                2779,
+                128,
+                100
+              ],
+              "hiddenBy": [
+                {
+                  "id": 32,
+                  "at": [
+                    3133,
+                    621
+                  ]
+                },
+                {
+                  "id": 806262366,
+                  "at": [
+                    3261,
+                    621
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                1967,
+                968
+              ],
+              "small": [
+                766,
+                145
+              ]
+            }
+          }
+        },
+        {
+          "id": 87,
+          "type": "TownCannonTowerL2",
+          "cell": [
+            108,
+            60
+          ],
+          "owner": "order",
+          "town": 4,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                5244,
+                6942,
+                170,
+                148
+              ],
+              "atlas": "rubble",
+              "at": [
+                3610,
+                3685
+              ],
+              "small": [
+                227,
+                145
+              ]
+            },
+            "standing": {
+              "rect": [
+                5271,
+                6940,
+                128,
+                102
+              ],
+              "hiddenBy": [
+                {
+                  "id": 146,
+                  "at": [
+                    2877,
+                    621
+                  ]
+                },
+                {
+                  "id": 978165572,
+                  "at": [
+                    3005,
+                    621
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                1839,
+                968
+              ],
+              "small": [
+                782,
+                145
+              ]
+            }
+          }
+        },
+        {
+          "id": 89,
+          "type": "TownCannonTowerL2",
+          "cell": [
+            105,
+            138
+          ],
+          "owner": "order",
+          "town": 2,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                5002,
+                3115,
+                289,
+                209
+              ],
+              "atlas": "rubble",
+              "at": [
+                1560,
+                3685
+              ],
+              "small": [
+                3621,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                5126,
+                3164,
+                128,
+                105
+              ],
+              "hiddenBy": [
+                {
+                  "id": 32,
+                  "at": [
+                    2621,
+                    621
+                  ]
+                },
+                {
+                  "id": 48,
+                  "at": [
+                    2749,
+                    621
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                1711,
+                968
+              ],
+              "small": [
+                596,
+                145
+              ]
+            }
+          }
+        },
+        {
+          "id": 2,
+          "type": "TownCannonTowerL3",
+          "cell": [
+            172,
+            129
+          ],
+          "owner": "chaos",
+          "town": 5,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                8375,
+                3593,
+                123,
+                117
+              ],
+              "atlas": "rubble",
+              "at": [
+                788,
+                3942
+              ],
+              "small": [
+                511,
+                145
+              ]
+            },
+            "standing": {
+              "rect": [
+                8344,
+                3560,
+                166,
+                171
+              ],
+              "hiddenBy": [
+                {
+                  "id": 1814,
+                  "at": [
+                    2511,
+                    358
+                  ]
+                },
+                {
+                  "id": 492,
+                  "at": [
+                    2677,
+                    358
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                849,
+                750
+              ],
+              "small": [
+                3921,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 27,
+          "type": "TownCannonTowerL3",
+          "cell": [
+            70,
+            73
+          ],
+          "owner": "order",
+          "town": 3,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                3319,
+                6305,
+                296,
+                201
+              ],
+              "atlas": "rubble",
+              "at": [
+                2260,
+                3685
+              ],
+              "small": [
+                3738,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                3440,
+                6305,
+                114,
+                112
+              ],
+              "hiddenBy": [
+                {
+                  "id": 1810,
+                  "at": [
+                    1489,
+                    621
+                  ]
+                },
+                {
+                  "id": 490,
+                  "at": [
+                    1603,
+                    621
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                678,
+                968
+              ],
+              "small": [
+                612,
+                145
+              ]
+            }
+          }
+        },
+        {
+          "id": 93,
+          "type": "TownCannonTowerL3",
+          "cell": [
+            73,
+            122
+          ],
+          "owner": "order",
+          "town": 1,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                3556,
+                3937,
+                162,
+                111
+              ],
+              "atlas": "rubble",
+              "at": [
+                911,
+                3942
+              ],
+              "small": [
+                627,
+                145
+              ]
+            },
+            "standing": {
+              "rect": [
+                3587,
+                3937,
+                108,
+                109
+              ],
+              "hiddenBy": [
+                {
+                  "id": 1811,
+                  "at": [
+                    1963,
+                    621
+                  ]
+                },
+                {
+                  "id": 487,
+                  "at": [
+                    2071,
+                    621
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                1160,
+                968
+              ],
+              "small": [
+                648,
+                145
+              ]
+            }
+          }
+        },
+        {
+          "id": 94,
+          "type": "TownCannonTowerL3",
+          "cell": [
+            67,
+            128
+          ],
+          "owner": "order",
+          "town": 1,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                3258,
+                3638,
+                178,
+                118
+              ],
+              "atlas": "rubble",
+              "at": [
+                482,
+                3942
+              ],
+              "small": [
+                527,
+                145
+              ]
+            },
+            "standing": {
+              "rect": [
+                3296,
+                3647,
+                110,
+                108
+              ],
+              "hiddenBy": [
+                {
+                  "id": 1811,
+                  "at": [
+                    2179,
+                    621
+                  ]
+                },
+                {
+                  "id": 488,
+                  "at": [
+                    2289,
+                    621
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                1268,
+                968
+              ],
+              "small": [
+                662,
+                145
+              ]
+            }
+          }
+        },
+        {
+          "id": 114,
+          "type": "TownCannonTowerL3",
+          "cell": [
+            76,
+            79
+          ],
+          "owner": "order",
+          "town": 3,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                3700,
+                5940,
+                167,
+                335
+              ],
+              "atlas": "rubble",
+              "at": [
+                2443,
+                3282
+              ],
+              "small": [
+                2563,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                3730,
+                6016,
+                111,
+                108
+              ],
+              "hiddenBy": [
+                {
+                  "id": 1810,
+                  "at": [
+                    2399,
+                    621
+                  ]
+                },
+                {
+                  "id": 489,
+                  "at": [
+                    2510,
+                    621
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                1378,
+                968
+              ],
+              "small": [
+                676,
+                145
+              ]
+            }
+          }
+        },
+        {
+          "id": 143,
+          "type": "TownCannonTowerL3",
+          "cell": [
+            175,
+            86
+          ],
+          "owner": "chaos",
+          "town": 7,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                8521,
+                5671,
+                119,
+                119
+              ],
+              "atlas": "rubble",
+              "at": [
+                242,
+                3942
+              ],
+              "small": [
+                550,
+                145
+              ]
+            },
+            "standing": {
+              "rect": [
+                8487,
+                5656,
+                172,
+                168
+              ],
+              "hiddenBy": [
+                {
+                  "id": 1815,
+                  "at": [
+                    2843,
+                    358
+                  ]
+                },
+                {
+                  "id": 494,
+                  "at": [
+                    3015,
+                    358
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                1015,
+                750
+              ],
+              "small": [
+                3962,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 144,
+          "type": "TownCannonTowerL3",
+          "cell": [
+            178,
+            135
+          ],
+          "owner": "chaos",
+          "town": 5,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                8663,
+                3299,
+                115,
+                125
+              ],
+              "atlas": "rubble",
+              "at": [
+                0,
+                3942
+              ],
+              "small": [
+                326,
+                145
+              ]
+            },
+            "standing": {
+              "rect": [
+                8639,
+                3272,
+                163,
+                164
+              ],
+              "hiddenBy": [
+                {
+                  "id": 1814,
+                  "at": [
+                    3747,
+                    358
+                  ]
+                },
+                {
+                  "id": 491,
+                  "at": [
+                    3910,
+                    358
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                2239,
+                750
+              ],
+              "small": [
+                3984,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 149,
+          "type": "TownCannonTowerL3",
+          "cell": [
+            181,
+            80
+          ],
+          "owner": "chaos",
+          "town": 7,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                8810,
+                5961,
+                121,
+                119
+              ],
+              "atlas": "rubble",
+              "at": [
+                361,
+                3942
+              ],
+              "small": [
+                565,
+                145
+              ]
+            },
+            "standing": {
+              "rect": [
+                8777,
+                5946,
+                172,
+                168
+              ],
+              "hiddenBy": [
+                {
+                  "id": 1815,
+                  "at": [
+                    3187,
+                    358
+                  ]
+                },
+                {
+                  "id": 493,
+                  "at": [
+                    3359,
+                    358
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                1187,
+                750
+              ],
+              "small": [
+                4005,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 38,
+          "type": "TownCannonTowerL3Standalone",
+          "cell": [
+            68,
+            101
+          ],
+          "owner": "order",
+          "town": 1,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                3074,
+                4784,
+                511,
+                410
+              ],
+              "atlas": "rubble",
+              "at": [
+                3466,
+                2761
+              ],
+              "small": [
+                1987,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                3339,
+                4951,
+                122,
+                111
+              ],
+              "atlas": "standing",
+              "at": [
+                792,
+                968
+              ],
+              "small": [
+                690,
+                145
+              ]
+            }
+          }
+        },
+        {
+          "id": 40,
+          "type": "TownCannonTowerL3Standalone",
+          "cell": [
+            180,
+            107
+          ],
+          "owner": "chaos",
+          "town": 7,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                8568,
+                4564,
+                461,
+                493
+              ],
+              "atlas": "rubble",
+              "at": [
+                1211,
+                2761
+              ],
+              "small": [
+                1586,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                8749,
+                4657,
+                136,
+                123
+              ],
+              "atlas": "standing",
+              "at": [
+                3728,
+                750
+              ],
+              "small": [
+                341,
+                145
+              ]
+            }
+          }
+        },
+        {
+          "id": 388017480,
+          "type": "TownCannonTowerL3Standalone",
+          "cell": [
+            168,
+            111
+          ],
+          "owner": "chaos",
+          "town": 7,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                7964,
+                4379,
+                489,
+                377
+              ],
+              "atlas": "rubble",
+              "at": [
+                1097,
+                3282
+              ],
+              "small": [
+                2189,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                8169,
+                4464,
+                135,
+                123
+              ],
+              "hiddenBy": [
+                {
+                  "id": 766,
+                  "at": [
+                    278,
+                    621
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                3864,
+                750
+              ],
+              "small": [
+                358,
+                145
+              ]
+            }
+          }
+        },
+        {
+          "id": 439978135,
+          "type": "TownCannonTowerL3Standalone",
+          "cell": [
+            162,
+            138
+          ],
+          "owner": "chaos",
+          "town": 6,
+          "core": false,
+          "states": {
+            "rubble": null,
+            "standing": {
+              "rect": [
+                7886,
+                3157,
+                125,
+                124
+              ],
+              "atlas": "standing",
+              "at": [
+                3603,
+                750
+              ],
+              "small": [
+                375,
+                145
+              ]
+            }
+          }
+        },
+        {
+          "id": 909878382,
+          "type": "TownCannonTowerL3Standalone",
+          "cell": [
+            80,
+            105
+          ],
+          "owner": "order",
+          "town": 1,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                3723,
+                4552,
+                470,
+                456
+              ],
+              "atlas": "rubble",
+              "at": [
+                1672,
+                2761
+              ],
+              "small": [
+                1702,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                3919,
+                4757,
+                123,
+                111
+              ],
+              "hiddenBy": [
+                {
+                  "id": 35,
+                  "at": [
+                    1717,
+                    621
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                914,
+                968
+              ],
+              "small": [
+                706,
+                145
+              ]
+            }
+          }
+        },
+        {
+          "id": 1084430558,
+          "type": "TownCannonTowerL3Standalone",
+          "cell": [
+            80,
+            97
+          ],
+          "owner": "order",
+          "town": 1,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                3794,
+                4995,
+                426,
+                361
+              ],
+              "atlas": "rubble",
+              "at": [
+                2017,
+                3282
+              ],
+              "small": [
+                2401,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                3919,
+                5144,
+                123,
+                111
+              ],
+              "hiddenBy": [
+                {
+                  "id": 35,
+                  "at": [
+                    1840,
+                    621
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                1037,
+                968
+              ],
+              "small": [
+                722,
+                145
+              ]
+            }
+          }
+        },
+        {
+          "id": 1106843562,
+          "type": "TownCannonTowerL3Standalone",
+          "cell": [
+            168,
+            103
+          ],
+          "owner": "chaos",
+          "town": 7,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                8010,
+                4659,
+                465,
+                436
+              ],
+              "atlas": "rubble",
+              "at": [
+                2377,
+                2761
+              ],
+              "small": [
+                1849,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                8169,
+                4851,
+                135,
+                123
+              ],
+              "hiddenBy": [
+                {
+                  "id": 766,
+                  "at": [
+                    413,
+                    621
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                0,
+                968
+              ],
+              "small": [
+                391,
+                145
+              ]
+            }
+          }
+        },
+        {
+          "id": 1369849260,
+          "type": "TownCannonTowerL3Standalone",
+          "cell": [
+            163,
+            77
+          ],
+          "owner": "chaos",
+          "town": 8,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                7792,
+                5770,
+                437,
+                823
+              ],
+              "atlas": "rubble",
+              "at": [
+                1541,
+                1154
+              ],
+              "small": [
+                672,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                7938,
+                6105,
+                124,
+                126
+              ],
+              "atlas": "standing",
+              "at": [
+                3340,
+                750
+              ],
+              "small": [
+                408,
+                145
+              ]
+            }
+          }
+        },
+        {
+          "id": 1997229234,
+          "type": "TownCannonTowerL3Standalone",
+          "cell": [
+            86,
+            70
+          ],
+          "owner": "order",
+          "town": 4,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                4034,
+                6253,
+                534,
+                521
+              ],
+              "atlas": "rubble",
+              "at": [
+                0,
+                2761
+              ],
+              "small": [
+                1433,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                4214,
+                6452,
+                111,
+                108
+              ],
+              "atlas": "standing",
+              "at": [
+                1489,
+                968
+              ],
+              "small": [
+                738,
+                145
+              ]
+            }
+          }
+        },
+        {
+          "id": 2056932872,
+          "type": "TownCannonTowerL3Standalone",
+          "cell": [
+            85,
+            131
+          ],
+          "owner": "order",
+          "town": null,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                4018,
+                3381,
+                342,
+                389
+              ],
+              "atlas": "rubble",
+              "at": [
+                755,
+                3282
+              ],
+              "small": [
+                2146,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                4166,
+                3502,
+                111,
+                108
+              ],
+              "atlas": "standing",
+              "at": [
+                1600,
+                968
+              ],
+              "small": [
+                752,
+                145
+              ]
+            }
+          }
+        },
+        {
+          "id": 19,
+          "type": "TownGateL215BLUR",
+          "cell": [
+            139,
+            144
+          ],
+          "owner": "chaos",
+          "town": 6,
+          "core": false,
+          "states": {
+            "rubble": null,
+            "standing": {
+              "rect": [
+                6731,
+                2762,
+                222,
+                324
+              ],
+              "hiddenBy": [
+                {
+                  "id": 21,
+                  "at": [
+                    1790,
+                    0
+                  ]
+                },
+                {
+                  "id": 57,
+                  "at": [
+                    2012,
+                    0
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                2739,
+                0
+              ],
+              "small": [
+                2644,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 146,
+          "type": "TownGateL215BLUR",
+          "cell": [
+            109,
+            64
+          ],
+          "owner": "order",
+          "town": 4,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                5281,
+                6458,
+                446,
+                716
+              ],
+              "atlas": "rubble",
+              "at": [
+                2315,
+                1154
+              ],
+              "small": [
+                770,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                5302,
+                6618,
+                163,
+                358
+              ],
+              "hiddenBy": [
+                {
+                  "id": 85,
+                  "at": [
+                    0,
+                    0
+                  ]
+                },
+                {
+                  "id": 87,
+                  "at": [
+                    163,
+                    0
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                1674,
+                0
+              ],
+              "small": [
+                2455,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 22,
+          "type": "TownGateL215BRUL",
+          "cell": [
+            144,
+            66
+          ],
+          "owner": "chaos",
+          "town": 8,
+          "core": false,
+          "states": {
+            "rubble": null,
+            "standing": {
+              "rect": [
+                6964,
+                6535,
+                222,
+                334
+              ],
+              "hiddenBy": [
+                {
+                  "id": 44,
+                  "at": [
+                    1346,
+                    0
+                  ]
+                },
+                {
+                  "id": 47,
+                  "at": [
+                    1568,
+                    0
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                2517,
+                0
+              ],
+              "small": [
+                2584,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 32,
+          "type": "TownGateL215BRUL",
+          "cell": [
+            104,
+            142
+          ],
+          "owner": "order",
+          "town": 2,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                4969,
+                2643,
+                337,
+                767
+              ],
+              "atlas": "rubble",
+              "at": [
+                1978,
+                1154
+              ],
+              "small": [
+                727,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                5063,
+                2843,
+                163,
+                358
+              ],
+              "hiddenBy": [
+                {
+                  "id": 86,
+                  "at": [
+                    326,
+                    0
+                  ]
+                },
+                {
+                  "id": 89,
+                  "at": [
+                    489,
+                    0
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                1837,
+                0
+              ],
+              "small": [
+                2476,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 1814,
+          "type": "TownGateL3BLURBRVisionBlocked",
+          "cell": [
+            175,
+            132
+          ],
+          "owner": "chaos",
+          "town": 5,
+          "core": false,
+          "states": {
+            "rubble": null,
+            "standing": {
+              "rect": [
+                8443,
+                3372,
+                271,
+                271
+              ],
+              "hiddenBy": [
+                {
+                  "id": 2,
+                  "at": [
+                    2788,
+                    0
+                  ]
+                },
+                {
+                  "id": 144,
+                  "at": [
+                    3059,
+                    0
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                1113,
+                462
+              ],
+              "small": [
+                3020,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 1810,
+          "type": "TownGateL3BLURTLVisionBlocked",
+          "cell": [
+            73,
+            76
+          ],
+          "owner": "order",
+          "town": 3,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                3505,
+                6098,
+                409,
+                513
+              ],
+              "atlas": "rubble",
+              "at": [
+                534,
+                2761
+              ],
+              "small": [
+                1500,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                3504,
+                6079,
+                277,
+                277
+              ],
+              "hiddenBy": [
+                {
+                  "id": 27,
+                  "at": [
+                    2234,
+                    0
+                  ]
+                },
+                {
+                  "id": 114,
+                  "at": [
+                    2511,
+                    0
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                288,
+                462
+              ],
+              "small": [
+                2915,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 1811,
+          "type": "TownGateL3BRULBLVisionBlocked",
+          "cell": [
+            70,
+            125
+          ],
+          "owner": "order",
+          "town": 1,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                3345,
+                3571,
+                326,
+                596
+              ],
+              "atlas": "rubble",
+              "at": [
+                2997,
+                2076
+              ],
+              "small": [
+                1298,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                3366,
+                3713,
+                263,
+                263
+              ],
+              "hiddenBy": [
+                {
+                  "id": 93,
+                  "at": [
+                    0,
+                    358
+                  ]
+                },
+                {
+                  "id": 94,
+                  "at": [
+                    263,
+                    358
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                1776,
+                462
+              ],
+              "small": [
+                3208,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 1815,
+          "type": "TownGateL3BRULTRVisionBlocked",
+          "cell": [
+            178,
+            83
+          ],
+          "owner": "chaos",
+          "town": 7,
+          "core": false,
+          "states": {
+            "rubble": null,
+            "standing": {
+              "rect": [
+                8590,
+                5743,
+                271,
+                271
+              ],
+              "hiddenBy": [
+                {
+                  "id": 143,
+                  "at": [
+                    3330,
+                    0
+                  ]
+                },
+                {
+                  "id": 149,
+                  "at": [
+                    3601,
+                    0
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                1384,
+                462
+              ],
+              "small": [
+                3054,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 35,
+          "type": "TownGateL3VerticalLeftVisionBlocked",
+          "cell": [
+            80,
+            101
+          ],
+          "owner": "order",
+          "town": 1,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                3864,
+                4635,
+                268,
+                502
+              ],
+              "atlas": "rubble",
+              "at": [
+                943,
+                2761
+              ],
+              "small": [
+                1552,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                3922,
+                4833,
+                118,
+                348
+              ],
+              "hiddenBy": [
+                {
+                  "id": 909878382,
+                  "at": [
+                    652,
+                    0
+                  ]
+                },
+                {
+                  "id": 1084430558,
+                  "at": [
+                    770,
+                    0
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                2000,
+                0
+              ],
+              "small": [
+                2497,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 766,
+          "type": "TownGateL3VerticalRightVisionBlocked",
+          "cell": [
+            168,
+            107
+          ],
+          "owner": "chaos",
+          "town": 7,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                8176,
+                4685,
+                13,
+                7
+              ],
+              "atlas": "rubble",
+              "at": [
+                1073,
+                3942
+              ],
+              "small": [
+                798,
+                145
+              ]
+            },
+            "standing": {
+              "rect": [
+                8121,
+                4544,
+                229,
+                346
+              ],
+              "hiddenBy": [
+                {
+                  "id": 388017480,
+                  "at": [
+                    888,
+                    0
+                  ]
+                },
+                {
+                  "id": 1106843562,
+                  "at": [
+                    1117,
+                    0
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                2118,
+                0
+              ],
+              "small": [
+                2512,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 16,
+          "type": "TownMoonwellL2",
+          "cell": [
+            147.5,
+            150.5
+          ],
+          "owner": "chaos",
+          "town": 6,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                7139,
+                2506,
+                220,
+                211
+              ],
+              "atlas": "rubble",
+              "at": [
+                1340,
+                3685
+              ],
+              "small": [
+                3658,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                7171,
+                2536,
+                153,
+                154
+              ],
+              "atlas": "standing",
+              "at": [
+                2402,
+                750
+              ],
+              "small": [
+                89,
+                145
+              ]
+            }
+          }
+        },
+        {
+          "id": 18,
+          "type": "TownMoonwellL2",
+          "cell": [
+            100.5,
+            57.5
+          ],
+          "owner": "order",
+          "town": 4,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                4786,
+                6941,
+                390,
+                403
+              ],
+              "atlas": "rubble",
+              "at": [
+                0,
+                3282
+              ],
+              "small": [
+                2051,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                4887,
+                7036,
+                173,
+                152
+              ],
+              "atlas": "standing",
+              "at": [
+                3167,
+                750
+              ],
+              "small": [
+                249,
+                145
+              ]
+            }
+          }
+        },
+        {
+          "id": 1619,
+          "type": "TownMoonwellL2",
+          "cell": [
+            152.5,
+            60.5
+          ],
+          "owner": "chaos",
+          "town": 8,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                7391,
+                6868,
+                203,
+                209
+              ],
+              "atlas": "rubble",
+              "at": [
+                1849,
+                3685
+              ],
+              "small": [
+                3686,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                7413,
+                6892,
+                153,
+                154
+              ],
+              "atlas": "standing",
+              "at": [
+                2555,
+                750
+              ],
+              "small": [
+                109,
+                145
+              ]
+            }
+          }
+        },
+        {
+          "id": 1620,
+          "type": "TownMoonwellL2",
+          "cell": [
+            95.5,
+            147.5
+          ],
+          "owner": "order",
+          "town": 2,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                4574,
+                2567,
+                395,
+                307
+              ],
+              "atlas": "rubble",
+              "at": [
+                2864,
+                3282
+              ],
+              "small": [
+                2696,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                4649,
+                2674,
+                166,
+                166
+              ],
+              "atlas": "standing",
+              "at": [
+                1575,
+                750
+              ],
+              "small": [
+                4027,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 72,
+          "type": "TownMoonwellL3",
+          "cell": [
+            188.5,
+            82.5
+          ],
+          "owner": "chaos",
+          "town": 7,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                9135,
+                5796,
+                208,
+                204
+              ],
+              "atlas": "rubble",
+              "at": [
+                2052,
+                3685
+              ],
+              "small": [
+                3775,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                9155,
+                5827,
+                153,
+                154
+              ],
+              "atlas": "standing",
+              "at": [
+                2708,
+                750
+              ],
+              "small": [
+                129,
+                145
+              ]
+            }
+          }
+        },
+        {
+          "id": 73,
+          "type": "TownMoonwellL3",
+          "cell": [
+            59.5,
+            125.5
+          ],
+          "owner": "order",
+          "town": 1,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                2915,
+                3739,
+                158,
+                166
+              ],
+              "atlas": "rubble",
+              "at": [
+                2996,
+                3685
+              ],
+              "small": [
+                4048,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                2907,
+                3739,
+                166,
+                166
+              ],
+              "atlas": "standing",
+              "at": [
+                1741,
+                750
+              ],
+              "small": [
+                4068,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 108,
+          "type": "TownMoonwellL3",
+          "cell": [
+            185.5,
+            131.5
+          ],
+          "owner": "chaos",
+          "town": 5,
+          "core": false,
+          "states": {
+            "rubble": null,
+            "standing": {
+              "rect": [
+                9010,
+                3455,
+                153,
+                154
+              ],
+              "atlas": "standing",
+              "at": [
+                2861,
+                750
+              ],
+              "small": [
+                149,
+                145
+              ]
+            }
+          }
+        },
+        {
+          "id": 1043,
+          "type": "TownMoonwellL3",
+          "cell": [
+            71.5,
+            97.5
+          ],
+          "owner": "order",
+          "town": 1,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                3440,
+                5060,
+                279,
+                229
+              ],
+              "atlas": "rubble",
+              "at": [
+                855,
+                3685
+              ],
+              "small": [
+                3442,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                3488,
+                5094,
+                166,
+                166
+              ],
+              "atlas": "standing",
+              "at": [
+                1907,
+                750
+              ],
+              "small": [
+                0,
+                145
+              ]
+            }
+          }
+        },
+        {
+          "id": 1044,
+          "type": "TownMoonwellL3",
+          "cell": [
+            176.5,
+            110.5
+          ],
+          "owner": "chaos",
+          "town": 7,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                8539,
+                4438,
+                206,
+                212
+              ],
+              "atlas": "rubble",
+              "at": [
+                1134,
+                3685
+              ],
+              "small": [
+                3712,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                8575,
+                4472,
+                153,
+                154
+              ],
+              "atlas": "standing",
+              "at": [
+                3014,
+                750
+              ],
+              "small": [
+                169,
+                145
+              ]
+            }
+          }
+        },
+        {
+          "id": 1077,
+          "type": "TownMoonwellL3",
+          "cell": [
+            62.5,
+            76.5
+          ],
+          "owner": "order",
+          "town": 3,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                3060,
+                6110,
+                158,
+                166
+              ],
+              "atlas": "rubble",
+              "at": [
+                3154,
+                3685
+              ],
+              "small": [
+                21,
+                145
+              ]
+            },
+            "standing": {
+              "rect": [
+                3052,
+                6110,
+                166,
+                166
+              ],
+              "atlas": "standing",
+              "at": [
+                2073,
+                750
+              ],
+              "small": [
+                41,
+                145
+              ]
+            }
+          }
+        },
+        {
+          "id": 150,
+          "type": "TownTownHallL2",
+          "cell": [
+            98,
+            65
+          ],
+          "owner": "order",
+          "town": 4,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                4518,
+                6337,
+                686,
+                647
+              ],
+              "atlas": "rubble",
+              "at": [
+                930,
+                2076
+              ],
+              "small": [
+                1038,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                4742,
+                6571,
+                288,
+                288
+              ],
+              "atlas": "standing",
+              "at": [
+                3759,
+                0
+              ],
+              "small": [
+                2822,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 151,
+          "type": "TownTownHallL2",
+          "cell": [
+            150,
+            143
+          ],
+          "owner": "chaos",
+          "town": 6,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                7091,
+                2702,
+                930,
+                685
+              ],
+              "atlas": "rubble",
+              "at": [
+                0,
+                2076
+              ],
+              "small": [
+                921,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                7253,
+                2787,
+                303,
+                299
+              ],
+              "atlas": "standing",
+              "at": [
+                3153,
+                0
+              ],
+              "small": [
+                2746,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 162,
+          "type": "TownTownHallL2",
+          "cell": [
+            156,
+            68
+          ],
+          "owner": "chaos",
+          "town": 8,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                7359,
+                5982,
+                871,
+                860
+              ],
+              "atlas": "rubble",
+              "at": [
+                670,
+                1154
+              ],
+              "small": [
+                563,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                7543,
+                6417,
+                303,
+                299
+              ],
+              "atlas": "standing",
+              "at": [
+                3456,
+                0
+              ],
+              "small": [
+                2784,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 163,
+          "type": "TownTownHallL2",
+          "cell": [
+            92,
+            140
+          ],
+          "owner": "order",
+          "town": 2,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                4191,
+                2803,
+                758,
+                694
+              ],
+              "atlas": "rubble",
+              "at": [
+                2761,
+                1154
+              ],
+              "small": [
+                826,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                4452,
+                2941,
+                288,
+                288
+              ],
+              "atlas": "standing",
+              "at": [
+                0,
+                462
+              ],
+              "small": [
+                2858,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 13,
+          "type": "TownTownHallL3",
+          "cell": [
+            61,
+            117
+          ],
+          "owner": "order",
+          "town": 1,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                2717,
+                3968,
+                730,
+                608
+              ],
+              "atlas": "rubble",
+              "at": [
+                1616,
+                2076
+              ],
+              "small": [
+                1124,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                2948,
+                4071,
+                274,
+                274
+              ],
+              "atlas": "standing",
+              "at": [
+                565,
+                462
+              ],
+              "small": [
+                2950,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 154,
+          "type": "TownTownHallL3",
+          "cell": [
+            65,
+            84
+          ],
+          "owner": "order",
+          "town": 3,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                2982,
+                5476,
+                651,
+                603
+              ],
+              "atlas": "rubble",
+              "at": [
+                2346,
+                2076
+              ],
+              "small": [
+                1216,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                3142,
+                5668,
+                274,
+                274
+              ],
+              "atlas": "standing",
+              "at": [
+                839,
+                462
+              ],
+              "small": [
+                2985,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 268,
+          "type": "TownTownHallL3",
+          "cell": [
+            187,
+            91
+          ],
+          "owner": "chaos",
+          "town": 7,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                8795,
+                5152,
+                748,
+                577
+              ],
+              "atlas": "rubble",
+              "at": [
+                3323,
+                2076
+              ],
+              "small": [
+                1339,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                8994,
+                5278,
+                379,
+                379
+              ],
+              "atlas": "standing",
+              "at": [
+                916,
+                0
+              ],
+              "small": [
+                2251,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 269,
+          "type": "TownTownHallL3",
+          "cell": [
+            183,
+            124
+          ],
+          "owner": "chaos",
+          "town": 5,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                8632,
+                3604,
+                670,
+                922
+              ],
+              "atlas": "rubble",
+              "at": [
+                0,
+                1154
+              ],
+              "small": [
+                479,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                8800,
+                3680,
+                379,
+                379
+              ],
+              "atlas": "standing",
+              "at": [
+                1295,
+                0
+              ],
+              "small": [
+                2299,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 493,
+          "type": "TownWallRadial14L3",
+          "cell": [
+            183.5,
+            78.5
+          ],
+          "owner": "chaos",
+          "town": 7,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                8933,
+                6009,
+                112,
+                201
+              ],
+              "atlas": "rubble",
+              "at": [
+                2556,
+                3685
+              ],
+              "small": [
+                3801,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                8888,
+                6027,
+                223,
+                189
+              ],
+              "hiddenBy": [
+                {
+                  "id": 149,
+                  "at": [
+                    1846,
+                    358
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                184,
+                750
+              ],
+              "small": [
+                3815,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 494,
+          "type": "TownWallRadial15L3",
+          "cell": [
+            173.5,
+            88.5
+          ],
+          "owner": "chaos",
+          "town": 7,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                8377,
+                5495,
+                272,
+                230
+              ],
+              "atlas": "rubble",
+              "at": [
+                583,
+                3685
+              ],
+              "small": [
+                3477,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                8390,
+                5493,
+                185,
+                223
+              ],
+              "hiddenBy": [
+                {
+                  "id": 143,
+                  "at": [
+                    1293,
+                    358
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                3621,
+                462
+              ],
+              "small": [
+                3527,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 24,
+          "type": "TownWallRadial17L2",
+          "cell": [
+            142.5,
+            73
+          ],
+          "owner": "chaos",
+          "town": 8,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                6851,
+                6239,
+                243,
+                266
+              ],
+              "atlas": "rubble",
+              "at": [
+                3421,
+                3282
+              ],
+              "small": [
+                3088,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                6946,
+                6267,
+                108,
+                240
+              ],
+              "hiddenBy": [
+                {
+                  "id": 44,
+                  "at": [
+                    875,
+                    358
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                2692,
+                462
+              ],
+              "small": [
+                3363,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 570077121,
+          "type": "TownWallRadial17L2",
+          "cell": [
+            145.5,
+            59
+          ],
+          "owner": "chaos",
+          "town": 8,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                7068,
+                6955,
+                154,
+                172
+              ],
+              "atlas": "rubble",
+              "at": [
+                2842,
+                3685
+              ],
+              "small": [
+                3942,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                7101,
+                6948,
+                99,
+                237
+              ],
+              "atlas": "standing",
+              "at": [
+                3212,
+                462
+              ],
+              "small": [
+                3377,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 1971096376,
+          "type": "TownWallRadial17L2",
+          "cell": [
+            138.5,
+            137
+          ],
+          "owner": "chaos",
+          "town": 6,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                6747,
+                3140,
+                162,
+                286
+              ],
+              "atlas": "rubble",
+              "at": [
+                3259,
+                3282
+              ],
+              "small": [
+                2894,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                6752,
+                3169,
+                108,
+                240
+              ],
+              "atlas": "standing",
+              "at": [
+                2800,
+                462
+              ],
+              "small": [
+                3390,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 736214455,
+          "type": "TownWallRadial18L2",
+          "cell": [
+            140.5,
+            151
+          ],
+          "owner": "chaos",
+          "town": 6,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                6853,
+                2531,
+                122,
+                153
+              ],
+              "atlas": "rubble",
+              "at": [
+                3488,
+                3685
+              ],
+              "small": [
+                189,
+                145
+              ]
+            },
+            "standing": {
+              "rect": [
+                6851,
+                2446,
+                105,
+                242
+              ],
+              "hiddenBy": [
+                {
+                  "id": 21,
+                  "at": [
+                    770,
+                    358
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                2587,
+                462
+              ],
+              "small": [
+                3241,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 492,
+          "type": "TownWallRadial20L3",
+          "cell": [
+            170.5,
+            126.5
+          ],
+          "owner": "chaos",
+          "town": 5,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                8150,
+                3635,
+                292,
+                266
+              ],
+              "atlas": "rubble",
+              "at": [
+                3664,
+                3282
+              ],
+              "small": [
+                3119,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                8241,
+                3670,
+                189,
+                224
+              ],
+              "hiddenBy": [
+                {
+                  "id": 2,
+                  "at": [
+                    1104,
+                    358
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                3432,
+                462
+              ],
+              "small": [
+                3551,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 491,
+          "type": "TownWallRadial21L3",
+          "cell": [
+            180.5,
+            136.5
+          ],
+          "owner": "chaos",
+          "town": 5,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                8728,
+                3229,
+                170,
+                135
+              ],
+              "atlas": "rubble",
+              "at": [
+                3780,
+                3685
+              ],
+              "small": [
+                271,
+                145
+              ]
+            },
+            "standing": {
+              "rect": [
+                8739,
+                3170,
+                224,
+                189
+              ],
+              "hiddenBy": [
+                {
+                  "id": 144,
+                  "at": [
+                    2069,
+                    358
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                407,
+                750
+              ],
+              "small": [
+                3843,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 488,
+          "type": "TownWallRadial2L3",
+          "cell": [
+            64.5,
+            129.5
+          ],
+          "owner": "order",
+          "town": 1,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                3126,
+                3537,
+                176,
+                154
+              ],
+              "atlas": "rubble",
+              "at": [
+                3312,
+                3685
+              ],
+              "small": [
+                205,
+                145
+              ]
+            },
+            "standing": {
+              "rect": [
+                3126,
+                3521,
+                216,
+                167
+              ],
+              "hiddenBy": [
+                {
+                  "id": 94,
+                  "at": [
+                    3531,
+                    358
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                1359,
+                750
+              ],
+              "small": [
+                62,
+                145
+              ]
+            }
+          }
+        },
+        {
+          "id": 487,
+          "type": "TownWallRadial3L3",
+          "cell": [
+            74.5,
+            119.5
+          ],
+          "owner": "order",
+          "town": 1,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                3604,
+                3937,
+                254,
+                331
+              ],
+              "atlas": "rubble",
+              "at": [
+                2610,
+                3282
+              ],
+              "small": [
+                2612,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                3634,
+                3995,
+                184,
+                218
+              ],
+              "hiddenBy": [
+                {
+                  "id": 93,
+                  "at": [
+                    1478,
+                    358
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                3806,
+                462
+              ],
+              "small": [
+                3575,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 48,
+          "type": "TownWallRadial5L2",
+          "cell": [
+            105.5,
+            135
+          ],
+          "owner": "order",
+          "town": 2,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                5108,
+                3125,
+                235,
+                445
+              ],
+              "atlas": "rubble",
+              "at": [
+                2142,
+                2761
+              ],
+              "small": [
+                1761,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                5177,
+                3246,
+                122,
+                243
+              ],
+              "hiddenBy": [
+                {
+                  "id": 89,
+                  "at": [
+                    526,
+                    358
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                2343,
+                462
+              ],
+              "small": [
+                3255,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 806262366,
+          "type": "TownWallRadial5L2",
+          "cell": [
+            102.5,
+            149
+          ],
+          "owner": "order",
+          "town": 2,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                4970,
+                2522,
+                223,
+                370
+              ],
+              "atlas": "rubble",
+              "at": [
+                1586,
+                3282
+              ],
+              "small": [
+                2347,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                5028,
+                2577,
+                121,
+                231
+              ],
+              "hiddenBy": [
+                {
+                  "id": 86,
+                  "at": [
+                    983,
+                    358
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                3311,
+                462
+              ],
+              "small": [
+                3511,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 1263872499,
+          "type": "TownWallRadial5L2",
+          "cell": [
+            109.5,
+            71
+          ],
+          "owner": "order",
+          "town": 4,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                5326,
+                6281,
+                208,
+                369
+              ],
+              "atlas": "rubble",
+              "at": [
+                1809,
+                3282
+              ],
+              "small": [
+                2375,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                5371,
+                6344,
+                122,
+                243
+              ],
+              "hiddenBy": [
+                {
+                  "id": 85,
+                  "at": [
+                    648,
+                    358
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                2465,
+                462
+              ],
+              "small": [
+                3271,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 978165572,
+          "type": "TownWallRadial6L2",
+          "cell": [
+            107.5,
+            57
+          ],
+          "owner": "order",
+          "town": 4,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                5145,
+                6945,
+                345,
+                435
+              ],
+              "atlas": "rubble",
+              "at": [
+                2842,
+                2761
+              ],
+              "small": [
+                1908,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                5265,
+                7004,
+                121,
+                267
+              ],
+              "hiddenBy": [
+                {
+                  "id": 87,
+                  "at": [
+                    3872,
+                    0
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                1655,
+                462
+              ],
+              "small": [
+                3156,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 489,
+          "type": "TownWallRadial8L3",
+          "cell": [
+            77.5,
+            81.5
+          ],
+          "owner": "order",
+          "town": 3,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                3776,
+                5843,
+                174,
+                180
+              ],
+              "atlas": "rubble",
+              "at": [
+                2668,
+                3685
+              ],
+              "small": [
+                3871,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                3781,
+                5845,
+                184,
+                218
+              ],
+              "hiddenBy": [
+                {
+                  "id": 114,
+                  "at": [
+                    1662,
+                    358
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                0,
+                750
+              ],
+              "small": [
+                3598,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "id": 490,
+          "type": "TownWallRadial9L3",
+          "cell": [
+            67.5,
+            71.5
+          ],
+          "owner": "order",
+          "town": 3,
+          "core": false,
+          "states": {
+            "rubble": {
+              "rect": [
+                3191,
+                6312,
+                365,
+                399
+              ],
+              "atlas": "rubble",
+              "at": [
+                390,
+                3282
+              ],
+              "small": [
+                2100,
+                0
+              ]
+            },
+            "standing": {
+              "rect": [
+                3274,
+                6353,
+                218,
+                184
+              ],
+              "hiddenBy": [
+                {
+                  "id": 27,
+                  "at": [
+                    2293,
+                    358
+                  ]
+                }
+              ],
+              "atlas": "standing",
+              "at": [
+                631,
+                750
+              ],
+              "small": [
+                3893,
+                0
+              ]
+            }
+          }
+        }
+      ],
+      "towns": [
+        {
+          "town": 1,
+          "lane": 1,
+          "owner": "order",
+          "region": 2,
+          "name": "Lane 1 - Order - Town 1"
+        },
+        {
+          "town": 2,
+          "lane": 1,
+          "owner": "order",
+          "region": 4,
+          "name": "Lane 1 - Order - Town 2"
+        },
+        {
+          "town": 3,
+          "lane": 2,
+          "owner": "order",
+          "region": 12,
+          "name": "Lane 2 - Order - Town 1"
+        },
+        {
+          "town": 4,
+          "lane": 2,
+          "owner": "order",
+          "region": 13,
+          "name": "Lane 2 - Order - Town 2"
+        },
+        {
+          "town": 5,
+          "lane": 1,
+          "owner": "chaos",
+          "region": 17,
+          "name": "Lane 1 - Chaos - Town 1"
+        },
+        {
+          "town": 6,
+          "lane": 1,
+          "owner": "chaos",
+          "region": 21,
+          "name": "Lane 1 - Chaos - Town 2"
+        },
+        {
+          "town": 7,
+          "lane": 2,
+          "owner": "chaos",
+          "region": 30,
+          "name": "Lane 2 - Chaos - Town 1"
+        },
+        {
+          "town": 8,
+          "lane": 2,
+          "owner": "chaos",
+          "region": 22,
+          "name": "Lane 2 - Chaos Town 2"
+        }
+      ],
+      "camps": [
+        {
+          "camp": 1,
+          "type": "SiegeCamp1",
+          "cell": [
+            120.962,
+            165.775
+          ],
+          "states": {
+            "spawned": {
+              "rect": [
+                5801,
+                1765,
+                304,
+                239
+              ],
+              "atlas": "standing",
+              "at": [
+                2908,
+                462
+              ],
+              "small": [
+                3404,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "camp": 2,
+          "type": "BruiserCamp1",
+          "cell": [
+            95.858,
+            94.95
+          ],
+          "states": {
+            "spawned": {
+              "rect": [
+                4667,
+                5129,
+                170,
+                338
+              ],
+              "atlas": "standing",
+              "at": [
+                2347,
+                0
+              ],
+              "small": [
+                2541,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "camp": 3,
+          "type": "SiegeCamp1",
+          "cell": [
+            126.965,
+            42.47
+          ],
+          "states": {
+            "spawned": {
+              "rect": [
+                6115,
+                7717,
+                304,
+                248
+              ],
+              "atlas": "standing",
+              "at": [
+                2039,
+                462
+              ],
+              "small": [
+                3287,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "camp": 4,
+          "type": "BruiserCamp1",
+          "cell": [
+            152.285,
+            113.035
+          ],
+          "states": {
+            "spawned": {
+              "rect": [
+                7360,
+                4275,
+                192,
+                318
+              ],
+              "atlas": "standing",
+              "at": [
+                2961,
+                0
+              ],
+              "small": [
+                2672,
+                0
+              ]
+            }
+          }
+        }
+      ],
+      "atlases": {
+        "standing": {
+          "file": "elements/standing.webp",
+          "size": [
+            4047,
+            1091
+          ],
+          "scale": 1
+        },
+        "rubble": {
+          "file": "elements/rubble.webp",
+          "size": [
+            4071,
+            4067
+          ],
+          "scale": 1
+        },
+        "masks": {
+          "file": "elements/masks.webp",
+          "size": [
+            4073,
+            746
+          ],
+          "scale": 1
+        },
+        "small": {
+          "file": "elements/small.webp",
+          "size": [
+            4089,
+            166
+          ],
+          "scale": 0.125
+        }
+      }
+    }
+  },
+  "files": {
+    "background.pmtiles": {
+      "bytes": 3774625,
+      "sha256": "036e701947ace94f852b8130088310542fe8115086c8da123015fa77952f85c9"
+    },
+    "fixed.webp": {
+      "bytes": 24998,
+      "sha256": "a098236698fd737f89cd7bbc4a8026fd5af4395c5a717d0e02cb1e80af13327d"
+    },
+    "haze.pmtiles": {
+      "bytes": 11733097,
+      "sha256": "518acbadf5ace48836e921dbe8494dcb839e21b8249d5658bd352f72f342ff4f"
+    },
+    "images/custom-minimap-hover.png": {
+      "bytes": 16366,
+      "sha256": "2b54dc3908b1a87ced3f11ec20f6555a339f53f4b4d35b406764043be0f2f987"
+    },
+    "images/custom-minimap.png": {
+      "bytes": 49177,
+      "sha256": "d0fb6ed9ebe98b00e736ab95fc3baff25d627e672665b66556fc4fed53f76f35"
+    },
+    "images/custom-minimap.svg": {
+      "bytes": 52235,
+      "sha256": "7de9a0086dbe42a692555b3d1729739343d6afdbd3d2a38f7783309c3474a089"
+    },
+    "images/map-select.png": {
+      "bytes": 334449,
+      "sha256": "1f6e2d2916191fe97ad583baf96210f2fa1821995fca25562dbe72f6314c51fb"
+    },
+    "images/minimap.png": {
+      "bytes": 54642,
+      "sha256": "eae2909c84929f46e96e82c96375c6c242bd54aa69a1ad43c8621636169ce68f"
+    },
+    "images/replay-preview.png": {
+      "bytes": 187074,
+      "sha256": "fd3e0eca3636781779654e706bee05a8b8da8f494b0e52f3b57475ed3a2ad9be"
+    },
+    "index.html": {
+      "bytes": 30320,
+      "sha256": "9b5c90e50c684822a3e2aea2bec0939ac20e94199759c129df0c4895f676ccb6"
+    },
+    "map.pmtiles": {
+      "bytes": 10464106,
+      "sha256": "fecb245a019f4d68b20c06a48130cc53dfb63fc7a5de4b44c17afbcd9b3e9a9e"
+    },
+    "thumbnail.webp": {
+      "bytes": 20680,
+      "sha256": "eba1c170dcc5d5ad6add794be75708e362f88606436cdc01f29a5f89ddc3895e"
+    },
+    "elements/standing.webp": {
+      "bytes": 1,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "elements/rubble.webp": {
+      "bytes": 1,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "elements/masks.webp": {
+      "bytes": 1,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "elements/small.webp": {
+      "bytes": 1,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  }
+}

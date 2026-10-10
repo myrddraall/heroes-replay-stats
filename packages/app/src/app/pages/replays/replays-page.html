@@ -1,0 +1,8 @@
+<hrs-layout>
+  <hrs-replay-list
+    [cards]="store.cards()"
+    [loaded]="store.loaded()"
+    [error]="store.error()"
+    (importRequested)="store.importReplays()"
+  />
+</hrs-layout>

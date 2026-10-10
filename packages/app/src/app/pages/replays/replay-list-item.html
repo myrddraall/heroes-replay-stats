@@ -1,0 +1,56 @@
+<article class="replay" [attr.aria-label]="label()">
+  @if (preview(); as src) {
+    <div class="replay__preview">
+      <img [ngSrc]="src" fill alt="" />
+    </div>
+  }
+  <header class="replay__head">
+    <h2 class="replay__map">{{ replay().map }}</h2>
+    <span class="replay__mode">{{ mode() }}</span>
+    <span class="replay__dates">
+      <span class="replay__played">
+        Played
+        <time [attr.datetime]="replay().playedAt">{{
+          replay().playedAt | date: 'MMM d, y, HH:mm'
+        }}</time>
+      </span>
+      <span class="replay__imported">
+        Imported
+        <time [attr.datetime]="replay().importedAt">{{
+          replay().importedAt | date: 'MMM d, y, HH:mm'
+        }}</time>
+      </span>
+    </span>
+  </header>
+  <p class="replay__meta">
+    {{ duration() }} · build {{ replay().build }}
+    @if (replay().status === 'ready') {
+      · <span class="replay__analysing">analysing…</span>
+    }
+  </p>
+  <div class="replay__teams">
+    @for (team of teams(); track team.team) {
+      <div class="team" [class.team--won]="team.won" [hrsTeam]="team.team">
+        <span class="team__name">
+          {{ team.name }}
+          @if (team.won !== null) {
+            <span class="team__result">{{ team.won ? 'Victory' : 'Defeat' }}</span>
+          }
+        </span>
+        <ul class="team__players">
+          @for (p of team.players; track p.slot) {
+            <li class="player">
+              <hrs-hero-minimap-icon
+                class="player__icon"
+                [src]="icons()[p.slot]?.src ?? null"
+                [name]="icons()[p.slot]?.name ?? p.hero"
+              />
+              <span class="player__hero">{{ p.hero }}</span>
+              <span class="player__name">{{ p.name }}</span>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+  </div>
+</article>

@@ -1,0 +1,29 @@
+<header class="head">
+  <h1>Maps</h1>
+</header>
+@if (error(); as error) {
+  <p class="error" role="alert">The list of maps could not be loaded: {{ error }}</p>
+} @else if (loading()) {
+  <mat-progress-bar mode="indeterminate" aria-label="Loading the maps" />
+} @else {
+  <ul class="maps">
+    @for (map of maps(); track map.id) {
+      <li>
+        <a class="map" [routerLink]="map.id">
+          @if (map.thumbnail && map.thumbnailUrl) {
+            <img
+              class="map__picture"
+              [ngSrc]="map.thumbnailUrl"
+              [width]="map.thumbnail.size[0]"
+              [height]="map.thumbnail.size[1]"
+              [priority]="$first"
+              alt=""
+            />
+          }
+          <span class="map__name">{{ map.name }}</span>
+          <span class="map__details">{{ map.category }} · game build {{ map.gameBuild }}</span>
+        </a>
+      </li>
+    }
+  </ul>
+}

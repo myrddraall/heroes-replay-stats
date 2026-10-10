@@ -1,0 +1,9 @@
+// The ingest worker (the src tree's *.worker.ts files), built by the Angular builder's web worker support.
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["es2022", "webworker"],
+    "types": []
+  },
+  "include": ["src/**/*.worker.ts"]
+}

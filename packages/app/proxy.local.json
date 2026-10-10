@@ -1,0 +1,6 @@
+{
+  "/maps-local": {
+    "target": "http://localhost:4208",
+    "pathRewrite": { "^/maps-local": "/maps" }
+  }
+}
