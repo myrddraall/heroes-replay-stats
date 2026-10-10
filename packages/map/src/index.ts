@@ -4,7 +4,7 @@
 
 // data-access: the pack format, the catalog, and loading a map
 export type * from './lib/pack/map-pack';
-export type { MapCatalog, MapCatalogEntry } from './lib/pack/map-catalog';
+export { readableMaps, type MapCatalog, type MapCatalogEntry } from './lib/pack/map-catalog';
 export type { MapAssets, MapViewModel, TileArchive } from './lib/pack/map-assets';
 export { HttpMapAssets } from './lib/pack/http-map-assets';
 export { MAP_PACKS_URL, MapPacksService } from './lib/pack/map-packs.service';

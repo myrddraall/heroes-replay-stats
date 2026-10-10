@@ -8,8 +8,8 @@
  * The folder is heroes-capture's output (`maps\`): each map at <folder>/<id>/pack/ or, for an
  * elements render, <folder>/<id>/elements/pack/ (preferred). By default
  * ../heroes-capture/tmp/results/maps next to this repository, on port 4208. The packs are read as
- * they are, on every request: a new render shows on the next reload. Only packs of the format the
- * viewer reads (MAP_PACK_FORMAT) are listed; older renders are named at start-up and left out.
+ * they are, on every request: a new render shows on the next reload. Every pack is listed with its
+ * format (`packFormat`, as heroes-maps' catalog gives it); the app shows only those it can read.
  */
 import { createReadStream } from 'node:fs';
 import { readdir, readFile, stat } from 'node:fs/promises';
@@ -73,16 +73,10 @@ async function allPacks(): Promise<Map<string, Found>> {
   return found;
 }
 
-/** The packs the viewer can read: those of its format. */
-async function packs(): Promise<Map<string, Found>> {
-  const all = await allPacks();
-  return new Map([...all].filter(([, { pack }]) => pack.format === MAP_PACK_FORMAT));
-}
-
 /** The catalog as heroes-maps writes it (its tools/catalog.mjs), from the packs found. */
 async function catalog(): Promise<string> {
   const maps = [];
-  for (const [id, { pack }] of await packs()) {
+  for (const [id, { pack }] of await allPacks()) {
     const thumbnail = pack.images.thumbnail;
     maps.push({
       id,
@@ -90,6 +84,7 @@ async function catalog(): Promise<string> {
       category: pack.map.category,
       gameBuild: pack.gameBuild,
       tool: pack.tool,
+      packFormat: pack.format,
       structures: pack.map.structures,
       path: `${id}/`,
       pack: `${id}/pack.json`,
@@ -127,7 +122,7 @@ async function serve(req: IncomingMessage, res: ServerResponse): Promise<void> {
     return;
   }
   const [, id, name] = /^\/maps\/([^/]+)\/(.+)$/.exec(path) ?? [];
-  const dir = id ? (await packs()).get(id)?.dir : undefined;
+  const dir = id ? (await allPacks()).get(id)?.dir : undefined;
   const file = dir && name ? join(dir, name) : null;
   const info = file ? await stat(file).catch(() => null) : null;
   if (!file || !info?.isFile()) {
@@ -162,17 +157,14 @@ createServer((req, res) => {
   });
 }).listen(port, async () => {
   const all = [...(await allPacks())];
-  const served = all.filter(([, { pack }]) => pack.format === MAP_PACK_FORMAT).map(([id]) => id);
-  const skipped = all
-    .filter(([, { pack }]) => pack.format !== MAP_PACK_FORMAT)
-    .map(([id, { pack }]) => `${id} (format ${pack.format})`);
+  const named = all.map(([id, { pack }]) => `${id} (format ${pack.format})`);
   const where = `http://localhost:${port}/maps/`;
   console.log(
-    `serving ${served.length} map(s) from ${folder} at ${where}: ${served.join(', ') || 'none yet'}`,
+    `serving ${all.length} map(s) from ${folder} at ${where}: ${named.join(', ') || 'none yet'}`,
   );
-  if (skipped.length) {
+  const unreadable = all.filter(([, { pack }]) => pack.format !== MAP_PACK_FORMAT).length;
+  if (unreadable)
     console.log(
-      `left out, not pack format ${MAP_PACK_FORMAT}, which the viewer reads: ${skipped.join(', ')}`,
+      `${unreadable} not pack format ${MAP_PACK_FORMAT}: the app lists only the ones it reads`,
     );
-  }
 });

@@ -9,8 +9,16 @@ export const MAP_PACKS_URL = new InjectionToken<string>('MAP_PACKS_URL', {
   factory: () => 'https://myrddraall.github.io/heroes-maps/maps/',
 });
 
+/**
+ * A JSON file of heroes-maps', always revalidated (`no-cache`): the catalog and a pack's
+ * `pack.json` are the files that change when a map is republished, and GitHub Pages lets a browser
+ * keep them for ten minutes otherwise. The pack's other files are cached by their hashes.
+ */
 async function json<T>(url: string, abortSignal?: AbortSignal): Promise<T> {
-  const answer = await fetch(url, abortSignal ? { signal: abortSignal } : {});
+  const answer = await fetch(url, {
+    cache: 'no-cache',
+    ...(abortSignal ? { signal: abortSignal } : {}),
+  });
   if (!answer.ok) throw new Error(`${url}: ${answer.status} ${answer.statusText}`);
   return (await answer.json()) as T;
 }
