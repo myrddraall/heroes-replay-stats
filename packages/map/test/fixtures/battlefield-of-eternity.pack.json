@@ -1,5 +1,5 @@
 {
-  "format": 1,
+  "format": 3,
   "tool": "heroes-capture 0.0.0-dev",
   "gameBuild": 98348,
   "map": {
@@ -43,59 +43,83 @@
       "kind": "parallax",
       "file": "background.pmtiles",
       "size": [
-        8509,
-        4788
+        14200,
+        7152
       ],
-      "rate": 0.4572850542148292,
+      "rate": 0.4573651791148446,
       "centreCell": [
         124.0,
         103.0
       ],
       "centrePixel": [
-        4222.0,
-        2571.0
+        7093.0,
+        4959.0
       ],
-      "pxPerCell": 22.1408277549736,
+      "pxPerCell": 22.144707242382545,
       "levels": 6,
-      "tileSize": 512
+      "tileSize": 512,
+      "overview": {
+        "file": "background-overview.webp",
+        "level": 2,
+        "size": [
+          1775,
+          894
+        ]
+      }
     },
     {
       "id": "haze",
       "kind": "parallax",
       "file": "haze.pmtiles",
       "size": [
-        8724,
-        4914
+        14368,
+        7320
       ],
-      "rate": 0.47505,
+      "rate": 0.47906313227025044,
       "centreCell": [
         124.0,
         103.0
       ],
       "centrePixel": [
-        4330.0,
-        2649.0
+        7181.0,
+        5063.0
       ],
-      "pxPerCell": 23.0009709,
+      "pxPerCell": 23.195278738260985,
       "levels": 6,
-      "tileSize": 512
+      "tileSize": 512,
+      "overview": {
+        "file": "haze-overview.webp",
+        "level": 2,
+        "size": [
+          1796,
+          915
+        ]
+      }
     },
     {
       "id": "map",
       "kind": "map",
       "file": "map.pmtiles",
       "size": [
-        12862,
-        9259
+        12865,
+        9260
       ],
       "rate": 1.0,
       "originCell": [
-        -2.1901028633661492,
-        204.42337481268564
+        -2.2520540992672387,
+        204.4410579105443
       ],
-      "pxPerCell": 48.39955317764385,
+      "pxPerCell": 48.40025825110766,
       "levels": 6,
-      "tileSize": 512
+      "tileSize": 512,
+      "overview": {
+        "file": "map-overview.webp",
+        "level": 2,
+        "size": [
+          1609,
+          1158
+        ]
+      }
     }
   ],
   "images": {
@@ -177,21 +201,37 @@
           "core": true,
           "states": {
             "rubble": {
-              "file": "elements/structure-210-rubble.webp",
               "rect": [
-                1483,
-                4418,
-                1924,
-                1215
+                1661,
+                4521,
+                1854,
+                1084
+              ],
+              "atlas": "rubble",
+              "at": [
+                1973,
+                0
+              ],
+              "small": [
+                247,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-210-standing.webp",
               "rect": [
-                2256,
-                4834,
-                461,
-                446
+                2260,
+                4837,
+                457,
+                440
+              ],
+              "atlas": "standing",
+              "at": [
+                459,
+                0
+              ],
+              "small": [
+                1791,
+                0
               ]
             }
           }
@@ -208,21 +248,37 @@
           "core": true,
           "states": {
             "rubble": {
-              "file": "elements/structure-346-rubble.webp",
               "rect": [
-                8928,
-                4118,
-                1667,
-                1179
+                8753,
+                4157,
+                1973,
+                1154
+              ],
+              "atlas": "rubble",
+              "at": [
+                0,
+                0
+              ],
+              "small": [
+                0,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-346-standing.webp",
               "rect": [
-                9508,
-                4439,
-                460,
-                466
+                9512,
+                4442,
+                459,
+                462
+              ],
+              "atlas": "standing",
+              "at": [
+                0,
+                0
+              ],
+              "small": [
+                1644,
+                0
               ]
             }
           }
@@ -239,31 +295,53 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-21-rubble.webp",
               "rect": [
-                6781,
-                2633,
-                185,
-                383
+                6727,
+                2626,
+                279,
+                417
+              ],
+              "atlas": "rubble",
+              "at": [
+                3187,
+                2761
+              ],
+              "small": [
+                1952,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-21-standing.webp",
               "rect": [
-                6812,
-                2672,
+                6815,
+                2673,
                 143,
                 116
               ],
               "hiddenBy": [
                 {
                   "id": 19,
-                  "file": "elements/structure-21-standing-under-19.webp"
+                  "at": [
+                    973,
+                    621
+                  ]
                 },
                 {
                   "id": 736214455,
-                  "file": "elements/structure-21-standing-under-736214455.webp"
+                  "at": [
+                    1116,
+                    621
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                420,
+                968
+              ],
+              "small": [
+                424,
+                145
               ]
             }
           }
@@ -280,31 +358,53 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-44-rubble.webp",
               "rect": [
-                6958,
-                6445,
+                6961,
+                6446,
                 127,
                 119
+              ],
+              "atlas": "rubble",
+              "at": [
+                115,
+                3942
+              ],
+              "small": [
+                442,
+                145
               ]
             },
             "standing": {
-              "file": "elements/structure-44-standing.webp",
               "rect": [
-                6958,
-                6445,
+                6961,
+                6446,
                 140,
                 119
               ],
               "hiddenBy": [
                 {
                   "id": 22,
-                  "file": "elements/structure-44-standing-under-22.webp"
+                  "at": [
+                    548,
+                    621
+                  ]
                 },
                 {
                   "id": 24,
-                  "file": "elements/structure-44-standing-under-24.webp"
+                  "at": [
+                    688,
+                    621
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                135,
+                968
+              ],
+              "small": [
+                458,
+                145
               ]
             }
           }
@@ -321,27 +421,46 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-47-rubble.webp",
               "rect": [
-                7054,
-                6834,
+                7057,
+                6835,
                 128,
                 117
+              ],
+              "atlas": "rubble",
+              "at": [
+                660,
+                3942
+              ],
+              "small": [
+                476,
+                145
               ]
             },
             "standing": {
-              "file": "elements/structure-47-standing.webp",
               "rect": [
-                7054,
-                6834,
+                7057,
+                6835,
                 145,
                 117
               ],
               "hiddenBy": [
                 {
                   "id": 22,
-                  "file": "elements/structure-47-standing-under-22.webp"
+                  "at": [
+                    828,
+                    621
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                275,
+                968
+              ],
+              "small": [
+                492,
+                145
               ]
             }
           }
@@ -358,31 +477,53 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-57-rubble.webp",
               "rect": [
-                6723,
-                3056,
+                6726,
+                3057,
                 116,
                 125
+              ],
+              "atlas": "rubble",
+              "at": [
+                3950,
+                3685
+              ],
+              "small": [
+                293,
+                145
               ]
             },
             "standing": {
-              "file": "elements/structure-57-standing.webp",
               "rect": [
-                6723,
-                3056,
+                6726,
+                3057,
                 139,
                 125
               ],
               "hiddenBy": [
                 {
                   "id": 19,
-                  "file": "elements/structure-57-standing-under-19.webp"
+                  "at": [
+                    0,
+                    621
+                  ]
                 },
                 {
                   "id": 1971096376,
-                  "file": "elements/structure-57-standing-under-1971096376.webp"
+                  "at": [
+                    139,
+                    621
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                3464,
+                750
+              ],
+              "small": [
+                308,
+                145
               ]
             }
           }
@@ -399,31 +540,53 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-85-rubble.webp",
               "rect": [
-                5306,
-                6466,
-                259,
-                344
+                5281,
+                6501,
+                301,
+                237
+              ],
+              "atlas": "rubble",
+              "at": [
+                282,
+                3685
+              ],
+              "small": [
+                3325,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-85-standing.webp",
               "rect": [
-                5372,
-                6546,
+                5375,
+                6547,
                 115,
                 112
               ],
               "hiddenBy": [
                 {
                   "id": 146,
-                  "file": "elements/structure-85-standing-under-146.webp"
+                  "at": [
+                    1259,
+                    621
+                  ]
                 },
                 {
                   "id": 1263872499,
-                  "file": "elements/structure-85-standing-under-1263872499.webp"
+                  "at": [
+                    1374,
+                    621
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                563,
+                968
+              ],
+              "small": [
+                581,
+                145
               ]
             }
           }
@@ -440,31 +603,53 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-86-rubble.webp",
               "rect": [
-                4945,
-                2779,
-                284,
-                165
+                4938,
+                2704,
+                282,
+                257
+              ],
+              "atlas": "rubble",
+              "at": [
+                0,
+                3685
+              ],
+              "small": [
+                3172,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-86-standing.webp",
               "rect": [
-                5026,
-                2778,
+                5029,
+                2779,
                 128,
                 100
               ],
               "hiddenBy": [
                 {
                   "id": 32,
-                  "file": "elements/structure-86-standing-under-32.webp"
+                  "at": [
+                    3133,
+                    621
+                  ]
                 },
                 {
                   "id": 806262366,
-                  "file": "elements/structure-86-standing-under-806262366.webp"
+                  "at": [
+                    3261,
+                    621
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                1967,
+                968
+              ],
+              "small": [
+                766,
+                145
               ]
             }
           }
@@ -481,31 +666,53 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-87-rubble.webp",
               "rect": [
-                5219,
-                6929,
-                192,
-                116
+                5244,
+                6942,
+                170,
+                148
+              ],
+              "atlas": "rubble",
+              "at": [
+                3610,
+                3685
+              ],
+              "small": [
+                227,
+                145
               ]
             },
             "standing": {
-              "file": "elements/structure-87-standing.webp",
               "rect": [
-                5268,
-                6939,
+                5271,
+                6940,
                 128,
                 102
               ],
               "hiddenBy": [
                 {
                   "id": 146,
-                  "file": "elements/structure-87-standing-under-146.webp"
+                  "at": [
+                    2877,
+                    621
+                  ]
                 },
                 {
                   "id": 978165572,
-                  "file": "elements/structure-87-standing-under-978165572.webp"
+                  "at": [
+                    3005,
+                    621
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                1839,
+                968
+              ],
+              "small": [
+                782,
+                145
               ]
             }
           }
@@ -522,31 +729,53 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-89-rubble.webp",
               "rect": [
                 5002,
-                3112,
-                388,
-                538
+                3115,
+                289,
+                209
+              ],
+              "atlas": "rubble",
+              "at": [
+                1560,
+                3685
+              ],
+              "small": [
+                3621,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-89-standing.webp",
               "rect": [
-                5123,
-                3163,
+                5126,
+                3164,
                 128,
                 105
               ],
               "hiddenBy": [
                 {
                   "id": 32,
-                  "file": "elements/structure-89-standing-under-32.webp"
+                  "at": [
+                    2621,
+                    621
+                  ]
                 },
                 {
                   "id": 48,
-                  "file": "elements/structure-89-standing-under-48.webp"
+                  "at": [
+                    2749,
+                    621
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                1711,
+                968
+              ],
+              "small": [
+                596,
+                145
               ]
             }
           }
@@ -563,31 +792,53 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-2-rubble.webp",
               "rect": [
-                8372,
-                3592,
+                8375,
+                3593,
                 123,
                 117
+              ],
+              "atlas": "rubble",
+              "at": [
+                788,
+                3942
+              ],
+              "small": [
+                511,
+                145
               ]
             },
             "standing": {
-              "file": "elements/structure-2-standing.webp",
               "rect": [
-                8341,
-                3559,
-                167,
+                8344,
+                3560,
+                166,
                 171
               ],
               "hiddenBy": [
                 {
                   "id": 1814,
-                  "file": "elements/structure-2-standing-under-1814.webp"
+                  "at": [
+                    2511,
+                    358
+                  ]
                 },
                 {
                   "id": 492,
-                  "file": "elements/structure-2-standing-under-492.webp"
+                  "at": [
+                    2677,
+                    358
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                849,
+                750
+              ],
+              "small": [
+                3921,
+                0
               ]
             }
           }
@@ -604,31 +855,53 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-27-rubble.webp",
               "rect": [
-                3400,
-                6293,
-                171,
-                165
+                3319,
+                6305,
+                296,
+                201
+              ],
+              "atlas": "rubble",
+              "at": [
+                2260,
+                3685
+              ],
+              "small": [
+                3738,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-27-standing.webp",
               "rect": [
-                3437,
-                6304,
+                3440,
+                6305,
                 114,
                 112
               ],
               "hiddenBy": [
                 {
                   "id": 1810,
-                  "file": "elements/structure-27-standing-under-1810.webp"
+                  "at": [
+                    1489,
+                    621
+                  ]
                 },
                 {
                   "id": 490,
-                  "file": "elements/structure-27-standing-under-490.webp"
+                  "at": [
+                    1603,
+                    621
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                678,
+                968
+              ],
+              "small": [
+                612,
+                145
               ]
             }
           }
@@ -645,31 +918,53 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-93-rubble.webp",
               "rect": [
-                3571,
-                3925,
-                159,
-                136
+                3556,
+                3937,
+                162,
+                111
+              ],
+              "atlas": "rubble",
+              "at": [
+                911,
+                3942
+              ],
+              "small": [
+                627,
+                145
               ]
             },
             "standing": {
-              "file": "elements/structure-93-standing.webp",
               "rect": [
-                3584,
-                3936,
+                3587,
+                3937,
                 108,
                 109
               ],
               "hiddenBy": [
                 {
                   "id": 1811,
-                  "file": "elements/structure-93-standing-under-1811.webp"
+                  "at": [
+                    1963,
+                    621
+                  ]
                 },
                 {
                   "id": 487,
-                  "file": "elements/structure-93-standing-under-487.webp"
+                  "at": [
+                    2071,
+                    621
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                1160,
+                968
+              ],
+              "small": [
+                648,
+                145
               ]
             }
           }
@@ -686,31 +981,53 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-94-rubble.webp",
               "rect": [
-                3271,
-                3644,
-                166,
-                124
+                3258,
+                3638,
+                178,
+                118
+              ],
+              "atlas": "rubble",
+              "at": [
+                482,
+                3942
+              ],
+              "small": [
+                527,
+                145
               ]
             },
             "standing": {
-              "file": "elements/structure-94-standing.webp",
               "rect": [
-                3293,
-                3646,
+                3296,
+                3647,
                 110,
                 108
               ],
               "hiddenBy": [
                 {
                   "id": 1811,
-                  "file": "elements/structure-94-standing-under-1811.webp"
+                  "at": [
+                    2179,
+                    621
+                  ]
                 },
                 {
                   "id": 488,
-                  "file": "elements/structure-94-standing-under-488.webp"
+                  "at": [
+                    2289,
+                    621
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                1268,
+                968
+              ],
+              "small": [
+                662,
+                145
               ]
             }
           }
@@ -727,31 +1044,53 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-114-rubble.webp",
               "rect": [
-                3696,
-                5884,
-                193,
-                339
+                3700,
+                5940,
+                167,
+                335
+              ],
+              "atlas": "rubble",
+              "at": [
+                2443,
+                3282
+              ],
+              "small": [
+                2563,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-114-standing.webp",
               "rect": [
-                3728,
-                6015,
-                110,
+                3730,
+                6016,
+                111,
                 108
               ],
               "hiddenBy": [
                 {
                   "id": 1810,
-                  "file": "elements/structure-114-standing-under-1810.webp"
+                  "at": [
+                    2399,
+                    621
+                  ]
                 },
                 {
                   "id": 489,
-                  "file": "elements/structure-114-standing-under-489.webp"
+                  "at": [
+                    2510,
+                    621
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                1378,
+                968
+              ],
+              "small": [
+                676,
+                145
               ]
             }
           }
@@ -768,31 +1107,53 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-143-rubble.webp",
               "rect": [
-                8518,
-                5670,
+                8521,
+                5671,
                 119,
                 119
+              ],
+              "atlas": "rubble",
+              "at": [
+                242,
+                3942
+              ],
+              "small": [
+                550,
+                145
               ]
             },
             "standing": {
-              "file": "elements/structure-143-standing.webp",
               "rect": [
-                8484,
-                5655,
+                8487,
+                5656,
                 172,
                 168
               ],
               "hiddenBy": [
                 {
                   "id": 1815,
-                  "file": "elements/structure-143-standing-under-1815.webp"
+                  "at": [
+                    2843,
+                    358
+                  ]
                 },
                 {
                   "id": 494,
-                  "file": "elements/structure-143-standing-under-494.webp"
+                  "at": [
+                    3015,
+                    358
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                1015,
+                750
+              ],
+              "small": [
+                3962,
+                0
               ]
             }
           }
@@ -809,31 +1170,53 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-144-rubble.webp",
               "rect": [
-                8660,
-                3298,
+                8663,
+                3299,
                 115,
                 125
+              ],
+              "atlas": "rubble",
+              "at": [
+                0,
+                3942
+              ],
+              "small": [
+                326,
+                145
               ]
             },
             "standing": {
-              "file": "elements/structure-144-standing.webp",
               "rect": [
-                8631,
-                3271,
-                168,
+                8639,
+                3272,
+                163,
                 164
               ],
               "hiddenBy": [
                 {
                   "id": 1814,
-                  "file": "elements/structure-144-standing-under-1814.webp"
+                  "at": [
+                    3747,
+                    358
+                  ]
                 },
                 {
                   "id": 491,
-                  "file": "elements/structure-144-standing-under-491.webp"
+                  "at": [
+                    3910,
+                    358
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                2239,
+                750
+              ],
+              "small": [
+                3984,
+                0
               ]
             }
           }
@@ -850,31 +1233,53 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-149-rubble.webp",
               "rect": [
-                8807,
-                5960,
+                8810,
+                5961,
                 121,
-                120
+                119
+              ],
+              "atlas": "rubble",
+              "at": [
+                361,
+                3942
+              ],
+              "small": [
+                565,
+                145
               ]
             },
             "standing": {
-              "file": "elements/structure-149-standing.webp",
               "rect": [
-                8774,
-                5945,
+                8777,
+                5946,
                 172,
                 168
               ],
               "hiddenBy": [
                 {
                   "id": 1815,
-                  "file": "elements/structure-149-standing-under-1815.webp"
+                  "at": [
+                    3187,
+                    358
+                  ]
                 },
                 {
                   "id": 493,
-                  "file": "elements/structure-149-standing-under-493.webp"
+                  "at": [
+                    3359,
+                    358
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                1187,
+                750
+              ],
+              "small": [
+                4005,
+                0
               ]
             }
           }
@@ -891,21 +1296,37 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-38-rubble.webp",
               "rect": [
-                3120,
-                4786,
-                431,
-                396
+                3074,
+                4784,
+                511,
+                410
+              ],
+              "atlas": "rubble",
+              "at": [
+                3466,
+                2761
+              ],
+              "small": [
+                1987,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-38-standing.webp",
               "rect": [
-                3336,
-                4950,
+                3339,
+                4951,
                 122,
                 111
+              ],
+              "atlas": "standing",
+              "at": [
+                792,
+                968
+              ],
+              "small": [
+                690,
+                145
               ]
             }
           }
@@ -922,21 +1343,37 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-40-rubble.webp",
               "rect": [
-                8546,
-                4586,
-                350,
-                509
+                8568,
+                4564,
+                461,
+                493
+              ],
+              "atlas": "rubble",
+              "at": [
+                1211,
+                2761
+              ],
+              "small": [
+                1586,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-40-standing.webp",
               "rect": [
-                8746,
-                4656,
+                8749,
+                4657,
                 136,
-                124
+                123
+              ],
+              "atlas": "standing",
+              "at": [
+                3728,
+                750
+              ],
+              "small": [
+                341,
+                145
               ]
             }
           }
@@ -953,27 +1390,46 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-388017480-rubble.webp",
               "rect": [
-                7986,
-                4334,
-                410,
-                474
+                7964,
+                4379,
+                489,
+                377
+              ],
+              "atlas": "rubble",
+              "at": [
+                1097,
+                3282
+              ],
+              "small": [
+                2189,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-388017480-standing.webp",
               "rect": [
-                8165,
-                4463,
-                136,
-                124
+                8169,
+                4464,
+                135,
+                123
               ],
               "hiddenBy": [
                 {
                   "id": 766,
-                  "file": "elements/structure-388017480-standing-under-766.webp"
+                  "at": [
+                    278,
+                    621
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                3864,
+                750
+              ],
+              "small": [
+                358,
+                145
               ]
             }
           }
@@ -991,12 +1447,20 @@
           "states": {
             "rubble": null,
             "standing": {
-              "file": "elements/structure-439978135-standing.webp",
               "rect": [
-                7883,
-                3155,
+                7886,
+                3157,
                 125,
-                125
+                124
+              ],
+              "atlas": "standing",
+              "at": [
+                3603,
+                750
+              ],
+              "small": [
+                375,
+                145
               ]
             }
           }
@@ -1013,27 +1477,46 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-909878382-rubble.webp",
               "rect": [
-                3762,
-                4617,
-                417,
-                411
+                3723,
+                4552,
+                470,
+                456
+              ],
+              "atlas": "rubble",
+              "at": [
+                1672,
+                2761
+              ],
+              "small": [
+                1702,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-909878382-standing.webp",
               "rect": [
-                3917,
-                4756,
-                122,
+                3919,
+                4757,
+                123,
                 111
               ],
               "hiddenBy": [
                 {
                   "id": 35,
-                  "file": "elements/structure-909878382-standing-under-35.webp"
+                  "at": [
+                    1717,
+                    621
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                914,
+                968
+              ],
+              "small": [
+                706,
+                145
               ]
             }
           }
@@ -1050,27 +1533,46 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-1084430558-rubble.webp",
               "rect": [
-                3795,
-                4978,
-                383,
-                417
+                3794,
+                4995,
+                426,
+                361
+              ],
+              "atlas": "rubble",
+              "at": [
+                2017,
+                3282
+              ],
+              "small": [
+                2401,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-1084430558-standing.webp",
               "rect": [
-                3917,
-                5143,
-                122,
+                3919,
+                5144,
+                123,
                 111
               ],
               "hiddenBy": [
                 {
                   "id": 35,
-                  "file": "elements/structure-1084430558-standing-under-35.webp"
+                  "at": [
+                    1840,
+                    621
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                1037,
+                968
+              ],
+              "small": [
+                722,
+                145
               ]
             }
           }
@@ -1087,27 +1589,46 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-1106843562-rubble.webp",
               "rect": [
-                8016,
-                4743,
-                408,
-                357
+                8010,
+                4659,
+                465,
+                436
+              ],
+              "atlas": "rubble",
+              "at": [
+                2377,
+                2761
+              ],
+              "small": [
+                1849,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-1106843562-standing.webp",
               "rect": [
-                8165,
-                4850,
-                136,
-                124
+                8169,
+                4851,
+                135,
+                123
               ],
               "hiddenBy": [
                 {
                   "id": 766,
-                  "file": "elements/structure-1106843562-standing-under-766.webp"
+                  "at": [
+                    413,
+                    621
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                0,
+                968
+              ],
+              "small": [
+                391,
+                145
               ]
             }
           }
@@ -1124,21 +1645,37 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-1369849260-rubble.webp",
               "rect": [
-                7823,
-                6019,
-                450,
-                560
+                7792,
+                5770,
+                437,
+                823
+              ],
+              "atlas": "rubble",
+              "at": [
+                1541,
+                1154
+              ],
+              "small": [
+                672,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-1369849260-standing.webp",
               "rect": [
-                7935,
-                6104,
+                7938,
+                6105,
                 124,
                 126
+              ],
+              "atlas": "standing",
+              "at": [
+                3340,
+                750
+              ],
+              "small": [
+                408,
+                145
               ]
             }
           }
@@ -1155,21 +1692,37 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-1997229234-rubble.webp",
               "rect": [
-                4089,
-                6276,
-                388,
-                450
+                4034,
+                6253,
+                534,
+                521
+              ],
+              "atlas": "rubble",
+              "at": [
+                0,
+                2761
+              ],
+              "small": [
+                1433,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-1997229234-standing.webp",
               "rect": [
-                4212,
-                6451,
-                110,
+                4214,
+                6452,
+                111,
                 108
+              ],
+              "atlas": "standing",
+              "at": [
+                1489,
+                968
+              ],
+              "small": [
+                738,
+                145
               ]
             }
           }
@@ -1186,21 +1739,37 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-2056932872-rubble.webp",
               "rect": [
-                3998,
-                3342,
-                505,
-                421
+                4018,
+                3381,
+                342,
+                389
+              ],
+              "atlas": "rubble",
+              "at": [
+                755,
+                3282
+              ],
+              "small": [
+                2146,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-2056932872-standing.webp",
               "rect": [
-                4163,
-                3501,
+                4166,
+                3502,
                 111,
                 108
+              ],
+              "atlas": "standing",
+              "at": [
+                1600,
+                968
+              ],
+              "small": [
+                752,
+                145
               ]
             }
           }
@@ -1216,32 +1785,38 @@
           "town": 6,
           "core": false,
           "states": {
-            "rubble": {
-              "file": "elements/structure-19-rubble.webp",
-              "rect": [
-                6819,
-                2961,
-                25,
-                5
-              ]
-            },
+            "rubble": null,
             "standing": {
-              "file": "elements/structure-19-standing.webp",
               "rect": [
-                6728,
-                2761,
+                6731,
+                2762,
                 222,
                 324
               ],
               "hiddenBy": [
                 {
                   "id": 21,
-                  "file": "elements/structure-19-standing-under-21.webp"
+                  "at": [
+                    1790,
+                    0
+                  ]
                 },
                 {
                   "id": 57,
-                  "file": "elements/structure-19-standing-under-57.webp"
+                  "at": [
+                    2012,
+                    0
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                2739,
+                0
+              ],
+              "small": [
+                2644,
+                0
               ]
             }
           }
@@ -1258,31 +1833,53 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-146-rubble.webp",
               "rect": [
-                5280,
-                6466,
-                448,
-                699
+                5281,
+                6458,
+                446,
+                716
+              ],
+              "atlas": "rubble",
+              "at": [
+                2315,
+                1154
+              ],
+              "small": [
+                770,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-146-standing.webp",
               "rect": [
-                5299,
-                6617,
+                5302,
+                6618,
                 163,
                 358
               ],
               "hiddenBy": [
                 {
                   "id": 85,
-                  "file": "elements/structure-146-standing-under-85.webp"
+                  "at": [
+                    0,
+                    0
+                  ]
                 },
                 {
                   "id": 87,
-                  "file": "elements/structure-146-standing-under-87.webp"
+                  "at": [
+                    163,
+                    0
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                1674,
+                0
+              ],
+              "small": [
+                2455,
+                0
               ]
             }
           }
@@ -1300,22 +1897,36 @@
           "states": {
             "rubble": null,
             "standing": {
-              "file": "elements/structure-22-standing.webp",
               "rect": [
-                6961,
-                6534,
+                6964,
+                6535,
                 222,
                 334
               ],
               "hiddenBy": [
                 {
                   "id": 44,
-                  "file": "elements/structure-22-standing-under-44.webp"
+                  "at": [
+                    1346,
+                    0
+                  ]
                 },
                 {
                   "id": 47,
-                  "file": "elements/structure-22-standing-under-47.webp"
+                  "at": [
+                    1568,
+                    0
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                2517,
+                0
+              ],
+              "small": [
+                2584,
+                0
               ]
             }
           }
@@ -1332,31 +1943,53 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-32-rubble.webp",
               "rect": [
-                4966,
-                2642,
+                4969,
+                2643,
                 337,
                 767
+              ],
+              "atlas": "rubble",
+              "at": [
+                1978,
+                1154
+              ],
+              "small": [
+                727,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-32-standing.webp",
               "rect": [
-                5060,
-                2842,
+                5063,
+                2843,
                 163,
                 358
               ],
               "hiddenBy": [
                 {
                   "id": 86,
-                  "file": "elements/structure-32-standing-under-86.webp"
+                  "at": [
+                    326,
+                    0
+                  ]
                 },
                 {
                   "id": 89,
-                  "file": "elements/structure-32-standing-under-89.webp"
+                  "at": [
+                    489,
+                    0
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                1837,
+                0
+              ],
+              "small": [
+                2476,
+                0
               ]
             }
           }
@@ -1374,22 +2007,36 @@
           "states": {
             "rubble": null,
             "standing": {
-              "file": "elements/structure-1814-standing.webp",
               "rect": [
-                8440,
-                3371,
+                8443,
+                3372,
                 271,
                 271
               ],
               "hiddenBy": [
                 {
                   "id": 2,
-                  "file": "elements/structure-1814-standing-under-2.webp"
+                  "at": [
+                    2788,
+                    0
+                  ]
                 },
                 {
                   "id": 144,
-                  "file": "elements/structure-1814-standing-under-144.webp"
+                  "at": [
+                    3059,
+                    0
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                1113,
+                462
+              ],
+              "small": [
+                3020,
+                0
               ]
             }
           }
@@ -1406,31 +2053,53 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-1810-rubble.webp",
               "rect": [
-                3517,
-                6017,
-                457,
-                361
+                3505,
+                6098,
+                409,
+                513
+              ],
+              "atlas": "rubble",
+              "at": [
+                534,
+                2761
+              ],
+              "small": [
+                1500,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-1810-standing.webp",
               "rect": [
-                3501,
-                6078,
+                3504,
+                6079,
                 277,
                 277
               ],
               "hiddenBy": [
                 {
                   "id": 27,
-                  "file": "elements/structure-1810-standing-under-27.webp"
+                  "at": [
+                    2234,
+                    0
+                  ]
                 },
                 {
                   "id": 114,
-                  "file": "elements/structure-1810-standing-under-114.webp"
+                  "at": [
+                    2511,
+                    0
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                288,
+                462
+              ],
+              "small": [
+                2915,
+                0
               ]
             }
           }
@@ -1447,31 +2116,53 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-1811-rubble.webp",
               "rect": [
-                3375,
-                3572,
-                295,
-                593
+                3345,
+                3571,
+                326,
+                596
+              ],
+              "atlas": "rubble",
+              "at": [
+                2997,
+                2076
+              ],
+              "small": [
+                1298,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-1811-standing.webp",
               "rect": [
-                3356,
-                3705,
-                277,
-                277
+                3366,
+                3713,
+                263,
+                263
               ],
               "hiddenBy": [
                 {
                   "id": 93,
-                  "file": "elements/structure-1811-standing-under-93.webp"
+                  "at": [
+                    0,
+                    358
+                  ]
                 },
                 {
                   "id": 94,
-                  "file": "elements/structure-1811-standing-under-94.webp"
+                  "at": [
+                    263,
+                    358
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                1776,
+                462
+              ],
+              "small": [
+                3208,
+                0
               ]
             }
           }
@@ -1489,22 +2180,36 @@
           "states": {
             "rubble": null,
             "standing": {
-              "file": "elements/structure-1815-standing.webp",
               "rect": [
-                8587,
-                5742,
+                8590,
+                5743,
                 271,
                 271
               ],
               "hiddenBy": [
                 {
                   "id": 143,
-                  "file": "elements/structure-1815-standing-under-143.webp"
+                  "at": [
+                    3330,
+                    0
+                  ]
                 },
                 {
                   "id": 149,
-                  "file": "elements/structure-1815-standing-under-149.webp"
+                  "at": [
+                    3601,
+                    0
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                1384,
+                462
+              ],
+              "small": [
+                3054,
+                0
               ]
             }
           }
@@ -1521,31 +2226,53 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-35-rubble.webp",
               "rect": [
-                3861,
-                4633,
-                269,
-                503
+                3864,
+                4635,
+                268,
+                502
+              ],
+              "atlas": "rubble",
+              "at": [
+                943,
+                2761
+              ],
+              "small": [
+                1552,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-35-standing.webp",
               "rect": [
-                3919,
-                4822,
+                3922,
+                4833,
                 118,
-                368
+                348
               ],
               "hiddenBy": [
                 {
                   "id": 909878382,
-                  "file": "elements/structure-35-standing-under-909878382.webp"
+                  "at": [
+                    652,
+                    0
+                  ]
                 },
                 {
                   "id": 1084430558,
-                  "file": "elements/structure-35-standing-under-1084430558.webp"
+                  "at": [
+                    770,
+                    0
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                2000,
+                0
+              ],
+              "small": [
+                2497,
+                0
               ]
             }
           }
@@ -1562,31 +2289,53 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-766-rubble.webp",
               "rect": [
-                8217,
-                4715,
-                2,
-                9
+                8176,
+                4685,
+                13,
+                7
+              ],
+              "atlas": "rubble",
+              "at": [
+                1073,
+                3942
+              ],
+              "small": [
+                798,
+                145
               ]
             },
             "standing": {
-              "file": "elements/structure-766-standing.webp",
               "rect": [
-                8118,
-                4554,
+                8121,
+                4544,
                 229,
-                324
+                346
               ],
               "hiddenBy": [
                 {
                   "id": 388017480,
-                  "file": "elements/structure-766-standing-under-388017480.webp"
+                  "at": [
+                    888,
+                    0
+                  ]
                 },
                 {
                   "id": 1106843562,
-                  "file": "elements/structure-766-standing-under-1106843562.webp"
+                  "at": [
+                    1117,
+                    0
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                2118,
+                0
+              ],
+              "small": [
+                2512,
+                0
               ]
             }
           }
@@ -1603,21 +2352,37 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-16-rubble.webp",
               "rect": [
-                7138,
-                2503,
-                217,
-                221
+                7139,
+                2506,
+                220,
+                211
+              ],
+              "atlas": "rubble",
+              "at": [
+                1340,
+                3685
+              ],
+              "small": [
+                3658,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-16-standing.webp",
               "rect": [
-                7168,
-                2535,
+                7171,
+                2536,
                 153,
                 154
+              ],
+              "atlas": "standing",
+              "at": [
+                2402,
+                750
+              ],
+              "small": [
+                89,
+                145
               ]
             }
           }
@@ -1634,21 +2399,37 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-18-rubble.webp",
               "rect": [
-                4789,
-                6940,
-                382,
-                438
+                4786,
+                6941,
+                390,
+                403
+              ],
+              "atlas": "rubble",
+              "at": [
+                0,
+                3282
+              ],
+              "small": [
+                2051,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-18-standing.webp",
               "rect": [
-                4884,
-                7035,
+                4887,
+                7036,
                 173,
                 152
+              ],
+              "atlas": "standing",
+              "at": [
+                3167,
+                750
+              ],
+              "small": [
+                249,
+                145
               ]
             }
           }
@@ -1665,21 +2446,37 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-1619-rubble.webp",
               "rect": [
-                7375,
-                6861,
-                216,
-                212
+                7391,
+                6868,
+                203,
+                209
+              ],
+              "atlas": "rubble",
+              "at": [
+                1849,
+                3685
+              ],
+              "small": [
+                3686,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-1619-standing.webp",
               "rect": [
-                7410,
-                6891,
+                7413,
+                6892,
                 153,
                 154
+              ],
+              "atlas": "standing",
+              "at": [
+                2555,
+                750
+              ],
+              "small": [
+                109,
+                145
               ]
             }
           }
@@ -1696,21 +2493,37 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-1620-rubble.webp",
               "rect": [
-                4611,
-                2636,
-                349,
-                252
+                4574,
+                2567,
+                395,
+                307
+              ],
+              "atlas": "rubble",
+              "at": [
+                2864,
+                3282
+              ],
+              "small": [
+                2696,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-1620-standing.webp",
               "rect": [
-                4646,
-                2673,
+                4649,
+                2674,
                 166,
                 166
+              ],
+              "atlas": "standing",
+              "at": [
+                1575,
+                750
+              ],
+              "small": [
+                4027,
+                0
               ]
             }
           }
@@ -1727,21 +2540,37 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-72-rubble.webp",
               "rect": [
-                9120,
-                5799,
-                215,
-                211
+                9135,
+                5796,
+                208,
+                204
+              ],
+              "atlas": "rubble",
+              "at": [
+                2052,
+                3685
+              ],
+              "small": [
+                3775,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-72-standing.webp",
               "rect": [
-                9152,
-                5826,
+                9155,
+                5827,
                 153,
                 154
+              ],
+              "atlas": "standing",
+              "at": [
+                2708,
+                750
+              ],
+              "small": [
+                129,
+                145
               ]
             }
           }
@@ -1758,21 +2587,37 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-73-rubble.webp",
               "rect": [
-                2913,
-                3738,
-                157,
+                2915,
+                3739,
+                158,
                 166
+              ],
+              "atlas": "rubble",
+              "at": [
+                2996,
+                3685
+              ],
+              "small": [
+                4048,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-73-standing.webp",
               "rect": [
-                2904,
-                3738,
+                2907,
+                3739,
                 166,
                 166
+              ],
+              "atlas": "standing",
+              "at": [
+                1741,
+                750
+              ],
+              "small": [
+                4068,
+                0
               ]
             }
           }
@@ -1790,12 +2635,20 @@
           "states": {
             "rubble": null,
             "standing": {
-              "file": "elements/structure-108-standing.webp",
               "rect": [
-                9007,
-                3454,
+                9010,
+                3455,
                 153,
                 154
+              ],
+              "atlas": "standing",
+              "at": [
+                2861,
+                750
+              ],
+              "small": [
+                149,
+                145
               ]
             }
           }
@@ -1812,21 +2665,37 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-1043-rubble.webp",
               "rect": [
-                3417,
-                5069,
-                300,
-                223
+                3440,
+                5060,
+                279,
+                229
+              ],
+              "atlas": "rubble",
+              "at": [
+                855,
+                3685
+              ],
+              "small": [
+                3442,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-1043-standing.webp",
               "rect": [
-                3485,
-                5093,
+                3488,
+                5094,
                 166,
                 166
+              ],
+              "atlas": "standing",
+              "at": [
+                1907,
+                750
+              ],
+              "small": [
+                0,
+                145
               ]
             }
           }
@@ -1843,21 +2712,37 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-1044-rubble.webp",
               "rect": [
-                8542,
-                4446,
-                213,
-                200
+                8539,
+                4438,
+                206,
+                212
+              ],
+              "atlas": "rubble",
+              "at": [
+                1134,
+                3685
+              ],
+              "small": [
+                3712,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-1044-standing.webp",
               "rect": [
-                8572,
-                4471,
+                8575,
+                4472,
                 153,
                 154
+              ],
+              "atlas": "standing",
+              "at": [
+                3014,
+                750
+              ],
+              "small": [
+                169,
+                145
               ]
             }
           }
@@ -1874,21 +2759,37 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-1077-rubble.webp",
               "rect": [
-                3058,
-                6088,
-                176,
-                187
+                3060,
+                6110,
+                158,
+                166
+              ],
+              "atlas": "rubble",
+              "at": [
+                3154,
+                3685
+              ],
+              "small": [
+                21,
+                145
               ]
             },
             "standing": {
-              "file": "elements/structure-1077-standing.webp",
               "rect": [
-                3049,
-                6109,
+                3052,
+                6110,
                 166,
                 166
+              ],
+              "atlas": "standing",
+              "at": [
+                2073,
+                750
+              ],
+              "small": [
+                41,
+                145
               ]
             }
           }
@@ -1905,21 +2806,37 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-150-rubble.webp",
               "rect": [
-                4459,
-                6383,
-                756,
-                629
+                4518,
+                6337,
+                686,
+                647
+              ],
+              "atlas": "rubble",
+              "at": [
+                930,
+                2076
+              ],
+              "small": [
+                1038,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-150-standing.webp",
               "rect": [
-                4739,
-                6570,
+                4742,
+                6571,
                 288,
                 288
+              ],
+              "atlas": "standing",
+              "at": [
+                3759,
+                0
+              ],
+              "small": [
+                2822,
+                0
               ]
             }
           }
@@ -1936,21 +2853,37 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-151-rubble.webp",
               "rect": [
-                7050,
-                2715,
-                968,
-                696
+                7091,
+                2702,
+                930,
+                685
+              ],
+              "atlas": "rubble",
+              "at": [
+                0,
+                2076
+              ],
+              "small": [
+                921,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-151-standing.webp",
               "rect": [
-                7250,
-                2786,
+                7253,
+                2787,
                 303,
                 299
+              ],
+              "atlas": "standing",
+              "at": [
+                3153,
+                0
+              ],
+              "small": [
+                2746,
+                0
               ]
             }
           }
@@ -1967,21 +2900,37 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-162-rubble.webp",
               "rect": [
-                7294,
-                6032,
-                916,
-                823
+                7359,
+                5982,
+                871,
+                860
+              ],
+              "atlas": "rubble",
+              "at": [
+                670,
+                1154
+              ],
+              "small": [
+                563,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-162-standing.webp",
               "rect": [
-                7540,
-                6416,
+                7543,
+                6417,
                 303,
                 299
+              ],
+              "atlas": "standing",
+              "at": [
+                3456,
+                0
+              ],
+              "small": [
+                2784,
+                0
               ]
             }
           }
@@ -1998,21 +2947,37 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-163-rubble.webp",
               "rect": [
-                4198,
-                2813,
-                744,
-                679
+                4191,
+                2803,
+                758,
+                694
+              ],
+              "atlas": "rubble",
+              "at": [
+                2761,
+                1154
+              ],
+              "small": [
+                826,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-163-standing.webp",
               "rect": [
-                4449,
-                2940,
+                4452,
+                2941,
                 288,
                 288
+              ],
+              "atlas": "standing",
+              "at": [
+                0,
+                462
+              ],
+              "small": [
+                2858,
+                0
               ]
             }
           }
@@ -2029,21 +2994,37 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-13-rubble.webp",
               "rect": [
-                2754,
-                3994,
-                696,
-                569
+                2717,
+                3968,
+                730,
+                608
+              ],
+              "atlas": "rubble",
+              "at": [
+                1616,
+                2076
+              ],
+              "small": [
+                1124,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-13-standing.webp",
               "rect": [
-                2945,
-                4070,
+                2948,
+                4071,
                 274,
                 274
+              ],
+              "atlas": "standing",
+              "at": [
+                565,
+                462
+              ],
+              "small": [
+                2950,
+                0
               ]
             }
           }
@@ -2060,21 +3041,37 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-154-rubble.webp",
               "rect": [
-                2925,
-                5415,
-                715,
-                646
+                2982,
+                5476,
+                651,
+                603
+              ],
+              "atlas": "rubble",
+              "at": [
+                2346,
+                2076
+              ],
+              "small": [
+                1216,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-154-standing.webp",
               "rect": [
-                3139,
-                5667,
+                3142,
+                5668,
                 274,
                 274
+              ],
+              "atlas": "standing",
+              "at": [
+                839,
+                462
+              ],
+              "small": [
+                2985,
+                0
               ]
             }
           }
@@ -2091,21 +3088,37 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-268-rubble.webp",
               "rect": [
-                8823,
-                5151,
-                717,
-                571
+                8795,
+                5152,
+                748,
+                577
+              ],
+              "atlas": "rubble",
+              "at": [
+                3323,
+                2076
+              ],
+              "small": [
+                1339,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-268-standing.webp",
               "rect": [
-                8991,
-                5277,
+                8994,
+                5278,
                 379,
                 379
+              ],
+              "atlas": "standing",
+              "at": [
+                916,
+                0
+              ],
+              "small": [
+                2251,
+                0
               ]
             }
           }
@@ -2122,21 +3135,37 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-269-rubble.webp",
               "rect": [
-                8629,
+                8632,
                 3604,
-                647,
-                921
+                670,
+                922
+              ],
+              "atlas": "rubble",
+              "at": [
+                0,
+                1154
+              ],
+              "small": [
+                479,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-269-standing.webp",
               "rect": [
-                8797,
-                3679,
+                8800,
+                3680,
                 379,
                 379
+              ],
+              "atlas": "standing",
+              "at": [
+                1295,
+                0
+              ],
+              "small": [
+                2299,
+                0
               ]
             }
           }
@@ -2153,27 +3182,46 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-493-rubble.webp",
               "rect": [
-                8852,
-                6001,
-                323,
-                305
+                8933,
+                6009,
+                112,
+                201
+              ],
+              "atlas": "rubble",
+              "at": [
+                2556,
+                3685
+              ],
+              "small": [
+                3801,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-493-standing.webp",
               "rect": [
-                8885,
-                6026,
+                8888,
+                6027,
                 223,
                 189
               ],
               "hiddenBy": [
                 {
                   "id": 149,
-                  "file": "elements/structure-493-standing-under-149.webp"
+                  "at": [
+                    1846,
+                    358
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                184,
+                750
+              ],
+              "small": [
+                3815,
+                0
               ]
             }
           }
@@ -2190,27 +3238,46 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-494-rubble.webp",
               "rect": [
-                8374,
-                5494,
-                276,
-                214
+                8377,
+                5495,
+                272,
+                230
+              ],
+              "atlas": "rubble",
+              "at": [
+                583,
+                3685
+              ],
+              "small": [
+                3477,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-494-standing.webp",
               "rect": [
-                8387,
-                5492,
+                8390,
+                5493,
                 185,
                 223
               ],
               "hiddenBy": [
                 {
                   "id": 143,
-                  "file": "elements/structure-494-standing-under-143.webp"
+                  "at": [
+                    1293,
+                    358
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                3621,
+                462
+              ],
+              "small": [
+                3527,
+                0
               ]
             }
           }
@@ -2227,27 +3294,46 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-24-rubble.webp",
               "rect": [
-                6848,
-                6238,
-                233,
+                6851,
+                6239,
+                243,
                 266
+              ],
+              "atlas": "rubble",
+              "at": [
+                3421,
+                3282
+              ],
+              "small": [
+                3088,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-24-standing.webp",
               "rect": [
-                6943,
-                6266,
+                6946,
+                6267,
                 108,
                 240
               ],
               "hiddenBy": [
                 {
                   "id": 44,
-                  "file": "elements/structure-24-standing-under-44.webp"
+                  "at": [
+                    875,
+                    358
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                2692,
+                462
+              ],
+              "small": [
+                3363,
+                0
               ]
             }
           }
@@ -2264,21 +3350,37 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-570077121-rubble.webp",
               "rect": [
-                7096,
-                6963,
-                108,
-                133
+                7068,
+                6955,
+                154,
+                172
+              ],
+              "atlas": "rubble",
+              "at": [
+                2842,
+                3685
+              ],
+              "small": [
+                3942,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-570077121-standing.webp",
               "rect": [
-                7098,
-                6947,
+                7101,
+                6948,
                 99,
                 237
+              ],
+              "atlas": "standing",
+              "at": [
+                3212,
+                462
+              ],
+              "small": [
+                3377,
+                0
               ]
             }
           }
@@ -2295,21 +3397,37 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-1971096376-rubble.webp",
               "rect": [
-                6751,
-                3139,
-                153,
-                287
+                6747,
+                3140,
+                162,
+                286
+              ],
+              "atlas": "rubble",
+              "at": [
+                3259,
+                3282
+              ],
+              "small": [
+                2894,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-1971096376-standing.webp",
               "rect": [
-                6749,
-                3168,
+                6752,
+                3169,
                 108,
                 240
+              ],
+              "atlas": "standing",
+              "at": [
+                2800,
+                462
+              ],
+              "small": [
+                3390,
+                0
               ]
             }
           }
@@ -2326,27 +3444,46 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-736214455-rubble.webp",
               "rect": [
-                6851,
-                2524,
-                157,
-                163
+                6853,
+                2531,
+                122,
+                153
+              ],
+              "atlas": "rubble",
+              "at": [
+                3488,
+                3685
+              ],
+              "small": [
+                189,
+                145
               ]
             },
             "standing": {
-              "file": "elements/structure-736214455-standing.webp",
               "rect": [
-                6848,
-                2445,
+                6851,
+                2446,
                 105,
                 242
               ],
               "hiddenBy": [
                 {
                   "id": 21,
-                  "file": "elements/structure-736214455-standing-under-21.webp"
+                  "at": [
+                    770,
+                    358
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                2587,
+                462
+              ],
+              "small": [
+                3241,
+                0
               ]
             }
           }
@@ -2363,27 +3500,46 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-492-rubble.webp",
               "rect": [
-                8147,
-                3665,
-                312,
-                229
+                8150,
+                3635,
+                292,
+                266
+              ],
+              "atlas": "rubble",
+              "at": [
+                3664,
+                3282
+              ],
+              "small": [
+                3119,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-492-standing.webp",
               "rect": [
-                8238,
-                3669,
+                8241,
+                3670,
                 189,
                 224
               ],
               "hiddenBy": [
                 {
                   "id": 2,
-                  "file": "elements/structure-492-standing-under-2.webp"
+                  "at": [
+                    1104,
+                    358
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                3432,
+                462
+              ],
+              "small": [
+                3551,
+                0
               ]
             }
           }
@@ -2400,27 +3556,46 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-491-rubble.webp",
               "rect": [
-                8789,
-                3208,
-                114,
-                218
+                8728,
+                3229,
+                170,
+                135
+              ],
+              "atlas": "rubble",
+              "at": [
+                3780,
+                3685
+              ],
+              "small": [
+                271,
+                145
               ]
             },
             "standing": {
-              "file": "elements/structure-491-standing.webp",
               "rect": [
-                8736,
-                3169,
+                8739,
+                3170,
                 224,
                 189
               ],
               "hiddenBy": [
                 {
                   "id": 144,
-                  "file": "elements/structure-491-standing-under-144.webp"
+                  "at": [
+                    2069,
+                    358
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                407,
+                750
+              ],
+              "small": [
+                3843,
+                0
               ]
             }
           }
@@ -2437,27 +3612,46 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-488-rubble.webp",
               "rect": [
-                3119,
-                3487,
-                250,
-                310
+                3126,
+                3537,
+                176,
+                154
+              ],
+              "atlas": "rubble",
+              "at": [
+                3312,
+                3685
+              ],
+              "small": [
+                205,
+                145
               ]
             },
             "standing": {
-              "file": "elements/structure-488-standing.webp",
               "rect": [
-                3123,
+                3126,
                 3521,
                 216,
-                166
+                167
               ],
               "hiddenBy": [
                 {
                   "id": 94,
-                  "file": "elements/structure-488-standing-under-94.webp"
+                  "at": [
+                    3531,
+                    358
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                1359,
+                750
+              ],
+              "small": [
+                62,
+                145
               ]
             }
           }
@@ -2474,27 +3668,46 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-487-rubble.webp",
               "rect": [
-                3543,
-                3938,
-                311,
-                365
+                3604,
+                3937,
+                254,
+                331
+              ],
+              "atlas": "rubble",
+              "at": [
+                2610,
+                3282
+              ],
+              "small": [
+                2612,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-487-standing.webp",
               "rect": [
-                3631,
-                3994,
+                3634,
+                3995,
                 184,
                 218
               ],
               "hiddenBy": [
                 {
                   "id": 93,
-                  "file": "elements/structure-487-standing-under-93.webp"
+                  "at": [
+                    1478,
+                    358
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                3806,
+                462
+              ],
+              "small": [
+                3575,
+                0
               ]
             }
           }
@@ -2511,27 +3724,46 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-48-rubble.webp",
               "rect": [
-                5123,
-                3171,
-                192,
-                357
+                5108,
+                3125,
+                235,
+                445
+              ],
+              "atlas": "rubble",
+              "at": [
+                2142,
+                2761
+              ],
+              "small": [
+                1761,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-48-standing.webp",
               "rect": [
-                5174,
-                3245,
+                5177,
+                3246,
                 122,
                 243
               ],
               "hiddenBy": [
                 {
                   "id": 89,
-                  "file": "elements/structure-48-standing-under-89.webp"
+                  "at": [
+                    526,
+                    358
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                2343,
+                462
+              ],
+              "small": [
+                3255,
+                0
               ]
             }
           }
@@ -2548,27 +3780,46 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-806262366-rubble.webp",
               "rect": [
-                4928,
-                2400,
-                315,
-                486
+                4970,
+                2522,
+                223,
+                370
+              ],
+              "atlas": "rubble",
+              "at": [
+                1586,
+                3282
+              ],
+              "small": [
+                2347,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-806262366-standing.webp",
               "rect": [
-                5025,
-                2576,
+                5028,
+                2577,
                 121,
                 231
               ],
               "hiddenBy": [
                 {
                   "id": 86,
-                  "file": "elements/structure-806262366-standing-under-86.webp"
+                  "at": [
+                    983,
+                    358
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                3311,
+                462
+              ],
+              "small": [
+                3511,
+                0
               ]
             }
           }
@@ -2585,27 +3836,46 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-1263872499-rubble.webp",
               "rect": [
-                5286,
-                6243,
-                249,
-                421
+                5326,
+                6281,
+                208,
+                369
+              ],
+              "atlas": "rubble",
+              "at": [
+                1809,
+                3282
+              ],
+              "small": [
+                2375,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-1263872499-standing.webp",
               "rect": [
-                5368,
-                6343,
+                5371,
+                6344,
                 122,
                 243
               ],
               "hiddenBy": [
                 {
                   "id": 85,
-                  "file": "elements/structure-1263872499-standing-under-85.webp"
+                  "at": [
+                    648,
+                    358
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                2465,
+                462
+              ],
+              "small": [
+                3271,
+                0
               ]
             }
           }
@@ -2622,27 +3892,46 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-978165572-rubble.webp",
               "rect": [
-                5184,
-                6899,
-                324,
-                455
+                5145,
+                6945,
+                345,
+                435
+              ],
+              "atlas": "rubble",
+              "at": [
+                2842,
+                2761
+              ],
+              "small": [
+                1908,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-978165572-standing.webp",
               "rect": [
-                5262,
-                7003,
+                5265,
+                7004,
                 121,
                 267
               ],
               "hiddenBy": [
                 {
                   "id": 87,
-                  "file": "elements/structure-978165572-standing-under-87.webp"
+                  "at": [
+                    3872,
+                    0
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                1655,
+                462
+              ],
+              "small": [
+                3156,
+                0
               ]
             }
           }
@@ -2659,27 +3948,46 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-489-rubble.webp",
               "rect": [
-                3693,
-                5790,
-                313,
-                389
+                3776,
+                5843,
+                174,
+                180
+              ],
+              "atlas": "rubble",
+              "at": [
+                2668,
+                3685
+              ],
+              "small": [
+                3871,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-489-standing.webp",
               "rect": [
-                3778,
-                5844,
+                3781,
+                5845,
                 184,
                 218
               ],
               "hiddenBy": [
                 {
                   "id": 114,
-                  "file": "elements/structure-489-standing-under-114.webp"
+                  "at": [
+                    1662,
+                    358
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                0,
+                750
+              ],
+              "small": [
+                3598,
+                0
               ]
             }
           }
@@ -2696,27 +4004,46 @@
           "core": false,
           "states": {
             "rubble": {
-              "file": "elements/structure-490-rubble.webp",
               "rect": [
-                3164,
-                6259,
-                439,
-                403
+                3191,
+                6312,
+                365,
+                399
+              ],
+              "atlas": "rubble",
+              "at": [
+                390,
+                3282
+              ],
+              "small": [
+                2100,
+                0
               ]
             },
             "standing": {
-              "file": "elements/structure-490-standing.webp",
               "rect": [
-                3271,
-                6352,
+                3274,
+                6353,
                 218,
                 184
               ],
               "hiddenBy": [
                 {
                   "id": 27,
-                  "file": "elements/structure-490-standing-under-27.webp"
+                  "at": [
+                    2293,
+                    358
+                  ]
                 }
+              ],
+              "atlas": "standing",
+              "at": [
+                631,
+                750
+              ],
+              "small": [
+                3893,
+                0
               ]
             }
           }
@@ -2790,12 +4117,20 @@
           ],
           "states": {
             "spawned": {
-              "file": "elements/camp-1-spawned.webp",
               "rect": [
-                5799,
-                1744,
-                306,
-                261
+                5801,
+                1765,
+                304,
+                239
+              ],
+              "atlas": "standing",
+              "at": [
+                2908,
+                462
+              ],
+              "small": [
+                3404,
+                0
               ]
             }
           }
@@ -2809,12 +4144,20 @@
           ],
           "states": {
             "spawned": {
-              "file": "elements/camp-2-spawned.webp",
               "rect": [
-                4664,
+                4667,
                 5129,
-                182,
-                341
+                170,
+                338
+              ],
+              "atlas": "standing",
+              "at": [
+                2347,
+                0
+              ],
+              "small": [
+                2541,
+                0
               ]
             }
           }
@@ -2828,12 +4171,20 @@
           ],
           "states": {
             "spawned": {
-              "file": "elements/camp-3-spawned.webp",
               "rect": [
-                6111,
+                6115,
                 7717,
                 304,
-                260
+                248
+              ],
+              "atlas": "standing",
+              "at": [
+                2039,
+                462
+              ],
+              "small": [
+                3287,
+                0
               ]
             }
           }
@@ -2847,879 +4198,73 @@
           ],
           "states": {
             "spawned": {
-              "file": "elements/camp-4-spawned.webp",
               "rect": [
-                7344,
-                4250,
-                195,
-                341
+                7360,
+                4275,
+                192,
+                318
+              ],
+              "atlas": "standing",
+              "at": [
+                2961,
+                0
+              ],
+              "small": [
+                2672,
+                0
               ]
             }
           }
         }
-      ]
+      ],
+      "atlases": {
+        "standing": {
+          "file": "elements/standing.webp",
+          "size": [
+            4047,
+            1091
+          ],
+          "scale": 1
+        },
+        "rubble": {
+          "file": "elements/rubble.webp",
+          "size": [
+            4071,
+            4067
+          ],
+          "scale": 1
+        },
+        "masks": {
+          "file": "elements/masks.webp",
+          "size": [
+            4073,
+            746
+          ],
+          "scale": 1
+        },
+        "small": {
+          "file": "elements/small.webp",
+          "size": [
+            4089,
+            166
+          ],
+          "scale": 0.125
+        }
+      }
     }
   },
   "files": {
     "background.pmtiles": {
-      "bytes": 1638113,
-      "sha256": "3bb761037675317d3aeab5e69b8f25ef882ed968be7e58a5c1432b6320870167"
-    },
-    "elements/camp-1-spawned.webp": {
-      "bytes": 45812,
-      "sha256": "d054de387540d01fbd30cc29c684e4313c48fb9917fbbb4fc28c6af1465ec992"
-    },
-    "elements/camp-2-spawned.webp": {
-      "bytes": 44914,
-      "sha256": "5124661c943f23ed1999f660c4ba97bbc70f2e0c95eb06afb4e74365a621946c"
-    },
-    "elements/camp-3-spawned.webp": {
-      "bytes": 43910,
-      "sha256": "6eae690ac84dac9b49ef2350b57923766b799507fce7846ee89a0c7c0b0cd8a7"
-    },
-    "elements/camp-4-spawned.webp": {
-      "bytes": 44012,
-      "sha256": "4d6ba96831d7975fef00b697e35f734f9a50ee4b73c5a6db349929da65fc7c4a"
-    },
-    "elements/structure-1043-rubble.webp": {
-      "bytes": 36298,
-      "sha256": "09e07fb5a349a3e51d8bdf84581833b21808366575487e50809f3ce1724fd0e1"
-    },
-    "elements/structure-1043-standing.webp": {
-      "bytes": 29242,
-      "sha256": "25f48528feb7018700c7b5db75ba16fd026eb5cd70a2472b5ae087c04067167d"
-    },
-    "elements/structure-1044-rubble.webp": {
-      "bytes": 40650,
-      "sha256": "d9f6c13e4215c097c144c7578bb5f0e597fc0bc17784a77b2eb187cc380dcdac"
-    },
-    "elements/structure-1044-standing.webp": {
-      "bytes": 28994,
-      "sha256": "96b07c3ae3a34026bb85362a11ecf012b2bb3ba42f15bd94f8205ebd7273f4c2"
-    },
-    "elements/structure-1077-rubble.webp": {
-      "bytes": 25182,
-      "sha256": "fdd238750884e460e29fb6512afa613ba1abaa3c67cfc7b2ea29b9434f8ebd59"
-    },
-    "elements/structure-1077-standing.webp": {
-      "bytes": 29864,
-      "sha256": "08de7a84d2bee4f6d32886a33fb644d02821903f93fb4d3444ae6e5e809ed11a"
-    },
-    "elements/structure-108-standing.webp": {
-      "bytes": 29100,
-      "sha256": "a24e9148c9d09c27461779dab0293adc78b8ef5968ce523dee3f14f2b59c5b03"
-    },
-    "elements/structure-1084430558-rubble.webp": {
-      "bytes": 63038,
-      "sha256": "77f8bc8c110b5293a68bc93eb9e30461860c2fbb05c29dcdd32d2e421dda4f47"
-    },
-    "elements/structure-1084430558-standing-under-35.webp": {
-      "bytes": 370,
-      "sha256": "25274aec602705629342e485e8abeafcdd214ae4be999f0671f84f5cb0b0e435"
-    },
-    "elements/structure-1084430558-standing.webp": {
-      "bytes": 16840,
-      "sha256": "3b8bc01251fea597b01bd47fb5ca37104f27ab5e15e354d95b5a87960193a9bf"
-    },
-    "elements/structure-1106843562-rubble.webp": {
-      "bytes": 22802,
-      "sha256": "535e022718aeba791fc990bc2228e05de1382b797f53d908b956e0ed51ac292f"
-    },
-    "elements/structure-1106843562-standing-under-766.webp": {
-      "bytes": 366,
-      "sha256": "c69ad2eea120e239004a208b655b1f47dfa662d6e1be6389065b0dd3576dec25"
-    },
-    "elements/structure-1106843562-standing.webp": {
-      "bytes": 18822,
-      "sha256": "98ed2d37144ca8d66351b935018a585fce4dbbfdf7f08179f12e8ac684ef838c"
-    },
-    "elements/structure-114-rubble.webp": {
-      "bytes": 10858,
-      "sha256": "a1777d450c6980275562f49b4162e58299f698197c679afcc2f85e32bb99183c"
-    },
-    "elements/structure-114-standing-under-1810.webp": {
-      "bytes": 418,
-      "sha256": "bbc4e3f3916eff82a98fadc77de49f7636405426aaba3605f14cc42698900ef3"
-    },
-    "elements/structure-114-standing-under-489.webp": {
-      "bytes": 366,
-      "sha256": "63720297585942214fcc19a53ee2a711d0f397c0209233e87a611611e5de6ccd"
-    },
-    "elements/structure-114-standing.webp": {
-      "bytes": 15538,
-      "sha256": "241b86bdee7b73651fd9ccb6561ab028e5a2d3b0cceebc185371cb37d243cf81"
-    },
-    "elements/structure-1263872499-rubble.webp": {
-      "bytes": 71030,
-      "sha256": "76b6f3a10d0bd48630f50f1905e22ebe7200aca79d82d7316b7bf73b5c886bcb"
-    },
-    "elements/structure-1263872499-standing-under-85.webp": {
-      "bytes": 390,
-      "sha256": "27bf1475cdff6855327703a95e4996572f3af4b5b55e692d00bbebdb4f45e09f"
-    },
-    "elements/structure-1263872499-standing.webp": {
-      "bytes": 24922,
-      "sha256": "3dddcc2e19d5374eb7c3b292e62e1ed68ecb40ac96cfb64ae7e02a12d6a0b178"
-    },
-    "elements/structure-13-rubble.webp": {
-      "bytes": 77852,
-      "sha256": "377f7dc43934d6481382aacd4976c9885299e568e52e96abf2a9412bb719b4df"
-    },
-    "elements/structure-13-standing.webp": {
-      "bytes": 99252,
-      "sha256": "b77fd5e38a93f85f331a62b29e25a17e67fe76bfcc5277282bcc94500d3ae53a"
-    },
-    "elements/structure-1369849260-rubble.webp": {
-      "bytes": 13622,
-      "sha256": "45cbe722b6cde1c5375cff3daeb6d461a9a368ccafa56b56153de987a79111d3"
-    },
-    "elements/structure-1369849260-standing.webp": {
-      "bytes": 17920,
-      "sha256": "51851531bcd2035a0dd6c1f5cc744735b02b12246ae66d05a5ddd40bdd94fa76"
-    },
-    "elements/structure-143-rubble.webp": {
-      "bytes": 15144,
-      "sha256": "8c4944c178629e05f8593f9afc04e5fc9db76ddcccf5a6d3e9f1426285aaf9d5"
-    },
-    "elements/structure-143-standing-under-1815.webp": {
-      "bytes": 374,
-      "sha256": "36e6411fdcc923d738eb50dcb2d38c742fbedf8c9cb01d4def15280a260459f3"
-    },
-    "elements/structure-143-standing-under-494.webp": {
-      "bytes": 384,
-      "sha256": "d92ff78e201ff453cf93ee626ce9ea1d7e0978a59a8b2d875031e7388e421056"
-    },
-    "elements/structure-143-standing.webp": {
-      "bytes": 22556,
-      "sha256": "c1428952927d6468b299082fc6a7c43f16d0c165a8e8a68b45a162d24623c20b"
-    },
-    "elements/structure-144-rubble.webp": {
-      "bytes": 15056,
-      "sha256": "ff43d5c2abd9ca2391a0c11d1eaebb652cf4a4ce7b060013f0150bc403a0451a"
-    },
-    "elements/structure-144-standing-under-1814.webp": {
-      "bytes": 514,
-      "sha256": "78ddaf6a2b82db1195cf4a5806f50e5ef844c225239ebaa12850b34e0511a7ff"
-    },
-    "elements/structure-144-standing-under-491.webp": {
-      "bytes": 438,
-      "sha256": "7b86147f5b5a6ec745055a7b3a566e06b4626d6067fcba79cfda3ac584878f01"
-    },
-    "elements/structure-144-standing.webp": {
-      "bytes": 30966,
-      "sha256": "e55ac45d3b5e853116ea61cfe26f56d95c1a8c4f9da13e8fdaae4825f618d4e1"
-    },
-    "elements/structure-146-rubble.webp": {
-      "bytes": 22922,
-      "sha256": "da194e724803f410be48902677357d708f95ae9b4a64b1a218e9f399a895e7f4"
-    },
-    "elements/structure-146-standing-under-85.webp": {
-      "bytes": 388,
-      "sha256": "654cfdb942a5bcc996ec80e6910cf4fced564fa93579df25b7aa435bc9be14b8"
-    },
-    "elements/structure-146-standing-under-87.webp": {
-      "bytes": 386,
-      "sha256": "7237e24d0df3aad2aa912867c587603812e6f532cee2aa3dd1a6ca4ed99fc661"
-    },
-    "elements/structure-146-standing.webp": {
-      "bytes": 58576,
-      "sha256": "5d5f4c1ac2b188c5ee05c0c15cb7b0bfc7c0e23a5d8242d014ac203e85eafbb6"
-    },
-    "elements/structure-149-rubble.webp": {
-      "bytes": 15108,
-      "sha256": "6a26cde14ca6bdf0bc1673db6eb586e4c540c15442a924203ae8e9931a5b3652"
-    },
-    "elements/structure-149-standing-under-1815.webp": {
-      "bytes": 390,
-      "sha256": "d260fd395e83a51c0d3c066f77ea75b1afa92d8c41fe3c747baa7ee6e9361c16"
-    },
-    "elements/structure-149-standing-under-493.webp": {
-      "bytes": 392,
-      "sha256": "3facee01a4fc677841165eccf34909a4c27ed6818ffcc25b223c72f31f26da08"
-    },
-    "elements/structure-149-standing.webp": {
-      "bytes": 23346,
-      "sha256": "018446ff77ebdab9ab3fd895157ad14d513866d57080a8ebf072d45e67f445d7"
-    },
-    "elements/structure-150-rubble.webp": {
-      "bytes": 79846,
-      "sha256": "da401e5a451340760580f5d7472e2718e995c1638a847122eb9d856d88a7f57b"
-    },
-    "elements/structure-150-standing.webp": {
-      "bytes": 93594,
-      "sha256": "f0f0cc0733eb227f7fd28a2eb86af73804d728fa989803bb63f9e340fa7115f7"
-    },
-    "elements/structure-151-rubble.webp": {
-      "bytes": 149874,
-      "sha256": "7c2a28502cc9e53473e1521af3aaac66496eb1744acddcbea30cd98fd6af3c94"
-    },
-    "elements/structure-151-standing.webp": {
-      "bytes": 62122,
-      "sha256": "365b8b972d53ca35ba9c7ab74134c68da5a2f245c97cd9ee81cc7f0b8848ee1c"
-    },
-    "elements/structure-154-rubble.webp": {
-      "bytes": 74680,
-      "sha256": "06e2285f71ce8e40ef34e166947aa551fb968e7a95fcf78264eba43fc835b224"
-    },
-    "elements/structure-154-standing.webp": {
-      "bytes": 103074,
-      "sha256": "738ded1e4bc3df88fae5911bd9e31ea192dd526a50fbc0de2968d3af143215c1"
-    },
-    "elements/structure-16-rubble.webp": {
-      "bytes": 45986,
-      "sha256": "894f9847562ab0acf9a76eda4500cb910bd02ce67ef1402c9e3520ebc3469689"
-    },
-    "elements/structure-16-standing.webp": {
-      "bytes": 28832,
-      "sha256": "346bd6cc2c0ff3fb16809f4854e77a841aabac1a0f8518d7d9354675413e7ae3"
-    },
-    "elements/structure-1619-rubble.webp": {
-      "bytes": 43742,
-      "sha256": "34428813431189855a85b959d801a2445dadef6cbbfa793a334e104fe69aa282"
-    },
-    "elements/structure-1619-standing.webp": {
-      "bytes": 28786,
-      "sha256": "2e9d6a5a099712f81923e1b080bccce6f61b03e1d00c98486d685f8b965ba13e"
-    },
-    "elements/structure-162-rubble.webp": {
-      "bytes": 167766,
-      "sha256": "40764214b7750345dc7896060adde2e4d3f2d9e3fddd42b349eb900fdd85e40b"
-    },
-    "elements/structure-162-standing.webp": {
-      "bytes": 63446,
-      "sha256": "0090105610a3a4b2994e9c6f47c783e0f1c548d57218bce22e51352e02d6b3df"
-    },
-    "elements/structure-1620-rubble.webp": {
-      "bytes": 33986,
-      "sha256": "1ebc62866df9228c015f8cb95c2ef457826631e6b656676e4bef9f5f7b7095a2"
-    },
-    "elements/structure-1620-standing.webp": {
-      "bytes": 29826,
-      "sha256": "d84e6f6504f017fb27c32ed473df9bd83eb545eafe0215c6461a7d3b19d17544"
-    },
-    "elements/structure-163-rubble.webp": {
-      "bytes": 71304,
-      "sha256": "c4c338fad8a7cbe5d50478a94f109f9bdeeaac99284fc68911faf71eb726a791"
-    },
-    "elements/structure-163-standing.webp": {
-      "bytes": 93592,
-      "sha256": "78208bb44028e4830e6dd37327e5c1fa04d721d2c8fb65fa7b704eb97e38b2fe"
-    },
-    "elements/structure-18-rubble.webp": {
-      "bytes": 38254,
-      "sha256": "dcc1f752515a031a5c533fbbef7088dedf382223f2040ec316442ecb2c14ce3d"
-    },
-    "elements/structure-18-standing.webp": {
-      "bytes": 29910,
-      "sha256": "cd42e720248378eb03b7e8c350d54ba3fab4f6089e6b583a08c1abe40640cb86"
-    },
-    "elements/structure-1810-rubble.webp": {
-      "bytes": 19208,
-      "sha256": "857a1d5c20ff03af3e3d1756daf6a27a072740bae05a5efe596c005aa0bdc038"
-    },
-    "elements/structure-1810-standing-under-114.webp": {
-      "bytes": 378,
-      "sha256": "3adb25457a479d64b07ddbe38ccd915b53d0c314bb75b29c9276b8dbba0e13f1"
-    },
-    "elements/structure-1810-standing-under-27.webp": {
-      "bytes": 366,
-      "sha256": "2c609dbc0248e51bfadf2cc7f2bc8e133713403a11ac37e5ffd125872d20121e"
-    },
-    "elements/structure-1810-standing.webp": {
-      "bytes": 54660,
-      "sha256": "833c76a6f52a734fc5faedbc1456eb722ddb9204de0f2e436f9d50056d805a57"
-    },
-    "elements/structure-1811-rubble.webp": {
-      "bytes": 18670,
-      "sha256": "5bde9c366ee82254c8c8c18e9cc839ab655ebb3738835cf473800ef245636968"
-    },
-    "elements/structure-1811-standing-under-93.webp": {
-      "bytes": 380,
-      "sha256": "3298e631c3c7b87ef5e6c365461541b02aefc5819765f50d960b2dd2cbfeea1e"
-    },
-    "elements/structure-1811-standing-under-94.webp": {
-      "bytes": 384,
-      "sha256": "74095289d335eddf7895517c14d142e5f9c75408c86d7f724928093b642cc59f"
-    },
-    "elements/structure-1811-standing.webp": {
-      "bytes": 56314,
-      "sha256": "60f03ac5b3ba53feb5436e8a47dffbf2ceb14a9a9396e6e168243e783d707bb0"
-    },
-    "elements/structure-1814-standing-under-144.webp": {
-      "bytes": 434,
-      "sha256": "33ccd99ff93ff6aab8af9670ce45e2b1bfd9c765ff91241b2a59ec511cb66bb0"
-    },
-    "elements/structure-1814-standing-under-2.webp": {
-      "bytes": 360,
-      "sha256": "af4ed0444e7e6c4165dd5260857c81b9048904ec4cd5a2e2c6f83996dd2647b2"
-    },
-    "elements/structure-1814-standing.webp": {
-      "bytes": 49322,
-      "sha256": "0fd6594edfc14ae9b0ade189001df073be1b89f93a586de9c043021ef747789a"
-    },
-    "elements/structure-1815-standing-under-143.webp": {
-      "bytes": 356,
-      "sha256": "553a8f93c94d17e2c6eeeb9a9735347f6ca6c5d7991afab10c31cbd1ee4f987a"
-    },
-    "elements/structure-1815-standing-under-149.webp": {
-      "bytes": 336,
-      "sha256": "d3b9e2448f18fea5a19483a2e7eddbad5e242b5c70d9e121b74c33d9ffdba5a6"
-    },
-    "elements/structure-1815-standing.webp": {
-      "bytes": 49988,
-      "sha256": "cbad6820044349dd83fd772bf8ea86652b4fe88aae53b3e592855bbd399aa11b"
-    },
-    "elements/structure-19-rubble.webp": {
-      "bytes": 374,
-      "sha256": "04826d31a1a2cd87e886e2bd29d8dcd09fb25f4e6f870a719100f25779132acb"
-    },
-    "elements/structure-19-standing-under-21.webp": {
-      "bytes": 330,
-      "sha256": "be1a7beef87cec3d92f10a9eec5b02b267f5e63be5fc568e334f15e752f9988d"
-    },
-    "elements/structure-19-standing-under-57.webp": {
-      "bytes": 364,
-      "sha256": "e82e13f6b1489a9592d111e6ab3c702567e2e15b9a7bcdad29939b7c3e5c27ae"
-    },
-    "elements/structure-19-standing.webp": {
-      "bytes": 53206,
-      "sha256": "f0485c7a6aa9b361b49940e39ec06e90a08eaeb68e3b55dae5fda025770f9027"
-    },
-    "elements/structure-1971096376-rubble.webp": {
-      "bytes": 20120,
-      "sha256": "647c3c4888bed0f5af33936737599da19157a436eae148f7a8b3163c20dac9a8"
-    },
-    "elements/structure-1971096376-standing.webp": {
-      "bytes": 21332,
-      "sha256": "53db0a2c470bdeea023374caa9414fecdbb9fd6608cbcce24fc85a2762823ac0"
-    },
-    "elements/structure-1997229234-rubble.webp": {
-      "bytes": 79348,
-      "sha256": "a749ca9327ffc24a4221d1aad60b4b2d3b0aa94d7e83564fa280b2c73af4aa86"
-    },
-    "elements/structure-1997229234-standing.webp": {
-      "bytes": 16794,
-      "sha256": "dc9bc1a96722c97284517cec6f8db64ff947580d2cb78cb96b3a0678464076e2"
-    },
-    "elements/structure-2-rubble.webp": {
-      "bytes": 15692,
-      "sha256": "8adc92c23b6b45d982339ba42d28c5fffe4fb0f2934c0ff4402f922904021f5a"
-    },
-    "elements/structure-2-standing-under-1814.webp": {
-      "bytes": 416,
-      "sha256": "eaebcb3607ca1aaa618dca3e9fed98ef74af6759d882c5a032737de2244ec333"
-    },
-    "elements/structure-2-standing-under-492.webp": {
-      "bytes": 400,
-      "sha256": "37da7e7eae1fc6a82876806c0e5f87643c15e6d5344d4045f24e6714a82536c7"
-    },
-    "elements/structure-2-standing.webp": {
-      "bytes": 23478,
-      "sha256": "fcd984789a845f17fd1a9feff3da17300071a81e3f657710134ab4b3bf29e2b8"
-    },
-    "elements/structure-2056932872-rubble.webp": {
-      "bytes": 64964,
-      "sha256": "9c19574fd42b8d0f7ff3168cb933f4f07ac3d34b1c82f1c55a7399178da8ef49"
-    },
-    "elements/structure-2056932872-standing.webp": {
-      "bytes": 16794,
-      "sha256": "703dce2d517df11f4d47fd6501317bcb3499f0e8b367e2a520c0838af14b710c"
-    },
-    "elements/structure-21-rubble.webp": {
-      "bytes": 37602,
-      "sha256": "65a4ed86323bb05cfe309d5e194016e91360c3df0b15cd0354e8f6e96edcccf4"
-    },
-    "elements/structure-21-standing-under-19.webp": {
-      "bytes": 370,
-      "sha256": "de6ce606c879a0e5d62869ec763bc17026e4b910d455be6188f10462044772e7"
-    },
-    "elements/structure-21-standing-under-736214455.webp": {
-      "bytes": 350,
-      "sha256": "f6bbaaa61c37cbc384dc7c89e184a7dc66d31fd3681b8890a18eef5a89e2047c"
-    },
-    "elements/structure-21-standing.webp": {
-      "bytes": 18158,
-      "sha256": "8817dcc4f74c3c8436ea1d58365128d8b45bd4637b8fe9ef0f3384107ec1ceba"
-    },
-    "elements/structure-210-rubble.webp": {
-      "bytes": 514858,
-      "sha256": "304548df7f63db0b896b0327684e9bacaf932f0ef45df52e06860284e0326d6c"
-    },
-    "elements/structure-210-standing.webp": {
-      "bytes": 217664,
-      "sha256": "ed1decd95edaeeaf14b0ea927dc1a99b50f8db958dbf76a695ad13709c70121f"
-    },
-    "elements/structure-22-standing-under-44.webp": {
-      "bytes": 354,
-      "sha256": "d190192019035f77062364bf7475412dbe15c5c1b9bac92e8bac3daa7665d766"
-    },
-    "elements/structure-22-standing-under-47.webp": {
-      "bytes": 360,
-      "sha256": "010ea624b681ed8b5d5705222140ec70ac8468153a044276a9df2f226da1c9b2"
-    },
-    "elements/structure-22-standing.webp": {
-      "bytes": 51604,
-      "sha256": "ece7d3e7af9771c23cf0a5c18e981c491bc73afedd6e48ee3f64f4253bcbe647"
-    },
-    "elements/structure-24-rubble.webp": {
-      "bytes": 24802,
-      "sha256": "e5ce644c93d0f7596f41c61c1147a50ae372d40ae088a83e2e719e8057bcd7de"
-    },
-    "elements/structure-24-standing-under-44.webp": {
-      "bytes": 508,
-      "sha256": "4039d08e1ac84e7eedf3d17acfd33bf752866c9f033d5d35124bf2ff6bdb125b"
-    },
-    "elements/structure-24-standing.webp": {
-      "bytes": 21052,
-      "sha256": "3a1f452b6f2bd84526e68f54df065ffdad43a7fb05b8c439eb589e1aa88a85d9"
-    },
-    "elements/structure-268-rubble.webp": {
-      "bytes": 144490,
-      "sha256": "4001646220c6a9a5060915a42a74fe4d640126c578296685792d6c4ea81969ea"
-    },
-    "elements/structure-268-standing.webp": {
-      "bytes": 93352,
-      "sha256": "e427e256e297c232a168d2d8a1c811d5ef947dfd5307aa8e0be5ba780b13d5eb"
-    },
-    "elements/structure-269-rubble.webp": {
-      "bytes": 140392,
-      "sha256": "e99b1e5e7e909a64864f422af00a5a5fd6e2d7c04f5ebc2b6813f1e63694ef79"
-    },
-    "elements/structure-269-standing.webp": {
-      "bytes": 94598,
-      "sha256": "40361244458c1822b0a18f47f1c604ee9e3c5d312495d583b527f4d5c6435c21"
-    },
-    "elements/structure-27-rubble.webp": {
-      "bytes": 11728,
-      "sha256": "c03a3b9b1698853680a4c655be89d7d97b5b6d7e7af42e5da3e7ff88795ecf62"
-    },
-    "elements/structure-27-standing-under-1810.webp": {
-      "bytes": 402,
-      "sha256": "be35412a3c0da0857a41d9e480be19f587631ecc72ed52609a25d60c81b9ba59"
-    },
-    "elements/structure-27-standing-under-490.webp": {
-      "bytes": 384,
-      "sha256": "46948136d578471f0343d2637a0b60d91685deacb8ae2c35214c0a63472fa3f2"
-    },
-    "elements/structure-27-standing.webp": {
-      "bytes": 15982,
-      "sha256": "081412a61fd85b0a3dc84e0aa0b9ff9c45d7a74e61fa48be3758c9384e102fc4"
-    },
-    "elements/structure-32-rubble.webp": {
-      "bytes": 22294,
-      "sha256": "e2a8c148bde21deb29abb97e6e2af50082f477bd820bb88b42f274a7e29f7d14"
-    },
-    "elements/structure-32-standing-under-86.webp": {
-      "bytes": 392,
-      "sha256": "155dd8fde6872ff67c63fda0287c60631e1949bfc31ded07a1b8037db021afc0"
-    },
-    "elements/structure-32-standing-under-89.webp": {
-      "bytes": 398,
-      "sha256": "c5103162d5403db503074140aa676116f22bf9bc4255942c1a921837d44b13db"
-    },
-    "elements/structure-32-standing.webp": {
-      "bytes": 56912,
-      "sha256": "2f3d8b60c08d418ef78f95bfa3318f21d6516ad7f6912506d5f39963d7453ffa"
-    },
-    "elements/structure-346-rubble.webp": {
-      "bytes": 553434,
-      "sha256": "ff19d1d44206dce5f720d51fdd81708c45cab76e801b9826df5741b0e91ee4cc"
-    },
-    "elements/structure-346-standing.webp": {
-      "bytes": 229394,
-      "sha256": "ed9f2bed72f3cd4e41fa8647864ea5f66852dc8bf8ad0376925d698c4fa5de55"
-    },
-    "elements/structure-35-rubble.webp": {
-      "bytes": 18662,
-      "sha256": "ce19de6f0a43f1fe0934bf1c8d7606077a8b3e3206d38fd8fab5369765157227"
-    },
-    "elements/structure-35-standing-under-1084430558.webp": {
-      "bytes": 386,
-      "sha256": "4ef3207b1b51e87df8e3103c18a9681e59e0186e9fcc2eb0c03124262fef31ee"
-    },
-    "elements/structure-35-standing-under-909878382.webp": {
-      "bytes": 388,
-      "sha256": "74c8ccd48170eca9d6155070f8181dca9c6762df268d0de511b1ba11159ee107"
-    },
-    "elements/structure-35-standing.webp": {
-      "bytes": 53436,
-      "sha256": "6e803f54a7562f3845b7b18376422adc52360905830f2a4eb565432fc685075f"
-    },
-    "elements/structure-38-rubble.webp": {
-      "bytes": 66862,
-      "sha256": "53d1486750851a179f826da61492f676de6e1131e6eca87bb6072f983d07773d"
-    },
-    "elements/structure-38-standing.webp": {
-      "bytes": 16824,
-      "sha256": "3cc4bf83291bec7c9c98a3fef92990fcb27e50124674f5d936545415c8e232c3"
-    },
-    "elements/structure-388017480-rubble.webp": {
-      "bytes": 14742,
-      "sha256": "589c695bbfa98182e3540cccdc393e9510b3a00afcd553cc01fa321ba43704f5"
-    },
-    "elements/structure-388017480-standing-under-766.webp": {
-      "bytes": 320,
-      "sha256": "e9c78de0e940ba16822fa6f5759b77d0708a014244cdbff7a9239532cd130dce"
-    },
-    "elements/structure-388017480-standing.webp": {
-      "bytes": 18518,
-      "sha256": "15de97a530c0704e66a484a47fefa5f3004958976cd73b1b753afd48043bb342"
-    },
-    "elements/structure-40-rubble.webp": {
-      "bytes": 15804,
-      "sha256": "20ca3408b70709adaedab7d83d354ed9e87c9043f451f176629a3734b3c13c26"
-    },
-    "elements/structure-40-standing.webp": {
-      "bytes": 19060,
-      "sha256": "49dbf961d6171e4f6d733eb655f8ad2e3d45de16832787175597c5eeb1b9c638"
-    },
-    "elements/structure-439978135-standing.webp": {
-      "bytes": 18322,
-      "sha256": "6c99d7ca77656ed12afcc0025da158e1b9a7f36a5379b3058a5eabfec46466ec"
-    },
-    "elements/structure-44-rubble.webp": {
-      "bytes": 15272,
-      "sha256": "b078a1e662c576f3bf94278a84eeac8acac962533ff3ee8813114123a17cda40"
-    },
-    "elements/structure-44-standing-under-22.webp": {
-      "bytes": 372,
-      "sha256": "d0083074cd3926ada97cd760cd2571381bae4850d9e4b82490d0a40816818431"
-    },
-    "elements/structure-44-standing-under-24.webp": {
-      "bytes": 446,
-      "sha256": "1f681f1ba9a0e3045b8bcfac6d4e9fd3efe36d1a704271252153157a57a5df23"
-    },
-    "elements/structure-44-standing.webp": {
-      "bytes": 18500,
-      "sha256": "e4fbabba6470d8e9fe321d141bc8e626d80afc6e46cc79a53b894c6c8dbe692c"
-    },
-    "elements/structure-47-rubble.webp": {
-      "bytes": 15256,
-      "sha256": "d2685ed86450d15b69f1a19a3df5d25dca6f1272fe9a4cb2dbb8b4e0babf2a6d"
-    },
-    "elements/structure-47-standing-under-22.webp": {
-      "bytes": 356,
-      "sha256": "766c402aba92381994366deb05de34f38c4c132053cd6cfafc042749766ca861"
-    },
-    "elements/structure-47-standing.webp": {
-      "bytes": 18864,
-      "sha256": "d86b4ffa863f59be4f70dc30e47d091060a21523eeb011baf4de268c555bb330"
-    },
-    "elements/structure-48-rubble.webp": {
-      "bytes": 41066,
-      "sha256": "7d860eff8154fc96d3ef2f68b82a832681cd66b564b87b71f30f2fd3edf51e81"
-    },
-    "elements/structure-48-standing-under-89.webp": {
-      "bytes": 292,
-      "sha256": "2ab764490eb69533eb2af40718aa9c8c57e9bd93d08adfcd4862d76cf3ba7150"
-    },
-    "elements/structure-48-standing.webp": {
-      "bytes": 25088,
-      "sha256": "0a5b5a40cc2dd1f0623f41cabffd5f1712b8c149c93a59a4e0153b953ed517f0"
-    },
-    "elements/structure-487-rubble.webp": {
-      "bytes": 49446,
-      "sha256": "b2bdeeec7f1fb5b6aabafa379c999c1a62c61adfa856aa3ad79c1eff2b073687"
-    },
-    "elements/structure-487-standing-under-93.webp": {
-      "bytes": 466,
-      "sha256": "f177028ac69cb6ad3934310c2595570d03871faa946ec71ee4586af213007ab9"
-    },
-    "elements/structure-487-standing.webp": {
-      "bytes": 25030,
-      "sha256": "f92896fdd0924a72e69bb7692017c31016941d0591ef647e2b8e5dba8f497887"
-    },
-    "elements/structure-488-rubble.webp": {
-      "bytes": 17716,
-      "sha256": "1602bd02a8fbe76bbf565267d481bd561833784f2ddc7e4c952c059d922254e5"
-    },
-    "elements/structure-488-standing-under-94.webp": {
-      "bytes": 336,
-      "sha256": "1b46dbfa8a8fe4111cb7397f35d997d392296e541b8a5e0c0aab36ab8f88d1bb"
-    },
-    "elements/structure-488-standing.webp": {
-      "bytes": 25546,
-      "sha256": "78d5e365fee6692abd4af00e0e6f2bfbc0a10181c03ae07fb32f84f2fdd158cf"
-    },
-    "elements/structure-489-rubble.webp": {
-      "bytes": 37702,
-      "sha256": "431528c730ba60dcbf0dc589d10655a05a64de33e00c03c28a2f0ec415726f76"
-    },
-    "elements/structure-489-standing-under-114.webp": {
-      "bytes": 436,
-      "sha256": "943d16e347d0ad7b248df4a0d6768b40d3a64796f6753af4b5dd04b5b47367c7"
-    },
-    "elements/structure-489-standing.webp": {
-      "bytes": 25928,
-      "sha256": "9edcca7b252dfb5352c14b21a24888014fcacb94a7ac33978a2862dbb1d4d997"
-    },
-    "elements/structure-490-rubble.webp": {
-      "bytes": 57964,
-      "sha256": "433eb8310417a4ddc01f024e1e71f57793d74c17fc3f85b4963248b11141b9ba"
-    },
-    "elements/structure-490-standing-under-27.webp": {
-      "bytes": 466,
-      "sha256": "b3ea893b6352f09e48b45a7437be23c82cc4d0139217a90a2cc34760ad598384"
-    },
-    "elements/structure-490-standing.webp": {
-      "bytes": 25684,
-      "sha256": "06469bc5632d639651011d8ea4acda022093dfbeaddddd1de38a573d77df17bf"
-    },
-    "elements/structure-491-rubble.webp": {
-      "bytes": 16938,
-      "sha256": "555a4b538e753d253dc40a084a5e087f4527062bb39afaa23a644310c98e6de6"
-    },
-    "elements/structure-491-standing-under-144.webp": {
-      "bytes": 424,
-      "sha256": "49a83c9ca718dbbc58c943abf17109d20da203d00de61bf4b6970a1f6ec17cc1"
-    },
-    "elements/structure-491-standing.webp": {
-      "bytes": 21832,
-      "sha256": "d9e4a189001d08c8ab307fdb28f689dced203e604db850b0468f70b664078798"
-    },
-    "elements/structure-492-rubble.webp": {
-      "bytes": 23030,
-      "sha256": "c92e9ef987caa671997e690153bf9c3674069a271114006a78b0a78b0302f12f"
-    },
-    "elements/structure-492-standing-under-2.webp": {
-      "bytes": 394,
-      "sha256": "a2d6cdcb4431ac6d4e2494bd4772b1ceb7b59e9de8f3727d77e788f46e2c5ba4"
-    },
-    "elements/structure-492-standing.webp": {
-      "bytes": 21688,
-      "sha256": "ccbe22723797c5fb016f1d0c1e203eece13fe4dc26015a129abcfccce364a562"
-    },
-    "elements/structure-493-rubble.webp": {
-      "bytes": 23844,
-      "sha256": "b06c56d0365d6844ff743b712428212a135dea7aa2e15e1c6a06fe73abda69ca"
-    },
-    "elements/structure-493-standing-under-149.webp": {
-      "bytes": 348,
-      "sha256": "d4bbe0ec5ec5a1ef667fbc34de60c586381d6a80425555e0973bb41756535384"
-    },
-    "elements/structure-493-standing.webp": {
-      "bytes": 21472,
-      "sha256": "e65779132fdbdb7b180849830f05987c5591c4c7c2db74ebe7d955328350dcab"
-    },
-    "elements/structure-494-rubble.webp": {
-      "bytes": 12746,
-      "sha256": "fe237e931bad0ca0fb8fb78dacd69d86c1ac1ed5107681462ed3b94f2028baef"
-    },
-    "elements/structure-494-standing-under-143.webp": {
-      "bytes": 394,
-      "sha256": "80c5f7b7b76fa6c1390b9d5251e1c2a76c02b648bd1c3a8e0b5d1b42f550e86b"
-    },
-    "elements/structure-494-standing.webp": {
-      "bytes": 22100,
-      "sha256": "f3e15289178838e4adb8877c51e018130eeb20faa3f22be3bbe9a94fba7cb417"
-    },
-    "elements/structure-57-rubble.webp": {
-      "bytes": 15572,
-      "sha256": "d386beb28e4077ad1990652a019df3ce4ff0fce3de3aea8695abcaa66c5316d2"
-    },
-    "elements/structure-57-standing-under-19.webp": {
-      "bytes": 358,
-      "sha256": "5c8dd4ec6bec23140c5ac4b292110146d5c4a53b44179fc7bccd93d5f98a3b8a"
-    },
-    "elements/structure-57-standing-under-1971096376.webp": {
-      "bytes": 320,
-      "sha256": "7c0d864687fb1edbdb3839d44828aa8642f0448f5b83c70f2d46f329947b27d6"
-    },
-    "elements/structure-57-standing.webp": {
-      "bytes": 18626,
-      "sha256": "6eaa418b5487fc70636214c1486f9db27598fbcf45fc2cdf06cf6d0ff0b6fb68"
-    },
-    "elements/structure-570077121-rubble.webp": {
-      "bytes": 16606,
-      "sha256": "22502d1f4bf1ebb2736e7a1d007d7a83cab479055e25c7275d531c7a77ed047e"
-    },
-    "elements/structure-570077121-standing.webp": {
-      "bytes": 20352,
-      "sha256": "8640f55aa3cc62b5140278a874e1dc88c6f122b90914171ac1b1202773caa826"
-    },
-    "elements/structure-72-rubble.webp": {
-      "bytes": 39374,
-      "sha256": "6264ff156ab981f6d2e43d6f38b31f6f8a536dc009e2c197c65872f34f72776f"
-    },
-    "elements/structure-72-standing.webp": {
-      "bytes": 29234,
-      "sha256": "6309349f6dd0dc93c15ee70438e0df4a5b20b4968ac063528e4583d3a0d0156e"
-    },
-    "elements/structure-73-rubble.webp": {
-      "bytes": 24636,
-      "sha256": "eb4eeb95c27f6152082dd1f71142768260aea97ef3a91181d53c1ab0c6c5940d"
-    },
-    "elements/structure-73-standing.webp": {
-      "bytes": 29176,
-      "sha256": "b24d6eb3d7a688fcf73effc5c1bc163396e53b488066c75b9699bf5ddf836bac"
-    },
-    "elements/structure-736214455-rubble.webp": {
-      "bytes": 17430,
-      "sha256": "8591f2146024c39accab1ad18eca5c0814ba519c72c06eb42f2ca8de13ab1fe8"
-    },
-    "elements/structure-736214455-standing-under-21.webp": {
-      "bytes": 308,
-      "sha256": "17d15a60e8445d7d9ca631730a4932e6996c1a1ce424b90e1eda08f508ca4fca"
-    },
-    "elements/structure-736214455-standing.webp": {
-      "bytes": 21382,
-      "sha256": "5cb4b5fe3e657dc172bb0bde5de52b28a7a1672cbc37682968b3a786f78574c0"
-    },
-    "elements/structure-766-rubble.webp": {
-      "bytes": 284,
-      "sha256": "aa43397f74602195f89d960bf053c41c47f0685c92fdd44114d54148e6e75132"
-    },
-    "elements/structure-766-standing-under-1106843562.webp": {
-      "bytes": 364,
-      "sha256": "11fc1672aa17ebaa960c526e0c2b73b3a74a323c02479ae3d2419fe80c1c06db"
-    },
-    "elements/structure-766-standing-under-388017480.webp": {
-      "bytes": 410,
-      "sha256": "fcbda2354997699c94941e029c4995903f912782feb99d7b1b58727357b583a0"
-    },
-    "elements/structure-766-standing.webp": {
-      "bytes": 48496,
-      "sha256": "e482cdf8c28d05639166008e2834ee7ae8b8b6be5549664ec5a83592e7433bdf"
-    },
-    "elements/structure-806262366-rubble.webp": {
-      "bytes": 50592,
-      "sha256": "342eff456a592000dfc064869f85ec13c9b5ef805cbeef9ef660e2e137a18733"
-    },
-    "elements/structure-806262366-standing-under-86.webp": {
-      "bytes": 398,
-      "sha256": "2810cfb09e2a158f04a814b14ead36ad3d5a0af91d93bf3c133568f21f28f0ab"
-    },
-    "elements/structure-806262366-standing.webp": {
-      "bytes": 23476,
-      "sha256": "f8a8a43edef29413f8c24834a6ba19b5ac8d537e45ffbcda3a7f1a268d21c4e5"
-    },
-    "elements/structure-85-rubble.webp": {
-      "bytes": 9930,
-      "sha256": "e34aee32b6cabdd5067c211e9742cc6a132bba1235dc7d46bcb4b62d61c9f8a9"
-    },
-    "elements/structure-85-standing-under-1263872499.webp": {
-      "bytes": 438,
-      "sha256": "639d0f06557144cf64dfa0e16fcc82c534b3ff5123eccdc6487388eca44f07d1"
-    },
-    "elements/structure-85-standing-under-146.webp": {
-      "bytes": 374,
-      "sha256": "37b596dae50c36b4c9caa4fd25bd609fd4b7dae458acc5ab4f3efe6f37fa2978"
-    },
-    "elements/structure-85-standing.webp": {
-      "bytes": 15626,
-      "sha256": "2987a5ea7f1925a7ab521965cbeaa25c982b1e3bbff7d1590f1e1a9fc168e8ff"
-    },
-    "elements/structure-86-rubble.webp": {
-      "bytes": 7178,
-      "sha256": "5e2125b9b95bdc0bc4e6f04cae3c43285c298bf4178834e080de7402b0e5eb2c"
-    },
-    "elements/structure-86-standing-under-32.webp": {
-      "bytes": 372,
-      "sha256": "7957fe04311e9da8518f10101f7aeb8b898b9d1b8fb71167490a0b93e4e13ed8"
-    },
-    "elements/structure-86-standing-under-806262366.webp": {
-      "bytes": 400,
-      "sha256": "f5abe373f7eb3708cb3a872403f72bf6ea7ec670c4ac41336b3c43b3683c71a7"
-    },
-    "elements/structure-86-standing.webp": {
-      "bytes": 15072,
-      "sha256": "c5e6a0d626ba625b2b17ccc5f04f06d6f1cb7510dca7ad223e296aca0475c9fc"
-    },
-    "elements/structure-87-rubble.webp": {
-      "bytes": 11944,
-      "sha256": "327512f517c262a2d1156518b531b6c520aac47f32b393834bc27e2acc3bae62"
-    },
-    "elements/structure-87-standing-under-146.webp": {
-      "bytes": 402,
-      "sha256": "054fdccebe1893d4642304edee7986a8a779972bf74b881baf1a94678bff6252"
-    },
-    "elements/structure-87-standing-under-978165572.webp": {
-      "bytes": 420,
-      "sha256": "900f52743eba09b795ebd2429d0d0a92052914f3944e51eeca9f5406b61be51e"
-    },
-    "elements/structure-87-standing.webp": {
-      "bytes": 15246,
-      "sha256": "ddace61b7aece40d28cf9554affa5201018d1f16109d7741250f81439775a4e3"
-    },
-    "elements/structure-89-rubble.webp": {
-      "bytes": 7876,
-      "sha256": "3ac670ce38f5e83357ecc3650183c7816869ece7d699f71e19e40252a45d64d8"
-    },
-    "elements/structure-89-standing-under-32.webp": {
-      "bytes": 390,
-      "sha256": "f85c82bc0676c5d715a0435da1d222b9b0b00c847e52d1f6f247cacbde9046f8"
-    },
-    "elements/structure-89-standing-under-48.webp": {
-      "bytes": 300,
-      "sha256": "7546dcbbc451a3bfb2afc9f98167ceafab9da8f92c4fb1adf2c3556f4e959539"
-    },
-    "elements/structure-89-standing.webp": {
-      "bytes": 15256,
-      "sha256": "5bab7718a92c4794fe88d2487e9308ae60ecbd322c708e2ddd3d5abec8e18aa8"
-    },
-    "elements/structure-909878382-rubble.webp": {
-      "bytes": 62310,
-      "sha256": "941849ad411dec9b134697c785c68e0d58b378c826f5c895d84df5513ef24c66"
-    },
-    "elements/structure-909878382-standing-under-35.webp": {
-      "bytes": 352,
-      "sha256": "1ea2a025862e092282c109d6336a473ccde2ec05cc24f64c1b6e2ae89258324c"
-    },
-    "elements/structure-909878382-standing.webp": {
-      "bytes": 16856,
-      "sha256": "62ca6cf1a270b1f21b3fcb86d75cb379570767a66f1dced637e187a7f428cb41"
-    },
-    "elements/structure-93-rubble.webp": {
-      "bytes": 11460,
-      "sha256": "919a26240324d80153411bb6dbea91e64a369c43f14ee1f9d143c65f590f37d5"
-    },
-    "elements/structure-93-standing-under-1811.webp": {
-      "bytes": 396,
-      "sha256": "394937fcbfb6b2e22f66c2931b1359a24ee976c1985196adbf33aa4291312207"
-    },
-    "elements/structure-93-standing-under-487.webp": {
-      "bytes": 350,
-      "sha256": "f14904b19a73d578614e8a2f9bc41bbf3a213582894ccd9d90e81fae1e950f1d"
-    },
-    "elements/structure-93-standing.webp": {
-      "bytes": 15768,
-      "sha256": "cd8ff39147d42e181d77e552ce41271840177cdad3b325effda0c20f22920c3f"
-    },
-    "elements/structure-94-rubble.webp": {
-      "bytes": 12612,
-      "sha256": "825915f944e9c68e9145e9098070e01702a0b73a1e526bc9094e5a48e236d9c1"
-    },
-    "elements/structure-94-standing-under-1811.webp": {
-      "bytes": 396,
-      "sha256": "e052c1f949c88c4fc80619011754f78f2a4c7e3733a659eddb304955ce4c7cf2"
-    },
-    "elements/structure-94-standing-under-488.webp": {
-      "bytes": 364,
-      "sha256": "842c143632c678226cf5ff5d4c86ccc623aca25e48c23bfd765bb31eb9faeb47"
-    },
-    "elements/structure-94-standing.webp": {
-      "bytes": 15346,
-      "sha256": "c99d1a2156d6e4ad1deb0e05d5421e69d8180a2946eb817819c08daaf0cc2f0e"
-    },
-    "elements/structure-978165572-rubble.webp": {
-      "bytes": 44804,
-      "sha256": "11af568ffcdb34e86086dd9fbdc4eaf50f1ab66b5e62919c8a84b61e3f8f9606"
-    },
-    "elements/structure-978165572-standing-under-87.webp": {
-      "bytes": 428,
-      "sha256": "2c256169bd0917f82b61a786a4cc869daf243d1c5a44d6e8293c6a944f172e1a"
-    },
-    "elements/structure-978165572-standing.webp": {
-      "bytes": 26632,
-      "sha256": "ffafaecc59133c107d643021f8f7d283d2bcf73aee8e858c4b4644078a8c63b8"
+      "bytes": 3774625,
+      "sha256": "036e701947ace94f852b8130088310542fe8115086c8da123015fa77952f85c9"
     },
     "fixed.webp": {
       "bytes": 24998,
       "sha256": "a098236698fd737f89cd7bbc4a8026fd5af4395c5a717d0e02cb1e80af13327d"
     },
     "haze.pmtiles": {
-      "bytes": 5100700,
-      "sha256": "d63103eeed64b281f369b3e9ee8dfd42640418df5374f258bc7af86c336faa7b"
+      "bytes": 11733097,
+      "sha256": "518acbadf5ace48836e921dbe8494dcb839e21b8249d5658bd352f72f342ff4f"
     },
     "images/custom-minimap-hover.png": {
       "bytes": 16366,
@@ -3746,16 +4291,32 @@
       "sha256": "fd3e0eca3636781779654e706bee05a8b8da8f494b0e52f3b57475ed3a2ad9be"
     },
     "index.html": {
-      "bytes": 28746,
-      "sha256": "edfe9208d90c3952a1a769d308ed7754b67beb6509b88765fcbebc5624553acb"
+      "bytes": 30320,
+      "sha256": "9b5c90e50c684822a3e2aea2bec0939ac20e94199759c129df0c4895f676ccb6"
     },
     "map.pmtiles": {
-      "bytes": 12024667,
-      "sha256": "92dd468317b05cf1cebe273a978b9b40d59af0db067b086852c0524468422cb0"
+      "bytes": 10464106,
+      "sha256": "fecb245a019f4d68b20c06a48130cc53dfb63fc7a5de4b44c17afbcd9b3e9a9e"
     },
     "thumbnail.webp": {
-      "bytes": 20660,
-      "sha256": "8d4128b2219876153872abdaa1594b8b650e1b0998f318a9513b7ea6cef6126d"
+      "bytes": 20680,
+      "sha256": "eba1c170dcc5d5ad6add794be75708e362f88606436cdc01f29a5f89ddc3895e"
+    },
+    "elements/standing.webp": {
+      "bytes": 1,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "elements/rubble.webp": {
+      "bytes": 1,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "elements/masks.webp": {
+      "bytes": 1,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "elements/small.webp": {
+      "bytes": 1,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
     }
   }
 }

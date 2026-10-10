@@ -6,6 +6,7 @@
   [arena]="store.arena()"
   [hiddenLayers]="store.hiddenLayers()"
   [elementStates]="store.elementStates()"
+  [bars]="bars()"
   (elementClick)="store.cycleElement($event)"
   (minimapFaded)="store.minimapFaded()"
 />

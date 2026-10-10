@@ -1,5 +1,5 @@
 {
-  "format": 1,
+  "format": 3,
   "tool": "heroes-capture 0.0.0-dev",
   "gameBuild": 98348,
   "map": {
@@ -103,7 +103,15 @@
       ],
       "pxPerCell": 22.290349182315907,
       "levels": 5,
-      "tileSize": 512
+      "tileSize": 512,
+      "overview": {
+        "file": "background-overview.webp",
+        "level": 2,
+        "size": [
+          1907,
+          1679
+        ]
+      }
     },
     {
       "id": "haze",
@@ -124,7 +132,15 @@
       ],
       "pxPerCell": 23.026561875,
       "levels": 5,
-      "tileSize": 512
+      "tileSize": 512,
+      "overview": {
+        "file": "haze-overview.webp",
+        "level": 2,
+        "size": [
+          1947,
+          1576
+        ]
+      }
     },
     {
       "id": "map-m1",
@@ -141,7 +157,15 @@
       ],
       "pxPerCell": 48.47348338481956,
       "levels": 6,
-      "tileSize": 512
+      "tileSize": 512,
+      "overview": {
+        "file": "map-m1-overview.webp",
+        "level": 2,
+        "size": [
+          1212,
+          621
+        ]
+      }
     },
     {
       "id": "map-m2",
@@ -158,7 +182,15 @@
       ],
       "pxPerCell": 48.47348338481956,
       "levels": 6,
-      "tileSize": 512
+      "tileSize": 512,
+      "overview": {
+        "file": "map-m2-overview.webp",
+        "level": 2,
+        "size": [
+          1137,
+          630
+        ]
+      }
     },
     {
       "id": "map-m3",
@@ -175,7 +207,15 @@
       ],
       "pxPerCell": 48.47348338481956,
       "levels": 6,
-      "tileSize": 512
+      "tileSize": 512,
+      "overview": {
+        "file": "map-m3-overview.webp",
+        "level": 2,
+        "size": [
+          1133,
+          609
+        ]
+      }
     }
   ],
   "images": {

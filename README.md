@@ -39,6 +39,24 @@ the browser build picks files with an `<input type=file>`, the desktop build thr
 Electron's dialog and knows the game's replay folder. Nothing else in the app knows
 where it runs.
 
+## Maps rendered on this machine
+
+The app reads its maps from [heroes-maps](https://github.com/myrddraall/heroes-maps). In the
+devcontainer (`DEV_LOCAL` is true there) `pnpm start` and `pnpm build` add the app's `local`
+configuration instead, which reads them from this machine:
+
+```bash
+pnpm run serve.maps                 # heroes-capture's output next to this repository (../heroes-capture/tmp/results/maps)
+pnpm run serve.maps <folder> [port] # another folder of renders
+pnpm start                          # the app on http://localhost:4200, its /maps-local/ proxied to the maps server
+```
+
+The maps server (port 4208) serves whatever renders are in the folder (a catalog, each pack, byte
+ranges), read afresh on every request, so a new render shows on the next reload. The dev server
+proxies `/maps-local/` to it, so from outside the container only port 4200 is needed.
+`pnpm start -- --configuration production` serves the production bundle the same way. CI builds,
+where `DEV_LOCAL` isn't set, read heroes-maps as before; nothing changes at check-in.
+
 ## Releasing
 
 This repository follows the [cpdevtools git-flow](https://github.com/cpdevtools/git-flow-template)

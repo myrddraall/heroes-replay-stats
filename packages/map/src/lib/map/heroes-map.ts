@@ -1,5 +1,6 @@
 import { Component, inject, input } from '@angular/core';
 import { MapViewer } from '../viewer/map-viewer';
+import type { MapViewerBars } from '../viewer/map-viewer.store';
 import { MapStore } from './map.store';
 
 /**
@@ -16,6 +17,8 @@ import { MapStore } from './map.store';
 export class HeroesMap {
   /** The map's id in heroes-maps (`battlefield-of-eternity`). */
   readonly mapId = input.required<string>();
+  /** The viewer's bars: fixed, or receding as it zooms in (MapViewer's `bars`). */
+  readonly bars = input<MapViewerBars>('fixed');
 
   protected readonly store = inject(MapStore);
 

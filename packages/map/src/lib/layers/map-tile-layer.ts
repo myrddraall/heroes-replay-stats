@@ -1,4 +1,5 @@
 import { Directive, effect, ElementRef, inject, input } from '@angular/core';
+import type { MapAssets } from '../pack/map-assets';
 import type { TilePackLayer } from '../pack/map-pack';
 import { middlePixel, screenBox, tileLevel, type ScreenBox } from '../view/camera';
 import { frameContext, LAYER_STYLE } from '../viewer/canvas';
@@ -12,7 +13,7 @@ import { MapLayerPlacement } from '../viewer/map-layer-placement';
 import { MapRenderer } from '../viewer/map-renderer';
 import { MapViewerStore } from '../viewer/map-viewer.store';
 import { MapTileLoader } from './map-tile-loader';
-import type { TilePyramid } from './tile-pyramid';
+import type { Tile, TilePyramid } from './tile-pyramid';
 
 /** A tile's fade-in once loaded, in milliseconds. */
 const FADE_MS = 250;
@@ -22,7 +23,8 @@ const FADE_MS = 250;
  * shown arena's map layer), or a sky layer's id (`"background"`, `"haze"`), at the parallax rate
  * of its placement. Every visible tile at the level whose pixels are about one screen pixel,
  * drawn from the finest coarser level loaded so far until its own arrives, which then fades in.
- * The tiles come from the map's assets.
+ * The tiles come from the map's assets; the layer's overview (PACK.md, Overviews) first, cut into
+ * its level's tiles, so the whole layer is on screen after one request.
  */
 @Directive({
   selector: 'canvas[hrsMapTileLayer]',
@@ -55,7 +57,11 @@ export class MapTileLayer implements MapLayer {
         layers.map((l) => [l.id, this.loader.open(l, map.assets.tiles(l.id))]),
       );
       this.pyramids = opened;
+      const abort = new AbortController();
+      for (const pyramid of opened.values())
+        this.seedFromOverview(pyramid, map.assets, abort.signal);
       onCleanup(() => {
+        abort.abort();
         for (const pyramid of opened.values()) this.loader.close(pyramid);
       });
     });
@@ -68,6 +74,42 @@ export class MapTileLayer implements MapLayer {
 
   placement() {
     return this.place.placement();
+  }
+
+  /**
+   * The overview's level filled from the overview: its tiles marked as on their way, so the loader
+   * doesn't ask the pyramid for them, then cut out of the picture (a tile past its edge is padded
+   * with transparency, as the pyramid's are) and faded in like loaded tiles.
+   */
+  private seedFromOverview(pyramid: TilePyramid, assets: MapAssets, signal: AbortSignal): void {
+    const overview = pyramid.layer.overview;
+    if (!overview) return;
+    const size = pyramid.layer.tileSize;
+    const [cols, rows] = pyramid.grid(overview.level);
+    const tiles: [number, number, Tile][] = [];
+    for (let y = 0; y < rows; y++) {
+      for (let x = 0; x < cols; x++) {
+        const tile = pyramid.tileAt(overview.level, x, y, 0);
+        if (tile.state !== 'new') continue;
+        tile.state = 'queued';
+        tiles.push([x, y, tile]);
+      }
+    }
+    assets
+      .picture(overview.file, signal, 'high')
+      .then(async (picture) => {
+        for (const [x, y, tile] of tiles) {
+          if (signal.aborted) break;
+          tile.bitmap = await createImageBitmap(picture, x * size, y * size, size, size);
+          tile.state = 'loaded';
+          tile.at = performance.now();
+        }
+        picture.close();
+        this.renderer.redraw();
+      })
+      .catch(() => {
+        for (const [, , tile] of tiles) if (tile.state === 'queued') tile.state = 'new';
+      });
   }
 
   render(frame: LayerFrame): MapLayerStatus {

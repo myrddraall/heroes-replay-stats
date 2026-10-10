@@ -2,8 +2,16 @@ import { PMTiles } from 'pmtiles';
 import type { MapAssets, TileArchive } from './map-assets';
 import type { MapPack } from './map-pack';
 
-async function fetched(url: string, abortSignal: AbortSignal): Promise<Response> {
-  const answer = await fetch(url, { signal: abortSignal });
+/**
+ * A file fetched, at low priority unless asked otherwise: the browser then queues it behind
+ * the tile pyramids' requests, so the terrain shows first.
+ */
+async function fetched(
+  url: string,
+  abortSignal: AbortSignal,
+  priority: 'high' | 'low' = 'low',
+): Promise<Response> {
+  const answer = await fetch(url, { signal: abortSignal, priority });
   if (!answer.ok) throw new Error(`${url}: ${answer.status} ${answer.statusText}`);
   return answer;
 }
@@ -21,8 +29,16 @@ export class HttpMapAssets implements MapAssets {
     private readonly folder: string,
   ) {}
 
+  /**
+   * A file's URL, with its hash from the pack's `files` as a version (PACK.md: a viewer can cache
+   * by hash): a server may then cache it for good, and a new render, with new hashes, still shows
+   * at once.
+   */
   url(file: string): string {
-    return new URL(file, this.folder).href;
+    const url = new URL(file, this.folder);
+    const hash = this.pack.files?.[file]?.sha256;
+    if (hash) url.searchParams.set('v', hash.slice(0, 12));
+    return url.href;
   }
 
   tiles(layerId: string): TileArchive {
@@ -36,8 +52,12 @@ export class HttpMapAssets implements MapAssets {
     return archive;
   }
 
-  async picture(file: string, abortSignal: AbortSignal): Promise<ImageBitmap> {
-    const answer = await fetched(this.url(file), abortSignal);
+  async picture(
+    file: string,
+    abortSignal: AbortSignal,
+    priority: 'high' | 'low' = 'low',
+  ): Promise<ImageBitmap> {
+    const answer = await fetched(this.url(file), abortSignal, priority);
     return createImageBitmap(await answer.blob());
   }
 

@@ -17,12 +17,23 @@ Container / presentational (smart / dumb) components, with NgRx `signalStore`s:
 | Layer       | Folder               | What                                                                                                                        |
 | ----------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | data-access | `pack/`              | The pack format, `MapPacksService` (loads a map: its `pack.json` and a `MapAssets` data source), `MapCatalogStore` (global) |
-| util        | `view/`              | Arenas, the camera and its projections, the layer stack (`packStack`, `resolvePlacement`)                                   |
+| util        | `view/`              | Arenas, the camera and its projections, the layer stack (`packStack`, `resolvePlacement`), the framing (`framing.ts`)       |
 | ui          | `viewer/`, `layers/` | The presentational viewer and its layer directives                                                                          |
 | feature     | `map/`               | `hrs-map`, the container                                                                                                    |
 
-- **`hrs-map` (`HeroesMap`, container):** takes a map id. Its component store (`MapStore`) loads the map and keeps what is shown: the hidden layers, the arena, and each structure's and camp's state. It hands all of that to the viewer, and handles the viewer's events (a click on an element steps it to its next state; the minimap's loading screen fading away turns it off).
+- **`hrs-map` (`HeroesMap`, container):** takes a map id. Its component store (`MapStore`) loads the map and keeps what is shown: the hidden layers, the arena, and each structure's and camp's state. It hands all of that to the viewer, and handles the viewer's events (a click on an element steps it to its next state; the minimap's loading screen fading away turns it off). While that loading screen is up the other layers are drawn at alpha 0; once the first view is fully drawn they cross-fade: the minimap out, the map in (`--hrs-map-viewer-fade`, 600 ms).
 - **`hrs-map-viewer` (`MapViewer`, presentational):** takes `map` (the pack and its `MapAssets`), `loading`, `error`, `arena`, `hiddenLayers` and `elementStates`, and emits `elementClick` and `minimapFaded`. It renders the pack's own layers from the pack's data, and draws them over a frame loop (`MapRenderer`). It keeps only UI state: the camera (`MapViewerStore`, a presenter store) and the hover. It never fetches: tiles, pictures and the minimap's SVG come from the `MapAssets` it is given.
+
+  Zoomed out all the way it shows, in order: the whole playable area (the camera bounds), centred; then as much of the map round it as it can, a margin of up to a tenth of its size (`PLAYABLE_MARGIN`); and never an edge of the sky (each sky layer's picture fills its rectangle: heroes-capture's PACK.md, Sky layers fill their rectangles). The margin shrinks as far as the sky needs for the viewer's size. Only when even no margin is filled is the map drawn in a narrower or shorter view, centred, between bars: one pair, left and right or top and bottom, the same thickness, depending on the viewer's size and zoom only (never on panning). They are two elements beside the view, black, or `--hrs-map-viewer-bars` (any `background`), or filled with an `ng-template[hrsMapViewerBar]` placed inside the viewer (rendered in each bar, given its side). They are part of the map: hidden while the minimap's loading screen is up, they fade in with it. The viewer has no background of its own: the page shows through the view until the map is drawn, and wherever the map is transparent. With `bars="shrink"` (on the viewer or on `hrs-map`) they recede as the camera zooms in, as far as the sky fills the view at that zoom:
+
+  ```html
+  <hrs-map-viewer [map]="map" style="--hrs-map-viewer-bars: #111">
+    <ng-template hrsMapViewerBar let-side>
+      <img [src]="side === 'left' || side === 'top' ? 'frame-start.png' : 'frame-end.png'" alt="" />
+    </ng-template>
+  </hrs-map-viewer>
+  ```
+
 - **The layers** are directives on elements: `div[hrsMapFixedLayer]`, `canvas[hrsMapTileLayer]`, `canvas[hrsMapElementsLayer]` and `hrs-map-minimap-layer`.
 
 ### Layer order and parallax

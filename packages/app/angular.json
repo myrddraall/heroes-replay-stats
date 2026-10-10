@@ -3,7 +3,9 @@
   "version": 1,
   "cli": {
     "packageManager": "pnpm",
-    "schematicCollections": ["angular-eslint"],
+    "schematicCollections": [
+      "angular-eslint"
+    ],
     "analytics": false
   },
   "newProjectRoot": "projects",
@@ -31,7 +33,9 @@
                 "input": "public"
               }
             ],
-            "styles": ["src/styles.scss"],
+            "styles": [
+              "src/styles.scss"
+            ],
             "webWorkerTsConfig": "tsconfig.worker.json"
           },
           "configurations": {
@@ -54,6 +58,14 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "local": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.local.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -66,6 +78,10 @@
             },
             "development": {
               "buildTarget": "heroes-replay-stats:build:development"
+            },
+            "local": {
+              "buildTarget": "heroes-replay-stats:build:development,local",
+              "proxyConfig": "proxy.local.json"
             }
           },
           "defaultConfiguration": "development",
@@ -73,7 +89,9 @@
             "host": "0.0.0.0",
             "port": 4200,
             "prebundle": {
-              "exclude": ["@myrddraall/heroes-replay-stats-map"]
+              "exclude": [
+                "@myrddraall/heroes-replay-stats-map"
+              ]
             }
           }
         },
@@ -83,7 +101,10 @@
         "lint": {
           "builder": "@angular-eslint/builder:lint",
           "options": {
-            "lintFilePatterns": ["src/**/*.ts", "src/**/*.html"]
+            "lintFilePatterns": [
+              "src/**/*.ts",
+              "src/**/*.html"
+            ]
           }
         }
       }

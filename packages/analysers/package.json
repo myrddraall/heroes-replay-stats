@@ -13,10 +13,10 @@
     "typecheck": "tsc --noEmit -p ."
   },
   "dependencies": {
-    "@myrddraall/heroprotocol-db": "^0.4.0"
+    "@myrddraall/heroprotocol-db": "^0.5.0"
   },
   "devDependencies": {
-    "@myrddraall/heroprotocol": "^0.4.0",
+    "@myrddraall/heroprotocol": "^0.5.0",
     "@types/node": "^24.0.0",
     "@typescript-eslint/eslint-plugin": "^8.20.0",
     "@typescript-eslint/parser": "^8.20.0",

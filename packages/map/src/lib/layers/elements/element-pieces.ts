@@ -30,7 +30,7 @@ export interface ElementPiece {
   readonly hit: ElementCut | null;
 }
 
-/** The pack's structures and camps, further north first: the drawing order. */
+/** The pack's structures and camps, further north first (drawOrder puts the rubble under them). */
 export function piecesOf(elements: PackElements): ElementPiece[] {
   const pieces: ElementPiece[] = [
     ...elements.structures.map((s) =>
@@ -51,6 +51,19 @@ function piece(
   const first = states[KIND_STATES[kind][0]];
   const hit = first ?? Object.values(states).find((cut): cut is ElementCut => Boolean(cut)) ?? null;
   return { key, kind, id, cell, states, hit };
+}
+
+/**
+ * The pieces in the order they are drawn, back to front: every one shown as rubble first, then the
+ * rest (standing, camps), each further north first. Rubble lies on the ground: a standing building
+ * is never under a fallen neighbour's remains.
+ */
+export function drawOrder(
+  pieces: readonly ElementPiece[],
+  stateOf: (piece: ElementPiece) => ElementShown,
+): ElementPiece[] {
+  const rubble = pieces.filter((p) => stateOf(p) === 'rubble');
+  return [...rubble, ...pieces.filter((p) => stateOf(p) !== 'rubble')];
 }
 
 /** The states of a kind. */

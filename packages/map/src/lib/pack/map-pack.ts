@@ -1,8 +1,8 @@
 /**
- * A heroes-capture map pack, format 1: what its `pack.json` holds. heroes-capture's PACK.md is
+ * A heroes-capture map pack, format 3: what its `pack.json` holds. heroes-capture's PACK.md is
  * the contract; only what a viewer reads is typed here.
  */
-export const MAP_PACK_FORMAT = 1;
+export const MAP_PACK_FORMAT = 3;
 
 /** A rectangle of map cells. */
 export interface CellBounds {
@@ -26,19 +26,35 @@ export interface PackFixedLayer {
   readonly size: Pixels;
 }
 
-/** What every tiled layer has: a PMTiles pyramid of `levels` levels. */
+/**
+ * One of a tiled layer's pyramid levels whole, as one picture (PACK.md, Overviews): the finest
+ * level no longer than 2048 px on a side, its pixels those of the level's tiles.
+ */
+export interface PackOverview {
+  readonly file: string;
+  /** The pyramid level, 0 the coarsest. */
+  readonly level: number;
+  readonly size: Pixels;
+}
+
+/** What every tiled layer has: a PMTiles pyramid of `levels` levels, and an overview of it. */
 interface TiledLayer {
   readonly id: string;
   readonly file: string;
   readonly size: Pixels;
   readonly levels: number;
   readonly tileSize: number;
+  readonly overview: PackOverview | null;
   /** How the layer moves with the camera: 1 for the map, less for the sky behind it. */
   readonly rate: number;
   readonly pxPerCell: number;
 }
 
-/** A sky layer (background art, haze): placed from the cell its picture is centred on. */
+/**
+ * A sky layer (background art, haze): placed from the cell its picture is centred on. Its picture
+ * fills its whole rectangle (PACK.md, Sky layers fill their rectangles): a window inside it shows
+ * no edge of the sky.
+ */
 export interface PackParallaxLayer extends TiledLayer {
   readonly kind: 'parallax';
   readonly centreCell: Cell;
@@ -87,17 +103,34 @@ export interface PackImages {
   readonly loadingScreen?: PackImage;
 }
 
-/** Where a standing neighbour is in front of a cut-out: opaque where it hides it. */
+/** Where a standing neighbour is in front of a cut-out: a mask in the `masks` atlas, opaque where it hides it. */
 export interface HiddenByMask {
   /** The neighbouring structure's id. */
   readonly id: number;
-  readonly file: string;
+  /** The mask's top-left corner in the `masks` atlas; it is the cut-out's size. */
+  readonly at: Pixels;
 }
 
-/** One state's cut-out, and where it goes on its map layer: left, top, width, height. */
-export interface ElementCut {
+/** The atlases the cut-outs are packed in (PACK.md, Elements). */
+export type ElementAtlasName = 'standing' | 'rubble' | 'masks' | 'small';
+
+export interface PackAtlas {
   readonly file: string;
+  readonly size: Pixels;
+  /** The atlas's pixels per map layer pixel: 1, or the overview's scale for `small`. */
+  readonly scale: number;
+}
+
+/**
+ * One state's cut-out: where it goes on its map layer (`rect`: left, top, width, height), its
+ * picture's top-left corner in its full-scale atlas (`atlas`, `at`), and in the `small` atlas
+ * (`small`, where it is ⌈width · scale⌉ by ⌈height · scale⌉).
+ */
+export interface ElementCut {
   readonly rect: readonly [left: number, top: number, width: number, height: number];
+  readonly atlas: 'standing' | 'rubble';
+  readonly at: Pixels;
+  readonly small: Pixels;
   readonly hiddenBy?: readonly HiddenByMask[];
 }
 
@@ -126,6 +159,7 @@ export interface PackCamp {
 export interface PackElements {
   /** The map layer the cut-outs belong to (their rectangles are in its pixels). */
   readonly layer: string;
+  readonly atlases: Readonly<Partial<Record<ElementAtlasName, PackAtlas>>>;
   readonly structures: readonly PackStructure[];
   readonly camps: readonly PackCamp[];
 }
@@ -144,6 +178,8 @@ export interface MapPack {
     readonly cameraBounds?: CellBounds;
   };
   readonly arenas: readonly PackArena[] | null;
+  /** Every file in the pack, its size and SHA-256 (`pack.json` aside). */
+  readonly files?: Readonly<Record<string, { readonly bytes: number; readonly sha256: string }>>;
   /** Back to front: the drawing order. */
   readonly layers: readonly PackLayer[];
   readonly images: PackImages;

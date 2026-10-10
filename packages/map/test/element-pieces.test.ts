@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ElementCut } from '../src/lib/pack/map-pack';
 import {
+  drawOrder,
   HIT_ALPHA,
   nextState,
   pieceAt,
@@ -48,13 +49,23 @@ describe('standingMasks', () => {
     const [first, ...others] = cut.hiddenBy!;
     expect(standingMasks(cut, () => true)).toEqual(cut.hiddenBy);
     expect(standingMasks(cut, (id) => id !== first!.id)).toEqual(others);
-    expect(standingMasks({ file: 'x', rect: [0, 0, 1, 1] }, () => true)).toEqual([]);
+    expect(
+      standingMasks(
+        { rect: [0, 0, 1, 1], atlas: 'standing', at: [0, 0], small: [0, 0] },
+        () => true,
+      ),
+    ).toEqual([]);
   });
 });
 
 describe('pieceAt', () => {
   // two overlapping 10 × 10 pictures; the second is drawn last, so it is in front
-  const cut = (left: number): ElementCut => ({ file: `${left}.webp`, rect: [left, 0, 10, 10] });
+  const cut = (left: number): ElementCut => ({
+    rect: [left, 0, 10, 10],
+    atlas: 'standing',
+    at: [0, 0],
+    small: [0, 0],
+  });
   const back = {
     key: 'back',
     kind: 'structure',
@@ -87,5 +98,23 @@ describe('pieceAt', () => {
     expect(pieceAt([back, front], 2, 5, () => undefined)).toBeNull();
     const faint = () => ({ width: 10, height: 10, alpha: new Uint8Array(100).fill(HIT_ALPHA - 1) });
     expect(pieceAt([back], 2, 5, faint)).toBeNull();
+  });
+});
+
+describe('drawOrder', () => {
+  it('draws every piece shown as rubble before the standing ones, each further north first', () => {
+    const pieces = piecesOf(elements);
+    const fallen = new Set(pieces.filter((_, k) => k % 3 === 0).map((p) => p.key));
+    const stateOf = (p: (typeof pieces)[number]) =>
+      fallen.has(p.key) ? 'rubble' : p.kind === 'camp' ? 'spawned' : 'standing';
+    const order = drawOrder(pieces, stateOf);
+    expect(order).toHaveLength(pieces.length);
+    const firstStanding = order.findIndex((p) => stateOf(p) !== 'rubble');
+    expect(order.slice(0, firstStanding).every((p) => stateOf(p) === 'rubble')).toBe(true);
+    expect(order.slice(firstStanding).every((p) => stateOf(p) !== 'rubble')).toBe(true);
+    for (const part of [order.slice(0, firstStanding), order.slice(firstStanding)]) {
+      for (let k = 1; k < part.length; k++)
+        expect(part[k - 1]!.cell[1]).toBeGreaterThanOrEqual(part[k]!.cell[1]);
+    }
   });
 });

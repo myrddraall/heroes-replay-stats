@@ -1,10 +1,12 @@
-<hrs-settings-form
-  [parallelImports]="store.parallelImports()"
-  [min]="store.min"
-  [max]="store.max"
-  [deviceDefault]="store.deviceDefault"
-  [cores]="store.cores"
-  [version]="store.platform.version"
-  [kind]="store.platform.kind"
-  (parallelImportsChange)="store.setParallelImports($event)"
-/>
+<hrs-layout>
+  <hrs-settings-form
+    [parallelImports]="store.parallelImports()"
+    [min]="store.min"
+    [max]="store.max"
+    [deviceDefault]="store.deviceDefault"
+    [cores]="store.cores"
+    [version]="store.platform.version"
+    [kind]="store.platform.kind"
+    (parallelImportsChange)="store.setParallelImports($event)"
+  />
+</hrs-layout>

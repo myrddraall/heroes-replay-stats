@@ -2,6 +2,7 @@ import {
   afterNextRender,
   Component,
   computed,
+  contentChild,
   DestroyRef,
   effect,
   ElementRef,
@@ -9,6 +10,7 @@ import {
   input,
   output,
   signal,
+  untracked,
 } from '@angular/core';
 import { MapElementsLayer } from '../layers/elements/map-elements-layer';
 import type { ElementShown } from '../layers/elements/element-pieces';
@@ -18,8 +20,10 @@ import { MapTileLoader } from '../layers/map-tile-loader';
 import { MapMinimapLayer } from '../layers/minimap/map-minimap-layer';
 import type { MapViewModel } from '../pack/map-assets';
 import type { ViewPoint } from '../view/camera';
+import { NgTemplateOutlet } from '@angular/common';
 import { MapRenderer } from './map-renderer';
-import { MapViewerStore } from './map-viewer.store';
+import { type BarSide, MapViewerBar } from './map-viewer-bar';
+import { MapViewerStore, type MapViewerBars } from './map-viewer.store';
 
 /** A press that moved less than this (in pixels) is a click, not a drag. */
 const CLICK_SLOP = 4;
@@ -34,10 +38,18 @@ const KEY_ZOOM = 1.25;
  * data (their order and parallax), and any other layer directive placed inside it. It keeps only
  * its UI state, the camera (drag to pan, wheel to zoom about the pointer, the keyboard too) and
  * the hover; what happens on a click is its container's to decide.
+ *
+ * Zoomed out all the way it shows the whole playable area, and it never shows the sky's edge;
+ * where it is too wide or too tall for both, the map is drawn in a narrower view, centred, between
+ * bars: two elements beside the view, black, or styled with `--hrs-map-viewer-bars`, or filled
+ * with an `ng-template[hrsMapViewerBar]` placed inside the viewer. They are part of the map: they
+ * fade in with it. With `bars="shrink"` they recede as the camera zooms in, where the sky fills
+ * more; the map stays put. The viewer has no background of its own: the page shows through until
+ * the map is drawn.
  */
 @Component({
   selector: 'hrs-map-viewer',
-  imports: [MapFixedLayer, MapTileLayer, MapElementsLayer, MapMinimapLayer],
+  imports: [NgTemplateOutlet, MapFixedLayer, MapTileLayer, MapElementsLayer, MapMinimapLayer],
   templateUrl: './map-viewer.html',
   styleUrl: './map-viewer.scss',
   providers: [MapViewerStore, MapRenderer, MapTileLoader],
@@ -48,6 +60,7 @@ const KEY_ZOOM = 1.25;
     tabindex: '0',
     '[class.map-viewer--dragging]': 'dragging()',
     '[class.map-viewer--over-element]': 'renderer.overInteractive()',
+    '[class.map-viewer--settled]': 'renderer.settled()',
     '(pointerdown)': 'pointerDown($event)',
     '(pointermove)': 'pointerMove($event)',
     '(pointerup)': 'pointerUp($event)',
@@ -70,6 +83,8 @@ export class MapViewer {
   readonly hiddenLayers = input<readonly string[]>([]);
   /** What each structure and camp shows, by its key (`structure-<id>`, `camp-<camp>`); off if not given. */
   readonly elementStates = input<Readonly<Record<string, ElementShown>>>({});
+  /** The bars, where the viewer is too wide or too tall for the sky: fixed, or receding as it zooms in. */
+  readonly bars = input<MapViewerBars>('fixed');
 
   /** A structure or camp was clicked: its key. */
   readonly elementClick = output<string>();
@@ -78,6 +93,30 @@ export class MapViewer {
 
   protected readonly store = inject(MapViewerStore);
   protected readonly renderer = inject(MapRenderer);
+
+  /** The template the bars are filled with, when one is placed in the viewer. */
+  protected readonly barTemplate = contentChild(MapViewerBar);
+
+  /** The bars: the viewer's strips beside the view, left and right or top and bottom; none when the view is all of it. */
+  protected readonly barBoxes = computed(
+    (): { side: BarSide; x: number; y: number; w: number; h: number }[] => {
+      const { width, height } = this.store.host();
+      const { x, y, w, h } = this.store.frame();
+      if (x > 0) {
+        return [
+          { side: 'left', x: 0, y: 0, w: x, h: height },
+          { side: 'right', x: x + w, y: 0, w: width - x - w, h: height },
+        ];
+      }
+      if (y > 0) {
+        return [
+          { side: 'top', x: 0, y: 0, w: width, h: y },
+          { side: 'bottom', x: 0, y: y + h, w: width, h: height - y - h },
+        ];
+      }
+      return [];
+    },
+  );
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
 
   protected readonly dragging = signal(false);
@@ -92,6 +131,11 @@ export class MapViewer {
   constructor() {
     effect(() => this.store.setMap(this.map()));
     effect(() => this.store.showArena(this.arena()));
+    effect(() => {
+      // Only the input: setting it moves the camera, which this effect must not track.
+      const bars = this.bars();
+      untracked(() => this.store.setBars(bars));
+    });
     const destroyRef = inject(DestroyRef);
     afterNextRender(() => {
       const resize = () =>
@@ -112,9 +156,16 @@ export class MapViewer {
     });
   }
 
+  /** Where an event is in the view (it may be over the bars, outside it). */
   private point(e: MouseEvent): ViewPoint {
     const box = this.host.getBoundingClientRect();
-    return { x: e.clientX - box.left, y: e.clientY - box.top };
+    const frame = this.store.frame();
+    return { x: e.clientX - box.left - frame.x, y: e.clientY - box.top - frame.y };
+  }
+
+  private inView({ x, y }: ViewPoint): boolean {
+    const frame = this.store.frame();
+    return x >= 0 && y >= 0 && x < frame.w && y < frame.h;
   }
 
   protected pointerDown(e: PointerEvent): void {
@@ -126,7 +177,7 @@ export class MapViewer {
   protected pointerMove(e: PointerEvent): void {
     const point = this.point(e);
     if (!this.last) {
-      this.renderer.hover(point);
+      this.renderer.hover(this.inView(point) ? point : null);
       return;
     }
     this.store.panBy(point.x - this.last.x, point.y - this.last.y);
@@ -138,7 +189,7 @@ export class MapViewer {
     const down = this.down;
     this.down = null;
     this.endDrag();
-    if (down && Math.hypot(point.x - down.x, point.y - down.y) < CLICK_SLOP)
+    if (down && this.inView(point) && Math.hypot(point.x - down.x, point.y - down.y) < CLICK_SLOP)
       this.renderer.click(point);
   }
 
@@ -153,7 +204,8 @@ export class MapViewer {
   }
 
   protected key(e: KeyboardEvent): void {
-    const middle = { x: this.host.clientWidth / 2, y: this.host.clientHeight / 2 };
+    const frame = this.store.frame();
+    const middle = { x: frame.w / 2, y: frame.h / 2 };
     const pans: Partial<Record<string, [number, number]>> = {
       ArrowLeft: [KEY_PAN, 0],
       ArrowRight: [-KEY_PAN, 0],

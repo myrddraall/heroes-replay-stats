@@ -1,10 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { PackMapLayer, PackParallaxLayer } from '../src/lib/pack/map-pack';
-import { arenasOf } from '../src/lib/view/arenas';
 import {
   cellToMapPixel,
-  clampCamera,
-  fitZoom,
   layerScale,
   mapPixelToCell,
   MAX_ZOOM,
@@ -62,24 +59,6 @@ describe('layer placement (PACK.md, Layers and drawing)', () => {
 });
 
 describe('camera', () => {
-  const arena = arenasOf(pack)[0]!;
-
-  it('fits the whole arena in the viewport', () => {
-    const zoom = fitZoom(arena, viewport);
-    const width = (arena.east - arena.west) * map.pxPerCell * zoom;
-    const height = (arena.north - arena.south) * map.pxPerCell * zoom;
-    expect(Math.max(width / viewport.width, height / viewport.height)).toBeCloseTo(1);
-  });
-
-  it('keeps the camera inside the bounds', () => {
-    const b = arena.bounds;
-    expect(clampCamera({ cx: -100, cy: 1000, zoom: 1 }, b)).toEqual({
-      cx: b.left,
-      cy: b.top,
-      zoom: 1,
-    });
-  });
-
   it('pans with the pointer: dragging right moves the camera west', () => {
     const moved = panBy({ cx: 100, cy: 100, zoom: 0.5 }, map.pxPerCell, map.pxPerCell, 0);
     expect(moved.cx).toBeCloseTo(98);

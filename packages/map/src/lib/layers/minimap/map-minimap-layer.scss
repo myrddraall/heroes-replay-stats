@@ -5,7 +5,7 @@ hrs-map-minimap-layer {
   top: 0;
   display: block;
   pointer-events: none;
-  transition: opacity 600ms ease;
+  transition: opacity var(--hrs-map-viewer-fade, 600ms) ease;
 
   &[hidden] {
     display: none;

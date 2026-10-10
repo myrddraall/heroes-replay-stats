@@ -1,0 +1,71 @@
+name: Pages
+
+# The app published to GitHub Pages on every push to main, built against the published
+# @myrddraall packages as Test is (DEV_LOCAL is unset here, so the production configuration reads
+# the maps heroes-maps publishes). For now this is the whole deploy; the git-flow release will take
+# it over later, with the same build.
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read # Install from GitHub Package Registry
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: https://npm.pkg.github.com
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # A project site lives under /heroes-replay-stats/. The copy of index.html as 404.html keeps
+      # a deep link (a map's page, refreshed) working: Pages serves it for a path it has no file
+      # for, and the router takes it from there.
+      - name: Build
+        working-directory: packages/app
+        run: |
+          pnpm build --base-href /heroes-replay-stats/
+          cp dist/heroes-replay-stats/browser/index.html dist/heroes-replay-stats/browser/404.html
+
+      - name: Upload
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: packages/app/dist/heroes-replay-stats/browser
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v5

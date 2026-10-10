@@ -18,7 +18,8 @@
     "typecheck": "devutil run typecheck",
     "start": "pnpm --filter @myrddraall/heroes-replay-stats start",
     "desktop": "pnpm --filter @myrddraall/heroes-replay-stats-desktop dev",
-    "generate.analysis-goldens": "pnpm --filter @myrddraall/heroes-replay-stats-analysers goldens:generate"
+    "generate.analysis-goldens": "pnpm --filter @myrddraall/heroes-replay-stats-analysers goldens:generate",
+    "serve.maps": "node tools/serve-maps.ts"
   },
   "devDependencies": {
     "@cpdevtools/git-flow": "^1.1.1",

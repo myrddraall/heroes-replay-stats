@@ -1,5 +1,4 @@
-import type { Cell, CellBounds, PackMapLayer, TilePackLayer } from '../pack/map-pack';
-import type { Arena } from './arenas';
+import type { Cell, PackMapLayer, TilePackLayer } from '../pack/map-pack';
 
 /** The camera: the map cell at the window's middle, and the window's pixels per map pixel. */
 export interface Camera {
@@ -23,9 +22,6 @@ export interface ViewPoint {
 
 /** The furthest in: two screen pixels per map pixel. */
 export const MAX_ZOOM = 2;
-/** The furthest out: the arena at half the size that fits the window. */
-export const MIN_ZOOM_OF_FIT = 0.5;
-
 /** A layer's window pixels per layer pixel at a zoom (PACK.md, Layers and drawing). */
 export function layerScale(rate: number, zoom: number): number {
   return 1 / (1 + rate * (1 / zoom - 1));
@@ -115,24 +111,6 @@ export function cellToMapPixel(layer: PackMapLayer, [x, y]: Cell): [number, numb
 export function tileLevel(levels: number, scale: number, dpr: number): number {
   const level = levels - 1 - Math.floor(Math.log2(1 / (scale * dpr)));
   return Math.max(0, Math.min(levels - 1, level));
-}
-
-/** The zoom at which the whole arena fits the viewport. */
-export function fitZoom(arena: Arena, viewport: Viewport): number {
-  const px = arena.layer.pxPerCell;
-  return Math.min(
-    viewport.width / ((arena.east - arena.west) * px),
-    viewport.height / ((arena.north - arena.south) * px),
-  );
-}
-
-/** The camera kept inside the bounds. */
-export function clampCamera(camera: Camera, bounds: CellBounds): Camera {
-  return {
-    cx: Math.min(bounds.right, Math.max(bounds.left, camera.cx)),
-    cy: Math.min(bounds.top, Math.max(bounds.bottom, camera.cy)),
-    zoom: camera.zoom,
-  };
 }
 
 /** The camera moved by a drag of (dx, dy) window pixels: the map follows the pointer. */

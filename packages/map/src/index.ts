@@ -31,7 +31,8 @@ export {
 
 // ui: the viewer, its layers, and what a custom layer builds on
 export { MapViewer } from './lib/viewer/map-viewer';
-export { MapViewerStore } from './lib/viewer/map-viewer.store';
+export { MapViewerStore, type MapViewerBars } from './lib/viewer/map-viewer.store';
+export { MapViewerBar, type BarContext, type BarSide } from './lib/viewer/map-viewer-bar';
 export { MapRenderer } from './lib/viewer/map-renderer';
 export { MapLayerPlacement } from './lib/viewer/map-layer-placement';
 export {

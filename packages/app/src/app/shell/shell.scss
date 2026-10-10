@@ -135,16 +135,9 @@ mat-nav-list {
   padding: 0;
 }
 
+// Each page lays itself out (hrs-layout: the constraints are its).
 .shell__page {
-  padding: 24px;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-@media (max-width: 600px) {
-  .shell__page {
-    padding: 16px;
-  }
+  display: block;
 }
 
 .shell__drop {

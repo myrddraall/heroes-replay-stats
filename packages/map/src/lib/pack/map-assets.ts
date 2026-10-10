@@ -12,8 +12,11 @@ export interface TileArchive {
 export interface MapAssets {
   /** A tiled layer's pyramid, by the layer's id. */
   tiles(layerId: string): TileArchive;
-  /** One of the pack's pictures (a cut-out, a mask). */
-  picture(file: string, abortSignal: AbortSignal): Promise<ImageBitmap>;
+  /**
+   * One of the pack's pictures (an atlas, an overview). `priority`: how soon, against the
+   * viewer's other requests (`low` unless given: the terrain's tiles come first).
+   */
+  picture(file: string, abortSignal: AbortSignal, priority?: 'high' | 'low'): Promise<ImageBitmap>;
   /** One of the pack's text files (the custom minimap's SVG). */
   text(file: string, abortSignal: AbortSignal): Promise<string>;
   /** A file's URL, for what the page shows by URL (the fixed skybox). */

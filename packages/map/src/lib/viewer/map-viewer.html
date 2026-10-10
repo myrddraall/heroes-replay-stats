@@ -1,43 +1,68 @@
-@for (layer of store.stack(); track layer.id) {
-  @switch (layer.kind) {
-    @case ('fixed') {
-      <div
-        hrsMapFixedLayer
-        [order]="layer.order"
-        [rate]="layer.rate"
-        [visible]="!hidden().has(layer.id)"
-      ></div>
-    }
-    @case ('tiles') {
-      <canvas
-        [hrsMapTileLayer]="layer.id"
-        [order]="layer.order"
-        [rate]="layer.rate"
-        [visible]="!hidden().has(layer.id)"
-      ></canvas>
-    }
-    @case ('elements') {
-      <canvas
-        hrsMapElementsLayer
-        [order]="layer.order"
-        [rate]="layer.rate"
-        [visible]="!hidden().has(layer.id)"
-        [states]="elementStates()"
-        (elementClick)="elementClick.emit($event)"
-      ></canvas>
-    }
-    @case ('minimap') {
-      <hrs-map-minimap-layer
-        [order]="layer.order"
-        [rate]="layer.rate"
-        [visible]="!hidden().has(layer.id)"
-        [overTerrain]="!hidden().has('map')"
-        (faded)="minimapFaded.emit()"
+@for (bar of barBoxes(); track bar.side) {
+  <div
+    class="map-viewer__bar"
+    [class]="'map-viewer__bar--' + bar.side"
+    [style.left.px]="bar.x"
+    [style.top.px]="bar.y"
+    [style.width.px]="bar.w"
+    [style.height.px]="bar.h"
+  >
+    @if (barTemplate(); as bar_) {
+      <ng-container
+        [ngTemplateOutlet]="bar_.template"
+        [ngTemplateOutletContext]="{ $implicit: bar.side }"
       />
     }
-  }
+  </div>
 }
-<ng-content />
+<div
+  class="map-viewer__view"
+  [style.left.px]="store.frame().x"
+  [style.top.px]="store.frame().y"
+  [style.width.px]="store.frame().w"
+  [style.height.px]="store.frame().h"
+>
+  @for (layer of store.stack(); track layer.id) {
+    @switch (layer.kind) {
+      @case ('fixed') {
+        <div
+          hrsMapFixedLayer
+          [order]="layer.order"
+          [rate]="layer.rate"
+          [visible]="!hidden().has(layer.id)"
+        ></div>
+      }
+      @case ('tiles') {
+        <canvas
+          [hrsMapTileLayer]="layer.id"
+          [order]="layer.order"
+          [rate]="layer.rate"
+          [visible]="!hidden().has(layer.id)"
+        ></canvas>
+      }
+      @case ('elements') {
+        <canvas
+          hrsMapElementsLayer
+          [order]="layer.order"
+          [rate]="layer.rate"
+          [visible]="!hidden().has(layer.id)"
+          [states]="elementStates()"
+          (elementClick)="elementClick.emit($event)"
+        ></canvas>
+      }
+      @case ('minimap') {
+        <hrs-map-minimap-layer
+          [order]="layer.order"
+          [rate]="layer.rate"
+          [visible]="!hidden().has(layer.id)"
+          [overTerrain]="!hidden().has('map')"
+          (faded)="minimapFaded.emit()"
+        />
+      }
+    }
+  }
+  <ng-content />
+</div>
 @if (error(); as error) {
   <p class="map-viewer__status" role="alert">The map couldn't be shown: {{ error }}</p>
 } @else if (loading()) {

@@ -1,11 +1,12 @@
 import { Component, inject } from '@angular/core';
 import { ImportJobs } from './import-jobs';
 import { ImportPageStore } from './import-page.store';
+import { Layout } from '../../layout/layout';
 
 /** Importing replays (container). */
 @Component({
   selector: 'hrs-import-page',
-  imports: [ImportJobs],
+  imports: [Layout, ImportJobs],
   templateUrl: './import-page.html',
   providers: [ImportPageStore],
 })
