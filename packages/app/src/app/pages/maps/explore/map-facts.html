@@ -1,0 +1,66 @@
+@if (facts(); as f) {
+  <section class="facts" aria-labelledby="map-facts-heading">
+    <h3 id="map-facts-heading" class="facts__heading">Map</h3>
+    @if (extra()?.images?.loadingScreen; as art) {
+      <img class="facts__art" [src]="art" alt="" loading="lazy" decoding="async" />
+    }
+    <dl class="facts__list">
+      @if (f.category) {
+        <dt>Category</dt>
+        <dd>{{ f.category }}</dd>
+      }
+      <dt>Size</dt>
+      <dd>{{ f.sizeCells[0] }} × {{ f.sizeCells[1] }} cells</dd>
+      @if (f.playable; as p) {
+        <dt>Playable area</dt>
+        <dd>{{ boundsLabel(p) }}</dd>
+      }
+      @if (f.arenas.length > 1) {
+        <dt>Arenas</dt>
+        <dd>{{ f.arenas.join(', ') }}</dd>
+      }
+      @if (f.counts.structures) {
+        <dt>Structures</dt>
+        <dd>{{ f.counts.structures }} in {{ f.counts.towns }} towns, {{ f.counts.cores }} cores</dd>
+      }
+      @if (f.counts.camps) {
+        <dt>Camps</dt>
+        <dd>{{ f.counts.camps }}</dd>
+      }
+      @if (f.gameBuild) {
+        <dt>Game build</dt>
+        <dd>{{ f.gameBuild }}</dd>
+      }
+    </dl>
+  </section>
+  <section class="objectives" aria-labelledby="map-objectives-heading">
+    <h3 id="map-objectives-heading" class="facts__heading">Objectives</h3>
+    @if (extra(); as x) {
+      @for (objective of x.objectives; track objective.title) {
+        <article class="objective">
+          @if (objective.iconUrls.length) {
+            <div class="objective__icons">
+              @for (icon of objective.iconUrls; track icon) {
+                <img class="objective__icon" [src]="icon" alt="" loading="lazy" decoding="async" />
+              }
+            </div>
+          }
+          <h4 class="objective__title">{{ objective.title }}</h4>
+          @if (objective.description) {
+            <p class="objective__text">{{ objective.description }}</p>
+          }
+        </article>
+      } @empty {
+        <p class="facts__hint">
+          {{
+            x.known
+              ? 'No objectives are listed for this map.'
+              : 'Hero data has nothing on this map.'
+          }}
+        </p>
+      }
+    } @else if (extraLoading()) {
+      <mat-progress-bar mode="indeterminate" aria-label="Loading hero data" />
+    }
+  </section>
+}

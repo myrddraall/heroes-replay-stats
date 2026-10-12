@@ -1,5 +1,12 @@
 import type { MapAssets } from '../../pack/map-assets';
-import type { ElementAtlasName, ElementCut, HiddenByMask, PackElements } from '../../pack/map-pack';
+import type {
+  ElementAtlasName,
+  ElementCut,
+  HiddenByMask,
+  PackElements,
+  PackTeamColours,
+} from '../../pack/map-pack';
+import { recolouredPicture, teamColoursKey, type TeamColours } from '../team-colour';
 import type { HitImage } from './element-pieces';
 
 /** The two levels of detail the cut-outs come in (PACK.md, Elements: the atlases). */
@@ -38,6 +45,7 @@ export class ElementImages {
   private readonly requested = new Set<ElementAtlasName>();
   private readonly failed = new Set<ElementAtlasName>();
   private readonly composed = new Map<ElementCut, { key: string; canvas: OffscreenCanvas }>();
+  private readonly recoloured = new Map<string, OffscreenCanvas>();
   private readonly hits = new Map<ElementCut, { level: ElementLevel; image: HitImage }>();
   private readonly abort = new AbortController();
 
@@ -86,6 +94,7 @@ export class ElementImages {
         if (this.abort.signal.aborted) return bitmap.close();
         this.atlases.set(name, bitmap);
         this.composed.clear();
+        this.recoloured.clear();
         this.loaded();
       })
       .catch(() => {
@@ -95,45 +104,77 @@ export class ElementImages {
   }
 
   /**
-   * A cut-out at a level, with (at the full level) the parts erased where the given masks'
-   * neighbours stand in front of it; the composed picture kept until the masks change.
-   * `undefined` until the atlas it is in has loaded.
+   * A cut-out at a level, in other team colours when given (`colours`: as shot and as wanted; its
+   * team-colour mask's atlas asked for, the colours as shot until it arrives), with (at the full
+   * level) the parts erased where the given masks' neighbours stand in front of it; the composed
+   * picture kept until the masks or the colours change. `undefined` until the atlas it is in has
+   * loaded.
    */
   picture(
     cut: ElementCut,
     masks: readonly HiddenByMask[],
     level: ElementLevel,
+    colours: { shot: PackTeamColours; wanted: TeamColours } | null = null,
   ): ElementPicture | undefined {
     const [, , w, h] = cut.rect;
     if (level === 'small') {
       const atlas = this.atlases.get('small');
       if (!atlas) return undefined;
       const s = this.smallScale;
-      return {
+      const small = {
         source: atlas,
         x: cut.small[0],
         y: cut.small[1],
         w: Math.ceil(w * s),
         h: Math.ceil(h * s),
       };
+      return this.inColours(small, 'teamSmall', cut.teamMask?.small, colours);
     }
     const atlas = this.atlases.get(cut.atlas);
     if (!atlas) return undefined;
-    const whole: ElementPicture = { source: atlas, x: cut.at[0], y: cut.at[1], w, h };
+    const whole = this.inColours(
+      { source: atlas, x: cut.at[0], y: cut.at[1], w, h },
+      'team',
+      cut.teamMask?.at,
+      colours,
+    );
     const maskAtlas = this.atlases.get('masks');
     if (!maskAtlas || !masks.length) return whole;
-    const key = masks.map((m) => m.id).join(',');
+    const key = masks.map((m) => m.id).join(',') + (colours ? ` ${teamColoursKey(colours.wanted)}` : '');
     const kept = this.composed.get(cut);
     if (kept?.key === key) return { source: kept.canvas, x: 0, y: 0, w, h };
     const canvas = new OffscreenCanvas(w, h);
     const context = canvas.getContext('2d');
     if (!context) return whole;
-    context.drawImage(atlas, cut.at[0], cut.at[1], w, h, 0, 0, w, h);
+    context.drawImage(whole.source, whole.x, whole.y, w, h, 0, 0, w, h);
     context.globalCompositeOperation = 'destination-out';
     for (const mask of masks)
       context.drawImage(maskAtlas, mask.at[0], mask.at[1], w, h, 0, 0, w, h);
     this.composed.set(cut, { key, canvas });
     return { source: canvas, x: 0, y: 0, w, h };
+  }
+
+  /**
+   * A cut-out's picture in other team colours, from its team-colour mask in `atlas` at `at`; the
+   * picture itself without colours, without a mask, or until the mask's atlas arrives (asked for).
+   */
+  private inColours(
+    picture: ElementPicture,
+    atlas: 'team' | 'teamSmall',
+    at: readonly [number, number] | undefined,
+    colours: { shot: PackTeamColours; wanted: TeamColours } | null,
+  ): ElementPicture {
+    if (!colours || !at) return picture;
+    this.request(atlas, 'high');
+    const mask = this.atlases.get(atlas);
+    if (!mask) return picture;
+    const key = `${atlas} ${at.join(',')} ${teamColoursKey(colours.wanted)}`;
+    let canvas = this.recoloured.get(key);
+    if (!canvas) {
+      canvas = recolouredPicture({ ...picture, mask, maskX: at[0], maskY: at[1] }, colours.shot, colours.wanted);
+      this.recoloured.set(key, canvas);
+    }
+    return { source: canvas, x: 0, y: 0, w: picture.w, h: picture.h };
   }
 
   /** A cut-out's transparency, for hit-testing: at the full level once it has loaded, else the small. */
@@ -155,5 +196,6 @@ export class ElementImages {
     this.atlases.clear();
     this.hits.clear();
     this.composed.clear();
+    this.recoloured.clear();
   }
 }

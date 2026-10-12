@@ -16,6 +16,11 @@ const elements = fixturePack('battlefield-of-eternity').data.elements!;
 describe('piecesOf', () => {
   const pieces = piecesOf(elements);
 
+  it("knows whose each piece is: the structure's side, nothing for a camp", () => {
+    expect(pieces.find((p) => p.kind === 'structure')?.owner).toMatch(/^(order|chaos)$/);
+    expect(pieces.find((p) => p.kind === 'camp')?.owner).toBeNull();
+  });
+
   it('lists every structure and camp once, further north first', () => {
     expect(pieces).toHaveLength(elements.structures.length + elements.camps.length);
     expect(new Set(pieces.map((p) => p.key)).size).toBe(pieces.length);
@@ -70,6 +75,7 @@ describe('pieceAt', () => {
     key: 'back',
     kind: 'structure',
     id: 1,
+    owner: null,
     cell: [0, 2],
     states: {},
     hit: cut(0),
@@ -78,6 +84,7 @@ describe('pieceAt', () => {
     key: 'front',
     kind: 'structure',
     id: 2,
+    owner: null,
     cell: [0, 1],
     states: {},
     hit: cut(5),

@@ -10,8 +10,8 @@ export interface TileArchive {
  * pictures, depends on what is in view). The viewer is given one; it never fetches by itself.
  */
 export interface MapAssets {
-  /** A tiled layer's pyramid, by the layer's id. */
-  tiles(layerId: string): TileArchive;
+  /** A tile pyramid (a tiled layer's, or its team-colour mask's), by its file. */
+  tiles(file: string): TileArchive;
   /**
    * One of the pack's pictures (an atlas, an overview). `priority`: how soon, against the
    * viewer's other requests (`low` unless given: the terrain's tiles come first).

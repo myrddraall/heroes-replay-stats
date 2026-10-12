@@ -58,13 +58,14 @@ export class MapRenderer {
     this.overInteractive.set(found);
   }
 
-  /** A click (a press that didn't move) on the viewer. */
-  click(point: ViewPoint): void {
+  /** A click (a press that didn't move) on the viewer: whether a layer took it. */
+  click(point: ViewPoint): boolean {
     const frame = this.frame();
-    if (!frame) return;
+    if (!frame) return false;
     for (const layer of this.stacked().reverse()) {
-      if (layer.click?.(this.layerFrame(frame, layer), point)) return;
+      if (layer.click?.(this.layerFrame(frame, layer), point)) return true;
     }
+    return false;
   }
 
   /** The layers back to front: by their order, then by their place in the page. */

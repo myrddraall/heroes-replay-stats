@@ -1,0 +1,74 @@
+// The drawer container fills the host; the viewer fills the content between the panels. Nothing
+// here may scroll sideways: the panels keep to their width, the map clips.
+:host {
+  position: relative;
+  display: block;
+  overflow: hidden;
+}
+
+.explore {
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+}
+
+.explore__drawer {
+  width: var(--hrs-map-panel-width, min(360px, 90vw));
+  overflow: hidden;
+  background: var(--hrs-surface);
+
+  // Material's own inner container scrolls by default; only the panel's body may, or a
+  // scrollbar appears for the border's pixel.
+  :host ::ng-deep &.mat-drawer .mat-drawer-inner-container {
+    overflow: hidden;
+  }
+
+  &.mat-drawer-end {
+    border-inline-start: 1px solid var(--hrs-border);
+  }
+
+  &.mat-drawer-start {
+    border-inline-end: 1px solid var(--hrs-border);
+  }
+}
+
+.explore__content {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+
+.explore__viewer {
+  position: absolute;
+  inset: 0;
+}
+
+// Over the map's top corners, above the viewer's own status line: one toggle per panel, each on
+// its panel's side.
+.explore__toggle {
+  position: absolute;
+  top: 8px;
+  inset-inline-end: 8px;
+  z-index: 10001;
+  background: rgba(16, 16, 20, 0.6);
+  backdrop-filter: blur(6px);
+
+  &.explore__toggle--start {
+    inset-inline-end: auto;
+    inset-inline-start: 8px;
+  }
+}
+
+// Over the map's bottom corner: the teams in each other's colours, or back in their own.
+.explore__team {
+  position: absolute;
+  bottom: 8px;
+  inset-inline-end: 8px;
+  z-index: 10001;
+  background: rgba(16, 16, 20, 0.6);
+  backdrop-filter: blur(6px);
+
+  &.explore__team--swapped {
+    outline: 2px solid var(--hrs-blue-soft);
+  }
+}

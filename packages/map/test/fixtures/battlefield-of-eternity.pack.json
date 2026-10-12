@@ -1,5 +1,5 @@
 {
-  "format": 3,
+  "format": 6,
   "tool": "heroes-capture 0.0.0-dev",
   "gameBuild": 98348,
   "map": {
@@ -60,10 +60,10 @@
       "tileSize": 512,
       "overview": {
         "file": "background-overview.webp",
-        "level": 2,
+        "level": 3,
         "size": [
-          1775,
-          894
+          3550,
+          1788
         ]
       }
     },
@@ -89,10 +89,10 @@
       "tileSize": 512,
       "overview": {
         "file": "haze-overview.webp",
-        "level": 2,
+        "level": 3,
         "size": [
-          1796,
-          915
+          3592,
+          1830
         ]
       }
     },
@@ -119,6 +119,17 @@
           1609,
           1158
         ]
+      },
+      "teamMask": {
+        "file": "map-team.pmtiles",
+        "overview": {
+          "file": "map-team-overview.webp",
+          "level": 2,
+          "size": [
+            1609,
+            1158
+          ]
+        }
       }
     }
   ],
@@ -129,46 +140,6 @@
         512,
         369
       ]
-    },
-    "minimap": {
-      "file": "images/minimap.png",
-      "size": [
-        512,
-        512
-      ],
-      "source": "Minimap.tga"
-    },
-    "customMinimap": {
-      "file": "images/custom-minimap.png",
-      "size": [
-        496,
-        416
-      ],
-      "source": "CustomMiniMap.dds"
-    },
-    "customMinimapHover": {
-      "file": "images/custom-minimap-hover.png",
-      "size": [
-        496,
-        416
-      ],
-      "source": "CustomMiniMap_Hover.dds"
-    },
-    "replayPreview": {
-      "file": "images/replay-preview.png",
-      "size": [
-        417,
-        234
-      ],
-      "source": "ReplaysPreviewImage.tga"
-    },
-    "mapSelect": {
-      "file": "images/map-select.png",
-      "size": [
-        572,
-        348
-      ],
-      "source": "Storm_UI_Gamemode_MapSelect_BattleOfEternity.png"
     },
     "customMinimapSvg": {
       "file": "images/custom-minimap.svg",
@@ -198,6 +169,7 @@
           ],
           "owner": "order",
           "town": null,
+          "outpost": null,
           "core": true,
           "states": {
             "rubble": {
@@ -245,6 +217,7 @@
           ],
           "owner": "chaos",
           "town": null,
+          "outpost": null,
           "core": true,
           "states": {
             "rubble": {
@@ -292,6 +265,7 @@
           ],
           "owner": "chaos",
           "town": 6,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -355,6 +329,7 @@
           ],
           "owner": "chaos",
           "town": 8,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -418,6 +393,7 @@
           ],
           "owner": "chaos",
           "town": 8,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -474,6 +450,7 @@
           ],
           "owner": "chaos",
           "town": 6,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -537,6 +514,7 @@
           ],
           "owner": "order",
           "town": 4,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -600,6 +578,7 @@
           ],
           "owner": "order",
           "town": 2,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -663,6 +642,7 @@
           ],
           "owner": "order",
           "town": 4,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -726,6 +706,7 @@
           ],
           "owner": "order",
           "town": 2,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -789,6 +770,7 @@
           ],
           "owner": "chaos",
           "town": 5,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -852,6 +834,7 @@
           ],
           "owner": "order",
           "town": 3,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -915,6 +898,7 @@
           ],
           "owner": "order",
           "town": 1,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -978,6 +962,7 @@
           ],
           "owner": "order",
           "town": 1,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -1041,6 +1026,7 @@
           ],
           "owner": "order",
           "town": 3,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -1104,6 +1090,7 @@
           ],
           "owner": "chaos",
           "town": 7,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -1167,6 +1154,7 @@
           ],
           "owner": "chaos",
           "town": 5,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -1230,6 +1218,7 @@
           ],
           "owner": "chaos",
           "town": 7,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -1293,6 +1282,7 @@
           ],
           "owner": "order",
           "town": 1,
+          "outpost": 1,
           "core": false,
           "states": {
             "rubble": {
@@ -1340,6 +1330,7 @@
           ],
           "owner": "chaos",
           "town": 7,
+          "outpost": 2,
           "core": false,
           "states": {
             "rubble": {
@@ -1387,6 +1378,7 @@
           ],
           "owner": "chaos",
           "town": 7,
+          "outpost": 2,
           "core": false,
           "states": {
             "rubble": {
@@ -1443,6 +1435,7 @@
           ],
           "owner": "chaos",
           "town": 6,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": null,
@@ -1474,6 +1467,7 @@
           ],
           "owner": "order",
           "town": 1,
+          "outpost": 1,
           "core": false,
           "states": {
             "rubble": {
@@ -1530,6 +1524,7 @@
           ],
           "owner": "order",
           "town": 1,
+          "outpost": 1,
           "core": false,
           "states": {
             "rubble": {
@@ -1586,6 +1581,7 @@
           ],
           "owner": "chaos",
           "town": 7,
+          "outpost": 2,
           "core": false,
           "states": {
             "rubble": {
@@ -1642,6 +1638,7 @@
           ],
           "owner": "chaos",
           "town": 8,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -1689,6 +1686,7 @@
           ],
           "owner": "order",
           "town": 4,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -1736,6 +1734,7 @@
           ],
           "owner": "order",
           "town": null,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -1783,6 +1782,7 @@
           ],
           "owner": "chaos",
           "town": 6,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": null,
@@ -1830,6 +1830,7 @@
           ],
           "owner": "order",
           "town": 4,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -1893,6 +1894,7 @@
           ],
           "owner": "chaos",
           "town": 8,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": null,
@@ -1940,6 +1942,7 @@
           ],
           "owner": "order",
           "town": 2,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -2003,6 +2006,7 @@
           ],
           "owner": "chaos",
           "town": 5,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": null,
@@ -2050,6 +2054,7 @@
           ],
           "owner": "order",
           "town": 3,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -2113,6 +2118,7 @@
           ],
           "owner": "order",
           "town": 1,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -2176,6 +2182,7 @@
           ],
           "owner": "chaos",
           "town": 7,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": null,
@@ -2223,6 +2230,7 @@
           ],
           "owner": "order",
           "town": 1,
+          "outpost": 1,
           "core": false,
           "states": {
             "rubble": {
@@ -2286,6 +2294,7 @@
           ],
           "owner": "chaos",
           "town": 7,
+          "outpost": 2,
           "core": false,
           "states": {
             "rubble": {
@@ -2349,6 +2358,7 @@
           ],
           "owner": "chaos",
           "town": 6,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -2396,6 +2406,7 @@
           ],
           "owner": "order",
           "town": 4,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -2443,6 +2454,7 @@
           ],
           "owner": "chaos",
           "town": 8,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -2490,6 +2502,7 @@
           ],
           "owner": "order",
           "town": 2,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -2537,6 +2550,7 @@
           ],
           "owner": "chaos",
           "town": 7,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -2584,6 +2598,7 @@
           ],
           "owner": "order",
           "town": 1,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -2631,6 +2646,7 @@
           ],
           "owner": "chaos",
           "town": 5,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": null,
@@ -2662,6 +2678,7 @@
           ],
           "owner": "order",
           "town": 1,
+          "outpost": 1,
           "core": false,
           "states": {
             "rubble": {
@@ -2709,6 +2726,7 @@
           ],
           "owner": "chaos",
           "town": 7,
+          "outpost": 2,
           "core": false,
           "states": {
             "rubble": {
@@ -2756,6 +2774,7 @@
           ],
           "owner": "order",
           "town": 3,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -2803,6 +2822,7 @@
           ],
           "owner": "order",
           "town": 4,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -2850,6 +2870,7 @@
           ],
           "owner": "chaos",
           "town": 6,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -2897,6 +2918,7 @@
           ],
           "owner": "chaos",
           "town": 8,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -2944,6 +2966,7 @@
           ],
           "owner": "order",
           "town": 2,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -2991,6 +3014,7 @@
           ],
           "owner": "order",
           "town": 1,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -3038,6 +3062,7 @@
           ],
           "owner": "order",
           "town": 3,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -3085,6 +3110,7 @@
           ],
           "owner": "chaos",
           "town": 7,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -3132,6 +3158,7 @@
           ],
           "owner": "chaos",
           "town": 5,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -3179,6 +3206,7 @@
           ],
           "owner": "chaos",
           "town": 7,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -3235,6 +3263,7 @@
           ],
           "owner": "chaos",
           "town": 7,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -3291,6 +3320,7 @@
           ],
           "owner": "chaos",
           "town": 8,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -3347,6 +3377,7 @@
           ],
           "owner": "chaos",
           "town": 8,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -3394,6 +3425,7 @@
           ],
           "owner": "chaos",
           "town": 6,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -3441,6 +3473,7 @@
           ],
           "owner": "chaos",
           "town": 6,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -3497,6 +3530,7 @@
           ],
           "owner": "chaos",
           "town": 5,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -3553,6 +3587,7 @@
           ],
           "owner": "chaos",
           "town": 5,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -3609,6 +3644,7 @@
           ],
           "owner": "order",
           "town": 1,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -3665,6 +3701,7 @@
           ],
           "owner": "order",
           "town": 1,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -3721,6 +3758,7 @@
           ],
           "owner": "order",
           "town": 2,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -3777,6 +3815,7 @@
           ],
           "owner": "order",
           "town": 2,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -3833,6 +3872,7 @@
           ],
           "owner": "order",
           "town": 4,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -3889,6 +3929,7 @@
           ],
           "owner": "order",
           "town": 4,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -3945,6 +3986,7 @@
           ],
           "owner": "order",
           "town": 3,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -4001,6 +4043,7 @@
           ],
           "owner": "order",
           "town": 3,
+          "outpost": null,
           "core": false,
           "states": {
             "rubble": {
@@ -4105,6 +4148,28 @@
           "owner": "chaos",
           "region": 22,
           "name": "Lane 2 - Chaos Town 2"
+        }
+      ],
+      "outposts": [
+        {
+          "outpost": 1,
+          "town": 1,
+          "lane": 1,
+          "owner": "order",
+          "cell": [
+            75.9,
+            100.3
+          ]
+        },
+        {
+          "outpost": 2,
+          "town": 7,
+          "lane": 2,
+          "owner": "chaos",
+          "cell": [
+            172.1,
+            107.7
+          ]
         }
       ],
       "camps": [
@@ -4266,33 +4331,9 @@
       "bytes": 11733097,
       "sha256": "518acbadf5ace48836e921dbe8494dcb839e21b8249d5658bd352f72f342ff4f"
     },
-    "images/custom-minimap-hover.png": {
-      "bytes": 16366,
-      "sha256": "2b54dc3908b1a87ced3f11ec20f6555a339f53f4b4d35b406764043be0f2f987"
-    },
-    "images/custom-minimap.png": {
-      "bytes": 49177,
-      "sha256": "d0fb6ed9ebe98b00e736ab95fc3baff25d627e672665b66556fc4fed53f76f35"
-    },
     "images/custom-minimap.svg": {
       "bytes": 52235,
       "sha256": "7de9a0086dbe42a692555b3d1729739343d6afdbd3d2a38f7783309c3474a089"
-    },
-    "images/map-select.png": {
-      "bytes": 334449,
-      "sha256": "1f6e2d2916191fe97ad583baf96210f2fa1821995fca25562dbe72f6314c51fb"
-    },
-    "images/minimap.png": {
-      "bytes": 54642,
-      "sha256": "eae2909c84929f46e96e82c96375c6c242bd54aa69a1ad43c8621636169ce68f"
-    },
-    "images/replay-preview.png": {
-      "bytes": 187074,
-      "sha256": "fd3e0eca3636781779654e706bee05a8b8da8f494b0e52f3b57475ed3a2ad9be"
-    },
-    "index.html": {
-      "bytes": 30320,
-      "sha256": "9b5c90e50c684822a3e2aea2bec0939ac20e94199759c129df0c4895f676ccb6"
     },
     "map.pmtiles": {
       "bytes": 10464106,
@@ -4318,5 +4359,18 @@
       "bytes": 1,
       "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
     }
+  },
+  "teamColours": {
+    "order": [
+      101,
+      159,
+      255
+    ],
+    "chaos": [
+      255,
+      57,
+      48
+    ],
+    "maskScale": 2.0
   }
 }

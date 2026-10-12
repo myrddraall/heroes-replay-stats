@@ -1,10 +1,11 @@
 import { computed } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import type { MapViewModel } from '../pack/map-assets';
-import type { PackParallaxLayer } from '../pack/map-pack';
+import type { Cell, PackParallaxLayer } from '../pack/map-pack';
 import { arenasOf } from '../view/arenas';
 import {
   panBy,
+  projection,
   zoomAbout,
   type Camera,
   type ScreenBox,
@@ -231,6 +232,21 @@ export const MapViewerStore = signalStore(
         const viewport = store.viewport();
         const minZoom = store.minZoom();
         move(zoomAbout(camera, viewport, arena.layer.pxPerCell, point, factor, minZoom));
+      },
+      /**
+       * The camera centred on a cell, as far as the view's limits allow, zoomed in to `minZoom` at
+       * least when given (zoomed out all the way the camera can't move: the whole playable area is
+       * in view, centred).
+       */
+      centreOn([cx, cy]: Cell, minZoom?: number): void {
+        const zoom = Math.max(store.camera().zoom, minZoom ?? 0);
+        move({ cx, cy, zoom });
+      },
+      /** The map cell under a point of the view; nothing before the camera is placed. */
+      cellAt(point: ViewPoint): Cell | null {
+        const arena = store.arena();
+        if (!arena || !store.placed()) return null;
+        return projection(store.camera(), store.viewport(), arena.layer.pxPerCell, 1).toCell(point);
       },
     };
   }),

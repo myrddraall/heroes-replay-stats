@@ -1,6 +1,6 @@
 import { Directive, effect, ElementRef, inject, input } from '@angular/core';
 import type { MapAssets } from '../pack/map-assets';
-import type { TilePackLayer } from '../pack/map-pack';
+import type { PackTeamColours, TilePackLayer } from '../pack/map-pack';
 import { middlePixel, screenBox, tileLevel, type ScreenBox } from '../view/camera';
 import { frameContext, LAYER_STYLE } from '../viewer/canvas';
 import {
@@ -13,7 +13,16 @@ import { MapLayerPlacement } from '../viewer/map-layer-placement';
 import { MapRenderer } from '../viewer/map-renderer';
 import { MapViewerStore } from '../viewer/map-viewer.store';
 import { MapTileLoader } from './map-tile-loader';
+import { isAsShot, recolouredPicture, teamColoursKey, type TeamColours } from './team-colour';
 import type { Tile, TilePyramid } from './tile-pyramid';
+
+/** Recolouring a layer's tiles: its mask's pyramid, the colours as shot and as wanted, and their key. */
+interface Recolour {
+  readonly mask: TilePyramid;
+  readonly shot: PackTeamColours;
+  readonly wanted: TeamColours;
+  readonly key: string;
+}
 
 /** A tile's fade-in once loaded, in milliseconds. */
 const FADE_MS = 250;
@@ -21,10 +30,12 @@ const FADE_MS = 250;
 /**
  * A tiled layer of the pack, drawn on the canvas it is placed on: `"map"` for the terrain (the
  * shown arena's map layer), or a sky layer's id (`"background"`, `"haze"`), at the parallax rate
- * of its placement. Every visible tile at the level whose pixels are about one screen pixel,
- * drawn from the finest coarser level loaded so far until its own arrives, which then fades in.
- * The tiles come from the map's assets; the layer's overview (PACK.md, Overviews) first, cut into
- * its level's tiles, so the whole layer is on screen after one request.
+ * of its placement. Every visible tile at the level whose pixels are about one screen pixel (never
+ * coarser than the overview's), drawn from the finest coarser level loaded so far until its own
+ * arrives, which then fades in. The layer's overview (PACK.md, Overviews) comes first, cut into its
+ * level's tiles, so the whole layer is on screen after one request; the finer levels' tiles from
+ * the map's assets. In other team colours (PACK.md, Team colour), each tile with team colour is
+ * recoloured from the same tile of the layer's team-colour mask, kept until the colours change.
  */
 @Directive({
   selector: 'canvas[hrsMapTileLayer]',
@@ -35,6 +46,8 @@ export class MapTileLayer implements MapLayer {
   /** `"map"`, or the id of one of the pack's parallax layers. */
   readonly layerId = input.required<string>({ alias: 'hrsMapTileLayer' });
   readonly visible = input(true);
+  /** The colours the teams are shown in; null: as the pack has them. */
+  readonly teamColours = input<TeamColours | null>(null);
 
   readonly element = inject<ElementRef<HTMLCanvasElement>>(ElementRef).nativeElement;
   private readonly store = inject(MapViewerStore);
@@ -42,6 +55,10 @@ export class MapTileLayer implements MapLayer {
   private readonly loader = inject(MapTileLoader);
   private readonly place = inject(MapLayerPlacement);
   private pyramids = new Map<string, TilePyramid>();
+  /** Each pyramid's team-colour mask's, by the layer's id, where it has one. */
+  private masks = new Map<string, TilePyramid>();
+  /** The pack's team colours as shot. */
+  private shot: PackTeamColours | null = null;
 
   constructor() {
     // The pack's pyramids that this layer draws, opened again for each pack.
@@ -54,19 +71,30 @@ export class MapTileLayer implements MapLayer {
           l.kind !== 'fixed' && (id === 'map' ? l.kind === 'map' : l.id === id),
       );
       const opened = new Map(
-        layers.map((l) => [l.id, this.loader.open(l, map.assets.tiles(l.id))]),
+        layers.map((l) => [l.id, this.loader.open(l, map.assets.tiles(l.file))]),
+      );
+      // A mask's pyramid is the layer's geometry with the mask's files.
+      const masks = new Map(
+        layers.flatMap((l) =>
+          l.teamMask
+            ? [[l.id, this.loader.open({ ...l, ...l.teamMask }, map.assets.tiles(l.teamMask.file))] as const]
+            : [],
+        ),
       );
       this.pyramids = opened;
+      this.masks = masks;
+      this.shot = map.pack.teamColours;
       const abort = new AbortController();
-      for (const pyramid of opened.values())
+      for (const pyramid of [...opened.values(), ...masks.values()])
         this.seedFromOverview(pyramid, map.assets, abort.signal);
       onCleanup(() => {
         abort.abort();
-        for (const pyramid of opened.values()) this.loader.close(pyramid);
+        for (const pyramid of [...opened.values(), ...masks.values()]) this.loader.close(pyramid);
       });
     });
     effect(() => {
       this.visible();
+      this.teamColours();
       this.renderer.redraw();
     });
     effect((onCleanup) => onCleanup(this.renderer.register(this)));
@@ -83,7 +111,6 @@ export class MapTileLayer implements MapLayer {
    */
   private seedFromOverview(pyramid: TilePyramid, assets: MapAssets, signal: AbortSignal): void {
     const overview = pyramid.layer.overview;
-    if (!overview) return;
     const size = pyramid.layer.tileSize;
     const [cols, rows] = pyramid.grid(overview.level);
     const tiles: [number, number, Tile][] = [];
@@ -114,25 +141,53 @@ export class MapTileLayer implements MapLayer {
 
   render(frame: LayerFrame): MapLayerStatus {
     const context = frameContext(this.element, frame.viewport);
-    const pyramid = this.pyramids.get(
-      this.layerId() === 'map' ? frame.arena.layer.id : this.layerId(),
-    );
+    const id = this.layerId() === 'map' ? frame.arena.layer.id : this.layerId();
+    const pyramid = this.pyramids.get(id);
     if (!this.visible() || !pyramid) return LAYER_DONE;
-    const status = this.draw(context, pyramid, frame);
+    const wanted = this.teamColours();
+    const mask = this.masks.get(id);
+    const recolour =
+      mask && this.shot && wanted && !isAsShot(wanted, this.shot)
+        ? { mask, shot: this.shot, wanted, key: teamColoursKey(wanted) }
+        : null;
+    const status = this.draw(context, pyramid, frame, recolour);
     this.loader.endFrame(frame.number);
     return status;
+  }
+
+  /**
+   * A loaded tile's picture: itself, or in other team colours once its mask's tile has arrived
+   * (asked for here; a mask tile not stored: no team colour there).
+   */
+  private picture(
+    tile: Tile,
+    at: { level: number; x: number; y: number; frame: number; priority: number },
+    recolour: Recolour | null,
+  ): CanvasImageSource | null {
+    if (!tile.bitmap || !recolour) return tile.bitmap;
+    const { level, x, y, frame, priority } = at;
+    const maskTile = recolour.mask.tileAt(level, x, y, frame);
+    if (recolour.mask.stored(level)) this.loader.request(recolour.mask, level, x, y, maskTile, priority);
+    if (maskTile.state !== 'loaded' || !maskTile.bitmap) return tile.bitmap;
+    if (tile.recoloured?.key !== recolour.key) {
+      const size = recolour.mask.layer.tileSize;
+      const picture = { source: tile.bitmap, x: 0, y: 0, w: size, h: size, mask: maskTile.bitmap, maskX: 0, maskY: 0 };
+      tile.recoloured = { key: recolour.key, canvas: recolouredPicture(picture, recolour.shot, recolour.wanted) };
+    }
+    return tile.recoloured.canvas;
   }
 
   private draw(
     context: CanvasRenderingContext2D,
     pyramid: TilePyramid,
     frame: LayerFrame,
+    recolour: Recolour | null,
   ): MapLayerStatus {
     const { viewport, camera, projection } = frame;
     const meta = pyramid.layer;
     const scale = projection.scale;
     const middle = middlePixel(meta, camera, frame.arena.skyAnchor, projection.rate);
-    const level = tileLevel(meta.levels, scale, viewport.dpr);
+    const level = Math.max(pyramid.floor, tileLevel(meta.levels, scale, viewport.dpr));
     const span = pyramid.span(level);
     const [cols, rows] = pyramid.grid(level);
     const [u, v] = middle;
@@ -152,27 +207,34 @@ export class MapTileLayer implements MapLayer {
             box.y + box.h / 2 - viewport.height / 2,
           );
         const tile = pyramid.tileAt(level, x, y, frame.number);
-        this.loader.request(pyramid, level, x, y, tile, priority);
+        if (pyramid.stored(level)) this.loader.request(pyramid, level, x, y, tile, priority);
         if (tile.state === 'empty') continue;
-        if (tile.state !== 'loaded' || !tile.bitmap) {
+        const picture =
+          tile.state === 'loaded'
+            ? this.picture(tile, { level, x, y, frame: frame.number, priority }, recolour)
+            : null;
+        if (!picture) {
           complete = false;
-          this.drawFromAbove(context, pyramid, level, x, y, box, priority, frame.number);
+          this.drawFromAbove(context, pyramid, level, x, y, box, priority, frame.number, recolour);
           continue;
         }
         const age = frame.now - tile.at;
         if (age < FADE_MS) {
-          this.drawFromAbove(context, pyramid, level, x, y, box, priority, frame.number);
+          this.drawFromAbove(context, pyramid, level, x, y, box, priority, frame.number, recolour);
           context.globalAlpha = Math.max(0, age / FADE_MS);
           animating = true;
         }
-        context.drawImage(tile.bitmap, box.x, box.y, box.w, box.h);
+        context.drawImage(picture, box.x, box.y, box.w, box.h);
         context.globalAlpha = 1;
       }
     }
     return { complete, animating };
   }
 
-  /** A tile's area from the finest coarser level loaded; asks for the levels it falls back on. */
+  /**
+   * A tile's area from the finest coarser level loaded, down to the overview's; asks for the
+   * stored levels it falls back on.
+   */
   private drawFromAbove(
     context: CanvasRenderingContext2D,
     pyramid: TilePyramid,
@@ -182,18 +244,23 @@ export class MapTileLayer implements MapLayer {
     box: ScreenBox,
     priority: number,
     frame: number,
+    recolour: Recolour | null,
   ): void {
     const size = pyramid.layer.tileSize;
-    for (let above = level - 1; above >= 0; above--) {
+    for (let above = level - 1; above >= pyramid.floor; above--) {
       const f = 2 ** (level - above);
       const ax = Math.floor(x / f);
       const ay = Math.floor(y / f);
       const tile = pyramid.tileAt(above, ax, ay, frame);
       if (tile.state === 'empty') return;
-      if (tile.state === 'loaded' && tile.bitmap) {
+      const picture =
+        tile.state === 'loaded'
+          ? this.picture(tile, { level: above, x: ax, y: ay, frame, priority }, recolour)
+          : null;
+      if (picture) {
         const part = size / f;
         context.drawImage(
-          tile.bitmap,
+          picture,
           (x - ax * f) * part,
           (y - ay * f) * part,
           part,
@@ -205,7 +272,7 @@ export class MapTileLayer implements MapLayer {
         );
         return;
       }
-      if (above === 0 || above === level - 2) {
+      if (above === level - 2 && pyramid.stored(above)) {
         this.loader.request(pyramid, above, ax, ay, tile, priority - 1e6 * (level - above));
       }
     }

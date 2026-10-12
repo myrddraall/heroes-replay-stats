@@ -1,0 +1,163 @@
+.pois {
+  margin-bottom: 20px;
+}
+
+// A team: its heading carries the team's colour; its groups sit under it.
+.pois__team {
+  & ~ .pois__team {
+    margin-top: 20px;
+  }
+}
+
+.pois__team-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--hrs-border);
+  font: var(--mat-sys-title-small);
+
+  &::before {
+    content: '';
+    width: 4px;
+    height: 14px;
+    border-radius: 2px;
+    background: var(--mat-sys-outline-variant);
+    flex: none;
+  }
+
+  .pois__team--order &::before {
+    background: var(--hrs-blue-soft);
+  }
+
+  .pois__team--chaos &::before {
+    background: var(--hrs-bronze-hot);
+  }
+
+  .pois__team--neutral &::before {
+    background: #ffdc6e;
+  }
+}
+
+.pois__group {
+  margin: 0 0 4px;
+  padding-inline-start: 12px;
+
+  & ~ .pois__group {
+    margin-top: 12px;
+  }
+
+  font: var(--mat-sys-label-large);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.pois__list {
+  margin: 0;
+  padding: 0 0 0 12px;
+  list-style: none;
+}
+
+.pois__none {
+  margin: 0;
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+// A row: the point's button (it picks it) and its state toggle, highlighted together.
+.poi-row {
+  display: flex;
+  align-items: center;
+  border-radius: 8px;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  &.poi-row--picked {
+    background: rgba(110, 215, 255, 0.16);
+    outline: 1px solid rgba(110, 215, 255, 0.5);
+  }
+}
+
+.poi {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: var(--mat-sys-body-medium);
+  text-align: start;
+  cursor: pointer;
+
+  &::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--mat-sys-outline-variant);
+    flex: none;
+  }
+
+  &.poi--order::before {
+    background: var(--hrs-blue-soft);
+  }
+
+  &.poi--chaos::before {
+    background: var(--hrs-bronze-hot);
+  }
+
+  &.poi--neutral::before {
+    background: #ffdc6e;
+  }
+
+  &.poi--off .poi__label {
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--hrs-blue-soft);
+    outline-offset: -2px;
+  }
+}
+
+// The state toggle: a small icon button at the row's end.
+.poi-toggle {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  margin-inline-end: 4px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--hrs-button-radius, 6px);
+  background: transparent;
+  color: var(--mat-sys-on-surface-variant);
+  cursor: pointer;
+
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--mat-sys-on-surface);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--hrs-blue-soft);
+    outline-offset: -2px;
+  }
+}
+
+.poi__label {
+  flex: 1;
+}

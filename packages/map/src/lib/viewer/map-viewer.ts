@@ -19,7 +19,9 @@ import { MapTileLayer } from '../layers/map-tile-layer';
 import { MapTileLoader } from '../layers/map-tile-loader';
 import { MapMinimapLayer } from '../layers/minimap/map-minimap-layer';
 import type { MapViewModel } from '../pack/map-assets';
+import type { Cell } from '../pack/map-pack';
 import type { ViewPoint } from '../view/camera';
+import type { TeamColours } from '../layers/team-colour';
 import { NgTemplateOutlet } from '@angular/common';
 import { MapRenderer } from './map-renderer';
 import { type BarSide, MapViewerBar } from './map-viewer-bar';
@@ -32,6 +34,16 @@ const WHEEL_ZOOM = 0.0015;
 /** How far an arrow key pans, in pixels, and how much `+` and `-` zoom. */
 const KEY_PAN = 80;
 const KEY_ZOOM = 1.25;
+
+/**
+ * A place to bring into view: the camera is centred on the cell (as far as the view's limits
+ * allow), zoomed in to `minZoom` at least when given. A new object is a new request, so the same
+ * place can be asked for again.
+ */
+export interface CentreRequest {
+  readonly cell: Cell;
+  readonly minZoom?: number;
+}
 
 /**
  * The map viewer (presentational): draws the map it is given, and its own layers from the pack's
@@ -85,9 +97,17 @@ export class MapViewer {
   readonly elementStates = input<Readonly<Record<string, ElementShown>>>({});
   /** The bars, where the viewer is too wide or too tall for the sky: fixed, or receding as it zooms in. */
   readonly bars = input<MapViewerBars>('fixed');
+  /** The structure or camp picked, by key: it glows in its own colour. */
+  readonly selected = input<string | null>(null);
+  /** A place to bring into view; each new object moves the camera once. */
+  readonly centreOn = input<CentreRequest | null>(null);
+  /** The colours the teams are shown in (PACK.md, Team colour); null: as the pack has them. */
+  readonly teamColours = input<TeamColours | null>(null);
 
   /** A structure or camp was clicked: its key. */
   readonly elementClick = output<string>();
+  /** The map was clicked where nothing takes a click: the cell. */
+  readonly mapClick = output<Cell>();
   /** The minimap's loading screen has faded away. */
   readonly minimapFaded = output<void>();
 
@@ -135,6 +155,10 @@ export class MapViewer {
       // Only the input: setting it moves the camera, which this effect must not track.
       const bars = this.bars();
       untracked(() => this.store.setBars(bars));
+    });
+    effect(() => {
+      const request = this.centreOn();
+      if (request) untracked(() => this.store.centreOn(request.cell, request.minZoom));
     });
     const destroyRef = inject(DestroyRef);
     afterNextRender(() => {
@@ -189,8 +213,12 @@ export class MapViewer {
     const down = this.down;
     this.down = null;
     this.endDrag();
-    if (down && this.inView(point) && Math.hypot(point.x - down.x, point.y - down.y) < CLICK_SLOP)
-      this.renderer.click(point);
+    if (down && this.inView(point) && Math.hypot(point.x - down.x, point.y - down.y) < CLICK_SLOP) {
+      if (!this.renderer.click(point)) {
+        const cell = this.store.cellAt(point);
+        if (cell) this.mapClick.emit(cell);
+      }
+    }
   }
 
   protected endDrag(): void {

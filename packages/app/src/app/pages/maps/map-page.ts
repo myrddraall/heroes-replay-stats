@@ -1,12 +1,12 @@
 import { Component, input } from '@angular/core';
-import { HeroesMap } from '@myrddraall/heroes-replay-stats-map';
 import { Layout } from '../../layout/layout';
 import { LayoutItem } from '../../layout/layout-item';
+import { MapExplore } from './explore/map-explore';
 
-/** One map, by its id in the address (`/maps/battlefield-of-eternity`). */
+/** One map, by its id in the address (`/maps/battlefield-of-eternity`), in explore mode. */
 @Component({
   selector: 'hrs-map-page',
-  imports: [HeroesMap, Layout, LayoutItem],
+  imports: [MapExplore, Layout, LayoutItem],
   templateUrl: './map-page.html',
   styleUrl: './map-page.scss',
 })

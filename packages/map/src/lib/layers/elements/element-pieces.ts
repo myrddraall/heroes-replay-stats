@@ -20,6 +20,8 @@ export interface ElementPiece {
   readonly kind: ElementKind;
   /** A structure's id (what `hiddenBy` names); `null` for a camp. */
   readonly id: number | null;
+  /** Whose it is; `null` for a camp, or a structure of neither side. */
+  readonly owner: 'order' | 'chaos' | null;
   readonly cell: Cell;
   readonly states: Readonly<Partial<Record<string, ElementCut | null>>>;
   /**
@@ -34,9 +36,9 @@ export interface ElementPiece {
 export function piecesOf(elements: PackElements): ElementPiece[] {
   const pieces: ElementPiece[] = [
     ...elements.structures.map((s) =>
-      piece('structure', `structure-${s.id}`, s.id, s.cell, s.states),
+      piece('structure', `structure-${s.id}`, s.id, s.owner, s.cell, s.states),
     ),
-    ...elements.camps.map((c) => piece('camp', `camp-${c.camp}`, null, c.cell, c.states)),
+    ...elements.camps.map((c) => piece('camp', `camp-${c.camp}`, null, null, c.cell, c.states)),
   ];
   return pieces.sort((a, b) => b.cell[1] - a.cell[1]);
 }
@@ -45,12 +47,13 @@ function piece(
   kind: ElementKind,
   key: string,
   id: number | null,
+  owner: 'order' | 'chaos' | null,
   cell: Cell,
   states: Readonly<Partial<Record<string, ElementCut | null>>>,
 ): ElementPiece {
   const first = states[KIND_STATES[kind][0]];
   const hit = first ?? Object.values(states).find((cut): cut is ElementCut => Boolean(cut)) ?? null;
-  return { key, kind, id, cell, states, hit };
+  return { key, kind, id, owner, cell, states, hit };
 }
 
 /**

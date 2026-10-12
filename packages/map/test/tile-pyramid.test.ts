@@ -20,6 +20,16 @@ describe('TilePyramid', () => {
     ]);
   });
 
+  it("draws nothing coarser than the overview's level, and reads only the finer levels from the archive", () => {
+    const pyramid = new TilePyramid(map, archive);
+    expect(pyramid.floor).toBe(map.overview.level);
+    expect(pyramid.stored(map.overview.level)).toBe(false);
+    expect(pyramid.stored(map.overview.level + 1)).toBe(true);
+    expect(pyramid.stored(0)).toBe(false);
+    const single = new TilePyramid({ ...map, levels: 1, overview: { ...map.overview, level: 0 } }, archive);
+    expect(single.stored(0)).toBe(true); // a layer of one level: the archive holds it
+  });
+
   it('keeps one tile per address, marked with the last frame that needed it', () => {
     const pyramid = new TilePyramid(map, archive);
     const tile = pyramid.tileAt(2, 1, 1, 5);

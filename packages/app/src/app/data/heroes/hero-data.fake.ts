@@ -9,7 +9,18 @@ const sonya = {
 const towers = {
   id: 'Towers of Doom',
   name: 'Towers of Doom',
+  width: 184,
+  height: 190,
   replayPreviewImage: 'replayspreviewimage_towersofdoom.png',
+  loadingScreenImage: 'storm_ui_homescreenbackground_towersofdoom.jpg',
+  objectives: [
+    {
+      title: 'Altars',
+      description: 'Capture altars to fire on the enemy core.',
+      icons: ['storm_ui_ingame_mapmechanic_towersofdoom_altar.png'],
+    },
+    { title: null, description: 'An untitled note the panel leaves out.', icons: [] },
+  ],
 } as unknown as MapInfo;
 
 /** For tests: a provider whose latest build knows only Sonya and Towers of Doom. */

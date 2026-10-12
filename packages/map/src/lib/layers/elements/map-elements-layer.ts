@@ -26,6 +26,7 @@ import { MapLayerPlacement } from '../../viewer/map-layer-placement';
 import { MapRenderer } from '../../viewer/map-renderer';
 import { MapViewerStore } from '../../viewer/map-viewer.store';
 import type { ElementCut } from '../../pack/map-pack';
+import { isAsShot, type TeamColours } from '../team-colour';
 import { ElementImages, type ElementLevel, type ElementPicture } from './element-images';
 import {
   drawOrder,
@@ -36,8 +37,18 @@ import {
   type ElementShown,
 } from './element-pieces';
 
-/** The hovered element's glow. */
-const GLOW_COLOUR = 'rgba(255, 236, 160, 0.95)';
+/**
+ * The glows, by whose the element is: a side's colour (Order blue, Chaos red), yellow for the
+ * neutral (camps), strong for the selected one and softer for the hovered one. Each can be
+ * restyled with a custom property on the viewer (`--hrs-map-glow-order`,
+ * `--hrs-map-glow-order-hover`, and so for `chaos` and `neutral`).
+ */
+const GLOW_DEFAULTS = {
+  order: ['rgba(10, 50, 240, 0.7)', 'rgba(20, 70, 240, 0.75)'],
+  chaos: ['rgba(255, 60, 40, 0.8)', 'rgba(255, 90, 70, 0.7)'],
+  neutral: ['rgba(255, 200, 30, 1)', 'rgba(255, 220, 110, 0.55)'],
+} as const;
+type GlowSide = keyof typeof GLOW_DEFAULTS;
 /** The fade from one level of detail to the other, in milliseconds (as the tiles'). */
 const FADE_MS = 250;
 /** The full level is drawn once the small one would be stretched past this. */
@@ -56,7 +67,8 @@ interface Glow {
 /**
  * The elements render's structures and camps (PACK.md, Elements), drawn on the canvas it is placed
  * on, the rubble first and then the rest, each further north first, each in the state it is given (`states`, by key; off if missing). The
- * one under the pointer glows, and a click on one is reported (`elementClick`). Where a standing
+ * one under the pointer glows, so does the `selected` one in its own colour, and a click on one
+ * is reported (`elementClick`). Where a standing
  * neighbour stands in front of a standing structure, its mask erases that part. The cut-outs are
  * in the map layer's pixels; they are placed through the projection of the layer's rate.
  */
@@ -68,7 +80,11 @@ interface Glow {
 export class MapElementsLayer implements MapLayer {
   /** What each structure and camp shows, by its key (`structure-<id>`, `camp-<camp>`). */
   readonly states = input<Readonly<Record<string, ElementShown>>>({});
+  /** The structure or camp picked, by key: it glows whether or not the pointer is over it. */
+  readonly selected = input<string | null>(null);
   readonly visible = input(true);
+  /** The colours the teams are shown in; null: as the pack has them (PACK.md, Team colour). */
+  readonly teamColours = input<TeamColours | null>(null);
   /** A structure or camp was clicked: its key. */
   readonly elementClick = output<string>();
 
@@ -78,6 +94,12 @@ export class MapElementsLayer implements MapLayer {
   private readonly place = inject(MapLayerPlacement);
 
   private readonly elements = computed(() => this.viewer.map()?.pack.data.elements ?? null);
+  /** The pictures' team colours as shot and as wanted, when they are to be recoloured. */
+  private readonly colours = computed(() => {
+    const shot = this.viewer.map()?.pack.teamColours;
+    const wanted = this.teamColours();
+    return shot && wanted && !isAsShot(wanted, shot) ? { shot, wanted } : null;
+  });
   private readonly pieces = computed(() => {
     const elements = this.elements();
     return elements ? piecesOf(elements) : [];
@@ -107,6 +129,8 @@ export class MapElementsLayer implements MapLayer {
       this.visible();
       this.states();
       this.hovered();
+      this.selected();
+      this.colours();
       this.renderer.redraw();
     });
     effect((onCleanup) => onCleanup(this.renderer.register(this)));
@@ -118,6 +142,21 @@ export class MapElementsLayer implements MapLayer {
 
   private stateOf(piece: ElementPiece): ElementShown {
     return this.states()[piece.key] ?? 'off';
+  }
+
+  /**
+   * A piece's glow colour for a role: in other team colours, its team's; else the custom property
+   * where set, else the default.
+   */
+  private glowColour(piece: ElementPiece, role: 'selected' | 'hovered'): string {
+    const side: GlowSide = piece.owner ?? 'neutral';
+    const colours = this.colours();
+    if (colours && side !== 'neutral') {
+      return `rgba(${colours.wanted[side].join(', ')}, ${role === 'hovered' ? 0.7 : 0.75})`;
+    }
+    const property = `--hrs-map-glow-${side}${role === 'hovered' ? '-hover' : ''}`;
+    const set = getComputedStyle(this.element).getPropertyValue(property).trim();
+    return set || GLOW_DEFAULTS[side][role === 'hovered' ? 1 : 0];
   }
 
   /** The map layer the cut-outs are in, when it is the shown arena's. */
@@ -135,7 +174,9 @@ export class MapElementsLayer implements MapLayer {
     if (!layer || !images) return LAYER_DONE;
     const { projection, viewport } = frame;
     const hovered = this.hovered();
+    const selected = this.selected();
     const states = this.states();
+    const colours = this.colours();
     const isStanding = (id: number) => states[`structure-${id}`] === 'standing';
     const order = drawOrder(this.pieces(), (p) => this.stateOf(p));
     // The level of detail: the small one until it would be stretched too far, then the full one,
@@ -162,7 +203,8 @@ export class MapElementsLayer implements MapLayer {
         if (!cut) continue;
         const masks = state === 'standing' && at === 'full' ? standingMasks(cut, isStanding) : [];
         // At the full level a cut-out whose atlas hasn't arrived (the rubble's) is drawn small.
-        const picture = images.picture(cut, masks, at) ?? images.picture(cut, [], 'small');
+        const picture =
+          images.picture(cut, masks, at, colours) ?? images.picture(cut, [], 'small', colours);
         if (picture) drawn.push({ piece, picture, box: boxOf(cut.rect) });
       }
       return drawn;
@@ -175,14 +217,27 @@ export class MapElementsLayer implements MapLayer {
       context.globalAlpha = 1;
     };
     const drawn = pictures(level);
-    // The hovered one's glow under everything: drawn with it, the neighbours drawn after it covered
-    // the glow except where their masks let it show, in the masks' jagged shapes. One turned off
-    // glows in the shape it has when it stands (its hit cut), with nothing drawn in it.
-    const lit =
-      drawn.find((d) => d.piece.key === hovered) ?? this.offGlow(order, hovered, level, boxOf);
-    if (lit) {
-      const blur = Math.max(8, 14 * Math.sqrt(projection.scale));
-      const glow = this.glow(lit.picture, lit.box, blur, viewport.dpr);
+    // The selected one's glow and the hovered one's, under everything: drawn with them, the
+    // neighbours drawn after cover the glow except where their masks let it show, in the masks'
+    // jagged shapes. One turned off glows in the shape it has when it stands (its hit cut), with
+    // nothing drawn in it. Each glows in its side's colour: the selected one strongly, hovered
+    // or not; the hovered one softly.
+    const blur = Math.max(8, 14 * Math.sqrt(projection.scale));
+    const litOf = (key: string | null) =>
+      key
+        ? (drawn.find((d) => d.piece.key === key) ?? this.offGlow(order, key, level, boxOf))
+        : null;
+    const glows: [role: 'selected' | 'hovered', key: string | null][] = [
+      ['selected', selected],
+      ['hovered', hovered === selected ? null : hovered],
+    ];
+    for (const [role, key] of glows) {
+      const lit = litOf(key);
+      if (!lit) continue;
+      const colour = this.glowColour(lit.piece, role);
+      // The selected one's glow spreads a little further than the hovered one's.
+      const spread = role === 'selected' ? blur * 1.3 : blur;
+      const glow = this.glow(role, lit.picture, lit.box, spread, viewport.dpr, colour);
       context.drawImage(glow.canvas, glow.x, glow.y, glow.w, glow.h);
     }
     if (fading) {
@@ -194,29 +249,36 @@ export class MapElementsLayer implements MapLayer {
     return { complete: images.ready(wantFull ? 'full' : 'small'), animating: fading };
   }
 
-  /** The hovered piece's standing picture, unmasked, where it stands, when it is turned off. */
+  /** A piece's standing picture, unmasked, where it stands, when it is turned off. */
   private offGlow(
     order: readonly ElementPiece[],
-    hovered: string | null,
+    key: string,
     level: ElementLevel,
     boxOf: (rect: ElementCut['rect']) => ScreenBox,
   ) {
-    const piece = order.find((p) => p.key === hovered);
+    const piece = order.find((p) => p.key === key);
     const cut = piece && this.stateOf(piece) === 'off' ? piece.hit : null;
-    const picture = cut && this.images?.picture(cut, [], level);
-    return cut && picture ? { picture, box: boxOf(cut.rect) } : null;
+    const picture = cut && this.images?.picture(cut, [], level, this.colours());
+    return piece && cut && picture ? { piece, picture, box: boxOf(cut.rect) } : null;
   }
 
-  /** The last glow made, kept while the same picture is hovered at the same size. */
-  private glowKept: { key: unknown[]; glow: Glow } | null = null;
+  /** The last glow made for each role, kept while the same picture glows at the same size. */
+  private readonly glowKept = new Map<string, { key: unknown[]; glow: Glow }>();
 
   /**
    * A picture's glow alone (its own shape's shadow, soft and bright, drawn twice to strengthen it,
    * with the shape itself taken out), as big as the picture's box with room for the blur round it.
    */
-  private glow(picture: ElementPicture, box: ScreenBox, blur: number, dpr: number): Glow {
-    const key = [picture.source, picture.x, picture.y, box.w, box.h, blur, dpr];
-    const kept = this.glowKept;
+  private glow(
+    role: string,
+    picture: ElementPicture,
+    box: ScreenBox,
+    blur: number,
+    dpr: number,
+    colour: string,
+  ): Glow {
+    const key = [picture.source, picture.x, picture.y, box.w, box.h, blur, dpr, colour];
+    const kept = this.glowKept.get(role);
     if (kept && kept.key.every((v, k) => v === key[k]))
       return { ...kept.glow, x: box.x - kept.glow.pad, y: box.y - kept.glow.pad };
     const pad = Math.ceil(blur * 2);
@@ -239,10 +301,13 @@ export class MapElementsLayer implements MapLayer {
         box.w,
         box.h,
       );
-    g.shadowColor = GLOW_COLOUR;
+    g.shadowColor = colour;
     g.shadowBlur = blur;
+    // Twice to strengthen the soft shadow; a third time for the selected one, so its colour
+    // holds up over a bright structure.
     shape();
     shape();
+    if (role === 'selected') shape();
     g.shadowColor = 'transparent';
     g.globalCompositeOperation = 'destination-out';
     shape();
@@ -254,7 +319,7 @@ export class MapElementsLayer implements MapLayer {
       w: box.w + 2 * pad,
       h: box.h + 2 * pad,
     };
-    this.glowKept = { key, glow };
+    this.glowKept.set(role, { key, glow });
     return glow;
   }
 

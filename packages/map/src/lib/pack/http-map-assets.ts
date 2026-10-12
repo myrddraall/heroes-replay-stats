@@ -41,13 +41,11 @@ export class HttpMapAssets implements MapAssets {
     return url.href;
   }
 
-  tiles(layerId: string): TileArchive {
-    let archive = this.archives.get(layerId);
+  tiles(file: string): TileArchive {
+    let archive = this.archives.get(file);
     if (!archive) {
-      const layer = this.pack.layers.find((l) => l.id === layerId && l.kind !== 'fixed');
-      if (!layer) throw new Error(`${this.pack.map.id}'s pack has no tiled layer ${layerId}`);
-      archive = new PMTiles(this.url(layer.file));
-      this.archives.set(layerId, archive);
+      archive = new PMTiles(this.url(file));
+      this.archives.set(file, archive);
     }
     return archive;
   }

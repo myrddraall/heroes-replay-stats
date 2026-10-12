@@ -1,5 +1,5 @@
 {
-  "format": 3,
+  "format": 6,
   "tool": "heroes-capture 0.0.0-dev",
   "gameBuild": 98348,
   "map": {
@@ -226,72 +226,6 @@
         262
       ]
     },
-    "minimap": {
-      "file": "images/minimap.png",
-      "size": [
-        512,
-        512
-      ],
-      "source": "Minimap.tga"
-    },
-    "customMinimap": {
-      "file": "images/custom-minimap.png",
-      "size": [
-        512,
-        512
-      ],
-      "source": "CustomMiniMap.dds"
-    },
-    "customMinimapHover": {
-      "file": "images/custom-minimap-hover.png",
-      "size": [
-        512,
-        512
-      ],
-      "source": "CustomMiniMap_Hover.dds"
-    },
-    "replayPreview": {
-      "file": "images/replay-preview.png",
-      "size": [
-        417,
-        234
-      ],
-      "source": "ReplaysPreviewImage.tga"
-    },
-    "mapSelect": {
-      "file": "images/map-select.png",
-      "size": [
-        574,
-        378
-      ],
-      "source": "Storm_UI_Gamemode_MapSelect_PunisherArena.png"
-    },
-    "loadingScreen": {
-      "file": "images/loading-screen.png",
-      "size": [
-        2560,
-        1440
-      ],
-      "source": "storm_loading_generic.dds"
-    },
-    "loadingScreenIcons": [
-      {
-        "file": "images/loading-screen-icon-1.png",
-        "size": [
-          284,
-          288
-        ],
-        "source": "Assets\\Textures\\ui_ingame_mapmechanic_loadscreen_shrines_icon2.dds"
-      },
-      {
-        "file": "images/loading-screen-icon-2.png",
-        "size": [
-          164,
-          200
-        ],
-        "source": "Assets\\Textures\\ui_ingame_mapmechanic_loadscreen_punisherarena_icon2.dds"
-      }
-    ],
     "customMinimapSvg": {
       "file": "images/custom-minimap.svg",
       "size": [
@@ -321,45 +255,9 @@
       "bytes": 5196755,
       "sha256": "18ef56ac79e2a9f18784562639b80f7ef4321163472d45becd9cac97ddc8500e"
     },
-    "images/custom-minimap-hover.png": {
-      "bytes": 28042,
-      "sha256": "010dd10e9a225c62814600d63a8e0a7432bad76eaf16878e39c0ac13aa2a125b"
-    },
-    "images/custom-minimap.png": {
-      "bytes": 47169,
-      "sha256": "1b8a4e0733172b2d63091139ff8c4ce89056dd4a9ab55cf7d8a9c4875f94dd10"
-    },
     "images/custom-minimap.svg": {
       "bytes": 40821,
       "sha256": "6c846f543c4da84328258cd848de5119dfae72faf1edfdd2271e52b2adc0762b"
-    },
-    "images/loading-screen-icon-1.png": {
-      "bytes": 60638,
-      "sha256": "267bf3f0c7d6f8799f2febaa6ee73f3195a301090fb488754a8c1da454842b6b"
-    },
-    "images/loading-screen-icon-2.png": {
-      "bytes": 28183,
-      "sha256": "dcf453191b7035345c6f847bfdcee150dc968bb7d9efe8ec6f8ff2a140dabee8"
-    },
-    "images/loading-screen.png": {
-      "bytes": 3343437,
-      "sha256": "6bc7309a35c5f20a4b3327e5c1266d6c3cc2ad75a303e2230c432ae167676e9b"
-    },
-    "images/map-select.png": {
-      "bytes": 375685,
-      "sha256": "c44a634412eefa4e12856b6c51b116bd52f68e8f7d3abe11e8fb6444b050d42e"
-    },
-    "images/minimap.png": {
-      "bytes": 65012,
-      "sha256": "1597755ddb8c2fa6b23c0fc05fb5e766e48c0006282bea4e2a10d0162a0b2c9c"
-    },
-    "images/replay-preview.png": {
-      "bytes": 183754,
-      "sha256": "eb7913790d06a2731900fca3b096e8752157cf061f4c82520ef4d8ecca1c0db9"
-    },
-    "index.html": {
-      "bytes": 20673,
-      "sha256": "961cd3792e636cc3932389032ca883b7ddbcfc73fcaa75e9d2d27f3738ad8c9b"
     },
     "map-m1.pmtiles": {
       "bytes": 8608765,
@@ -377,5 +275,18 @@
       "bytes": 23274,
       "sha256": "be1bc7be5819f5aaacaaea0b25a46b2e39b2818ed055e8619990c106216e3f2f"
     }
+  },
+  "teamColours": {
+    "order": [
+      101,
+      159,
+      255
+    ],
+    "chaos": [
+      255,
+      57,
+      48
+    ],
+    "maskScale": 2.0
   }
 }

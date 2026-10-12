@@ -38,6 +38,7 @@
           [order]="layer.order"
           [rate]="layer.rate"
           [visible]="!hidden().has(layer.id)"
+          [teamColours]="teamColours()"
         ></canvas>
       }
       @case ('elements') {
@@ -47,6 +48,8 @@
           [rate]="layer.rate"
           [visible]="!hidden().has(layer.id)"
           [states]="elementStates()"
+          [selected]="selected()"
+          [teamColours]="teamColours()"
           (elementClick)="elementClick.emit($event)"
         ></canvas>
       }

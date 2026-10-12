@@ -11,6 +11,8 @@ export interface Tile {
   at: number;
   /** The last frame that needed it. */
   used: number;
+  /** Its picture in other team colours, by the colours' key (team-colour.ts). */
+  recoloured?: { key: string; canvas: OffscreenCanvas };
 }
 
 /** A layer's tile pyramid (PACK.md, Tile pyramids) and the tiles loaded from it so far. */
@@ -32,6 +34,19 @@ export class TilePyramid {
     }
     tile.used = frame;
     return tile;
+  }
+
+  /**
+   * The coarsest level drawn: the overview's (PACK.md, Overviews). Zoomed further out, its tiles
+   * are drawn smaller.
+   */
+  get floor(): number {
+    return this.layer.overview.level;
+  }
+
+  /** Whether the PMTiles archive holds a level: the levels finer than the overview's, or a layer's only one. */
+  stored(level: number): boolean {
+    return level > this.floor || level === this.layer.levels - 1;
   }
 
   /** A tile's span in full-size layer pixels at a level. */

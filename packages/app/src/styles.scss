@@ -18,10 +18,10 @@ html {
       // Multi-word families must reach the CSS `font` shorthand quoted, or the whole
       // declaration is invalid and headings fall back to body size.
       typography: (
-        plain-family: "'Source Sans 3', sans-serif",
-        brand-family: "'Exo 2', sans-serif",
-        bold-weight: 600,
-      ),
+          plain-family: "'Source Sans 3', sans-serif",
+          brand-family: "'Exo 2', sans-serif",
+          bold-weight: 600,
+        ),
       density: 0,
     )
   );
@@ -88,6 +88,23 @@ h2 {
 
 a {
   color: var(--hrs-blue-soft);
+}
+
+// Buttons with little rounding, everywhere: Material's full pill is not this site's look.
+:root {
+  --hrs-button-radius: 6px;
+}
+
+html {
+  @include mat.button-overrides(
+    (
+      filled-container-shape: var(--hrs-button-radius),
+      outlined-container-shape: var(--hrs-button-radius),
+      text-container-shape: var(--hrs-button-radius),
+      protected-container-shape: var(--hrs-button-radius),
+      tonal-container-shape: var(--hrs-button-radius),
+    )
+  );
 }
 
 // Call-to-action buttons in the site's bronze: `class="hrs-cta"` on a mat-flat-button.
