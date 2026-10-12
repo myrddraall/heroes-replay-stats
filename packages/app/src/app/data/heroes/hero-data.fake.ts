@@ -17,7 +17,10 @@ const towers = {
     {
       title: 'Altars',
       description: 'Capture altars to fire on the enemy core.',
-      icons: ['storm_ui_ingame_mapmechanic_towersofdoom_altar.png'],
+      icons: [
+        'ui_ingame_mapmechanic_loadscreen_towersofdoom_icon2.png',
+        'ui_ingame_mapmechanic_loadscreen_towersofdoom_icon9.png',
+      ],
     },
     { title: null, description: 'An untitled note the panel leaves out.', icons: [] },
   ],

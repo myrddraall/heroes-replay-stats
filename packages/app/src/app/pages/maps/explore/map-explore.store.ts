@@ -23,7 +23,7 @@ import {
 } from '@myrddraall/heroes-replay-stats-map';
 import { map } from 'rxjs';
 import { LatestHeroData } from '../../../data/heroes/hero-data';
-import { mapExtraInfoOf } from './map-info';
+import { mapArtOf, mapExtraInfoOf } from './map-info';
 
 export type PanelPosition = 'start' | 'end';
 export type PanelMode = 'side' | 'over' | 'push';
@@ -69,8 +69,8 @@ interface ExploreState {
 /**
  * {@link MapExplore}'s component store: one map from the global map store ({@link withMapPack}),
  * what its structures and camps show ({@link withElementStates}), the point of interest picked,
- * the panel, and the map's facts (from the pack) with what hero-data adds (objectives, art) —
- * the two globals merged here, for this one consumer.
+ * the panel, and the map's facts and art (from the pack) with what hero-data adds (objectives,
+ * their icons the pack's) — the two globals merged here, for this one consumer.
  */
 export const MapExploreStore = signalStore(
   withMapPack(),
@@ -89,23 +89,25 @@ export const MapExploreStore = signalStore(
       { initialValue: false },
     ),
   })),
-  withComputed(({ pack, elementStates, selected, panels, _heroData, _handset }) => {
+  withComputed(({ map: loaded, pack, elementStates, selected, panels, _heroData, _handset }) => {
     const pois = computed(() => {
       const p = pack();
       return p ? poisOf(p) : [];
     });
+    const art = computed(() => mapArtOf(loaded()));
     return {
       pois,
       facts: computed(() => {
         const p = pack();
         return p ? mapFactsOf(p) : null;
       }),
+      art,
       extra: computed(() => {
         const p = pack();
         // Nothing until hero-data has loaded (or failed): the panel shows that it is loading.
         if (!p || (!_heroData.data.hasValue() && !_heroData.data.error())) return null;
         const data = _heroData.data.hasValue() ? _heroData.data.value() : undefined;
-        return mapExtraInfoOf(p.map.name, data, _heroData.images);
+        return mapExtraInfoOf(p.map.name, data, art());
       }),
       extraLoading: computed(() => _heroData.data.isLoading()),
       selectedPoi: computed((): SelectedPoi | null => {

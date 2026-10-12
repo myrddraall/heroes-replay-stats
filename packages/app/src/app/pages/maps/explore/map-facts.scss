@@ -9,7 +9,7 @@
   color: var(--mat-sys-on-surface-variant);
 }
 
-// Hero-data's art and icons come in whatever size and shape they have: sized here.
+// The pack's art and icons come in whatever size and shape the game has them: sized here.
 .facts__art {
   display: block;
   width: 100%;
@@ -53,7 +53,6 @@
 }
 
 .objective__icon {
-  height: 40px;
   width: auto;
   border-radius: 6px;
 }

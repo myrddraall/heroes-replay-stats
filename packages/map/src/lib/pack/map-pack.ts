@@ -106,11 +106,18 @@ export interface PackArena {
   readonly middleCell?: Cell;
 }
 
-/** A picture of the map, with its size in pixels. */
-export interface PackImage {
+/** A picture's file, with its size in pixels. */
+export interface PackImageVersion {
   readonly file: string;
   readonly size: Pixels;
+}
+
+/** A picture of the map, with its size in pixels. */
+export interface PackImage extends PackImageVersion {
+  /** The game file it came from. */
   readonly source?: string;
+  /** The same picture smaller (a half, a quarter of its size), largest first. */
+  readonly smaller?: readonly PackImageVersion[];
 }
 
 /** The custom minimap redrawn as SVG, and the map cells it covers. */
@@ -121,6 +128,10 @@ export interface PackMinimapSvg extends PackImage {
 export interface PackImages {
   readonly thumbnail?: PackImage;
   readonly customMinimapSvg?: PackMinimapSvg;
+  /** The map's loading screen picture (the background only). */
+  readonly loadingScreen?: PackImage;
+  /** The pictures the loading screen places on it (the objectives' icons), in its order. */
+  readonly loadingScreenIcons?: readonly PackImage[];
 }
 
 /** Where a standing neighbour is in front of a cut-out: a mask in the `masks` atlas, opaque where it hides it. */

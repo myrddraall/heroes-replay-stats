@@ -1,8 +1,17 @@
 @if (facts(); as f) {
   <section class="facts" aria-labelledby="map-facts-heading">
     <h3 id="map-facts-heading" class="facts__heading">Map</h3>
-    @if (extra()?.images?.loadingScreen; as art) {
-      <img class="facts__art" [src]="art" alt="" loading="lazy" decoding="async" />
+    @if (loadingScreen(); as art) {
+      <!-- As wide as the panel: min(360px, 90vw) -->
+      <img
+        class="facts__art"
+        [src]="art.src"
+        [srcset]="art.srcset"
+        sizes="(max-width: 400px) 90vw, 360px"
+        alt=""
+        loading="lazy"
+        decoding="async"
+      />
     }
     <dl class="facts__list">
       @if (f.category) {
@@ -38,10 +47,19 @@
     @if (extra(); as x) {
       @for (objective of x.objectives; track objective.title) {
         <article class="objective">
-          @if (objective.iconUrls.length) {
+          @if (objective.icons.length) {
             <div class="objective__icons">
-              @for (icon of objective.iconUrls; track icon) {
-                <img class="objective__icon" [src]="icon" alt="" loading="lazy" decoding="async" />
+              @for (icon of objective.icons; track icon.src) {
+                <img
+                  class="objective__icon"
+                  [src]="icon.src"
+                  [srcset]="icon.srcset"
+                  [sizes]="iconSizes(icon)"
+                  [style.height.px]="iconHeight"
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                />
               }
             </div>
           }
