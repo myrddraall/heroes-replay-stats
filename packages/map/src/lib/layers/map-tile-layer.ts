@@ -35,7 +35,9 @@ const FADE_MS = 250;
  * arrives, which then fades in. The layer's overview (PACK.md, Overviews) comes first, cut into its
  * level's tiles, so the whole layer is on screen after one request; the finer levels' tiles from
  * the map's assets. In other team colours (PACK.md, Team colour), each tile with team colour is
- * recoloured from the same tile of the layer's team-colour mask, kept until the colours change.
+ * recoloured from the same tile of the layer's team-colour mask, kept until the colours change; a
+ * tile whose mask's tile is still on its way waits for it like a tile not yet loaded (drawn from
+ * the coarser levels, already recoloured), so it never shows in the colours as shot.
  */
 @Directive({
   selector: 'canvas[hrsMapTileLayer]',
@@ -156,25 +158,34 @@ export class MapTileLayer implements MapLayer {
   }
 
   /**
-   * A loaded tile's picture: itself, or in other team colours once its mask's tile has arrived
-   * (asked for here; a mask tile not stored: no team colour there).
+   * A loaded tile's picture, and since when it has been ready (for its fade-in): itself, or in other
+   * team colours once its mask's tile has arrived (asked for here; an empty mask tile, or one at a
+   * level the mask doesn't store: no team colour there). Null while the mask's tile is on its way,
+   * so the tile is drawn from a coarser level meanwhile; at the overview's level, which has none,
+   * itself until then.
    */
   private picture(
     tile: Tile,
     at: { level: number; x: number; y: number; frame: number; priority: number },
     recolour: Recolour | null,
-  ): CanvasImageSource | null {
-    if (!tile.bitmap || !recolour) return tile.bitmap;
+  ): { source: CanvasImageSource; at: number } | null {
+    if (!tile.bitmap) return null;
+    if (!recolour) return { source: tile.bitmap, at: tile.at };
     const { level, x, y, frame, priority } = at;
-    const maskTile = recolour.mask.tileAt(level, x, y, frame);
-    if (recolour.mask.stored(level)) this.loader.request(recolour.mask, level, x, y, maskTile, priority);
-    if (maskTile.state !== 'loaded' || !maskTile.bitmap) return tile.bitmap;
+    const mask = recolour.mask;
+    const maskTile = mask.tileAt(level, x, y, frame);
+    const hasMask = mask.stored(level) || level === mask.floor;
+    if (mask.stored(level)) this.loader.request(mask, level, x, y, maskTile, priority);
+    if (!hasMask || maskTile.state === 'empty') return { source: tile.bitmap, at: tile.at };
+    if (maskTile.state !== 'loaded' || !maskTile.bitmap) {
+      return level === mask.floor ? { source: tile.bitmap, at: tile.at } : null;
+    }
     if (tile.recoloured?.key !== recolour.key) {
-      const size = recolour.mask.layer.tileSize;
+      const size = mask.layer.tileSize;
       const picture = { source: tile.bitmap, x: 0, y: 0, w: size, h: size, mask: maskTile.bitmap, maskX: 0, maskY: 0 };
       tile.recoloured = { key: recolour.key, canvas: recolouredPicture(picture, recolour.shot, recolour.wanted) };
     }
-    return tile.recoloured.canvas;
+    return { source: tile.recoloured.canvas, at: Math.max(tile.at, maskTile.at) };
   }
 
   private draw(
@@ -218,13 +229,13 @@ export class MapTileLayer implements MapLayer {
           this.drawFromAbove(context, pyramid, level, x, y, box, priority, frame.number, recolour);
           continue;
         }
-        const age = frame.now - tile.at;
+        const age = frame.now - picture.at;
         if (age < FADE_MS) {
           this.drawFromAbove(context, pyramid, level, x, y, box, priority, frame.number, recolour);
           context.globalAlpha = Math.max(0, age / FADE_MS);
           animating = true;
         }
-        context.drawImage(picture, box.x, box.y, box.w, box.h);
+        context.drawImage(picture.source, box.x, box.y, box.w, box.h);
         context.globalAlpha = 1;
       }
     }
@@ -260,7 +271,7 @@ export class MapTileLayer implements MapLayer {
       if (picture) {
         const part = size / f;
         context.drawImage(
-          picture,
+          picture.source,
           (x - ax * f) * part,
           (y - ay * f) * part,
           part,

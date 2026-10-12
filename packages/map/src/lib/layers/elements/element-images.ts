@@ -68,8 +68,8 @@ export class ElementImages {
   }
 
   /** Whether a level's request is over: its atlas arrived, couldn't be read, or the pack has none. */
-  ready(level: ElementLevel): boolean {
-    const name = this.atlasOf(level);
+  ready(level: ElementLevel | ElementAtlasName): boolean {
+    const name = level === 'full' || level === 'small' ? this.atlasOf(level) : level;
     return this.atlases.has(name) || this.failed.has(name) || !this.elements.atlases[name];
   }
 
@@ -105,10 +105,11 @@ export class ElementImages {
 
   /**
    * A cut-out at a level, in other team colours when given (`colours`: as shot and as wanted; its
-   * team-colour mask's atlas asked for, the colours as shot until it arrives), with (at the full
-   * level) the parts erased where the given masks' neighbours stand in front of it; the composed
-   * picture kept until the masks or the colours change. `undefined` until the atlas it is in has
-   * loaded.
+   * team-colour mask's atlas asked for), with (at the full level) the parts erased where the given
+   * masks' neighbours stand in front of it; the composed picture kept until the masks or the colours
+   * change. `undefined` until the atlas it is in has loaded, and at the full level until its mask's
+   * has too (the small picture, already recoloured, is drawn meanwhile); at the small level, in the
+   * colours as shot until then.
    */
   picture(
     cut: ElementCut,
@@ -128,7 +129,7 @@ export class ElementImages {
         w: Math.ceil(w * s),
         h: Math.ceil(h * s),
       };
-      return this.inColours(small, 'teamSmall', cut.teamMask?.small, colours);
+      return this.inColours(small, 'teamSmall', cut.teamMask?.small, colours) ?? small;
     }
     const atlas = this.atlases.get(cut.atlas);
     if (!atlas) return undefined;
@@ -138,6 +139,7 @@ export class ElementImages {
       cut.teamMask?.at,
       colours,
     );
+    if (!whole) return undefined;
     const maskAtlas = this.atlases.get('masks');
     if (!maskAtlas || !masks.length) return whole;
     const key = masks.map((m) => m.id).join(',') + (colours ? ` ${teamColoursKey(colours.wanted)}` : '');
@@ -156,18 +158,19 @@ export class ElementImages {
 
   /**
    * A cut-out's picture in other team colours, from its team-colour mask in `atlas` at `at`; the
-   * picture itself without colours, without a mask, or until the mask's atlas arrives (asked for).
+   * picture itself without colours, without a mask, or when the mask's atlas can't be read;
+   * `undefined` while that atlas is on its way (asked for).
    */
   private inColours(
     picture: ElementPicture,
     atlas: 'team' | 'teamSmall',
     at: readonly [number, number] | undefined,
     colours: { shot: PackTeamColours; wanted: TeamColours } | null,
-  ): ElementPicture {
+  ): ElementPicture | undefined {
     if (!colours || !at) return picture;
     this.request(atlas, 'high');
     const mask = this.atlases.get(atlas);
-    if (!mask) return picture;
+    if (!mask) return this.ready(atlas) ? picture : undefined;
     const key = `${atlas} ${at.join(',')} ${teamColoursKey(colours.wanted)}`;
     let canvas = this.recoloured.get(key);
     if (!canvas) {
