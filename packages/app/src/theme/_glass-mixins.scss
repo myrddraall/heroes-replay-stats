@@ -5,9 +5,18 @@
 // and the light bleeding into the glass just inside it (`$x`, `$y`: the way into the glass from
 // that edge, -1, 0 or 1 each).
 @mixin frame-glass($side, $x, $y) {
+  @include frame-glass-pane;
+  @include frame-glass-edge($side, $x, $y);
+}
+
+// The frame glass's fill alone (panes that share it can share one rule).
+@mixin frame-glass-pane {
   background: rgb(var(--hrs-glass-tint) / var(--hrs-glass-alpha-frame, var(--hrs-glass-alpha)));
   backdrop-filter: var(--hrs-glass-backdrop-frame, none);
-  -webkit-backdrop-filter: var(--hrs-glass-backdrop-frame, none);
+}
+
+// The frame glass's lit edge alone.
+@mixin frame-glass-edge($side, $x, $y) {
   border-#{$side}: 1px solid color-mix(in srgb, rgb(var(--hrs-glass-edge)) 76%, white);
   box-shadow:
     0 0 4px rgb(var(--hrs-glass-edge) / 0.75),

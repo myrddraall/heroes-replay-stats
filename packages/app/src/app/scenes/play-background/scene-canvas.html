@@ -1,1 +1,4 @@
-<canvas #canvas aria-hidden="true" [class.shown]="drawn()"></canvas>
+<div class="picture" [class.shown]="drawn()">
+  <canvas #canvas aria-hidden="true"></canvas>
+  <canvas #previous class="previous" aria-hidden="true"></canvas>
+</div>

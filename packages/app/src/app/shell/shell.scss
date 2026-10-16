@@ -3,12 +3,8 @@
 :host {
   display: block;
   height: 100%;
-  // The glass's opacity and blur (as on /theme-preview, until the Graphics settings set them):
-  // the panels', and the frame's (the menu and the header, always there, so a heavier pane).
-  --hrs-glass-alpha: 0.5;
-  --hrs-glass-backdrop: none;
-  --hrs-glass-alpha-frame: 0.55;
-  --hrs-glass-backdrop-frame: blur(6px);
+  // The glass's opacity and blur, the panels' and the frame's (the menu and the header), are set
+  // on the host from the Graphics settings.
 }
 
 // The background, fixed behind everything; the pages scroll over it.
@@ -27,9 +23,15 @@
 }
 
 
+// The frame: the menu and the header, one pane of glass each.
+.shell__nav,
+.shell__toolbar {
+  @include glass.frame-glass-pane;
+}
+
 .shell__nav {
   width: 248px;
-  @include glass.frame-glass(right, -1, 0);
+  @include glass.frame-glass-edge(right, -1, 0);
   display: flex;
   flex-direction: column;
 }
@@ -87,7 +89,7 @@ mat-nav-list {
   position: sticky;
   top: 0;
   z-index: 2;
-  @include glass.frame-glass(bottom, 0, -1);
+  @include glass.frame-glass-edge(bottom, 0, -1);
   gap: 8px;
 }
 

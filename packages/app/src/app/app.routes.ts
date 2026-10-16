@@ -30,6 +30,12 @@ const pages: Routes = [
     loadComponent: () => import('./pages/import/import-page').then((m) => m.ImportPage),
   },
   {
+    path: 'theme-preview',
+    title: 'Theme preview · Heroes Replay Stats',
+    loadComponent: () =>
+      import('./pages/theme-preview/theme-preview-page').then((m) => m.ThemePreviewPage),
+  },
+  {
     path: 'settings',
     title: 'Settings · Heroes Replay Stats',
     loadComponent: () => import('./pages/settings/settings-page').then((m) => m.SettingsPage),
@@ -38,18 +44,12 @@ const pages: Routes = [
 ];
 
 export const routes: Routes = [
-  // Pages of their own, filling the window without the shell.
+  // A page of its own, filling the window without the shell.
   {
     path: 'play-background',
     title: 'Play screen background · Heroes Replay Stats',
     loadComponent: () =>
       import('./pages/play-background/play-background-page').then((m) => m.PlayBackgroundPage),
-  },
-  {
-    path: 'theme-preview',
-    title: 'Theme preview · Heroes Replay Stats',
-    loadComponent: () =>
-      import('./pages/theme-preview/theme-preview-page').then((m) => m.ThemePreviewPage),
   },
   { path: '', component: Shell, children: pages },
 ];

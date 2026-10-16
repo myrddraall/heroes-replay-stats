@@ -12,6 +12,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { map } from 'rxjs';
 import { ReplayImportJobStore } from '../data/import/replay-import-job.store';
+import { GraphicsStore } from '../data/settings/graphics.store';
 import { PlayBackground } from '../scenes/play-background/play-background';
 import { injectPlatform } from '../platform/platform';
 
@@ -20,6 +21,9 @@ export interface NavItem {
   readonly label: string;
   readonly icon: string;
 }
+
+/** How much the glass blurs what is behind it, when it does. */
+const GLASS_BLUR = 'blur(6px)';
 
 /** Whether a drag carries files (as opposed to text or links dragged within the page). */
 function hasFiles(event: DragEvent): boolean {
@@ -31,13 +35,16 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { path: '/players', label: 'Players', icon: 'groups' },
   { path: '/maps', label: 'Maps', icon: 'map' },
   { path: '/import', label: 'Import', icon: 'upload_file' },
+  { path: '/theme-preview', label: 'Theme preview', icon: 'palette' },
+  { path: '/play-background', label: 'Background', icon: 'wallpaper' },
   { path: '/settings', label: 'Settings', icon: 'settings' },
 ];
 
 /**
  * The frame: the game's Play screen background behind everything (one for every page, so it keeps
  * running as they change), and over it in glass a toolbar, a rail/sidenav that collapses on small
- * screens, and the routed page.
+ * screens, and the routed page. Its theme, and how see-through the glass is and whether it blurs,
+ * are the Graphics settings'.
  */
 @Component({
   selector: 'hrs-shell',
@@ -58,7 +65,11 @@ export const NAV_ITEMS: readonly NavItem[] = [
   templateUrl: './shell.html',
   styleUrl: './shell.scss',
   host: {
-    class: 'hrs-glass-neutral',
+    '[class]': "'hrs-glass-' + graphics.theme()",
+    '[style.--hrs-glass-alpha]': 'graphics.glassAlpha()',
+    '[style.--hrs-glass-alpha-frame]': 'graphics.frameAlpha()',
+    '[style.--hrs-glass-backdrop]': 'backdrop()',
+    '[style.--hrs-glass-backdrop-frame]': 'backdrop()',
     '(document:dragenter)': 'onDragEnter($event)',
     '(document:dragover)': 'onDragOver($event)',
     '(document:dragleave)': 'onDragLeave($event)',
@@ -66,6 +77,9 @@ export const NAV_ITEMS: readonly NavItem[] = [
   },
 })
 export class Shell {
+  /** The theme and the glass are the Graphics settings'. */
+  protected readonly graphics = inject(GraphicsStore);
+  protected readonly backdrop = computed(() => (this.graphics.blur() ? GLASS_BLUR : 'none'));
   /** True while files are being dragged over the page; shows the drop overlay. */
   protected readonly dragging = signal(false);
   /** dragenter/dragleave fire for every element crossed, so track nesting depth. */

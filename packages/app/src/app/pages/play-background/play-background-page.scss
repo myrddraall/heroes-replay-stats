@@ -22,6 +22,14 @@ h1 {
   border: 0;
 }
 
+// Back to the site, in the top left; dark behind it so it reads over the brightest sky.
+.back {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: rgb(0 0 0 / 0.55);
+}
+
 // The tint controls, in the top right: a button, and the panel it opens under it.
 .corner {
   position: absolute;

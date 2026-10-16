@@ -34,6 +34,8 @@ const WHEEL_ZOOM = 0.0015;
 /** How far an arrow key pans, in pixels, and how much `+` and `-` zoom. */
 const KEY_PAN = 80;
 const KEY_ZOOM = 1.25;
+/** How long after the last wheel notch or key press the viewer is still in use, in milliseconds. */
+const IN_USE_MS = 300;
 
 /**
  * A place to bring into view: the camera is centred on the cell (as far as the view's limits
@@ -110,6 +112,12 @@ export class MapViewer {
   readonly mapClick = output<Cell>();
   /** The minimap's loading screen has faded away. */
   readonly minimapFaded = output<void>();
+  /**
+   * The viewer is in use (true: dragged, zoomed with the wheel or moved with the keys), or no longer
+   * (false, a moment after the last wheel notch or key press): what else the page draws can make
+   * room for it meanwhile.
+   */
+  readonly inUse = output<boolean>();
 
   protected readonly store = inject(MapViewerStore);
   protected readonly renderer = inject(MapRenderer);
@@ -147,6 +155,9 @@ export class MapViewer {
   );
   private last: ViewPoint | null = null;
   private down: ViewPoint | null = null;
+  private used = false;
+  /** Ends the use a moment after the last wheel notch or key press. */
+  private usedTimer: ReturnType<typeof setTimeout> | undefined;
 
   constructor() {
     effect(() => this.store.setMap(this.map()));
@@ -161,6 +172,7 @@ export class MapViewer {
       if (request) untracked(() => this.store.centreOn(request.cell, request.minZoom));
     });
     const destroyRef = inject(DestroyRef);
+    destroyRef.onDestroy(() => clearTimeout(this.usedTimer));
     afterNextRender(() => {
       const resize = () =>
         this.store.resize({
@@ -192,10 +204,31 @@ export class MapViewer {
     return x >= 0 && y >= 0 && x < frame.w && y < frame.h;
   }
 
+  /** In use: while dragged, or (`lasting`) for a moment from now. */
+  private use(lasting = false): void {
+    if (!this.used) {
+      this.used = true;
+      this.inUse.emit(true);
+    }
+    if (!lasting) return;
+    clearTimeout(this.usedTimer);
+    this.usedTimer = setTimeout(() => {
+      this.usedTimer = undefined;
+      if (!this.last) this.unuse();
+    }, IN_USE_MS);
+  }
+
+  private unuse(): void {
+    if (!this.used || this.usedTimer !== undefined) return;
+    this.used = false;
+    this.inUse.emit(false);
+  }
+
   protected pointerDown(e: PointerEvent): void {
     this.last = this.down = this.point(e);
     this.host.setPointerCapture(e.pointerId);
     this.dragging.set(true);
+    this.use();
   }
 
   protected pointerMove(e: PointerEvent): void {
@@ -224,10 +257,12 @@ export class MapViewer {
   protected endDrag(): void {
     this.last = null;
     this.dragging.set(false);
+    this.unuse();
   }
 
   protected wheel(e: WheelEvent): void {
     e.preventDefault();
+    this.use(true);
     this.store.zoomAt(this.point(e), Math.exp(-e.deltaY * WHEEL_ZOOM));
   }
 
@@ -247,5 +282,6 @@ export class MapViewer {
     else if (e.key === 'Home') this.store.recentre();
     else return;
     e.preventDefault();
+    this.use(true);
   }
 }

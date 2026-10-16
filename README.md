@@ -63,11 +63,34 @@ where `DEV_LOCAL` isn't set, read heroes-maps as before; nothing changes at chec
 window: its sky, the energy drifting in towards the horizon, the twinkling stars and the planets, drawn with
 WebGL from the game's own camera, meshes, materials and particles (`hrs-play-background`,
 `packages/app/src/app/scenes/play-background`, fills whatever element holds it).
-Custom properties tint it, as the game turns it blue for vs A.I.: `--hrs-background-tint` (a
-colour) and `--hrs-background-tint-blend` (`multiply`, the default, `color`, `hue`, `overlay`, `soft-light`, `color-burn` or
-`saturation`, as CSS blends them) for the whole of it, and `--hrs-planet-large-tint`, `-medium-` and `-small-` (each with its
-`-blend`) for a planet on its own; a change fades over half a second. The page's Colours button, top
-right, opens controls to try tints: presets, and each part's colour and blend. The scene comes
+The site's background is one instance in the shell, behind every page. `BackgroundStore`
+(`packages/app/src/app/scenes/play-background/background.store.ts`) holds how it is tinted, as the
+game turns it blue for vs A.I.: a colour and a blend (`multiply`, `color`, `hue`, `overlay`,
+`soft-light`, `color-burn` or `saturation`, as CSS blends them) for the whole of it, and for each
+planet on its own; a change fades over half a second. The site's tints are the Graphics settings'
+colour; a page can hold its own over them while it is open (`setPageTints`, the Background page and
+the theme preview do). It also holds how the background is drawn (`setDrawing`): whether it moves
+(when not, it is drawn once for each page, cross-fading from the last, and again on a resize), its
+frame rates (idle, while a tint fades, and while something interactive holds
+`requestInteracting()`, which returns the release: the map explorer holds it while the map is
+dragged or zoomed) and the share of the display's resolution it is drawn at. As a side
+effect the tints are on the root element for the interface to use: `--hrs-background-tint`,
+`--hrs-background-tint-blend`, and `--hrs-planet-large-tint`, `-medium-` and `-small-` (each with its
+`-blend`). The Background page (in the nav) shows it alone, with a back button in the top left
+and a Colours button in the top right to try tints: presets, and each part's colour and blend.
+
+The Graphics settings (Settings page; `GraphicsStore`, `packages/app/src/app/data/settings/graphics.store.ts`,
+kept in `localStorage`: `hrs.graphics.quality` holds the preset's id, or all the quality settings as
+JSON when they are Custom; `hrs.graphics.custom` the last custom settings, as JSON; `hrs.graphics`
+the look's settings the user chose) set it, through `provideSiteBackground()`: a quality
+preset (Low, Medium, High, Ultra, Extreme; until one is chosen it is High, or Low where the
+browser draws without hardware acceleration, detected on each load; Custom shows when the values
+match none, and is the last such values kept, so choosing it after trying a preset brings them
+back; a change that matches no preset replaces them) over the animation, the three frame rates, the resolution and the glass's blur; and the
+look, which presets don't touch: the theme (purple or Nexus), the background's colour (fixed, or
+random or the next in turn each page; the site always opens untinted and fades to it) and the
+glass panels' and the frame's opacity.
+The scene comes
 from [heroes-capture](https://github.com/myrddraall/heroes-capture) and is checked in under
 `packages/app/public/backgrounds/play` (about 1 MB); after a game update, export it again:
 

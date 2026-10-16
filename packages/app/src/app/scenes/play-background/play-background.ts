@@ -1,15 +1,13 @@
-import { Component, input, resource } from '@angular/core';
+import { Component, computed, inject, input, resource } from '@angular/core';
+import { BackgroundStore } from './background.store';
 import { loadPlayScene, PLAY_SCENE_URL } from './play-scene';
-import { DEFAULT_MAX_FPS, SceneCanvas } from './scene-canvas';
+import { SceneCanvas } from './scene-canvas';
+import { browserColourParser, rendererTints } from './scene-tints';
 
 /**
  * The game's Play screen background (container): its sky, the energy drifting across the horizon,
  * the twinkling stars and the planets, from the scene heroes-capture exports, filling this element,
- * tinted as its CSS says: `--hrs-background-tint` (a colour) and `--hrs-background-tint-blend`
- * (multiply, the default, color, hue, overlay, soft-light,
- * color-burn or saturation) for the whole of it, `--hrs-planet-large-tint`, `-medium-`
- * and `-small-` (and their `-blend`) for each planet on its own. Black
- * until the scene has loaded, or if it can't be.
+ * tinted and drawn as the BackgroundStore says. Black until the scene has loaded, or if it can't be.
  */
 @Component({
   selector: 'hrs-play-background',
@@ -20,8 +18,11 @@ import { DEFAULT_MAX_FPS, SceneCanvas } from './scene-canvas';
 export class PlayBackground {
   /** Where the exported scene is served. */
   readonly src = input(PLAY_SCENE_URL);
-  /** Frames a second at most. */
-  readonly maxFps = input(DEFAULT_MAX_FPS);
+
+  protected readonly store = inject(BackgroundStore);
+  protected readonly drawing = this.store.drawing;
+  private readonly parse = browserColourParser();
+  protected readonly tints = computed(() => rendererTints(this.store.tints(), this.parse));
 
   protected readonly scene = resource({
     params: () => this.src(),

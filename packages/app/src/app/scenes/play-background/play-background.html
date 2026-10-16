@@ -1,3 +1,11 @@
 @if (scene.hasValue()) {
-  <hrs-scene-canvas [scene]="scene.value()" [maxFps]="maxFps()" />
+  <hrs-scene-canvas
+    [scene]="scene.value()"
+    [tints]="tints()"
+    [animate]="drawing().animate"
+    [fps]="store.fps()"
+    [fadeFps]="store.fadeFps()"
+    [resolution]="drawing().resolution"
+    [picture]="store.picture()"
+  />
 }

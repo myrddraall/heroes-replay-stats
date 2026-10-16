@@ -40,23 +40,31 @@ export const BLENDS = Object.keys(BLEND_MODES) as readonly TintBlend[];
 /** A CSS colour as RGB 0..1, or null when it isn't one. */
 export type ColourParser = (css: string) => readonly [number, number, number] | null;
 
+/** A tint as it is set: any CSS colour (resolved: not a `var()`), and how it blends. */
+export interface PartTint {
+  readonly colour: string;
+  readonly blend: TintBlend;
+}
+
+/** The background's tint (none: as the game draws it), and the planets that have one of their own. */
+export interface BackgroundTints {
+  readonly background: PartTint | null;
+  readonly planets: Readonly<Partial<Record<PlanetSize, PartTint>>>;
+}
+
+export const UNTINTED: BackgroundTints = { background: null, planets: {} };
+
 /**
- * The tints a style sets: the background's in `--hrs-background-tint` (a colour) and
- * `--hrs-background-tint-blend` (one of BLENDS, multiply by default), each planet's in
- * `--hrs-planet-<size>-tint` and `--hrs-planet-<size>-tint-blend`. What isn't set is the
- * background's for a planet, and no tint for the background.
+ * The tints as the renderer draws them: the background's, then each planet's (its own, or the
+ * background's where it has none). A colour that isn't one tints nothing.
  */
-export function readTints(style: CSSStyleDeclaration, parse: ColourParser): Tints {
-  const read = (name: string, fallback: Tint): Tint => {
-    const colour = parse(style.getPropertyValue(`--hrs-${name}-tint`).trim());
-    const blend = style.getPropertyValue(`--hrs-${name}-tint-blend`).trim() as TintBlend;
-    return {
-      colour: colour ?? fallback.colour,
-      blend: BLENDS.includes(blend) ? blend : colour ? 'multiply' : fallback.blend,
-    };
+export function rendererTints(tints: BackgroundTints, parse: ColourParser): Tints {
+  const tint = (set: PartTint | null | undefined): Tint | null => {
+    const colour = set ? parse(set.colour) : null;
+    return colour && set ? { colour, blend: set.blend } : null;
   };
-  const background = read('background', NO_TINT);
-  const [large, medium, small] = PLANETS.map((size) => read(`planet-${size}`, background));
+  const background = tint(tints.background) ?? NO_TINT;
+  const [large, medium, small] = PLANETS.map((size) => tint(tints.planets[size]) ?? background);
   return [background, large!, medium!, small!];
 }
 

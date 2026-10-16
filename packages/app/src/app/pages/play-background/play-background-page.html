@@ -1,6 +1,16 @@
 <main>
   <h1>Play screen background</h1>
-  <hrs-play-background [style]="styles()" />
+  <hrs-play-background />
+  <button
+    mat-icon-button
+    type="button"
+    class="back"
+    aria-label="Back"
+    matTooltip="Back"
+    (click)="back()"
+  >
+    <mat-icon class="material-symbols-outlined" aria-hidden="true">arrow_back</mat-icon>
+  </button>
   <div class="corner">
     <button
       mat-stroked-button
@@ -16,7 +26,8 @@
     @if (open()) {
       <hrs-tint-controls
         id="tint-controls"
-        class="hrs-glass hrs-glass-neutral"
+        class="hrs-glass"
+        [class]="'hrs-glass-' + graphics.theme()"
         [(settings)]="settings"
         [presets]="presets"
         (presetChosen)="choose($event)"

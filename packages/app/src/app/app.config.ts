@@ -4,6 +4,7 @@ import { provideRouter, withComponentInputBinding, withViewTransitions } from '@
 import { provideHeroData } from './data/heroes/hero-data';
 import { provideReplayDb } from './data/import/provide-replay-db';
 import { providePlatform } from './platform/provide-platform';
+import { provideSiteBackground } from './scenes/play-background/provide-site-background';
 import { routes } from './app.routes';
 import { environment } from '../environments/environment';
 
@@ -15,5 +16,6 @@ export const appConfig: ApplicationConfig = {
     providePlatform(),
     provideReplayDb(),
     provideHeroData(),
+    provideSiteBackground(),
   ],
 };

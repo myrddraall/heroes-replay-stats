@@ -1,10 +1,5 @@
-<hrs-play-background
-  class="backdrop"
-  [maxFps]="fps()"
-  [style.--hrs-background-tint]="blueTint() ? 'var(--hrs-background-tint-blue)' : null"
-/>
-
-<main
+<div
+  class="preview"
   [class]="nexus() ? 'hrs-glass-nexus' : 'hrs-glass-neutral'"
   [style.--hrs-glass-alpha]="alpha()"
   [style.--hrs-glass-backdrop]="backdrop()"
@@ -31,17 +26,6 @@
         />
       </mat-slider>
       <span class="muted">from {{ floor }}: the least that keeps AA contrast</span>
-    </div>
-    <div class="slider">
-      <span id="fps-label">Background frame rate cap {{ fps() }} fps</span>
-      <mat-slider min="5" max="144" step="1" discrete>
-        <input
-          matSliderThumb
-          aria-labelledby="fps-label"
-          [value]="fps()"
-          (valueChange)="fps.set($event)"
-        />
-      </mat-slider>
     </div>
   </header>
 
@@ -111,4 +95,4 @@
       </table>
     }
   </section>
-</main>
+</div>

@@ -8,5 +8,14 @@
     [version]="store.platform.version"
     [kind]="store.platform.kind"
     (parallelImportsChange)="store.setParallelImports($event)"
-  />
+  >
+    <hrs-graphics-form
+      [settings]="store.graphics()"
+      [quality]="store.quality()"
+      [hasCustom]="store.hasCustom()"
+      [colours]="store.colours"
+      (qualityChosen)="store.setQuality($event)"
+      (changed)="store.setGraphics($event)"
+    />
+  </hrs-settings-form>
 </hrs-layout>

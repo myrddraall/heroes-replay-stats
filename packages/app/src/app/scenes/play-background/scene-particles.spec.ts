@@ -70,6 +70,15 @@ describe('ParticleSystem', () => {
     expect(particles.count).toBeLessThan(220);
   });
 
+  it('is in its steady state again after a jump longer than any life, not all born at once', () => {
+    const particles = new ParticleSystem(system, emitter, seeded());
+    particles.update(0);
+    particles.update(600); // drawn again ten minutes on
+    expect(particles.count).toBe(200);
+    const sizes = Array.from({ length: particles.count }, (_, i) => particles.instances[i * INSTANCE_FLOATS + 3]!);
+    expect(new Set(sizes.map((s) => s.toFixed(2))).size).toBeGreaterThan(20); // part way through their lives
+  });
+
   it("scales each particle's alpha by the emitter's vertex alpha where it was born, where asked", () => {
     const faded = new ParticleSystem({ ...system, vertexAlpha: true }, emitter, seeded());
     const plain = new ParticleSystem(system, emitter, seeded());

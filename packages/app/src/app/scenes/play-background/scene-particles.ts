@@ -55,8 +55,12 @@ export class ParticleSystem {
   /** Advance to `seconds` (the scene's clock) and fill `instances` with the particles alive. */
   update(seconds: number): void {
     const { rate, lifespan } = this.system;
-    if (this.last === undefined) {
+    if (this.last === undefined || seconds - this.last >= lifespan[1]) {
       // As if it had been running: as many as a steady state holds, each part way through its life.
+      // So too after a jump longer than any life (a background that doesn't move, drawn again):
+      // every particle there was is gone.
+      this.alive.fill(0);
+      this.carry = 0;
       const steady = Math.min(
         this.system.max,
         Math.round((rate * (lifespan[0] + lifespan[1])) / 2),

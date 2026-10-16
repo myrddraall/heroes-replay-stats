@@ -86,7 +86,6 @@
   border-radius: var(--hrs-glass-radius);
   background: rgb(var(--hrs-glass-tint) / var(--hrs-glass-alpha));
   backdrop-filter: var(--hrs-glass-backdrop, none);
-  -webkit-backdrop-filter: var(--hrs-glass-backdrop, none);
   box-shadow:
     // The hairline, a 1px ring: a border thins where it curves round the corners (in Chrome most:
     // its light falls to about 0.7 there at 1x), a ring keeps its weight at 1x, 1.25x and 1.5x.

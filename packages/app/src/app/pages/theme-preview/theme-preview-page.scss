@@ -2,16 +2,10 @@
 
 :host {
   display: block;
-  min-height: 100vh;
 }
 
-// The background stays put while the page scrolls over it.
-.backdrop {
-  position: fixed;
-  inset: 0;
-}
-
-main {
+// Not a main landmark: the shell's main holds it.
+.preview {
   position: relative;
   display: grid;
   gap: 24px;

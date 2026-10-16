@@ -6,6 +6,7 @@ import {
   signalMethod,
   signalStore,
   withComputed,
+  withHooks,
   withMethods,
   withProps,
   withState,
@@ -23,6 +24,7 @@ import {
 } from '@myrddraall/heroes-replay-stats-map';
 import { map } from 'rxjs';
 import { LatestHeroData } from '../../../data/heroes/hero-data';
+import { BackgroundStore, type Release } from '../../../scenes/play-background/background.store';
 import { mapArtOf, mapExtraInfoOf } from './map-info';
 
 export type PanelPosition = 'start' | 'end';
@@ -82,6 +84,9 @@ export const MapExploreStore = signalStore(
   }),
   withProps(() => ({
     _heroData: inject(LatestHeroData),
+    _background: inject(BackgroundStore),
+    /** Gives back the background's interacting frame rate, while the map is in use. */
+    _release: { current: null as Release | null },
     _handset: toSignal(
       inject(BreakpointObserver)
         .observe([Breakpoints.Handset, Breakpoints.TabletPortrait])
@@ -170,5 +175,19 @@ export const MapExploreStore = signalStore(
       const now = panel === 'info' ? store.infoOpened() : store.detailsOpened();
       if (opened !== now) patchState(store, { panels: { ...store.panels(), [panel]: opened } });
     },
+    /** The map is in use, or no longer: the site's background slows to its interacting rate meanwhile. */
+    inUse(used: boolean): void {
+      const release = store._release;
+      if (used) release.current ??= store._background.requestInteracting();
+      else {
+        release.current?.();
+        release.current = null;
+      }
+    },
   })),
+  withHooks({
+    onDestroy(store) {
+      store._release.current?.();
+    },
+  }),
 );

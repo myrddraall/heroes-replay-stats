@@ -29,18 +29,18 @@ describe('ThemePreviewPage', () => {
 
   it("sets the glass's opacity and blur from its controls", async () => {
     const fixture = await render();
-    const main: HTMLElement = fixture.nativeElement.querySelector('main');
+    const main: HTMLElement = fixture.nativeElement.querySelector('.preview');
     expect(main.style.getPropertyValue('--hrs-glass-alpha')).toBe('0.5');
     expect(main.style.getPropertyValue('--hrs-glass-backdrop')).toBe('none');
 
     const slider: HTMLInputElement = fixture.nativeElement.querySelector('input[matSliderThumb]');
     expect(Number(slider.min)).toBe(GLASS_ALPHA_FLOOR);
-    slider.value = '0.5';
+    slider.value = '0.7';
     slider.dispatchEvent(new Event('input'));
     slider.dispatchEvent(new Event('change'));
     (fixture.nativeElement.querySelector('mat-slide-toggle button') as HTMLButtonElement).click();
     await fixture.whenStable();
-    expect(main.style.getPropertyValue('--hrs-glass-alpha')).toBe('0.5');
+    expect(main.style.getPropertyValue('--hrs-glass-alpha')).toBe('0.7');
     expect(main.style.getPropertyValue('--hrs-glass-backdrop')).toBe('blur(6px)');
   });
 });
