@@ -90,6 +90,7 @@ uniform Layer uLayers[4];
 uniform bool uUnshaded, uVertexAlpha, uVertexColor, uOpaque;
 uniform int uEmissiveBlend;
 uniform float uEmissiveMult, uCutout;
+uniform float uSmear;
 uniform bool uLit;
 uniform vec3 uAmbient;
 uniform vec3 uLightDir[3];
@@ -132,9 +133,17 @@ float fresnel(Layer l) {
 vec4 midtone(vec4 v, float m) {
   return m > 0.0 ? pow(v, vec4(1.0 / (1.0 + m))) : v;
 }
+// A layer's texel; smeared across u by uSmear (the sky's textures, as the view sweeps in a fly).
+vec4 texel(sampler2D tex, Layer l) {
+  vec2 uv = layerUv(l);
+  if (uSmear <= 0.0) return texture(tex, uv);
+  vec4 sum = vec4(0.0);
+  for (int k = -3; k <= 3; k++) sum += texture(tex, uv + vec2(float(k) * uSmear / 3.0, 0.0));
+  return sum / 7.0;
+}
 vec4 colorLayer(sampler2D tex, Layer l) {
   if (!l.used) return vec4(0.0, 0.0, 0.0, 1.0);
-  vec4 v = l.textured ? midtone(channel(texture(tex, layerUv(l)), l.channel), l.midtone) : l.color;
+  vec4 v = l.textured ? midtone(channel(texel(tex, l), l.channel), l.midtone) : l.color;
   return vec4(v.rgb * l.bright * fresnel(l), v.a);
 }
 float maskLayer(sampler2D tex, Layer l) {
@@ -173,10 +182,12 @@ void main() {
 
 /**
  * A particle as a square facing the camera, its size its side (the brightest stars then come out
- * as wide, and as many, as in a screenshot of the game); streaked across the view by uStreak
- * (times its size) while the background flies to another set of planets.
+ * as wide, and as many, as in a screenshot of the game); streaked across the view while the
+ * background flies to another set of planets (uStreak, 0 to 1): drawn out to STREAK_LENGTH times
+ * its size, thinned and dimmed as it goes, as a star smears when the view sweeps.
  */
 const PARTICLE_VERTEX = `#version 300 es
+const float STREAK_LENGTH = 14.0;
 in vec2 aCorner;
 in vec4 aParticle;
 in vec4 aParticleColor;
@@ -186,10 +197,10 @@ out vec2 vUv;
 out vec4 vColor;
 void main() {
   vec4 at = uView * vec4(aParticle.xyz, 1.0);
-  at.xy += aCorner * aParticle.w;
-  at.x += aCorner.x * aParticle.w * uStreak;
+  at.x += aCorner.x * aParticle.w * (1.0 + uStreak * STREAK_LENGTH);
+  at.y += aCorner.y * aParticle.w * mix(1.0, 0.3, uStreak);
   vUv = aCorner + 0.5;
-  vColor = aParticleColor;
+  vColor = vec4(aParticleColor.rgb, aParticleColor.a * mix(1.0, 0.55, uStreak));
   gl_Position = uProjection * at;
 }`;
 
@@ -681,8 +692,10 @@ export class SceneRenderer {
     this.stillDirty = false;
   }
 
-  /** How far the stars are streaked across the view, in their own sizes (0: not at all). */
+  /** How far the stars are streaked across the view, 0 to 1 (0: not at all). */
   streak = 0;
+  /** How far the sky's textures are smeared across u, in texture widths (0: not at all). */
+  smear = 0;
   /** The tints drawn: the background's, then each planet's. */
   tints: Tints = NO_TINTS;
   /** The tints the picture fades from, and how far it is from them to `tints` (1: all the way). */
@@ -872,6 +885,7 @@ export class SceneRenderer {
       this.blend(draw.material);
       this.bindMaterial(draw.material, seconds);
       gl.uniform3fv(this.uniform(p, 'uPlanet'), draw.planet);
+      gl.uniform1f(this.uniform(p, 'uSmear'), draw.placed ? 0 : this.smear);
       gl.uniformMatrix4fv(this.uniform(p, 'uModel'), false, draw.placed?.model ?? IDENTITY);
       gl.uniformMatrix3fv(this.uniform(p, 'uNormalMatrix'), false, draw.placed?.normal ?? IDENTITY3);
       const light = draw.light;

@@ -47,6 +47,23 @@ describe('planet sets', () => {
     }
   });
 
+  it('keeps a planet on its own within the view, unless it is big', () => {
+    let solos = 0;
+    for (let n = 1; n <= 600; n++) {
+      const set = randomSet(index, seeded(n));
+      if (set.length !== 1) continue;
+      solos++;
+      const [p] = set;
+      const over = (p!.radius / 30) * 0.7 * p!.radius + 0.01;
+      const depth = p!.position[1] + 41.2;
+      const halfWidth = depth * Math.tan((43 * Math.PI) / 360) * (16 / 9);
+      expect(Math.abs(p!.position[0]) + p!.radius).toBeLessThanOrEqual(halfWidth + over);
+      expect(p!.position[2] + p!.radius).toBeLessThanOrEqual(40 + over);
+      expect(p!.position[2] - p!.radius).toBeGreaterThanOrEqual(-34 - over);
+    }
+    expect(solos).toBeGreaterThan(20);
+  });
+
   it('puts a planet just beyond the edge of the view, whichever side and however the camera turns', () => {
     const camera: SceneCamera = {
       eye: [0, -41.2, 5.6],

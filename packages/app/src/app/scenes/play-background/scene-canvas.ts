@@ -29,12 +29,13 @@ const FADE_SECONDS = 0.5;
 /**
  * The fly to another set of planets: how long (the first half the old ones leave, the second the
  * new ones arrive, each from or to beyond the edge of the view at its own depth, so none pops or
- * crosses another), how far the camera turns (radians) and the stars streak at its middle, and the
- * room a planet is given past the edge, in its own angular radius.
+ * crosses another), how far the camera turns (radians) and the sky smears at its middle (the stars
+ * streak then too), and the room a planet is given past the edge, in its own angular radius.
  */
 const FLY_SECONDS = 2.2;
 const FLY_YAW = 0.11;
-const FLY_STREAK = 14;
+/** How far the sky's textures smear across, in texture widths (the sky's go right round). */
+const FLY_SMEAR = 0.012;
 const FLY_CLEARANCE = 1.3;
 
 /** What the running scene is told of a change of its inputs. */
@@ -197,7 +198,8 @@ export class SceneCanvas {
       const at = (p: PlanetPlacement, x: number) => [x, p.position[1], p.position[2]] as const;
       const mix = (a: number, b: number, f: number) => a + (b - a) * f;
       renderer.setYaw(-fly.direction * FLY_YAW * bump);
-      renderer.streak = FLY_STREAK * bump;
+      renderer.streak = bump;
+      renderer.smear = FLY_SMEAR * bump;
       renderer.placePlanets([
         ...fly.from.map((p) => at(p, mix(p.position[0], beyond(p, -fly!.direction), leaving))),
         ...fly.to.map((p) => at(p, mix(beyond(p, fly!.direction), p.position[0], arriving))),
@@ -207,6 +209,7 @@ export class SceneCanvas {
         fly = undefined;
         renderer.setYaw(0);
         renderer.streak = 0;
+        renderer.smear = 0;
         renderer.setPlanets(to);
       }
     };
@@ -237,6 +240,7 @@ export class SceneCanvas {
             renderer.setPlanets(fly.to);
             renderer.setYaw(0);
             renderer.streak = 0;
+            renderer.smear = 0;
             fly = undefined;
           }
           draw();
