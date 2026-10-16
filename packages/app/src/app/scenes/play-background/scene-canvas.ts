@@ -10,8 +10,9 @@ import {
   viewChild,
 } from '@angular/core';
 import { DEFAULT_DRAWING } from './background.store';
+import { beyondEdge } from './planet-sets';
 import type { LoadedPlayScene } from './play-scene';
-import { SceneRenderer } from './scene-renderer';
+import { type PlanetPlacement, SceneRenderer } from './scene-renderer';
 import { NO_TINTS, sameTints, type Tints } from './scene-tints';
 
 /** Device pixels per CSS pixel at most: past this the extra sharpness isn't worth the fill rate. */
@@ -25,6 +26,16 @@ const FRAME_SLACK_MS = 4;
  * cross-fading from the last.
  */
 const FADE_SECONDS = 0.5;
+/**
+ * The fly to another set of planets: how long (the first half the old ones leave, the second the
+ * new ones arrive, each from or to beyond the edge of the view at its own depth, so none pops or
+ * crosses another), how far the camera turns (radians) and the stars streak at its middle, and the
+ * room a planet is given past the edge, in its own angular radius.
+ */
+const FLY_SECONDS = 2.2;
+const FLY_YAW = 0.11;
+const FLY_STREAK = 14;
+const FLY_CLEARANCE = 1.3;
 
 /** What the running scene is told of a change of its inputs. */
 interface Running {
@@ -32,7 +43,20 @@ interface Running {
   play(): void;
   resize(): void;
   newPicture(): void;
+  replace(placements: readonly PlanetPlacement[]): void;
 }
+
+/** A fly from one set of planets to the next, part way through. */
+interface Fly {
+  readonly from: readonly PlanetPlacement[];
+  readonly to: readonly PlanetPlacement[];
+  /** Which way: the planets slide to -x (1) or +x (-1) as the camera turns the other way. */
+  readonly direction: 1 | -1;
+  t: number;
+}
+
+const easeIn = (u: number) => u * u;
+const easeOut = (u: number) => 1 - (1 - u) * (1 - u);
 
 /**
  * A loaded scene drawn into a canvas that fills this element (presentational), at a share of the
@@ -42,8 +66,10 @@ interface Running {
  * screen). Not animated, it is drawn once, then again for each new `picture`, at the time it is
  * then, cross-fading from the last; with reduced motion asked for, it is drawn once, still, and a
  * change shows at once.
- * It is always first drawn untinted, and fades into `tints`. Without WebGL 2 it stays empty: the
- * element's own background shows.
+ * It is always first drawn untinted, and fades into `tints`. The planets up are `placements`;
+ * a new set is flown to while it animates (the camera turns, the planets slide out and the new
+ * ones in, the stars streak), or cross-faded to where it doesn't. Without WebGL 2 it stays empty:
+ * the element's own background shows.
  */
 @Component({
   selector: 'hrs-scene-canvas',
@@ -64,6 +90,8 @@ export class SceneCanvas {
   readonly resolution = input(DEFAULT_DRAWING.resolution);
   /** A new one asks for a new picture, when it doesn't move. */
   readonly picture = input(0);
+  /** The planets up; null until a set has loaded. */
+  readonly placements = input<readonly PlanetPlacement[] | null>(null);
 
   /** Whether a frame has been drawn: the picture fades in then. */
   protected readonly drawn = signal(false);
@@ -89,6 +117,10 @@ export class SceneCanvas {
     effect(() => {
       this.picture();
       untracked(() => this.running?.newPicture());
+    });
+    effect(() => {
+      const placements = this.placements();
+      if (placements) untracked(() => this.running?.replace(placements));
     });
     afterRenderEffect((onCleanup) => {
       const loaded = this.scene();
@@ -119,6 +151,9 @@ export class SceneCanvas {
     let frame = 0;
     let onScreen = true;
     let crossFade: Animation | undefined;
+    let shown: readonly PlanetPlacement[] = [];
+    let fly: Fly | undefined;
+    let flights = 0;
 
     const draw = () => {
       renderer.draw(clock);
@@ -146,15 +181,45 @@ export class SceneCanvas {
       });
       crossFade.onfinish = () => (previous.width = previous.height = 0);
     };
+    /** Where a planet is just beyond the edge of the view on a side (-1 left, 1 right): its x. */
+    const beyond = (p: PlanetPlacement, side: number): number => {
+      const aspect = this.host.clientWidth / Math.max(1, this.host.clientHeight);
+      return beyondEdge(p.position, p.radius, loaded.scene.camera, aspect, side, FLY_YAW, FLY_CLEARANCE);
+    };
+    /** The fly, `step` seconds on: the camera turned, the planets slid, the stars streaked. */
+    const flyOn = (step: number) => {
+      if (!fly) return;
+      fly.t = Math.min(1, fly.t + step / FLY_SECONDS);
+      const u = fly.t;
+      const bump = Math.sin(Math.PI * u);
+      const leaving = easeIn(Math.min(1, u * 2));
+      const arriving = easeOut(Math.max(0, u * 2 - 1));
+      const at = (p: PlanetPlacement, x: number) => [x, p.position[1], p.position[2]] as const;
+      const mix = (a: number, b: number, f: number) => a + (b - a) * f;
+      renderer.setYaw(-fly.direction * FLY_YAW * bump);
+      renderer.streak = FLY_STREAK * bump;
+      renderer.placePlanets([
+        ...fly.from.map((p) => at(p, mix(p.position[0], beyond(p, -fly!.direction), leaving))),
+        ...fly.to.map((p) => at(p, mix(beyond(p, fly!.direction), p.position[0], arriving))),
+      ]);
+      if (u >= 1) {
+        const { to } = fly;
+        fly = undefined;
+        renderer.setYaw(0);
+        renderer.streak = 0;
+        renderer.setPlanets(to);
+      }
+    };
     const tick = (now: number) => {
       frame = requestAnimationFrame(tick);
-      const fading = renderer.fade < 1;
+      const fading = renderer.fade < 1 || fly !== undefined;
       const fps = fading ? this.fadeFps() : this.fps();
       if (last !== undefined && (fps <= 0 || now - last < 1000 / fps - FRAME_SLACK_MS)) return;
       const step = last === undefined ? 0 : Math.min(MAX_STEP, (now - last) / 1000);
       clock += step;
       last = now;
-      if (fading) renderer.fade = Math.min(1, renderer.fade + step / FADE_SECONDS);
+      if (renderer.fade < 1) renderer.fade = Math.min(1, renderer.fade + step / FADE_SECONDS);
+      flyOn(step);
       draw();
     };
     const play = () => {
@@ -166,8 +231,14 @@ export class SceneCanvas {
       } else if (!animate && frame) {
         cancelAnimationFrame(frame);
         frame = 0;
-        if (renderer.fade < 1) {
+        if (renderer.fade < 1 || fly) {
           renderer.fade = 1; // a fade stopped part way shows where it was going
+          if (fly) {
+            renderer.setPlanets(fly.to);
+            renderer.setYaw(0);
+            renderer.streak = 0;
+            fly = undefined;
+          }
           draw();
         }
       }
@@ -212,10 +283,30 @@ export class SceneCanvas {
         if (frame || reducedMotion.matches || this.animate()) return;
         crossFadeTo(() => (clock += (performance.now() - drawnAt) / 1000));
       },
+      // A new set of planets: the first is put up as it is; another is flown to while the scene
+      // animates (the old ones keep their tints till they are gone), else cross-faded to.
+      replace: (placements) => {
+        if (placements === shown) return;
+        const before = shown;
+        shown = placements;
+        if (!before.length || reducedMotion.matches) {
+          renderer.setPlanets(placements);
+          if (!frame) draw();
+        } else if (frame) {
+          const direction = flights++ % 2 ? -1 : 1;
+          fly = { from: before, to: placements, direction, t: 0 };
+          renderer.setPlanets([...before, ...placements.map((p) => ({ ...p, slot: -1 }))]);
+          flyOn(0);
+        } else {
+          crossFadeTo(() => renderer.setPlanets(placements));
+        }
+      },
     };
     renderer.tints = NO_TINTS; // always shown untinted first
     resize();
     play();
+    const placements = this.placements(); // may have loaded before the scene did
+    if (placements) this.running.replace(placements);
     this.running.retint(this.tints());
 
     onCleanup(() => {

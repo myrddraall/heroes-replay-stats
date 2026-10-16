@@ -79,6 +79,17 @@ effect the tints are on the root element for the interface to use: `--hrs-backgr
 `-blend`). The Background page (in the nav) shows it alone, with a back button in the top left
 and a Colours button in the top right to try tints: presets, and each part's colour and blend.
 
+The planets are put up in sets: the game's own as the site loads, then one drawn at random with
+each page (`nextPlanetSet` on BackgroundStore; the Background page's Planets button too), from the
+pool heroes-capture exports beside the scene (`planets/`): the Play screen's three, the tutorial
+flyby's three worlds (Azeroth, Korhal, Sanctuary) with their own meshes and lit as the flyby lights
+them, and its nine painted spheres on the Play screen's hemisphere, each wearing the Play screen's
+hex grid and atmosphere. Each planet loads the first time a set has it (`PlanetLoader`). The
+renderer turns each to face the camera as the game's billboards do and lights the flyby's by their
+lights (`scene-renderer.ts`); the layout is `planet-sets.ts` (a set from a number, the same number
+the same set). A new set is flown to while the background animates: the camera turns, the planets
+slide out and the new ones in, the stars streak (1.6 s); where it doesn't, the picture cross-fades.
+
 The Graphics settings (Settings page; `GraphicsStore`, `packages/app/src/app/data/settings/graphics.store.ts`,
 kept in `localStorage`: `hrs.graphics.quality` holds the preset's id, or all the quality settings as
 JSON when they are Custom; `hrs.graphics.custom` the last custom settings, as JSON; `hrs.graphics`

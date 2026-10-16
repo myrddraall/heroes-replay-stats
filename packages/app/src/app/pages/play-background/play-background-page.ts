@@ -54,6 +54,11 @@ export class PlayBackgroundPage {
     else void this.router.navigateByUrl('/');
   }
 
+  /** Another set of planets, flown to. */
+  protected anotherSet(): void {
+    this.background.nextPlanetSet();
+  }
+
   /** A preset tints the whole background; the planets follow it. */
   protected choose(preset: TintPreset): void {
     const colour = preset.token

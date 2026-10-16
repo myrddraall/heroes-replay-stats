@@ -21,7 +21,7 @@ function pageOf(url: string): string {
  * The site's background follows the Graphics settings: how it is drawn, and its colour. The site
  * loads untinted; a fixed colour fades in, and a random one or the next in turn comes with each
  * page after the first. Each new page asks for a new picture (drawn when the background doesn't
- * move).
+ * move) and the next set of planets (flown to, when it does).
  */
 export function provideSiteBackground(): EnvironmentProviders {
   return provideEnvironmentInitializer(() => {
@@ -65,6 +65,7 @@ export function provideSiteBackground(): EnvironmentProviders {
           // Any other than the one shown.
           show((shown + 1 + Math.floor(Math.random() * (PRESETS.length - 1))) % PRESETS.length);
         }
+        background.nextPlanetSet();
         background.newPicture();
       });
   });

@@ -7,6 +7,7 @@ import {
   type SceneMesh,
 } from './play-scene';
 import { INSTANCE_FLOATS, ParticleSystem } from './scene-particles';
+import type { LoadedPlanet, PlanetLight } from './scene-planets';
 import { BLEND_GLSL, BLEND_MODES, NO_TINTS, PLANETS, type Tints } from './scene-tints';
 
 /** A target's outputs: the colour, the planets' light and their bodies (COLOR_ATTACHMENT0 to 2). */
@@ -33,6 +34,8 @@ in vec2 aUv2;
 in vec3 aNormal;
 in vec4 aColor;
 uniform mat4 uViewProjection;
+uniform mat4 uModel;
+uniform mat3 uNormalMatrix;
 out vec2 vUv;
 out vec2 vUv2;
 out vec3 vNormal;
@@ -41,10 +44,11 @@ out vec4 vColor;
 void main() {
   vUv = aUv;
   vUv2 = aUv2;
-  vNormal = aNormal;
-  vWorld = aPosition;
+  vNormal = uNormalMatrix * aNormal;
+  vec4 world = uModel * vec4(aPosition, 1.0);
+  vWorld = world.xyz;
   vColor = aColor;
-  gl_Position = uViewProjection * vec4(aPosition, 1.0);
+  gl_Position = uViewProjection * world;
 }`;
 
 /**
@@ -61,9 +65,17 @@ void main() {
  * yaw and pitch (the planets' hex grid brightens towards one side of their rims). The game's
  * fresnel comes out squared and brighter than that formula: measured against a Quick Match
  * screenshot, the planets' hex grid matches the formula's square times FRESNEL_GAIN, where the
- * formula alone left it all but invisible (the data doesn't say why). The emissive
+ * formula alone left it all but invisible (the data doesn't say why); that was measured on the
+ * grid's kind of fresnel (type 1), and the inverted kind (type 2, the flyby planets' atmospheres
+ * and city lights, strongest facing the camera) is taken as the formula gives it, unmeasured. A
+ * mask layer's fresnel scales its mask the same way. The emissive
  * layer adds to the diffuse colour, or multiplies it (mod, twice for mod2x). A blended material's
  * output is premultiplied; an opaque one's is cut out where its alpha falls below its threshold.
+ * A lit material (a flyby planet's) takes its diffuse colour times the light on it: the ambient
+ * colour plus each directional light's colour by how squarely the surface faces against the way it
+ * travels, as the game's standard material is lit (its specular left out), scaled by the exposure
+ * the light was set for over the scene's own. A material that uses the vertex colour multiplies
+ * its diffuse by it.
  */
 const MESH_FRAGMENT = `#version 300 es
 precision highp float;
@@ -75,9 +87,15 @@ struct Layer {
 const float FRESNEL_GAIN = 4.3;
 uniform sampler2D uDiffuse, uEmissive, uMask0, uMask1;
 uniform Layer uLayers[4];
-uniform bool uUnshaded, uVertexAlpha, uOpaque;
+uniform bool uUnshaded, uVertexAlpha, uVertexColor, uOpaque;
 uniform int uEmissiveBlend;
 uniform float uEmissiveMult, uCutout;
+uniform bool uLit;
+uniform vec3 uAmbient;
+uniform vec3 uLightDir[3];
+uniform vec3 uLightColor[3];
+uniform int uLightCount;
+uniform float uLightScale;
 const vec3 LUMINANCE = vec3(0.2126, 0.7152, 0.0722);
 uniform vec3 uEye, uRight, uUp;
 in vec2 vUv;
@@ -109,8 +127,7 @@ float fresnel(Layer l) {
   if (l.fresnel == 0) return 1.0;
   vec3 view = turn(turn(normalize(uEye - vWorld), uUp, l.fTurn.x), uRight, l.fTurn.y);
   float f = mix(l.fMin, l.fMax, pow(1.0 - clamp(dot(normalize(vNormal), view), 0.0, 1.0), l.fExponent));
-  f = l.fresnel == 2 ? 1.0 - f : f;
-  return f * f * FRESNEL_GAIN;
+  return l.fresnel == 2 ? 1.0 - f : f * f * FRESNEL_GAIN;
 }
 vec4 midtone(vec4 v, float m) {
   return m > 0.0 ? pow(v, vec4(1.0 / (1.0 + m))) : v;
@@ -123,12 +140,21 @@ vec4 colorLayer(sampler2D tex, Layer l) {
 float maskLayer(sampler2D tex, Layer l) {
   if (!l.used) return 1.0;
   float v = clamp(channel(texture(tex, layerUv(l)), l.channel).a * l.bright, 0.0, 1.0);
-  return midtone(vec4(v), l.midtone).a;
+  return midtone(vec4(v), l.midtone).a * clamp(fresnel(l), 0.0, 1.0);
+}
+vec3 lit(vec3 albedo) {
+  vec3 n = normalize(vNormal);
+  vec3 light = uAmbient;
+  for (int i = 0; i < 3; i++) {
+    if (i < uLightCount) light += uLightColor[i] * max(0.0, dot(n, -normalize(uLightDir[i])));
+  }
+  return albedo * light * uLightScale;
 }
 void main() {
   vec4 diffuse = colorLayer(uDiffuse, uLayers[0]);
+  if (uVertexColor) diffuse.rgb *= vColor.rgb;
   vec4 emissive = colorLayer(uEmissive, uLayers[1]);
-  vec3 base = uUnshaded ? diffuse.rgb : vec3(0.0);
+  vec3 base = uUnshaded ? diffuse.rgb : uLit ? lit(diffuse.rgb) : vec3(0.0);
   vec3 glow = emissive.rgb * uEmissiveMult;
   vec3 rgb = uEmissiveBlend == 2 ? base + glow : base * glow * (uEmissiveBlend == 1 ? 2.0 : 1.0);
   float alpha = maskLayer(uMask0, uLayers[2]) * maskLayer(uMask1, uLayers[3]) * diffuse.a;
@@ -147,18 +173,21 @@ void main() {
 
 /**
  * A particle as a square facing the camera, its size its side (the brightest stars then come out
- * as wide, and as many, as in a screenshot of the game).
+ * as wide, and as many, as in a screenshot of the game); streaked across the view by uStreak
+ * (times its size) while the background flies to another set of planets.
  */
 const PARTICLE_VERTEX = `#version 300 es
 in vec2 aCorner;
 in vec4 aParticle;
 in vec4 aParticleColor;
 uniform mat4 uView, uProjection;
+uniform float uStreak;
 out vec2 vUv;
 out vec4 vColor;
 void main() {
   vec4 at = uView * vec4(aParticle.xyz, 1.0);
   at.xy += aCorner * aParticle.w;
+  at.x += aCorner.x * aParticle.w * uStreak;
   vUv = aCorner + 0.5;
   vColor = aParticleColor;
   gl_Position = uProjection * at;
@@ -294,6 +323,31 @@ export function projectionMatrix(
   ]);
 }
 
+/** A vector turned about an axis (unit) by an angle in radians. */
+function turnAbout(v: Vec3, axis: Vec3, angle: number): Vec3 {
+  const c = Math.cos(angle);
+  const s = Math.sin(angle);
+  const k = cross(axis, v);
+  const d = dot(axis, v) * (1 - c);
+  return [
+    v[0] * c + k[0] * s + axis[0] * d,
+    v[1] * c + k[1] * s + axis[1] * d,
+    v[2] * c + k[2] * s + axis[2] * d,
+  ];
+}
+
+/**
+ * Draws in drawing order: opaque first (they write depth), then the blended ones by the model's
+ * priority, highest first, as the game draws a model's materials (the order of equal ones is kept).
+ */
+function sorted(draws: readonly MeshDraw[]): MeshDraw[] {
+  return [...draws].sort(
+    (a, b) =>
+      Number(a.material.blend !== 'opaque') - Number(b.material.blend !== 'opaque') ||
+      (b.material.priority ?? 0) - (a.material.priority ?? 0),
+  );
+}
+
 function multiply(a: Float32Array, b: Float32Array): Float32Array {
   const out = new Float32Array(16);
   for (let c = 0; c < 4; c++)
@@ -329,6 +383,70 @@ interface MeshDraw {
   readonly moving: boolean;
   /** Which planet it draws (one channel per planet, in PLANETS' order), or none. */
   readonly planet: readonly [number, number, number];
+  /** The planet it is part of (a placed one), whose matrices place it; none: in world space as it is. */
+  readonly placed?: Placed;
+  /** How it is lit, where it is a lit material of a flyby planet. */
+  readonly light?: PlanetLight;
+}
+
+/** A planet put up in the scene: where, how big, and which tint channel is its. */
+export interface PlanetPlacement {
+  readonly planet: LoadedPlanet;
+  readonly position: Vec3;
+  /** Its body's radius in the scene's units. */
+  readonly radius: number;
+  /** Which of the tints is its (0 to 2, in PLANETS' order), or none (-1). */
+  readonly slot: number;
+}
+
+/** A placement with its matrices as last placed. */
+interface Placed {
+  placement: PlanetPlacement;
+  model: Float32Array;
+  normal: Float32Array;
+}
+
+const IDENTITY = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+const IDENTITY3 = new Float32Array([1, 0, 0, 0, 1, 0, 0, 0, 1]);
+
+/**
+ * A planet's model matrix (column-major) and its normal matrix: at its position, at its radius,
+ * turned so that its own -Y (the way its body faces) points at the eye, by the shortest turn, as
+ * the game's billboards turn.
+ */
+export function placementMatrices(
+  position: Vec3,
+  radius: number,
+  eye: Vec3,
+): [Float32Array, Float32Array] {
+  const wanted = normalize([eye[0] - position[0], eye[1] - position[1], eye[2] - position[2]]);
+  const current: Vec3 = [0, -1, 0];
+  const axis = cross(current, wanted);
+  const sin = Math.hypot(...axis);
+  const cos = dot(current, wanted);
+  let r: number[] = [1, 0, 0, 0, 1, 0, 0, 0, 1]; // row-major 3x3
+  if (sin > 1e-9) {
+    const k: Vec3 = [axis[0] / sin, axis[1] / sin, axis[2] / sin];
+    // Rodrigues: I + sin K + (1 - cos) K², K the cross-product matrix of the axis.
+    const K = [0, -k[2], k[1], k[2], 0, -k[0], -k[1], k[0], 0];
+    const KK = Array.from({ length: 9 }, (_, i) => {
+      const row = Math.floor(i / 3);
+      const col = i % 3;
+      return K[row * 3]! * K[col]! + K[row * 3 + 1]! * K[3 + col]! + K[row * 3 + 2]! * K[6 + col]!;
+    });
+    r = r.map((v, i) => v + sin * K[i]! + (1 - cos) * KK[i]!);
+  } else if (cos < 0) {
+    r = [-1, 0, 0, 0, -1, 0, 0, 0, 1]; // turned right round
+  }
+  // Column-major: column c holds each row's c-th value.
+  const normal = new Float32Array([r[0]!, r[3]!, r[6]!, r[1]!, r[4]!, r[7]!, r[2]!, r[5]!, r[8]!]);
+  const model = new Float32Array([
+    ...[r[0]! * radius, r[3]! * radius, r[6]! * radius, 0],
+    ...[r[1]! * radius, r[4]! * radius, r[7]! * radius, 0],
+    ...[r[2]! * radius, r[5]! * radius, r[8]! * radius, 0],
+    ...[position[0], position[1], position[2], 1],
+  ]);
+  return [model, normal];
 }
 
 /** A float render target (half floats where the browser can render to them), with depth. */
@@ -370,7 +488,12 @@ export class SceneRenderer {
   /** How layers sample their textures, by whether they repeat across u (1) and across v (2). */
   private readonly samplers: WebGLSampler[];
   private readonly vaos: WebGLVertexArrayObject[] = [];
-  private readonly draws: MeshDraw[] = [];
+  /** The scene's own draws (its sky), then the placed planets'. */
+  private readonly sceneDraws: MeshDraw[] = [];
+  private draws: MeshDraw[] = [];
+  /** The placed planets' meshes on the GPU, by planet and mesh; kept while the renderer lives. */
+  private readonly planetVaos = new Map<string, { vao: WebGLVertexArrayObject; count: number }>();
+  private placed: Placed[] = [];
   private readonly particles: ParticleDraw[] = [];
   private readonly uniforms = new Map<WebGLProgram, Map<string, WebGLUniformLocation | null>>();
   /** The targets' format: half floats where the browser can render to them, else bytes. */
@@ -381,6 +504,10 @@ export class SceneRenderer {
   private readonly frame: Target;
   private view: Float32Array = new Float32Array(16);
   private projection: Float32Array = new Float32Array(16);
+  /** The camera turned from where the scene puts it, about its up, in radians. */
+  private yaw = 0;
+  /** Whether what doesn't move has to be drawn again before the next frame. */
+  private stillDirty = true;
 
   /** Throws when the browser has no WebGL 2. */
   constructor(
@@ -428,16 +555,17 @@ export class SceneRenderer {
     const { scene } = loaded;
     for (const [name, mesh] of Object.entries(scene.meshes)) {
       if (!mesh.materials.length) continue; // an emitter, not drawn
+      if (mesh.planet) continue; // the scene's own planets: put up as placed planets instead
       const vao = this.meshVao(mesh);
       this.vaos.push(vao);
       for (const m of mesh.materials) {
-        const material = this.material(m, name);
-        this.draws.push({
+        const material = this.material(m, name, scene.materials);
+        this.sceneDraws.push({
           vao,
           count: mesh.indices.length,
           material,
           moving: moves(material),
-          planet: PLANETS.map((size) => (size === mesh.planet ? 1 : 0)) as [number, number, number],
+          planet: [0, 0, 0],
         });
       }
     }
@@ -450,18 +578,79 @@ export class SceneRenderer {
         system: particles,
         vao,
         buffer,
-        material: this.material(system.material, 'particles'),
+        material: this.material(system.material, 'particles', scene.materials),
       });
     }
-    // Opaque draws first (they write depth), then the blended ones by the model's priority, highest
-    // first, as the game draws a model's materials (the order of equal ones is the scene's).
-    this.draws.sort(
-      (a, b) =>
-        Number(a.material.blend !== 'opaque') - Number(b.material.blend !== 'opaque') ||
-        (b.material.priority ?? 0) - (a.material.priority ?? 0),
-    );
+    this.draws = sorted(this.sceneDraws);
     gl.enable(gl.CULL_FACE);
     gl.depthFunc(gl.LEQUAL);
+  }
+
+  /**
+   * The planets put up in the scene, replacing those there were: their meshes go to the GPU the
+   * first time each planet is placed. What doesn't move is drawn again at the next frame.
+   */
+  setPlanets(placements: readonly PlanetPlacement[]): void {
+    const { eye } = this.loaded.scene.camera;
+    this.placed = placements.map((placement) => {
+      const [model, normal] = placementMatrices(placement.position, placement.radius, eye);
+      return { placement, model, normal };
+    });
+    const draws: MeshDraw[] = [];
+    for (const placed of this.placed) {
+      const { planet, slot } = placed.placement;
+      const channels = PLANETS.map((_, i) => (i === slot ? 1 : 0)) as [number, number, number];
+      for (const [name, mesh] of Object.entries(planet.planet.meshes)) {
+        const key = `${planet.id}/${name}`;
+        let vao = this.planetVaos.get(key);
+        if (!vao) {
+          for (const [textureKey, image] of Object.entries(planet.images))
+            if (!this.textures.has(textureKey)) this.textures.set(textureKey, this.texture(image));
+          vao = { vao: this.meshVao(mesh), count: mesh.indices.length };
+          this.planetVaos.set(key, vao);
+        }
+        for (const m of mesh.materials) {
+          const material = this.material(m, key, planet.planet.materials);
+          draws.push({
+            vao: vao.vao,
+            count: vao.count,
+            material,
+            moving: moves(material),
+            planet: channels,
+            placed,
+            light: material.unshaded ? undefined : planet.planet.light,
+          });
+        }
+      }
+    }
+    this.draws = [...sorted(this.sceneDraws), ...sorted(draws)];
+    this.stillDirty = true;
+  }
+
+  /** The placed planets moved: their positions and radii, in the order they were placed. */
+  placePlanets(positions: readonly Vec3[], radii?: readonly number[]): void {
+    const { eye } = this.loaded.scene.camera;
+    this.placed.forEach((placed, i) => {
+      const position = positions[i] ?? placed.placement.position;
+      const radius = radii?.[i] ?? placed.placement.radius;
+      placed.placement = { ...placed.placement, position, radius };
+      [placed.model, placed.normal] = placementMatrices(position, radius, eye);
+    });
+    this.stillDirty = true;
+  }
+
+  /** The camera turned about its up from where the scene puts it, in radians. */
+  setYaw(yaw: number): void {
+    if (yaw === this.yaw) return;
+    this.yaw = yaw;
+    this.view = this.viewNow();
+    this.stillDirty = true;
+  }
+
+  private viewNow(): Float32Array {
+    const { camera } = this.loaded.scene;
+    const forward = turnAbout(camera.forward, camera.up, this.yaw);
+    return viewMatrix(camera.eye, forward, camera.up);
   }
 
   /**
@@ -469,11 +658,10 @@ export class SceneRenderer {
    * doesn't move is drawn again at the new size.
    */
   resize(width: number, height: number): void {
-    const gl = this.gl;
     this.canvas.width = Math.max(1, Math.round(width));
     this.canvas.height = Math.max(1, Math.round(height));
     const { camera } = this.loaded.scene;
-    this.view = viewMatrix(camera.eye, camera.forward, camera.up);
+    this.view = this.viewNow();
     this.projection = projectionMatrix(
       camera.fovY,
       this.canvas.width / this.canvas.height,
@@ -482,11 +670,19 @@ export class SceneRenderer {
     );
     this.allocate(this.still);
     this.allocate(this.frame);
-    this.begin(this.still);
-    this.drawMeshes(false, 0);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    this.stillDirty = true;
   }
 
+  /** What doesn't move, drawn into its target. */
+  private drawStill(): void {
+    this.begin(this.still);
+    this.drawMeshes(false, 0);
+    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+    this.stillDirty = false;
+  }
+
+  /** How far the stars are streaked across the view, in their own sizes (0: not at all). */
+  streak = 0;
   /** The tints drawn: the background's, then each planet's. */
   tints: Tints = NO_TINTS;
   /** The tints the picture fades from, and how far it is from them to `tints` (1: all the way). */
@@ -497,6 +693,7 @@ export class SceneRenderer {
   draw(seconds: number): void {
     const gl = this.gl;
     const { width, height } = this.canvas;
+    if (this.stillDirty) this.drawStill();
     // The still part, into the frame: one attachment at a time (a blit copies the one read
     // into every one drawn).
     gl.bindFramebuffer(gl.READ_FRAMEBUFFER, this.still.framebuffer);
@@ -524,6 +721,7 @@ export class SceneRenderer {
     gl.bindSampler(1, null);
     gl.uniformMatrix4fv(this.uniform(this.particleProgram, 'uView'), false, this.view);
     gl.uniformMatrix4fv(this.uniform(this.particleProgram, 'uProjection'), false, this.projection);
+    gl.uniform1f(this.uniform(this.particleProgram, 'uStreak'), this.streak);
     for (const p of this.particles) {
       p.system.update(seconds);
       const layer = p.material.diffuse!;
@@ -577,6 +775,7 @@ export class SceneRenderer {
     for (const t of this.textures.values()) gl.deleteTexture(t);
     for (const s of this.samplers) gl.deleteSampler(s);
     for (const vao of this.vaos) gl.deleteVertexArray(vao);
+    for (const { vao } of this.planetVaos.values()) gl.deleteVertexArray(vao);
     for (const p of this.particles) {
       gl.deleteVertexArray(p.vao);
       gl.deleteBuffer(p.buffer);
@@ -665,19 +864,38 @@ export class SceneRenderer {
     gl.uniform3fv(this.uniform(this.meshProgram, 'uEye'), this.loaded.scene.camera.eye);
     gl.uniform3f(this.uniform(this.meshProgram, 'uRight'), v[0]!, v[4]!, v[8]!);
     gl.uniform3f(this.uniform(this.meshProgram, 'uUp'), v[1]!, v[5]!, v[9]!);
+    const p = this.meshProgram;
+    const exposure = this.loaded.scene.tone.exposure;
     for (const draw of this.draws) {
       if (draw.moving !== moving) continue;
       gl.bindVertexArray(draw.vao);
       this.blend(draw.material);
       this.bindMaterial(draw.material, seconds);
-      gl.uniform3fv(this.uniform(this.meshProgram, 'uPlanet'), draw.planet);
+      gl.uniform3fv(this.uniform(p, 'uPlanet'), draw.planet);
+      gl.uniformMatrix4fv(this.uniform(p, 'uModel'), false, draw.placed?.model ?? IDENTITY);
+      gl.uniformMatrix3fv(this.uniform(p, 'uNormalMatrix'), false, draw.placed?.normal ?? IDENTITY3);
+      const light = draw.light;
+      gl.uniform1i(this.uniform(p, 'uLit'), light ? 1 : 0);
+      if (light) {
+        const lights = light.directional.slice(0, 3);
+        const pad = Array<number>(9 - lights.length * 3).fill(0);
+        gl.uniform3fv(this.uniform(p, 'uAmbient'), light.ambient);
+        gl.uniform1i(this.uniform(p, 'uLightCount'), lights.length);
+        gl.uniform3fv(this.uniform(p, 'uLightDir'), [...lights.flatMap((l) => [...l.direction]), ...pad]);
+        gl.uniform3fv(this.uniform(p, 'uLightColor'), [...lights.flatMap((l) => [...l.color]), ...pad]);
+        gl.uniform1f(this.uniform(p, 'uLightScale'), light.exposure / exposure);
+      }
       gl.drawElements(gl.TRIANGLES, draw.count, gl.UNSIGNED_SHORT, 0);
     }
     gl.bindVertexArray(null);
   }
 
-  private material(name: string, where: string): SceneMaterial {
-    const material = this.loaded.scene.materials[name];
+  private material(
+    name: string,
+    where: string,
+    materials: Readonly<Record<string, SceneMaterial>>,
+  ): SceneMaterial {
+    const material = materials[name];
     if (!material) throw new Error(`${where}: no material ${name} in the scene`);
     if (!['opaque', 'alpha', 'add', 'alphaAdd'].includes(material.blend))
       throw new Error(`${name}: ${material.blend} blending isn't drawn yet`);
@@ -722,6 +940,7 @@ export class SceneRenderer {
     });
     gl.uniform1i(this.uniform(p, 'uUnshaded'), material.unshaded ? 1 : 0);
     gl.uniform1i(this.uniform(p, 'uVertexAlpha'), material.vertexAlpha ? 1 : 0);
+    gl.uniform1i(this.uniform(p, 'uVertexColor'), material.vertexColor ? 1 : 0);
     gl.uniform1f(this.uniform(p, 'uEmissiveMult'), material.emissiveMult);
     gl.uniform1i(this.uniform(p, 'uOpaque'), material.blend === 'opaque' ? 1 : 0);
     gl.uniform1i(

@@ -46,6 +46,8 @@ interface BackgroundState {
   readonly interacting: number;
   /** Counts the pictures asked for, one for each page: a background that doesn't move draws one. */
   readonly picture: number;
+  /** Which set of planets is up: 0 the game's own; any other, a set drawn from that number. */
+  readonly planetSet: number;
 }
 
 /**
@@ -59,6 +61,8 @@ interface BackgroundState {
  * where nothing is tinted.
  * Something that needs the page to itself for a while (the map while it is dragged) asks for the
  * interacting frame rate, and gives it back when done.
+ * The planets up are a set by number: the game's own (0) as the site loads, then one drawn from
+ * each number in turn (`nextPlanetSet`, each page), the background flying to it.
  */
 export const BackgroundStore = signalStore(
   { providedIn: 'root' },
@@ -68,6 +72,7 @@ export const BackgroundStore = signalStore(
     drawing: DEFAULT_DRAWING,
     interacting: 0,
     picture: 0,
+    planetSet: 0,
   }),
   withComputed((store) => ({
     /** The tints shown: the page's, or the site's. */
@@ -107,6 +112,14 @@ export const BackgroundStore = signalStore(
     /** A new picture, for a new page: drawn when the background doesn't move. */
     newPicture(): void {
       patchState(store, { picture: store.picture() + 1 });
+    },
+    /** The next set of planets, drawn from the next number. */
+    nextPlanetSet(): void {
+      patchState(store, { planetSet: store.planetSet() + 1 });
+    },
+    /** A set of planets by number: 0 the game's own. */
+    setPlanetSet(planetSet: number): void {
+      patchState(store, { planetSet });
     },
     /** The interacting frame rate, until released; any number can hold it at once. */
     requestInteracting(): Release {
