@@ -1,26 +1,20 @@
+@use '../../../theme/glass-mixins' as glass;
+
+// A glass panel (hrs-glass).
 .replay {
-  position: relative;
   isolation: isolate;
   overflow: hidden;
   padding: 16px 20px;
-  border: 1px solid var(--hrs-border);
-  border-radius: 12px;
-  background: var(--hrs-surface);
 }
-// the map's replay preview: full card height, square, fading into the card colour
+// the map's replay preview: full card height, square, fading out into the glass
 .replay__preview {
   position: absolute;
   inset: 0 auto 0 0;
   z-index: -1;
   aspect-ratio: 1;
+  mask-image: linear-gradient(to right, black, transparent);
   img {
     object-fit: cover;
-  }
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to right, transparent, var(--hrs-surface));
   }
 }
 .replay__head {
@@ -58,7 +52,7 @@
   font: var(--mat-sys-body-small);
 }
 .replay__analysing {
-  color: var(--hrs-blue-soft);
+  color: rgb(var(--hrs-glass-edge));
 }
 .replay__teams {
   display: grid;
@@ -70,10 +64,8 @@
   align-items: center;
   gap: 8px 12px;
   padding: 8px 12px;
-  border-radius: 8px;
-  border-left: 3px solid var(--mat-sys-primary);
-  // partly see-through, so the map preview shows behind the rows
-  background: color-mix(in srgb, var(--mat-sys-surface-container) 70%, transparent);
+  // the team's colour washing in from its lit edge; the map preview still shows behind the rows
+  @include glass.lit-row;
 }
 .team__name {
   display: grid;

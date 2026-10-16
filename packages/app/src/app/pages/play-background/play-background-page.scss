@@ -21,3 +21,31 @@ h1 {
   white-space: nowrap;
   border: 0;
 }
+
+// The tint controls, in the top right: a button, and the panel it opens under it.
+.corner {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  justify-items: end;
+  gap: 8px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 32px);
+}
+
+// Dark behind its text so it reads over the brightest sky.
+.open {
+  background: rgb(0 0 0 / 0.55);
+}
+
+hrs-tint-controls {
+  width: 470px;
+  max-width: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  // Opaque enough to read over the brightest sky.
+  --hrs-glass-alpha: 0.7;
+  --hrs-glass-backdrop: none;
+}

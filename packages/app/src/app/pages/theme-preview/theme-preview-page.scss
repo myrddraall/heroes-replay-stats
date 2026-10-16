@@ -1,3 +1,5 @@
+@use '../../../theme/glass-mixins' as glass;
+
 :host {
   display: block;
   min-height: 100vh;
@@ -71,8 +73,8 @@ h2 {
   gap: 8px;
 }
 
-// A team's rows on a neutral panel: the team's light washes in from the left edge, fading out
-// across the row to nothing at the right.
+// A team's rows on a neutral panel: the team's light washes in from the left edge, fading
+// across the row (the site's team rows, glass.lit-row).
 table {
   width: 100%;
   border-collapse: collapse;
@@ -102,12 +104,11 @@ table {
   }
 
   tbody tr {
-    background: linear-gradient(90deg, rgb(var(--hrs-glass-edge) / 0.16), transparent);
-    box-shadow: inset 2px 0 rgb(var(--hrs-glass-edge) / 0.9);
+    @include glass.lit-row;
   }
 
   tbody tr + tr {
-    border-top: 1px solid rgb(var(--hrs-glass-edge) / 0.15);
+    border-top: 1px solid var(--hrs-glass-line);
   }
 
   .number {

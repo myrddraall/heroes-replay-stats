@@ -19,19 +19,16 @@
   flex-direction: column;
   gap: 4px;
   padding: 10px;
-  border: 1px solid var(--hrs-border);
-  border-radius: 12px;
-  background: var(--hrs-surface);
-  color: inherit;
+  color: inherit; // a glass panel (hrs-glass)
   text-decoration: none;
 
   &:hover .map__name,
   &:focus-visible .map__name {
-    color: var(--hrs-blue-soft);
+    color: rgb(var(--hrs-glass-edge));
   }
 
   &:focus-visible {
-    outline: 2px solid var(--hrs-blue-soft);
+    outline: 2px solid rgb(var(--hrs-glass-edge));
     outline-offset: 2px;
   }
 }
@@ -39,7 +36,7 @@
   width: 100%;
   height: auto;
   border-radius: 8px;
-  background: var(--hrs-surface-raised);
+  background: var(--mat-sys-surface-container-high);
 }
 .map__name {
   font: var(--mat-sys-title-small);

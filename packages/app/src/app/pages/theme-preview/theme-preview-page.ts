@@ -38,7 +38,7 @@ interface SampleTeam {
  * The glass theme in preview, over the Play screen background: each variant's panel with the
  * usual components, and the variants mixed (a neutral panel holding the teams' rows). Its
  * controls set how see-through the glass is, whether it blurs what is behind it, the background's
- * frame rate cap, and whether the background shows the vs A.I. look.
+ * frame rate cap, whether the background is tinted blue, and which neutral the page is in.
  */
 @Component({
   selector: 'hrs-theme-preview-page',
@@ -58,16 +58,19 @@ interface SampleTeam {
 })
 export class ThemePreviewPage {
   protected readonly floor = GLASS_ALPHA_FLOOR;
-  protected readonly alpha = signal(0.3);
+  protected readonly alpha = signal(0.5);
   protected readonly blur = signal(false);
-  /** Whether the background shows the vs A.I. look. */
-  protected readonly versusAI = signal(false);
+  /** Whether the background is tinted blue (--hrs-background-tint). */
+  protected readonly blueTint = signal(false);
+  /** Whether the page's neutral is the Nexus one (blue and cyan) rather than the purple. */
+  protected readonly nexus = signal(false);
   /** The background's frame rate cap, to weigh smoothness against what it costs. */
   protected readonly fps = signal(DEFAULT_MAX_FPS);
   protected readonly backdrop = computed(() => (this.blur() ? GLASS_BLUR : 'none'));
 
   protected readonly variants: readonly Variant[] = [
     { label: 'Neutral', theme: 'hrs-glass-neutral' },
+    { label: 'Nexus neutral', theme: 'hrs-glass-nexus' },
     { label: 'Blue team', theme: 'hrs-glass-blue' },
     { label: 'Red team', theme: 'hrs-glass-red' },
   ];

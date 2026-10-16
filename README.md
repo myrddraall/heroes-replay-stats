@@ -63,7 +63,11 @@ where `DEV_LOCAL` isn't set, read heroes-maps as before; nothing changes at chec
 window: its sky, the energy drifting in towards the horizon, the twinkling stars and the planets, drawn with
 WebGL from the game's own camera, meshes, materials and particles (`hrs-play-background`,
 `packages/app/src/app/scenes/play-background`, fills whatever element holds it).
-`/play-background?versusAI` shows it with the game's vs A.I. look (the screen turned blue). The scene comes
+Custom properties tint it, as the game turns it blue for vs A.I.: `--hrs-background-tint` (a
+colour) and `--hrs-background-tint-blend` (`multiply`, the default, `color`, `hue`, `overlay`, `soft-light`, `color-burn` or
+`saturation`, as CSS blends them) for the whole of it, and `--hrs-planet-large-tint`, `-medium-` and `-small-` (each with its
+`-blend`) for a planet on its own; a change fades over half a second. The page's Colours button, top
+right, opens controls to try tints: presets, and each part's colour and blend. The scene comes
 from [heroes-capture](https://github.com/myrddraall/heroes-capture) and is checked in under
 `packages/app/public/backgrounds/play` (about 1 MB); after a game update, export it again:
 

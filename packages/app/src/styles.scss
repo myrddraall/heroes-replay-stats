@@ -1,6 +1,5 @@
 @use '@angular/material' as mat;
 @use './theme/theme-colors' as palettes;
-@use './theme/teams';
 @use './theme/glass';
 
 // The Heroes of the Storm look, taken from heroesofthestorm.blizzard.com and the game:
@@ -38,6 +37,13 @@ html {
   --hrs-blue-soft: #99c8ff;
   --hrs-purple: #7b3fc8;
   --hrs-bronze: #e0994b;
+  // A blue for the background (--hrs-background-tint): the colour the game multiplies its Play
+  // screen's sky by for vs A.I. (Storm_UI_Play_AI_ColorShift, its sky's average).
+  --hrs-background-tint-blue: #8aecff;
+  // More tints for it, picked by eye on /play-background.
+  --hrs-background-tint-gold: #ffcc00;
+  --hrs-background-tint-green: #00ff00;
+  --hrs-background-tint-red: #ff0000;
   --hrs-bronze-deep: #d3802e;
   --hrs-bronze-hot: #e65d08;
 

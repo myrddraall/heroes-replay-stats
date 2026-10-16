@@ -1,16 +1,15 @@
 import {
   afterRenderEffect,
   Component,
-  effect,
   ElementRef,
   inject,
   input,
   signal,
-  untracked,
   viewChild,
 } from '@angular/core';
 import type { LoadedPlayScene } from './play-scene';
 import { SceneRenderer } from './scene-renderer';
+import { browserColourParser, readTints, sameTints } from './scene-tints';
 
 /** Device pixels per CSS pixel at most: past this the extra sharpness isn't worth the fill rate. */
 const MAX_PIXEL_RATIO = 2;
@@ -24,13 +23,17 @@ const MAX_STEP = 0.1;
 export const DEFAULT_MAX_FPS = 12;
 /** A frame comes this early at most (vsync isn't exact): at 60 Hz and 12 a second, every fifth is drawn. */
 const FRAME_SLACK_MS = 4;
+/** How long a change of tint fades over: the half second the game's vs A.I. tint takes. */
+const TINT_FADE_SECONDS = 0.5;
+/** How often the tints are looked at while nothing animates (with reduced motion asked for). */
+const TINT_CHECK_MS = 250;
 
 /**
  * A loaded scene drawn into a canvas that fills this element (presentational), at the screen's
  * resolution whatever its size, up to `maxFps` frames a second. It animates only while it can be
  * seen (the tab shown, the element on screen); with reduced motion asked for, it is drawn once, still. Without WebGL 2 it stays
- * empty: the element's own background shows. The vs A.I. look fades in or out as the scene says
- * when `versusAI` changes, at the display's own rate (straight to it where nothing animates).
+ * empty: the element's own background shows. It is tinted as the CSS on this element says (see
+ * readTints); a change fades in at the display's own rate, or shows at once where nothing animates.
  */
 @Component({
   selector: 'hrs-scene-canvas',
@@ -41,21 +44,13 @@ export class SceneCanvas {
   readonly scene = input.required<LoadedPlayScene>();
   /** Frames a second at most (the scene's motion keeps its speed whatever it is). */
   readonly maxFps = input(DEFAULT_MAX_FPS);
-  /** Whether the scene shows the vs A.I. look. */
-  readonly versusAI = input(false);
 
   /** Whether a frame has been drawn: the canvas fades in then. */
   protected readonly drawn = signal(false);
   private readonly canvas = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
   private readonly host: HTMLElement = inject(ElementRef).nativeElement;
-  /** Tells the running scene that `versusAI` changed. */
-  private shiftChanged?: () => void;
 
   constructor() {
-    effect(() => {
-      this.versusAI();
-      untracked(() => this.shiftChanged?.());
-    });
     afterRenderEffect((onCleanup) => {
       const loaded = this.scene();
       let renderer: SceneRenderer;
@@ -66,34 +61,38 @@ export class SceneCanvas {
         return;
       }
       const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
-      const fadeSeconds = loaded.scene.versusAI.fadeSeconds;
+      const style = getComputedStyle(this.host);
+      const parse = browserColourParser();
       let clock = 0;
       let last: number | undefined;
       let frame = 0;
       let onScreen = true;
-      renderer.versusAI = untracked(() => (this.versusAI() ? 1 : 0)); // as first shown: no fade
+      renderer.tints = readTints(style, parse); // as first shown: no fade
+
+      /** Whether the tints the CSS sets changed: then the picture fades to them. */
+      const retint = (): boolean => {
+        const tints = readTints(style, parse);
+        if (sameTints(tints, renderer.tints)) return false;
+        renderer.fadingFrom = renderer.tints;
+        renderer.tints = tints;
+        renderer.fade = frame ? 0 : 1;
+        return true;
+      };
 
       const draw = () => {
         renderer.draw(clock);
         if (!this.drawn()) this.drawn.set(true);
       };
-      const target = () => (this.versusAI() ? 1 : 0);
       const tick = (now: number) => {
         frame = requestAnimationFrame(tick);
-        const fading = renderer.versusAI !== target();
+        retint();
+        const fading = renderer.fade < 1;
         if (!fading && last !== undefined && now - last < 1000 / this.maxFps() - FRAME_SLACK_MS)
           return;
         const step = last === undefined ? 0 : Math.min(MAX_STEP, (now - last) / 1000);
         clock += step;
         last = now;
-        if (fading) {
-          const by = fadeSeconds > 0 ? step / fadeSeconds : 1;
-          const to = target();
-          renderer.versusAI =
-            to > renderer.versusAI
-              ? Math.min(to, renderer.versusAI + by)
-              : Math.max(to, renderer.versusAI - by);
-        }
+        if (fading) renderer.fade = Math.min(1, renderer.fade + step / TINT_FADE_SECONDS);
         draw();
       };
       const play = () => {
@@ -121,17 +120,15 @@ export class SceneCanvas {
       seen.observe(this.host);
       document.addEventListener('visibilitychange', play);
       reducedMotion.addEventListener('change', play);
-      this.shiftChanged = () => {
-        if (frame) return; // the running animation fades it
-        renderer.versusAI = target();
-        draw();
-      };
+      const checks = setInterval(() => {
+        if (!frame && retint()) draw();
+      }, TINT_CHECK_MS);
       resize();
       play();
 
       onCleanup(() => {
-        this.shiftChanged = undefined;
         cancelAnimationFrame(frame);
+        clearInterval(checks);
         sized.disconnect();
         seen.disconnect();
         document.removeEventListener('visibilitychange', play);

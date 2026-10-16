@@ -1,0 +1,27 @@
+// Glass pieces components style themselves with (the panels are the .hrs-glass class, _glass.scss).
+
+// A pane of the frame's glass (`--hrs-glass-alpha-frame`, `--hrs-glass-backdrop-frame`), lit along
+// one edge only (the edge facing the page, say): the lit hairline, the light spilling out of it,
+// and the light bleeding into the glass just inside it (`$x`, `$y`: the way into the glass from
+// that edge, -1, 0 or 1 each).
+@mixin frame-glass($side, $x, $y) {
+  background: rgb(var(--hrs-glass-tint) / var(--hrs-glass-alpha-frame, var(--hrs-glass-alpha)));
+  backdrop-filter: var(--hrs-glass-backdrop-frame, none);
+  -webkit-backdrop-filter: var(--hrs-glass-backdrop-frame, none);
+  border-#{$side}: 1px solid color-mix(in srgb, rgb(var(--hrs-glass-edge)) 76%, white);
+  box-shadow:
+    0 0 4px rgb(var(--hrs-glass-edge) / 0.75),
+    0 0 14px rgb(var(--hrs-glass-edge) / 0.37),
+    0 0 36px rgb(var(--hrs-glass-edge) / 0.16),
+    inset #{$x * 3px} #{$y * 3px} 6px -3px rgb(var(--hrs-glass-edge) / 0.45),
+    inset #{$x * 12px} #{$y * 12px} 22px -12px rgb(var(--hrs-glass-edge) / 0.15);
+}
+
+// A row in its variant's colour (a team's, inside hrs-glass-blue or -red): the colour washes in
+// from a lit left edge and fades across the row, over a darker glass so the text keeps reading.
+@mixin lit-row {
+  background:
+    linear-gradient(90deg, rgb(var(--hrs-glass-edge) / 0.3), rgb(var(--hrs-glass-edge) / 0.08)),
+    rgb(var(--hrs-glass-tint) / 0.55);
+  box-shadow: inset 3px 0 rgb(var(--hrs-glass-edge));
+}

@@ -7,6 +7,10 @@ import {
   type SceneMesh,
 } from './play-scene';
 import { INSTANCE_FLOATS, ParticleSystem } from './scene-particles';
+import { BLEND_GLSL, BLEND_MODES, NO_TINTS, PLANETS, type Tints } from './scene-tints';
+
+/** A target's outputs: the colour, the planets' light and their bodies (COLOR_ATTACHMENT0 to 2). */
+const DRAW_BUFFERS = [0x8ce0, 0x8ce1, 0x8ce2];
 
 const CHANNELS: Record<LayerChannel, number> = { rgb: 0, rgba: 1, a: 2, r: 3, g: 4, b: 5 };
 /** A material's layer slots, in the shader's order, and their samplers. */
@@ -74,13 +78,18 @@ uniform Layer uLayers[4];
 uniform bool uUnshaded, uVertexAlpha, uOpaque;
 uniform int uEmissiveBlend;
 uniform float uEmissiveMult, uCutout;
+const vec3 LUMINANCE = vec3(0.2126, 0.7152, 0.0722);
 uniform vec3 uEye, uRight, uUp;
 in vec2 vUv;
 in vec2 vUv2;
 in vec3 vNormal;
 in vec3 vWorld;
 in vec4 vColor;
-out vec4 outColor;
+uniform vec3 uPlanet;
+uniform bool uAdds;
+layout(location = 0) out vec4 outColor;
+layout(location = 1) out vec4 outCover;
+layout(location = 2) out vec4 outBody;
 
 vec2 layerUv(Layer l) {
   vec2 t = ((l.uvSet == 2 ? vUv2 : vUv) - 0.5 - l.offset) * l.tiling;
@@ -130,6 +139,10 @@ void main() {
   } else {
     outColor = vec4(rgb * alpha, alpha);
   }
+  // The light it gives, as its planet's (blended as the colour is, so it is what reaches the pixel).
+  outCover = vec4(uPlanet * dot(outColor.rgb, LUMINANCE), outColor.a);
+  // How much it hides what is behind it, as its planet's: light added hides nothing.
+  outBody = uAdds ? vec4(0.0) : vec4(uPlanet * outColor.a, outColor.a);
 }`;
 
 /**
@@ -158,8 +171,12 @@ uniform int uChannel;
 uniform float uBright;
 in vec2 vUv;
 in vec4 vColor;
-out vec4 outColor;
+layout(location = 0) out vec4 outColor;
+layout(location = 1) out vec4 outCover;
+layout(location = 2) out vec4 outBody;
 void main() {
+  outCover = vec4(0.0); // the stars are the sky's
+  outBody = vec4(0.0);
   vec4 t = texture(uTexture, vUv);
   vec3 c = uChannel <= 1 ? t.rgb : vec3(uChannel == 2 ? t.a : uChannel == 3 ? t.r : uChannel == 4 ? t.g : t.b);
   outColor = vec4(c * uBright * vColor.rgb * vColor.a, 0.0);
@@ -178,21 +195,37 @@ void main() {
  * curve to the light's white point (what reaches it shows as white). The data gives the exposure
  * and white point but not the curve (its operator is a number); on luminance this one matches the
  * game's screenshot within a few levels, where the same curve per channel darkens the blues too much.
- * Then the vs A.I. look, as the game's interface draws it over the screen: the picture multiplied by
- * its texture stretched over the whole of it, by `uShift` of the way (0 none, 1 all).
+ * Then the tints, as CSS blends a colour over the picture: each planet's on its part of the pixel,
+ * the background's on the rest; fading from the tints before (uTint[4..7]) to the tints now
+ * (uTint[0..3]) by uFade. A planet's part is the share of the pixel's light it gives (its glow at
+ * the rim, over the sky), or how much its body hides the sky, whichever is more (so the sky's
+ * energy drifting over a planet takes the planet's tint).
  */
 const TONE_FRAGMENT = `#version 300 es
 precision highp float;
-uniform sampler2D uScene, uShiftTexture;
-uniform float uExposure, uWhitePoint, uShift;
+uniform sampler2D uScene, uCover, uBody;
+uniform float uExposure, uWhitePoint, uFade;
+uniform vec3 uTint[8];
+uniform int uBlend[8];
 in vec2 vUv;
 out vec4 outColor;
+${BLEND_GLSL}
+vec3 tinted(vec3 c, vec3 share, int first) {
+  return blend(c, uTint[first], uBlend[first]) * (1.0 - share.r - share.g - share.b)
+    + blend(c, uTint[first + 1], uBlend[first + 1]) * share.r
+    + blend(c, uTint[first + 2], uBlend[first + 2]) * share.g
+    + blend(c, uTint[first + 3], uBlend[first + 3]) * share.b;
+}
 void main() {
-  vec3 c = texture(uScene, vUv).rgb * uExposure;
-  float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
+  vec3 hdr = texture(uScene, vUv).rgb;
+  float light = dot(hdr, vec3(0.2126, 0.7152, 0.0722));
+  vec3 share = max(texture(uCover, vUv).rgb / max(light, 1e-4), texture(uBody, vUv).rgb);
+  share /= max(1.0, share.r + share.g + share.b);
+  vec3 c = hdr * uExposure;
+  float l = light * uExposure;
   float mapped = l * (1.0 + l / (uWhitePoint * uWhitePoint)) / (1.0 + l);
-  vec3 shift = texture(uShiftTexture, vec2(vUv.x, 1.0 - vUv.y)).rgb;
-  outColor = vec4((l > 0.0 ? c * (mapped / l) : c) * mix(vec3(1.0), shift, uShift), 1.0);
+  c = clamp(l > 0.0 ? c * (mapped / l) : c, 0.0, 1.0);
+  outColor = vec4(mix(tinted(c, share, 4), tinted(c, share, 0), uFade), 1.0);
 }`;
 
 type Vec3 = readonly [number, number, number];
@@ -294,6 +327,8 @@ interface MeshDraw {
   readonly count: number;
   readonly material: SceneMaterial;
   readonly moving: boolean;
+  /** Which planet it draws (one channel per planet, in PLANETS' order), or none. */
+  readonly planet: readonly [number, number, number];
 }
 
 /** A float render target (half floats where the browser can render to them), with depth. */
@@ -301,6 +336,10 @@ interface Target {
   readonly framebuffer: WebGLFramebuffer;
   readonly depth: WebGLRenderbuffer;
   texture: WebGLTexture | null;
+  /** The light each planet gives each pixel, one channel per planet (its luminance, as the colour's). */
+  cover: WebGLTexture | null;
+  /** How much each planet's body hides the pixel's sky, one channel per planet. */
+  body: WebGLTexture | null;
 }
 
 const moves = (m: SceneMaterial) =>
@@ -320,6 +359,7 @@ interface ParticleDraw {
  * what is behind them; the blended ones follow by priority. What doesn't move (the sky's nebula and
  * stars, the planets) is drawn once per size into a target of its own, colour and depth, and each
  * frame starts from a copy of it, drawing only what moves (the energy's scroll, the particles).
+ * Each target also keeps the light each planet gives each pixel, for the planets' own tints.
  */
 export class SceneRenderer {
   private readonly gl: WebGL2RenderingContext;
@@ -327,6 +367,8 @@ export class SceneRenderer {
   private readonly particleProgram: WebGLProgram;
   private readonly toneProgram: WebGLProgram;
   private readonly textures = new Map<string, WebGLTexture>();
+  /** How layers sample their textures, by whether they repeat across u (1) and across v (2). */
+  private readonly samplers: WebGLSampler[];
   private readonly vaos: WebGLVertexArrayObject[] = [];
   private readonly draws: MeshDraw[] = [];
   private readonly particles: ParticleDraw[] = [];
@@ -356,16 +398,28 @@ export class SceneRenderer {
     this.meshProgram = program(gl, MESH_VERTEX, MESH_FRAGMENT);
     this.particleProgram = program(gl, PARTICLE_VERTEX, PARTICLE_FRAGMENT);
     this.toneProgram = program(gl, TONE_VERTEX, TONE_FRAGMENT);
+    this.samplers = [0, 1, 2, 3].map((wrap) => {
+      const s = gl.createSampler();
+      gl.samplerParameteri(s, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+      gl.samplerParameteri(s, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.samplerParameteri(s, gl.TEXTURE_WRAP_S, wrap & 1 ? gl.REPEAT : gl.CLAMP_TO_EDGE);
+      gl.samplerParameteri(s, gl.TEXTURE_WRAP_T, wrap & 2 ? gl.REPEAT : gl.CLAMP_TO_EDGE);
+      return s;
+    });
     this.format = gl.getExtension('EXT_color_buffer_float') !== null ? gl.RGBA16F : gl.RGBA8;
     this.still = {
       framebuffer: gl.createFramebuffer(),
       depth: gl.createRenderbuffer(),
       texture: null,
+      cover: null,
+      body: null,
     };
     this.frame = {
       framebuffer: gl.createFramebuffer(),
       depth: gl.createRenderbuffer(),
       texture: null,
+      cover: null,
+      body: null,
     };
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
     gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
@@ -378,7 +432,13 @@ export class SceneRenderer {
       this.vaos.push(vao);
       for (const m of mesh.materials) {
         const material = this.material(m, name);
-        this.draws.push({ vao, count: mesh.indices.length, material, moving: moves(material) });
+        this.draws.push({
+          vao,
+          count: mesh.indices.length,
+          material,
+          moving: moves(material),
+          planet: PLANETS.map((size) => (size === mesh.planet ? 1 : 0)) as [number, number, number],
+        });
       }
     }
     for (const system of scene.particles) {
@@ -427,27 +487,28 @@ export class SceneRenderer {
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   }
 
-  /** How far the vs A.I. look is in, from 0 (not at all) to 1 (fully); applies from the next draw. */
-  versusAI = 0;
+  /** The tints drawn: the background's, then each planet's. */
+  tints: Tints = NO_TINTS;
+  /** The tints the picture fades from, and how far it is from them to `tints` (1: all the way). */
+  fadingFrom: Tints = NO_TINTS;
+  fade = 1;
 
   /** The scene at `seconds` on its clock. */
   draw(seconds: number): void {
     const gl = this.gl;
     const { width, height } = this.canvas;
+    // The still part, into the frame: one attachment at a time (a blit copies the one read
+    // into every one drawn).
     gl.bindFramebuffer(gl.READ_FRAMEBUFFER, this.still.framebuffer);
     gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, this.frame.framebuffer);
-    gl.blitFramebuffer(
-      0,
-      0,
-      width,
-      height,
-      0,
-      0,
-      width,
-      height,
-      gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT,
-      gl.NEAREST,
-    );
+    for (let i = 0; i < DRAW_BUFFERS.length; i++) {
+      gl.readBuffer(gl.COLOR_ATTACHMENT0 + i);
+      gl.drawBuffers(DRAW_BUFFERS.map((b, j) => (j === i ? b : gl.NONE)));
+      const bits = i === 0 ? gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT : gl.COLOR_BUFFER_BIT;
+      gl.blitFramebuffer(0, 0, width, height, 0, 0, width, height, bits, gl.NEAREST);
+    }
+    gl.readBuffer(gl.COLOR_ATTACHMENT0);
+    gl.drawBuffers(DRAW_BUFFERS);
     gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.frame.framebuffer);
     gl.viewport(0, 0, width, height);
@@ -459,6 +520,8 @@ export class SceneRenderer {
     gl.blendFunc(gl.ONE, gl.ONE);
     gl.depthMask(false);
     gl.useProgram(this.particleProgram);
+    gl.bindSampler(0, null); // the particles' and the tone pass's textures sample as they are set
+    gl.bindSampler(1, null);
     gl.uniformMatrix4fv(this.uniform(this.particleProgram, 'uView'), false, this.view);
     gl.uniformMatrix4fv(this.uniform(this.particleProgram, 'uProjection'), false, this.projection);
     for (const p of this.particles) {
@@ -490,9 +553,19 @@ export class SceneRenderer {
     gl.bindTexture(gl.TEXTURE_2D, this.frame.texture);
     gl.uniform1i(this.uniform(this.toneProgram, 'uScene'), 0);
     gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, this.textures.get(this.loaded.scene.versusAI.multiply)!);
-    gl.uniform1i(this.uniform(this.toneProgram, 'uShiftTexture'), 1);
-    gl.uniform1f(this.uniform(this.toneProgram, 'uShift'), this.versusAI);
+    gl.bindTexture(gl.TEXTURE_2D, this.frame.cover);
+    gl.uniform1i(this.uniform(this.toneProgram, 'uCover'), 1);
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindSampler(2, null);
+    gl.bindTexture(gl.TEXTURE_2D, this.frame.body);
+    gl.uniform1i(this.uniform(this.toneProgram, 'uBody'), 2);
+    const tints = [...this.tints, ...this.fadingFrom];
+    gl.uniform3fv(this.uniform(this.toneProgram, 'uTint'), tints.flatMap((t) => [...t.colour]));
+    gl.uniform1iv(
+      this.uniform(this.toneProgram, 'uBlend'),
+      tints.map((t) => BLEND_MODES[t.blend]),
+    );
+    gl.uniform1f(this.uniform(this.toneProgram, 'uFade'), this.fade);
     gl.uniform1f(this.uniform(this.toneProgram, 'uExposure'), this.loaded.scene.tone.exposure);
     gl.uniform1f(this.uniform(this.toneProgram, 'uWhitePoint'), this.loaded.scene.tone.whitePoint);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -502,6 +575,7 @@ export class SceneRenderer {
   dispose(): void {
     const gl = this.gl;
     for (const t of this.textures.values()) gl.deleteTexture(t);
+    for (const s of this.samplers) gl.deleteSampler(s);
     for (const vao of this.vaos) gl.deleteVertexArray(vao);
     for (const p of this.particles) {
       gl.deleteVertexArray(p.vao);
@@ -510,6 +584,8 @@ export class SceneRenderer {
     for (const p of [this.meshProgram, this.particleProgram, this.toneProgram]) gl.deleteProgram(p);
     for (const target of [this.still, this.frame]) {
       gl.deleteTexture(target.texture);
+      gl.deleteTexture(target.cover);
+      gl.deleteTexture(target.body);
       gl.deleteRenderbuffer(target.depth);
       gl.deleteFramebuffer(target.framebuffer);
     }
@@ -524,8 +600,23 @@ export class SceneRenderer {
     gl.texStorage2D(gl.TEXTURE_2D, 1, this.format, this.canvas.width, this.canvas.height);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.deleteTexture(target.cover);
+    target.cover = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, target.cover);
+    gl.texStorage2D(gl.TEXTURE_2D, 1, this.format, this.canvas.width, this.canvas.height);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.deleteTexture(target.body);
+    target.body = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, target.body);
+    gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA8, this.canvas.width, this.canvas.height);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.bindFramebuffer(gl.FRAMEBUFFER, target.framebuffer);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, target.texture, 0);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, target.cover, 0);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT2, gl.TEXTURE_2D, target.body, 0);
+    gl.drawBuffers(DRAW_BUFFERS);
     gl.bindRenderbuffer(gl.RENDERBUFFER, target.depth);
     gl.renderbufferStorage(
       gl.RENDERBUFFER,
@@ -579,6 +670,7 @@ export class SceneRenderer {
       gl.bindVertexArray(draw.vao);
       this.blend(draw.material);
       this.bindMaterial(draw.material, seconds);
+      gl.uniform3fv(this.uniform(this.meshProgram, 'uPlanet'), draw.planet);
       gl.drawElements(gl.TRIANGLES, draw.count, gl.UNSIGNED_SHORT, 0);
     }
     gl.bindVertexArray(null);
@@ -607,6 +699,8 @@ export class SceneRenderer {
       gl.activeTexture(gl.TEXTURE0 + i);
       const texture = layer?.texture ? this.textures.get(layer.texture)! : null;
       gl.bindTexture(gl.TEXTURE_2D, texture);
+      const [u, v] = layer?.wrap ?? [true, true];
+      gl.bindSampler(i, texture ? this.samplers[(u ? 1 : 0) | (v ? 2 : 0)]! : null);
       gl.uniform1i(this.uniform(p, SLOTS[i]!), i);
       if (!layer) return;
       gl.uniform1i(at('textured'), texture ? 1 : 0);
@@ -630,6 +724,10 @@ export class SceneRenderer {
     gl.uniform1i(this.uniform(p, 'uVertexAlpha'), material.vertexAlpha ? 1 : 0);
     gl.uniform1f(this.uniform(p, 'uEmissiveMult'), material.emissiveMult);
     gl.uniform1i(this.uniform(p, 'uOpaque'), material.blend === 'opaque' ? 1 : 0);
+    gl.uniform1i(
+      this.uniform(p, 'uAdds'),
+      material.blend === 'add' || material.blend === 'alphaAdd' ? 1 : 0,
+    );
     gl.uniform1i(
       this.uniform(p, 'uEmissiveBlend'),
       { mod: 0, mod2x: 1, add: 2 }[material.emissiveBlend ?? 'add'],

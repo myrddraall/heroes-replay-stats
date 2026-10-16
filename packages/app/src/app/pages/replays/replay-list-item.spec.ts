@@ -119,7 +119,7 @@ describe('ReplayListItem', () => {
     const rows = (el: HTMLElement) =>
       [...el.querySelectorAll('.team')].map((t) => [
         t.querySelector('.team__name')!.firstChild!.textContent!.trim(),
-        t.classList.contains('hrs-team-blue') ? 'blue' : 'red',
+        t.classList.contains('hrs-glass-blue') ? 'blue' : 'red',
         t.querySelector('.player__name')!.textContent!.trim(),
       ]);
     // Bob recorded it, so his team (1) is blue, and blue is on top

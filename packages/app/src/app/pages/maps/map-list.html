@@ -9,7 +9,7 @@
   <ul class="maps">
     @for (map of maps(); track map.id) {
       <li>
-        <a class="map" [routerLink]="map.id">
+        <a class="map hrs-glass" [routerLink]="map.id">
           @if (map.thumbnail && map.thumbnailUrl) {
             <img
               class="map__picture"

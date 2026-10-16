@@ -16,17 +16,14 @@
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  border: 1px solid var(--hrs-border);
-  border-radius: 12px;
-  overflow: hidden;
-  background: var(--hrs-surface);
+  overflow: hidden; // a glass panel (hrs-glass)
 }
 th,
 td {
   padding: 10px 16px;
   text-align: left;
   vertical-align: middle;
-  border-bottom: 1px solid var(--hrs-border);
+  border-bottom: 1px solid var(--hrs-glass-line);
 }
 tbody tr:last-child > * {
   border-bottom: none;
@@ -36,7 +33,7 @@ thead th {
   color: var(--mat-sys-on-surface-variant);
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  background: var(--hrs-surface-raised);
+  background: var(--mat-sys-surface-container-high);
 }
 .me {
   width: 1%;
@@ -80,13 +77,13 @@ time {
 .hero {
   padding: 2px 8px;
   border-radius: 999px;
-  background: rgba(0, 117, 255, 0.16);
+  background: rgb(var(--hrs-glass-edge) / 0.16);
   font: var(--mat-sys-body-small);
   color: #fff;
   white-space: nowrap;
 }
 .hero__games {
-  color: var(--hrs-blue-soft);
+  color: rgb(var(--hrs-glass-edge));
 }
 .hero--more {
   background: transparent;
@@ -106,6 +103,7 @@ time {
   .players {
     border: none;
     background: none;
+    box-shadow: none;
   }
   .players tbody {
     display: grid;
@@ -113,9 +111,9 @@ time {
   }
   .players tr {
     padding: 12px 14px;
-    border: 1px solid var(--hrs-border);
-    border-radius: 12px;
-    background: var(--hrs-surface);
+    border: 1px solid var(--hrs-glass-line);
+    border-radius: var(--hrs-glass-radius);
+    background: rgb(var(--hrs-glass-tint) / var(--hrs-glass-alpha));
   }
   .players th,
   .players td {

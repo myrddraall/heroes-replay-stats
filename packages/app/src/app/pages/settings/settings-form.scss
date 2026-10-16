@@ -1,9 +1,6 @@
 .card {
   padding: 20px;
-  margin-bottom: 16px;
-  border: 1px solid var(--hrs-border);
-  border-radius: 16px;
-  background: rgba(22, 15, 58, 0.6);
+  margin-bottom: 16px; // a glass panel (hrs-glass)
 }
 .setting {
   display: flex;

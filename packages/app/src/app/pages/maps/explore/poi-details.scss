@@ -1,7 +1,7 @@
 .details {
   margin-bottom: 12px;
   padding-bottom: 12px;
-  border-bottom: 1px solid var(--hrs-border);
+  border-bottom: 1px solid var(--hrs-glass-line);
 }
 
 .details__heading {
@@ -62,7 +62,7 @@
   }
 
   &:focus-visible {
-    outline: 2px solid var(--hrs-blue-soft);
+    outline: 2px solid rgb(var(--hrs-glass-edge));
     outline-offset: -2px;
   }
 }

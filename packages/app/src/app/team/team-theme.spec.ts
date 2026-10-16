@@ -31,21 +31,21 @@ describe('TeamTheme', () => {
   it('uses the fixed colours without a perspective, and none for a null team', async () => {
     const fixture = TestBed.createComponent(Rows);
     await fixture.whenStable();
-    expect(classes(fixture.nativeElement)).toEqual(['hrs-team-blue', 'hrs-team-red', '']);
+    expect(classes(fixture.nativeElement)).toEqual(['hrs-glass-blue', 'hrs-glass-red', '']);
   });
 
   it("follows the perspective's team and mode", async () => {
     const fixture = TestBed.createComponent(Screen);
     const perspective = fixture.debugElement.injector.get(TeamPerspective);
     await fixture.whenStable();
-    expect(classes(fixture.nativeElement)).toEqual(['hrs-team-blue', 'hrs-team-red', '']);
+    expect(classes(fixture.nativeElement)).toEqual(['hrs-glass-blue', 'hrs-glass-red', '']);
 
     perspective.follow(signal(1));
     await fixture.whenStable();
-    expect(classes(fixture.nativeElement)).toEqual(['hrs-team-red', 'hrs-team-blue', '']);
+    expect(classes(fixture.nativeElement)).toEqual(['hrs-glass-red', 'hrs-glass-blue', '']);
 
     perspective.mode.set('fixed');
     await fixture.whenStable();
-    expect(classes(fixture.nativeElement)).toEqual(['hrs-team-blue', 'hrs-team-red', '']);
+    expect(classes(fixture.nativeElement)).toEqual(['hrs-glass-blue', 'hrs-glass-red', '']);
   });
 });

@@ -18,6 +18,15 @@
 }
 .jobs {
   display: block;
+  overflow: hidden;
+  // One glass panel (hrs-glass): the jobs lie flat in it, a faint line between each.
+  --mat-expansion-container-background-color: transparent;
+  --mat-expansion-container-shape: 0;
+  --mat-expansion-container-elevation-shadow: none;
+
+  .mat-expansion-panel + .mat-expansion-panel {
+    border-top: 1px solid var(--hrs-glass-line);
+  }
 }
 mat-panel-title {
   min-width: 0;
@@ -35,7 +44,7 @@ mat-panel-title {
   white-space: nowrap;
 }
 .job--complete .job__icon {
-  color: var(--hrs-blue-soft);
+  color: rgb(var(--hrs-glass-edge));
 }
 .job--failed .job__icon,
 .job--failed .job__phase {
@@ -82,7 +91,7 @@ mat-panel-description {
 }
 .analyser--done .analyser__icon,
 .analyser--cached .analyser__icon {
-  color: var(--hrs-blue-soft);
+  color: rgb(var(--hrs-glass-edge));
 }
 .analyser--failed .analyser__icon,
 .analyser--failed .analyser__state {

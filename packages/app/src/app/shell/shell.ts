@@ -12,6 +12,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { map } from 'rxjs';
 import { ReplayImportJobStore } from '../data/import/replay-import-job.store';
+import { PlayBackground } from '../scenes/play-background/play-background';
 import { injectPlatform } from '../platform/platform';
 
 export interface NavItem {
@@ -33,7 +34,11 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { path: '/settings', label: 'Settings', icon: 'settings' },
 ];
 
-/** The frame: a toolbar, a rail/sidenav that collapses on small screens, and the routed page. */
+/**
+ * The frame: the game's Play screen background behind everything (one for every page, so it keeps
+ * running as they change), and over it in glass a toolbar, a rail/sidenav that collapses on small
+ * screens, and the routed page.
+ */
 @Component({
   selector: 'hrs-shell',
   imports: [
@@ -48,10 +53,12 @@ export const NAV_ITEMS: readonly NavItem[] = [
     RouterOutlet,
     RouterLink,
     RouterLinkActive,
+    PlayBackground,
   ],
   templateUrl: './shell.html',
   styleUrl: './shell.scss',
   host: {
+    class: 'hrs-glass-neutral',
     '(document:dragenter)': 'onDragEnter($event)',
     '(document:dragover)': 'onDragOver($event)',
     '(document:dragleave)': 'onDragLeave($event)',

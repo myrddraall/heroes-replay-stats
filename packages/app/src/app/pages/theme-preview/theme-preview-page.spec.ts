@@ -16,11 +16,13 @@ describe('ThemePreviewPage', () => {
     const panels = [...el.querySelectorAll('.variants .hrs-glass')];
     expect(panels.map((p) => p.getAttribute('aria-label'))).toEqual([
       'Neutral',
+      'Nexus neutral',
       'Blue team',
       'Red team',
     ]);
-    expect(panels[1]!.classList).toContain('hrs-glass-blue');
-    expect(panels[2]!.classList).toContain('hrs-glass-red');
+    expect(panels[1]!.classList).toContain('hrs-glass-nexus');
+    expect(panels[2]!.classList).toContain('hrs-glass-blue');
+    expect(panels[3]!.classList).toContain('hrs-glass-red');
     const tables = [...el.querySelectorAll('.match table')];
     expect(tables.map((t) => t.className)).toEqual(['hrs-glass-blue', 'hrs-glass-red']);
   });
@@ -28,7 +30,7 @@ describe('ThemePreviewPage', () => {
   it("sets the glass's opacity and blur from its controls", async () => {
     const fixture = await render();
     const main: HTMLElement = fixture.nativeElement.querySelector('main');
-    expect(main.style.getPropertyValue('--hrs-glass-alpha')).toBe('0.3');
+    expect(main.style.getPropertyValue('--hrs-glass-alpha')).toBe('0.5');
     expect(main.style.getPropertyValue('--hrs-glass-backdrop')).toBe('none');
 
     const slider: HTMLInputElement = fixture.nativeElement.querySelector('input[matSliderThumb]');

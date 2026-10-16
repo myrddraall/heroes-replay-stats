@@ -1,4 +1,26 @@
 <main>
   <h1>Play screen background</h1>
-  <hrs-play-background [versusAI]="versusAI()" />
+  <hrs-play-background [style]="styles()" />
+  <div class="corner">
+    <button
+      mat-stroked-button
+      type="button"
+      class="open"
+      aria-controls="tint-controls"
+      [attr.aria-expanded]="open()"
+      (click)="open.set(!open())"
+    >
+      <mat-icon class="material-symbols-outlined" aria-hidden="true">palette</mat-icon>
+      Colours
+    </button>
+    @if (open()) {
+      <hrs-tint-controls
+        id="tint-controls"
+        class="hrs-glass hrs-glass-neutral"
+        [(settings)]="settings"
+        [presets]="presets"
+        (presetChosen)="choose($event)"
+      />
+    }
+  </div>
 </main>

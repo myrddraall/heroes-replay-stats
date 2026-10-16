@@ -1,7 +1,11 @@
-<hrs-play-background class="backdrop" [maxFps]="fps()" [versusAI]="versusAI()" />
+<hrs-play-background
+  class="backdrop"
+  [maxFps]="fps()"
+  [style.--hrs-background-tint]="blueTint() ? 'var(--hrs-background-tint-blue)' : null"
+/>
 
 <main
-  class="hrs-glass-neutral"
+  [class]="nexus() ? 'hrs-glass-nexus' : 'hrs-glass-neutral'"
   [style.--hrs-glass-alpha]="alpha()"
   [style.--hrs-glass-backdrop]="backdrop()"
 >
@@ -10,8 +14,11 @@
     <mat-slide-toggle [checked]="blur()" (change)="blur.set($event.checked)">
       Blur behind the glass
     </mat-slide-toggle>
-    <mat-slide-toggle [checked]="versusAI()" (change)="versusAI.set($event.checked)">
-      vs A.I. background
+    <mat-slide-toggle [checked]="blueTint()" (change)="blueTint.set($event.checked)">
+      Blue background
+    </mat-slide-toggle>
+    <mat-slide-toggle [checked]="nexus()" (change)="nexus.set($event.checked)">
+      Nexus neutral (blue and cyan)
     </mat-slide-toggle>
     <div class="slider">
       <span id="opacity-label">Glass opacity {{ alpha().toFixed(2) }}</span>

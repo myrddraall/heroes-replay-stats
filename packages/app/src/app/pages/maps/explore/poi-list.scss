@@ -15,7 +15,7 @@
   gap: 8px;
   margin: 0 0 8px;
   padding-bottom: 4px;
-  border-bottom: 1px solid var(--hrs-border);
+  border-bottom: 1px solid var(--hrs-glass-line);
   font: var(--mat-sys-title-small);
 
   &::before {
@@ -75,8 +75,8 @@
   }
 
   &.poi-row--picked {
-    background: rgba(110, 215, 255, 0.16);
-    outline: 1px solid rgba(110, 215, 255, 0.5);
+    background: rgb(var(--hrs-glass-edge) / 0.16);
+    outline: 1px solid rgb(var(--hrs-glass-edge) / 0.5);
   }
 }
 
@@ -121,7 +121,7 @@
   }
 
   &:focus-visible {
-    outline: 2px solid var(--hrs-blue-soft);
+    outline: 2px solid rgb(var(--hrs-glass-edge));
     outline-offset: -2px;
   }
 }
@@ -153,7 +153,7 @@
   }
 
   &:focus-visible {
-    outline: 2px solid var(--hrs-blue-soft);
+    outline: 2px solid rgb(var(--hrs-glass-edge));
     outline-offset: -2px;
   }
 }

@@ -1,0 +1,38 @@
+<div class="presets" role="group" aria-label="Presets">
+  @for (preset of presets(); track preset.label) {
+    <button mat-stroked-button type="button" (click)="presetChosen.emit(preset)">
+      {{ preset.label }}
+    </button>
+  }
+</div>
+
+@for (part of parts; track part) {
+  @let tint = settings()[part];
+  <fieldset class="part">
+    <legend>{{ labels[part] }}</legend>
+    <mat-slide-toggle [checked]="tint.on" (change)="change(part, { on: $event.checked })">
+      {{ part === 'background' ? 'Tint' : 'Own tint' }}
+    </mat-slide-toggle>
+    <label class="colour">
+      Colour
+      <input
+        type="color"
+        [value]="tint.colour"
+        [disabled]="!tint.on"
+        (input)="colour(part, $event)"
+      />
+    </label>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="blend">
+      <mat-label>Blend</mat-label>
+      <mat-select
+        [value]="tint.blend"
+        [disabled]="!tint.on"
+        (selectionChange)="blend(part, $event.value)"
+      >
+        @for (mode of blends; track mode) {
+          <mat-option [value]="mode">{{ mode }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </fieldset>
+}

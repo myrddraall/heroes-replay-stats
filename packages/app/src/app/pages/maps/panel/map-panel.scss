@@ -5,7 +5,7 @@
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: var(--hrs-surface);
+  background: transparent; // its drawer is the glass
   color: var(--mat-sys-on-surface);
 }
 
@@ -14,7 +14,7 @@
   align-items: center;
   gap: 8px;
   padding: 8px 8px 8px 16px;
-  border-bottom: 1px solid var(--hrs-border);
+  border-bottom: 1px solid var(--hrs-glass-line);
 }
 
 .map-panel__title {

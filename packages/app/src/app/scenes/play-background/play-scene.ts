@@ -1,3 +1,4 @@
+import type { PlanetSize } from './scene-tints';
 /**
  * The Play screen's background as heroes-capture exports it from the game (`heroes-capture ui
  * background`): the cutscene's camera, the meshes of the sky as the model's Stand pose places
@@ -26,6 +27,8 @@ export interface SceneMesh {
   readonly indices: readonly number[];
   /** The materials drawn on it, in order (a composite material's sections). */
   readonly materials: readonly string[];
+  /** The planet it belongs to, by size; none for the sky's meshes. */
+  readonly planet?: PlanetSize;
 }
 
 /** Which of a texture's channels a layer reads. */
@@ -61,6 +64,8 @@ export interface SceneLayer {
   /** Radians, about the texture's centre. */
   readonly angle?: number;
   readonly tiling?: readonly [number, number];
+  /** Whether a texture repeats across u, and across v; where it doesn't, it stops at its edge. */
+  readonly wrap?: readonly [boolean, boolean];
   /** The offset's steady scroll: `by` over `seconds`, looping. */
   readonly scroll?: { readonly seconds: number; readonly by: readonly [number, number] };
 }
@@ -130,19 +135,9 @@ export interface SceneTone {
   readonly whitePoint: number;
 }
 
-/**
- * The vs A.I. look: the game's interface multiplies the screen by this texture (by its key in the
- * scene's textures), fading it in over `fadeSeconds` when vs A.I. is chosen.
- */
-export interface SceneVersusAI {
-  readonly multiply: string;
-  readonly fadeSeconds: number;
-}
-
 export interface PlayScene {
   readonly camera: SceneCamera;
   readonly tone: SceneTone;
-  readonly versusAI: SceneVersusAI;
   readonly meshes: Readonly<Record<string, SceneMesh>>;
   readonly materials: Readonly<Record<string, SceneMaterial>>;
   readonly particles: readonly SceneParticles[];

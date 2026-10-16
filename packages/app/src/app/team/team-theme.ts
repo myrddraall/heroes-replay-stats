@@ -3,15 +3,15 @@ import type { Team } from '@myrddraall/heroprotocol-db';
 import { teamColor, TeamPerspective } from './team-color';
 
 /**
- * Themes an element as a team: `<tr [hrsTeam]="player.team">`. Adds `hrs-team-blue` or
- * `hrs-team-red` (see `theme/_teams.scss`), chosen by the `TeamPerspective` above it.
- * A null team leaves the element in the app's own theme.
+ * Themes an element as a team: `<tr [hrsTeam]="player.team">`. Adds the glass theme's team
+ * variant, `hrs-glass-blue` or `hrs-glass-red` (see `theme/_glass.scss`), chosen by the
+ * `TeamPerspective` above it. A null team leaves the element in the theme around it.
  */
 @Directive({
   selector: '[hrsTeam]',
   host: {
-    '[class.hrs-team-blue]': "color() === 'blue'",
-    '[class.hrs-team-red]': "color() === 'red'",
+    '[class.hrs-glass-blue]': "color() === 'blue'",
+    '[class.hrs-glass-red]': "color() === 'red'",
   },
 })
 export class TeamTheme {

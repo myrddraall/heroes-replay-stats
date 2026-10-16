@@ -1,0 +1,51 @@
+:host {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.part {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin: 0;
+  padding: 8px 12px 12px;
+  border: 1px solid rgb(var(--hrs-glass-edge) / 0.3);
+  border-radius: 8px;
+
+  legend {
+    padding: 0 4px;
+    font-weight: 600;
+  }
+}
+
+.blend {
+  width: 150px;
+}
+
+.colour {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  input {
+    width: 40px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+  }
+}

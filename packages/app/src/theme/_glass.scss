@@ -2,16 +2,20 @@
 @use './glass/neutral-colors' as glass-neutral;
 @use './glass/blue-colors' as glass-blue;
 @use './glass/red-colors' as glass-red;
+@use './glass/nexus-colors' as glass-nexus;
 
 // The glass look (in preview at /theme-preview): the Play screen background shows through every
 // surface, panels are dark tinted glass, and their edges are lit in the variant's highlight colour,
 // like light leaking out of the edge of a fibre-optic sheet rather than a neon tube.
 //
-// Three variants, mixed as the team themes are (an element with one re-themes everything inside):
-// neutral (the game's purples, magenta for highlights), blue and red. Their colours are the game
-// interface's own named colours (its fontstyles.stormstyle): GlowColorPurple and ColorPurple,
-// GlowColorMediumBlue and ColorNeonBlue, ColorDeathTimerRed and GlowColorRed; the Material
-// palettes are generated from those (theme/glass/). The tint is each palette's darkest neutral.
+// Two neutrals and the two teams, mixed as the team themes are (an element with one re-themes
+// everything inside): neutral (the game's purples, magenta for highlights), nexus (the dark blue
+// and cyan of Blizzard's Heroes site: its Nexus blue #0075ff, the cyan #1be4ff and indigo #5b61ff
+// its borders glow in, the game's GlowColorDarkBlue navy), blue and red (the teams as a match
+// colours them: GameUIData's ally #245cff and hostile #ff0000, with the interface's
+// LabelYourTeam and LabelEnemyTeam). The others are the game interface's own named colours (its
+// fontstyles.stormstyle): GlowColorPurple and ColorPurple. The Material palettes are generated from
+// these (theme/glass/); the tint is each palette's darkest neutral, the edge its highlight.
 //
 // How see-through the glass is (`--hrs-glass-alpha`) and whether it blurs what is behind it
 // (`--hrs-glass-backdrop`) are set by whoever uses it. Against the background's brightest sky
@@ -29,6 +33,10 @@
   );
   --hrs-glass-tint: #{$tint};
   --hrs-glass-edge: #{$edge};
+  // A line inside the glass (between rows, under a heading): the edge's light, faint.
+  --hrs-glass-line: rgb(var(--hrs-glass-edge) / 0.15);
+  // How rounded a pane of glass is.
+  --hrs-glass-radius: 10px;
   // Material's surfaces become the glass.
   --mat-sys-surface: rgb(var(--hrs-glass-tint) / var(--hrs-glass-alpha));
   --mat-sys-surface-container-lowest: transparent;
@@ -51,12 +59,21 @@
   );
 }
 
+.hrs-glass-nexus {
+  @include _variant(
+    glass-nexus.$primary-palette,
+    glass-nexus.$tertiary-palette,
+    0 13 39,
+    27 228 255
+  );
+}
+
 .hrs-glass-blue {
-  @include _variant(glass-blue.$primary-palette, glass-blue.$tertiary-palette, 0 12 44, 0 210 255);
+  @include _variant(glass-blue.$primary-palette, glass-blue.$tertiary-palette, 0 12 44, 36 92 255);
 }
 
 .hrs-glass-red {
-  @include _variant(glass-red.$primary-palette, glass-red.$tertiary-palette, 34 4 12, 255 0 84);
+  @include _variant(glass-red.$primary-palette, glass-red.$tertiary-palette, 34 4 12, 255 0 0);
 }
 
 // A glass panel: the tint, and an edge lit all the way round, as if light ran through the edge
@@ -66,12 +83,14 @@
   --_edge: var(--hrs-glass-edge);
 
   position: relative;
-  border: 1px solid color-mix(in srgb, rgb(var(--_edge)) 76%, white);
-  border-radius: 6px;
+  border-radius: var(--hrs-glass-radius);
   background: rgb(var(--hrs-glass-tint) / var(--hrs-glass-alpha));
   backdrop-filter: var(--hrs-glass-backdrop, none);
   -webkit-backdrop-filter: var(--hrs-glass-backdrop, none);
   box-shadow:
+    // The hairline, a 1px ring: a border thins where it curves round the corners (in Chrome most:
+    // its light falls to about 0.7 there at 1x), a ring keeps its weight at 1x, 1.25x and 1.5x.
+    0 0 0 1px color-mix(in srgb, rgb(var(--_edge)) 76%, white),
     0 0 4px rgb(var(--_edge) / 0.75),
     0 0 14px rgb(var(--_edge) / 0.37),
     0 0 36px rgb(var(--_edge) / 0.16),
@@ -80,8 +99,9 @@
 }
 
 @media (forced-colors: active) {
+  // Shadows are dropped there: a real border instead.
   .hrs-glass {
-    border-color: CanvasText;
+    border: 1px solid CanvasText;
     box-shadow: none;
   }
 }

@@ -1,12 +1,12 @@
 import { Component, input } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 
-/** A titled, iconed empty state; pages use it until they have data to show. */
+/** A titled, iconed empty state, on a glass panel; pages use it until they have data to show. */
 @Component({
   selector: 'hrs-empty-state',
   imports: [MatIconModule],
   template: `
-    <section class="empty">
+    <section class="empty hrs-glass">
       <mat-icon class="material-symbols-outlined empty__icon" aria-hidden="true">{{
         icon()
       }}</mat-icon>
@@ -21,15 +21,12 @@ import { MatIconModule } from '@angular/material/icon';
       text-align: center;
       gap: 8px;
       padding: 64px 16px;
-      border: 1px dashed var(--hrs-border);
-      border-radius: 16px;
-      background: rgba(22, 15, 58, 0.6);
     }
     .empty__icon {
       font-size: 56px;
       width: 56px;
       height: 56px;
-      color: var(--hrs-blue-soft);
+      color: rgb(var(--hrs-glass-edge));
     }
     .empty__text {
       color: var(--mat-sys-on-surface-variant);

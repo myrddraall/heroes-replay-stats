@@ -1,3 +1,7 @@
+<!-- Its own chunk, fetched once the page is up: it fades in when its scene has loaded anyway. -->
+@defer (on idle) {
+  <hrs-play-background class="shell__backdrop" />
+}
 <mat-sidenav-container class="shell">
   <mat-sidenav
     #nav
@@ -101,7 +105,7 @@
 </mat-sidenav-container>
 @if (dragging()) {
   <div class="shell__drop" aria-hidden="true">
-    <div class="shell__drop-card">
+    <div class="shell__drop-card hrs-glass">
       <mat-icon class="material-symbols-outlined">upload_file</mat-icon>
       <span>Drop .StormReplay files to import them</span>
     </div>
