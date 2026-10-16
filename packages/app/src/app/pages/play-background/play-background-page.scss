@@ -48,6 +48,18 @@ h1 {
   background: rgb(0 0 0 / 0.55);
 }
 
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.review {
+  width: 160px;
+  background: rgb(0 0 0 / 0.55);
+  border-radius: 4px;
+}
+
 hrs-tint-controls {
   width: 470px;
   max-width: 100%;

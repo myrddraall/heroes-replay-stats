@@ -8,6 +8,7 @@ import {
   withMethods,
   withState,
 } from '@ngrx/signals';
+import type { PlanetSet } from './planet-sets';
 import { PLANETS, type BackgroundTints, type PartTint, type PlanetSize, UNTINTED } from './scene-tints';
 
 /** How the background is drawn: what it costs. */
@@ -48,6 +49,8 @@ interface BackgroundState {
   readonly picture: number;
   /** Which set of planets is up: 0 the game's own; any other, a set drawn from that number. */
   readonly planetSet: number;
+  /** The planets the open page holds up instead, if it does (the Background page, reviewing one). */
+  readonly pagePlanets: PlanetSet | null;
 }
 
 /**
@@ -73,6 +76,7 @@ export const BackgroundStore = signalStore(
     interacting: 0,
     picture: 0,
     planetSet: 0,
+    pagePlanets: null,
   }),
   withComputed((store) => ({
     /** The tints shown: the page's, or the site's. */
@@ -120,6 +124,10 @@ export const BackgroundStore = signalStore(
     /** A set of planets by number: 0 the game's own. */
     setPlanetSet(planetSet: number): void {
       patchState(store, { planetSet });
+    },
+    /** The open page's planets instead of the set; null gives the set back (a page does, closing). */
+    setPagePlanets(pagePlanets: PlanetSet | null): void {
+      patchState(store, { pagePlanets });
     },
     /** The interacting frame rate, until released; any number can hold it at once. */
     requestInteracting(): Release {

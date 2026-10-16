@@ -34,8 +34,8 @@ const FADE_SECONDS = 0.5;
  */
 const FLY_SECONDS = 2.2;
 const FLY_YAW = 0.11;
-/** How far the sky's textures smear across, in texture widths (the sky's go right round). */
-const FLY_SMEAR = 0.012;
+/** How far the sky's layers smear across at the fly's middle, of the way round the sky (0.014: about 5 degrees, near the camera's turn). */
+const FLY_SMEAR = 0.014;
 const FLY_CLEARANCE = 1.3;
 
 /** What the running scene is told of a change of its inputs. */

@@ -1,12 +1,16 @@
 import { DOCUMENT, Location } from '@angular/common';
-import { Component, DestroyRef, effect, inject, signal } from '@angular/core';
+import { Component, DestroyRef, effect, inject, resource, signal } from '@angular/core';
 import { MatButton, MatIconButton } from '@angular/material/button';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatIcon } from '@angular/material/icon';
+import { MatOption, MatSelect } from '@angular/material/select';
 import { MatTooltip } from '@angular/material/tooltip';
 import { Router } from '@angular/router';
 import { GraphicsStore } from '../../data/settings/graphics.store';
 import { BackgroundStore } from '../../scenes/play-background/background.store';
+import { PLAY_SCENE_URL } from '../../scenes/play-background/play-scene';
 import { PlayBackground } from '../../scenes/play-background/play-background';
+import { loadPlanetIndex } from '../../scenes/play-background/scene-planets';
 import { TintControls } from './tint-controls';
 import {
   backgroundTints,
@@ -21,11 +25,26 @@ import {
  * button in the top left, and one in the top right opening controls to tint it, the whole of it or
  * each planet on its own.
  * The page holds the background's tints while it is open, over the site's colour; leaving it
- * gives the site's back. Its controls are in the Graphics settings' theme.
+ * gives the site's back. Its controls are in the Graphics settings' theme. A Review choice brings
+ * in one planet on its own, centred, in place of the sets, while the page is open.
  */
+/** Where a planet is put to review it: in the middle of the view, filling much of it. */
+const REVIEW_POSITION: readonly [number, number, number] = [0, 65, 4];
+const REVIEW_RADIUS = 18;
 @Component({
   selector: 'hrs-play-background-page',
-  imports: [PlayBackground, TintControls, MatButton, MatIconButton, MatIcon, MatTooltip],
+  imports: [
+    PlayBackground,
+    TintControls,
+    MatButton,
+    MatIconButton,
+    MatIcon,
+    MatTooltip,
+    MatFormField,
+    MatLabel,
+    MatSelect,
+    MatOption,
+  ],
   templateUrl: './play-background-page.html',
   styleUrl: './play-background-page.scss',
 })
@@ -39,9 +58,25 @@ export class PlayBackgroundPage {
   private readonly location = inject(Location);
   private readonly router = inject(Router);
 
+  /** The planets there are to review. */
+  protected readonly planets = resource({
+    loader: ({ abortSignal }) => loadPlanetIndex(PLAY_SCENE_URL, abortSignal),
+  });
+  /** The planet under review, by id; none: the sets. */
+  protected readonly review = signal('');
+
   constructor() {
     effect(() => this.background.setPageTints(backgroundTints(this.settings())));
-    inject(DestroyRef).onDestroy(() => this.background.setPageTints(null));
+    effect(() => {
+      const id = this.review();
+      this.background.setPagePlanets(
+        id ? [{ id, position: REVIEW_POSITION, radius: REVIEW_RADIUS }] : null,
+      );
+    });
+    inject(DestroyRef).onDestroy(() => {
+      this.background.setPageTints(null);
+      this.background.setPagePlanets(null);
+    });
   }
 
   /**

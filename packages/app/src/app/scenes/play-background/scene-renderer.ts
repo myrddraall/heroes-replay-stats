@@ -110,10 +110,14 @@ layout(location = 0) out vec4 outColor;
 layout(location = 1) out vec4 outCover;
 layout(location = 2) out vec4 outBody;
 
-vec2 layerUv(Layer l) {
-  vec2 t = ((l.uvSet == 2 ? vUv2 : vUv) - 0.5 - l.offset) * l.tiling;
+// A layer's texture coordinates, the mesh's shifted by du along u first (the sky's go right round).
+vec2 layerUvFrom(Layer l, float du) {
+  vec2 t = ((l.uvSet == 2 ? vUv2 : vUv) + vec2(du, 0.0) - 0.5 - l.offset) * l.tiling;
   float c = cos(l.angle), s = sin(l.angle);
   return mat2(c, s, -s, c) * t + 0.5;
+}
+vec2 layerUv(Layer l) {
+  return layerUvFrom(l, 0.0);
 }
 vec4 channel(vec4 texel, int c) {
   if (c == 0) return vec4(texel.rgb, 1.0);
@@ -133,12 +137,12 @@ float fresnel(Layer l) {
 vec4 midtone(vec4 v, float m) {
   return m > 0.0 ? pow(v, vec4(1.0 / (1.0 + m))) : v;
 }
-// A layer's texel; smeared across u by uSmear (the sky's textures, as the view sweeps in a fly).
+// A layer's texel; smeared across the mesh's u by uSmear (of the way round the sky: the same
+// sweep for every layer whatever its tiling) as the view sweeps in a fly.
 vec4 texel(sampler2D tex, Layer l) {
-  vec2 uv = layerUv(l);
-  if (uSmear <= 0.0) return texture(tex, uv);
+  if (uSmear <= 0.0) return texture(tex, layerUv(l));
   vec4 sum = vec4(0.0);
-  for (int k = -3; k <= 3; k++) sum += texture(tex, uv + vec2(float(k) * uSmear / 3.0, 0.0));
+  for (int k = -3; k <= 3; k++) sum += texture(tex, layerUvFrom(l, float(k) * uSmear / 3.0));
   return sum / 7.0;
 }
 vec4 colorLayer(sampler2D tex, Layer l) {
@@ -694,7 +698,7 @@ export class SceneRenderer {
 
   /** How far the stars are streaked across the view, 0 to 1 (0: not at all). */
   streak = 0;
-  /** How far the sky's textures are smeared across u, in texture widths (0: not at all). */
+  /** How far the sky's layers are smeared across, as a share of the way round the sky (0: not at all). */
   smear = 0;
   /** The tints drawn: the background's, then each planet's. */
   tints: Tints = NO_TINTS;

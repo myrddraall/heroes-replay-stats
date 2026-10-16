@@ -37,10 +37,12 @@ export class PlayBackground {
     loader: ({ params, abortSignal }) => loadPlanetIndex(params, abortSignal),
   });
   private readonly planets = computed(() => new PlanetLoader(this.src()));
-  /** The set up: the game's own for 0, else one drawn from the number. */
+  /** The set up: the page's, if it holds one; else the game's own for 0, else one drawn from the number. */
   private readonly set = computed(() => {
     const index = this.index.hasValue() ? this.index.value() : null;
     if (!index) return null;
+    const page = this.store.pagePlanets();
+    if (page) return page;
     const number = this.store.planetSet();
     return number === 0 ? playSet(index) : randomSet(index, seeded(number));
   });

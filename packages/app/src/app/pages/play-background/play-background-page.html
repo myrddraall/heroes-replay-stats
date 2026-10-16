@@ -12,10 +12,21 @@
     <mat-icon class="material-symbols-outlined" aria-hidden="true">arrow_back</mat-icon>
   </button>
   <div class="corner">
-    <button mat-stroked-button type="button" class="open" (click)="anotherSet()">
-      <mat-icon class="material-symbols-outlined" aria-hidden="true">shuffle</mat-icon>
-      Planets
-    </button>
+    <div class="row">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="review">
+        <mat-label>Review</mat-label>
+        <mat-select [value]="review()" (selectionChange)="review.set($event.value)">
+          <mat-option value="">Sets</mat-option>
+          @for (planet of planets.hasValue() ? planets.value().planets : []; track planet.id) {
+            <mat-option [value]="planet.id">{{ planet.id }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <button mat-stroked-button type="button" class="open" (click)="anotherSet()" [disabled]="review() !== ''">
+        <mat-icon class="material-symbols-outlined" aria-hidden="true">shuffle</mat-icon>
+        Planets
+      </button>
+    </div>
     <button
       mat-stroked-button
       type="button"
