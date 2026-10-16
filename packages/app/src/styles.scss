@@ -1,6 +1,7 @@
 @use '@angular/material' as mat;
 @use './theme/theme-colors' as palettes;
 @use './theme/teams';
+@use './theme/glass';
 
 // The Heroes of the Storm look, taken from heroesofthestorm.blizzard.com and the game:
 // deep indigo (#130c38, #0d0119) rather than black, Nexus blue (#0075ff) as the

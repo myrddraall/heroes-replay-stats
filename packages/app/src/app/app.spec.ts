@@ -1,12 +1,11 @@
 import { provideRouter } from '@angular/router';
 import { TestBed } from '@angular/core/testing';
 import { describe, expect, it, beforeEach } from 'vitest';
-import { App } from './app';
 import { routes } from './app.routes';
 import { REPLAY_DB, REPLAY_DB_FACTORY } from './data/import/provide-replay-db';
 import { PLATFORM, type Platform } from './platform/platform';
 import { ReplayImportJobStore } from './data/import/replay-import-job.store';
-import { NAV_ITEMS } from './shell/shell';
+import { NAV_ITEMS, Shell } from './shell/shell';
 
 /** A drag event as jsdom cannot make one: a plain event with a fake dataTransfer. */
 function dragEvent(type: string, files: File[]): Event {
@@ -28,7 +27,7 @@ describe('App shell', () => {
   beforeEach(async () => {
     sessionStorage.clear();
     await TestBed.configureTestingModule({
-      imports: [App],
+      imports: [Shell],
       providers: [
         provideRouter(routes),
         { provide: PLATFORM, useValue: fakePlatform },
@@ -52,7 +51,7 @@ describe('App shell', () => {
   });
 
   it('renders the brand, one nav link per section, and the platform badge', async () => {
-    const fixture = TestBed.createComponent(App);
+    const fixture = TestBed.createComponent(Shell);
     await fixture.whenStable();
     const el: HTMLElement = fixture.nativeElement;
     expect(el.querySelector('.shell__toolbar-title')?.textContent).toContain('Heroes Replay Stats');
@@ -64,7 +63,7 @@ describe('App shell', () => {
   });
 
   it('shows a drop overlay while files are dragged over the page and imports dropped replays', async () => {
-    const fixture = TestBed.createComponent(App);
+    const fixture = TestBed.createComponent(Shell);
     await fixture.whenStable();
     const el: HTMLElement = fixture.nativeElement;
     const replay = new File([new Uint8Array([1])], 'game.StormReplay');
@@ -84,5 +83,12 @@ describe('App shell', () => {
     expect(el.querySelector('.shell__drop')).toBeNull();
     const jobs = TestBed.inject(ReplayImportJobStore).jobs();
     expect(jobs.map((j) => j.fileName)).toEqual(['game.StormReplay']);
+  });
+
+  it('puts the app pages in the shell and the Play screen background on a page of its own', () => {
+    const shell = routes.find((r) => r.component === Shell);
+    expect(shell?.children?.map((r) => r.path)).toContain('replays');
+    expect(routes.map((r) => r.path)).toContain('play-background');
+    expect(shell?.children?.map((r) => r.path)).not.toContain('play-background');
   });
 });

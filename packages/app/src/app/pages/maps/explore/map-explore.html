@@ -12,6 +12,15 @@
       [title]="store.facts()?.name ?? 'Map'"
       (closeRequested)="store.setPanelOpened('info', false)"
     >
+      <hrs-map-view-controls
+        hrsMapPanelPinned
+        [arenas]="store.arenas()"
+        [arena]="store.arena()"
+        [hasTeamColour]="store.hasTeamColour()"
+        [teamColoursSwapped]="store.teamColoursSwapped()"
+        (arenaChange)="store.showArena($event)"
+        (teamColoursToggle)="store.toggleTeamColours()"
+      />
       <hrs-map-facts
         [facts]="store.facts()"
         [loadingScreen]="store.art().loadingScreen"
@@ -94,18 +103,5 @@
         {{ toggleIcon(store.detailsPosition(), store.detailsOpened()) }}
       </mat-icon>
     </button>
-    @if (store.hasTeamColour()) {
-      <button
-        mat-icon-button
-        type="button"
-        class="explore__team"
-        aria-label="Swap team colours"
-        [attr.aria-pressed]="store.teamColoursSwapped()"
-        [class.explore__team--swapped]="store.teamColoursSwapped()"
-        (click)="store.toggleTeamColours()"
-      >
-        <mat-icon class="material-symbols-outlined" aria-hidden="true">swap_horiz</mat-icon>
-      </button>
-    }
   </mat-drawer-content>
 </mat-drawer-container>

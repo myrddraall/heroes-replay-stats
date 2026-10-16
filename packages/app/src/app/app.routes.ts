@@ -1,6 +1,8 @@
 import { Routes } from '@angular/router';
+import { Shell } from './shell/shell';
 
-export const routes: Routes = [
+/** The app's pages, in the shell (its toolbar and navigation). */
+const pages: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'replays' },
   {
     path: 'replays',
@@ -33,4 +35,21 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/settings/settings-page').then((m) => m.SettingsPage),
   },
   { path: '**', redirectTo: 'replays' },
+];
+
+export const routes: Routes = [
+  // Pages of their own, filling the window without the shell.
+  {
+    path: 'play-background',
+    title: 'Play screen background · Heroes Replay Stats',
+    loadComponent: () =>
+      import('./pages/play-background/play-background-page').then((m) => m.PlayBackgroundPage),
+  },
+  {
+    path: 'theme-preview',
+    title: 'Theme preview · Heroes Replay Stats',
+    loadComponent: () =>
+      import('./pages/theme-preview/theme-preview-page').then((m) => m.ThemePreviewPage),
+  },
+  { path: '', component: Shell, children: pages },
 ];

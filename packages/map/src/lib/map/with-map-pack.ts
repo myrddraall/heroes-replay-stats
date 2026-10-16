@@ -9,6 +9,7 @@ import {
 } from '@ngrx/signals';
 import { swappedTeamColours, type TeamColours } from '../layers/team-colour';
 import { MapsStore } from '../pack/maps.store';
+import { arenasOf, type Arena } from '../view/arenas';
 
 export interface MapPackState {
   readonly mapId: string | null;
@@ -45,6 +46,11 @@ export function withMapPack() {
         _packEntry,
         map,
         pack,
+        /** The pack's arenas (one, the whole map, unless it has several); the chosen one is `arena`. */
+        arenas: computed((): readonly Arena[] => {
+          const p = pack();
+          return p ? arenasOf(p) : [];
+        }),
         /** Whether the map has team colour to show in other colours: a layer's or a structure's. */
         hasTeamColour: computed(() => {
           const p = pack();
@@ -67,6 +73,10 @@ export function withMapPack() {
       showMap(mapId: string): void {
         patchState(store, { ...INITIAL, mapId });
         void store._maps.loadPack(mapId);
+      },
+      /** Shows one of the pack's arenas, by index (a map of several). */
+      showArena(index: number): void {
+        if (index !== store.arena()) patchState(store, { arena: index });
       },
       /** The teams shown in each other's colours, or back in their own. */
       toggleTeamColours(): void {

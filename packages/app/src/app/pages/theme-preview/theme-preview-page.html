@@ -1,0 +1,107 @@
+<hrs-play-background class="backdrop" [maxFps]="fps()" [versusAI]="versusAI()" />
+
+<main
+  class="hrs-glass-neutral"
+  [style.--hrs-glass-alpha]="alpha()"
+  [style.--hrs-glass-backdrop]="backdrop()"
+>
+  <header class="hrs-glass controls">
+    <h1>Theme preview</h1>
+    <mat-slide-toggle [checked]="blur()" (change)="blur.set($event.checked)">
+      Blur behind the glass
+    </mat-slide-toggle>
+    <mat-slide-toggle [checked]="versusAI()" (change)="versusAI.set($event.checked)">
+      vs A.I. background
+    </mat-slide-toggle>
+    <div class="slider">
+      <span id="opacity-label">Glass opacity {{ alpha().toFixed(2) }}</span>
+      <mat-slider [min]="floor" max="0.9" step="0.01" discrete>
+        <input
+          matSliderThumb
+          aria-labelledby="opacity-label"
+          [value]="alpha()"
+          (valueChange)="alpha.set($event)"
+        />
+      </mat-slider>
+      <span class="muted">from {{ floor }}: the least that keeps AA contrast</span>
+    </div>
+    <div class="slider">
+      <span id="fps-label">Background frame rate cap {{ fps() }} fps</span>
+      <mat-slider min="5" max="144" step="1" discrete>
+        <input
+          matSliderThumb
+          aria-labelledby="fps-label"
+          [value]="fps()"
+          (valueChange)="fps.set($event)"
+        />
+      </mat-slider>
+    </div>
+  </header>
+
+  <div class="variants">
+    @for (variant of variants; track variant.theme) {
+      <section class="hrs-glass panel" [class]="variant.theme" [attr.aria-label]="variant.label">
+        <h2>{{ variant.label }}</h2>
+        <p>Body text over the glass: the match summary, a hero's name, a talent's description.</p>
+        <p class="muted">Muted text: dates, durations, the map's name.</p>
+
+        <div class="buttons">
+          <button mat-flat-button type="button">Play</button>
+          <button mat-stroked-button type="button">Ready</button>
+          <button mat-button type="button">Cancel</button>
+          <button mat-icon-button type="button" aria-label="Settings">
+            <mat-icon class="material-symbols-outlined" aria-hidden="true">settings</mat-icon>
+          </button>
+        </div>
+
+        <mat-chip-set>
+          <mat-chip highlighted>Quick Match</mat-chip>
+          <mat-chip>Ranked</mat-chip>
+          <mat-chip>ARAM</mat-chip>
+        </mat-chip-set>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Player name</mat-label>
+          <input matInput value="Myrddraall" />
+        </mat-form-field>
+
+        <mat-slide-toggle [checked]="true">Show talents</mat-slide-toggle>
+
+        <mat-progress-bar mode="determinate" value="62" aria-label="Experience to next level" />
+      </section>
+    }
+  </div>
+
+  <section class="hrs-glass panel match" aria-labelledby="match-title">
+    <h2 id="match-title">Mixed: a match on a neutral panel</h2>
+    <p class="muted">Cursed Hollow · Quick Match · 18:42</p>
+    @for (team of teams; track team.theme) {
+      <table [class]="team.theme">
+        <caption>
+          {{
+            team.label
+          }}
+          <span class="result">{{ team.won ? 'Victory' : 'Defeat' }}</span>
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Player</th>
+            <th scope="col">Hero</th>
+            <th scope="col" class="number">Takedowns</th>
+            <th scope="col" class="number">Deaths</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (player of team.players; track player.name) {
+            <tr>
+              <th scope="row">{{ player.name }}</th>
+              <td>{{ player.hero }}</td>
+              <td class="number">{{ player.takedowns }}</td>
+              <td class="number">{{ player.deaths }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+</main>

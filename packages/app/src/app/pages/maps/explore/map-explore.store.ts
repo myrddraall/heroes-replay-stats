@@ -145,8 +145,11 @@ export const MapExploreStore = signalStore(
      */
     select(key: string, centre = false): void {
       const poi = centre ? allPois(store.pois()).find((p) => p.key === key) : undefined;
+      // On a map of several arenas, one from the list is on its own arena: shown first.
+      const arena = poi ? store.arenas().findIndex((a) => a.layer.id === poi.layer) : -1;
       patchState(store, {
         selected: key,
+        ...(arena >= 0 && arena !== store.arena() ? { arena } : {}),
         ...(poi ? { centre: { cell: poi.cell, minZoom: POI_ZOOM } } : {}),
         ...(store._handset() ? { panels: { ...store.panels(), details: true } } : {}),
       });

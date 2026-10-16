@@ -84,6 +84,22 @@ describe('the points of interest of a pack', () => {
     expect(poisOf(fixturePack('punisher-arena'))).toEqual([]);
   });
 
+  it("puts each point of interest on its arena's map layer, the elements' own unless it names one", () => {
+    const elements = pack.data.elements!;
+    const several = {
+      ...pack,
+      data: {
+        elements: {
+          ...elements,
+          structures: elements.structures.map((s, k) => (k === 0 ? { ...s, layer: 'map-m2' } : s)),
+        },
+      },
+    };
+    const pois = allPois(poisOf(several));
+    expect(pois.find((p) => p.key === `structure-${elements.structures[0]!.id}`)?.layer).toBe('map-m2');
+    expect(pois.filter((p) => p.layer === elements.layer).length).toBe(pois.length - 1);
+  });
+
   it('names the types', () => {
     expect(structureLabel('KingsCore')).toBe('Core');
     expect(structureLabel('TownTownHallL2')).toBe('Fort');

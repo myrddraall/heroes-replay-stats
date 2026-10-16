@@ -180,6 +180,8 @@ export interface PackStructure {
   /** The outpost it belongs to; `null`: its town hall's ring, or no outpost. */
   readonly outpost: number | null;
   readonly core: boolean;
+  /** On a map of several arenas, the map layer of its arena, where that isn't `PackElements.layer`. */
+  readonly layer?: string;
   /** `null`: nothing is left of it in that state; missing: that state couldn't be shot. */
   readonly states: Partial<Record<StructureState, ElementCut | null>>;
 }
@@ -201,6 +203,8 @@ export interface PackCamp {
   readonly camp: number;
   readonly type: string;
   readonly cell: Cell;
+  /** On a map of several arenas, the map layer of its arena, where that isn't `PackElements.layer`. */
+  readonly layer?: string;
   readonly states: Partial<Record<CampState, ElementCut | null>>;
 }
 

@@ -13,6 +13,8 @@ export interface Poi {
   /** The game's type name, as the pack has it. */
   readonly type: string;
   readonly cell: Cell;
+  /** The map layer it is on: its arena's, on a map of several. */
+  readonly layer: string;
   readonly owner: PoiOwner;
   readonly town: number | null;
   readonly outpost: number | null;
@@ -70,13 +72,14 @@ const RANK: Record<string, number> = {
   Wall: 4,
 };
 
-function structurePoi(s: PackStructure): Poi {
+function structurePoi(s: PackStructure, layer: string): Poi {
   return {
     key: `structure-${s.id}`,
     kind: 'structure',
     label: structureLabel(s.type),
     type: s.type,
     cell: s.cell,
+    layer: s.layer ?? layer,
     owner: s.owner,
     town: s.town,
     outpost: s.outpost,
@@ -84,13 +87,14 @@ function structurePoi(s: PackStructure): Poi {
   };
 }
 
-function campPoi(c: PackCamp): Poi {
+function campPoi(c: PackCamp, layer: string): Poi {
   return {
     key: `camp-${c.camp}`,
     kind: 'camp',
     label: campLabel(c.type),
     type: c.type,
     cell: c.cell,
+    layer: c.layer ?? layer,
     owner: null,
     town: null,
     outpost: null,
@@ -142,8 +146,10 @@ function groupsOf(owner: PoiOwner, structures: readonly Poi[], camps: readonly P
 export function poisOf(pack: MapPack): readonly PoiTeam[] {
   const elements = pack.data.elements;
   if (!elements) return [];
-  const structures = elements.structures.map(structurePoi);
-  const camps = elements.camps.map(campPoi).sort((a, b) => a.key.localeCompare(b.key));
+  const structures = elements.structures.map((s) => structurePoi(s, elements.layer));
+  const camps = elements.camps
+    .map((c) => campPoi(c, elements.layer))
+    .sort((a, b) => a.key.localeCompare(b.key));
   const teams: PoiTeam[] = [];
   for (const id of ['order', 'chaos', 'neutral'] as const) {
     const owner = id === 'neutral' ? null : id;

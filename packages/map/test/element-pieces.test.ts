@@ -16,6 +16,13 @@ const elements = fixturePack('battlefield-of-eternity').data.elements!;
 describe('piecesOf', () => {
   const pieces = piecesOf(elements);
 
+  it("is drawn on its arena's layer: the elements' own, or the one it names", () => {
+    expect(new Set(pieces.map((p) => p.layer))).toEqual(new Set([elements.layer]));
+    const first = elements.structures[0]!;
+    const moved = piecesOf({ ...elements, structures: [{ ...first, layer: 'map-m3' }], camps: [] });
+    expect(moved[0]?.layer).toBe('map-m3');
+  });
+
   it("knows whose each piece is: the structure's side, nothing for a camp", () => {
     expect(pieces.find((p) => p.kind === 'structure')?.owner).toMatch(/^(order|chaos)$/);
     expect(pieces.find((p) => p.kind === 'camp')?.owner).toBeNull();
@@ -74,6 +81,7 @@ describe('pieceAt', () => {
   const back = {
     key: 'back',
     kind: 'structure',
+    layer: 'map',
     id: 1,
     owner: null,
     cell: [0, 2],
@@ -83,6 +91,7 @@ describe('pieceAt', () => {
   const front = {
     key: 'front',
     kind: 'structure',
+    layer: 'map',
     id: 2,
     owner: null,
     cell: [0, 1],

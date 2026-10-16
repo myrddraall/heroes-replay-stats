@@ -16,6 +16,8 @@
   width: var(--hrs-map-panel-width, min(360px, 90vw));
   overflow: hidden;
   background: var(--hrs-surface);
+  // Material rounds a side drawer's inner corners; these run the full height, flush with the map.
+  border-radius: 0;
 
   // Material's own inner container scrolls by default; only the panel's body may, or a
   // scrollbar appears for the border's pixel.
@@ -56,19 +58,5 @@
   &.explore__toggle--start {
     inset-inline-end: auto;
     inset-inline-start: 8px;
-  }
-}
-
-// Over the map's bottom corner: the teams in each other's colours, or back in their own.
-.explore__team {
-  position: absolute;
-  bottom: 8px;
-  inset-inline-end: 8px;
-  z-index: 10001;
-  background: rgba(16, 16, 20, 0.6);
-  backdrop-filter: blur(6px);
-
-  &.explore__team--swapped {
-    outline: 2px solid var(--hrs-blue-soft);
   }
 }

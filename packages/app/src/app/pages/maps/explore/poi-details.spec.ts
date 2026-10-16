@@ -12,6 +12,7 @@ const fort: SelectedPoi = {
     label: 'Fort',
     type: 'TownTownHallL2',
     cell: [10, 20.4],
+    layer: 'map',
     owner: 'order',
     town: 1,
     outpost: null,

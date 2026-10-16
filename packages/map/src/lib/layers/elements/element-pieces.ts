@@ -23,6 +23,8 @@ export interface ElementPiece {
   /** Whose it is; `null` for a camp, or a structure of neither side. */
   readonly owner: 'order' | 'chaos' | null;
   readonly cell: Cell;
+  /** The map layer it is drawn on (its arena's). */
+  readonly layer: string;
   readonly states: Readonly<Partial<Record<string, ElementCut | null>>>;
   /**
    * What the pointer finds it by, whatever it shows: its first state's picture (a structure
@@ -36,9 +38,11 @@ export interface ElementPiece {
 export function piecesOf(elements: PackElements): ElementPiece[] {
   const pieces: ElementPiece[] = [
     ...elements.structures.map((s) =>
-      piece('structure', `structure-${s.id}`, s.id, s.owner, s.cell, s.states),
+      piece('structure', `structure-${s.id}`, s.id, s.owner, s.cell, s.layer ?? elements.layer, s.states),
     ),
-    ...elements.camps.map((c) => piece('camp', `camp-${c.camp}`, null, null, c.cell, c.states)),
+    ...elements.camps.map((c) =>
+      piece('camp', `camp-${c.camp}`, null, null, c.cell, c.layer ?? elements.layer, c.states),
+    ),
   ];
   return pieces.sort((a, b) => b.cell[1] - a.cell[1]);
 }
@@ -49,11 +53,12 @@ function piece(
   id: number | null,
   owner: 'order' | 'chaos' | null,
   cell: Cell,
+  layer: string,
   states: Readonly<Partial<Record<string, ElementCut | null>>>,
 ): ElementPiece {
   const first = states[KIND_STATES[kind][0]];
   const hit = first ?? Object.values(states).find((cut): cut is ElementCut => Boolean(cut)) ?? null;
-  return { key, kind, id, owner, cell, states, hit };
+  return { key, kind, id, owner, cell, layer, states, hit };
 }
 
 /**

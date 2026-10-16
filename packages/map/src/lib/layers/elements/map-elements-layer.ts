@@ -159,12 +159,10 @@ export class MapElementsLayer implements MapLayer {
     return set || GLOW_DEFAULTS[side][role === 'hovered' ? 1 : 0];
   }
 
-  /** The map layer the cut-outs are in, when it is the shown arena's. */
+  /** The shown arena's map layer, when any piece is drawn on it. */
   private mapLayer(frame: LayerFrame) {
-    const elements = this.elements();
-    return elements && this.visible() && elements.layer === frame.arena.layer.id
-      ? frame.arena.layer
-      : null;
+    const id = frame.arena.layer.id;
+    return this.visible() && this.pieces().some((p) => p.layer === id) ? frame.arena.layer : null;
   }
 
   render(frame: LayerFrame): MapLayerStatus {
@@ -178,7 +176,11 @@ export class MapElementsLayer implements MapLayer {
     const states = this.states();
     const colours = this.colours();
     const isStanding = (id: number) => states[`structure-${id}`] === 'standing';
-    const order = drawOrder(this.pieces(), (p) => this.stateOf(p));
+    // The pieces of this arena only (on a map of several, each piece is on its arena's layer).
+    const order = drawOrder(
+      this.pieces().filter((p) => p.layer === layer.id),
+      (p) => this.stateOf(p),
+    );
     // The level of detail: the small one until it would be stretched too far, then the full one,
     // asked for as soon as it is wanted and drawn once it has arrived, faded in over the small.
     const wantFull = projection.scale > SMALL_STRETCH * images.smallScale;
@@ -331,7 +333,10 @@ export class MapElementsLayer implements MapLayer {
     const [px, py] = cellToMapPixel(layer, cell);
     // Found by its hit picture whatever it shows, so one turned off can be clicked back on.
     return pieceAt(
-      drawOrder(this.pieces(), (p) => this.stateOf(p)),
+      drawOrder(
+        this.pieces().filter((p) => p.layer === layer.id),
+        (p) => this.stateOf(p),
+      ),
       px,
       py,
       (cut) => images.hit(cut),

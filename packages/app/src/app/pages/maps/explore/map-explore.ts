@@ -6,6 +6,7 @@ import { MapViewer } from '@myrddraall/heroes-replay-stats-map';
 import { MapPanel } from '../panel/map-panel';
 import { MapExploreStore, type PanelMode, type PanelPosition } from './map-explore.store';
 import { MapFacts } from './map-facts';
+import { MapViewControls } from './map-view-controls';
 import { PoiDetails } from './poi-details';
 import { PoiList } from './poi-list';
 
@@ -27,6 +28,7 @@ import { PoiList } from './poi-list';
     PoiDetails,
     PoiList,
     MapFacts,
+    MapViewControls,
   ],
   templateUrl: './map-explore.html',
   styleUrl: './map-explore.scss',

@@ -57,6 +57,23 @@ proxies `/maps-local/` to it, so from outside the container only port 4200 is ne
 `pnpm start -- --configuration production` serves the production bundle the same way. CI builds,
 where `DEV_LOCAL` isn't set, read heroes-maps as before; nothing changes at check-in.
 
+## The Play screen background
+
+`/play-background` is the game's Play screen background on a page of its own, filling the
+window: its sky, the energy drifting in towards the horizon, the twinkling stars and the planets, drawn with
+WebGL from the game's own camera, meshes, materials and particles (`hrs-play-background`,
+`packages/app/src/app/scenes/play-background`, fills whatever element holds it).
+`/play-background?versusAI` shows it with the game's vs A.I. look (the screen turned blue). The scene comes
+from [heroes-capture](https://github.com/myrddraall/heroes-capture) and is checked in under
+`packages/app/public/backgrounds/play` (about 1 MB); after a game update, export it again:
+
+```bash
+pnpm run generate.play-background   # heroes-capture ui background into packages/app/public/backgrounds/play
+```
+
+It needs `heroes-capture` on the path (its release executable, or `pip install -e .` in
+heroes-capture's package).
+
 ## Releasing
 
 This repository follows the [cpdevtools git-flow](https://github.com/cpdevtools/git-flow-template)

@@ -78,14 +78,14 @@ const pack: MapPack = {
 
 const view = { pack, assets: {} } as unknown as MapViewModel;
 
-function setUp(handset = false) {
+function setUp(handset = false, shown: MapPack = pack) {
   TestBed.configureTestingModule({
     providers: [
       MapExploreStore,
       {
         provide: MapPacksService,
         useValue: {
-          open: async () => view,
+          open: async () => (shown === pack ? view : { ...view, pack: shown }),
           catalog: async () => ({ format: 1, maps: [] }),
           fileUrl: (f: string) => f,
         },
@@ -147,6 +147,35 @@ describe('the explore store', () => {
     expect(store.centre()).not.toBe(first); // asked again: a new request, so the camera moves again
     store.deselect();
     expect(store.selected()).toBeNull();
+  });
+
+  it("shows an arena of several, and switches to a point of interest's arena when picked from the list", async () => {
+    const store = setUp(false, {
+      ...pack,
+      arenas: [
+        { id: 'a', layer: 'map', boundsCells: { left: 0, bottom: 0, right: 100, top: 100 } },
+        { id: 'b', layer: 'map-b', boundsCells: { left: 0, bottom: 100, right: 100, top: 190 } },
+      ],
+      layers: [...pack.layers, { ...pack.layers[0]!, id: 'map-b', file: 'map-b.pmtiles' }],
+      data: {
+        elements: {
+          ...pack.data.elements!,
+          camps: pack.data.elements!.camps.map((c) => ({ ...c, layer: 'map-b' })),
+        },
+      },
+    });
+    store.load(signal('towers-of-doom'));
+    await settled();
+    expect(store.arenas().map((a) => a.layer.id)).toEqual(['map', 'map-b']);
+    expect(store.arena()).toBe(0);
+    store.showArena(1);
+    expect(store.arena()).toBe(1);
+    store.select('structure-1', true); // on the first arena
+    expect(store.arena()).toBe(0);
+    store.select('camp-1', true); // on the second
+    expect(store.arena()).toBe(1);
+    store.select('structure-1'); // clicked on the map: already in view, the arena stays
+    expect(store.arena()).toBe(1);
   });
 
   it('starts afresh on another map', async () => {

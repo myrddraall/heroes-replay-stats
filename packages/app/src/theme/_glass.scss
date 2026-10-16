@@ -1,0 +1,87 @@
+@use '@angular/material' as mat;
+@use './glass/neutral-colors' as glass-neutral;
+@use './glass/blue-colors' as glass-blue;
+@use './glass/red-colors' as glass-red;
+
+// The glass look (in preview at /theme-preview): the Play screen background shows through every
+// surface, panels are dark tinted glass, and their edges are lit in the variant's highlight colour,
+// like light leaking out of the edge of a fibre-optic sheet rather than a neon tube.
+//
+// Three variants, mixed as the team themes are (an element with one re-themes everything inside):
+// neutral (the game's purples, magenta for highlights), blue and red. Their colours are the game
+// interface's own named colours (its fontstyles.stormstyle): GlowColorPurple and ColorPurple,
+// GlowColorMediumBlue and ColorNeonBlue, ColorDeathTimerRed and GlowColorRed; the Material
+// palettes are generated from those (theme/glass/). The tint is each palette's darkest neutral.
+//
+// How see-through the glass is (`--hrs-glass-alpha`) and whether it blurs what is behind it
+// (`--hrs-glass-backdrop`) are set by whoever uses it. Against the background's brightest sky
+// (the nebula's core), the variants' muted text keeps WCAG AA contrast from 0.06 up.
+
+@mixin _variant($primary, $tertiary, $tint, $edge) {
+  @include mat.theme(
+    (
+      color: (
+        primary: $primary,
+        tertiary: $tertiary,
+        theme-type: dark,
+      ),
+    )
+  );
+  --hrs-glass-tint: #{$tint};
+  --hrs-glass-edge: #{$edge};
+  // Material's surfaces become the glass.
+  --mat-sys-surface: rgb(var(--hrs-glass-tint) / var(--hrs-glass-alpha));
+  --mat-sys-surface-container-lowest: transparent;
+  --mat-sys-surface-container-low: rgb(var(--hrs-glass-tint) / calc(var(--hrs-glass-alpha) * 0.6));
+  --mat-sys-surface-container: rgb(var(--hrs-glass-tint) / var(--hrs-glass-alpha));
+  --mat-sys-surface-container-high: rgb(var(--hrs-glass-tint) / calc(var(--hrs-glass-alpha) + 0.1));
+  --mat-sys-surface-container-highest: rgb(
+    var(--hrs-glass-tint) / calc(var(--hrs-glass-alpha) + 0.2)
+  );
+  color: var(--mat-sys-on-surface);
+}
+
+// The tint (RGB) is each palette's neutral tone 4; the edge is its highlight colour.
+.hrs-glass-neutral {
+  @include _variant(
+    glass-neutral.$primary-palette,
+    glass-neutral.$tertiary-palette,
+    20 2 51,
+    246 0 255
+  );
+}
+
+.hrs-glass-blue {
+  @include _variant(glass-blue.$primary-palette, glass-blue.$tertiary-palette, 0 12 44, 0 210 255);
+}
+
+.hrs-glass-red {
+  @include _variant(glass-red.$primary-palette, glass-red.$tertiary-palette, 34 4 12, 255 0 84);
+}
+
+// A glass panel: the tint, and an edge lit all the way round, as if light ran through the edge
+// of the glass: a bright hairline (the highlight colour pushed towards white), light spilling out
+// of it (a tight bright halo and a wide faint one) and bleeding into the glass just inside.
+.hrs-glass {
+  --_edge: var(--hrs-glass-edge);
+
+  position: relative;
+  border: 1px solid color-mix(in srgb, rgb(var(--_edge)) 76%, white);
+  border-radius: 6px;
+  background: rgb(var(--hrs-glass-tint) / var(--hrs-glass-alpha));
+  backdrop-filter: var(--hrs-glass-backdrop, none);
+  -webkit-backdrop-filter: var(--hrs-glass-backdrop, none);
+  box-shadow:
+    0 0 4px rgb(var(--_edge) / 0.75),
+    0 0 14px rgb(var(--_edge) / 0.37),
+    0 0 36px rgb(var(--_edge) / 0.16),
+    inset 0 0 6px rgb(var(--_edge) / 0.45),
+    inset 0 0 22px rgb(var(--_edge) / 0.15);
+}
+
+@media (forced-colors: active) {
+  .hrs-glass {
+    border-color: CanvasText;
+    box-shadow: none;
+  }
+}
