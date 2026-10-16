@@ -1,6 +1,6 @@
 <main>
   <h1>Play screen background</h1>
-  <hrs-play-background />
+  <hrs-play-background [names]="names()" />
   <button
     mat-icon-button
     type="button"
@@ -22,6 +22,9 @@
           }
         </mat-select>
       </mat-form-field>
+      <mat-slide-toggle class="names" [checked]="names()" (change)="names.set($event.checked)">
+        Names
+      </mat-slide-toggle>
       <button mat-stroked-button type="button" class="open" (click)="anotherSet()" [disabled]="review() !== ''">
         <mat-icon class="material-symbols-outlined" aria-hidden="true">shuffle</mat-icon>
         Planets

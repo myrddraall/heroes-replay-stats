@@ -4,6 +4,7 @@ import { MatButton, MatIconButton } from '@angular/material/button';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatIcon } from '@angular/material/icon';
 import { MatOption, MatSelect } from '@angular/material/select';
+import { MatSlideToggle } from '@angular/material/slide-toggle';
 import { MatTooltip } from '@angular/material/tooltip';
 import { Router } from '@angular/router';
 import { GraphicsStore } from '../../data/settings/graphics.store';
@@ -44,6 +45,7 @@ const REVIEW_RADIUS = 18;
     MatLabel,
     MatSelect,
     MatOption,
+    MatSlideToggle,
   ],
   templateUrl: './play-background-page.html',
   styleUrl: './play-background-page.scss',
@@ -64,6 +66,8 @@ export class PlayBackgroundPage {
   });
   /** The planet under review, by id; none: the sets. */
   protected readonly review = signal('');
+  /** Whether the planets' names float over them. */
+  protected readonly names = signal(false);
 
   constructor() {
     effect(() => this.background.setPageTints(backgroundTints(this.settings())));

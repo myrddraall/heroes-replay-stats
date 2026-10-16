@@ -93,6 +93,11 @@ export class SceneCanvas {
   readonly picture = input(0);
   /** The planets up; null until a set has loaded. */
   readonly placements = input<readonly PlanetPlacement[] | null>(null);
+  /** Whether each planet's name floats over it. */
+  readonly names = input(false);
+
+  /** Where the names go: each planet's, over the top of its body, as shares of the canvas. */
+  protected readonly labels = signal<{ id: string; x: number; top: number }[]>([]);
 
   /** Whether a frame has been drawn: the picture fades in then. */
   protected readonly drawn = signal(false);
@@ -122,6 +127,9 @@ export class SceneCanvas {
     effect(() => {
       const placements = this.placements();
       if (placements) untracked(() => this.running?.replace(placements));
+    });
+    effect(() => {
+      if (!this.names()) this.labels.set([]);
     });
     afterRenderEffect((onCleanup) => {
       const loaded = this.scene();
@@ -160,6 +168,7 @@ export class SceneCanvas {
       renderer.draw(clock);
       drawnAt = performance.now();
       if (!this.drawn()) this.drawn.set(true);
+      if (this.names()) this.labels.set(renderer.anchors());
     };
     /** Draws what `change` makes, the picture there was fading away over it. */
     const crossFadeTo = (change: () => void) => {

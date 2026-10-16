@@ -642,6 +642,31 @@ export class SceneRenderer {
     this.stillDirty = true;
   }
 
+  /**
+   * Where each placed planet is on the canvas, as it was last placed: its centre, and the top of
+   * its body, as shares of the canvas's width and height from its top left; none for one behind
+   * the camera.
+   */
+  anchors(): { id: string; x: number; y: number; top: number }[] {
+    const viewProjection = multiply(this.projection, this.view);
+    const project = (p: Vec3): [number, number] | null => {
+      const m = viewProjection;
+      const w = m[3]! * p[0] + m[7]! * p[1] + m[11]! * p[2] + m[15]!;
+      if (w <= 0) return null;
+      const x = (m[0]! * p[0] + m[4]! * p[1] + m[8]! * p[2] + m[12]!) / w;
+      const y = (m[1]! * p[0] + m[5]! * p[1] + m[9]! * p[2] + m[13]!) / w;
+      return [(x + 1) / 2, (1 - y) / 2];
+    };
+    const out: { id: string; x: number; y: number; top: number }[] = [];
+    for (const { placement } of this.placed) {
+      const { position, radius } = placement;
+      const centre = project(position);
+      const top = project([position[0], position[1], position[2] + radius]);
+      if (centre && top) out.push({ id: placement.planet.id, x: centre[0], y: centre[1], top: top[1] });
+    }
+    return out;
+  }
+
   /** The placed planets moved: their positions and radii, in the order they were placed. */
   placePlanets(positions: readonly Vec3[], radii?: readonly number[]): void {
     const { eye } = this.loaded.scene.camera;

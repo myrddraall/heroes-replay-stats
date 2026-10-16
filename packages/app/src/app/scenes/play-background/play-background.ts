@@ -22,6 +22,8 @@ import { browserColourParser, rendererTints } from './scene-tints';
 export class PlayBackground {
   /** Where the exported scene is served. */
   readonly src = input(PLAY_SCENE_URL);
+  /** Whether each planet's name floats over it (to review them). */
+  readonly names = input(false);
 
   protected readonly store = inject(BackgroundStore);
   protected readonly drawing = this.store.drawing;
