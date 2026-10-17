@@ -29,15 +29,9 @@ h1 {
   height: 100%;
   overflow: hidden;
   background: transparent;
-  // Nothing on this page is rounded: the panel, its fields, its buttons, its dropdowns.
+  // The panel is square (its groups too, below); the controls in it keep Material's shapes.
   --mat-sidenav-container-shape: 0;
-  --mdc-outlined-text-field-container-shape: 0;
-  --mdc-outlined-button-container-shape: 0;
-  --mdc-filled-button-container-shape: 0;
-  --mdc-text-button-container-shape: 0;
-  --mat-select-container-shape: 0;
-  --mat-slide-toggle-track-shape: 0;
-  --mat-slide-toggle-handle-shape: 0;
+  --hrs-glass-radius: 0;
 }
 
 .page__drawer {
