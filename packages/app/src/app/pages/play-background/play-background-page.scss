@@ -91,7 +91,7 @@ h1 {
 
 .slider {
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr);
+  grid-template-columns: 100px minmax(0, 1fr);
   align-items: center;
 
   mat-slider {

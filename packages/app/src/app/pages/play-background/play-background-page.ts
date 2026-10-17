@@ -36,8 +36,9 @@ import {
  * The page holds the background's tints while it is open, over the site's colour; leaving it
  * gives the site's back. Its controls are in the Graphics settings' theme. A Review choice brings
  * in one planet on its own, centred, in place of the sets, while the page is open, with its own
- * settings (style, glow, light, shade, haze): each planet keeps its own, over what its file and
- * its style give it, and Reset gives those back. The planets' names float over them here unless
+ * settings (glow, light, shade, haze, its style's): each planet keeps its own in each style it is
+ * shown in (a variant of it), over what its file and the style give it, and Reset gives those
+ * back for the variant shown. The planets' names float over them here unless
  * switched off. The page's choices (review, names, tints, each planet's settings) are kept
  * across visits.
  */
@@ -47,22 +48,44 @@ const REVIEW_RADIUS = 18;
 /** Where the page's choices are kept. */
 const STORAGE_KEY = 'hrs.background-page';
 
-/** A planet's settings on this page, each where it was set here (else the planet's own apply). */
-interface PlanetChoices {
-  readonly style?: string;
+/**
+ * A planet's settings on this page, each where it was set here (else the planet's own apply): in
+ * each style it is shown in (a variant of the planet), its own.
+ */
+interface VariantChoices {
   readonly glow?: number;
   readonly lighting?: number;
   readonly shade?: number;
   readonly haze?: number;
+  /** Its style's parts: how strongly they show, and the shield's own glow. */
+  readonly shield?: number;
+  readonly ring?: number;
+  readonly shieldGlow?: number;
+  readonly shieldSpread?: number;
+  readonly shieldScale?: number;
+  readonly shieldCut?: number;
 }
 
-/** A planet's settings as shown: its own, over its file's tuning, over the defaults. */
+interface PlanetChoices {
+  /** The style it is shown in, where chosen here. */
+  readonly style?: string;
+  /** Its settings in each style, by the style's id ('' for none). */
+  readonly variants?: Readonly<Record<string, VariantChoices>>;
+}
+
+/** A planet's settings as shown: its own, over its style's, over its file's tuning, over the defaults. */
 interface PlanetValues {
   readonly style: string;
   readonly glow: number;
   readonly lighting: number;
   readonly shade: number;
   readonly haze: number;
+  readonly shield: number;
+  readonly ring: number;
+  readonly shieldGlow: number;
+  readonly shieldSpread: number;
+  readonly shieldScale: number;
+  readonly shieldCut: number;
 }
 
 interface PageChoices {
@@ -130,8 +153,8 @@ export class PlayBackgroundPage {
   private readonly choices = signal<Readonly<Record<string, PlanetChoices>>>(
     this.stored.planets ?? {},
   );
-  /** The reviewed planet's settings set here. */
-  private readonly chosen = computed(() => this.choices()[this.review()] ?? {});
+  /** The reviewed planet's choices here. */
+  private readonly planetChoices = computed(() => this.choices()[this.review()] ?? {});
   /** The reviewed planet's file: what it has, for which controls apply, and its own tuning. */
   private readonly reviewed = resource({
     params: () => this.review() || undefined,
@@ -142,7 +165,11 @@ export class PlayBackgroundPage {
   );
   /** The style the reviewed planet wears, by id; none: as it is. */
   protected readonly style = computed(
-    () => this.chosen().style ?? this.file()?.tuning?.style ?? '',
+    () => this.planetChoices().style ?? this.file()?.tuning?.style ?? '',
+  );
+  /** The reviewed planet's settings set here, in the style it is shown in. */
+  private readonly chosen = computed(
+    (): VariantChoices => this.planetChoices().variants?.[this.style()] ?? {},
   );
   /** The style's file, for what it brings (its shade). */
   private readonly styled = resource({
@@ -154,17 +181,24 @@ export class PlayBackgroundPage {
   protected readonly values = computed((): PlanetValues => {
     const chosen = this.chosen();
     const tuning = this.file()?.tuning;
-    const styleShade = this.styled.hasValue() ? this.styled.value().shade : undefined;
+    const style = this.styled.hasValue() ? this.styled.value() : undefined;
     return {
       style: this.style(),
-      glow: chosen.glow ?? tuning?.glow ?? 0,
+      glow: chosen.glow ?? tuning?.glow ?? 1,
       lighting: chosen.lighting ?? tuning?.lighting ?? 1,
+      // A style it wears shades it its way; else its own tuning.
       shade:
         chosen.shade ??
+        style?.shade?.strength ??
         tuning?.shade?.strength ??
-        styleShade?.strength ??
         DEFAULT_SHADE.strength,
       haze: chosen.haze ?? tuning?.strengths?.layer ?? DEFAULT_STRENGTHS.layer ?? 1,
+      shield: chosen.shield ?? style?.tuning?.strengths?.shield ?? 1,
+      ring: chosen.ring ?? style?.tuning?.strengths?.ring ?? 1,
+      shieldGlow: chosen.shieldGlow ?? style?.tuning?.glows?.shield ?? 1,
+      shieldSpread: chosen.shieldSpread ?? style?.tuning?.spreads?.shield ?? 0,
+      shieldScale: chosen.shieldScale ?? style?.tuning?.scales?.shield ?? 1,
+      shieldCut: chosen.shieldCut ?? style?.tuning?.cuts?.shield ?? 0,
     };
   });
   /** Whether the reviewed planet has anything set here to reset. */
@@ -204,7 +238,11 @@ export class PlayBackgroundPage {
           glow: v.glow,
           lighting: v.lighting,
           shade: { strength: v.shade },
-          strengths: { layer: v.haze },
+          strengths: { layer: v.haze, shield: v.shield, ring: v.ring },
+          glows: { shield: v.shieldGlow },
+          spreads: { shield: v.shieldSpread },
+          scales: { shield: v.shieldScale },
+          cuts: { shield: v.shieldCut },
         },
       ]);
     });
@@ -228,20 +266,38 @@ export class PlayBackgroundPage {
     });
   }
 
-  /** A setting of the reviewed planet, set here. */
-  protected set<K extends keyof PlanetChoices>(key: K, value: PlanetChoices[K]): void {
+  /** The style the reviewed planet is shown in, chosen here. */
+  protected setStyle(style: string): void {
     const id = this.review();
     if (!id) return;
-    this.choices.update((all) => ({ ...all, [id]: { ...all[id], [key]: value } }));
+    this.choices.update((all) => ({ ...all, [id]: { ...all[id], style } }));
   }
 
-  /** The reviewed planet back to its own settings. */
+  /** A setting of the reviewed planet in the style it is shown in, set here. */
+  protected set<K extends keyof VariantChoices>(key: K, value: VariantChoices[K]): void {
+    const id = this.review();
+    if (!id) return;
+    const style = this.style();
+    this.choices.update((all) => {
+      const planet = all[id] ?? {};
+      const variant = planet.variants?.[style] ?? {};
+      return {
+        ...all,
+        [id]: { ...planet, variants: { ...planet.variants, [style]: { ...variant, [key]: value } } },
+      };
+    });
+  }
+
+  /** The reviewed planet, in the style it is shown in, back to its own settings. */
   protected reset(): void {
     const id = this.review();
+    const style = this.style();
     this.choices.update((all) => {
-      const rest = { ...all };
-      delete rest[id];
-      return rest;
+      const planet = all[id];
+      if (!planet?.variants) return all;
+      const variants = { ...planet.variants };
+      delete variants[style];
+      return { ...all, [id]: { ...planet, variants } };
     });
   }
 

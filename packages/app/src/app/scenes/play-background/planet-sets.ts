@@ -8,8 +8,16 @@ export interface SetPlanet {
   readonly radius: number;
   /** A style it wears, by id (the index's), if any. */
   readonly style?: string;
-  /** How much its emissive layers glow past their light (0, none: as the data has it). */
+  /** Its glow: 0 none, 1 its own light's bloom as the data has it, past 1 its emissive light boosted. */
   readonly glow?: number;
+  /** A glow for the parts of a role on its own (a style's shield), over `glow`. */
+  readonly glows?: Partial<Record<PartRole, number>>;
+  /** How far a role's parts show away from the limb, 0 to 1 (a floor under their fresnel). */
+  readonly spreads?: Partial<Record<PartRole, number>>;
+  /** How large a role's parts' emissive pattern is: its tiling times this. */
+  readonly scales?: Partial<Record<PartRole, number>>;
+  /** How much of a role's parts' emissive pattern is cut to black, 0 to 1. */
+  readonly cuts?: Partial<Record<PartRole, number>>;
   /** How strongly its parts of a role show, 0 to 1 (1, as the data has them): its haze layers, its shell, its ring. */
   readonly strengths?: Partial<Record<PartRole, number>>;
   /** How strongly its light lights it, times this (1, as the data has it). */

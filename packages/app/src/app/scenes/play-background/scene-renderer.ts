@@ -111,7 +111,7 @@ uniform vec3 uEye, uRight, uUp;
 uniform vec3 uPlanet;
 uniform bool uAdds;
 uniform float uGlowThreshold, uSceneThreshold, uGlowBoost;
-uniform float uStrength;
+uniform float uStrength, uSpread, uCut;
 uniform vec3 uShadeDir;
 uniform float uShadeStrength, uShadeSoftness;
 layout(location = 0) out vec4 outColor;
@@ -143,7 +143,10 @@ vec3 turn(vec3 v, vec3 axis, float angle) {
 float fresnelFormula(Layer l) {
   vec3 view = turn(turn(normalize(uEye - vWorld), uUp, l.fTurn.x), uRight, l.fTurn.y);
   float facing = clamp(dot(normalize(vNormal), view), 0.0, 1.0);
-  return mix(l.fMin, l.fMax, pow(l.fresnel == 2 ? facing : 1.0 - facing, l.fExponent));
+  // Spread: in place of the layer's minimum (none set: as the layer has it), so what shows at
+  // the limb shows across the face; 0 is nothing but the limb.
+  float low = uSpread < 0.0 ? l.fMin : uSpread * l.fMax;
+  return mix(low, l.fMax, pow(l.fresnel == 2 ? facing : 1.0 - facing, l.fExponent));
 }
 // A colour layer's fresnel, as the game shows it: squared, type 1 with the gain.
 float fresnel(Layer l) {
@@ -199,6 +202,8 @@ void shade() {
   if (uShadeStrength > 0.0)
     base *= 1.0 - uShadeStrength * pow(max(0.0, dot(normalize(vNormal), uShadeDir)), uShadeSoftness);
   vec3 glow = emissive.rgb * uEmissiveMult;
+  // The emissive pattern cut: what is below the cut goes black, the rest keeps its range.
+  if (uCut > 0.0) glow = max(glow - uCut, 0.0) / (1.0 - uCut);
   vec3 rgb = uEmissiveBlend == 2 ? base + glow : base * glow * (uEmissiveBlend == 1 ? 2.0 : 1.0);
   float alpha = maskLayer(uMask0, uLayers[2]) * maskLayer(uMask1, uLayers[3]) * diffuse.a;
   if (uVertexAlpha) alpha *= vColor.a;
@@ -213,10 +218,13 @@ void shade() {
   outCover = vec4(uPlanet * dot(outColor.rgb, LUMINANCE), outColor.a);
   // How much it hides what is behind it, as its planet's: light added hides nothing.
   outBody = uAdds ? vec4(0.0) : vec4(uPlanet * outColor.a, outColor.a);
-  // What blooms under its own light's threshold that the scene's wouldn't, and its emissive
-  // layer's light boosted (a glow as if through haze): the bloom adds them.
-  outGlow = vec4(max(outColor.rgb - uGlowThreshold, 0.0) - max(outColor.rgb - uSceneThreshold, 0.0)
-    + uGlowBoost * glow * (uOpaque ? 1.0 : alpha), outColor.a);
+  // What blooms under its own light's threshold that the scene's wouldn't (the glow up to 1 of
+  // it: 0 none, 1 as the data has it), and past 1 its emissive light boosted (a glow as if
+  // through haze): the bloom adds them. The light is the emissive layer's, or the colour it
+  // modulates (a grid over a colour glows in that colour).
+  vec3 shine = uEmissiveBlend == 2 ? glow : rgb;
+  outGlow = vec4(min(uGlowBoost, 1.0) * (max(outColor.rgb - uGlowThreshold, 0.0) - max(outColor.rgb - uSceneThreshold, 0.0))
+    + max(uGlowBoost - 1.0, 0.0) * shine * (uOpaque ? 1.0 : alpha), outColor.a);
 }
 `;
 
@@ -606,8 +614,16 @@ export interface PlanetPlacement {
   readonly planet: LoadedPlanet;
   /** A style it wears: its parts about the body, its light on the body's lit materials. */
   readonly style?: LoadedPlanet;
-  /** How much its emissive layers glow past their light: added to the bloom, times this. */
+  /** Its glow: 0 none, 1 its own light's bloom as the data has it, past 1 its emissive light boosted into the bloom. */
   readonly glow?: number;
+  /** A glow for the parts of a role on its own (a style's shield), over `glow`. */
+  readonly glows?: Partial<Record<PartRole, number>>;
+  /** How far a role's parts show away from the limb, 0 to 1 (a floor under their fresnel). */
+  readonly spreads?: Partial<Record<PartRole, number>>;
+  /** How large a role's parts' emissive pattern is: its tiling times this. */
+  readonly scales?: Partial<Record<PartRole, number>>;
+  /** How much of a role's parts' emissive pattern is cut to black, 0 to 1. */
+  readonly cuts?: Partial<Record<PartRole, number>>;
   /** How strongly its parts of a role show, 0 to 1 (DEFAULT_STRENGTHS where unsaid): their blended materials' alpha times this. */
   readonly strengths?: Partial<Record<PartRole, number>>;
   /** How strongly its light lights it, times this. */
@@ -1238,8 +1254,10 @@ export class SceneRenderer {
     gl.uniformMatrix4fv(this.uniform(this.meshProgram, 'uViewProjection'), false, viewProjection);
     gl.uniform1f(this.uniform(this.meshProgram, 'uSceneThreshold'), threshold);
     gl.uniform1f(this.uniform(this.meshProgram, 'uGlowThreshold'), threshold); // the sky: no glow of its own
-    gl.uniform1f(this.uniform(this.meshProgram, 'uGlowBoost'), 0);
+    gl.uniform1f(this.uniform(this.meshProgram, 'uGlowBoost'), 1);
     gl.uniform1f(this.uniform(this.meshProgram, 'uStrength'), 1);
+    gl.uniform1f(this.uniform(this.meshProgram, 'uSpread'), -1);
+    gl.uniform1f(this.uniform(this.meshProgram, 'uCut'), 0);
     gl.uniform1f(this.uniform(this.meshProgram, 'uShadeStrength'), 0);
     gl.uniform3fv(this.uniform(this.meshProgram, 'uEye'), this.loaded.scene.camera.eye);
     gl.uniform3fv(this.uniform(this.meshProgram, 'uRight'), right);
@@ -1253,24 +1271,32 @@ export class SceneRenderer {
       if (p !== program) gl.useProgram((program = p));
       gl.bindVertexArray(draw.vao);
       this.blend(draw.material);
-      this.bindMaterial(p, draw.material, seconds);
+      // How a planet's part shows: the placement's say, over its style's, over its planet's tuning.
+      const placement = draw.placed?.placement;
+      const role = draw.part?.role;
+      const tunings = [placement?.style?.planet.tuning, placement?.planet.planet.tuning];
+      const setting = <K extends 'glows' | 'spreads' | 'scales' | 'cuts' | 'strengths'>(key: K) =>
+        role === undefined
+          ? undefined
+          : (placement?.[key]?.[role] ?? tunings[0]?.[key]?.[role] ?? tunings[1]?.[key]?.[role]);
+      this.bindMaterial(p, draw.material, seconds, setting('scales') ?? 1);
       gl.uniform3fv(this.uniform(p, 'uPlanet'), draw.planet);
-      if (draw.part && draw.placed) {
-        const { placement } = draw.placed;
-        const tuning = placement.planet.planet.tuning;
+      if (draw.part && draw.placed && placement && role) {
         this.bindPart(draw.part, draw.placed, right, up);
-        this.bindLight(draw.light, placement.lighting ?? tuning?.lighting ?? 1);
+        this.bindLight(draw.light, placement.lighting ?? tunings[1]?.lighting ?? 1);
         this.bindShade(placement);
         // The body glows under its own light's bloom threshold, lit or not (its city lights aren't lit).
         const own = (placement.style ?? placement.planet).planet.light;
         gl.uniform1f(this.uniform(p, 'uGlowThreshold'), own?.bloomThreshold ?? threshold);
-        gl.uniform1f(this.uniform(p, 'uGlowBoost'), placement.glow ?? tuning?.glow ?? 0);
+        gl.uniform1f(
+          this.uniform(p, 'uGlowBoost'),
+          setting('glows') ?? placement.glow ?? tunings[1]?.glow ?? 1,
+        );
+        gl.uniform1f(this.uniform(p, 'uSpread'), setting('spreads') ?? -1);
+        gl.uniform1f(this.uniform(p, 'uCut'), setting('cuts') ?? 0);
         gl.uniform1f(
           this.uniform(p, 'uStrength'),
-          placement.strengths?.[draw.part.role] ??
-            tuning?.strengths?.[draw.part.role] ??
-            DEFAULT_STRENGTHS[draw.part.role] ??
-            1,
+          setting('strengths') ?? DEFAULT_STRENGTHS[role] ?? 1,
         );
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, draw.count);
       } else {
@@ -1334,10 +1360,11 @@ export class SceneRenderer {
   private bindShade(placement: PlanetPlacement): void {
     const gl = this.gl;
     const p = this.bodyProgram;
+    // The planet's own tuning shades it as it is; a style it wears shades it its way instead.
     const shade = {
       ...DEFAULT_SHADE,
-      ...placement.style?.planet.shade,
       ...placement.planet.planet.tuning?.shade,
+      ...placement.style?.planet.shade,
       ...placement.shade,
     };
     gl.uniform3fv(this.uniform(p, 'uShadeDir'), normalize(shade.direction));
@@ -1376,7 +1403,13 @@ export class SceneRenderer {
     return material;
   }
 
-  private bindMaterial(p: WebGLProgram, material: SceneMaterial, seconds: number): void {
+  /** `emissiveScale` scales the emissive layer's tiling (a pattern made larger or smaller). */
+  private bindMaterial(
+    p: WebGLProgram,
+    material: SceneMaterial,
+    seconds: number,
+    emissiveScale = 1,
+  ): void {
     const gl = this.gl;
     const layers: (SceneLayer | null | undefined)[] = [
       material.diffuse,
@@ -1403,7 +1436,9 @@ export class SceneRenderer {
       gl.uniform1f(at('midtone'), layer.midtone ?? 0);
       gl.uniform2fv(at('offset'), layerOffset(layer, seconds));
       gl.uniform1f(at('angle'), layer.angle ?? 0);
-      gl.uniform2fv(at('tiling'), layer.tiling ?? [1, 1]);
+      const tiling = layer.tiling ?? [1, 1];
+      const scale = i === 1 ? emissiveScale : 1;
+      gl.uniform2f(at('tiling'), tiling[0] * scale, tiling[1] * scale);
       const f = layer.fresnel;
       gl.uniform1i(at('fresnel'), f?.type ?? 0);
       gl.uniform1f(at('fExponent'), f?.exponent ?? 1);

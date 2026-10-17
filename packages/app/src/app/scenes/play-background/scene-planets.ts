@@ -150,10 +150,21 @@ export interface PlanetFile {
   readonly tuning?: PlanetTuning;
 }
 
-/** Settings a planet is shown with unless a placement says otherwise. */
+/** Settings a planet (or a style's parts) is shown with unless a placement says otherwise. */
 export interface PlanetTuning {
   readonly style?: string;
   readonly glow?: number;
+  /** A glow for the parts of a role on its own (a style's shield), over `glow`. */
+  readonly glows?: Partial<Record<PartRole, number>>;
+  /**
+   * How far a role's parts show away from the limb, 0 to 1: a floor under their layers' fresnel
+   * (a style's hex grid is faint but at the rim by its own; spread, it covers the face).
+   */
+  readonly spreads?: Partial<Record<PartRole, number>>;
+  /** How large a role's parts' emissive pattern is: its tiling times this (0.5: twice the size). */
+  readonly scales?: Partial<Record<PartRole, number>>;
+  /** How much of a role's parts' emissive pattern is cut to black, 0 to 1: a grid's cells go, its lines stay. */
+  readonly cuts?: Partial<Record<PartRole, number>>;
   readonly lighting?: number;
   readonly shade?: Partial<BodyShade>;
   readonly strengths?: Partial<Record<PartRole, number>>;
