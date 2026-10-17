@@ -241,6 +241,8 @@ export const PlayBackgroundPageStore = signalStore(
   })),
   withComputed(({ review, files, focus, selected, _scenes, _index, _sceneFile }) => {
     const planetChoices = computed(() => _scenes.planets()[review()] ?? {});
+    /** The scene's own sky (the random sets' under ''). */
+    const sky = computed(() => planetChoices().sky ?? {});
     const moons = computed(() => planetChoices().moons ?? []);
     const planetIds = computed(() =>
       _index.hasValue() ? _index.value().planets.map((p) => p.id) : [],
@@ -307,7 +309,7 @@ export const PlayBackgroundPageStore = signalStore(
     const skyMaterials = computed((): MaterialEntry[] => {
       const scene = _sceneFile.hasValue() ? _sceneFile.value() : null;
       if (!scene) return [];
-      const chosen = _scenes.sky();
+      const chosen = sky().materials ?? {};
       const out: MaterialEntry[] = [];
       for (const mesh of Object.values(scene.meshes)) {
         if (mesh.planet) continue; // the scene's own planets are placed planets
@@ -380,12 +382,11 @@ export const PlayBackgroundPageStore = signalStore(
         if (t.kind === 'sky-material' || t.kind === 'material') return t.name;
         return body()?.id ?? 'Properties';
       }),
-      skyChanged: computed(
-        () => Object.keys(_scenes.sky()).length > 0 || _scenes.skyTint() !== null,
-      ),
+      sky,
+      skyChanged: computed(() => !!sky().materials || !!sky().tint),
       /** The sky's tint as shown (none: no tint), and as set here. */
-      skyTint: computed(() => _scenes.skyTint() ?? NO_MATERIAL_TINT),
-      skyTintSet: computed(() => _scenes.skyTint() ?? undefined),
+      skyTint: computed(() => sky().tint ?? NO_MATERIAL_TINT),
+      skyTintSet: computed(() => sky().tint),
       /** The colour over the whole picture. */
       tint: computed(() => _scenes.settings().background),
       /** The scenes to choose: the random sets, then the planets by kind. */
@@ -527,7 +528,7 @@ export const PlayBackgroundPageStore = signalStore(
     /** A material's settings changed: the sky's, or a body's. */
     const setMaterial = (t: Target, change: Partial<MaterialSettings>) => {
       const { id, style } = scene();
-      if (t.kind === 'sky-material') store._scenes.setSkyMaterial(t.name, change);
+      if (t.kind === 'sky-material') store._scenes.setSkyMaterial(id, t.name, change);
       else if (t.kind === 'material') store._scenes.setMaterial(id, t.path, style, t.name, change);
     };
     return {
@@ -561,7 +562,7 @@ export const PlayBackgroundPageStore = signalStore(
       /** A material's settings taken back (all of them: `keys` left out). */
       clearMaterial(t: Target, keys?: readonly (keyof MaterialSettings)[]): void {
         const { id, style } = scene();
-        if (t.kind === 'sky-material') store._scenes.clearSkyMaterial(t.name, keys);
+        if (t.kind === 'sky-material') store._scenes.clearSkyMaterial(id, t.name, keys);
         else if (t.kind === 'material')
           store._scenes.clearMaterial(id, t.path, style, t.name, keys);
       },
@@ -614,13 +615,13 @@ export const PlayBackgroundPageStore = signalStore(
         patchState(store, { focus: null });
       },
       resetSky(): void {
-        store._scenes.resetSky();
+        store._scenes.resetSky(store.review());
       },
       setSkyTint(tint: MaterialTint): void {
-        store._scenes.setSkyTint(tint);
+        store._scenes.setSkyTint(store.review(), tint);
       },
       clearSkyTint(): void {
-        store._scenes.clearSkyTint();
+        store._scenes.clearSkyTint(store.review());
       },
       chooseTint(choice: string): void {
         store._scenes.chooseTint(choice);
@@ -632,10 +633,9 @@ export const PlayBackgroundPageStore = signalStore(
       confirmReset(asked: boolean): void {
         patchState(store, { confirmingReset: asked });
       },
-      /** The whole scene back as the data has it: the planet's scene, the sky, the colour; the view on the planet. */
+      /** The whole scene back as the data has it: the planet, its moons, the scene's sky, the colour; the view on the planet. */
       resetScene(): void {
-        if (store.review()) store._scenes.resetPlanet(store.review());
-        store._scenes.resetSky();
+        store._scenes.resetPlanet(store.review()); // its sky with it
         store._scenes.resetTint();
         patchState(store, { focus: null, selected: SCENE, confirmingReset: false });
       },
@@ -647,8 +647,8 @@ export const PlayBackgroundPageStore = signalStore(
       effect(() => store._background.setPageTints(backgroundTints(store._scenes.settings())));
       effect(() =>
         store._background.setPageSky({
-          materials: store._scenes.sky(),
-          tint: store._scenes.skyTint() ?? undefined,
+          materials: store.sky().materials,
+          tint: store.sky().tint,
         }),
       );
       effect(() => {

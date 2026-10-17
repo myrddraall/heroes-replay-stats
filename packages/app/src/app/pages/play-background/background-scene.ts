@@ -267,8 +267,18 @@ export function fitRadius(
   return radius;
 }
 
-/** A planet's scene as set on the Background page: its style, its settings in each style, its moons. */
+/** A scene's sky as set on the Background page: its materials' settings by name, and a tint over all of it. */
+export interface SkyChoices {
+  readonly materials?: MaterialSettingsMap;
+  readonly tint?: MaterialTint;
+}
+
+/**
+ * A scene as set on the Background page (a planet's, or the random sets', under ''): the planet's
+ * style, its settings in each style, its moons, and the scene's sky.
+ */
 export interface PlanetChoices {
+  readonly sky?: SkyChoices;
   readonly style?: string;
   /** Its settings in each style, by the style's id ('' for none). */
   readonly variants?: Readonly<Record<string, BodySettings>>;

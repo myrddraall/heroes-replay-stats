@@ -108,8 +108,9 @@ properties of what is selected (`pages/play-background/editor/`, built of the co
 `properties/`). A moon is any planet on an orbit about its parent: radius, tilt, turn, a
 progress round it and its size (`background-scene.ts`); one hidden behind a body is shown round
 its orbit while selected, and the planet is drawn smaller where the scene would not fit the view.
-The scenes themselves are a global store (`BackgroundScenesStore`: each planet's style, looks
-per style and moons, the sky's materials, the scene colour); the editor's own state is the page's
+The scenes themselves are a global store (`BackgroundScenesStore`: for each scene, the planet's
+style, looks per style and moons, and the scene's own sky, its materials and a tint over all of
+it; the random sets are a scene of their own; and the colour over the whole picture); the editor's own state is the page's
 component store (`PlayBackgroundPageStore`: what is shown, selected, folded, focused). Both are
 kept in `localStorage` through the `withLocalStorage` store feature (`data/store-features/`,
 beside `withFolding`; `withPlanetFiles` loads planets' files as a store needs them). The planet

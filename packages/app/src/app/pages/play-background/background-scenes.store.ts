@@ -1,11 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { inject } from '@angular/core';
 import { patchState, signalStore, withMethods, withProps, withState } from '@ngrx/signals';
-import type {
-  MaterialSettings,
-  MaterialSettingsMap,
-  MaterialTint,
-} from '../../scenes/play-background/scene-planets';
+import type { MaterialSettings, MaterialTint } from '../../scenes/play-background/scene-planets';
 import { withLocalStorage } from '../../data/store-features/with-local-storage';
 import {
   addMoon,
@@ -17,6 +13,7 @@ import {
   type MoonChoices,
   type Orbit,
   type PlanetChoices,
+  type SkyChoices,
   without,
 } from './background-scene';
 import { type PartTint, PRESETS, type TintSettings, UNTINTED } from './tint-settings';
@@ -30,26 +27,23 @@ export const CUSTOM_TINT = 'custom';
 interface ScenesState {
   /** The colour over the whole picture. */
   readonly settings: TintSettings;
-  /** The sky's materials' settings, by name. */
-  readonly sky: MaterialSettingsMap;
-  /** A tint over the whole sky (its stars too); none: as the data has it. */
-  readonly skyTint: MaterialTint | null;
-  /** Each planet's scene, by the planet's id. */
+  /** Each scene, by its planet's id ('' for the random sets'): the planet's look and moons, its sky. */
   readonly planets: Readonly<Record<string, PlanetChoices>>;
 }
 
 /**
  * The Background page's scenes (global): for each planet, the style it wears and its look in each
- * style, and its moons (each its own look and orbit, its own moons); the sky's materials and a
- * tint over the whole sky; and the colour over the whole picture. Kept in `localStorage`. What is set here is set over what the
+ * style, and its moons (each its own look and orbit, its own moons), and the scene's sky (its
+ * materials, a tint over all of it), each scene its own (the random sets' too); and the colour over
+ * the whole picture. Kept in `localStorage`. What is set here is set over what the
  * game data and its tuning give: taking a setting back gives the data's again.
  * A planet's own settings are kept by the style it wears (its look in that style): whoever changes
  * them says which style that is.
  */
 export const BackgroundScenesStore = signalStore(
   { providedIn: 'root' },
-  withState<ScenesState>({ settings: UNTINTED, sky: {}, skyTint: null, planets: {} }),
-  withLocalStorage<ScenesState>(BACKGROUND_SCENES_KEY, ['settings', 'sky', 'skyTint', 'planets']),
+  withState<ScenesState>({ settings: UNTINTED, planets: {} }),
+  withLocalStorage<ScenesState>(BACKGROUND_SCENES_KEY, ['settings', 'planets']),
   withProps(() => ({ _root: inject(DOCUMENT).documentElement })),
   withMethods((store) => {
     const planet = (id: string): PlanetChoices => store.planets()[id] ?? {};
@@ -60,6 +54,14 @@ export const BackgroundScenesStore = signalStore(
       else delete next[id];
       patchState(store, { planets: next });
     };
+    /** A scene's sky changed (nothing left set: none kept). */
+    const setSky = (id: string, change: (sky: SkyChoices) => SkyChoices) =>
+      setPlanet(id, (p) => {
+        const sky = change(p.sky ?? {});
+        const kept = sky.materials || sky.tint ? sky : undefined;
+        const next = { ...p, sky: kept };
+        return Object.values(next).some((v) => v !== undefined) ? next : null;
+      });
     const setMoons = (id: string, moons: readonly MoonChoices[]) =>
       setPlanet(id, (p) => ({ ...p, moons }));
     /** A body's settings changed: the planet's in `style`, a moon's its own. */
@@ -177,26 +179,31 @@ export const BackgroundScenesStore = signalStore(
       resetPlanet(id: string): void {
         setPlanet(id, () => null);
       },
-      setSkyMaterial(name: string, change: Partial<MaterialSettings>): void {
-        patchState(store, { sky: { ...store.sky(), [name]: { ...store.sky()[name], ...change } } });
+      setSkyMaterial(id: string, name: string, change: Partial<MaterialSettings>): void {
+        setSky(id, (sky) => ({
+          ...sky,
+          materials: { ...sky.materials, [name]: { ...sky.materials?.[name], ...change } },
+        }));
       },
       /** A sky material's settings taken back (all of them: `keys` left out). */
-      clearSkyMaterial(name: string, keys?: readonly (keyof MaterialSettings)[]): void {
-        const sky = { ...store.sky() };
-        const left = keys ? without(sky[name], keys) : undefined;
-        if (left) sky[name] = left;
-        else delete sky[name];
-        patchState(store, { sky });
+      clearSkyMaterial(id: string, name: string, keys?: readonly (keyof MaterialSettings)[]): void {
+        setSky(id, (sky) => {
+          const materials = { ...sky.materials };
+          const left = keys ? without(materials[name], keys) : undefined;
+          if (left) materials[name] = left;
+          else delete materials[name];
+          return { ...sky, materials: Object.keys(materials).length ? materials : undefined };
+        });
       },
-      setSkyTint(skyTint: MaterialTint): void {
-        patchState(store, { skyTint });
+      setSkyTint(id: string, tint: MaterialTint): void {
+        setSky(id, (sky) => ({ ...sky, tint }));
       },
-      clearSkyTint(): void {
-        patchState(store, { skyTint: null });
+      clearSkyTint(id: string): void {
+        setSky(id, (sky) => ({ ...sky, tint: undefined }));
       },
-      /** The sky back as the data has it: its materials and its tint. */
-      resetSky(): void {
-        patchState(store, { sky: {}, skyTint: null });
+      /** A scene's sky back as the data has it: its materials and its tint. */
+      resetSky(id: string): void {
+        setSky(id, () => ({}));
       },
       /**
        * The colour over the whole picture chosen: a preset by id (the first: none, its colour read
