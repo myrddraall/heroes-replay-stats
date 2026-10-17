@@ -57,6 +57,22 @@ interface Fly {
 }
 
 const easeIn = (u: number) => u * u;
+
+/** Whether two sets put the same planets, in the same styles, in the same places. */
+function sameBodies(a: readonly PlanetPlacement[], b: readonly PlanetPlacement[]): boolean {
+  return (
+    a.length === b.length &&
+    a.every((p, i) => {
+      const q = b[i]!;
+      return (
+        p.planet === q.planet &&
+        p.style === q.style &&
+        p.radius === q.radius &&
+        p.position.every((v, k) => v === q.position[k])
+      );
+    })
+  );
+}
 const easeOut = (u: number) => 1 - (1 - u) * (1 - u);
 
 /**
@@ -297,12 +313,17 @@ export class SceneCanvas {
         crossFadeTo(() => (clock += (performance.now() - drawnAt) / 1000));
       },
       // A new set of planets: the first is put up as it is; another is flown to while the scene
-      // animates (the old ones keep their tints till they are gone), else cross-faded to.
+      // animates (the old ones keep their tints till they are gone), else cross-faded to. The
+      // same planets in the same places, changed in how they show (a style, a glow, a strength),
+      // are drawn again as they are: no fly, no fade.
       replace: (placements) => {
         if (placements === shown) return;
         const before = shown;
         shown = placements;
-        if (!before.length || reducedMotion.matches) {
+        if (before.length && sameBodies(before, placements) && !fly) {
+          renderer.setPlanets(placements);
+          if (!frame) draw();
+        } else if (!before.length || reducedMotion.matches) {
           renderer.setPlanets(placements);
           if (!frame) draw();
         } else if (frame) {

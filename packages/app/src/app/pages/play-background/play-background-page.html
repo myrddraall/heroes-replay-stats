@@ -1,55 +1,154 @@
 <main>
   <h1>Play screen background</h1>
-  <hrs-play-background [names]="names()" />
-  <button
-    mat-icon-button
-    type="button"
-    class="back"
-    aria-label="Back"
-    matTooltip="Back"
-    (click)="back()"
+  <mat-drawer-container
+    class="page"
+    [class]="'hrs-glass-' + graphics.theme()"
+    [hasBackdrop]="false"
   >
-    <mat-icon class="material-symbols-outlined" aria-hidden="true">arrow_back</mat-icon>
-  </button>
-  <div class="corner">
-    <div class="row">
-      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="review">
-        <mat-label>Review</mat-label>
-        <mat-select [value]="review()" (selectionChange)="review.set($event.value)">
-          <mat-option value="">Sets</mat-option>
-          @for (planet of planets.hasValue() ? planets.value().planets : []; track planet.id) {
-            <mat-option [value]="planet.id">{{ planet.id }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-      <mat-slide-toggle class="names" [checked]="names()" (change)="names.set($event.checked)">
-        Names
-      </mat-slide-toggle>
-      <button mat-stroked-button type="button" class="open" (click)="anotherSet()" [disabled]="review() !== ''">
-        <mat-icon class="material-symbols-outlined" aria-hidden="true">shuffle</mat-icon>
-        Planets
-      </button>
-    </div>
-    <button
-      mat-stroked-button
-      type="button"
-      class="open"
-      aria-controls="tint-controls"
-      [attr.aria-expanded]="open()"
-      (click)="open.set(!open())"
+    <mat-drawer
+      id="background-panel"
+      class="page__drawer"
+      aria-label="Background controls"
+      position="end"
+      mode="side"
+      [opened]="panel()"
+      (openedChange)="panel.set($event)"
     >
-      <mat-icon class="material-symbols-outlined" aria-hidden="true">palette</mat-icon>
-      Colours
-    </button>
-    @if (open()) {
-      <hrs-tint-controls
-        id="tint-controls"
-        class="hrs-glass"
-        [class]="'hrs-glass-' + graphics.theme()"
-        [(settings)]="settings"
-        [presets]="presets"
-        (presetChosen)="choose($event)"
-      />
-    }
-  </div>
+      <hrs-map-panel title="Background" (closeRequested)="panel.set(false)">
+        <fieldset class="group">
+          <legend>Planets</legend>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Review</mat-label>
+            <mat-select [value]="review()" (selectionChange)="review.set($event.value)">
+              <mat-option value="">Sets</mat-option>
+              @for (planet of planets.hasValue() ? planets.value().planets : []; track planet.id) {
+                <mat-option [value]="planet.id">{{ planet.id }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <div class="actions">
+            <mat-slide-toggle [checked]="names()" (change)="names.set($event.checked)">
+              Names
+            </mat-slide-toggle>
+            <button
+              mat-stroked-button
+              type="button"
+              (click)="anotherSet()"
+              [disabled]="review() !== ''"
+            >
+              <mat-icon class="material-symbols-outlined" aria-hidden="true">shuffle</mat-icon>
+              Another set
+            </button>
+          </div>
+        </fieldset>
+        @if (review(); as id) {
+          @let v = values();
+          <fieldset class="group">
+            <legend>{{ id }}</legend>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>Style</mat-label>
+              <mat-select [value]="v.style" (selectionChange)="set('style', $event.value)">
+                <mat-option value="">None</mat-option>
+                @for (style of planets.hasValue() ? planets.value().styles : []; track style.id) {
+                  <mat-option [value]="style.id">{{ style.id }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <label class="slider">
+              <span>Glow</span>
+              <mat-slider min="0" max="4" step="0.1" discrete [disabled]="!canGlow()">
+                <input
+                  matSliderThumb
+                  #glowThumb="matSliderThumb"
+                  [value]="v.glow"
+                  (input)="set('glow', glowThumb.value)"
+                  aria-label="Glow"
+                />
+              </mat-slider>
+            </label>
+            <label class="slider">
+              <span>Light</span>
+              <mat-slider min="0" max="3" step="0.05" discrete [disabled]="!canLight()">
+                <input
+                  matSliderThumb
+                  #lightThumb="matSliderThumb"
+                  [value]="v.lighting"
+                  (input)="set('lighting', lightThumb.value)"
+                  aria-label="Light"
+                />
+              </mat-slider>
+            </label>
+            <label class="slider">
+              <span>Shade</span>
+              <mat-slider min="0" max="1" step="0.05" discrete>
+                <input
+                  matSliderThumb
+                  #shadeThumb="matSliderThumb"
+                  [value]="v.shade"
+                  (input)="set('shade', shadeThumb.value)"
+                  aria-label="Shade"
+                />
+              </mat-slider>
+            </label>
+            <label class="slider">
+              <span>Haze</span>
+              <mat-slider min="0" max="1" step="0.01" discrete [disabled]="!canHaze()">
+                <input
+                  matSliderThumb
+                  #hazeThumb="matSliderThumb"
+                  [value]="v.haze"
+                  (input)="set('haze', hazeThumb.value)"
+                  aria-label="Haze"
+                />
+              </mat-slider>
+            </label>
+            <button
+              mat-stroked-button
+              type="button"
+              class="reset"
+              (click)="reset()"
+              [disabled]="!changed()"
+            >
+              <mat-icon class="material-symbols-outlined" aria-hidden="true">restart_alt</mat-icon>
+              Reset
+            </button>
+          </fieldset>
+        }
+        <fieldset class="group">
+          <legend>Colours</legend>
+          <hrs-tint-controls
+            [(settings)]="settings"
+            [presets]="presets"
+            (presetChosen)="choose($event)"
+          />
+        </fieldset>
+      </hrs-map-panel>
+    </mat-drawer>
+    <mat-drawer-content class="page__content">
+      <hrs-play-background class="page__scene" [names]="names()" />
+      <button
+        mat-icon-button
+        type="button"
+        class="back"
+        aria-label="Back"
+        matTooltip="Back"
+        (click)="back()"
+      >
+        <mat-icon class="material-symbols-outlined" aria-hidden="true">arrow_back</mat-icon>
+      </button>
+      <button
+        mat-icon-button
+        type="button"
+        class="page__toggle"
+        aria-controls="background-panel"
+        [attr.aria-expanded]="panel()"
+        [attr.aria-label]="panel() ? 'Hide the controls' : 'Show the controls'"
+        (click)="panel.set(!panel())"
+      >
+        <mat-icon class="material-symbols-outlined" aria-hidden="true">
+          {{ panel() ? 'right_panel_close' : 'right_panel_open' }}
+        </mat-icon>
+      </button>
+    </mat-drawer-content>
+  </mat-drawer-container>
 </main>

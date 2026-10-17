@@ -133,6 +133,8 @@ export interface SceneTexture {
 export interface SceneTone {
   readonly exposure: number;
   readonly whitePoint: number;
+  /** The brightness the light's bloom starts from, where the data sets it. */
+  readonly bloomThreshold?: number;
 }
 
 export interface PlayScene {

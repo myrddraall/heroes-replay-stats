@@ -18,6 +18,7 @@ const index: PlanetIndex = {
     { id: 'play-medium', position: [37.3, 64.9, 14.2], radius: 9 },
     { id: 'play-small', position: [27.8, 53.8, 7.5], radius: 1.6 },
   ],
+  styles: [{ id: 'nexus' }],
 };
 
 describe('planet sets', () => {

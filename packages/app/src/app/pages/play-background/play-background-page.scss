@@ -1,10 +1,11 @@
+@use '../../../theme/glass-mixins' as glass;
+
 :host {
   position: fixed;
   inset: 0;
 }
 
-main,
-hrs-play-background {
+main {
   position: absolute;
   inset: 0;
 }
@@ -22,56 +23,100 @@ h1 {
   border: 0;
 }
 
+// The drawer container fills the page; the scene fills the content beside the panel, as the map
+// does beside its panels.
+.page {
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+  // Nothing on this page is rounded: the panel, its fields, its buttons, its dropdowns.
+  --mat-sidenav-container-shape: 0;
+  --mdc-outlined-text-field-container-shape: 0;
+  --mdc-outlined-button-container-shape: 0;
+  --mdc-filled-button-container-shape: 0;
+  --mdc-text-button-container-shape: 0;
+  --mat-select-container-shape: 0;
+  --mat-slide-toggle-track-shape: 0;
+  --mat-slide-toggle-handle-shape: 0;
+}
+
+.page__drawer {
+  width: var(--hrs-map-panel-width, min(360px, 90vw));
+  overflow: hidden;
+  border-radius: 0;
+  @include glass.frame-glass(left, 1, 0);
+
+  // Only the panel's body may scroll.
+  :host ::ng-deep &.mat-drawer .mat-drawer-inner-container {
+    overflow: hidden;
+  }
+}
+
+.page__content {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+
+.page__scene {
+  position: absolute;
+  inset: 0;
+}
+
 // Back to the site, in the top left; dark behind it so it reads over the brightest sky.
 .back {
   position: absolute;
-  top: 16px;
-  left: 16px;
-  background: rgb(0 0 0 / 0.55);
+  top: 8px;
+  left: 8px;
+  background: rgb(var(--hrs-glass-tint) / var(--hrs-glass-alpha-frame));
+  backdrop-filter: var(--hrs-glass-backdrop-frame);
 }
 
-// The tint controls, in the top right: a button, and the panel it opens under it.
-.corner {
+// Over the scene's top right corner: the panel's toggle.
+.page__toggle {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: 8px;
+  inset-inline-end: 8px;
+  z-index: 10001;
+  background: rgb(var(--hrs-glass-tint) / var(--hrs-glass-alpha-frame));
+  backdrop-filter: var(--hrs-glass-backdrop-frame);
+}
+
+.group {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  justify-items: end;
-  gap: 8px;
-  max-width: calc(100vw - 32px);
-  max-height: calc(100vh - 32px);
+  gap: 10px;
+  margin: 0 0 12px;
+  padding: 8px 12px 12px;
+  border: 1px solid rgb(var(--hrs-glass-edge) / 0.3);
+
+  legend {
+    padding: 0 4px;
+    font-weight: 600;
+  }
 }
 
-// Dark behind its text so it reads over the brightest sky.
-.open {
-  background: rgb(0 0 0 / 0.55);
+.slider {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  align-items: center;
+
+  mat-slider {
+    width: 100%;
+  }
 }
 
-.row {
+.actions {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
 }
 
-.review {
-  width: 160px;
-  background: rgb(0 0 0 / 0.55);
-  border-radius: 4px;
+.reset {
+  justify-self: start;
 }
 
-.names {
-  padding: 4px 10px;
-  border-radius: 20px;
-  background: rgb(0 0 0 / 0.55);
-}
-
+// The tint controls, inside the panel: no panel of their own.
 hrs-tint-controls {
-  width: 470px;
-  max-width: 100%;
-  min-height: 0;
-  overflow-y: auto;
-  // Opaque enough to read over the brightest sky.
-  --hrs-glass-alpha: 0.7;
-  --hrs-glass-backdrop: none;
+  padding: 0;
 }

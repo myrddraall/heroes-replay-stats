@@ -82,12 +82,27 @@ and a Colours button in the top right to try tints: presets, and each part's col
 The planets are put up in sets: the game's own as the site loads, then one drawn at random with
 each page (`nextPlanetSet` on BackgroundStore; the Background page's Planets button too), from the
 pool heroes-capture exports beside the scene (`planets/`): the Play screen's three, the tutorial
-flyby's three worlds (Azeroth, Korhal, Sanctuary) with their own meshes and lit as the flyby lights
-them, and its nine painted spheres on the Play screen's hemisphere, each wearing the Play screen's
-hex grid and atmosphere. Each planet loads the first time a set has it (`PlanetLoader`). The
-renderer turns each to face the camera as the game's billboards do and lights the flyby's by their
-lights (`scene-renderer.ts`); the layout is `planet-sets.ts` (a set from a number, the same number
-the same set). A new set is flown to while the background animates: the camera turns, the planets
+flyby's three worlds (Azeroth, Korhal, Sanctuary) with their own layered materials and atmosphere
+shells, lit as the flyby lights them, and its nine painted spheres. A planet is a body of parts
+(`scene-planets.ts`): each a shape about the body's centre (a sphere seen from outside or, for an
+atmosphere shell modelled inside out, from inside; a flat ring) with a rule mapping it to its
+materials' textures (a uv sphere about a pole, linear in the point, or round the ring), all read
+off the game's meshes by heroes-capture. No mesh is loaded: the renderer draws each part on one
+camera-facing square, finding the shape under each pixel (the body shader in
+`scene-renderer.ts`), turned to face the camera as the game's billboards do and lit by the
+flyby's lights where it is a world's. A planet can wear a style (`style-<id>.json`, the same
+form): its parts go about the body and its shade darkens it from a side; `nexus` is the Play
+screen's look for a world (its hex-grid shield and ring, a crescent left lit). How a planet shows
+is settable per placement (`SetPlanet`): a glow (its emissive layers into the bloom), its light's
+strength, a shade, and the strength of its parts by role (haze layers, shell, ring, shield);
+heroes-capture's `tuning` in a planet's file is the default where the data alone isn't right (Korhal's
+haze at 0.42, its back light's crescent shaded). The Background page's panel sets these per planet
+(kept in `localStorage`, Reset gives the planet's own back). Each planet loads the first time a set has
+it (`PlanetLoader`); the layout is `planet-sets.ts` (a set from a number, the same number
+the same set). What glows past the light's bloom threshold (in the scene's tone data) blooms: blurred
+small and added back, as the game's HDR does, which spreads the flyby planets' atmospheres into
+soft coronas (how far and how strongly isn't in the data: measured against the tutorial's own shots,
+got from a recording of it, as were the lights' reading and each world's moment). A new set is flown to while the background animates: the camera turns, the planets
 slide out and the new ones in, the stars streak (1.6 s); where it doesn't, the picture cross-fades.
 
 The Graphics settings (Settings page; `GraphicsStore`, `packages/app/src/app/data/settings/graphics.store.ts`,

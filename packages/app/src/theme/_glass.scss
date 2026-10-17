@@ -46,6 +46,10 @@
   --mat-sys-surface-container-highest: rgb(
     var(--hrs-glass-tint) / calc(var(--hrs-glass-alpha) + 0.2)
   );
+  // What pops up over the glass (a select's options) is solid tint: it reads over anything.
+  --mat-select-panel-background-color: rgb(var(--hrs-glass-tint));
+  --mat-menu-container-color: rgb(var(--hrs-glass-tint));
+  --mat-autocomplete-background-color: rgb(var(--hrs-glass-tint));
   color: var(--mat-sys-on-surface);
 }
 

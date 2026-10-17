@@ -27,15 +27,15 @@ canvas {
   opacity: 0;
 }
 
-// A planet's name, floating just over the top of it.
+// A planet's name, floating a little above it.
 .name {
   position: absolute;
-  transform: translate(-50%, calc(-100% - 6px));
-  padding: 2px 8px;
-  border-radius: 4px;
+  transform: translate(-50%, calc(-100% - 18px));
+  padding: 4px 12px;
+  border-radius: 6px;
   background: rgb(0 0 0 / 0.55);
   color: #fff;
-  font: var(--mat-sys-label-medium);
+  font: var(--mat-sys-title-medium);
   letter-spacing: 0.04em;
   white-space: nowrap;
   pointer-events: none;

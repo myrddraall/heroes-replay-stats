@@ -1,11 +1,21 @@
 import type { SceneCamera } from './play-scene';
-import type { PlanetIndex } from './scene-planets';
+import type { BodyShade, PartRole, PlanetIndex } from './scene-planets';
 
 /** A planet in a set: which, where (the scene's units), and its body's radius there. */
 export interface SetPlanet {
   readonly id: string;
   readonly position: readonly [number, number, number];
   readonly radius: number;
+  /** A style it wears, by id (the index's), if any. */
+  readonly style?: string;
+  /** How much its emissive layers glow past their light (0, none: as the data has it). */
+  readonly glow?: number;
+  /** How strongly its parts of a role show, 0 to 1 (1, as the data has them): its haze layers, its shell, its ring. */
+  readonly strengths?: Partial<Record<PartRole, number>>;
+  /** How strongly its light lights it, times this (1, as the data has it). */
+  readonly lighting?: number;
+  /** A shade from a side, over its style's (what is given here; the rest the style's or DEFAULT_SHADE). */
+  readonly shade?: Partial<BodyShade>;
 }
 
 /** A set of planets to put up, largest first: each takes the tint channel of its place. */

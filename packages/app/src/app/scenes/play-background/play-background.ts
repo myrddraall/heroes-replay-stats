@@ -54,8 +54,22 @@ export class PlayBackground {
     loader: async ({ params: set, abortSignal }): Promise<readonly PlanetPlacement[] | null> => {
       if (!set) return null;
       const loader = this.planets();
-      const loaded = await Promise.all(set.map((p) => loader.load(p.id, abortSignal)));
-      return set.map((p, slot) => ({ planet: loaded[slot]!, position: p.position, radius: p.radius, slot }));
+      const loaded = await Promise.all(
+        set.map(async (p) => ({
+          planet: await loader.load(p.id, abortSignal),
+          style: p.style ? await loader.load(`style-${p.style}`, abortSignal) : undefined,
+        })),
+      );
+      return set.map((p, slot) => ({
+        ...loaded[slot]!,
+        position: p.position,
+        radius: p.radius,
+        glow: p.glow,
+        strengths: p.strengths,
+        lighting: p.lighting,
+        shade: p.shade,
+        slot,
+      }));
     },
   });
   /** What is shown: a set that has loaded (a failed one leaves the last up). */
