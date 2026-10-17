@@ -1,23 +1,15 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { RouterLink } from '@angular/router';
-import { EmptyState } from '../empty-state';
+import { Component, inject } from '@angular/core';
+import { ReplayList } from './replay-list';
+import { ReplaysPageStore } from './replays-page.store';
+import { Layout } from '../../layout/layout';
 
+/** The stored replays (container). */
 @Component({
   selector: 'hrs-replays-page',
-  imports: [EmptyState, MatButtonModule, RouterLink],
-  template: `
-    <h1>Replays</h1>
-    <hrs-empty-state icon="history" title="No replays yet">
-      Import a few .StormReplay files and they will be parsed, stored locally and listed here.
-      <br /><a mat-stroked-button routerLink="/import" class="cta">Import replays</a>
-    </hrs-empty-state>
-  `,
-  styles: `
-    .cta {
-      margin-top: 16px;
-    }
-  `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [Layout, ReplayList],
+  templateUrl: './replays-page.html',
+  providers: [ReplaysPageStore],
 })
-export class ReplaysPage {}
+export class ReplaysPage {
+  protected readonly store = inject(ReplaysPageStore);
+}

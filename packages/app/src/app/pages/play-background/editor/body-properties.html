@@ -1,0 +1,149 @@
+@let v = values();
+<hrs-property-section title="Body" [changed]="styleSet()" (resetRequested)="styleReset.emit()">
+  <hrs-property-select
+    label="Style"
+    [value]="v.style"
+    [options]="styleOptions()"
+    [changed]="styleSet()"
+    (resetRequested)="styleReset.emit()"
+    (valueChange)="styleChange.emit($event)"
+  />
+</hrs-property-section>
+@if (orbit(); as o) {
+  <hrs-property-section title="Orbit" [changed]="orbitSet()" (resetRequested)="resetOrbit()">
+    <hrs-property-slider
+      label="Progress"
+      [value]="o.progress"
+      [min]="0"
+      [max]="1"
+      [step]="0.01"
+      [changed]="orbitSet('progress')"
+      (resetRequested)="resetOrbit('progress')"
+      (valueChange)="orbitChange.emit({ progress: $event })"
+    />
+    <hrs-property-slider
+      label="Distance"
+      [value]="o.radius"
+      [min]="1"
+      [max]="8"
+      [step]="0.05"
+      [changed]="orbitSet('radius')"
+      (resetRequested)="resetOrbit('radius')"
+      (valueChange)="orbitChange.emit({ radius: $event })"
+    />
+    <hrs-property-slider
+      label="Tilt"
+      [value]="o.tilt"
+      [min]="-90"
+      [max]="90"
+      [step]="1"
+      [changed]="orbitSet('tilt')"
+      (resetRequested)="resetOrbit('tilt')"
+      (valueChange)="orbitChange.emit({ tilt: $event })"
+    />
+    <hrs-property-slider
+      label="Turn"
+      [value]="o.turn"
+      [min]="-180"
+      [max]="180"
+      [step]="1"
+      [changed]="orbitSet('turn')"
+      (resetRequested)="resetOrbit('turn')"
+      (valueChange)="orbitChange.emit({ turn: $event })"
+    />
+    <hrs-property-slider
+      label="Size"
+      [value]="o.size"
+      [min]="0.02"
+      [max]="1"
+      [step]="0.01"
+      [changed]="orbitSet('size')"
+      (resetRequested)="resetOrbit('size')"
+      (valueChange)="orbitChange.emit({ size: $event })"
+    />
+  </hrs-property-section>
+}
+<hrs-property-section
+  title="Light"
+  [changed]="anySet(lightKeys)"
+  (resetRequested)="clear.emit(lightKeys)"
+>
+  @if (canLight()) {
+    <hrs-property-slider
+      label="Light"
+      [value]="v.lighting"
+      [min]="0"
+      [max]="3"
+      [step]="0.05"
+      [changed]="isSet('lighting')"
+      (resetRequested)="clear.emit(['lighting'])"
+      (valueChange)="settingsChange.emit({ lighting: $event })"
+    />
+    @if (v.lightFrom; as from) {
+      <hrs-property-direction
+        label="Light from"
+        [value]="from"
+        [back]="true"
+        [changed]="isSet('lightFrom')"
+        (resetRequested)="clear.emit(['lightFrom'])"
+        (valueChange)="settingsChange.emit({ lightFrom: $event })"
+      />
+    }
+  }
+  <hrs-property-slider
+    label="Shade"
+    [value]="v.shade"
+    [min]="0"
+    [max]="1"
+    [step]="0.05"
+    [changed]="isSet('shade')"
+    (resetRequested)="clear.emit(['shade'])"
+    (valueChange)="settingsChange.emit({ shade: $event })"
+  />
+  <hrs-property-direction
+    label="Shade on"
+    [value]="v.shadeTowards"
+    [back]="true"
+    [changed]="isSet('shadeTowards')"
+    (resetRequested)="clear.emit(['shadeTowards'])"
+    (valueChange)="settingsChange.emit({ shadeTowards: $event })"
+  />
+  <hrs-property-direction
+    label="Rims lean"
+    [value]="v.rim"
+    [changed]="isSet('rim')"
+    (resetRequested)="clear.emit(['rim'])"
+    (valueChange)="settingsChange.emit({ rim: $event })"
+  />
+</hrs-property-section>
+<hrs-tint-section
+  [tint]="v.tint"
+  [base]="baseTint()"
+  [set]="set().tint"
+  (tintChange)="settingsChange.emit({ tint: $event })"
+  (clear)="clear.emit(['tint'])"
+/>
+<hrs-property-section title="Moons">
+  <select class="action" aria-label="Add a moon" (change)="add($event)">
+    <option value="" selected>Add a moon…</option>
+    @for (id of planets(); track id) {
+      <option [value]="id">{{ id }}</option>
+    }
+  </select>
+</hrs-property-section>
+<div class="buttons">
+  @if (orbit()) {
+    <button
+      type="button"
+      class="button"
+      (click)="focusToggle.emit()"
+      [attr.aria-pressed]="focused()"
+    >
+      {{ focused() ? 'Unfocus' : 'Focus' }}
+    </button>
+    <button type="button" class="button" (click)="removeRequested.emit()">Remove moon</button>
+  }
+  <button type="button" class="button" (click)="resetRequested.emit()" [disabled]="!changed()">
+    Reset look
+  </button>
+</div>

@@ -1,0 +1,14 @@
+@if (scene.hasValue()) {
+  <hrs-scene-canvas
+    [scene]="scene.value()"
+    [tint]="tint()"
+    [sky]="sky()"
+    [animate]="drawing().animate"
+    [fps]="store.fps()"
+    [fadeFps]="store.fadeFps()"
+    [resolution]="drawing().resolution"
+    [picture]="store.picture()"
+    [placements]="shown()"
+    [names]="names()"
+  />
+}

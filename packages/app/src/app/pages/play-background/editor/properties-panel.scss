@@ -1,0 +1,29 @@
+@use '../properties/property-row';
+
+// A properties panel's sections, one after another, tight.
+:host {
+  display: grid;
+  gap: 4px;
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 4px;
+}
+
+.button {
+  @include property-row.button;
+}
+
+// A choice that acts at once (add a moon): a small select, put back to its prompt after.
+.action {
+  @include property-row.field;
+  max-width: 100%;
+
+  option {
+    background: rgb(var(--hrs-glass-tint));
+    color: inherit;
+  }
+}

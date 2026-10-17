@@ -1,0 +1,10 @@
+:host {
+  position: relative;
+  display: block;
+  overflow: hidden;
+}
+
+.heroes-map__viewer {
+  position: absolute;
+  inset: 0;
+}

@@ -1,0 +1,119 @@
+@let v = values();
+@let c = controls();
+<hrs-property-section
+  title="Compositing"
+  [changed]="anySet(['strength', 'blend'])"
+  (resetRequested)="clear.emit(['strength', 'blend'])"
+>
+  @if (c.strength) {
+    <hrs-property-slider
+      label="Strength"
+      [value]="v.strength"
+      [min]="0"
+      [max]="1"
+      [step]="0.01"
+      [changed]="isSet('strength')"
+      (resetRequested)="clear.emit(['strength'])"
+      (valueChange)="settingsChange.emit({ strength: $event })"
+    />
+  }
+  <hrs-property-select
+    label="Blend"
+    [value]="v.blend"
+    [options]="blends"
+    [changed]="isSet('blend')"
+    (resetRequested)="clear.emit(['blend'])"
+    (valueChange)="blend($event)"
+  />
+</hrs-property-section>
+<hrs-tint-section
+  [tint]="v.tint"
+  [base]="baseTint()"
+  [set]="set()?.tint"
+  (tintChange)="settingsChange.emit({ tint: $event })"
+  (clear)="clear.emit(['tint'])"
+/>
+<hrs-property-section
+  title="Light"
+  [changed]="anySet(['glow', 'spread'])"
+  (resetRequested)="clear.emit(['glow', 'spread'])"
+>
+  <hrs-property-slider
+    label="Glow"
+    [value]="v.glow"
+    [min]="0"
+    [max]="4"
+    [step]="0.1"
+    [changed]="isSet('glow')"
+    (resetRequested)="clear.emit(['glow'])"
+    (valueChange)="settingsChange.emit({ glow: $event })"
+  />
+  @if (c.spread) {
+    <hrs-property-slider
+      label="Spread"
+      [value]="v.spread"
+      [min]="0"
+      [max]="1"
+      [step]="0.05"
+      [changed]="isSet('spread')"
+      (resetRequested)="clear.emit(['spread'])"
+      (valueChange)="settingsChange.emit({ spread: $event })"
+    />
+  }
+</hrs-property-section>
+@if (c.scale) {
+  <hrs-property-section
+    title="Pattern"
+    [changed]="anySet(['scale', 'width', 'soft', 'cut'])"
+    (resetRequested)="clear.emit(['scale', 'width', 'soft', 'cut'])"
+  >
+    <hrs-property-slider
+      label="Size"
+      [value]="v.scale"
+      [min]="0.1"
+      [max]="1"
+      [step]="0.05"
+      [changed]="isSet('scale')"
+      (resetRequested)="clear.emit(['scale'])"
+      (valueChange)="settingsChange.emit({ scale: $event })"
+    />
+    @if (c.lines) {
+      <hrs-property-slider
+        label="Line width"
+        [value]="v.width"
+        [min]="0.01"
+        [max]="0.4"
+        [step]="0.01"
+        [changed]="isSet('width')"
+        (resetRequested)="clear.emit(['width'])"
+        (valueChange)="settingsChange.emit({ width: $event })"
+      />
+      <hrs-property-slider
+        label="Line soft"
+        [value]="v.soft"
+        [min]="0"
+        [max]="1"
+        [step]="0.05"
+        [changed]="isSet('soft')"
+        (resetRequested)="clear.emit(['soft'])"
+        (valueChange)="settingsChange.emit({ soft: $event })"
+      />
+    } @else if (c.cut) {
+      <hrs-property-slider
+        label="Contrast"
+        [value]="v.cut"
+        [min]="0"
+        [max]="0.9"
+        [step]="0.05"
+        [changed]="isSet('cut')"
+        (resetRequested)="clear.emit(['cut'])"
+        (valueChange)="settingsChange.emit({ cut: $event })"
+      />
+    }
+  </hrs-property-section>
+}
+<div class="buttons">
+  <button type="button" class="button" (click)="resetRequested.emit()" [disabled]="!changed()">
+    Reset material
+  </button>
+</div>

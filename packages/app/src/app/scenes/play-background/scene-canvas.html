@@ -1,0 +1,11 @@
+<div class="picture" [class.shown]="drawn()">
+  <canvas #canvas aria-hidden="true"></canvas>
+  <canvas #previous class="previous" aria-hidden="true"></canvas>
+  @if (names()) {
+    @for (label of labels(); track label.id) {
+      <span class="name" [style.left.%]="label.x * 100" [style.top.%]="label.top * 100">
+        {{ label.id }}
+      </span>
+    }
+  }
+</div>

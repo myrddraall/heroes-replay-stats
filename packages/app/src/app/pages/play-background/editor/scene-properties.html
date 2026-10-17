@@ -1,0 +1,35 @@
+@let t = tint();
+<hrs-property-section
+  title="Colour"
+  [changed]="tinted()"
+  (resetRequested)="presetChange.emit(none)"
+>
+  <hrs-property-select
+    label="Tint"
+    [changed]="tinted()"
+    (resetRequested)="presetChange.emit(none)"
+    [value]="preset()"
+    [options]="presetOptions()"
+    (valueChange)="presetChange.emit($event)"
+  />
+  @if (custom()) {
+    <hrs-property-colour
+      label="Colour"
+      [value]="t.colour"
+      (valueChange)="tintChange.emit({ colour: $event })"
+    />
+    <hrs-property-select
+      label="Blend"
+      [value]="t.blend"
+      [options]="blends"
+      (valueChange)="blend($event)"
+    />
+  }
+</hrs-property-section>
+@if (sets()) {
+  <hrs-property-section title="Sets">
+    <div class="buttons">
+      <button type="button" class="button" (click)="anotherSet.emit()">Another set</button>
+    </div>
+  </hrs-property-section>
+}

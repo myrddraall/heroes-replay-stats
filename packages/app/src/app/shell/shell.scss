@@ -1,17 +1,37 @@
+@use '../../theme/glass-mixins' as glass;
+
 :host {
   display: block;
   height: 100%;
+  // The glass's opacity and blur, the panels' and the frame's (the menu and the header), are set
+  // on the host from the Graphics settings.
+}
+
+// The background, fixed behind everything; the pages scroll over it.
+.shell__backdrop {
+  position: fixed;
+  inset: 0;
 }
 
 .shell {
   height: 100%;
   background: transparent;
+  --mat-sidenav-content-background-color: transparent;
+  --mat-sidenav-container-background-color: transparent;
+  // Square, so the lit edge runs straight down the whole side.
+  --mat-sidenav-container-shape: 0;
+}
+
+
+// The frame: the menu and the header, one pane of glass each.
+.shell__nav,
+.shell__toolbar {
+  @include glass.frame-glass-pane;
 }
 
 .shell__nav {
   width: 248px;
-  border-right: 1px solid var(--hrs-border);
-  background: linear-gradient(180deg, rgba(20, 29, 51, 0.95), rgba(7, 11, 22, 0.98));
+  @include glass.frame-glass-edge(right, -1, 0);
   display: flex;
   flex-direction: column;
 }
@@ -22,38 +42,39 @@
   gap: 12px;
   padding: 20px 16px 12px;
   text-decoration: none;
-  color: var(--hrs-gold);
-  font-family: 'Cinzel', serif;
+  color: #fff;
+  font-family: 'Exo 2', sans-serif;
   font-weight: 600;
   font-size: 15px;
   line-height: 1.15;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
 
 .shell__brand-mark {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   flex: none;
-  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
-  background: linear-gradient(160deg, var(--hrs-gold), var(--hrs-gold-dim) 60%, #6b4f00);
-  box-shadow: 0 0 18px rgba(245, 179, 1, 0.35);
+  filter: drop-shadow(0 0 10px rgba(54, 174, 234, 0.55));
 }
 
+// Square links, their hover and press too, so the lit edge of the active one runs straight.
 mat-nav-list {
   padding-top: 8px;
+  --mat-list-active-indicator-shape: 0;
 }
 
 .shell__link--active {
-  --mat-list-list-item-label-text-color: var(--hrs-gold);
-  --mat-list-list-item-leading-icon-color: var(--hrs-gold);
-  background: rgba(245, 179, 1, 0.08);
-  box-shadow: inset 3px 0 0 var(--hrs-gold);
+  --mat-list-list-item-label-text-color: #fff;
+  --mat-list-list-item-leading-icon-color: rgb(var(--hrs-glass-edge));
+  background: linear-gradient(90deg, rgb(var(--hrs-glass-edge) / 0.16), transparent);
+  box-shadow: inset 2px 0 rgb(var(--hrs-glass-edge) / 0.9);
 }
 
 .shell__nav-footer {
   margin-top: auto;
   padding: 12px 16px;
-  border-top: 1px solid var(--hrs-border);
+  border-top: 1px solid rgb(var(--hrs-glass-edge) / 0.15);
   font: var(--mat-sys-label-small);
   color: var(--mat-sys-on-surface-variant);
 }
@@ -68,17 +89,16 @@ mat-nav-list {
   position: sticky;
   top: 0;
   z-index: 2;
-  background: rgba(7, 11, 22, 0.7);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--hrs-border);
+  @include glass.frame-glass-edge(bottom, 0, -1);
   gap: 8px;
 }
 
 .shell__toolbar-title {
-  font-family: 'Cinzel', serif;
+  font-family: 'Exo 2', sans-serif;
   font-weight: 600;
-  letter-spacing: 0.04em;
-  color: var(--hrs-gold);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #fff;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -89,14 +109,81 @@ mat-nav-list {
   flex: 1;
 }
 
-.shell__page {
-  padding: 24px;
-  max-width: 1400px;
-  margin: 0 auto;
+.shell__pod {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 4px 0 6px;
+  border-radius: 20px;
+  background: rgb(var(--hrs-glass-tint) / var(--hrs-glass-alpha-frame));
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, rgb(var(--hrs-glass-edge)) 76%, white), // a ring: see .hrs-glass
+    0 0 4px rgb(var(--hrs-glass-edge) / 0.6),
+    0 0 14px rgb(var(--hrs-glass-edge) / 0.25);
 }
 
-@media (max-width: 600px) {
-  .shell__page {
-    padding: 16px;
+.shell__pod-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 100%;
+  padding: 0 8px 0 4px;
+  border-radius: 20px;
+  color: #fff;
+  text-decoration: none;
+  font: var(--mat-sys-label-large);
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    background: rgba(255, 255, 255, 0.08);
+    outline: none;
+  }
+}
+
+.shell__pod-ring {
+  --mat-progress-spinner-active-indicator-color: rgb(var(--hrs-glass-edge));
+  flex: none;
+}
+
+.shell__pod-add {
+  --mat-icon-button-icon-color: #fff;
+  --mat-icon-button-state-layer-size: 32px;
+  --mat-icon-button-icon-size: 20px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+}
+
+// Each page lays itself out (hrs-layout: the constraints are its).
+.shell__page {
+  display: block;
+}
+
+.shell__drop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  pointer-events: none;
+  display: grid;
+  place-items: center;
+  background: rgb(var(--hrs-glass-tint) / 0.7);
+  backdrop-filter: blur(4px);
+  outline: 3px dashed rgb(var(--hrs-glass-edge));
+  outline-offset: -16px;
+}
+
+.shell__drop-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 28px;
+  --hrs-glass-alpha: 0.7; // a glass panel (hrs-glass), dense enough over the dimmed page
+  color: #fff;
+  font: var(--mat-sys-title-medium);
+
+  mat-icon {
+    color: rgb(var(--hrs-glass-edge));
   }
 }

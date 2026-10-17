@@ -1,0 +1,33 @@
+@use 'property-row';
+
+:host {
+  @include property-row.row;
+  grid-template-columns: 84px minmax(0, 1fr) property-row.$reset-column;
+}
+
+.label {
+  @include property-row.label;
+}
+
+.control {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.check {
+  @include property-row.check;
+}
+
+.text {
+  font: var(--mat-sys-body-small);
+  cursor: pointer;
+
+  &.label--changed {
+    color: var(--mat-sys-primary);
+  }
+}
+
+.reset-slot {
+  @include property-row.reset-slot;
+}

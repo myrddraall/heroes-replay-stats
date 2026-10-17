@@ -1,0 +1,73 @@
+@let t = store.target();
+@switch (t.kind) {
+  @case ('scene') {
+    <hrs-scene-properties
+      [tint]="store.tint()"
+      [presetOptions]="store.tintOptions()"
+      [preset]="store.tintChoice()"
+      [custom]="store.tintChoice() === 'custom'"
+      [sets]="!store.review()"
+      (tintChange)="store.setTint($event)"
+      (presetChange)="store.chooseTint($event)"
+      (anotherSet)="store.anotherSet()"
+    />
+  }
+  @case ('sky') {
+    <hrs-tint-section
+      [tint]="store.skyTint()"
+      [set]="store.skyTintSet()"
+      (tintChange)="store.setSkyTint($event)"
+      (clear)="store.clearSkyTint()"
+    />
+    <p class="hint">Over the whole sky, its stars too. Its materials are under it in the scene.</p>
+    <div class="buttons">
+      <button
+        type="button"
+        class="button"
+        (click)="store.resetSky()"
+        [disabled]="!store.skyChanged()"
+      >
+        Reset sky
+      </button>
+    </div>
+  }
+  @case ('body') {
+    @if (store.bodyView(); as b) {
+      <hrs-body-properties
+        [values]="b.values"
+        [styleOptions]="store.styleOptions()"
+        [canLight]="b.canLight"
+        [orbit]="b.info.orbit ?? null"
+        [planets]="store.planetIds()"
+        [changed]="b.changed"
+        [focused]="b.focused"
+        [set]="b.info.settings"
+        [baseTint]="b.baseTint"
+        [styleSet]="b.info.styleSet"
+        (styleChange)="store.setStyle(b.info.path, $event)"
+        (styleReset)="store.resetStyle(b.info.path)"
+        (settingsChange)="store.setBody(b.info.path, $event)"
+        (clear)="store.clearBody(b.info.path, $event)"
+        (orbitChange)="store.setOrbit(b.info.path, $event)"
+        (moonAdd)="store.addMoon(b.info.path, $event)"
+        (removeRequested)="store.removeMoon(b.info.path)"
+        (focusToggle)="store.toggleFocus(b.info.path)"
+        (resetRequested)="store.resetBody(b.info.path)"
+      />
+    }
+  }
+  @default {
+    @if (store.material(); as m) {
+      <hrs-material-properties
+        [values]="m.values"
+        [controls]="m.controls"
+        [changed]="m.set !== undefined"
+        [set]="m.set"
+        [baseTint]="m.baseTint"
+        (settingsChange)="store.setMaterial(t, $event)"
+        (clear)="store.clearMaterial(t, $event)"
+        (resetRequested)="store.clearMaterial(t)"
+      />
+    }
+  }
+}

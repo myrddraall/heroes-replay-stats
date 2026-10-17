@@ -1,0 +1,112 @@
+@use '../../../theme/glass-mixins' as glass;
+
+:host {
+  display: block;
+}
+
+// Not a main landmark: the shell's main holds it.
+.preview {
+  position: relative;
+  display: grid;
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+  background: transparent;
+}
+
+h1,
+h2 {
+  margin: 0;
+}
+
+.muted {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px 32px;
+  padding: 16px 20px;
+}
+
+.slider {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+
+  mat-slider {
+    width: 220px;
+  }
+}
+
+.variants {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.panel {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+  padding: 20px;
+
+  p {
+    margin: 0;
+  }
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+// A team's rows on a neutral panel: the team's light washes in from the left edge, fading
+// across the row (the site's team rows, glass.lit-row).
+table {
+  width: 100%;
+  border-collapse: collapse;
+
+  caption {
+    text-align: left;
+    padding: 0 12px 6px;
+    font-weight: 600;
+    color: var(--mat-sys-on-surface);
+  }
+
+  .result {
+    margin-left: 8px;
+    color: var(--mat-sys-primary);
+  }
+
+  th,
+  td {
+    padding: 8px 12px;
+    text-align: left;
+    font-weight: normal;
+  }
+
+  thead th {
+    color: var(--mat-sys-on-surface-variant);
+    font-size: 0.875em;
+  }
+
+  tbody tr {
+    @include glass.lit-row;
+  }
+
+  tbody tr + tr {
+    border-top: 1px solid var(--hrs-glass-line);
+  }
+
+  .number {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+}

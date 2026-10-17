@@ -1,0 +1,88 @@
+@use 'property-row';
+
+:host {
+  @include property-row.row;
+  grid-template-columns: 84px minmax(0, 1fr) property-row.$reset-column;
+  padding: 2px 0;
+}
+
+.label {
+  @include property-row.label;
+}
+
+.control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+// The planet's face as the eye sees it: a point on it drags to where the direction points.
+.disc {
+  position: relative;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border: 1px solid rgb(var(--hrs-glass-edge) / 0.5);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgb(var(--hrs-glass-tint) / 0.4),
+    rgb(var(--hrs-glass-tint) / 0.9)
+  );
+  cursor: crosshair;
+  touch-action: none;
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: 2px;
+  }
+}
+
+.cross {
+  position: absolute;
+  inset: 50% 0 auto;
+  border-top: 1px solid rgb(var(--hrs-glass-edge) / 0.2);
+
+  &::after {
+    position: absolute;
+    top: -24px;
+    left: 50%;
+    height: 48px;
+    border-left: 1px solid rgb(var(--hrs-glass-edge) / 0.2);
+    content: '';
+  }
+}
+
+.point {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border: 2px solid var(--mat-sys-primary);
+  border-radius: 50%;
+  background: var(--mat-sys-primary);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+
+  &--behind {
+    background: transparent;
+  }
+}
+
+.side {
+  @include property-row.button;
+  flex: none;
+  padding: 0 6px;
+}
+
+.readout {
+  overflow: hidden;
+  font: var(--mat-sys-body-small);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.7;
+}
+
+.reset-slot {
+  @include property-row.reset-slot;
+}
