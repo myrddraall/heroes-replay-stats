@@ -194,7 +194,9 @@ export async function loadPlanetFile(
 
 /**
  * Loads planets from the scene's directory, each once (the textures are the scene's, beside it,
- * decoded as stored, as the scene's are: nothing premultiplied or colour-converted).
+ * decoded as stored, as the scene's are: nothing premultiplied or colour-converted). A load is
+ * shared by all who ask for the planet, so no one's abort stops it: a caller that no longer
+ * wants it just stops waiting (its signal rejects its own wait).
  */
 export class PlanetLoader {
   private readonly loading = new Map<string, Promise<LoadedPlanet>>();
@@ -204,24 +206,30 @@ export class PlanetLoader {
   load(id: string, signal?: AbortSignal): Promise<LoadedPlanet> {
     let loading = this.loading.get(id);
     if (!loading) {
-      loading = this.fetch(id, signal).catch((error: unknown) => {
+      loading = this.fetch(id).catch((error: unknown) => {
         this.loading.delete(id); // not kept: asked for again, it is tried again
         throw error;
       });
       this.loading.set(id, loading);
     }
-    return loading;
+    if (!signal) return loading;
+    return new Promise((resolve, reject) => {
+      if (signal.aborted) {
+        reject(signal.reason instanceof Error ? signal.reason : new DOMException('aborted', 'AbortError'));
+        return;
+      }
+      const abort = () =>
+        reject(signal.reason instanceof Error ? signal.reason : new DOMException('aborted', 'AbortError'));
+      signal.addEventListener('abort', abort, { once: true });
+      loading.then(resolve, reject).finally(() => signal.removeEventListener('abort', abort));
+    });
   }
 
-  private async fetch(id: string, signal?: AbortSignal): Promise<LoadedPlanet> {
-    const planet = await loadPlanetFile(this.base, id, signal);
+  private async fetch(id: string): Promise<LoadedPlanet> {
+    const planet = await loadPlanetFile(this.base, id);
     const entries = await Promise.all(
       Object.entries(planet.textures).map(async ([key, texture]) => {
-        const image = await fetchOk(
-          at(this.base, texture.file),
-          `the texture ${texture.file}`,
-          signal,
-        );
+        const image = await fetchOk(at(this.base, texture.file), `the texture ${texture.file}`);
         const bitmap = await createImageBitmap(await image.blob(), {
           premultiplyAlpha: 'none',
           colorSpaceConversion: 'none',

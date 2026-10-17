@@ -193,6 +193,7 @@ export class PlayBackgroundPage {
         this.background.setPagePlanets(null);
         return;
       }
+      if (!this.file()) return; // its own settings aren't known yet: the last planet stays till they are
       const v = this.values();
       this.background.setPagePlanets([
         {

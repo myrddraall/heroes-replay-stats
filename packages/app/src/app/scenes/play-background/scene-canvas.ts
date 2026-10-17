@@ -320,7 +320,12 @@ export class SceneCanvas {
         if (placements === shown) return;
         const before = shown;
         shown = placements;
-        if (before.length && sameBodies(before, placements) && !fly) {
+        if (fly && sameBodies(fly.to, placements)) {
+          // The planets being flown to, changed in how they show: the fly goes on, to them as they are now.
+          fly = { ...fly, to: placements };
+          renderer.setPlanets([...fly.from, ...placements.map((p) => ({ ...p, slot: -1 }))]);
+          flyOn(0);
+        } else if (before.length && sameBodies(before, placements) && !fly) {
           renderer.setPlanets(placements);
           if (!frame) draw();
         } else if (!before.length || reducedMotion.matches) {
