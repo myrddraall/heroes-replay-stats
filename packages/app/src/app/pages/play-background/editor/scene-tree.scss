@@ -1,0 +1,92 @@
+@use '../properties/property-row';
+
+.tree {
+  display: grid;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+}
+
+// One short row, indented by its depth; the selected one marked along its whole width.
+.row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 24px;
+  padding-inline-start: calc(var(--depth, 0) * 14px + 4px);
+  padding-inline-end: 6px;
+
+  &--selected {
+    background: rgb(var(--hrs-glass-edge) / 0.18);
+    box-shadow: inset 2px 0 0 var(--mat-sys-primary);
+  }
+}
+
+.fold {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+
+  mat-icon {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+  }
+}
+
+.check {
+  @include property-row.check;
+  flex: none;
+  margin-inline: 2px 4px;
+}
+
+.name {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  height: 24px;
+  padding: 0 2px;
+  border: none;
+  background: none;
+  color: inherit;
+  font: var(--mat-sys-body-small);
+  text-align: start;
+  cursor: pointer;
+
+  &--off {
+    opacity: 0.5;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: -2px;
+  }
+}
+
+.icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+  opacity: 0.8;
+}
+
+.text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

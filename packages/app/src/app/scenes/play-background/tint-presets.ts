@@ -13,8 +13,13 @@ export interface TintPreset {
 }
 
 export const PRESETS: readonly TintPreset[] = [
-  { id: 'purple', label: 'Purple', token: null, blend: 'multiply' },
-  { id: 'blue-multiply', label: 'Blue (multiply)', token: '--hrs-background-tint-blue', blend: 'multiply' },
+  { id: 'purple', label: 'None', token: null, blend: 'multiply' },
+  {
+    id: 'blue-multiply',
+    label: 'Blue (multiply)',
+    token: '--hrs-background-tint-blue',
+    blend: 'multiply',
+  },
   { id: 'blue-color', label: 'Blue (color)', token: '--hrs-background-tint-blue', blend: 'color' },
   { id: 'gold', label: 'Gold (multiply)', token: '--hrs-background-tint-gold', blend: 'multiply' },
   { id: 'green', label: 'Green (color)', token: '--hrs-background-tint-green', blend: 'color' },
@@ -31,5 +36,5 @@ export function presetById(id: string): TintPreset {
 export function presetTints(preset: TintPreset, root: Element): BackgroundTints {
   if (!preset.token) return UNTINTED;
   const colour = getComputedStyle(root).getPropertyValue(preset.token).trim();
-  return { background: { colour, blend: preset.blend }, planets: {} };
+  return { background: { colour, blend: preset.blend } };
 }

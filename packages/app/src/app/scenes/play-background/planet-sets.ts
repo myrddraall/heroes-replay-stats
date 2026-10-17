@@ -1,5 +1,5 @@
 import type { SceneCamera } from './play-scene';
-import type { BodyShade, PartRole, PlanetIndex } from './scene-planets';
+import type { BodyShade, MaterialSettingsMap, MaterialTint, PlanetIndex } from './scene-planets';
 
 /** A planet in a set: which, where (the scene's units), and its body's radius there. */
 export interface SetPlanet {
@@ -8,22 +8,14 @@ export interface SetPlanet {
   readonly radius: number;
   /** A style it wears, by id (the index's), if any. */
   readonly style?: string;
-  /** Its glow: 0 none, 1 its own light's bloom as the data has it, past 1 its emissive light boosted. */
-  readonly glow?: number;
-  /** A glow for the parts of a role on its own (a style's shield), over `glow`. */
-  readonly glows?: Partial<Record<PartRole, number>>;
-  /** How far a role's parts show away from the limb, 0 to 1 (a floor under their fresnel). */
-  readonly spreads?: Partial<Record<PartRole, number>>;
-  /** How large a role's parts' emissive pattern is: its tiling times this. */
-  readonly scales?: Partial<Record<PartRole, number>>;
-  /** How much of a role's parts' emissive pattern is cut to black, 0 to 1. */
-  readonly cuts?: Partial<Record<PartRole, number>>;
-  /** How wide a role's parts' drawn pattern's lines are, as a share of a cell. */
-  readonly widths?: Partial<Record<PartRole, number>>;
-  /** How softly a role's parts' drawn pattern's lines glow about themselves, 0 to 1. */
-  readonly softs?: Partial<Record<PartRole, number>>;
-  /** How strongly its parts of a role show, 0 to 1 (1, as the data has them): its haze layers, its shell, its ring. */
-  readonly strengths?: Partial<Record<PartRole, number>>;
+  /** Its materials' settings (its own and its style's, by name), over its tuning's and its style's. */
+  readonly materials?: MaterialSettingsMap;
+  /** A tint over all its materials (its style's too), over its tuning's. */
+  readonly tint?: MaterialTint;
+  /** Where its key light comes from (its lights turned together; body frame), over its tuning's. */
+  readonly lightFrom?: readonly [number, number, number];
+  /** Where its rims and glows lean: a point on its face (body frame), over its tuning's. */
+  readonly rim?: readonly [number, number, number];
   /** How strongly its light lights it, times this (1, as the data has it). */
   readonly lighting?: number;
   /** A shade from a side, over its style's (what is given here; the rest the style's or DEFAULT_SHADE). */
@@ -151,7 +143,8 @@ export function randomSet(index: PlanetIndex, random: () => number): PlanetSet {
         position: [
           Math.round(x * 100) / 100,
           Math.round(y * 100) / 100,
-          Math.round(between([region.z[0] + radius - past, region.z[1] - radius + past]) * 100) / 100,
+          Math.round(between([region.z[0] + radius - past, region.z[1] - radius + past]) * 100) /
+            100,
         ],
         radius,
       };

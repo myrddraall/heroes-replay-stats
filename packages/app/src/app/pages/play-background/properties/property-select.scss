@@ -1,0 +1,29 @@
+@use 'property-row';
+
+:host {
+  @include property-row.row;
+  grid-template-columns: 84px minmax(0, 1fr) property-row.$reset-column;
+}
+
+.label {
+  @include property-row.label;
+}
+
+.select {
+  @include property-row.field;
+  width: 100%;
+
+  option {
+    background: rgb(var(--hrs-glass-tint));
+    color: inherit;
+  }
+}
+
+// A divider between groups of choices, in the panel's edge colour.
+.select hr {
+  border-color: rgb(var(--hrs-glass-edge) / 0.4);
+}
+
+.reset-slot {
+  @include property-row.reset-slot;
+}

@@ -1,4 +1,5 @@
-import type { SceneColor, SceneMaterial, SceneTexture } from './play-scene';
+import type { SceneBlend, SceneColor, SceneMaterial, SceneTexture } from './play-scene';
+import type { TintBlend } from './scene-tints';
 
 /**
  * The planets heroes-capture exports beside the Play screen's scene (`heroes-capture ui
@@ -73,7 +74,12 @@ export type PartShape =
       /** Where its centre is, from the body's (a moon's): the body's by default. */
       readonly centre?: Vec3;
     }
-  | { readonly kind: 'ring'; readonly inner: number; readonly outer: number; readonly depth: number };
+  | {
+      readonly kind: 'ring';
+      readonly inner: number;
+      readonly outer: number;
+      readonly depth: number;
+    };
 
 /**
  * How a part's surface maps to its materials' texture coordinates. A uv sphere: u round the pole
@@ -103,16 +109,58 @@ export type PartMapping =
 export type PartRole = 'surface' | 'layer' | 'shell' | 'ring' | 'shield';
 
 /**
- * How strongly a role's parts show unless a placement says otherwise, 0 to 1: the haze layers
- * over a world's surface (Korhal's edge lights) at 0.42, the user's choice over the data's full
- * strength; the rest as the data has them.
+ * How a material shows, where something says (a planet's tuning, a style's, a placement): the
+ * data's way otherwise. The same settings for any material, a planet's, a style's or the sky's;
+ * each does nothing where the material has nothing for it to act on (a strength on an opaque
+ * material, a scale without an emissive layer).
  */
-export const DEFAULT_STRENGTHS: Readonly<Partial<Record<PartRole, number>>> = { layer: 0.42 };
+export interface MaterialSettings {
+  /** Whether it is drawn at all. */
+  readonly enabled?: boolean;
+  /** How strongly it shows, 0 to 1 (1: as the data has it): a blended material's alpha times this. */
+  readonly strength?: number;
+  /** How it blends over what is behind it, in place of the data's. */
+  readonly blend?: SceneBlend;
+  /** Its glow: 0 none, 1 its own light's bloom as the data has it, past 1 its emissive light boosted into the bloom. */
+  readonly glow?: number;
+  /** How far it shows away from the limb, 0 to 1: a floor under its layers' fresnel (unset: each layer's own). */
+  readonly spread?: number;
+  /** How large its emissive pattern is: its tiling times this (0.5: twice the size). */
+  readonly scale?: number;
+  /** How much of its emissive pattern is cut to black, 0 to 1: a grid's cells go, its lines stay. */
+  readonly cut?: number;
+  /** How wide its drawn pattern's lines are, as a share of a cell (0 to 0.5). */
+  readonly width?: number;
+  /** How softly its drawn pattern's lines glow about themselves, 0 to 1. */
+  readonly soft?: number;
+  /** A colour blended over it. */
+  readonly tint?: MaterialTint;
+}
+
+/**
+ * A colour blended over a material's own, as CSS's blend modes of those names do, by `strength`
+ * (0: not at all, 1: all the way); a colour past white keeps its brightness.
+ */
+export interface MaterialTint {
+  /** `#rrggbb`. */
+  readonly colour: string;
+  readonly blend: TintBlend;
+  readonly strength: number;
+}
+
+/** Materials' settings by the materials' names. */
+export type MaterialSettingsMap = Readonly<Record<string, MaterialSettings>>;
+
+/** How the sky shows: its materials' settings by name, and a tint over all of it (its stars too). */
+export interface SkySettings {
+  readonly materials?: MaterialSettingsMap;
+  readonly tint?: MaterialTint;
+}
 
 /**
  * A pattern the renderer draws in place of a part's emissive texture: hexes, as lines on the
- * part's mapping (so many round it, of a width and with a soft glow about them, set by the
- * placement's or the tuning's scales, widths and softs for the part's role), crisp at any size.
+ * part's mapping (so many round it, of a width and with a soft glow about them, set by its
+ * materials' settings: scale, width and soft), crisp at any size.
  */
 export interface PartPattern {
   readonly kind: 'hex';
@@ -145,7 +193,11 @@ export interface BodyShade {
 }
 
 /** The shade's direction unless one is given: from the lower left and in front. */
-export const DEFAULT_SHADE: BodyShade = { direction: [-0.78, -0.3, -0.55], strength: 0, softness: 1 };
+export const DEFAULT_SHADE: BodyShade = {
+  direction: [-0.78, -0.3, -0.55],
+  strength: 0,
+  softness: 1,
+};
 
 export interface PlanetFile {
   readonly kind: PlanetKind;
@@ -164,25 +216,17 @@ export interface PlanetFile {
 /** Settings a planet (or a style's parts) is shown with unless a placement says otherwise. */
 export interface PlanetTuning {
   readonly style?: string;
-  readonly glow?: number;
-  /** A glow for the parts of a role on its own (a style's shield), over `glow`. */
-  readonly glows?: Partial<Record<PartRole, number>>;
-  /**
-   * How far a role's parts show away from the limb, 0 to 1: a floor under their layers' fresnel
-   * (a style's hex grid is faint but at the rim by its own; spread, it covers the face).
-   */
-  readonly spreads?: Partial<Record<PartRole, number>>;
-  /** How large a role's parts' emissive pattern is: its tiling times this (0.5: twice the size). */
-  readonly scales?: Partial<Record<PartRole, number>>;
-  /** How much of a role's parts' emissive pattern is cut to black, 0 to 1: a grid's cells go, its lines stay. */
-  readonly cuts?: Partial<Record<PartRole, number>>;
-  /** How wide a role's parts' drawn pattern's lines are, as a share of a cell (0 to 0.5). */
-  readonly widths?: Partial<Record<PartRole, number>>;
-  /** How softly a role's parts' drawn pattern's lines glow about themselves, 0 to 1. */
-  readonly softs?: Partial<Record<PartRole, number>>;
+  /** How strongly its light lights it, times this (1: as the data has it). */
   readonly lighting?: number;
   readonly shade?: Partial<BodyShade>;
-  readonly strengths?: Partial<Record<PartRole, number>>;
+  /** Its materials' settings, by name (a style's: its own materials'). */
+  readonly materials?: MaterialSettingsMap;
+  /** A tint over all its materials (a planet's: its style's too). */
+  readonly tint?: MaterialTint;
+  /** Where its key light comes from (its lights turned together; body frame). */
+  readonly lightFrom?: Vec3;
+  /** Where its rims and glows lean: a point on its face (body frame). */
+  readonly rim?: Vec3;
 }
 
 /** A planet with its textures decoded, ready to draw. */
@@ -241,11 +285,19 @@ export class PlanetLoader {
     if (!signal) return loading;
     return new Promise((resolve, reject) => {
       if (signal.aborted) {
-        reject(signal.reason instanceof Error ? signal.reason : new DOMException('aborted', 'AbortError'));
+        reject(
+          signal.reason instanceof Error
+            ? signal.reason
+            : new DOMException('aborted', 'AbortError'),
+        );
         return;
       }
       const abort = () =>
-        reject(signal.reason instanceof Error ? signal.reason : new DOMException('aborted', 'AbortError'));
+        reject(
+          signal.reason instanceof Error
+            ? signal.reason
+            : new DOMException('aborted', 'AbortError'),
+        );
       signal.addEventListener('abort', abort, { once: true });
       loading.then(resolve, reject).finally(() => signal.removeEventListener('abort', abort));
     });

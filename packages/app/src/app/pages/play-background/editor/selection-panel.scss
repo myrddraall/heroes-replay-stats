@@ -1,0 +1,25 @@
+@use '../properties/property-row';
+
+// The properties' rows: one column, tight, as a design tool's properties panel.
+:host {
+  display: grid;
+  gap: 4px;
+  padding: 4px 12px 12px;
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 4px;
+}
+
+.button {
+  @include property-row.button;
+}
+
+.hint {
+  margin: 0;
+  font: var(--mat-sys-body-small);
+  opacity: 0.75;
+}

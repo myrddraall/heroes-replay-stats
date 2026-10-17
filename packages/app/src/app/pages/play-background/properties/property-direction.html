@@ -1,0 +1,44 @@
+<span class="label" [class.label--changed]="changed()" [id]="id">{{ label() }}</span>
+<span class="control">
+  <span
+    class="disc"
+    role="slider"
+    tabindex="0"
+    [attr.aria-labelledby]="id"
+    aria-valuemin="0"
+    aria-valuemax="360"
+    [attr.aria-valuenow]="angle()"
+    [attr.aria-valuetext]="text()"
+    (pointerdown)="pointerDown($event)"
+    (pointermove)="pointerMove($event)"
+    (keydown)="key($event)"
+  >
+    <span class="cross" aria-hidden="true"></span>
+    <span
+      class="point"
+      [class.point--behind]="behind()"
+      [style.left.%]="50 + point().x * 50"
+      [style.top.%]="50 + point().y * 50"
+      aria-hidden="true"
+    ></span>
+  </span>
+  @if (back()) {
+    <button type="button" class="side" (click)="flip()" [attr.aria-pressed]="behind()">
+      {{ behind() ? 'Behind' : 'Front' }}
+    </button>
+  }
+  <span class="readout" aria-hidden="true">{{ text() }}</span>
+</span>
+<span class="reset-slot">
+  @if (changed()) {
+    <button
+      type="button"
+      class="reset"
+      [attr.aria-label]="'Reset ' + label()"
+      title="Reset"
+      (click)="resetRequested.emit()"
+    >
+      <mat-icon class="material-symbols-outlined" aria-hidden="true">restart_alt</mat-icon>
+    </button>
+  }
+</span>

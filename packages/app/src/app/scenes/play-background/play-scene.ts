@@ -1,4 +1,3 @@
-import type { PlanetSize } from './scene-tints';
 /**
  * The Play screen's background as heroes-capture exports it from the game (`heroes-capture ui
  * background`): the cutscene's camera, the meshes of the sky as the model's Stand pose places
@@ -14,6 +13,9 @@ export interface SceneCamera {
   readonly near: number;
   readonly far: number;
 }
+
+/** The Play screen's own planets, by their size, as the game's atmosphere materials name them. */
+export type PlanetSize = 'large' | 'medium' | 'small';
 
 /** A mesh in world space: positions (xyz), texture coordinates (uv), RGBA colours (0-255), triangles. */
 export interface SceneMesh {
@@ -161,10 +163,7 @@ export const PLAY_SCENE_URL = 'backgrounds/play/';
  */
 export async function loadPlayScene(base: string, signal?: AbortSignal): Promise<LoadedPlayScene> {
   const at = (file: string) => new URL(file, new URL(base, document.baseURI)).href;
-  const response = await fetch(at('scene.json'), { signal });
-  if (!response.ok)
-    throw new Error(`the Play screen background (${response.status} ${response.statusText})`);
-  const scene = (await response.json()) as PlayScene;
+  const scene = await loadPlaySceneFile(base, signal);
   const entries = await Promise.all(
     Object.entries(scene.textures).map(async ([key, texture]) => {
       const file = await fetch(at(texture.file), { signal });
@@ -178,6 +177,15 @@ export async function loadPlayScene(base: string, signal?: AbortSignal): Promise
     }),
   );
   return { scene, images: Object.fromEntries(entries) };
+}
+
+/** The scene's file alone, as exported (its textures not loaded): what it is made of. */
+export async function loadPlaySceneFile(base: string, signal?: AbortSignal): Promise<PlayScene> {
+  const url = new URL('scene.json', new URL(base, document.baseURI)).href;
+  const response = await fetch(url, { signal });
+  if (!response.ok)
+    throw new Error(`the Play screen background (${response.status} ${response.statusText})`);
+  return (await response.json()) as PlayScene;
 }
 
 /** A layer's offset at a time: its own, plus its scroll's progress through the loop. */

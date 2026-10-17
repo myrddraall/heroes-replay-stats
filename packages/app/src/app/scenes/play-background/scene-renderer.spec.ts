@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { layerBrightness, projectionMatrix, viewMatrix } from './scene-renderer';
+import { bodyExtent, layerBrightness, projectionMatrix, viewMatrix } from './scene-renderer';
 
 /** A point through a column-major matrix, divided by w: normalized device coordinates. */
 function transform(m: Float32Array, [x, y, z]: [number, number, number]): [number, number, number] {
@@ -41,5 +41,18 @@ describe('layerBrightness', () => {
   it('squares the data multiplier', () => {
     expect(layerBrightness(0.3)).toBeCloseTo(0.09);
     expect(layerBrightness(1)).toBe(1);
+  });
+});
+
+describe('bodyExtent', () => {
+  it('widens a body\u2019s square past its radius by how near it is, enough for its outline', () => {
+    // A sphere of radius 3 at distance 5: its outline on the plane through its centre is 3.75 out.
+    expect(bodyExtent(1.5, 2, 5)).toBeCloseTo(3.75);
+    // Far away it is hardly wider than its radius.
+    expect(bodyExtent(1, 1, 1000)).toBeCloseTo(1, 5);
+  });
+
+  it('stays finite with the eye inside the body', () => {
+    expect(Number.isFinite(bodyExtent(10, 1, 5))).toBe(true);
   });
 });

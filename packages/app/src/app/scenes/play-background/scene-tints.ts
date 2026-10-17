@@ -1,12 +1,32 @@
-/** How a tint recolours: as CSS's blend modes of those names do. */
+/**
+ * How a tint recolours: CSS's blend modes of those names (Compositing and Blending Level 1), and
+ * the image editors' others CSS doesn't have (linear dodge and burn, vivid, linear and pin light,
+ * hard mix, subtract, divide), as Photoshop defines them.
+ */
 export type TintBlend =
   | 'multiply'
-  | 'color'
-  | 'hue'
+  | 'screen'
   | 'overlay'
   | 'soft-light'
+  | 'hard-light'
+  | 'darken'
+  | 'lighten'
+  | 'color-dodge'
   | 'color-burn'
-  | 'saturation';
+  | 'linear-dodge'
+  | 'linear-burn'
+  | 'vivid-light'
+  | 'linear-light'
+  | 'pin-light'
+  | 'hard-mix'
+  | 'difference'
+  | 'exclusion'
+  | 'subtract'
+  | 'divide'
+  | 'hue'
+  | 'saturation'
+  | 'color'
+  | 'luminosity';
 
 /** A colour the scene, or a part of it, is blended with; its channels 0..1. */
 export interface Tint {
@@ -14,18 +34,10 @@ export interface Tint {
   readonly blend: TintBlend;
 }
 
-/** The planets, by their size, as the game's atmosphere materials name them. */
-export const PLANETS = ['large', 'medium', 'small'] as const;
-export type PlanetSize = (typeof PLANETS)[number];
-
-/** The background's tint, then each planet's, in PLANETS' order. */
-export type Tints = readonly [Tint, Tint, Tint, Tint];
-
 /** White multiplied: the scene as the game draws it. */
 export const NO_TINT: Tint = { colour: [1, 1, 1], blend: 'multiply' };
-export const NO_TINTS: Tints = [NO_TINT, NO_TINT, NO_TINT, NO_TINT];
 
-/** Each blend's number in the tone pass's shader. */
+/** Each blend's number in the shaders' `blend` (kept as they were: settings name blends, not numbers). */
 export const BLEND_MODES: Readonly<Record<TintBlend, number>> = {
   multiply: 0,
   color: 1,
@@ -34,8 +46,35 @@ export const BLEND_MODES: Readonly<Record<TintBlend, number>> = {
   'soft-light': 4,
   'color-burn': 5,
   saturation: 6,
+  screen: 7,
+  darken: 8,
+  lighten: 9,
+  'color-dodge': 10,
+  'hard-light': 11,
+  difference: 12,
+  exclusion: 13,
+  luminosity: 14,
+  'linear-dodge': 15,
+  'linear-burn': 16,
+  'vivid-light': 17,
+  'linear-light': 18,
+  'pin-light': 19,
+  'hard-mix': 20,
+  subtract: 21,
+  divide: 22,
 };
-export const BLENDS = Object.keys(BLEND_MODES) as readonly TintBlend[];
+
+/** The blends in groups, as an image editor lists them: darkening, lightening, contrast, comparing, colour. */
+export const BLEND_GROUPS: readonly (readonly TintBlend[])[] = [
+  ['multiply', 'darken', 'color-burn', 'linear-burn'],
+  ['screen', 'lighten', 'color-dodge', 'linear-dodge'],
+  ['overlay', 'soft-light', 'hard-light', 'vivid-light', 'linear-light', 'pin-light', 'hard-mix'],
+  ['difference', 'exclusion', 'subtract', 'divide'],
+  ['hue', 'saturation', 'color', 'luminosity'],
+];
+
+/** The blends, in BLEND_GROUPS' order. */
+export const BLENDS: readonly TintBlend[] = BLEND_GROUPS.flat();
 
 /** A CSS colour as RGB 0..1, or null when it isn't one. */
 export type ColourParser = (css: string) => readonly [number, number, number] | null;
@@ -46,33 +85,22 @@ export interface PartTint {
   readonly blend: TintBlend;
 }
 
-/** The background's tint (none: as the game draws it), and the planets that have one of their own. */
+/** The background's tint (none: as the game draws it). */
 export interface BackgroundTints {
   readonly background: PartTint | null;
-  readonly planets: Readonly<Partial<Record<PlanetSize, PartTint>>>;
 }
 
-export const UNTINTED: BackgroundTints = { background: null, planets: {} };
+export const UNTINTED: BackgroundTints = { background: null };
 
-/**
- * The tints as the renderer draws them: the background's, then each planet's (its own, or the
- * background's where it has none). A colour that isn't one tints nothing.
- */
-export function rendererTints(tints: BackgroundTints, parse: ColourParser): Tints {
-  const tint = (set: PartTint | null | undefined): Tint | null => {
-    const colour = set ? parse(set.colour) : null;
-    return colour && set ? { colour, blend: set.blend } : null;
-  };
-  const background = tint(tints.background) ?? NO_TINT;
-  const [large, medium, small] = PLANETS.map((size) => tint(tints.planets[size]) ?? background);
-  return [background, large!, medium!, small!];
+/** The tint as the renderer draws it. A colour that isn't one tints nothing. */
+export function rendererTint(tints: BackgroundTints, parse: ColourParser): Tint {
+  const set = tints.background;
+  const colour = set ? parse(set.colour) : null;
+  return colour && set ? { colour, blend: set.blend } : NO_TINT;
 }
 
-export function sameTints(a: Tints, b: Tints): boolean {
-  return a.every(
-    (tint, i) =>
-      tint.blend === b[i]!.blend && tint.colour.every((c, j) => c === b[i]!.colour[j]),
-  );
+export function sameTint(a: Tint, b: Tint): boolean {
+  return a.blend === b.blend && a.colour.every((c, j) => c === b.colour[j]);
 }
 
 /**
@@ -108,9 +136,24 @@ export function parseCanvasColour(value: string): readonly [number, number, numb
 }
 
 /**
- * CSS's blend modes of BLENDS (Compositing and Blending Level 1), in GLSL: `blend(b, s, mode)` is
- * backdrop b blended with source s, both 0..1, mode as BLEND_MODES numbers it.
+ * The blends of BLENDS in GLSL: `blend(b, s, mode)` is backdrop b blended with source s, both
+ * 0..1, mode as BLEND_MODES numbers it. CSS's as Compositing and Blending Level 1 defines them;
+ * the others as Photoshop does.
  */
+/**
+ * A tint in GLSL (after BLEND_GLSL): `tintBy(c, colour, mode, strength)` blends a colour over c as
+ * the blend does, by the tint's strength; a colour past white (HDR light) is blended at its hue and
+ * keeps its brightness.
+ */
+export const TINT_GLSL = `
+vec3 tintBy(vec3 c, vec3 colour, int mode, float strength) {
+  if (strength <= 0.0) return c;
+  float m = max(max(c.r, c.g), c.b);
+  vec3 n = m > 1.0 ? c / m : c;
+  vec3 t = blend(n, colour, mode);
+  return mix(c, m > 1.0 ? t * m : t, strength);
+}`;
+
 export const BLEND_GLSL = `
 float lum(vec3 c) { return dot(c, vec3(0.3, 0.59, 0.11)); }
 vec3 clipColour(vec3 c) {
@@ -137,6 +180,16 @@ vec3 colorBurn(vec3 b, vec3 s) {
   vec3 burnt = 1.0 - min(vec3(1.0), (1.0 - b) / max(s, vec3(1e-5)));
   return mix(mix(burnt, vec3(0.0), step(s, vec3(0.0))), vec3(1.0), step(1.0, b));
 }
+vec3 colorDodge(vec3 b, vec3 s) {
+  vec3 dodged = min(vec3(1.0), b / max(1.0 - s, vec3(1e-5)));
+  return mix(mix(dodged, vec3(1.0), step(1.0, s)), vec3(0.0), step(b, vec3(0.0)));
+}
+vec3 vividLight(vec3 b, vec3 s) {
+  return mix(colorBurn(b, 2.0 * s), colorDodge(b, 2.0 * s - 1.0), step(0.5, s));
+}
+vec3 pinLight(vec3 b, vec3 s) {
+  return mix(min(b, 2.0 * s), max(b, 2.0 * s - 1.0), step(0.5, s));
+}
 vec3 blend(vec3 b, vec3 s, int mode) {
   if (mode == 1) return setLum(s, lum(b));
   if (mode == 2) return setLum(setSat(s, sat(b)), lum(b));
@@ -144,5 +197,21 @@ vec3 blend(vec3 b, vec3 s, int mode) {
   if (mode == 4) return softLight(b, s);
   if (mode == 5) return colorBurn(b, s);
   if (mode == 6) return setLum(setSat(b, sat(s)), lum(b));
+  if (mode == 7) return screen(b, s);
+  if (mode == 8) return min(b, s);
+  if (mode == 9) return max(b, s);
+  if (mode == 10) return colorDodge(b, s);
+  if (mode == 11) return hardLight(b, s);
+  if (mode == 12) return abs(b - s);
+  if (mode == 13) return b + s - 2.0 * b * s;
+  if (mode == 14) return setLum(b, lum(s));
+  if (mode == 15) return min(b + s, vec3(1.0));
+  if (mode == 16) return max(b + s - 1.0, vec3(0.0));
+  if (mode == 17) return vividLight(b, s);
+  if (mode == 18) return clamp(b + 2.0 * s - 1.0, 0.0, 1.0);
+  if (mode == 19) return pinLight(b, s);
+  if (mode == 20) return step(1.0, b + s);
+  if (mode == 21) return max(b - s, vec3(0.0));
+  if (mode == 22) return mix(min(vec3(1.0), b / max(s, vec3(1e-5))), vec3(1.0), step(s, vec3(0.0)));
   return b * s;
 }`;

@@ -9,7 +9,8 @@ import {
   withState,
 } from '@ngrx/signals';
 import type { PlanetSet } from './planet-sets';
-import { PLANETS, type BackgroundTints, type PartTint, type PlanetSize, UNTINTED } from './scene-tints';
+import type { SkySettings } from './scene-planets';
+import { type BackgroundTints, type PartTint, UNTINTED } from './scene-tints';
 
 /** How the background is drawn: what it costs. */
 export interface BackgroundDrawing {
@@ -51,17 +52,16 @@ interface BackgroundState {
   readonly planetSet: number;
   /** The planets the open page holds up instead, if it does (the Background page, reviewing one). */
   readonly pagePlanets: PlanetSet | null;
+  /** The sky's materials' settings the open page holds, if it does (the Background page, reviewing the sky). */
+  readonly pageSky: SkySettings | null;
 }
 
 /**
- * The site's Play screen background: how it is tinted, the whole of it and each planet on its own,
- * and how it is drawn.
- * What sets a tint calls this; the background follows it. The site's tints are the Graphics
- * settings' colour; a page can hold its own over them while it is open. As a side effect the tints
- * shown are on the root element as custom properties for the interface to use:
- * `--hrs-background-tint` and `--hrs-background-tint-blend`, and each planet's,
- * `--hrs-planet-<size>-tint` and `-blend` (the background's where it has none of its own), none set
- * where nothing is tinted.
+ * The site's Play screen background: how it is tinted, and how it is drawn.
+ * What sets a tint calls this; the background follows it. The site's tint is the Graphics
+ * settings' colour; a page can hold its own over it while it is open. As a side effect the tint
+ * shown is on the root element as custom properties for the interface to use:
+ * `--hrs-background-tint` and `--hrs-background-tint-blend`, none set where nothing is tinted.
  * Something that needs the page to itself for a while (the map while it is dragged) asks for the
  * interacting frame rate, and gives it back when done.
  * The planets up are a set by number: the game's own (0) as the site loads, then one drawn from
@@ -77,6 +77,7 @@ export const BackgroundStore = signalStore(
     picture: 0,
     planetSet: 0,
     pagePlanets: null,
+    pageSky: null,
   }),
   withComputed((store) => ({
     /** The tints shown: the page's, or the site's. */
@@ -98,16 +99,9 @@ export const BackgroundStore = signalStore(
     setTints(siteTints: BackgroundTints): void {
       patchState(store, { siteTints });
     },
-    /** The site's whole background's tint; null untints it (the planets with their own keep theirs). */
+    /** The site's whole background's tint; null untints it. */
     setBackgroundTint(background: PartTint | null): void {
-      patchState(store, { siteTints: { ...store.siteTints(), background } });
-    },
-    /** A planet's own tint on the site; null has it follow the background again. */
-    setPlanetTint(size: PlanetSize, tint: PartTint | null): void {
-      const planets = { ...store.siteTints().planets };
-      if (tint) planets[size] = tint;
-      else delete planets[size];
-      patchState(store, { siteTints: { ...store.siteTints(), planets } });
+      patchState(store, { siteTints: { background } });
     },
     /** The open page's tints over the site's; null gives the site's back (a page does, closing). */
     setPageTints(pageTints: BackgroundTints | null): void {
@@ -129,6 +123,10 @@ export const BackgroundStore = signalStore(
     setPagePlanets(pagePlanets: PlanetSet | null): void {
       patchState(store, { pagePlanets });
     },
+    /** The open page's settings for the sky's materials; null gives the sky back as it is (a page does, closing). */
+    setPageSky(pageSky: SkySettings | null): void {
+      patchState(store, { pageSky });
+    },
     /** The interacting frame rate, until released; any number can hold it at once. */
     requestInteracting(): Release {
       patchState(store, { interacting: store.interacting() + 1 });
@@ -144,18 +142,14 @@ export const BackgroundStore = signalStore(
     onInit(store) {
       const root = inject(DOCUMENT).documentElement;
       effect(() => {
-        const { background, planets } = store.tints();
-        const set = (name: string, tint: PartTint | null | undefined) => {
-          if (tint) {
-            root.style.setProperty(`--hrs-${name}-tint`, tint.colour);
-            root.style.setProperty(`--hrs-${name}-tint-blend`, tint.blend);
-          } else {
-            root.style.removeProperty(`--hrs-${name}-tint`);
-            root.style.removeProperty(`--hrs-${name}-tint-blend`);
-          }
-        };
-        set('background', background);
-        for (const size of PLANETS) set(`planet-${size}`, planets[size] ?? background);
+        const { background } = store.tints();
+        if (background) {
+          root.style.setProperty('--hrs-background-tint', background.colour);
+          root.style.setProperty('--hrs-background-tint-blend', background.blend);
+        } else {
+          root.style.removeProperty('--hrs-background-tint');
+          root.style.removeProperty('--hrs-background-tint-blend');
+        }
       });
     },
   }),

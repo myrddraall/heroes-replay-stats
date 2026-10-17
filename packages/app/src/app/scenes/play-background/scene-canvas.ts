@@ -12,8 +12,9 @@ import {
 import { DEFAULT_DRAWING } from './background.store';
 import { beyondEdge } from './planet-sets';
 import type { LoadedPlayScene } from './play-scene';
+import type { SkySettings } from './scene-planets';
 import { type PlanetPlacement, SceneRenderer } from './scene-renderer';
-import { NO_TINTS, sameTints, type Tints } from './scene-tints';
+import { NO_TINT, sameTint, type Tint } from './scene-tints';
 
 /** Device pixels per CSS pixel at most: past this the extra sharpness isn't worth the fill rate. */
 const MAX_PIXEL_RATIO = 2;
@@ -40,11 +41,12 @@ const FLY_CLEARANCE = 1.3;
 
 /** What the running scene is told of a change of its inputs. */
 interface Running {
-  retint(tints: Tints): void;
+  retint(tint: Tint): void;
   play(): void;
   resize(): void;
   newPicture(): void;
   replace(placements: readonly PlanetPlacement[]): void;
+  resky(sky: SkySettings): void;
 }
 
 /** A fly from one set of planets to the next, part way through. */
@@ -58,19 +60,14 @@ interface Fly {
 
 const easeIn = (u: number) => u * u;
 
-/** Whether two sets put the same planets, in the same styles, in the same places. */
+/**
+ * Whether two sets are the same planets in the same styles, in the same order: the same scene, its
+ * bodies perhaps moved or resized (a moon round its orbit), drawn again where they are now rather
+ * than flown to.
+ */
 function sameBodies(a: readonly PlanetPlacement[], b: readonly PlanetPlacement[]): boolean {
   return (
-    a.length === b.length &&
-    a.every((p, i) => {
-      const q = b[i]!;
-      return (
-        p.planet === q.planet &&
-        p.style === q.style &&
-        p.radius === q.radius &&
-        p.position.every((v, k) => v === q.position[k])
-      );
-    })
+    a.length === b.length && a.every((p, i) => p.planet === b[i]!.planet && p.style === b[i]!.style)
   );
 }
 const easeOut = (u: number) => 1 - (1 - u) * (1 - u);
@@ -83,10 +80,10 @@ const easeOut = (u: number) => 1 - (1 - u) * (1 - u);
  * screen). Not animated, it is drawn once, then again for each new `picture`, at the time it is
  * then, cross-fading from the last; with reduced motion asked for, it is drawn once, still, and a
  * change shows at once.
- * It is always first drawn untinted, and fades into `tints`. The planets up are `placements`;
+ * It is always first drawn untinted, and fades into `tint`. The planets up are `placements`;
  * a new set is flown to while it animates (the camera turns, the planets slide out and the new
- * ones in, the stars streak), or cross-faded to where it doesn't. Without WebGL 2 it stays empty:
- * the element's own background shows.
+ * ones in, the stars streak), or cross-faded to where it doesn't. The sky's materials show as
+ * `sky` says. Without WebGL 2 it stays empty: the element's own background shows.
  */
 @Component({
   selector: 'hrs-scene-canvas',
@@ -95,8 +92,10 @@ const easeOut = (u: number) => 1 - (1 - u) * (1 - u);
 })
 export class SceneCanvas {
   readonly scene = input.required<LoadedPlayScene>();
-  /** The tints it is drawn in: the background's, then each planet's. */
-  readonly tints = input<Tints>(NO_TINTS);
+  /** The tint it is drawn in. */
+  readonly tint = input<Tint>(NO_TINT);
+  /** How the sky shows: its materials' settings by name (those not named as the data has them), its tint. */
+  readonly sky = input<SkySettings>({});
   /** Whether it moves. */
   readonly animate = input(DEFAULT_DRAWING.animate);
   /** Frames a second at most while it just moves (the scene's motion keeps its speed whatever it is). */
@@ -125,8 +124,12 @@ export class SceneCanvas {
 
   constructor() {
     effect(() => {
-      const tints = this.tints();
-      untracked(() => this.running?.retint(tints));
+      const tint = this.tint();
+      untracked(() => this.running?.retint(tint));
+    });
+    effect(() => {
+      const sky = this.sky();
+      untracked(() => this.running?.resky(sky));
     });
     effect(() => {
       this.animate();
@@ -210,7 +213,15 @@ export class SceneCanvas {
     /** Where a planet is just beyond the edge of the view on a side (-1 left, 1 right): its x. */
     const beyond = (p: PlanetPlacement, side: number): number => {
       const aspect = this.host.clientWidth / Math.max(1, this.host.clientHeight);
-      return beyondEdge(p.position, p.radius, loaded.scene.camera, aspect, side, FLY_YAW, FLY_CLEARANCE);
+      return beyondEdge(
+        p.position,
+        p.radius,
+        loaded.scene.camera,
+        aspect,
+        side,
+        FLY_YAW,
+        FLY_CLEARANCE,
+      );
     };
     /** The fly, `step` seconds on: the camera turned, the planets slid, the stars streaked. */
     const flyOn = (step: number) => {
@@ -251,8 +262,7 @@ export class SceneCanvas {
       draw();
     };
     const play = () => {
-      const animate =
-        onScreen && !document.hidden && this.animate() && !reducedMotion.matches;
+      const animate = onScreen && !document.hidden && this.animate() && !reducedMotion.matches;
       if (animate && !frame) {
         last = undefined;
         frame = requestAnimationFrame(tick);
@@ -291,20 +301,25 @@ export class SceneCanvas {
     document.addEventListener('visibilitychange', play);
     reducedMotion.addEventListener('change', play);
     this.running = {
-      // New tints fade in the running animation's frames; where nothing animates, the picture
-      // cross-fades to them.
-      retint: (tints) => {
-        if (sameTints(tints, renderer.tints)) return;
+      // A new tint fades in the running animation's frames; where nothing animates, the picture
+      // cross-fades to it.
+      retint: (tint) => {
+        if (sameTint(tint, renderer.tint)) return;
         if (frame) {
-          renderer.fadingFrom = renderer.tints;
-          renderer.tints = tints;
+          renderer.fadingFrom = renderer.tint;
+          renderer.tint = tint;
           renderer.fade = 0;
         } else {
           crossFadeTo(() => {
-            renderer.tints = tints;
+            renderer.tint = tint;
             renderer.fade = 1;
           });
         }
+      },
+      // The sky's materials changed in how they show: drawn again as they are.
+      resky: (sky) => {
+        renderer.setSky(sky);
+        if (!frame) draw();
       },
       play,
       resize,
@@ -314,8 +329,8 @@ export class SceneCanvas {
       },
       // A new set of planets: the first is put up as it is; another is flown to while the scene
       // animates (the old ones keep their tints till they are gone), else cross-faded to. The
-      // same planets in the same places, changed in how they show (a style, a glow, a strength),
-      // are drawn again as they are: no fly, no fade.
+      // same planets, changed in how they show (a glow, a strength) or where they are (a moon
+      // moved round its orbit), are drawn again as they are: no fly, no fade.
       replace: (placements) => {
         if (placements === shown) return;
         const before = shown;
@@ -323,7 +338,7 @@ export class SceneCanvas {
         if (fly && sameBodies(fly.to, placements)) {
           // The planets being flown to, changed in how they show: the fly goes on, to them as they are now.
           fly = { ...fly, to: placements };
-          renderer.setPlanets([...fly.from, ...placements.map((p) => ({ ...p, slot: -1 }))]);
+          renderer.setPlanets([...fly.from, ...placements]);
           flyOn(0);
         } else if (before.length && sameBodies(before, placements) && !fly) {
           renderer.setPlanets(placements);
@@ -334,19 +349,20 @@ export class SceneCanvas {
         } else if (frame) {
           const direction = flights++ % 2 ? -1 : 1;
           fly = { from: before, to: placements, direction, t: 0 };
-          renderer.setPlanets([...before, ...placements.map((p) => ({ ...p, slot: -1 }))]);
+          renderer.setPlanets([...before, ...placements]);
           flyOn(0);
         } else {
           crossFadeTo(() => renderer.setPlanets(placements));
         }
       },
     };
-    renderer.tints = NO_TINTS; // always shown untinted first
+    renderer.tint = NO_TINT; // always shown untinted first
+    renderer.setSky(this.sky());
     resize();
     play();
     const placements = this.placements(); // may have loaded before the scene did
     if (placements) this.running.replace(placements);
-    this.running.retint(this.tints());
+    this.running.retint(this.tint());
 
     onCleanup(() => {
       this.running = undefined;

@@ -93,11 +93,29 @@ camera-facing square, finding the shape under each pixel (the body shader in
 flyby's lights where it is a world's. A planet can wear a style (`style-<id>.json`, the same
 form): its parts go about the body and its shade darkens it from a side; `nexus` is the Play
 screen's look for a world (its hex-grid shield and ring, a crescent left lit). How a planet shows
-is settable per placement (`SetPlanet`): a glow (its emissive layers into the bloom), its light's
-strength, a shade, and the strength of its parts by role (haze layers, shell, ring, shield);
-heroes-capture's `tuning` in a planet's file is the default where the data alone isn't right (Korhal's
-haze at 0.42, its back light's crescent shaded). The Background page's panel sets these per planet
-(kept in `localStorage`, per planet and style, Reset gives the planet's own back). A part may carry a
+is settable per placement (`SetPlanet`): its light's strength, where its key light comes from
+(its rig turned together), a shade and where it falls, where its rims and glows lean
+(`scene-directions.ts`), a tint over all its materials, and its materials'
+settings by name (`MaterialSettings`, the same for any material, a planet's, a style's or the
+sky's: drawn or not, strength, blend, a tint, glow, spread, its pattern's size, cut, line width
+and softness; `material-settings.ts` says which do anything for a material). Tints blend by
+CSS's blend modes and the image editors' others (`scene-tints.ts`); heroes-capture's
+`tuning` in a planet's file is the default where the data alone isn't right (Korhal's haze
+material at 0.42, its back light's crescent shaded; the nexus style's shield material). The
+Background page is an editor: on the left the scene's planet and the scene as a tree (sky and
+its materials, the planet, its materials and its moons, moons of moons), on the right the
+properties of what is selected (`pages/play-background/editor/`, built of the compact rows in
+`properties/`). A moon is any planet on an orbit about its parent: radius, tilt, turn, a
+progress round it and its size (`background-scene.ts`); one hidden behind a body is shown round
+its orbit while selected, and the planet is drawn smaller where the scene would not fit the view.
+The scenes themselves are a global store (`BackgroundScenesStore`: each planet's style, looks
+per style and moons, the sky's materials, the scene colour); the editor's own state is the page's
+component store (`PlayBackgroundPageStore`: what is shown, selected, folded, focused). Both are
+kept in `localStorage` through the `withLocalStorage` store feature (`data/store-features/`,
+beside `withFolding`; `withPlanetFiles` loads planets' files as a store needs them). The planet
+shown is in the URL (`/play-background?planet=korhal`; none: the random sets). Every property
+and section shows a reset where it is set; the sky's settings and the planets are held through
+the `BackgroundStore` while the page is open. A part may carry a
 `pattern` the renderer draws in place of its emissive texture (the nexus shield's hexes: analytic lines
 of a size, width and softness, crisp at any size). Each planet loads the first time a set has
 it (`PlanetLoader`); the layout is `planet-sets.ts` (a set from a number, the same number

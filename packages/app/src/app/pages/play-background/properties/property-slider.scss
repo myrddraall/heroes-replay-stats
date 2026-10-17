@@ -1,0 +1,37 @@
+@use 'property-row';
+
+:host {
+  @include property-row.row;
+  grid-template-columns: 84px minmax(0, 1fr) auto property-row.$reset-column;
+}
+
+.label {
+  @include property-row.label;
+}
+
+.range {
+  width: 100%;
+  min-width: 0;
+  height: 24px;
+  margin: 0;
+  accent-color: var(--mat-sys-primary);
+  cursor: pointer;
+}
+
+.number {
+  @include property-row.field;
+  width: 52px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  appearance: textfield;
+
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    appearance: none;
+    margin: 0;
+  }
+}
+
+.reset-slot {
+  @include property-row.reset-slot;
+}

@@ -1,7 +1,8 @@
 @if (scene.hasValue()) {
   <hrs-scene-canvas
     [scene]="scene.value()"
-    [tints]="tints()"
+    [tint]="tint()"
+    [sky]="sky()"
     [animate]="drawing().animate"
     [fps]="store.fps()"
     [fadeFps]="store.fadeFps()"

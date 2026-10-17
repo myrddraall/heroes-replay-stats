@@ -107,9 +107,15 @@ function turnZ(v: readonly [number, number, number], angle: number): [number, nu
 }
 
 /** A point's x in normalised device coordinates. */
-function project(projection: Float32Array, view: Float32Array, p: [number, number, number]): number {
+function project(
+  projection: Float32Array,
+  view: Float32Array,
+  p: [number, number, number],
+): number {
   const mul = (m: Float32Array, v: number[]) =>
-    [0, 1, 2, 3].map((r) => m[r]! * v[0]! + m[4 + r]! * v[1]! + m[8 + r]! * v[2]! + m[12 + r]! * v[3]!);
+    [0, 1, 2, 3].map(
+      (r) => m[r]! * v[0]! + m[4 + r]! * v[1]! + m[8 + r]! * v[2]! + m[12 + r]! * v[3]!,
+    );
   const clip = mul(projection, mul(view, [...p, 1]));
   return clip[0]! / clip[3]!;
 }

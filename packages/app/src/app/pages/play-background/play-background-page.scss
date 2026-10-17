@@ -35,14 +35,23 @@ h1 {
 }
 
 .page__drawer {
-  width: var(--hrs-map-panel-width, min(360px, 90vw));
+  width: var(--hrs-map-panel-width, min(320px, 90vw));
   overflow: hidden;
   border-radius: 0;
-  @include glass.frame-glass(left, 1, 0);
 
   // Only the panel's body may scroll.
   :host ::ng-deep &.mat-drawer .mat-drawer-inner-container {
     overflow: hidden;
+  }
+
+  // the frame's glass over the scene, lit along the edge facing it
+  &.mat-drawer-end {
+    @include glass.frame-glass(left, 1, 0);
+  }
+
+  // (Material marks only an end drawer: a start one is any other.)
+  &:not(.mat-drawer-end) {
+    @include glass.frame-glass(right, -1, 0);
   }
 }
 
@@ -66,7 +75,7 @@ h1 {
   backdrop-filter: var(--hrs-glass-backdrop-frame);
 }
 
-// Over the scene's top right corner: the panel's toggle.
+// Over the scene's top corners: each panel's toggle on its own side (the scene's beside Back).
 .page__toggle {
   position: absolute;
   top: 8px;
@@ -74,43 +83,9 @@ h1 {
   z-index: 10001;
   background: rgb(var(--hrs-glass-tint) / var(--hrs-glass-alpha-frame));
   backdrop-filter: var(--hrs-glass-backdrop-frame);
-}
 
-.group {
-  display: grid;
-  gap: 10px;
-  margin: 0 0 12px;
-  padding: 8px 12px 12px;
-  border: 1px solid rgb(var(--hrs-glass-edge) / 0.3);
-
-  legend {
-    padding: 0 4px;
-    font-weight: 600;
+  &--start {
+    inset-inline-end: auto;
+    inset-inline-start: 56px;
   }
-}
-
-.slider {
-  display: grid;
-  grid-template-columns: 100px minmax(0, 1fr);
-  align-items: center;
-
-  mat-slider {
-    width: 100%;
-  }
-}
-
-.actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.reset {
-  justify-self: start;
-}
-
-// The tint controls, inside the panel: no panel of their own.
-hrs-tint-controls {
-  padding: 0;
 }

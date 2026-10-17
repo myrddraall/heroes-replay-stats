@@ -1,50 +1,30 @@
 import { describe, expect, it } from 'vitest';
-import {
-  NO_TINT,
-  NO_TINTS,
-  parseCanvasColour,
-  rendererTints,
-  sameTints,
-  type Tint,
-  UNTINTED,
-} from './scene-tints';
+import { NO_TINT, parseCanvasColour, rendererTint, sameTint, UNTINTED } from './scene-tints';
 
 /** Colours by name, for the tests: the browser parses them in the app. */
 const parse = (css: string) =>
   (({ red: [1, 0, 0], blue: [0, 0, 1] }) as Record<string, [number, number, number]>)[css] ?? null;
 
-describe('the tints the renderer draws', () => {
-  it('are none when nothing is tinted', () => {
-    expect(rendererTints(UNTINTED, parse)).toEqual(NO_TINTS);
+describe('the tint the renderer draws', () => {
+  it('is none when nothing is tinted', () => {
+    expect(rendererTint(UNTINTED, parse)).toEqual(NO_TINT);
   });
 
-  it('tint the planets as the background where they have none of their own', () => {
-    const tints = rendererTints({ background: { colour: 'red', blend: 'hue' }, planets: {} }, parse);
-    expect(tints.every((t: Tint) => t.blend === 'hue' && t.colour.join() === '1,0,0')).toBe(true);
+  it('is the background’s colour and blend', () => {
+    expect(rendererTint({ background: { colour: 'red', blend: 'hue' } }, parse)).toEqual({
+      colour: [1, 0, 0],
+      blend: 'hue',
+    });
   });
 
-  it('tint a planet on its own', () => {
-    const [background, large, medium] = rendererTints(
-      {
-        background: { colour: 'red', blend: 'color' },
-        planets: { large: { colour: 'blue', blend: 'multiply' } },
-      },
-      parse,
-    );
-    expect(background).toEqual({ colour: [1, 0, 0], blend: 'color' });
-    expect(large).toEqual({ colour: [0, 0, 1], blend: 'multiply' });
-    expect(medium).toEqual(background);
+  it("is none with what isn't a colour", () => {
+    expect(rendererTint({ background: { colour: 'nope', blend: 'hue' } }, parse)).toEqual(NO_TINT);
   });
 
-  it("tint nothing with what isn't a colour", () => {
-    const [background] = rendererTints({ background: { colour: 'nope', blend: 'hue' }, planets: {} }, parse);
-    expect(background).toEqual(NO_TINT);
-  });
-
-  it('tell when they changed', () => {
-    const red = rendererTints({ background: { colour: 'red', blend: 'multiply' }, planets: {} }, parse);
-    expect(sameTints(red, [...red])).toBe(true);
-    expect(sameTints(red, NO_TINTS)).toBe(false);
+  it('tells when it changed', () => {
+    const red = rendererTint({ background: { colour: 'red', blend: 'multiply' } }, parse);
+    expect(sameTint(red, { ...red })).toBe(true);
+    expect(sameTint(red, NO_TINT)).toBe(false);
   });
 });
 

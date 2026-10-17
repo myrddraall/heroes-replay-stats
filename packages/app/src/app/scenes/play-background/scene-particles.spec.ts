@@ -75,7 +75,10 @@ describe('ParticleSystem', () => {
     particles.update(0);
     particles.update(600); // drawn again ten minutes on
     expect(particles.count).toBe(200);
-    const sizes = Array.from({ length: particles.count }, (_, i) => particles.instances[i * INSTANCE_FLOATS + 3]!);
+    const sizes = Array.from(
+      { length: particles.count },
+      (_, i) => particles.instances[i * INSTANCE_FLOATS + 3]!,
+    );
     expect(new Set(sizes.map((s) => s.toFixed(2))).size).toBeGreaterThan(20); // part way through their lives
   });
 

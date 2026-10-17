@@ -104,7 +104,6 @@ export class ThemePreviewPage {
       const blue = getComputedStyle(this.root).getPropertyValue('--hrs-background-tint-blue').trim();
       this.background.setPageTints({
         background: this.blueTint() ? { colour: blue, blend: 'multiply' } : null,
-        planets: {},
       });
     });
     inject(DestroyRef).onDestroy(() => this.background.setPageTints(null));

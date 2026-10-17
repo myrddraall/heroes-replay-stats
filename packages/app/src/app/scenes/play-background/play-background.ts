@@ -5,7 +5,7 @@ import { loadPlayScene, PLAY_SCENE_URL } from './play-scene';
 import { SceneCanvas } from './scene-canvas';
 import { loadPlanetIndex, PlanetLoader } from './scene-planets';
 import type { PlanetPlacement } from './scene-renderer';
-import { browserColourParser, rendererTints } from './scene-tints';
+import { browserColourParser, rendererTint } from './scene-tints';
 
 /**
  * The game's Play screen background (container): its sky, the energy drifting across the horizon,
@@ -28,7 +28,9 @@ export class PlayBackground {
   protected readonly store = inject(BackgroundStore);
   protected readonly drawing = this.store.drawing;
   private readonly parse = browserColourParser();
-  protected readonly tints = computed(() => rendererTints(this.store.tints(), this.parse));
+  protected readonly tint = computed(() => rendererTint(this.store.tints(), this.parse));
+  /** The sky's materials' settings: the page's, if it holds any; else as the data has them. */
+  protected readonly sky = computed(() => this.store.pageSky() ?? {});
 
   protected readonly scene = resource({
     params: () => this.src(),
@@ -64,17 +66,12 @@ export class PlayBackground {
         ...loaded[slot]!,
         position: p.position,
         radius: p.radius,
-        glow: p.glow,
-        glows: p.glows,
-        spreads: p.spreads,
-        scales: p.scales,
-        cuts: p.cuts,
-        widths: p.widths,
-        softs: p.softs,
-        strengths: p.strengths,
+        materials: p.materials,
+        tint: p.tint,
+        lightFrom: p.lightFrom,
+        rim: p.rim,
         lighting: p.lighting,
         shade: p.shade,
-        slot,
       }));
     },
   });

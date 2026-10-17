@@ -2,25 +2,37 @@ import {
   type LoadedPlayScene,
   layerOffset,
   type LayerChannel,
+  type SceneBlend,
   type SceneLayer,
   type SceneMaterial,
   type SceneMesh,
 } from './play-scene';
 import { INSTANCE_FLOATS, ParticleSystem } from './scene-particles';
+import { MATERIAL_DEFAULTS, mergeMaterialSettings } from './material-settings';
+import { lightFrom, rimTurn } from './scene-directions';
 import {
   type BodyPart,
   type BodyShade,
   DEFAULT_SHADE,
-  DEFAULT_STRENGTHS,
   type LoadedPlanet,
+  type MaterialSettings,
+  type MaterialSettingsMap,
+  type MaterialTint,
+  type SkySettings,
   type PlanetLight,
   type PartMapping,
-  type PartRole,
 } from './scene-planets';
-import { BLEND_GLSL, BLEND_MODES, NO_TINTS, PLANETS, type Tints } from './scene-tints';
+import {
+  BLEND_GLSL,
+  BLEND_MODES,
+  NO_TINT,
+  parseCanvasColour,
+  type Tint,
+  TINT_GLSL,
+} from './scene-tints';
 
-/** A target's outputs: the colour, the planets' light, their bodies and their glow (COLOR_ATTACHMENT0 to 3). */
-const DRAW_BUFFERS = [0x8ce0, 0x8ce1, 0x8ce2, 0x8ce3];
+/** A target's outputs: the colour and the glow (COLOR_ATTACHMENT0 and 1). */
+const DRAW_BUFFERS = [0x8ce0, 0x8ce1];
 
 const CHANNELS: Record<LayerChannel, number> = { rgb: 0, rgba: 1, a: 2, r: 3, g: 4, b: 5 };
 /** A material's layer slots, in the shader's order, and their samplers. */
@@ -108,20 +120,25 @@ uniform vec3 uLightDir[3];
 uniform vec3 uLightColor[3];
 uniform int uLightCount;
 uniform float uLightScale;
-const vec3 LUMINANCE = vec3(0.2126, 0.7152, 0.0722);
 uniform vec3 uEye, uRight, uUp;
-uniform vec3 uPlanet;
-uniform bool uAdds;
 uniform float uGlowThreshold, uSceneThreshold, uGlowBoost;
 uniform float uStrength, uSpread, uCut;
 uniform int uPattern;
 uniform vec3 uPatternParams;
 uniform vec3 uShadeDir;
 uniform float uShadeStrength, uShadeSoftness;
+uniform vec2 uRimTurn;
+uniform vec3 uTintColor, uBodyTintColor;
+uniform int uTintBlend, uBodyTintBlend;
+uniform float uTintStrength, uBodyTintStrength;
 layout(location = 0) out vec4 outColor;
-layout(location = 1) out vec4 outCover;
-layout(location = 2) out vec4 outBody;
-layout(location = 3) out vec4 outGlow;
+layout(location = 1) out vec4 outGlow;
+${BLEND_GLSL}
+${TINT_GLSL}
+// The material's own tint, then its body's over all its materials (a planet's; the sky's over the sky's).
+vec3 tinted(vec3 c) {
+  return tintBy(tintBy(c, uTintColor, uTintBlend, uTintStrength), uBodyTintColor, uBodyTintBlend, uBodyTintStrength);
+}
 
 // A layer's texture coordinates, the mesh's shifted by du along u first (the sky's go right round).
 vec2 layerUvFrom(Layer l, float du) {
@@ -145,7 +162,9 @@ vec3 turn(vec3 v, vec3 axis, float angle) {
 // 1), or the other way about (type 2: the facing itself to the exponent, so a low exponent keeps
 // it up nearly to the limb, as the flyby's city lights stay in view in the tutorial's shots).
 float fresnelFormula(Layer l) {
-  vec3 view = turn(turn(normalize(uEye - vWorld), uUp, l.fTurn.x), uRight, l.fTurn.y);
+  // The layer's own turn, and its planet's lean of its rims and glows.
+  vec2 t = l.fTurn + uRimTurn;
+  vec3 view = turn(turn(normalize(uEye - vWorld), uUp, t.x), uRight, t.y);
   float facing = clamp(dot(normalize(vNormal), view), 0.0, 1.0);
   // Spread: in place of the layer's minimum (none set: as the layer has it), so what shows at
   // the limb shows across the face; 0 is nothing but the limb.
@@ -231,7 +250,7 @@ void shade() {
   vec3 glow = emissive.rgb * uEmissiveMult;
   // The emissive pattern cut: what is below the cut goes black, the rest keeps its range.
   if (uCut > 0.0) glow = max(glow - uCut, 0.0) / (1.0 - uCut);
-  vec3 rgb = uEmissiveBlend == 2 ? base + glow : base * glow * (uEmissiveBlend == 1 ? 2.0 : 1.0);
+  vec3 rgb = tinted(uEmissiveBlend == 2 ? base + glow : base * glow * (uEmissiveBlend == 1 ? 2.0 : 1.0));
   float alpha = maskLayer(uMask0, uLayers[2]) * maskLayer(uMask1, uLayers[3]) * diffuse.a;
   if (uVertexAlpha) alpha *= vColor.a;
   if (!uOpaque) alpha *= uStrength; // a part shown less strongly: its blended materials fainter
@@ -241,16 +260,12 @@ void shade() {
   } else {
     outColor = vec4(rgb * alpha, alpha);
   }
-  // The light it gives, as its planet's (blended as the colour is, so it is what reaches the pixel).
-  outCover = vec4(uPlanet * dot(outColor.rgb, LUMINANCE), outColor.a);
-  // How much it hides what is behind it, as its planet's: light added hides nothing.
-  outBody = uAdds ? vec4(0.0) : vec4(uPlanet * outColor.a, outColor.a);
   // What blooms under its own light's threshold that the scene's wouldn't (the glow up to 1 of
   // it: 0 none, 1 as the data has it), and past 1 its emissive light boosted (a glow as if
   // through haze): the bloom adds them. Below 1 the glow also takes back as much of what the
   // scene's own bloom would make of this light, so at 0 it glows not at all. The light is the
   // emissive layer's, or the colour it modulates (a grid over a colour glows in that colour).
-  vec3 shine = uEmissiveBlend == 2 ? glow : rgb;
+  vec3 shine = uEmissiveBlend == 2 ? tinted(glow) : rgb;
   float up = min(uGlowBoost, 1.0);
   outGlow = vec4(up * max(outColor.rgb - uGlowThreshold, 0.0) - max(outColor.rgb - uSceneThreshold, 0.0)
     + max(uGlowBoost - 1.0, 0.0) * shine * (uOpaque ? 1.0 : alpha), outColor.a);
@@ -393,19 +408,22 @@ precision highp float;
 uniform sampler2D uTexture;
 uniform int uChannel;
 uniform float uBright;
+// The sky's tint: the stars are the sky's.
+uniform vec3 uBodyTintColor;
+uniform int uBodyTintBlend;
+uniform float uBodyTintStrength;
 in vec2 vUv;
 in vec4 vColor;
 layout(location = 0) out vec4 outColor;
-layout(location = 1) out vec4 outCover;
-layout(location = 2) out vec4 outBody;
-layout(location = 3) out vec4 outGlow;
+layout(location = 1) out vec4 outGlow;
+${BLEND_GLSL}
+${TINT_GLSL}
 void main() {
-  outCover = vec4(0.0); // the stars are the sky's
-  outBody = vec4(0.0);
   outGlow = vec4(0.0);
   vec4 t = texture(uTexture, vUv);
   vec3 c = uChannel <= 1 ? t.rgb : vec3(uChannel == 2 ? t.a : uChannel == 3 ? t.r : uChannel == 4 ? t.g : t.b);
-  outColor = vec4(c * uBright * vColor.rgb * vColor.a, 0.0);
+  vec3 star = tintBy(c * uBright * vColor.rgb, uBodyTintColor, uBodyTintBlend, uBodyTintStrength);
+  outColor = vec4(star * vColor.a, 0.0);
 }`;
 
 const TONE_VERTEX = `#version 300 es
@@ -468,37 +486,26 @@ const DEFAULT_BLOOM_THRESHOLD = 0.6;
  * curve to the light's white point (what reaches it shows as white). The data gives the exposure
  * and white point but not the curve (its operator is a number); on luminance this one matches the
  * game's screenshot within a few levels, where the same curve per channel darkens the blues too much.
- * Then the tints, as CSS blends a colour over the picture: each planet's on its part of the pixel,
- * the background's on the rest; fading from the tints before (uTint[4..7]) to the tints now
- * (uTint[0..3]) by uFade. A planet's part is the share of the pixel's light it gives (its glow at
- * the rim, over the sky), or how much its body hides the sky, whichever is more (so the sky's
- * energy drifting over a planet takes the planet's tint).
+ * Then the tint, as CSS blends a colour over the picture: fading from the tint before (uTint[1])
+ * to the tint now (uTint[0]) by uFade.
  */
 const TONE_FRAGMENT = `#version 300 es
 precision highp float;
-uniform sampler2D uScene, uCover, uBody, uBloom;
+uniform sampler2D uScene, uBloom;
 uniform float uExposure, uWhitePoint, uFade, uBloomStrength;
-uniform vec3 uTint[8];
-uniform int uBlend[8];
+uniform vec3 uTint[2];
+uniform int uBlend[2];
 in vec2 vUv;
 out vec4 outColor;
 ${BLEND_GLSL}
-vec3 tinted(vec3 c, vec3 share, int first) {
-  return blend(c, uTint[first], uBlend[first]) * (1.0 - share.r - share.g - share.b)
-    + blend(c, uTint[first + 1], uBlend[first + 1]) * share.r
-    + blend(c, uTint[first + 2], uBlend[first + 2]) * share.g
-    + blend(c, uTint[first + 3], uBlend[first + 3]) * share.b;
-}
 void main() {
   vec3 hdr = texture(uScene, vUv).rgb + texture(uBloom, vUv).rgb * uBloomStrength;
   float light = dot(hdr, vec3(0.2126, 0.7152, 0.0722));
-  vec3 share = max(texture(uCover, vUv).rgb / max(light, 1e-4), texture(uBody, vUv).rgb);
-  share /= max(1.0, share.r + share.g + share.b);
   vec3 c = hdr * uExposure;
   float l = light * uExposure;
   float mapped = l * (1.0 + l / (uWhitePoint * uWhitePoint)) / (1.0 + l);
   c = clamp(l > 0.0 ? c * (mapped / l) : c, 0.0, 1.0);
-  outColor = vec4(mix(tinted(c, share, 4), tinted(c, share, 0), uFade), 1.0);
+  outColor = vec4(mix(blend(c, uTint[1], uBlend[1]), blend(c, uTint[0], uBlend[0]), uFade), 1.0);
 }`;
 
 type Vec3 = readonly [number, number, number];
@@ -509,6 +516,7 @@ const cross = (a: Vec3, b: Vec3): Vec3 => [
   a[0] * b[1] - a[1] * b[0],
 ];
 const dot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const distance = (a: Vec3, b: Vec3) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
 const normalize = (a: Vec3): Vec3 => {
   const l = Math.hypot(...a);
   return [a[0] / l, a[1] / l, a[2] / l];
@@ -584,11 +592,13 @@ function turnAbout(v: Vec3, axis: Vec3, angle: number): Vec3 {
  * Draws in drawing order: opaque first (they write depth), then the blended ones by the model's
  * priority, highest first, as the game draws a model's materials (the order of equal ones is kept).
  */
-function sorted(draws: readonly MeshDraw[]): MeshDraw[] {
+function sorted<T extends { readonly draw: MeshDraw; readonly blend: SceneBlend }>(
+  draws: readonly T[],
+): T[] {
   return [...draws].sort(
     (a, b) =>
-      Number(a.material.blend !== 'opaque') - Number(b.material.blend !== 'opaque') ||
-      (b.material.priority ?? 0) - (a.material.priority ?? 0),
+      Number(a.blend !== 'opaque') - Number(b.blend !== 'opaque') ||
+      (b.draw.material.priority ?? 0) - (a.draw.material.priority ?? 0),
   );
 }
 
@@ -626,12 +636,14 @@ function program(gl: WebGL2RenderingContext, vertex: string, fragment: string): 
 interface MeshDraw {
   readonly vao: WebGLVertexArrayObject;
   readonly count: number;
+  /** The material's name, which its settings are kept by. */
+  readonly name: string;
   readonly material: SceneMaterial;
   readonly moving: boolean;
-  /** Which planet it draws (one channel per planet, in PLANETS' order), or none. */
-  readonly planet: readonly [number, number, number];
   /** The planet it is part of (a placed one), whose frame places it; none: in world space as it is. */
   readonly placed?: Placed;
+  /** The planet or style the material is of, whose tuning is its settings' default; none: the sky's. */
+  readonly owner?: LoadedPlanet;
   /** The part of the planet's body it is, drawn on the square instead of a mesh. */
   readonly part?: BodyPart;
   /** How it is lit, where it is a lit material of a flyby planet. */
@@ -643,22 +655,14 @@ export interface PlanetPlacement {
   readonly planet: LoadedPlanet;
   /** A style it wears: its parts about the body, its light on the body's lit materials. */
   readonly style?: LoadedPlanet;
-  /** Its glow: 0 none, 1 its own light's bloom as the data has it, past 1 its emissive light boosted into the bloom. */
-  readonly glow?: number;
-  /** A glow for the parts of a role on its own (a style's shield), over `glow`. */
-  readonly glows?: Partial<Record<PartRole, number>>;
-  /** How far a role's parts show away from the limb, 0 to 1 (a floor under their fresnel). */
-  readonly spreads?: Partial<Record<PartRole, number>>;
-  /** How large a role's parts' emissive pattern is: its tiling times this. */
-  readonly scales?: Partial<Record<PartRole, number>>;
-  /** How much of a role's parts' emissive pattern is cut to black, 0 to 1. */
-  readonly cuts?: Partial<Record<PartRole, number>>;
-  /** How wide a role's parts' drawn pattern's lines are, as a share of a cell. */
-  readonly widths?: Partial<Record<PartRole, number>>;
-  /** How softly a role's parts' drawn pattern's lines glow about themselves, 0 to 1. */
-  readonly softs?: Partial<Record<PartRole, number>>;
-  /** How strongly its parts of a role show, 0 to 1 (DEFAULT_STRENGTHS where unsaid): their blended materials' alpha times this. */
-  readonly strengths?: Partial<Record<PartRole, number>>;
+  /** Its materials' settings (its own and its style's, by name), over the tunings' (the planet's for its materials, the style's for its own). */
+  readonly materials?: MaterialSettingsMap;
+  /** A tint over all its materials (its style's too), over its tuning's. */
+  readonly tint?: MaterialTint;
+  /** Where its key light comes from (its lights turned together), over its tuning's; none: as the data has it. */
+  readonly lightFrom?: Vec3;
+  /** Where its rims and glows lean (a point on its face), over its tuning's; none: as the data has them. */
+  readonly rim?: Vec3;
   /** How strongly its light lights it, times this. */
   readonly lighting?: number;
   /** A shade from a side, over its style's. */
@@ -666,8 +670,6 @@ export interface PlanetPlacement {
   readonly position: Vec3;
   /** Its body's radius in the scene's units. */
   readonly radius: number;
-  /** Which of the tints is its (0 to 2, in PLANETS' order), or none (-1). */
-  readonly slot: number;
 }
 
 /** A placement with its body's frame as last placed. */
@@ -716,6 +718,19 @@ function partsOf(placement: PlanetPlacement): readonly BodyPart[] {
   return [...placement.planet.planet.parts, ...(placement.style?.planet.parts ?? [])];
 }
 
+/**
+ * The half-side of the square a body's parts are drawn on, in the scene's units: as far as they
+ * reach, widened for perspective. A sphere seen from a finite distance shows wider than its radius
+ * on the plane through its centre (its outline is where the eye's rays graze it, nearer the eye):
+ * by d/sqrt(d^2 - r^2) for a sphere of radius r at distance d; a square only as wide as the radius
+ * cuts its edges off, the more so the nearer and larger the body.
+ */
+export function bodyExtent(radius: number, reachOf: number, eyeDistance: number): number {
+  const r = radius * reachOf;
+  const d = Math.max(eyeDistance, r * 1.01); // the eye inside it: as wide as it can usefully be
+  return (r * d) / Math.sqrt(d * d - r * r);
+}
+
 /** How far a body's parts reach from its centre, in units of its radius. */
 function reach(parts: readonly BodyPart[]): number {
   return Math.max(
@@ -733,10 +748,6 @@ interface Target {
   readonly framebuffer: WebGLFramebuffer;
   readonly depth: WebGLRenderbuffer;
   texture: WebGLTexture | null;
-  /** The light each planet gives each pixel, one channel per planet (its luminance, as the colour's). */
-  cover: WebGLTexture | null;
-  /** How much each planet's body hides the pixel's sky, one channel per planet. */
-  body: WebGLTexture | null;
   /** What blooms under the planets' own lights' thresholds beyond the scene's. */
   glow: WebGLTexture | null;
 }
@@ -759,8 +770,10 @@ interface ParticleDraw {
  * planets' surfaces) draw first and hide what is behind them; the blended ones follow by
  * priority. What doesn't move (the sky's nebula and stars, the planets) is drawn once per size
  * into a target of its own, colour and depth, and each frame starts from a copy of it, drawing
- * only what moves (the energy's scroll, the particles). Each target also keeps the light each
- * planet gives each pixel, for the planets' own tints.
+ * only what moves (the energy's scroll, the particles). Each target also keeps what glows beyond
+ * the scene's own bloom, for the bloom pass. Each material is drawn as its settings say (the
+ * sky's as set by `setSky`; a planet's as its placement, its tuning and its style's say): not at
+ * all, fainter, blended another way, glowing more or less, its pattern sized.
  */
 export class SceneRenderer {
   private readonly gl: WebGL2RenderingContext;
@@ -832,16 +845,12 @@ export class SceneRenderer {
       framebuffer: gl.createFramebuffer(),
       depth: gl.createRenderbuffer(),
       texture: null,
-      cover: null,
-      body: null,
       glow: null,
     };
     this.frame = {
       framebuffer: gl.createFramebuffer(),
       depth: gl.createRenderbuffer(),
       texture: null,
-      cover: null,
-      body: null,
       glow: null,
     };
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
@@ -859,9 +868,9 @@ export class SceneRenderer {
         this.sceneDraws.push({
           vao,
           count: mesh.indices.length,
+          name: m,
           material,
           moving: moves(material),
-          planet: [0, 0, 0],
         });
       }
     }
@@ -877,7 +886,7 @@ export class SceneRenderer {
         material: this.material(system.material, 'particles', scene.materials),
       });
     }
-    this.draws = sorted(this.sceneDraws);
+    this.draws = [...this.sceneDraws];
     gl.enable(gl.CULL_FACE);
     gl.depthFunc(gl.LEQUAL);
   }
@@ -891,12 +900,15 @@ export class SceneRenderer {
     this.placed = placements.map((placement) => ({
       placement,
       frame: bodyFrame(placement.position, placement.radius, eye),
-      extent: placement.radius * reach(partsOf(placement)),
+      extent: bodyExtent(
+        placement.radius,
+        reach(partsOf(placement)),
+        distance(placement.position, eye),
+      ),
     }));
     const draws: MeshDraw[] = [];
     for (const placed of this.placed) {
-      const { planet, style, slot } = placed.placement;
-      const channels = PLANETS.map((_, i) => (i === slot ? 1 : 0)) as [number, number, number];
+      const { planet, style } = placed.placement;
       for (const loaded of style ? [planet, style] : [planet]) {
         if (this.planetsOnGpu.has(loaded.id)) continue;
         for (const [textureKey, image] of Object.entries(loaded.images))
@@ -912,10 +924,11 @@ export class SceneRenderer {
             draws.push({
               vao: this.quad,
               count: 4,
+              name: m,
               material,
               moving: moves(material),
-              planet: channels,
               placed,
+              owner: loaded,
               part,
               light: material.unshaded ? undefined : light,
             });
@@ -923,7 +936,7 @@ export class SceneRenderer {
         });
       }
     }
-    this.draws = [...sorted(this.sceneDraws), ...sorted(draws)];
+    this.draws = [...this.sceneDraws, ...draws];
     this.stillDirty = true;
   }
 
@@ -947,7 +960,8 @@ export class SceneRenderer {
       const { position, radius } = placement;
       const centre = project(position);
       const top = project([position[0], position[1], position[2] + radius]);
-      if (centre && top) out.push({ id: placement.planet.id, x: centre[0], y: centre[1], top: top[1] });
+      if (centre && top)
+        out.push({ id: placement.planet.id, x: centre[0], y: centre[1], top: top[1] });
     }
     return out;
   }
@@ -960,7 +974,7 @@ export class SceneRenderer {
       const radius = radii?.[i] ?? placed.placement.radius;
       placed.placement = { ...placed.placement, position, radius };
       placed.frame = bodyFrame(position, radius, eye);
-      placed.extent = radius * reach(partsOf(placed.placement));
+      placed.extent = bodyExtent(radius, reach(partsOf(placed.placement)), distance(position, eye));
     });
     this.stillDirty = true;
   }
@@ -1017,7 +1031,13 @@ export class SceneRenderer {
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
       gl.bindFramebuffer(gl.FRAMEBUFFER, target.framebuffer);
-      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, target.texture, 0);
+      gl.framebufferTexture2D(
+        gl.FRAMEBUFFER,
+        gl.COLOR_ATTACHMENT0,
+        gl.TEXTURE_2D,
+        target.texture,
+        0,
+      );
       gl.drawBuffers([gl.COLOR_ATTACHMENT0]);
     }
   }
@@ -1077,11 +1097,19 @@ export class SceneRenderer {
   streak = 0;
   /** How far the sky's layers are smeared across, as a share of the way round the sky (0: not at all). */
   smear = 0;
-  /** The tints drawn: the background's, then each planet's. */
-  tints: Tints = NO_TINTS;
-  /** The tints the picture fades from, and how far it is from them to `tints` (1: all the way). */
-  fadingFrom: Tints = NO_TINTS;
+  /** The tint drawn over the whole picture. */
+  tint: Tint = NO_TINT;
+  /** The tint the picture fades from, and how far it is from it to `tint` (1: all the way). */
+  fadingFrom: Tint = NO_TINT;
   fade = 1;
+  /** How the sky shows: its materials' settings by name, and its tint. */
+  private sky: SkySettings = {};
+
+  /** The sky shown as these settings say (materials not named, as the data has them). */
+  setSky(settings: SkySettings): void {
+    this.sky = settings;
+    this.stillDirty = true;
+  }
 
   /** The scene at `seconds` on its clock. */
   draw(seconds: number): void {
@@ -1116,6 +1144,7 @@ export class SceneRenderer {
     gl.uniformMatrix4fv(this.uniform(this.particleProgram, 'uView'), false, this.view);
     gl.uniformMatrix4fv(this.uniform(this.particleProgram, 'uProjection'), false, this.projection);
     gl.uniform1f(this.uniform(this.particleProgram, 'uStreak'), this.streak);
+    this.bindTint(this.particleProgram, 'uBodyTint', this.sky.tint);
     for (const p of this.particles) {
       p.system.update(seconds);
       const layer = p.material.diffuse!;
@@ -1147,19 +1176,14 @@ export class SceneRenderer {
     gl.bindTexture(gl.TEXTURE_2D, this.frame.texture);
     gl.uniform1i(this.uniform(this.toneProgram, 'uScene'), 0);
     gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, this.frame.cover);
-    gl.uniform1i(this.uniform(this.toneProgram, 'uCover'), 1);
-    gl.activeTexture(gl.TEXTURE2);
-    gl.bindSampler(2, null);
-    gl.bindTexture(gl.TEXTURE_2D, this.frame.body);
-    gl.uniform1i(this.uniform(this.toneProgram, 'uBody'), 2);
-    gl.activeTexture(gl.TEXTURE3);
-    gl.bindSampler(3, null);
     gl.bindTexture(gl.TEXTURE_2D, this.bloom[0]!.texture);
-    gl.uniform1i(this.uniform(this.toneProgram, 'uBloom'), 3);
+    gl.uniform1i(this.uniform(this.toneProgram, 'uBloom'), 1);
     gl.uniform1f(this.uniform(this.toneProgram, 'uBloomStrength'), BLOOM_STRENGTH);
-    const tints = [...this.tints, ...this.fadingFrom];
-    gl.uniform3fv(this.uniform(this.toneProgram, 'uTint'), tints.flatMap((t) => [...t.colour]));
+    const tints = [this.tint, this.fadingFrom];
+    gl.uniform3fv(
+      this.uniform(this.toneProgram, 'uTint'),
+      tints.flatMap((t) => [...t.colour]),
+    );
     gl.uniform1iv(
       this.uniform(this.toneProgram, 'uBlend'),
       tints.map((t) => BLEND_MODES[t.blend]),
@@ -1195,8 +1219,6 @@ export class SceneRenderer {
     }
     for (const target of [this.still, this.frame]) {
       gl.deleteTexture(target.texture);
-      gl.deleteTexture(target.cover);
-      gl.deleteTexture(target.body);
       gl.deleteTexture(target.glow);
       gl.deleteRenderbuffer(target.depth);
       gl.deleteFramebuffer(target.framebuffer);
@@ -1212,18 +1234,6 @@ export class SceneRenderer {
     gl.texStorage2D(gl.TEXTURE_2D, 1, this.format, this.canvas.width, this.canvas.height);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.deleteTexture(target.cover);
-    target.cover = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, target.cover);
-    gl.texStorage2D(gl.TEXTURE_2D, 1, this.format, this.canvas.width, this.canvas.height);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.deleteTexture(target.body);
-    target.body = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, target.body);
-    gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA8, this.canvas.width, this.canvas.height);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.deleteTexture(target.glow);
     target.glow = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, target.glow);
@@ -1232,9 +1242,7 @@ export class SceneRenderer {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.bindFramebuffer(gl.FRAMEBUFFER, target.framebuffer);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, target.texture, 0);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, target.cover, 0);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT2, gl.TEXTURE_2D, target.body, 0);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT3, gl.TEXTURE_2D, target.glow, 0);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, target.glow, 0);
     gl.drawBuffers(DRAW_BUFFERS);
     gl.bindRenderbuffer(gl.RENDERBUFFER, target.depth);
     gl.renderbufferStorage(
@@ -1257,18 +1265,30 @@ export class SceneRenderer {
     gl.enable(gl.DEPTH_TEST);
   }
 
-  /** The blend for a material: opaque writes colour and depth; the rest add or blend over. */
-  private blend(material: SceneMaterial): void {
+  /** A blend: opaque writes colour and depth; the rest add or blend over. */
+  private blend(blend: SceneBlend): void {
     const gl = this.gl;
-    if (material.blend === 'opaque') {
+    if (blend === 'opaque') {
       gl.disable(gl.BLEND);
       gl.depthMask(true);
       return;
     }
     gl.enable(gl.BLEND);
     gl.depthMask(false);
-    if (material.blend === 'alpha') gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    if (blend === 'alpha') gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     else gl.blendFunc(gl.ONE, gl.ONE);
+  }
+
+  /**
+   * A draw's material's settings: the placement's say over its owner's tuning (a planet's for its
+   * materials, its style's for the style's), or the sky's as set.
+   */
+  private settingsOf(draw: MeshDraw): MaterialSettings | undefined {
+    const placement = draw.placed?.placement;
+    if (!placement) return this.sky.materials?.[draw.name];
+    return mergeMaterialSettings(draw.owner?.planet.tuning?.materials, placement.materials)[
+      draw.name
+    ];
   }
 
   /** The mesh draws that move, or those that don't, into the bound target. */
@@ -1287,58 +1307,62 @@ export class SceneRenderer {
     gl.uniformMatrix4fv(this.uniform(this.meshProgram, 'uViewProjection'), false, viewProjection);
     gl.uniform1f(this.uniform(this.meshProgram, 'uSceneThreshold'), threshold);
     gl.uniform1f(this.uniform(this.meshProgram, 'uGlowThreshold'), threshold); // the sky: no glow of its own
-    gl.uniform1f(this.uniform(this.meshProgram, 'uGlowBoost'), 1);
-    gl.uniform1f(this.uniform(this.meshProgram, 'uStrength'), 1);
-    gl.uniform1f(this.uniform(this.meshProgram, 'uSpread'), -1);
-    gl.uniform1f(this.uniform(this.meshProgram, 'uCut'), 0);
     gl.uniform1i(this.uniform(this.meshProgram, 'uPattern'), 0);
     gl.uniform1f(this.uniform(this.meshProgram, 'uShadeStrength'), 0);
+    this.bindTint(this.meshProgram, 'uBodyTint', this.sky.tint); // the sky's over all of it
+    gl.uniform2f(this.uniform(this.meshProgram, 'uRimTurn'), 0, 0);
     gl.uniform3fv(this.uniform(this.meshProgram, 'uEye'), this.loaded.scene.camera.eye);
     gl.uniform3fv(this.uniform(this.meshProgram, 'uRight'), right);
     gl.uniform3fv(this.uniform(this.meshProgram, 'uUp'), up);
     gl.uniform1f(this.uniform(this.meshProgram, 'uSmear'), this.smear);
     gl.uniform1i(this.uniform(this.meshProgram, 'uLit'), 0);
     let program = this.meshProgram;
-    for (const draw of this.draws) {
-      if (draw.moving !== moving) continue;
+    // Each draw as its material's settings say; the sky's in drawing order by the blend they
+    // give it, then the planets' likewise.
+    const draws = this.draws
+      .filter((draw) => draw.moving === moving)
+      .map((draw) => {
+        const settings = this.settingsOf(draw);
+        return { draw, settings, blend: settings?.blend ?? draw.material.blend };
+      })
+      .filter(({ settings }) => settings?.enabled ?? MATERIAL_DEFAULTS.enabled);
+    const ordered = [
+      ...sorted(draws.filter((d) => !d.draw.placed)),
+      ...sorted(draws.filter((d) => d.draw.placed)),
+    ];
+    for (const { draw, settings, blend } of ordered) {
       const p = draw.part ? this.bodyProgram : this.meshProgram;
       if (p !== program) gl.useProgram((program = p));
       gl.bindVertexArray(draw.vao);
-      this.blend(draw.material);
-      // How a planet's part shows: the placement's say, over its style's, over its planet's tuning.
+      this.blend(blend);
+      const scale = settings?.scale ?? MATERIAL_DEFAULTS.scale;
+      this.bindMaterial(p, draw.material, seconds, scale, blend);
+      gl.uniform1f(this.uniform(p, 'uGlowBoost'), settings?.glow ?? MATERIAL_DEFAULTS.glow);
+      gl.uniform1f(this.uniform(p, 'uSpread'), settings?.spread ?? -1);
+      gl.uniform1f(this.uniform(p, 'uCut'), settings?.cut ?? MATERIAL_DEFAULTS.cut);
+      gl.uniform1f(this.uniform(p, 'uStrength'), settings?.strength ?? MATERIAL_DEFAULTS.strength);
+      this.bindTint(p, 'uTint', settings?.tint);
       const placement = draw.placed?.placement;
-      const role = draw.part?.role;
-      const tunings = [placement?.style?.planet.tuning, placement?.planet.planet.tuning];
-      const setting = <K extends 'glows' | 'spreads' | 'scales' | 'cuts' | 'widths' | 'softs' | 'strengths'>(key: K) =>
-        role === undefined
-          ? undefined
-          : (placement?.[key]?.[role] ?? tunings[0]?.[key]?.[role] ?? tunings[1]?.[key]?.[role]);
-      this.bindMaterial(p, draw.material, seconds, setting('scales') ?? 1);
-      gl.uniform3fv(this.uniform(p, 'uPlanet'), draw.planet);
-      if (draw.part && draw.placed && placement && role) {
+      if (draw.part && draw.placed && placement) {
         this.bindPart(draw.part, draw.placed, right, up);
-        this.bindLight(draw.light, placement.lighting ?? tunings[1]?.lighting ?? 1);
+        const tuning = placement.planet.planet.tuning;
+        const from = placement.lightFrom ?? tuning?.lightFrom;
+        const light = draw.light && from ? lightFrom(draw.light, from) : draw.light;
+        this.bindLight(light, placement.lighting ?? tuning?.lighting ?? 1);
+        this.bindTint(p, 'uBodyTint', placement.tint ?? tuning?.tint);
+        const rim = placement.rim ?? tuning?.rim;
+        gl.uniform2fv(this.uniform(p, 'uRimTurn'), rim ? rimTurn(rim) : [0, 0]);
         this.bindShade(placement);
         // The body glows under its own light's bloom threshold, lit or not (its city lights aren't lit).
         const own = (placement.style ?? placement.planet).planet.light;
         gl.uniform1f(this.uniform(p, 'uGlowThreshold'), own?.bloomThreshold ?? threshold);
-        gl.uniform1f(
-          this.uniform(p, 'uGlowBoost'),
-          setting('glows') ?? placement.glow ?? tunings[1]?.glow ?? 1,
-        );
-        gl.uniform1f(this.uniform(p, 'uSpread'), setting('spreads') ?? -1);
-        gl.uniform1f(this.uniform(p, 'uCut'), setting('cuts') ?? 0);
         // A drawn pattern: so many cells round the part (HEX_ROUND over its scale), its lines' width and glow.
         gl.uniform1i(this.uniform(p, 'uPattern'), draw.part.pattern?.kind === 'hex' ? 1 : 0);
         gl.uniform3f(
           this.uniform(p, 'uPatternParams'),
-          HEX_ROUND / (setting('scales') ?? 1),
-          setting('widths') ?? 0.08,
-          setting('softs') ?? 0.3,
-        );
-        gl.uniform1f(
-          this.uniform(p, 'uStrength'),
-          setting('strengths') ?? DEFAULT_STRENGTHS[role] ?? 1,
+          HEX_ROUND / scale,
+          settings?.width ?? MATERIAL_DEFAULTS.width,
+          settings?.soft ?? MATERIAL_DEFAULTS.soft,
         );
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, draw.count);
       } else {
@@ -1346,6 +1370,16 @@ export class SceneRenderer {
       }
     }
     gl.bindVertexArray(null);
+  }
+
+  /** A tint into the uniforms `<name>Color`, `<name>Blend` and `<name>Strength` (none: strength 0). */
+  private bindTint(p: WebGLProgram, name: string, tint: MaterialTint | undefined): void {
+    const gl = this.gl;
+    const colour = tint ? parseCanvasColour(tint.colour) : null;
+    gl.uniform1f(this.uniform(p, `${name}Strength`), colour && tint ? tint.strength : 0);
+    if (!colour || !tint) return;
+    gl.uniform3fv(this.uniform(p, `${name}Color`), colour);
+    gl.uniform1i(this.uniform(p, `${name}Blend`), BLEND_MODES[tint.blend]);
   }
 
   /** A body's part and its frame, for the body shader: in units of the body's radius. */
@@ -1424,7 +1458,10 @@ export class SceneRenderer {
     const pad = Array<number>(9 - lights.length * 3).fill(0);
     gl.uniform3fv(this.uniform(p, 'uAmbient'), light.ambient);
     gl.uniform1i(this.uniform(p, 'uLightCount'), lights.length);
-    gl.uniform3fv(this.uniform(p, 'uLightDir'), [...lights.flatMap((l) => [...l.direction]), ...pad]);
+    gl.uniform3fv(this.uniform(p, 'uLightDir'), [
+      ...lights.flatMap((l) => [...l.direction]),
+      ...pad,
+    ]);
     gl.uniform3fv(this.uniform(p, 'uLightColor'), [...lights.flatMap((l) => [...l.color]), ...pad]);
     // The light's exposure over the scene's: the planet as bright as the tutorial shows it.
     gl.uniform1f(
@@ -1445,12 +1482,16 @@ export class SceneRenderer {
     return material;
   }
 
-  /** `emissiveScale` scales the emissive layer's tiling (a pattern made larger or smaller). */
+  /**
+   * `emissiveScale` scales the emissive layer's tiling (a pattern made larger or smaller);
+   * `blend` is the blend it is drawn with (its own, or its settings').
+   */
   private bindMaterial(
     p: WebGLProgram,
     material: SceneMaterial,
     seconds: number,
-    emissiveScale = 1,
+    emissiveScale: number,
+    blend: SceneBlend,
   ): void {
     const gl = this.gl;
     const layers: (SceneLayer | null | undefined)[] = [
@@ -1492,11 +1533,7 @@ export class SceneRenderer {
     gl.uniform1i(this.uniform(p, 'uVertexAlpha'), material.vertexAlpha ? 1 : 0);
     gl.uniform1i(this.uniform(p, 'uVertexColor'), material.vertexColor ? 1 : 0);
     gl.uniform1f(this.uniform(p, 'uEmissiveMult'), material.emissiveMult);
-    gl.uniform1i(this.uniform(p, 'uOpaque'), material.blend === 'opaque' ? 1 : 0);
-    gl.uniform1i(
-      this.uniform(p, 'uAdds'),
-      material.blend === 'add' || material.blend === 'alphaAdd' ? 1 : 0,
-    );
+    gl.uniform1i(this.uniform(p, 'uOpaque'), blend === 'opaque' ? 1 : 0);
     gl.uniform1i(
       this.uniform(p, 'uEmissiveBlend'),
       { mod: 0, mod2x: 1, add: 2 }[material.emissiveBlend ?? 'add'],
