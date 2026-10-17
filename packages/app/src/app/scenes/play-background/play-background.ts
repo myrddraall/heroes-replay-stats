@@ -69,6 +69,8 @@ export class PlayBackground {
         spreads: p.spreads,
         scales: p.scales,
         cuts: p.cuts,
+        widths: p.widths,
+        softs: p.softs,
         strengths: p.strengths,
         lighting: p.lighting,
         shade: p.shade,

@@ -18,6 +18,10 @@ export interface SetPlanet {
   readonly scales?: Partial<Record<PartRole, number>>;
   /** How much of a role's parts' emissive pattern is cut to black, 0 to 1. */
   readonly cuts?: Partial<Record<PartRole, number>>;
+  /** How wide a role's parts' drawn pattern's lines are, as a share of a cell. */
+  readonly widths?: Partial<Record<PartRole, number>>;
+  /** How softly a role's parts' drawn pattern's lines glow about themselves, 0 to 1. */
+  readonly softs?: Partial<Record<PartRole, number>>;
   /** How strongly its parts of a role show, 0 to 1 (1, as the data has them): its haze layers, its shell, its ring. */
   readonly strengths?: Partial<Record<PartRole, number>>;
   /** How strongly its light lights it, times this (1, as the data has it). */

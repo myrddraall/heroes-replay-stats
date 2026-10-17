@@ -27,6 +27,8 @@ const CHANNELS: Record<LayerChannel, number> = { rgb: 0, rgba: 1, a: 2, r: 3, g:
 const SLOTS = ['uDiffuse', 'uEmissive', 'uMask0', 'uMask1'] as const;
 /** How many values a uv sphere's v table has, from the pole to the opposite one (as exported). */
 const V_SAMPLES = 32;
+/** How many hexes a drawn hex pattern has round a body at scale 1. */
+const HEX_ROUND = 24;
 
 /**
  * How strongly a layer's brightness multiplier acts: the data's value, squared. Measured, as the
@@ -112,6 +114,8 @@ uniform vec3 uPlanet;
 uniform bool uAdds;
 uniform float uGlowThreshold, uSceneThreshold, uGlowBoost;
 uniform float uStrength, uSpread, uCut;
+uniform int uPattern;
+uniform vec3 uPatternParams;
 uniform vec3 uShadeDir;
 uniform float uShadeStrength, uShadeSoftness;
 layout(location = 0) out vec4 outColor;
@@ -180,6 +184,29 @@ vec4 colorLayer(sampler2D tex, Layer l) {
   vec4 v = l.textured ? midtone(channel(texel(tex, l), l.channel), l.midtone) : l.color;
   return vec4(v.rgb * l.bright * fresnel(l), v.a);
 }
+// A hex grid's lines, drawn: the distance from the nearest cell's edge in a grid of pointy
+// hexes a unit apart, the lines "width" of a cell wide (anti-aliased by the pixel's footprint)
+// and glowing "soft" about themselves.
+float hexLines(vec2 p, float width, float soft) {
+  const vec2 r = vec2(1.0, 1.7320508);
+  vec2 h = r * 0.5;
+  vec2 a = mod(p, r) - h;
+  vec2 b = mod(p - h, r) - h;
+  vec2 c = abs(dot(a, a) < dot(b, b) ? a : b);
+  float edge = 0.5 - max(dot(c, normalize(vec2(1.0, 1.7320508))), c.x);
+  float aa = fwidth(edge);
+  float line = 1.0 - smoothstep(width - aa, width + aa, edge);
+  float halo = soft * exp(-max(edge - width, 0.0) * 6.0);
+  return max(line, halo);
+}
+// The emissive layer drawn as a pattern instead of read from its texture: the hexes on the
+// mapping, so many round it (the params: round, width, soft), regular at the equator.
+vec4 patternLayer(Layer l) {
+  if (!l.used) return vec4(0.0, 0.0, 0.0, 1.0);
+  vec2 p = vec2(vUv.x, vUv.y * 0.5) * uPatternParams.x;
+  float v = hexLines(p, uPatternParams.y, uPatternParams.z);
+  return vec4(vec3(v) * l.bright * fresnel(l), 1.0);
+}
 float maskLayer(sampler2D tex, Layer l) {
   if (!l.used) return 1.0;
   float v = clamp(channel(sampled(tex, layerUv(l)), l.channel).a * l.bright, 0.0, 1.0);
@@ -196,7 +223,7 @@ vec3 lit(vec3 albedo) {
 void shade() {
   vec4 diffuse = colorLayer(uDiffuse, uLayers[0]);
   if (uVertexColor) diffuse.rgb *= vColor.rgb;
-  vec4 emissive = colorLayer(uEmissive, uLayers[1]);
+  vec4 emissive = uPattern == 1 ? patternLayer(uLayers[1]) : colorLayer(uEmissive, uLayers[1]);
   vec3 base = uUnshaded ? diffuse.rgb : uLit ? lit(diffuse.rgb) : vec3(0.0);
   // The shade: the body's colour cut where it faces the shade's direction; what it emits isn't.
   if (uShadeStrength > 0.0)
@@ -220,10 +247,12 @@ void shade() {
   outBody = uAdds ? vec4(0.0) : vec4(uPlanet * outColor.a, outColor.a);
   // What blooms under its own light's threshold that the scene's wouldn't (the glow up to 1 of
   // it: 0 none, 1 as the data has it), and past 1 its emissive light boosted (a glow as if
-  // through haze): the bloom adds them. The light is the emissive layer's, or the colour it
-  // modulates (a grid over a colour glows in that colour).
+  // through haze): the bloom adds them. Below 1 the glow also takes back as much of what the
+  // scene's own bloom would make of this light, so at 0 it glows not at all. The light is the
+  // emissive layer's, or the colour it modulates (a grid over a colour glows in that colour).
   vec3 shine = uEmissiveBlend == 2 ? glow : rgb;
-  outGlow = vec4(min(uGlowBoost, 1.0) * (max(outColor.rgb - uGlowThreshold, 0.0) - max(outColor.rgb - uSceneThreshold, 0.0))
+  float up = min(uGlowBoost, 1.0);
+  outGlow = vec4(up * max(outColor.rgb - uGlowThreshold, 0.0) - max(outColor.rgb - uSceneThreshold, 0.0)
     + max(uGlowBoost - 1.0, 0.0) * shine * (uOpaque ? 1.0 : alpha), outColor.a);
 }
 `;
@@ -624,6 +653,10 @@ export interface PlanetPlacement {
   readonly scales?: Partial<Record<PartRole, number>>;
   /** How much of a role's parts' emissive pattern is cut to black, 0 to 1. */
   readonly cuts?: Partial<Record<PartRole, number>>;
+  /** How wide a role's parts' drawn pattern's lines are, as a share of a cell. */
+  readonly widths?: Partial<Record<PartRole, number>>;
+  /** How softly a role's parts' drawn pattern's lines glow about themselves, 0 to 1. */
+  readonly softs?: Partial<Record<PartRole, number>>;
   /** How strongly its parts of a role show, 0 to 1 (DEFAULT_STRENGTHS where unsaid): their blended materials' alpha times this. */
   readonly strengths?: Partial<Record<PartRole, number>>;
   /** How strongly its light lights it, times this. */
@@ -1258,6 +1291,7 @@ export class SceneRenderer {
     gl.uniform1f(this.uniform(this.meshProgram, 'uStrength'), 1);
     gl.uniform1f(this.uniform(this.meshProgram, 'uSpread'), -1);
     gl.uniform1f(this.uniform(this.meshProgram, 'uCut'), 0);
+    gl.uniform1i(this.uniform(this.meshProgram, 'uPattern'), 0);
     gl.uniform1f(this.uniform(this.meshProgram, 'uShadeStrength'), 0);
     gl.uniform3fv(this.uniform(this.meshProgram, 'uEye'), this.loaded.scene.camera.eye);
     gl.uniform3fv(this.uniform(this.meshProgram, 'uRight'), right);
@@ -1275,7 +1309,7 @@ export class SceneRenderer {
       const placement = draw.placed?.placement;
       const role = draw.part?.role;
       const tunings = [placement?.style?.planet.tuning, placement?.planet.planet.tuning];
-      const setting = <K extends 'glows' | 'spreads' | 'scales' | 'cuts' | 'strengths'>(key: K) =>
+      const setting = <K extends 'glows' | 'spreads' | 'scales' | 'cuts' | 'widths' | 'softs' | 'strengths'>(key: K) =>
         role === undefined
           ? undefined
           : (placement?.[key]?.[role] ?? tunings[0]?.[key]?.[role] ?? tunings[1]?.[key]?.[role]);
@@ -1294,6 +1328,14 @@ export class SceneRenderer {
         );
         gl.uniform1f(this.uniform(p, 'uSpread'), setting('spreads') ?? -1);
         gl.uniform1f(this.uniform(p, 'uCut'), setting('cuts') ?? 0);
+        // A drawn pattern: so many cells round the part (HEX_ROUND over its scale), its lines' width and glow.
+        gl.uniform1i(this.uniform(p, 'uPattern'), draw.part.pattern?.kind === 'hex' ? 1 : 0);
+        gl.uniform3f(
+          this.uniform(p, 'uPatternParams'),
+          HEX_ROUND / (setting('scales') ?? 1),
+          setting('widths') ?? 0.08,
+          setting('softs') ?? 0.3,
+        );
         gl.uniform1f(
           this.uniform(p, 'uStrength'),
           setting('strengths') ?? DEFAULT_STRENGTHS[role] ?? 1,

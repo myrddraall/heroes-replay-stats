@@ -109,9 +109,20 @@ export type PartRole = 'surface' | 'layer' | 'shell' | 'ring' | 'shield';
  */
 export const DEFAULT_STRENGTHS: Readonly<Partial<Record<PartRole, number>>> = { layer: 0.42 };
 
+/**
+ * A pattern the renderer draws in place of a part's emissive texture: hexes, as lines on the
+ * part's mapping (so many round it, of a width and with a soft glow about them, set by the
+ * placement's or the tuning's scales, widths and softs for the part's role), crisp at any size.
+ */
+export interface PartPattern {
+  readonly kind: 'hex';
+}
+
 export interface BodyPart {
   readonly role: PartRole;
   readonly shape: PartShape;
+  /** A pattern drawn in place of its materials' emissive texture. */
+  readonly pattern?: PartPattern;
   readonly mapping: PartMapping;
   /** The mesh's second texture coordinates, where a layer reads them and a rule fits them. */
   readonly mapping2?: PartMapping;
@@ -165,6 +176,10 @@ export interface PlanetTuning {
   readonly scales?: Partial<Record<PartRole, number>>;
   /** How much of a role's parts' emissive pattern is cut to black, 0 to 1: a grid's cells go, its lines stay. */
   readonly cuts?: Partial<Record<PartRole, number>>;
+  /** How wide a role's parts' drawn pattern's lines are, as a share of a cell (0 to 0.5). */
+  readonly widths?: Partial<Record<PartRole, number>>;
+  /** How softly a role's parts' drawn pattern's lines glow about themselves, 0 to 1. */
+  readonly softs?: Partial<Record<PartRole, number>>;
   readonly lighting?: number;
   readonly shade?: Partial<BodyShade>;
   readonly strengths?: Partial<Record<PartRole, number>>;

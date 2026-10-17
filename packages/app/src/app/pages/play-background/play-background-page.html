@@ -139,18 +139,45 @@
                   />
                 </mat-slider>
               </label>
-              <label class="slider">
-                <span>Hex contrast</span>
-                <mat-slider min="0" max="0.9" step="0.05" discrete>
-                  <input
-                    matSliderThumb
-                    #shieldCutThumb="matSliderThumb"
-                    [value]="v.shieldCut"
-                    (input)="set('shieldCut', shieldCutThumb.value)"
-                    aria-label="Hex contrast"
-                  />
-                </mat-slider>
-              </label>
+              @if (drawnShield()) {
+                <label class="slider">
+                  <span>Hex width</span>
+                  <mat-slider min="0.01" max="0.4" step="0.01" discrete>
+                    <input
+                      matSliderThumb
+                      #shieldWidthThumb="matSliderThumb"
+                      [value]="v.shieldWidth"
+                      (input)="set('shieldWidth', shieldWidthThumb.value)"
+                      aria-label="Hex width"
+                    />
+                  </mat-slider>
+                </label>
+                <label class="slider">
+                  <span>Hex soft</span>
+                  <mat-slider min="0" max="1" step="0.05" discrete>
+                    <input
+                      matSliderThumb
+                      #shieldSoftThumb="matSliderThumb"
+                      [value]="v.shieldSoft"
+                      (input)="set('shieldSoft', shieldSoftThumb.value)"
+                      aria-label="Hex soft"
+                    />
+                  </mat-slider>
+                </label>
+              } @else {
+                <label class="slider">
+                  <span>Hex contrast</span>
+                  <mat-slider min="0" max="0.9" step="0.05" discrete>
+                    <input
+                      matSliderThumb
+                      #shieldCutThumb="matSliderThumb"
+                      [value]="v.shieldCut"
+                      (input)="set('shieldCut', shieldCutThumb.value)"
+                      aria-label="Hex contrast"
+                    />
+                  </mat-slider>
+                </label>
+              }
               <label class="slider">
                 <span>Shield glow</span>
                 <mat-slider min="0" max="4" step="0.1" discrete>

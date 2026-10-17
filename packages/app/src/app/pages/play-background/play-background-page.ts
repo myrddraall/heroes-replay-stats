@@ -64,6 +64,8 @@ interface VariantChoices {
   readonly shieldSpread?: number;
   readonly shieldScale?: number;
   readonly shieldCut?: number;
+  readonly shieldWidth?: number;
+  readonly shieldSoft?: number;
 }
 
 interface PlanetChoices {
@@ -86,6 +88,8 @@ interface PlanetValues {
   readonly shieldSpread: number;
   readonly shieldScale: number;
   readonly shieldCut: number;
+  readonly shieldWidth: number;
+  readonly shieldSoft: number;
 }
 
 interface PageChoices {
@@ -199,7 +203,14 @@ export class PlayBackgroundPage {
       shieldSpread: chosen.shieldSpread ?? style?.tuning?.spreads?.shield ?? 0,
       shieldScale: chosen.shieldScale ?? style?.tuning?.scales?.shield ?? 1,
       shieldCut: chosen.shieldCut ?? style?.tuning?.cuts?.shield ?? 0,
+      shieldWidth: chosen.shieldWidth ?? style?.tuning?.widths?.shield ?? 0.08,
+      shieldSoft: chosen.shieldSoft ?? style?.tuning?.softs?.shield ?? 0.3,
     };
+  });
+  /** Whether the style's shield is a drawn pattern (its lines have a width and a softness) rather than a texture. */
+  protected readonly drawnShield = computed(() => {
+    const style = this.styled.hasValue() ? this.styled.value() : undefined;
+    return !!style?.parts.some((p) => p.role === 'shield' && p.pattern);
   });
   /** Whether the reviewed planet has anything set here to reset. */
   protected readonly changed = computed(() => Object.keys(this.chosen()).length > 0);
@@ -243,6 +254,8 @@ export class PlayBackgroundPage {
           spreads: { shield: v.shieldSpread },
           scales: { shield: v.shieldScale },
           cuts: { shield: v.shieldCut },
+          widths: { shield: v.shieldWidth },
+          softs: { shield: v.shieldSoft },
         },
       ]);
     });

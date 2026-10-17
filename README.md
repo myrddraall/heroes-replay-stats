@@ -97,7 +97,9 @@ is settable per placement (`SetPlanet`): a glow (its emissive layers into the bl
 strength, a shade, and the strength of its parts by role (haze layers, shell, ring, shield);
 heroes-capture's `tuning` in a planet's file is the default where the data alone isn't right (Korhal's
 haze at 0.42, its back light's crescent shaded). The Background page's panel sets these per planet
-(kept in `localStorage`, Reset gives the planet's own back). Each planet loads the first time a set has
+(kept in `localStorage`, per planet and style, Reset gives the planet's own back). A part may carry a
+`pattern` the renderer draws in place of its emissive texture (the nexus shield's hexes: analytic lines
+of a size, width and softness, crisp at any size). Each planet loads the first time a set has
 it (`PlanetLoader`); the layout is `planet-sets.ts` (a set from a number, the same number
 the same set). What glows past the light's bloom threshold (in the scene's tone data) blooms: blurred
 small and added back, as the game's HDR does, which spreads the flyby planets' atmospheres into
