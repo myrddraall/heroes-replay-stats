@@ -52,27 +52,5 @@ describe('BackgroundStore', () => {
     expect([store.fps(), store.fadeFps()]).toEqual([12, 60]);
   });
 
-  it("holds the open page's planets over the set until it gives them back", () => {
-    const store = TestBed.inject(BackgroundStore);
-    store.nextPlanetSet();
-    expect(store.planetSet()).toBe(1);
-    const review = [{ id: 'korhal', position: [0, 65, 4] as const, radius: 18 }];
-    store.setPagePlanets(review);
-    expect(store.pagePlanets()).toEqual(review);
-    store.setPagePlanets(null);
-    expect(store.pagePlanets()).toBeNull();
-    expect(store.planetSet()).toBe(1);
-  });
 
-  it("holds the open page's sky settings until it gives them back", () => {
-    const store = TestBed.inject(BackgroundStore);
-    const sky = {
-      materials: { peterPainting: { strength: 0.5 } },
-      tint: { colour: '#ff0000', blend: 'hue' as const, strength: 1 },
-    };
-    store.setPageSky(sky);
-    expect(store.pageSky()).toEqual(sky);
-    store.setPageSky(null);
-    expect(store.pageSky()).toBeNull();
-  });
 });

@@ -1,0 +1,99 @@
+@use '../../../../theme/glass-mixins' as glass;
+
+:host {
+  display: block;
+  height: 100%;
+}
+
+// The drawer container fills the page; the scene fills the content beside the panel, as the map
+// does beside its panels.
+.layout {
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+  // The panel is square (its groups too, below); the controls in it keep Material's shapes.
+  --mat-sidenav-container-shape: 0;
+  --hrs-glass-radius: 0;
+}
+
+.layout__drawer {
+  width: var(--hrs-map-panel-width, min(320px, 90vw));
+  overflow: hidden;
+  border-radius: 0;
+
+  // Only the panel's body may scroll.
+  :host ::ng-deep &.mat-drawer .mat-drawer-inner-container {
+    overflow: hidden;
+  }
+
+  // the frame's glass over the scene, lit along the edge facing it
+  &.mat-drawer-end {
+    @include glass.frame-glass(left, 1, 0);
+  }
+
+  // (Material marks only an end drawer: a start one is any other.)
+  &:not(.mat-drawer-end) {
+    @include glass.frame-glass(right, -1, 0);
+  }
+}
+
+.layout__content {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+
+.layout__scene {
+  position: absolute;
+  inset: 0;
+}
+
+// Back to the site, in the top left; dark behind it so it reads over the brightest sky.
+.back {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgb(var(--hrs-glass-tint) / var(--hrs-glass-alpha-frame));
+  backdrop-filter: var(--hrs-glass-backdrop-frame);
+}
+
+// Over the scene's top corners: each panel's toggle on its own side (the scene's beside Back).
+.layout__toggle {
+  position: absolute;
+  top: 8px;
+  inset-inline-end: 8px;
+  z-index: 10001;
+  background: rgb(var(--hrs-glass-tint) / var(--hrs-glass-alpha-frame));
+  backdrop-filter: var(--hrs-glass-backdrop-frame);
+
+  &--start {
+    inset-inline-end: auto;
+    inset-inline-start: 56px;
+  }
+}
+
+// The screenshot mode's hint: shown a moment, then gone, so it isn't in the picture.
+.layout__hint {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  margin: 0;
+  padding: 6px 12px;
+  background: rgb(var(--hrs-glass-tint) / 0.8);
+  font: var(--mat-sys-body-small);
+  transform: translateX(-50%);
+  animation: hint-away 2.5s ease-in forwards;
+  pointer-events: none;
+}
+
+@keyframes hint-away {
+  0%,
+  70% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}

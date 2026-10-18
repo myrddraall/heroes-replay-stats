@@ -1,14 +1,16 @@
 @let v = values();
-<hrs-property-section title="Body" [changed]="styleSet()" (resetRequested)="styleReset.emit()">
-  <hrs-property-select
-    label="Style"
-    [value]="v.style"
-    [options]="styleOptions()"
-    [changed]="styleSet()"
-    (resetRequested)="styleReset.emit()"
-    (valueChange)="styleChange.emit($event)"
-  />
-</hrs-property-section>
+@if (styled()) {
+  <hrs-property-section title="Body" [changed]="styleSet()" (resetRequested)="styleReset.emit()">
+    <hrs-property-select
+      label="Style"
+      [value]="v.style"
+      [options]="styleOptions()"
+      [changed]="styleSet()"
+      (resetRequested)="styleReset.emit()"
+      (valueChange)="styleChange.emit($event)"
+    />
+  </hrs-property-section>
+}
 @if (orbit(); as o) {
   <hrs-property-section title="Orbit" [changed]="orbitSet()" (resetRequested)="resetOrbit()">
     <hrs-property-slider
@@ -123,14 +125,16 @@
   (tintChange)="settingsChange.emit({ tint: $event })"
   (clear)="clear.emit(['tint'])"
 />
-<hrs-property-section title="Moons">
-  <select class="action" aria-label="Add a moon" (change)="add($event)">
-    <option value="" selected>Add a moon…</option>
-    @for (id of planets(); track id) {
-      <option [value]="id">{{ id }}</option>
-    }
-  </select>
-</hrs-property-section>
+@if (moons()) {
+  <hrs-property-section title="Moons">
+    <select class="action" aria-label="Add a moon" (change)="add($event)">
+      <option value="" selected>Add a moon…</option>
+      @for (id of planets(); track id) {
+        <option [value]="id">{{ id }}</option>
+      }
+    </select>
+  </hrs-property-section>
+}
 <div class="buttons">
   @if (orbit()) {
     <button

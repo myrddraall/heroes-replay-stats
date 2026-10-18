@@ -1,49 +1,9 @@
-<div class="row">
-  <hrs-property-select
-    class="planet"
-    label="Planet"
-    [value]="store.review()"
-    [options]="store.reviewOptions()"
-    (valueChange)="planetChange.emit($event)"
-  />
-  <button
-    mat-icon-button
-    type="button"
-    class="gear"
-    aria-label="View options"
-    matTooltip="View options"
-    [matMenuTriggerFor]="viewMenu"
-  >
-    <mat-icon class="material-symbols-outlined" aria-hidden="true">settings</mat-icon>
-  </button>
-  <mat-menu #viewMenu="matMenu" xPosition="before">
-    <button
-      mat-menu-item
-      type="button"
-      role="menuitemcheckbox"
-      [attr.aria-checked]="store.names()"
-      (click)="store.setNames(!store.names())"
-    >
-      <mat-icon class="material-symbols-outlined" aria-hidden="true">
-        {{ store.names() ? 'check_box' : 'check_box_outline_blank' }}
-      </mat-icon>
-      <span>Names</span>
-    </button>
-    <button mat-menu-item type="button" (click)="store.confirmReset(true)">
-      <mat-icon class="material-symbols-outlined" aria-hidden="true">restart_alt</mat-icon>
-      <span>Reset scene…</span>
-    </button>
-  </mat-menu>
-</div>
-@if (store.confirmingReset()) {
-  <div class="confirm" role="alert">
-    <span>Reset the whole scene? Its moons go too.</span>
-    <span class="confirm__buttons">
-      <button type="button" class="button" (click)="store.resetScene()">Reset</button>
-      <button type="button" class="button" (click)="store.confirmReset(false)">Keep</button>
-    </span>
-  </div>
-}
+<hrs-property-select
+  label="Planet"
+  [value]="store.review()"
+  [options]="store.reviewOptions()"
+  (valueChange)="planetChange.emit($event)"
+/>
 @if (store.focusedName(); as name) {
   <div class="focus">
     <span>Centred on {{ name }}</span>

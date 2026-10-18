@@ -1,0 +1,88 @@
+<mat-drawer-container
+  class="layout"
+  [class]="'hrs-glass-' + graphics.theme()"
+  [hasBackdrop]="false"
+>
+  <mat-drawer
+    id="background-tree"
+    class="layout__drawer"
+    aria-label="Tree"
+    position="start"
+    mode="side"
+    [opened]="ui.left() && !ui.screenshot()"
+    (openedChange)="ui.screenshot() || ui.setPanel('left', $event)"
+  >
+    <hrs-map-panel
+      [title]="ui.mode() === 'scene' ? 'Scene' : 'Library'"
+      (closeRequested)="ui.setPanel('left', false)"
+    >
+      <div hrsMapPanelPinned>
+        <hrs-editor-bar />
+        <ng-content select="[editorHead]" />
+      </div>
+      <hrs-scene-tree
+        [rows]="editor.rows()"
+        [selected]="editor.selected()"
+        (rowSelect)="editor.select($event)"
+        (expandToggle)="editor.toggleExpanded($event)"
+        (enabledChange)="editor.setEnabled($event)"
+      />
+    </hrs-map-panel>
+  </mat-drawer>
+  <mat-drawer
+    id="background-properties"
+    class="layout__drawer"
+    aria-label="Properties"
+    position="end"
+    mode="side"
+    [opened]="ui.right() && !ui.screenshot()"
+    (openedChange)="ui.screenshot() || ui.setPanel('right', $event)"
+  >
+    <hrs-map-panel [title]="editor.title()" (closeRequested)="ui.setPanel('right', false)">
+      <hrs-selection-panel />
+    </hrs-map-panel>
+  </mat-drawer>
+  <mat-drawer-content class="layout__content">
+    <hrs-play-background #scene class="layout__scene" [names]="ui.names() && !ui.screenshot()" />
+    @if (ui.screenshot()) {
+      <p class="layout__hint" role="status">Screenshot mode: press Esc to leave</p>
+    } @else {
+      <button
+        mat-icon-button
+        type="button"
+        class="back"
+        aria-label="Back"
+        matTooltip="Back"
+        (click)="back()"
+      >
+        <mat-icon class="material-symbols-outlined" aria-hidden="true">arrow_back</mat-icon>
+      </button>
+      <button
+        mat-icon-button
+        type="button"
+        class="layout__toggle layout__toggle--start"
+        aria-controls="background-tree"
+        [attr.aria-expanded]="ui.left()"
+        [attr.aria-label]="ui.left() ? 'Hide the tree' : 'Show the tree'"
+        (click)="ui.setPanel('left', !ui.left())"
+      >
+        <mat-icon class="material-symbols-outlined" aria-hidden="true">
+          {{ ui.left() ? 'left_panel_close' : 'left_panel_open' }}
+        </mat-icon>
+      </button>
+      <button
+        mat-icon-button
+        type="button"
+        class="layout__toggle"
+        aria-controls="background-properties"
+        [attr.aria-expanded]="ui.right()"
+        [attr.aria-label]="ui.right() ? 'Hide the properties' : 'Show the properties'"
+        (click)="ui.setPanel('right', !ui.right())"
+      >
+        <mat-icon class="material-symbols-outlined" aria-hidden="true">
+          {{ ui.right() ? 'right_panel_close' : 'right_panel_open' }}
+        </mat-icon>
+      </button>
+    }
+  </mat-drawer-content>
+</mat-drawer-container>

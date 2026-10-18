@@ -76,11 +76,11 @@ frame rates (idle, while a tint fades, and while something interactive holds
 dragged or zoomed) and the share of the display's resolution it is drawn at. As a side
 effect the tints are on the root element for the interface to use: `--hrs-background-tint`,
 `--hrs-background-tint-blend`, and `--hrs-planet-large-tint`, `-medium-` and `-small-` (each with its
-`-blend`). The Background page (in the nav) shows it alone, with a back button in the top left
-and a Colours button in the top right to try tints: presets, and each part's colour and blend.
+`-blend`). The Background page (in the nav) shows it alone, with a back button in the top left; it is
+the background's editor (below).
 
 The planets are put up in sets: the game's own as the site loads, then one drawn at random with
-each page (`nextPlanetSet` on BackgroundStore; the Background page's Planets button too), from the
+each page (`nextPlanetSet` on BackgroundStore; the Background page's Another set button too), from the
 pool heroes-capture exports beside the scene (`planets/`): the Play screen's three, the tutorial
 flyby's three worlds (Azeroth, Korhal, Sanctuary) with their own layered materials and atmosphere
 shells, lit as the flyby lights them, and its nine painted spheres. A planet is a body of parts
@@ -102,21 +102,30 @@ and softness; `material-settings.ts` says which do anything for a material). Tin
 CSS's blend modes and the image editors' others (`scene-tints.ts`); heroes-capture's
 `tuning` in a planet's file is the default where the data alone isn't right (Korhal's haze
 material at 0.42, its back light's crescent shaded; the nexus style's shield material). The
-Background page is an editor: on the left the scene's planet and the scene as a tree (sky and
-its materials, the planet, its materials and its moons, moons of moons), on the right the
-properties of what is selected (`pages/play-background/editor/`, built of the compact rows in
-`properties/`). A moon is any planet on an orbit about its parent: radius, tilt, turn, a
-progress round it and its size (`background-scene.ts`); one hidden behind a body is shown round
-its orbit while selected, and the planet is drawn smaller where the scene would not fit the view.
-The scenes themselves are a global store (`BackgroundScenesStore`: for each scene, the planet's
-style, looks per style and moons, and the scene's own sky, its materials and a tint over all of
-it; the random sets are a scene of their own; and the colour over the whole picture); the editor's own state is the page's
-component store (`PlayBackgroundPageStore`: what is shown, selected, folded, focused). Both are
-kept in `localStorage` through the `withLocalStorage` store feature (`data/store-features/`,
-beside `withFolding`; `withPlanetFiles` loads planets' files as a store needs them). The planet
-shown is in the URL (`/play-background?planet=korhal`; none: the random sets). Every property
-and section shows a reset where it is set; the sky's settings and the planets are held through
-the `BackgroundStore` while the page is open. A part may carry a
+design has three layers, each setting only what it changes: the game data with its tuning, the
+library (each planet's, style's and the sky's defaults, wherever they appear, the site's random
+sets too) and the scenes (each a planet with its look, moons and sky, the random sets' under
+`''`, and the colour over the whole picture) (`background-design.ts`). What the site shows is the
+published design, a global store kept in `localStorage` (`PublishedDesignStore`, provided as the
+design in effect by the `BACKGROUND_DESIGN` token's root default). The Background page is an
+editor of a draft of it: the page provides `DraftDesignStore` (kept between visits) as the design
+for everything under it, so its background shows the draft while the rest of the site shows what
+is published; Save publishes the draft, Discard takes it back, and the bar counts what is not
+saved. On the left the editor's mode (Scene or Library), a gear menu (names, screenshot mode,
+reset all) and the tree; on the right the properties of what is selected
+(`pages/play-background/editor/`, built of the compact rows in `properties/`). Both modes are
+the same layout over the abstract `Editor` token, provided by `SceneEditorStore` or
+`LibraryEditorStore`, each of which also provides the `BACKGROUND_SCENE` the background shows.
+The Scene mode edits a scene, the planet shown in the URL (`/play-background?planet=korhal`;
+none: the random sets): the sky and its materials, the planet, its materials and its moons, moons
+of moons. A moon is any planet on an orbit about its parent: radius, tilt, turn, a progress round
+it and its size (`background-scene.ts`); one hidden behind a body is shown round its orbit while
+selected, and the planet is drawn smaller where the scene would not fit the view. The Library mode
+edits each asset's defaults, shown on a preview stage (a scene of its own, `@preview`, there only
+to see the asset in). Every property and section shows a reset where it is set. The screenshot
+mode shows the background alone, full screen, until Esc. The stores keep what they keep in
+`localStorage` through the `withLocalStorage` store feature (`data/store-features/`, beside
+`withFolding`; `withPlanetFiles` loads planets' files as a store needs them). A part may carry a
 `pattern` the renderer draws in place of its emissive texture (the nexus shield's hexes: analytic lines
 of a size, width and softness, crisp at any size). Each planet loads the first time a set has
 it (`PlanetLoader`); the layout is `planet-sets.ts` (a set from a number, the same number

@@ -1,6 +1,6 @@
-import type { BackgroundTints, TintBlend } from '../../scenes/play-background/scene-tints';
-export { BLENDS } from '../../scenes/play-background/scene-tints';
-export { PRESETS, type TintPreset } from '../../scenes/play-background/tint-presets';
+import type { BackgroundTints, TintBlend } from './scene-tints';
+export { BLENDS } from './scene-tints';
+export { PRESETS, type TintPreset } from './tint-presets';
 
 /** A tint: whether it is on, its colour (#rrggbb) and blend. */
 export interface PartTint {

@@ -1,6 +1,11 @@
 import { Component, input, output } from '@angular/core';
 import type { MaterialTint } from '../../../scenes/play-background/scene-planets';
-import { type BodySettings, type BodyValues, DEFAULT_ORBIT, type Orbit } from '../background-scene';
+import {
+  type BodySettings,
+  type BodyValues,
+  DEFAULT_ORBIT,
+  type Orbit,
+} from '../../../scenes/play-background/background-scene';
 import { NO_MATERIAL_TINT } from '../../../scenes/play-background/material-settings';
 import { PropertyDirection } from '../properties/property-direction';
 import { PropertySection } from '../properties/property-section';
@@ -32,6 +37,9 @@ export class BodyProperties {
   readonly changed = input(false);
   /** Whether the view is centred on it. */
   readonly focused = input(false);
+  /** Whether it can wear a style, and have moons put about it (a scene's bodies; not the library's). */
+  readonly styled = input(true);
+  readonly moons = input(true);
   /** What of it is set here (the rest is its own). */
   readonly set = input<BodySettings>({});
   /** Its tint where none is set here: its own (its file's), or none. */

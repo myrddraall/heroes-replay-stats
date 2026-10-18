@@ -90,3 +90,13 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+// Not saved yet: a small dot after the name.
+.unsaved {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  margin-inline-start: 2px;
+  border-radius: 50%;
+  background: var(--mat-sys-primary);
+}

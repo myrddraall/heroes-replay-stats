@@ -3,7 +3,7 @@ import { BLEND_GROUPS, BLENDS, type TintBlend } from '../../../scenes/play-backg
 import { PropertyColour } from '../properties/property-colour';
 import { PropertySection } from '../properties/property-section';
 import { grouped, type PropertyOption, PropertySelect } from '../properties/property-select';
-import { type PartTint, PRESETS } from '../tint-settings';
+import { type PartTint, PRESETS } from '../../../scenes/play-background/tint-settings';
 
 /**
  * The scene's own properties (presentational): the tint over the whole picture, chosen from one

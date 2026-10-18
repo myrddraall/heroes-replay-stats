@@ -1,81 +1,8 @@
 <main>
   <h1>Play screen background</h1>
-  <mat-drawer-container
-    class="page"
-    [class]="'hrs-glass-' + graphics.theme()"
-    [hasBackdrop]="false"
-  >
-    <mat-drawer
-      id="background-scene"
-      class="page__drawer"
-      aria-label="Scene"
-      position="start"
-      mode="side"
-      [opened]="store.left()"
-      (openedChange)="store.setPanel('left', $event)"
-    >
-      <hrs-map-panel title="Scene" (closeRequested)="store.setPanel('left', false)">
-        <hrs-scene-header hrsMapPanelPinned (planetChange)="choosePlanet($event)" />
-        <hrs-scene-tree
-          [rows]="store.rows()"
-          [selected]="store.selected()"
-          (rowSelect)="store.select($event)"
-          (expandToggle)="store.toggleExpanded($event)"
-          (enabledChange)="store.setEnabled($event)"
-        />
-      </hrs-map-panel>
-    </mat-drawer>
-    <mat-drawer
-      id="background-properties"
-      class="page__drawer"
-      aria-label="Properties"
-      position="end"
-      mode="side"
-      [opened]="store.right()"
-      (openedChange)="store.setPanel('right', $event)"
-    >
-      <hrs-map-panel [title]="store.title()" (closeRequested)="store.setPanel('right', false)">
-        <hrs-selection-panel />
-      </hrs-map-panel>
-    </mat-drawer>
-    <mat-drawer-content class="page__content">
-      <hrs-play-background #scene class="page__scene" [names]="store.names()" />
-      <button
-        mat-icon-button
-        type="button"
-        class="back"
-        aria-label="Back"
-        matTooltip="Back"
-        (click)="back()"
-      >
-        <mat-icon class="material-symbols-outlined" aria-hidden="true">arrow_back</mat-icon>
-      </button>
-      <button
-        mat-icon-button
-        type="button"
-        class="page__toggle page__toggle--start"
-        aria-controls="background-scene"
-        [attr.aria-expanded]="store.left()"
-        [attr.aria-label]="store.left() ? 'Hide the scene' : 'Show the scene'"
-        (click)="store.setPanel('left', !store.left())"
-      >
-        <mat-icon class="material-symbols-outlined" aria-hidden="true">
-          {{ store.left() ? 'left_panel_close' : 'left_panel_open' }}
-        </mat-icon>
-      </button>
-      <button
-        mat-icon-button
-        type="button"
-        class="page__toggle"
-        aria-controls="background-properties"
-        [attr.aria-expanded]="store.right()"
-        [attr.aria-label]="store.right() ? 'Hide the properties' : 'Show the properties'"
-        (click)="store.setPanel('right', !store.right())"
-      >
-        <mat-icon class="material-symbols-outlined" aria-hidden="true">
-          {{ store.right() ? 'right_panel_close' : 'right_panel_open' }}
-        </mat-icon>
-      </button>
-    </mat-drawer-content>
-  </mat-drawer-container>
+  @if (ui.mode() === 'scene') {
+    <hrs-scene-editor [planet]="planet()" (planetChange)="choosePlanet($event)" />
+  } @else {
+    <hrs-library-editor />
+  }
 </main>

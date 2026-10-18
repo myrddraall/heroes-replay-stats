@@ -14,6 +14,8 @@ export interface TreeRow {
   readonly expanded: boolean;
   /** Whether it is drawn, where it can be switched on and off (a material); none where it can't. */
   readonly enabled?: boolean;
+  /** Whether it differs from what is published (shown as a dot). */
+  readonly unsaved?: boolean;
 }
 
 /**

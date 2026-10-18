@@ -3,50 +3,10 @@
 :host {
   display: grid;
   gap: 4px;
-  padding-bottom: 8px;
-}
-
-.row {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.planet {
-  flex: 1;
-  min-width: 0;
-}
-
-// The view's options (the names over the bodies, the scene's reset), behind a gear beside the planet.
-.gear {
-  --mat-icon-button-state-layer-size: 32px;
-  flex: none;
-  width: 32px;
-  height: 32px;
-  padding: 4px;
-
-  mat-icon {
-    width: 20px;
-    height: 20px;
-    font-size: 20px;
-  }
 }
 
 .button {
   @include property-row.button;
-}
-
-.confirm {
-  display: grid;
-  gap: 4px;
-  padding: 6px 8px;
-  border: 1px solid rgb(var(--hrs-glass-edge) / 0.5);
-  font: var(--mat-sys-body-small);
-}
-
-.confirm__buttons {
-  display: flex;
-  gap: 6px;
 }
 
 .focus {

@@ -1,5 +1,5 @@
-import type { MaterialSettingsMap, MaterialTint } from '../../scenes/play-background/scene-planets';
-import { bodyFrame } from '../../scenes/play-background/scene-renderer';
+import type { MaterialSettingsMap, MaterialTint } from './scene-planets';
+import { bodyFrame } from './scene-renderer';
 
 /**
  * The Background page's scene: one planet with its moons (and theirs), under the sky. A moon goes
@@ -278,6 +278,11 @@ export interface SkyChoices {
  * style, its settings in each style, its moons, and the scene's sky.
  */
 export interface PlanetChoices {
+  /**
+   * The scene's planet, by id, where it isn't the one its key is: so a scene can have a name of its
+   * own (prebuilt or added scenes); scenes kept by a planet's id have that planet.
+   */
+  readonly planet?: string;
   readonly sky?: SkyChoices;
   readonly style?: string;
   /** Its settings in each style, by the style's id ('' for none). */
