@@ -27,7 +27,12 @@
             </button>
           </div>
         }
-        <hrs-editor-bar />
+        @if (!ui.browsing()) {
+          <hrs-editor-bar />
+        }
+        @if (ui.confirmingReset()) {
+          <hrs-reset-confirm />
+        }
         @if (!ui.browsing()) {
           <ng-content select="[editorHead]" />
         }

@@ -6,16 +6,17 @@ import { ownScene } from '../../../scenes/play-background/background-design';
 import { type PropertyOption, PropertySelect } from '../properties/property-select';
 import { AssetCatalogStore } from './asset-catalog.store';
 import { LIBRARY_TYPES } from './library-types';
+import { ViewMenu } from './view-menu';
 import type { OpenKind } from './open-target';
 
 /**
  * The library's head (container, on the page's catalog): which kind of thing is listed, the
- * search over it, and, for the scenes, a button for a new one: empty, or a copy of one of the
+ * search over it with the view's menu beside it, and, for the scenes, a button for a new one: empty, or a copy of one of the
  * user's own, chosen from its flyout.
  */
 @Component({
   selector: 'hrs-library-head',
-  imports: [PropertySelect, MatIcon, MatMenu, MatMenuItem, MatMenuTrigger, MatDivider],
+  imports: [PropertySelect, MatIcon, MatMenu, MatMenuItem, MatMenuTrigger, MatDivider, ViewMenu],
   templateUrl: './library-head.html',
   styleUrl: './library-head.scss',
 })

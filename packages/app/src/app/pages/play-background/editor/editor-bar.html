@@ -1,63 +1,21 @@
-<div class="row row--end">
-  @if (!ui.browsing()) {
-    <span class="status" [class.status--unsaved]="draft.unsaved() > 0">
-      @if (draft.unsaved(); as n) {
-        {{ n }} not saved
-      } @else {
-        All saved
-      }
-    </span>
-    <button type="button" class="button" (click)="draft.discard()" [disabled]="!draft.unsaved()">
-      Discard
-    </button>
-    <button
-      type="button"
-      class="button button--primary"
-      (click)="draft.save()"
-      [disabled]="!draft.unsaved()"
-    >
-      Save
-    </button>
-  }
-  <button
-    mat-icon-button
-    type="button"
-    class="gear"
-    aria-label="View options"
-    matTooltip="View options"
-    [matMenuTriggerFor]="viewMenu"
-  >
-    <mat-icon class="material-symbols-outlined" aria-hidden="true">settings</mat-icon>
+<div class="row">
+  <span class="status" [class.status--unsaved]="draft.unsaved() > 0">
+    @if (draft.unsaved(); as n) {
+      {{ n }} not saved
+    } @else {
+      All saved
+    }
+  </span>
+  <button type="button" class="button" (click)="draft.discard()" [disabled]="!draft.unsaved()">
+    Discard
   </button>
-  <mat-menu #viewMenu="matMenu" xPosition="before">
-    <button
-      mat-menu-item
-      type="button"
-      role="menuitemcheckbox"
-      [attr.aria-checked]="ui.names()"
-      (click)="ui.setNames(!ui.names())"
-    >
-      <mat-icon class="material-symbols-outlined" aria-hidden="true">
-        {{ ui.names() ? 'check_box' : 'check_box_outline_blank' }}
-      </mat-icon>
-      <span>Names</span>
-    </button>
-    <button mat-menu-item type="button" (click)="ui.setScreenshot(true)">
-      <mat-icon class="material-symbols-outlined" aria-hidden="true">photo_camera</mat-icon>
-      <span>Screenshot mode</span>
-    </button>
-    <button mat-menu-item type="button" (click)="ui.confirmReset(true)">
-      <mat-icon class="material-symbols-outlined" aria-hidden="true">restart_alt</mat-icon>
-      <span>{{ editor.resetAllLabel() }}…</span>
-    </button>
-  </mat-menu>
+  <button
+    type="button"
+    class="button button--primary"
+    (click)="draft.save()"
+    [disabled]="!draft.unsaved()"
+  >
+    Save
+  </button>
+  <hrs-view-menu />
 </div>
-@if (ui.confirmingReset()) {
-  <div class="confirm" role="alert">
-    <span>{{ editor.resetAllLabel() }}? Everything in it goes back to what is under it.</span>
-    <span class="confirm__buttons">
-      <button type="button" class="button" (click)="editor.resetAll()">Reset</button>
-      <button type="button" class="button" (click)="ui.confirmReset(false)">Keep</button>
-    </span>
-  </div>
-}
