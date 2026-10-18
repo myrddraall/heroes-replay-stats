@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, resource } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, output, resource } from '@angular/core';
 import { BACKGROUND_DESIGN, BACKGROUND_SCENE } from './background-design.tokens';
 import { BUILT_IN_PLANETS } from './built-in-planets';
 import { type LibraryState, skyWithLibrary, withLibrary } from './background-design';
@@ -6,7 +6,12 @@ import { BackgroundStore } from './background.store';
 import { playSet, randomSet, seeded, type SetPlanet } from './planet-sets';
 import { loadPlayScene, PLAY_SCENE_URL } from './play-scene';
 import { SceneCanvas } from './scene-canvas';
-import { type LoadedPlanet, loadPlanetIndex, PlanetLoader } from './scene-planets';
+import {
+  type LoadedPlanet,
+  loadPlanetIndex,
+  PlanetLoader,
+  type PlanetIndex,
+} from './scene-planets';
 import type { PlanetPlacement } from './scene-renderer';
 import { browserColourParser, rendererTint } from './scene-tints';
 import { backgroundTints } from './tint-settings';
@@ -37,12 +42,22 @@ export class PlayBackground {
   readonly src = input(PLAY_SCENE_URL);
   /** Whether each planet's name floats over it (to review them). */
   readonly names = input(false);
+  /** Whether a planet can be picked by a click (an editor's): `planetPick` gives its index in the set shown. */
+  readonly pickable = input(false);
+  readonly planetPick = output<number>();
 
   protected readonly store = inject(BackgroundStore);
   private readonly design = inject(BACKGROUND_DESIGN);
   private readonly source = inject(BACKGROUND_SCENE, { optional: true });
   /** Planets the app makes (an editor's stand-in), where a container above provides them. */
   private readonly builtIns = inject(BUILT_IN_PLANETS, { optional: true });
+  /**
+   * Which scene is shown, for how a change is drawn: the source's (its planets edited in place),
+   * or the random set's number (another set flown to).
+   */
+  protected readonly sceneKey = computed(() =>
+    this.random() ? `sets:${this.store.planetSet()}` : `scene:${this.source?.key?.() ?? ''}`,
+  );
   /** An editing backdrop in place of the sky, where the scene shown has one. */
   protected readonly backdrop = computed(() => this.source?.backdrop?.() ?? null);
   protected readonly drawing = this.store.drawing;
@@ -69,13 +84,32 @@ export class PlayBackground {
     () => new PlanetLoader(this.src(), this.builtIns ?? undefined),
   );
   /** The set up: the scene's, where there is one; else the game's own for 0, else one drawn from the number. */
-  private readonly set = computed((): readonly SetPlanet[] | null => {
-    const scene = this.source?.planets();
-    if (scene) return scene;
-    const index = this.index.hasValue() ? this.index.value() : null;
-    if (!index) return null;
-    const number = this.store.planetSet();
-    return number === 0 ? playSet(index) : randomSet(index, seeded(number));
+  /** Whether the random sets are shown: the site's, or a scene that is the random sets'. */
+  private readonly random = computed(() => !this.source || (this.source.random?.() ?? false));
+  /**
+   * The set up: the scene's, where there is one (while what it needs loads, the one up stays);
+   * else the game's own for 0, else one drawn from the number.
+   */
+  private readonly set = linkedSignal<
+    {
+      scene: readonly SetPlanet[] | null | undefined;
+      random: boolean;
+      number: number;
+      index: PlanetIndex | null;
+    },
+    readonly SetPlanet[] | null
+  >({
+    source: () => ({
+      scene: this.source?.planets(),
+      random: this.random(),
+      number: this.store.planetSet(),
+      index: this.index.hasValue() ? this.index.value() : null,
+    }),
+    computation: ({ scene, random, number, index }, previous) => {
+      if (!random) return scene ?? previous?.value ?? null;
+      if (!index) return null;
+      return number === 0 ? playSet(index) : randomSet(index, seeded(number));
+    },
   });
   /** What the set needs loaded, as a key: loading follows it alone (not every change of a setting). */
   private readonly needed = computed(() => {
@@ -87,7 +121,7 @@ export class PlayBackground {
     params: () => this.needed() ?? undefined,
     loader: async ({ params, abortSignal }) => {
       const loader = this.planets();
-      const ids = params.split(',');
+      const ids = params ? params.split(',') : [];
       const files = await Promise.all(ids.map((id) => loader.load(id, abortSignal)));
       return new Map<string, LoadedPlanet>(ids.map((id, i) => [id, files[i]!]));
     },
@@ -110,6 +144,7 @@ export class PlayBackground {
       library: this.design.library(),
     }),
     computation: ({ set, loaded, library }, previous) => {
+      if (set?.length === 0) return []; // no planets: nothing to wait for
       if (!set || !loaded) return previous?.value ?? null;
       const out: PlanetPlacement[] = [];
       for (const p of set.map((s) => withLibrary(s, library))) {

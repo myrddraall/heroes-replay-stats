@@ -65,6 +65,42 @@
     />
   </hrs-property-section>
 }
+@if (place(); as p) {
+  <hrs-property-section title="Place">
+    <hrs-property-slider
+      label="Across"
+      [value]="p.position[0]"
+      [min]="-80"
+      [max]="80"
+      [step]="0.5"
+      (valueChange)="move(0, $event)"
+    />
+    <hrs-property-slider
+      label="Up"
+      [value]="p.position[2]"
+      [min]="-60"
+      [max]="60"
+      [step]="0.5"
+      (valueChange)="move(2, $event)"
+    />
+    <hrs-property-slider
+      label="Distance"
+      [value]="p.position[1]"
+      [min]="20"
+      [max]="200"
+      [step]="1"
+      (valueChange)="move(1, $event)"
+    />
+    <hrs-property-slider
+      label="Size"
+      [value]="p.radius"
+      [min]="1"
+      [max]="40"
+      [step]="0.5"
+      (valueChange)="placeChange.emit({ radius: $event })"
+    />
+  </hrs-property-section>
+}
 <hrs-property-section
   title="Light"
   [changed]="anySet(lightKeys)"
@@ -127,12 +163,9 @@
 />
 @if (moons()) {
   <hrs-property-section title="Moons">
-    <select class="action" aria-label="Add a moon" (change)="add($event)">
-      <option value="" selected>Add a moon…</option>
-      @for (id of planets(); track id) {
-        <option [value]="id">{{ id }}</option>
-      }
-    </select>
+    <div class="buttons">
+      <ng-content select="[moonAdd]" />
+    </div>
   </hrs-property-section>
 }
 <div class="buttons">
@@ -146,6 +179,9 @@
       {{ focused() ? 'Unfocus' : 'Focus' }}
     </button>
     <button type="button" class="button" (click)="removeRequested.emit()">Remove moon</button>
+  }
+  @if (place()) {
+    <button type="button" class="button" (click)="removeRequested.emit()">Remove planet</button>
   }
   <button type="button" class="button" (click)="resetRequested.emit()" [disabled]="!changed()">
     Reset look

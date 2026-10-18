@@ -73,28 +73,41 @@ describe('DraftDesignStore', () => {
     expect(draft.unsaved()).toBe(0);
   });
 
-  it('makes scenes of their own, empty or from another, keeps them through a reset, deletes them', () => {
+  it('makes scenes of their own, empty or a copy of another with its planets, resets and deletes them', () => {
     const draft = TestBed.inject(DraftDesignStore);
     const id = draft.createScene();
     expect(id).toBe('scene-1');
-    expect(draft.scenes().planets[id]).toEqual({});
-    draft.setScenePlanet(id, 'korhal');
+    expect(draft.scenes().planets[id]).toEqual({ bodies: [] });
+    // A new scene starts saved.
+    expect(draft.unsaved()).toBe(0);
+    expect(TestBed.inject(PublishedDesignStore).scenes().planets[id]).toEqual({ bodies: [] });
+    const korhal = { id: 'korhal', position: [0, 65, 4], radius: 18 } as const;
+    draft.setSceneBodies(id, [{ ...korhal, style: 'nexus' }]);
     draft.renameScene(id, '  Home  ');
     draft.setSkyTint(id, red);
-    const copy = draft.createScene({ id, name: 'Home copy' });
+    const copy = draft.createScene(
+      { id, bodies: draft.scenes().planets[id]!.bodies! },
+      'Home copy',
+    );
     expect(copy).toBe('scene-2');
     expect(draft.scenes().planets[copy]).toEqual({
-      planet: 'korhal',
+      bodies: [{ ...korhal, style: 'nexus' }],
       name: 'Home copy',
       sky: { tint: red },
     });
     draft.resetScene(id);
-    expect(draft.scenes().planets[id]).toEqual({ planet: 'korhal', name: 'Home' });
-    draft.renameScene(id, '');
-    draft.setScenePlanet(id, '');
-    expect(draft.scenes().planets[id]).toEqual({});
+    expect(draft.scenes().planets[id]).toEqual({ name: 'Home', bodies: [korhal] });
     draft.deleteScene(id);
     expect(draft.scenes().planets[id]).toBeUndefined();
     expect(draft.scenes().planets[copy]?.name).toBe('Home copy');
+  });
+
+  it("resets a preset to its own (the Play screen to the game's three)", () => {
+    const draft = TestBed.inject(DraftDesignStore);
+    draft.setSceneBodies('play-screen', [{ id: 'korhal', position: [0, 0, 0], radius: 1 }]);
+    expect(draft.unsaved()).toBe(1);
+    draft.resetScene('play-screen');
+    expect(draft.scenes().planets['play-screen']).toBeUndefined();
+    expect(draft.unsaved()).toBe(0);
   });
 });

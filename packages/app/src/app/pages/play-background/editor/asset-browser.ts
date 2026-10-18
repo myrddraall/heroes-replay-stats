@@ -56,7 +56,7 @@ export class AssetBrowser {
           return c.scenes().map((s) => ({
             key: key(s.id),
             label: s.label,
-            caption: s.planet && s.planet !== s.label ? s.planet : undefined,
+            caption: s.shows !== s.label ? s.shows : undefined,
             unsaved: d.unsavedScenes().has(s.id),
           }));
         case 'planet':

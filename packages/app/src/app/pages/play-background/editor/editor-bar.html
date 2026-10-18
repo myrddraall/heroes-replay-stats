@@ -2,8 +2,6 @@
   <span class="status" [class.status--unsaved]="draft.unsaved() > 0">
     @if (draft.unsaved(); as n) {
       {{ n }} not saved
-    } @else {
-      All saved
     }
   </span>
   <button type="button" class="button" (click)="draft.discard()" [disabled]="!draft.unsaved()">

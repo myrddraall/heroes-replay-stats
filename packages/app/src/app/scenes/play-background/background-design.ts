@@ -70,15 +70,22 @@ export interface BackgroundDesign {
 
 /**
  * What a background shows, where something other than the site's random sets is to be shown (an
- * editor's scene): its planets (null: the random sets), its sky, and its tint over the whole
- * picture (null: the site's).
+ * editor's scene): its planets (null while what they need loads: what was shown stays), or the
+ * random sets (`random`); its sky, and its tint over the whole picture (null: the site's).
  */
 export interface BackgroundSceneSource {
   readonly planets: Signal<readonly SetPlanet[] | null>;
+  /** Whether it shows the random sets (its planets are none of its own). */
+  readonly random?: Signal<boolean>;
   readonly sky: Signal<SkySettings>;
   readonly tint: Signal<TintSettings | null>;
   /** An editing aid shown in place of the sky (none: the sky); never part of the design. */
   readonly backdrop?: Signal<Backdrop | null>;
+  /**
+   * Which scene this is (an editor's open scene or asset): its planets changing under the same
+   * one are drawn again in place (faded), not flown to; another one is flown to.
+   */
+  readonly key?: Signal<string>;
 }
 
 /** A shade from a body's settings: what of it is set (strength, direction), the rest left to what is under it. */

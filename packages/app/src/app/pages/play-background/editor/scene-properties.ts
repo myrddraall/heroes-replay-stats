@@ -27,6 +27,8 @@ export class SceneProperties {
   readonly custom = input(false);
   /** Whether the random sets are up (another can be drawn). */
   readonly sets = input(false);
+  /** Whether planets can be put in it (a Planets section, its button given as `[planetAdd]`). */
+  readonly planets = input(false);
   /** Whether it is a scene of its own (named, deletable), not the random sets'. */
   readonly own = input(false);
   /** Its name ('': none, its planet's id shown). */

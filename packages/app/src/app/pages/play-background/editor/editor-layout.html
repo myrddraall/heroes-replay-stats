@@ -71,7 +71,13 @@
     </hrs-map-panel>
   </mat-drawer>
   <mat-drawer-content class="layout__content">
-    <hrs-play-background #scene class="layout__scene" [names]="ui.names() && !ui.screenshot()" />
+    <hrs-play-background
+      #scene
+      class="layout__scene"
+      [names]="ui.names() && !ui.screenshot()"
+      [pickable]="!ui.screenshot()"
+      (planetPick)="pick($event)"
+    />
     @if (ui.screenshot()) {
       <p class="layout__hint" role="status">Screenshot mode: press Esc to leave</p>
     } @else {

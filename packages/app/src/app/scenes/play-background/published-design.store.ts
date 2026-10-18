@@ -1,6 +1,7 @@
 import { patchState, signalStore, withHooks, withMethods, withState } from '@ngrx/signals';
 import { withLocalStorage } from '../../data/store-features/with-local-storage';
 import { type Design, EMPTY_LIBRARY, EMPTY_SCENES, type ScenesState } from './background-design';
+import type { PlanetChoices } from './background-scene';
 
 /** Where the published design is kept. */
 export const PUBLISHED_DESIGN_KEY = 'hrs.background-design';
@@ -33,6 +34,11 @@ export const PublishedDesignStore = signalStore(
     /** A design published: the site shows it from now on. */
     publish(design: Design): void {
       patchState(store, { library: design.library, scenes: design.scenes });
+    },
+    /** One scene published as it is (a new one starts saved), the rest as they were. */
+    publishScene(id: string, scene: PlanetChoices): void {
+      const scenes = store.scenes();
+      patchState(store, { scenes: { ...scenes, planets: { ...scenes.planets, [id]: scene } } });
     },
   })),
   withHooks({

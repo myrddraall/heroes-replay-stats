@@ -1,0 +1,31 @@
+<div class="flyout" cdkTrapFocus [cdkTrapFocusAutoCapture]="true">
+  <h3 class="title">{{ title() }}</h3>
+  <input
+    type="search"
+    class="filter"
+    placeholder="Filter"
+    [attr.aria-label]="'Filter: ' + title()"
+    cdkFocusInitial
+    [value]="query()"
+    (input)="filtered($event)"
+  />
+  <ul class="choices choices--scroll">
+    @for (item of shown(); track item.id) {
+      <li>
+        <button type="button" class="choice" (click)="picked.emit(item.id)">
+          <mat-icon class="material-symbols-outlined choice__icon" aria-hidden="true">{{
+            icon()
+          }}</mat-icon>
+          <span class="choice__text">
+            <span class="choice__label">{{ item.label }}</span>
+            @if (item.caption) {
+              <span class="choice__caption">{{ item.caption }}</span>
+            }
+          </span>
+        </button>
+      </li>
+    } @empty {
+      <li class="none">Nothing matches</li>
+    }
+  </ul>
+</div>

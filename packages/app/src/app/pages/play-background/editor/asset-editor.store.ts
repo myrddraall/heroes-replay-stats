@@ -12,7 +12,9 @@ import { withFolding } from '../../../data/store-features/with-folding';
 import { withLocalStorage } from '../../../data/store-features/with-local-storage';
 import type { BodySettings, SkyChoices } from '../../../scenes/play-background/background-scene';
 import { PREVIEW_SCENE } from '../../../scenes/play-background/background-design';
+import { fitRadius } from '../../../scenes/play-background/background-scene';
 import { NO_MATERIAL_TINT } from '../../../scenes/play-background/material-settings';
+import { visualExtent } from '../../../scenes/play-background/scene-bodies';
 import type { SetPlanet } from '../../../scenes/play-background/planet-sets';
 import { loadPlaySceneFile, PLAY_SCENE_URL } from '../../../scenes/play-background/play-scene';
 import type {
@@ -189,7 +191,19 @@ export const AssetEditorStore = signalStore(
     };
   }),
   withComputed(
-    ({ asset, selected, previewPlanet, _draft, _skyOf, _body, _materialUse, _aids, _catalog }) => {
+    ({
+      asset,
+      selected,
+      previewPlanet,
+      _draft,
+      _skyOf,
+      _body,
+      _materialUse,
+      _aids,
+      _catalog,
+      _sceneFile,
+      _ui,
+    }) => {
       const library = _draft.library;
       const target = computed(() => targetOf(selected(), asset()));
       const selectedSky = computed(() => {
@@ -251,7 +265,6 @@ export const AssetEditorStore = signalStore(
           return !!sky && (!!sky.edited.materials || !!sky.edited.tint);
         }),
         styleOptions: computed((): PropertyOption[] => grouped([{ value: '', label: 'None' }])),
-        planetIds: computed((): string[] => []),
         sets: computed(() => false),
         /**
          * The stage: the asset on the planet last opened (a planet itself; a style worn by it); a
@@ -261,7 +274,20 @@ export const AssetEditorStore = signalStore(
         stagePlanets: computed((): SetPlanet[] => {
           const a = asset();
           const use = _materialUse();
-          const at = { position: PREVIEW_POSITION, radius: PREVIEW_RADIUS };
+          const files = _catalog.files();
+          const scene = _sceneFile.hasValue() ? _sceneFile.value() : null;
+          /** The stage's place, the asset as big as fits the view with its shells and halo. */
+          const fitted = (...ids: (string | undefined)[]) => {
+            const root = { position: PREVIEW_POSITION, radius: PREVIEW_RADIUS };
+            if (!scene) return root;
+            const up = Math.tan((scene.camera.fovY * Math.PI) / 360);
+            const extent = visualExtent(...ids.map((id) => (id ? files[id] : undefined)));
+            const view = { up, across: up * _ui.aspect() };
+            return {
+              ...root,
+              radius: fitRadius(root, [], scene.camera.eye, view, new Map(), () => extent),
+            };
+          };
           if (a.kind === 'sky') return []; // the sky alone
           if (a.kind === 'material' && !_aids.materialOnPlanet()) {
             const owner =
@@ -281,18 +307,29 @@ export const AssetEditorStore = signalStore(
             return [
               {
                 id,
-                ...at,
+                ...fitted(owner),
                 materials: fill === 'colour' ? { [STAND_IN_MATERIAL]: { tint } } : undefined,
               },
             ];
           }
-          if (a.kind === 'planet') return [{ id: a.id, ...at }];
-          if (a.kind === 'style') return [{ id: previewPlanet(), style: a.id, ...at }];
-          if (use?.kind === 'planet') return [{ id: use.id, ...at }];
-          if (use?.kind === 'style') return [{ id: previewPlanet(), style: use.id, ...at }];
-          return [{ id: previewPlanet(), ...at }];
+          if (a.kind === 'planet') return [{ id: a.id, ...fitted(a.id) }];
+          if (a.kind === 'style')
+            return [
+              { id: previewPlanet(), style: a.id, ...fitted(previewPlanet(), `style-${a.id}`) },
+            ];
+          if (use?.kind === 'planet') return [{ id: use.id, ...fitted(use.id) }];
+          if (use?.kind === 'style')
+            return [
+              { id: previewPlanet(), style: use.id, ...fitted(previewPlanet(), `style-${use.id}`) },
+            ];
+          return [{ id: previewPlanet(), ...fitted(previewPlanet()) }];
         }),
         stageTint: computed(() => _draft.scenes().settings),
+        /** Which asset is on the stage (another one flown to; this one edited, faded in place). */
+        stageKey: computed(() => {
+          const a = asset();
+          return `${a.kind}:${a.id}`;
+        }),
         /**
          * The stage's backdrop in place of the sky; none (the sky) for what is part of the sky: the
          * sky open, a particle system, a material only the sky uses.
@@ -478,6 +515,12 @@ export const AssetEditorStore = signalStore(
         store._ui.confirmReset(false);
         store.expand(ASSET);
       }),
+      /** The asset on the stage clicked: its own row selected. */
+      selectPlaced(): boolean {
+        if (store.asset().kind === 'sky') return false;
+        patchState(store, { selected: ASSET });
+        return true;
+      },
       /** A row selected; a group only folds. */
       select(key: string): void {
         if (targetOf(key, asset()).kind === 'group') store.toggleExpanded(key);

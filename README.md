@@ -106,18 +106,24 @@ design has three layers, each setting only what it changes: the game data with i
 library (each asset's defaults, wherever it appears, the site's random sets too) and the scenes
 (`background-design.ts`). In the library a material has base settings of its own, wherever it is
 used; a planet, style or the sky using it can set it otherwise for itself, and a scene again.
-A scene is a planet with its look, moons and sky, an id and a name (`scene-<n>`). Two are
-presets, their sky and colour set as any scene's: the random sets (`''`) and the game's own Play
-screen (`play-screen`, its three planets where the game puts them). And the colour over the whole picture is the scenes'. What the site shows is the
+A scene is its planets (each where it is and how big, with its style, looks and moons), its sky,
+an id and a name (`scene-<n>`; `background-scene.ts`, `scene-bodies.ts`). Two are presets: the
+random sets (`''`: a set drawn with each page; its sky set as any scene's) and the game's own Play
+screen (`play-screen`: its three planets where the game puts them, set as any scene's). Scenes
+kept with one planet before scenes had several open as that planet in the middle of the view.
+The colour over the whole picture is the scenes'. What the site shows is the
 published design, a global store kept in `localStorage` (`PublishedDesignStore`, provided as the
 design in effect by the `BACKGROUND_DESIGN` token's root default). The Background page is an
 editor of a draft of it: the page provides `DraftDesignStore` (kept between visits) as the design
 for everything under it, so its background shows the draft while the rest of the site shows what
 is published; Save publishes the draft, Discard takes it back, and the bar counts what is not
-saved (shown while something is open; the library's list marks each thing not saved with a dot). The left panel starts on the library (`AssetCatalogStore`): the kind of thing listed as
+saved (on one line with the view's menu while something is open; the library's list marks each
+thing not saved with a dot). A new scene starts saved: it is published as it is made. The left panel starts on the library (`AssetCatalogStore`): the kind of thing listed as
 its title, a choice of the kind (scenes, planets, styles, materials, particle systems, skies),
 a search by name or where a thing is used, the bar, then the things of that kind as one flat
-list (a material with what uses it; for the scenes, a new one made of a planet). A click (or the up and down
+list (a material with what uses it). For the scenes, a New scene button opens a flyout: a name,
+then empty, or a copy of any scene (the presets first, filtered where the list is long): the
+copy has the template's planets as its own (a copy of the random sets, the set up then). A click (or the up and down
 arrows) selects one: it goes in
 the URL (`/edit-background/planet/korhal`, `/edit-background/material/<name>`,
 `/edit-background/scene/<id>`; nothing: the random sets' scene), the background shows it and the right panel tells what it is (what it is
@@ -129,11 +135,18 @@ compact rows in `properties/`). A material's properties show the textures it rea
 site has each, and where the game data has it (the export says; a baked one, the texture it was
 baked from). A scene opens in `SceneEditorStore`, an asset in `AssetEditorStore`, each provided as
 the abstract `Editor` token the layout, tree and panels use and as the `BACKGROUND_SCENE` the
-background shows. A scene's tree is its sky and its materials, the planet, its materials and its
-moons, moons of moons; its own properties are its name, its deletion and the colour. A moon is
-any planet on an orbit about its parent: radius, tilt, turn, a progress round it and its size
-(`background-scene.ts`); one hidden behind a body is shown round its orbit while selected, and
-the planet is drawn smaller where the scene would not fit the view. An asset is shown on a
+background shows. A scene's tree is its sky and its materials, then each planet with its
+materials and its moons, moons of moons; its own properties are its name, its deletion, the
+colour, and an Add planet button (a flyout of the planets, filtered). A planet's properties have
+its place (across, up, distance) and size; a body's, an Add moon button (the same flyout). A moon
+is any planet on an orbit about its parent: radius, tilt, turn, a progress round it and its size;
+one hidden behind a body is shown round its orbit while selected. What is drawn is kept in the
+view with room for each body's shells and halo (`visualExtent`): a scene of one planet, and the
+preview stage's asset, drawn smaller where they would not fit; a scene of several drawn smaller
+about the middle of the view (`fitScene`), its layout kept. Another scene or asset opened (or
+another random set) is flown to; the one open edited (a planet or moon added or taken out, a
+style changed) fades to where it is (`BackgroundSceneSource.key`). A body clicked in the view (the
+nearest under the pointer) is selected in the tree, its rows unfolded to it. An asset is shown on a
 preview stage (a scene of its own, `@preview`, there only to see the asset in): a planet itself, a
 style worn by the planet last opened, a material on the stand-in planet (on what uses it, where
 asked), the sky alone. The stage has two editing aids (`EditingAidsStore`), kept in this browser

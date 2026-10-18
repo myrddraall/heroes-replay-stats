@@ -24,6 +24,8 @@ export abstract class Editor {
   abstract readonly kind: Signal<TargetKind>;
   abstract readonly title: Signal<string>;
   abstract select(key: string): void;
+  /** The body shown at an index of the scene's planets (as put up) selected; whether there was one. */
+  abstract selectPlaced(index: number): boolean;
   abstract toggleExpanded(key: string): void;
   /** A material switched on or off from the tree, by its row's key. */
   abstract setEnabled(change: { key: string; enabled: boolean }): void;
@@ -31,7 +33,6 @@ export abstract class Editor {
   /** The selected body, as its properties show it. */
   abstract readonly bodyView: Signal<BodyView | null>;
   abstract readonly styleOptions: Signal<PropertyOption[]>;
-  abstract readonly planetIds: Signal<string[]>;
   abstract setBody(change: Partial<BodySettings>): void;
   abstract clearBody(keys: readonly (keyof BodySettings)[]): void;
   abstract resetBody(): void;

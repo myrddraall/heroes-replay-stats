@@ -1,0 +1,31 @@
+<button
+  type="button"
+  class="button"
+  cdkOverlayOrigin
+  #origin="cdkOverlayOrigin"
+  aria-haspopup="dialog"
+  [attr.aria-expanded]="open()"
+  (click)="open.set(!open())"
+>
+  <mat-icon class="material-symbols-outlined" aria-hidden="true">add</mat-icon>
+  <span>{{ label() }}</span>
+</button>
+<ng-template
+  cdkConnectedOverlay
+  [cdkConnectedOverlayOrigin]="origin"
+  [cdkConnectedOverlayOpen]="open()"
+  [cdkConnectedOverlayPositions]="positions"
+  [cdkConnectedOverlayPanelClass]="'hrs-glass-' + graphics.theme()"
+  [cdkConnectedOverlayHasBackdrop]="true"
+  cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+  (backdropClick)="open.set(false)"
+  (detach)="open.set(false)"
+>
+  <hrs-pick-flyout
+    [title]="label()"
+    icon="public"
+    [items]="planets()"
+    (picked)="pick($event)"
+    (closed)="open.set(false)"
+  />
+</ng-template>

@@ -1,6 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
 import { DraftDesignStore } from '../draft-design.store';
 import type { PropertyOption } from '../properties/property-select';
+import { AddPlanet } from './add-planet';
 import { AssetCatalogStore } from './asset-catalog.store';
 import { BodyProperties } from './body-properties';
 import {
@@ -31,7 +32,14 @@ import { TintSection } from './tint-section';
  */
 @Component({
   selector: 'hrs-selection-panel',
-  imports: [TintSection, SceneProperties, BodyProperties, MaterialProperties, EditingAidProperties],
+  imports: [
+    TintSection,
+    SceneProperties,
+    BodyProperties,
+    MaterialProperties,
+    EditingAidProperties,
+    AddPlanet,
+  ],
   templateUrl: './selection-panel.html',
   styleUrl: './selection-panel.scss',
 })

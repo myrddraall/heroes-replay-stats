@@ -4,35 +4,45 @@
   [options]="types"
   (valueChange)="setType($event)"
 />
+<input
+  type="search"
+  class="search"
+  placeholder="Search"
+  aria-label="Search the library"
+  [value]="catalog.query()"
+  (input)="search($event)"
+/>
 <div class="row">
-  <input
-    type="search"
-    class="search"
-    placeholder="Search"
-    aria-label="Search the library"
-    [value]="catalog.query()"
-    (input)="search($event)"
-  />
-  <hrs-view-menu />
-</div>
-@if (catalog.type() === 'scene') {
-  <button type="button" class="button new" [matMenuTriggerFor]="newScene">
-    <mat-icon class="material-symbols-outlined" aria-hidden="true">add</mat-icon>
-    <span>New scene</span>
-  </button>
-  <mat-menu #newScene="matMenu">
-    <button mat-menu-item type="button" (click)="catalog.createScene()">
-      <mat-icon class="material-symbols-outlined" aria-hidden="true">add_box</mat-icon>
-      <span>Empty scene</span>
+  @if (catalog.type() === 'scene') {
+    <button
+      type="button"
+      class="button new"
+      cdkOverlayOrigin
+      #origin="cdkOverlayOrigin"
+      aria-haspopup="dialog"
+      [attr.aria-expanded]="flyout()"
+      (click)="flyout.set(!flyout())"
+    >
+      <mat-icon class="material-symbols-outlined" aria-hidden="true">add</mat-icon>
+      <span>New scene</span>
     </button>
-    @if (templates().length) {
-      <mat-divider />
-      @for (scene of templates(); track scene.id) {
-        <button mat-menu-item type="button" (click)="catalog.createScene(scene.id)">
-          <mat-icon class="material-symbols-outlined" aria-hidden="true">content_copy</mat-icon>
-          <span>From {{ scene.label }}</span>
-        </button>
-      }
-    }
-  </mat-menu>
-}
+    <ng-template
+      cdkConnectedOverlay
+      [cdkConnectedOverlayOrigin]="origin"
+      [cdkConnectedOverlayOpen]="flyout()"
+      [cdkConnectedOverlayPositions]="positions"
+      [cdkConnectedOverlayPanelClass]="'hrs-glass-' + graphics.theme()"
+      [cdkConnectedOverlayHasBackdrop]="true"
+      cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+      (backdropClick)="flyout.set(false)"
+      (detach)="flyout.set(false)"
+    >
+      <hrs-new-scene-flyout
+        [templates]="templates()"
+        (create)="create($event)"
+        (closed)="flyout.set(false)"
+      />
+    </ng-template>
+  }
+  <span class="end"><hrs-view-menu /></span>
+</div>

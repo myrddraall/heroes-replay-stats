@@ -2,9 +2,9 @@ import type { MaterialSettingsMap, MaterialTint } from './scene-planets';
 import { bodyFrame } from './scene-renderer';
 
 /**
- * The Background page's scene: one planet with its moons (and theirs), under the sky. A moon goes
- * round its parent on an orbit: a circle of a radius about the parent, tilted and turned, the moon
- * a progress of the way round it. What is set here is kept as the page's choices.
+ * The Background page's scene: its planets, each with its moons (and theirs), under the sky. A
+ * moon goes round its parent on an orbit: a circle of a radius about the parent, tilted and
+ * turned, the moon a progress of the way round it. What is set here is kept as the page's choices.
  */
 
 export type Vec3 = readonly [number, number, number];
@@ -50,7 +50,7 @@ export interface MoonChoices {
   readonly moons?: readonly MoonChoices[];
 }
 
-/** Where a body is in the scene: the planet ([]), or the moons in turn from it down. */
+/** Where a body is: in a scene, its planet's index then its moons' in turn; among moons, theirs alone. */
 export type BodyPath = readonly number[];
 
 /** A path as a key: '' for the planet, else its indices joined by dots. */
@@ -239,7 +239,8 @@ const FIT_MARGIN = 0.85;
  * a moon (with its moons, where they are shown) would reach past the view's edge, the moons' orbits
  * scaling with the planet. As the eye sees it: a body `x` planet radii across from the planet's
  * centre and `y` nearer or further, at radius R, is seen (x + r)·R / (d + y·R) across, which must
- * stay within the view's reach; solved for R body by body, across and up.
+ * stay within the view's reach; solved for R body by body, across and up. A body's `extent` (in
+ * its radii: its shells and halo past its surface, 1 by default) is what must stay in view.
  */
 export function fitRadius(
   root: { readonly position: Vec3; readonly radius: number },
@@ -247,6 +248,7 @@ export function fitRadius(
   eye: Vec3,
   reach: ViewReach,
   overrides: ProgressOverrides = new Map(),
+  extent: (path: BodyPath) => number = () => 1,
 ): number {
   const unit = placeBodies({ position: root.position, radius: 1 }, moons, eye, overrides);
   const { axes } = bodyFrame(root.position, 1, eye);
@@ -257,14 +259,60 @@ export function fitRadius(
     const o = sub(b.position, root.position);
     const depth = along(o, 3); // away from the eye
     for (const [side, limit] of [
-      [Math.abs(along(o, 0)) + b.radius, FIT_MARGIN * reach.across],
-      [Math.abs(along(o, 6)) + b.radius, FIT_MARGIN * reach.up],
+      [Math.abs(along(o, 0)) + b.radius * extent(b.path), FIT_MARGIN * reach.across],
+      [Math.abs(along(o, 6)) + b.radius * extent(b.path), FIT_MARGIN * reach.up],
     ] as const) {
       const grows = side - limit * depth;
       if (grows > 0) radius = Math.min(radius, (limit * d) / grows);
     }
   }
   return radius;
+}
+
+/**
+ * A scene of several planets drawn smaller about the middle of the view, where any would reach
+ * past its edge: each body's offset across and up from the line of sight, and its radius, times
+ * one scale (its distance kept), so the picture keeps its layout, only smaller. As the eye sees
+ * a body `x` across at depth `z`, radius `r` (its `extent` in radii what must stay in view), it
+ * reaches (|x| + r·extent) / z, which must stay within the view's reach.
+ */
+export function fitScene<T extends { readonly position: Vec3; readonly radius: number }>(
+  bodies: readonly T[],
+  extents: readonly number[],
+  camera: { readonly eye: Vec3; readonly forward: Vec3; readonly up: Vec3 },
+  reach: ViewReach,
+): T[] {
+  const norm = (v: Vec3): Vec3 => {
+    const l = length(v);
+    return [v[0] / l, v[1] / l, v[2] / l];
+  };
+  const dot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const f = norm(camera.forward);
+  // Up made square to the line of sight; right across both.
+  const u0 = camera.up;
+  const u = norm([u0[0] - f[0] * dot(u0, f), u0[1] - f[1] * dot(u0, f), u0[2] - f[2] * dot(u0, f)]);
+  const r: Vec3 = [f[1] * u[2] - f[2] * u[1], f[2] * u[0] - f[0] * u[2], f[0] * u[1] - f[1] * u[0]];
+  const frames = bodies.map((b) => {
+    const v = sub(b.position, camera.eye);
+    return { x: dot(v, r), y: dot(v, u), z: dot(v, f) };
+  });
+  let scale = 1;
+  bodies.forEach((b, i) => {
+    const { x, y, z } = frames[i]!;
+    if (z <= 0) return;
+    const size = b.radius * (extents[i] ?? 1);
+    for (const [side, limit] of [
+      [(Math.abs(x) + size) / z, FIT_MARGIN * reach.across],
+      [(Math.abs(y) + size) / z, FIT_MARGIN * reach.up],
+    ] as const)
+      if (side > limit) scale = Math.min(scale, limit / side);
+  });
+  if (scale >= 1) return [...bodies];
+  return bodies.map((b, i) => {
+    const { x, y, z } = frames[i]!;
+    const at = (k: 0 | 1 | 2) => camera.eye[k] + f[k] * z + r[k] * x * scale + u[k] * y * scale;
+    return { ...b, position: [at(0), at(1), at(2)] as Vec3, radius: b.radius * scale };
+  });
 }
 
 /** A scene's sky as set on the Background page: its materials' settings by name, and a tint over all of it. */
@@ -277,17 +325,32 @@ export interface SkyChoices {
  * A scene as set on the Background page (a planet's, or the random sets', under ''): the planet's
  * style, its settings in each style, its moons, and the scene's sky.
  */
+/**
+ * A planet of a scene: which planet it is, where it is (in the scene's space) and how big, its
+ * style, its settings in each style (by the style's id, '' for none), and its moons.
+ */
+export interface SceneBody {
+  readonly id: string;
+  readonly position: Vec3;
+  readonly radius: number;
+  readonly style?: string;
+  readonly variants?: Readonly<Record<string, BodySettings>>;
+  readonly moons?: readonly MoonChoices[];
+}
+
+/**
+ * A scene as set on the Background page: its planets (each with its moons), its name, its sky.
+ * Scenes kept before scenes had several planets have one (`planet`, `style`, `variants`, `moons`),
+ * read as one planet in the middle of the view (`sceneBodies`); what is set now is `bodies`.
+ */
 export interface PlanetChoices {
-  /**
-   * The scene's planet, by id, where it isn't the one its key is: so a scene can have a name of its
-   * own (prebuilt or added scenes); scenes kept by a planet's id have that planet.
-   */
-  readonly planet?: string;
-  /** What the scene is called, where it is named (else its planet's id). */
+  readonly bodies?: readonly SceneBody[];
+  /** What the scene is called, where it is named (else its first planet's id, or its own). */
   readonly name?: string;
   readonly sky?: SkyChoices;
+  /** Kept before scenes had several planets: the one planet, its style, looks and moons. */
+  readonly planet?: string;
   readonly style?: string;
-  /** Its settings in each style, by the style's id ('' for none). */
   readonly variants?: Readonly<Record<string, BodySettings>>;
   readonly moons?: readonly MoonChoices[];
 }

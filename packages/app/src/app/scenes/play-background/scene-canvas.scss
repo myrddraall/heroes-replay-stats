@@ -46,3 +46,13 @@ canvas {
     transition: none;
   }
 }
+
+// Over a planet that a click picks: the pointer says so.
+:host(.pickable.over-planet) {
+  cursor: pointer;
+}
+
+// The names don't take the clicks meant for the planets under them.
+.name {
+  pointer-events: none;
+}

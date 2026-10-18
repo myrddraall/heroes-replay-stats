@@ -19,7 +19,13 @@ import { SceneHeader } from './scene-header';
       provide: BACKGROUND_SCENE,
       useFactory: () => {
         const store = inject(SceneEditorStore);
-        return { planets: store.scenePlanets, sky: store.sceneSky, tint: store.sceneTint };
+        return {
+          planets: store.scenePlanets,
+          sky: store.sceneSky,
+          tint: store.sceneTint,
+          key: store.scene,
+          random: store.sets,
+        };
       },
     },
   ],

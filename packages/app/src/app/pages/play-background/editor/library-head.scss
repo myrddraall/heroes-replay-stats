@@ -14,18 +14,22 @@
 
 .search {
   @include property-row.field;
-  flex: 1;
-  min-width: 0;
+  width: 100%;
 }
 
 .button {
   @include property-row.button;
   gap: 4px;
-  justify-self: start;
 
   mat-icon {
     width: 16px;
     height: 16px;
     font-size: 16px;
   }
+}
+
+// The view's menu at the row's end, with or without the button before it.
+.end {
+  display: flex;
+  margin-inline-start: auto;
 }

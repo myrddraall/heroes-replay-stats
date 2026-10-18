@@ -64,15 +64,21 @@ export class AssetInfo {
               { label: 'Sky', value: scene?.sky ? 'Set in the scene' : "The library's" },
             ],
           };
-        const planet = scene?.planet ?? id;
+        const shows = this.catalog.scenes().find((s) => s.id === id)?.shows ?? '';
         return {
           ...none,
           kind: 'Scene',
           facts: [
             { label: 'Name', value: scene?.name ?? '(none)' },
-            { label: 'Planet', value: planet },
-            { label: 'Style', value: scene?.style || '(its own)' },
-            { label: 'Moons', value: String(moonCount(scene?.moons)) },
+            { label: 'Planets', value: shows },
+            {
+              label: 'Moons',
+              value: String(
+                c
+                  .planetsOf()(id)
+                  .reduce((n, b) => n + moonCount(b.moons), 0),
+              ),
+            },
             { label: 'Sky', value: scene?.sky ? 'Set in the scene' : "The library's" },
           ],
         };
@@ -97,7 +103,11 @@ export class AssetInfo {
                     value:
                       c
                         .scenes()
-                        .filter((s) => s.planet === id)
+                        .filter((s) =>
+                          c
+                            .planetsOf()(s.id)
+                            .some((b) => b.id === id),
+                        )
                         .map((s) => s.label)
                         .join(', ') || 'None',
                   },

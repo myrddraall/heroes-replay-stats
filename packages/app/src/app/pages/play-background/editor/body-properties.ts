@@ -5,6 +5,7 @@ import {
   type BodyValues,
   DEFAULT_ORBIT,
   type Orbit,
+  type Vec3,
 } from '../../../scenes/play-background/background-scene';
 import { NO_MATERIAL_TINT } from '../../../scenes/play-background/material-settings';
 import { PropertyDirection } from '../properties/property-direction';
@@ -16,7 +17,8 @@ import { PropertySlider } from '../properties/property-slider';
 /**
  * A body's properties (presentational): the planet's or a moon's style, its light, shade and
  * their directions, the lean of its rims, a tint over all its materials; a moon's orbit about its
- * parent; and moons to add about it.
+ * parent, or a scene's planet's place and size; and its Moons section, whose button to add one
+ * is given (`[moonAdd]`).
  */
 @Component({
   selector: 'hrs-body-properties',
@@ -31,8 +33,8 @@ export class BodyProperties {
   readonly canLight = input(false);
   /** Its orbit, where it is a moon. */
   readonly orbit = input<Orbit | null>(null);
-  /** The planets a moon added about it can be, by id. */
-  readonly planets = input.required<readonly string[]>();
+  /** Where it is and how big, where it is one of a scene's planets (x across, y away, z up). */
+  readonly place = input<{ readonly position: Vec3; readonly radius: number } | null>(null);
   /** Whether anything of it is set here, to reset. */
   readonly changed = input(false);
   /** Whether the view is centred on it. */
@@ -49,7 +51,7 @@ export class BodyProperties {
   readonly styleChange = output<string>();
   readonly settingsChange = output<Partial<BodySettings>>();
   readonly orbitChange = output<Partial<Orbit>>();
-  readonly moonAdd = output<string>();
+  readonly placeChange = output<{ readonly position?: Vec3; readonly radius?: number }>();
   readonly removeRequested = output<void>();
   readonly focusToggle = output<void>();
   readonly resetRequested = output<void>();
@@ -82,15 +84,17 @@ export class BodyProperties {
     return fields.some((f) => orbit[f] !== DEFAULT_ORBIT[f]);
   }
 
+  /** A planet moved along one axis (0 across, 1 away, 2 up). */
+  protected move(axis: 0 | 1 | 2, value: number): void {
+    const place = this.place();
+    if (!place) return;
+    const position: [number, number, number] = [...place.position];
+    position[axis] = value;
+    this.placeChange.emit({ position });
+  }
+
   /** Its orbit (or one part of it) back to a new moon's. */
   protected resetOrbit(field?: keyof Orbit): void {
     this.orbitChange.emit(field ? { [field]: DEFAULT_ORBIT[field] } : DEFAULT_ORBIT);
-  }
-
-  /** A moon chosen to add: added, and the choice put back to its prompt. */
-  protected add(event: Event): void {
-    const select = event.target as HTMLSelectElement;
-    if (select.value) this.moonAdd.emit(select.value);
-    select.value = '';
   }
 }

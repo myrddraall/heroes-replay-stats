@@ -4,6 +4,7 @@
     [tint]="tint()"
     [sky]="sky()"
     [backdrop]="backdrop()"
+    [sceneKey]="sceneKey()"
     [animate]="drawing().animate"
     [fps]="store.fps()"
     [fadeFps]="store.fadeFps()"
@@ -11,5 +12,7 @@
     [picture]="store.picture()"
     [placements]="shown()"
     [names]="names()"
+    [pickable]="pickable()"
+    (planetPick)="planetPick.emit($event)"
   />
 }

@@ -25,6 +25,7 @@ import type { AssetTarget } from './open-target';
           sky: store.stageSky,
           tint: store.stageTint,
           backdrop: store.stageBackdrop,
+          key: store.stageKey,
         };
       },
     },

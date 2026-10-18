@@ -4,6 +4,7 @@ import {
   changeMoon,
   DEFAULT_ORBIT,
   fitRadius,
+  fitScene,
   hidden,
   type MoonChoices,
   moonAt,
@@ -97,5 +98,23 @@ describe('the scene fitted to the view', () => {
         reach.across,
       );
     }
+  });
+
+  it('draws a scene of several planets smaller about the middle where one would leave the view', () => {
+    const camera = { eye: [0, 0, 0] as const, forward: [0, 1, 0] as const, up: [0, 0, 1] as const };
+    const reach = { across: 0.5, up: 0.5 };
+    const inView = [{ position: [5, 100, 0] as const, radius: 5 }];
+    expect(fitScene(inView, [1], camera, reach)).toEqual(inView);
+    const wide = [
+      { position: [0, 100, 0] as const, radius: 10 },
+      { position: [60, 100, 0] as const, radius: 10 },
+    ];
+    const fitted = fitScene(wide, [1.2, 1.2], camera, reach);
+    // Now within the view (its margin): across, 60·s + 12·s ≤ 0.85 · 0.5 · 100.
+    const [, right] = fitted;
+    expect(right!.position[0] + right!.radius * 1.2).toBeCloseTo(42.5, 5);
+    // Its distance kept, the first still in the middle.
+    expect(right!.position[1]).toBeCloseTo(100, 5);
+    expect(fitted[0]!.position[0]).toBeCloseTo(0, 5);
   });
 });

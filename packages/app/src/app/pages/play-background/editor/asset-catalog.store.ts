@@ -14,6 +14,10 @@ import {
   PLAY_SCREEN_SCENE,
   RANDOM_SCENE,
 } from '../../../scenes/play-background/background-design';
+import { BackgroundStore } from '../../../scenes/play-background/background.store';
+import type { SceneBody } from '../../../scenes/play-background/background-scene';
+import { playSet, randomSet, seeded } from '../../../scenes/play-background/planet-sets';
+import { sceneBodies } from '../../../scenes/play-background/scene-bodies';
 import {
   loadPlaySceneFile,
   PLAY_SCENE_URL,
@@ -57,9 +61,18 @@ export interface CatalogMaterial {
 export interface CatalogScene {
   readonly id: string;
   readonly label: string;
-  /** Its planet, by id (none: the random sets). */
-  readonly planet: string;
+  /** What it shows, in words: its planets, or the random sets, or nothing yet. */
+  readonly shows: string;
 }
+
+/** Planets in words: their ids, or that there are none. */
+const planetWords = (bodies: readonly SceneBody[]) =>
+  bodies.length ? bodies.map((b) => b.id).join(', ') : 'No planets yet';
+
+/** A set put up as a scene's planets: each where it is, as big. */
+const asBodies = (
+  set: readonly { id: string; position: SceneBody['position']; radius: number }[],
+) => set.map((p): SceneBody => ({ id: p.id, position: p.position, radius: p.radius }));
 
 /**
  * What the Background page's library has (component store, provided by the page): flat lists of
@@ -74,6 +87,7 @@ export const AssetCatalogStore = signalStore(
   withProps(() => ({
     _draft: inject(DraftDesignStore),
     _ui: inject(EditorUiStore),
+    _background: inject(BackgroundStore),
     _index: resource({ loader: ({ abortSignal }) => loadPlanetIndex(PLAY_SCENE_URL, abortSignal) }),
     _sceneFile: resource({
       loader: ({ abortSignal }) => loadPlaySceneFile(PLAY_SCENE_URL, abortSignal),
@@ -163,21 +177,41 @@ export const AssetCatalogStore = signalStore(
           })) ?? [],
       ),
       skies: computed(() => [{ id: PLAY_SKY, label: 'Play screen' }]),
-      scenes: computed((): CatalogScene[] => {
-        const listed = Object.entries(_draft.scenes().planets)
-          .filter(([id]) => ownScene(id))
-          .map(([id, p]) => {
-            const planet = p.planet ?? id;
-            return { id, label: p.name ?? planet, planet };
-          })
-          .sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }));
-        // The presets first: the random sets, the game's own Play screen.
-        return [
-          { id: RANDOM_SCENE, label: 'Random sets', planet: '' },
-          { id: PLAY_SCREEN_SCENE, label: 'Play screen', planet: '' },
-          ...listed,
-        ];
+      /** A scene's planets: its own; the Play screen's, the game's three until it sets its own. */
+      planetsOf: computed(() => {
+        const scenes = _draft.scenes().planets;
+        const play = index() ? asBodies(playSet(index()!)) : [];
+        return (id: string): readonly SceneBody[] =>
+          id === RANDOM_SCENE
+            ? []
+            : sceneBodies(scenes[id], id, id === PLAY_SCREEN_SCENE ? play : []);
       }),
+    };
+  }),
+  withComputed(({ _draft, planetsOf }) => ({
+    scenes: computed((): CatalogScene[] => {
+      const listed = Object.entries(_draft.scenes().planets)
+        .filter(([id]) => ownScene(id))
+        .map(([id, p]) => {
+          const bodies = planetsOf()(id);
+          return { id, label: p.name ?? bodies[0]?.id ?? id, shows: planetWords(bodies) };
+        })
+        .sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }));
+      // The presets first: the random sets, the game's own Play screen.
+      return [
+        { id: RANDOM_SCENE, label: 'Random sets', shows: 'A set drawn with each page' },
+        {
+          id: PLAY_SCREEN_SCENE,
+          label: 'Play screen',
+          shows: planetWords(planetsOf()(PLAY_SCREEN_SCENE)),
+        },
+        ...listed,
+      ];
+    }),
+  })),
+  withComputed(({ _sceneFile, planets, styles }) => {
+    const sceneFile = computed(() => (_sceneFile.hasValue() ? _sceneFile.value() : null));
+    return {
       /** The sky's own materials (not its planets'), in its meshes' order, then its particles'. */
       skyMaterials: computed(() => {
         const scene = sceneFile();
@@ -202,11 +236,22 @@ export const AssetCatalogStore = signalStore(
     setType(type: OpenKind): void {
       patchState(store, { type });
     },
-    /** A new scene, empty or a copy of one of the user's own (by id), opened. */
-    createScene(from?: string): void {
-      const template = from ? store.scenes().find((s) => s.id === from) : undefined;
+    /**
+     * A new scene, empty or a copy of another (by id) with its planets as they are shown (the
+     * random sets': the set up now), named (none: a copy's '<name> copy'), opened.
+     */
+    createScene(from?: string, name?: string): void {
+      // ('' is the random sets': a template too.)
+      const template = from !== undefined ? store.scenes().find((s) => s.id === from) : undefined;
+      let bodies: readonly SceneBody[] = [];
+      if (template?.id === RANDOM_SCENE) {
+        const index = store._index.hasValue() ? store._index.value() : null;
+        const n = store._background.planetSet();
+        if (index) bodies = asBodies(n === 0 ? playSet(index) : randomSet(index, seeded(n)));
+      } else if (template) bodies = store.planetsOf()(template.id);
       const id = store._draft.createScene(
-        template ? { id: template.id, name: `${template.label} copy` } : undefined,
+        template ? { id: template.id, bodies } : undefined,
+        name?.trim() || (template ? `${template.label} copy` : undefined),
       );
       store._ui.open({ kind: 'scene', id });
     },

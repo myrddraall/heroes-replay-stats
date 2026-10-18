@@ -16,18 +16,18 @@ import {
   type ScenesState,
 } from '../../scenes/play-background/background-design';
 import {
-  addMoon,
-  type BodyPath,
   type BodySettings,
-  changeMoon,
-  DEFAULT_ORBIT,
-  moonAt,
-  type MoonChoices,
-  type Orbit,
   type PlanetChoices,
+  type SceneBody,
   type SkyChoices,
   without,
 } from '../../scenes/play-background/background-scene';
+import {
+  placesOnly,
+  sceneBodies,
+  withMaterial,
+  withoutMaterial,
+} from '../../scenes/play-background/scene-bodies';
 import { PublishedDesignStore } from '../../scenes/play-background/published-design.store';
 import type { MaterialSettings, MaterialTint } from '../../scenes/play-background/scene-planets';
 import { type PartTint, PRESETS, UNTINTED } from '../../scenes/play-background/tint-settings';
@@ -40,28 +40,6 @@ export const CUSTOM_TINT = 'custom';
 
 /** Which of the library's bodies: a planet's defaults, or a style's. */
 export type LibraryKind = 'planets' | 'styles';
-
-/** Settings with one material's changed. */
-function withMaterial(
-  s: BodySettings,
-  name: string,
-  change: Partial<MaterialSettings>,
-): BodySettings {
-  return { ...s, materials: { ...s.materials, [name]: { ...s.materials?.[name], ...change } } };
-}
-
-/** Settings with one material's taken back (all of it: `keys` left out); none left: none at all. */
-function withoutMaterial(
-  s: BodySettings,
-  name: string,
-  keys?: readonly (keyof MaterialSettings)[],
-): BodySettings | undefined {
-  const materials = { ...s.materials };
-  const left = keys ? without(materials[name], keys) : undefined;
-  if (left) materials[name] = left;
-  else delete materials[name];
-  return without({ ...s, materials }, Object.keys(materials).length ? [] : ['materials']);
-}
 
 /** A sky with one material's changed, or taken back; its tint set or taken back. */
 function skyMaterial(
@@ -150,14 +128,14 @@ export const DraftDesignStore = signalStore(
     const scene = (id: string): PlanetChoices => store.scenes().planets[id] ?? {};
     /**
      * A scene changed. One with nothing left set is dropped, but for a scene of the user's own
-     * (not a preset or the stage), which stays listed, its planet kept (or none: an empty one).
+     * (not a preset or the stage), which stays listed.
      */
     const setScene = (id: string, change: (p: PlanetChoices) => PlanetChoices | null) =>
       setScenes((s) => {
         const planets = { ...s.planets };
         const changed = change(scene(id));
         if (changed && Object.values(changed).some((v) => v !== undefined)) planets[id] = changed;
-        else if (ownScene(id)) planets[id] = changed?.planet ? { planet: changed.planet } : {};
+        else if (ownScene(id)) planets[id] = {};
         else delete planets[id];
         return { ...s, planets };
       });
@@ -166,33 +144,6 @@ export const DraftDesignStore = signalStore(
         const sky = change(p.sky ?? {});
         return { ...p, sky: sky.materials || sky.tint ? sky : undefined };
       });
-    const setMoons = (id: string, moons: readonly MoonChoices[]) =>
-      setScene(id, (p) => ({ ...p, moons: moons.length ? moons : undefined }));
-    /** A body's settings in a scene changed: the planet's in `style`, a moon's its own. */
-    const updateBody = (
-      id: string,
-      path: BodyPath,
-      style: string,
-      change: (s: BodySettings) => BodySettings | undefined,
-    ) => {
-      if (path.length) {
-        setMoons(
-          id,
-          changeMoon(scene(id).moons ?? [], path, (m) => ({
-            ...m,
-            settings: change(m.settings ?? {}),
-          })),
-        );
-        return;
-      }
-      setScene(id, (p) => {
-        const variants = { ...p.variants };
-        const changed = change(variants[style] ?? {});
-        if (changed) variants[style] = changed;
-        else delete variants[style];
-        return { ...p, variants: Object.keys(variants).length ? variants : undefined };
-      });
-    };
     /** A library body's defaults changed (none left: none kept). */
     const updateLibraryBody = (
       kind: LibraryKind,
@@ -283,37 +234,40 @@ export const DraftDesignStore = signalStore(
         setLibrarySky(() => ({}));
       },
 
-      // The scenes: each listed, named, of a planet.
-      /** A new scene of a planet: its id (`scene-<n>`, the first free). */
+      // The scenes: each listed, named, with its planets.
       /**
-       * A new scene: empty (no planet yet), or a copy of another (`from`, by id) under a name of
-       * its own. Its id (`scene-<n>`, the first free).
+       * A new scene: empty, or a copy of another (`from`: its id, and its planets as they are
+       * shown, a preset's included), named (none: as it starts), saved as it is made. Its id
+       * (`scene-<n>`, the first free).
        */
-      createScene(from?: { readonly id: string; readonly name: string }): string {
+      createScene(
+        from?: { readonly id: string; readonly bodies: readonly SceneBody[] },
+        name?: string,
+      ): string {
         const taken = store.scenes().planets;
         let n = 1;
         while (taken[`scene-${n}`]) n++;
         const id = `scene-${n}`;
-        const copy: PlanetChoices = from
-          ? { ...(structuredClone(taken[from.id]) ?? {}), name: from.name }
-          : {};
+        const sky = from ? taken[from.id]?.sky : undefined;
+        const copy: PlanetChoices = {
+          bodies: from ? structuredClone(from.bodies) : [],
+          sky: sky ? structuredClone(sky) : undefined,
+          name: name?.trim() || undefined,
+        };
         setScenes((s) => ({ ...s, planets: { ...s.planets, [id]: copy } }));
+        // A new scene starts saved: published as it is made (only it; the rest of the draft as it was).
+        store._published.publishScene(id, copy);
         return id;
       },
-      /** A scene named ('' takes its name off: its planet's id is shown). */
+      /** A scene named ('' takes its name off). */
       renameScene(id: string, name: string): void {
         setScene(id, (p) => ({ ...p, name: name.trim() || undefined }));
       },
-      /** A scene's planet changed ('': none): its looks were the old planet's, so they go; its moons and sky stay. */
-      setScenePlanet(id: string, planet: string): void {
-        setScene(id, (p) => ({
-          ...p,
-          planet: planet || undefined,
-          style: undefined,
-          variants: undefined,
-        }));
+      /** A scene's planets as they are now (what kept them before scenes had several goes). */
+      setSceneBodies(id: string, bodies: readonly SceneBody[]): void {
+        setScene(id, (p) => ({ bodies, name: p.name, sky: p.sky }));
       },
-      /** A scene taken out (the random sets', a preset's or the stage's is only reset). */
+      /** A scene taken out (a preset's or the stage's is only reset). */
       deleteScene(id: string): void {
         if (!ownScene(id)) {
           setScene(id, () => null);
@@ -325,81 +279,14 @@ export const DraftDesignStore = signalStore(
           return { ...s, planets };
         });
       },
-
-      // A scene ('' for the random sets'): its planet, moons and sky.
-      setStyle(id: string, path: BodyPath, style: string): void {
-        if (path.length)
-          setMoons(
-            id,
-            changeMoon(scene(id).moons ?? [], path, (m) => ({ ...m, style: style || undefined })),
-          );
-        else setScene(id, (p) => ({ ...p, style }));
-      },
-      resetStyle(id: string, path: BodyPath): void {
-        if (path.length)
-          setMoons(
-            id,
-            changeMoon(scene(id).moons ?? [], path, (m) => ({ ...m, style: undefined })),
-          );
-        else setScene(id, (p) => ({ ...p, style: undefined }));
-      },
-      setBody(id: string, path: BodyPath, style: string, change: Partial<BodySettings>): void {
-        updateBody(id, path, style, (s) => ({ ...s, ...change }));
-      },
-      clearBody(
-        id: string,
-        path: BodyPath,
-        style: string,
-        keys: readonly (keyof BodySettings)[],
-      ): void {
-        updateBody(id, path, style, (s) => without(s, keys));
-      },
-      resetBody(id: string, path: BodyPath, style: string): void {
-        updateBody(id, path, style, () => undefined);
-      },
-      setMaterial(
-        id: string,
-        path: BodyPath,
-        style: string,
-        name: string,
-        change: Partial<MaterialSettings>,
-      ): void {
-        updateBody(id, path, style, (s) => withMaterial(s, name, change));
-      },
-      clearMaterial(
-        id: string,
-        path: BodyPath,
-        style: string,
-        name: string,
-        keys?: readonly (keyof MaterialSettings)[],
-      ): void {
-        updateBody(id, path, style, (s) => withoutMaterial(s, name, keys));
-      },
-      setOrbit(id: string, path: BodyPath, change: Partial<Orbit>): void {
-        setMoons(
-          id,
-          changeMoon(scene(id).moons ?? [], path, (m) => ({
-            ...m,
-            orbit: { ...m.orbit, ...change },
-          })),
-        );
-      },
-      /** A moon, by its planet's id, added about a body: its path. */
-      addMoon(id: string, parent: BodyPath, moon: string): BodyPath {
-        const moons = scene(id).moons ?? [];
-        const count = parent.length ? (moonAt(moons, parent)?.moons?.length ?? 0) : moons.length;
-        setMoons(id, addMoon(moons, parent, { id: moon, orbit: DEFAULT_ORBIT }));
-        return [...parent, count];
-      },
-      removeMoon(id: string, path: BodyPath): void {
-        setMoons(
-          id,
-          changeMoon(scene(id).moons ?? [], path, () => null),
-        );
-      },
-      /** A scene back as the library has it: its planet's style and looks, its moons, its sky (its planet and name kept). */
+      /**
+       * A scene back as the library has it: its planets' styles, looks and moons, its sky (a
+       * scene of the user's own keeps its planets where they are, and its name; a preset, its own).
+       */
       resetScene(id: string): void {
-        setScene(id, (p) => ({ planet: p.planet, name: p.name }));
+        setScene(id, (p) =>
+          ownScene(id) ? { name: p.name, bodies: placesOnly(sceneBodies(p, id)) } : null,
+        );
       },
       setSkyMaterial(id: string, name: string, change: Partial<MaterialSettings>): void {
         setSceneSky(id, (sky) => skyMaterial(sky, name, change));

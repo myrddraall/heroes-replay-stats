@@ -17,6 +17,7 @@ import type {
   MoonChoices,
   Orbit,
   SkyChoices,
+  Vec3,
 } from '../../../scenes/play-background/background-scene';
 import { keyLightFrom, TOWARDS_EYE } from '../../../scenes/play-background/scene-directions';
 import {
@@ -67,6 +68,8 @@ export interface BodyInfo {
   readonly styleFile?: PlanetFile;
   /** Its orbit, where it is a moon in a scene. */
   readonly orbit?: Orbit;
+  /** Where it is and how big, where it is one of a scene's planets. */
+  readonly place?: { readonly position: Vec3; readonly radius: number };
   readonly moons: readonly MoonChoices[];
 }
 

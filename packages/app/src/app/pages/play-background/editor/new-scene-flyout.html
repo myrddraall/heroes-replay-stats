@@ -1,0 +1,56 @@
+<div class="flyout" cdkTrapFocus [cdkTrapFocusAutoCapture]="true">
+  <h3 class="title">New scene</h3>
+  <label class="name">
+    <span class="name__label">Name</span>
+    <input
+      type="text"
+      class="name__field"
+      placeholder="Optional"
+      cdkFocusInitial
+      [value]="name()"
+      (input)="named($event)"
+      (keydown.enter)="create.emit({ name: name() })"
+    />
+  </label>
+  <ul class="choices">
+    <li>
+      <button type="button" class="choice" (click)="create.emit({ name: name() })">
+        <mat-icon class="material-symbols-outlined choice__icon" aria-hidden="true"
+          >add_box</mat-icon
+        >
+        <span class="choice__text">
+          <span class="choice__label">Empty</span>
+          <span class="choice__caption">No planets, the library's sky</span>
+        </span>
+      </button>
+    </li>
+  </ul>
+  <h4 class="section">From a scene</h4>
+  <input
+    type="search"
+    class="filter"
+    placeholder="Filter"
+    aria-label="Filter the scenes"
+    [value]="query()"
+    (input)="filtered($event)"
+  />
+  <ul class="choices choices--scroll">
+    @for (t of shown(); track t.id) {
+      <li>
+        <button type="button" class="choice" (click)="create.emit({ from: t.id, name: name() })">
+          <mat-icon class="material-symbols-outlined choice__icon" aria-hidden="true"
+            >landscape</mat-icon
+          >
+          <span class="choice__text">
+            <span class="choice__label">{{ t.label }}</span>
+            @if (t.shows !== t.label) {
+              <span class="choice__caption">{{ t.shows }}</span>
+            }
+          </span>
+        </button>
+      </li>
+    } @empty {
+      <li class="none">No scene matches</li>
+    }
+  </ul>
+</div>

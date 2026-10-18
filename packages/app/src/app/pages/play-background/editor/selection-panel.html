@@ -8,14 +8,17 @@
         [custom]="s.tintChoice() === 'custom'"
         [sets]="s.sets()"
         [own]="s.own()"
+        [planets]="s.hasPlanets()"
         [name]="s.sceneName()"
-        [planet]="s.planetId()"
+        [planet]="s.sceneLabel()"
         (nameChange)="s.rename($event)"
         (deleteRequested)="s.deleteScene()"
         (tintChange)="draft.setTint($event)"
         (presetChange)="draft.chooseTint($event)"
         (anotherSet)="s.anotherSet()"
-      />
+      >
+        <hrs-add-planet planetAdd (picked)="s.addPlanet($event)" />
+      </hrs-scene-properties>
     }
   }
   @case ('sky') {
@@ -44,7 +47,7 @@
         [styleOptions]="editor.styleOptions()"
         [canLight]="b.canLight"
         [orbit]="b.info.orbit ?? null"
-        [planets]="editor.planetIds()"
+        [place]="b.info.place ?? null"
         [changed]="b.changed"
         [focused]="b.focused"
         [set]="b.info.settings"
@@ -57,11 +60,13 @@
         (settingsChange)="editor.setBody($event)"
         (clear)="editor.clearBody($event)"
         (orbitChange)="editor.setOrbit($event)"
-        (moonAdd)="editor.addMoon($event)"
+        (placeChange)="scene?.setPlace($event)"
         (removeRequested)="editor.removeMoon()"
         (focusToggle)="editor.toggleFocus()"
         (resetRequested)="editor.resetBody()"
-      />
+      >
+        <hrs-add-planet moonAdd label="Add moon" (picked)="editor.addMoon($event)" />
+      </hrs-body-properties>
     }
   }
   @case ('material') {

@@ -753,7 +753,8 @@ export function bodyExtent(radius: number, reachOf: number, eyeDistance: number)
 }
 
 /** How far a body's parts reach from its centre, in units of its radius. */
-function reach(parts: readonly BodyPart[]): number {
+/** How far a body's parts reach from its centre, in its radii (its shells, rings, offset moons): at least 1. */
+export function reach(parts: readonly BodyPart[]): number {
   return Math.max(
     1,
     ...parts.map((p) =>
@@ -969,6 +970,34 @@ export class SceneRenderer {
    * its body, as shares of the canvas's width and height from its top left; none for one behind
    * the camera.
    */
+  /**
+   * The placed planet under a point of the view (`x`, `y`: shares of its width and height; the
+   * view `aspect` wide), by its index in what was put up (`setPlanets`); the nearest where they
+   * overlap; null where there is none. Its body counts, not its halo.
+   */
+  pick(x: number, y: number, aspect: number): number | null {
+    const viewProjection = multiply(this.projection, this.view);
+    const m = viewProjection;
+    const project = (p: Vec3): [number, number, number] | null => {
+      const w = m[3]! * p[0] + m[7]! * p[1] + m[11]! * p[2] + m[15]!;
+      if (w <= 0) return null;
+      const px = (m[0]! * p[0] + m[4]! * p[1] + m[8]! * p[2] + m[12]!) / w;
+      const py = (m[1]! * p[0] + m[5]! * p[1] + m[9]! * p[2] + m[13]!) / w;
+      return [(px + 1) / 2, (1 - py) / 2, w];
+    };
+    let best: { index: number; depth: number } | null = null;
+    this.placed.forEach(({ placement }, index) => {
+      const { position, radius } = placement;
+      const centre = project(position);
+      const top = project([position[0], position[1], position[2] + radius]);
+      if (!centre || !top) return;
+      const r = Math.abs(centre[1] - top[1]);
+      const hit = Math.hypot((x - centre[0]) * aspect, y - centre[1]) <= r;
+      if (hit && (!best || centre[2] < best.depth)) best = { index, depth: centre[2] };
+    });
+    return (best as { index: number } | null)?.index ?? null;
+  }
+
   anchors(): { id: string; x: number; y: number; top: number }[] {
     const viewProjection = multiply(this.projection, this.view);
     const project = (p: Vec3): [number, number] | null => {

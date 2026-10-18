@@ -14,6 +14,13 @@
     </div>
   </hrs-property-section>
 }
+@if (planets()) {
+  <hrs-property-section title="Planets">
+    <div class="buttons">
+      <ng-content select="[planetAdd]" />
+    </div>
+  </hrs-property-section>
+}
 <hrs-property-section
   title="Colour"
   [changed]="tinted()"

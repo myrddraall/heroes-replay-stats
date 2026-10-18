@@ -5,6 +5,7 @@ import {
   ElementRef,
   inject,
   input,
+  output,
   signal,
   untracked,
   viewChild,
@@ -71,6 +72,10 @@ function sameBodies(a: readonly PlanetPlacement[], b: readonly PlanetPlacement[]
     a.length === b.length && a.every((p, i) => p.planet === b[i]!.planet && p.style === b[i]!.style)
   );
 }
+/** Whether two sets are the same planets in the same order, whatever styles they wear. */
+function samePlanets(a: readonly PlanetPlacement[], b: readonly PlanetPlacement[]): boolean {
+  return a.length === b.length && a.every((p, i) => p.planet.id === b[i]!.planet.id);
+}
 const easeOut = (u: number) => 1 - (1 - u) * (1 - u);
 
 /**
@@ -90,6 +95,12 @@ const easeOut = (u: number) => 1 - (1 - u) * (1 - u);
   selector: 'hrs-scene-canvas',
   templateUrl: './scene-canvas.html',
   styleUrl: './scene-canvas.scss',
+  host: {
+    '(click)': 'clicked($event)',
+    '(pointermove)': 'hovered($event)',
+    '[class.pickable]': 'pickable()',
+    '[class.over-planet]': 'overPlanet()',
+  },
 })
 export class SceneCanvas {
   readonly scene = input.required<LoadedPlayScene>();
@@ -99,6 +110,19 @@ export class SceneCanvas {
   readonly sky = input<SkySettings>({});
   /** An editing backdrop in place of the sky (none: the sky). */
   readonly backdrop = input<Backdrop | null>(null);
+  /**
+   * Which scene the planets are of: new planets under the same key are faded to in place (a
+   * scene edited), under another flown to (another scene, another set). None: always flown to.
+   */
+  readonly sceneKey = input<string | null>(null);
+  /** Whether its planets can be picked by a click (an editor's): `planetPick` gives the one clicked. */
+  readonly pickable = input(false);
+  /** A planet clicked, by its index in `placements`. */
+  readonly planetPick = output<number>();
+  /** Whether the pointer is over a planet that can be picked. */
+  protected readonly overPlanet = signal(false);
+  /** The planet under a point of the canvas, while the scene runs. */
+  private pickAt?: (x: number, y: number) => number | null;
   /** Whether it moves. */
   readonly animate = input(DEFAULT_DRAWING.animate);
   /** Frames a second at most while it just moves (the scene's motion keeps its speed whatever it is). */
@@ -165,6 +189,19 @@ export class SceneCanvas {
     });
   }
 
+  /** A click: the planet under it picked, where planets can be. */
+  protected clicked(event: MouseEvent): void {
+    if (!this.pickable()) return;
+    const index = this.pickAt?.(event.offsetX, event.offsetY) ?? null;
+    if (index !== null) this.planetPick.emit(index);
+  }
+
+  /** The pointer moved: whether it is over a planet to pick (shown by the cursor). */
+  protected hovered(event: PointerEvent): void {
+    if (!this.pickable()) return;
+    this.overPlanet.set((this.pickAt?.(event.offsetX, event.offsetY) ?? null) !== null);
+  }
+
   private run(
     loaded: LoadedPlayScene,
     canvas: HTMLCanvasElement,
@@ -187,6 +224,8 @@ export class SceneCanvas {
     let onScreen = true;
     let crossFade: Animation | undefined;
     let shown: readonly PlanetPlacement[] = [];
+    /** The scene the planets shown are of. */
+    let shownKey: string | null = null;
     let fly: Fly | undefined;
     let flights = 0;
 
@@ -307,6 +346,12 @@ export class SceneCanvas {
     seen.observe(this.host);
     document.addEventListener('visibilitychange', play);
     reducedMotion.addEventListener('change', play);
+    this.pickAt = (x, y) => {
+      if (fly) return null; // mid-flight the planets up aren't the set's
+      const w = Math.max(1, this.host.clientWidth);
+      const h = Math.max(1, this.host.clientHeight);
+      return renderer.pick(x / w, y / h, w / h);
+    };
     this.running = {
       // A new tint fades in the running animation's frames; where nothing animates, the picture
       // cross-fades to it.
@@ -346,6 +391,9 @@ export class SceneCanvas {
         if (placements === shown) return;
         const before = shown;
         shown = placements;
+        const key = untracked(() => this.sceneKey());
+        const sameScene = key !== null && key === shownKey;
+        shownKey = key;
         if (fly && sameBodies(fly.to, placements)) {
           // The planets being flown to, changed in how they show: the fly goes on, to them as they are now.
           fly = { ...fly, to: placements };
@@ -354,6 +402,10 @@ export class SceneCanvas {
         } else if (before.length && sameBodies(before, placements) && !fly) {
           renderer.setPlanets(placements);
           if (!frame) draw();
+        } else if (before.length && (sameScene || samePlanets(before, placements)) && !fly) {
+          // The same scene edited (a planet or moon added or taken out, a style changed): faded to
+          // where it is, not flown to.
+          crossFadeTo(() => renderer.setPlanets(placements));
         } else if (!before.length || reducedMotion.matches) {
           renderer.setPlanets(placements);
           if (!frame) draw();
@@ -378,6 +430,7 @@ export class SceneCanvas {
 
     onCleanup(() => {
       this.running = undefined;
+      this.pickAt = undefined;
       cancelAnimationFrame(frame);
       crossFade?.cancel();
       sized.disconnect();

@@ -96,6 +96,11 @@ export class EditorLayout {
     });
   }
 
+  /** A planet clicked in the view: selected in the editor, its tree shown (from the lists too). */
+  protected pick(index: number): void {
+    if (this.editor.selectPlaced(index)) this.ui.setBrowsing(false);
+  }
+
   /** The browser left full screen (Esc, or its own control): the screenshot mode ends with it. */
   protected fullscreenChanged(): void {
     if (!this.document.fullscreenElement) this.ui.setScreenshot(false);
