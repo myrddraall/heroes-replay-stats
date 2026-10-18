@@ -17,50 +17,54 @@
       (valueChange)="settingsChange.emit({ strength: $event })"
     />
   }
-  <hrs-property-select
-    label="Blend"
-    [value]="v.blend"
-    [options]="blends"
-    [changed]="isSet('blend')"
-    (resetRequested)="clear.emit(['blend'])"
-    (valueChange)="blend($event)"
-  />
-</hrs-property-section>
-<hrs-tint-section
-  [tint]="v.tint"
-  [base]="baseTint()"
-  [set]="set()?.tint"
-  (tintChange)="settingsChange.emit({ tint: $event })"
-  (clear)="clear.emit(['tint'])"
-/>
-<hrs-property-section
-  title="Light"
-  [changed]="anySet(['glow', 'spread'])"
-  (resetRequested)="clear.emit(['glow', 'spread'])"
->
-  <hrs-property-slider
-    label="Glow"
-    [value]="v.glow"
-    [min]="0"
-    [max]="4"
-    [step]="0.1"
-    [changed]="isSet('glow')"
-    (resetRequested)="clear.emit(['glow'])"
-    (valueChange)="settingsChange.emit({ glow: $event })"
-  />
-  @if (c.spread) {
-    <hrs-property-slider
-      label="Spread"
-      [value]="v.spread"
-      [min]="0"
-      [max]="1"
-      [step]="0.05"
-      [changed]="isSet('spread')"
-      (resetRequested)="clear.emit(['spread'])"
-      (valueChange)="settingsChange.emit({ spread: $event })"
+  @if (!c.particles) {
+    <hrs-property-select
+      label="Blend"
+      [value]="v.blend"
+      [options]="blends"
+      [changed]="isSet('blend')"
+      (resetRequested)="clear.emit(['blend'])"
+      (valueChange)="blend($event)"
     />
   }
 </hrs-property-section>
+@if (!c.particles) {
+  <hrs-tint-section
+    [tint]="v.tint"
+    [base]="baseTint()"
+    [set]="set()?.tint"
+    (tintChange)="settingsChange.emit({ tint: $event })"
+    (clear)="clear.emit(['tint'])"
+  />
+  <hrs-property-section
+    title="Light"
+    [changed]="anySet(['glow', 'spread'])"
+    (resetRequested)="clear.emit(['glow', 'spread'])"
+  >
+    <hrs-property-slider
+      label="Glow"
+      [value]="v.glow"
+      [min]="0"
+      [max]="4"
+      [step]="0.1"
+      [changed]="isSet('glow')"
+      (resetRequested)="clear.emit(['glow'])"
+      (valueChange)="settingsChange.emit({ glow: $event })"
+    />
+    @if (c.spread) {
+      <hrs-property-slider
+        label="Spread"
+        [value]="v.spread"
+        [min]="0"
+        [max]="1"
+        [step]="0.05"
+        [changed]="isSet('spread')"
+        (resetRequested)="clear.emit(['spread'])"
+        (valueChange)="settingsChange.emit({ spread: $event })"
+      />
+    }
+  </hrs-property-section>
+}
 @if (c.scale) {
   <hrs-property-section
     title="Pattern"
@@ -110,6 +114,24 @@
         (valueChange)="settingsChange.emit({ cut: $event })"
       />
     }
+  </hrs-property-section>
+}
+@if (textures().length) {
+  <hrs-property-section title="Textures">
+    <ul class="textures">
+      @for (t of textures(); track t.layer) {
+        <li class="texture">
+          <span class="texture__layer">{{ t.layer }}</span>
+          <a class="texture__path" [href]="t.path" target="_blank" rel="noopener">{{ t.path }}</a>
+          @if (t.source) {
+            <span class="texture__source" title="In the game data">
+              {{ t.baked ? 'Baked from ' : '' }}{{ t.source }}
+            </span>
+          }
+          <span class="texture__size">{{ t.width }} × {{ t.height }}</span>
+        </li>
+      }
+    </ul>
   </hrs-property-section>
 }
 <div class="buttons">

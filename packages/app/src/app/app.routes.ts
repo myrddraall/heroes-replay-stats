@@ -1,4 +1,4 @@
-import { Routes } from '@angular/router';
+import type { Routes, UrlMatchResult, UrlSegment } from '@angular/router';
 import { Shell } from './shell/shell';
 
 /** The app's pages, in the shell (its toolbar and navigation). */
@@ -43,10 +43,23 @@ const pages: Routes = [
   { path: '**', redirectTo: 'replays' },
 ];
 
+/**
+ * The Background page: `/edit-background` (the library), or `/edit-background/<kind>/<id>` (what
+ * is open in its editor: `kind` and `id` for the page). One route for both, so moving between
+ * them keeps the page (its draft, its panels) as it is.
+ */
+export function editBackgroundMatcher(segments: UrlSegment[]): UrlMatchResult | null {
+  if (segments[0]?.path !== 'edit-background') return null;
+  if (segments.length === 1) return { consumed: segments };
+  if (segments.length === 3)
+    return { consumed: segments, posParams: { kind: segments[1]!, id: segments[2]! } };
+  return null;
+}
+
 export const routes: Routes = [
   // A page of its own, filling the window without the shell.
   {
-    path: 'play-background',
+    matcher: editBackgroundMatcher,
     title: 'Play screen background · Heroes Replay Stats',
     loadComponent: () =>
       import('./pages/play-background/play-background-page').then((m) => m.PlayBackgroundPage),

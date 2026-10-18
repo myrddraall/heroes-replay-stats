@@ -10,27 +10,9 @@
   display: flex;
   align-items: center;
   gap: 6px;
-}
 
-// The layer edited: two buttons as one control, the one on marked.
-.modes {
-  display: flex;
-  flex: 1;
-}
-
-.mode {
-  @include property-row.button;
-  flex: 1;
-  justify-content: center;
-
-  & + & {
-    border-inline-start: none;
-  }
-
-  &--on {
-    border-color: var(--mat-sys-primary);
-    background: rgb(var(--hrs-glass-edge) / 0.25);
-    color: var(--mat-sys-primary);
+  &--end {
+    justify-content: flex-end;
   }
 }
 

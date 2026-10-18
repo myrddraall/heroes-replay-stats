@@ -129,6 +129,10 @@ export interface SceneTexture {
   readonly file: string;
   readonly width: number;
   readonly height: number;
+  /** Where it is in the game data (a baked one: the texture it was baked from). */
+  readonly source?: string;
+  /** Whether it was baked from its source onto its planet's own mapping by the exporter. */
+  readonly baked?: boolean;
 }
 
 /** The light's HDR tone mapping: its exposure, and the brightness that shows as white. */

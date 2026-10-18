@@ -283,6 +283,8 @@ export interface PlanetChoices {
    * own (prebuilt or added scenes); scenes kept by a planet's id have that planet.
    */
   readonly planet?: string;
+  /** What the scene is called, where it is named (else its planet's id). */
+  readonly name?: string;
   readonly sky?: SkyChoices;
   readonly style?: string;
   /** Its settings in each style, by the style's id ('' for none). */

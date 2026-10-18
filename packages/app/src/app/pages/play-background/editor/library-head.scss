@@ -1,0 +1,24 @@
+@use '../properties/property-row';
+
+:host {
+  display: grid;
+  gap: 6px;
+  padding-bottom: 8px;
+}
+
+.search {
+  @include property-row.field;
+  width: 100%;
+}
+
+.button {
+  @include property-row.button;
+  gap: 4px;
+  justify-self: start;
+
+  mat-icon {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+  }
+}

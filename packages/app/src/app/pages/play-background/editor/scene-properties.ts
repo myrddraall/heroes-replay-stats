@@ -2,17 +2,19 @@ import { Component, input, output } from '@angular/core';
 import { BLEND_GROUPS, BLENDS, type TintBlend } from '../../../scenes/play-background/scene-tints';
 import { PropertyColour } from '../properties/property-colour';
 import { PropertySection } from '../properties/property-section';
+import { PropertyText } from '../properties/property-text';
 import { grouped, type PropertyOption, PropertySelect } from '../properties/property-select';
 import { type PartTint, PRESETS } from '../../../scenes/play-background/tint-settings';
 
 /**
- * The scene's own properties (presentational): the tint over the whole picture, chosen from one
- * list (none, a preset, or a custom one whose colour and blend are then set here), and, while the
- * sets are up, another set.
+ * The scene's own properties (presentational): its name and a way to delete it (a scene of its
+ * own: not the random sets'), the tint over the whole picture, chosen from one list (none, a
+ * preset, or a custom one whose colour and blend are then set here), and, while the sets are up,
+ * another set.
  */
 @Component({
   selector: 'hrs-scene-properties',
-  imports: [PropertySection, PropertySelect, PropertyColour],
+  imports: [PropertySection, PropertySelect, PropertyColour, PropertyText],
   templateUrl: './scene-properties.html',
   styleUrl: './properties-panel.scss',
 })
@@ -25,6 +27,13 @@ export class SceneProperties {
   readonly custom = input(false);
   /** Whether the random sets are up (another can be drawn). */
   readonly sets = input(false);
+  /** Whether it is a scene of its own (named, deletable), not the random sets'. */
+  readonly own = input(false);
+  /** Its name ('': none, its planet's id shown). */
+  readonly name = input('');
+  readonly planet = input('');
+  readonly nameChange = output<string>();
+  readonly deleteRequested = output<void>();
   readonly tintChange = output<Partial<PartTint>>();
   readonly presetChange = output<string>();
   readonly anotherSet = output<void>();

@@ -39,6 +39,8 @@ export interface MaterialControls {
   readonly cut: boolean;
   /** A drawn pattern's lines have a width and a softness. */
   readonly lines: boolean;
+  /** Drawn by a particle system: only whether it is drawn and its strength apply. */
+  readonly particles: boolean;
 }
 
 /** The settings where nothing says otherwise (the spread's is the material's own, see `ownSpread`). */
@@ -100,9 +102,16 @@ export function materialValues(
 }
 
 /** Which of a material's controls do anything: by its layers, and whether a pattern is drawn for its emissive. */
-export function materialControls(material: SceneMaterial, pattern: boolean): MaterialControls {
+export function materialControls(
+  material: SceneMaterial,
+  pattern: boolean,
+  particles = false,
+): MaterialControls {
+  if (particles)
+    return { strength: true, spread: false, scale: false, cut: false, lines: false, particles };
   const layers = [material.diffuse, material.emissive, ...material.alphaMasks];
   return {
+    particles,
     strength: material.blend !== 'opaque',
     spread: layers.some((l) => l?.fresnel !== undefined),
     scale: material.emissive !== null || pattern,

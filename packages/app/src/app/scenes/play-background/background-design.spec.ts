@@ -44,6 +44,26 @@ describe('withLibrary', () => {
   });
 });
 
+describe('the material cascade', () => {
+  it("puts a material's base under a planet's own setting of it, and the scene's over both", () => {
+    const library: LibraryState = {
+      materials: { rock: { strength: 0.2, glow: 1, scale: 2 } },
+      planets: { korhal: { materials: { rock: { glow: 3 } } } },
+      styles: {},
+      sky: { materials: { rock: { scale: 4 } } },
+    };
+    expect(
+      withLibrary({ ...korhal, materials: { rock: { strength: 0.9 } } }, library).materials,
+    ).toEqual({ rock: { strength: 0.9, glow: 3, scale: 2 } });
+    expect(withLibrary({ ...korhal, id: 'azeroth' }, library).materials).toEqual({
+      rock: { strength: 0.2, glow: 1, scale: 2 },
+    });
+    expect(skyWithLibrary(undefined, library).materials).toEqual({
+      rock: { strength: 0.2, glow: 1, scale: 4 },
+    });
+  });
+});
+
 describe('skyWithLibrary', () => {
   it("puts the library's sky under a scene's", () => {
     const library: LibraryState = {

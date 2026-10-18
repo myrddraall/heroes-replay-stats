@@ -3,16 +3,20 @@ import type { BodySettings, Orbit } from '../../../scenes/play-background/backgr
 import type { MaterialSettings, MaterialTint } from '../../../scenes/play-background/scene-planets';
 import type { PropertyOption } from '../properties/property-select';
 import type { BodyView, MaterialEntry, TargetKind } from './editor-model';
+import type { OpenTarget } from './open-target';
 import type { TreeRow } from './scene-tree';
 
 /**
  * An editor of the background's design, as the panels under it use one: provided by the scene
- * editor (a scene's overrides, over the library) or the library editor (the library's defaults,
- * over the game data) for everything in its subtree, so the same tree and properties edit either
- * layer. What it changes is what is selected in its tree. Things only a scene has (moons, the
- * random sets) do nothing in the library.
+ * editor (a scene's overrides, over the library) or the asset editor (one of the library's
+ * assets: its defaults, over the game data) for everything in its subtree, so the same tree and
+ * properties edit either. What it changes is what is selected in its tree. Things only a scene
+ * has (moons, the random sets) do nothing for an asset.
  */
 export abstract class Editor {
+  /** What it has open; what the left panel calls it. */
+  abstract readonly opened: Signal<OpenTarget>;
+  abstract readonly heading: Signal<string>;
   /** What the tree shows: as many rows as are unfolded. */
   abstract readonly rows: Signal<TreeRow[]>;
   abstract readonly selected: Signal<string>;
@@ -48,7 +52,7 @@ export abstract class Editor {
   abstract resetSky(): void;
 
   /** Everything in the layer edited back as what is under it (a scene; the whole library). */
-  abstract readonly resetAllLabel: string;
+  abstract readonly resetAllLabel: Signal<string>;
   abstract resetAll(): void;
 
   // A scene's (nothing in the library).

@@ -1,5 +1,6 @@
 import { Component, computed, inject, input, linkedSignal, resource } from '@angular/core';
 import { BACKGROUND_DESIGN, BACKGROUND_SCENE } from './background-design.tokens';
+import { BUILT_IN_PLANETS } from './built-in-planets';
 import { type LibraryState, skyWithLibrary, withLibrary } from './background-design';
 import { BackgroundStore } from './background.store';
 import { playSet, randomSet, seeded, type SetPlanet } from './planet-sets';
@@ -40,6 +41,10 @@ export class PlayBackground {
   protected readonly store = inject(BackgroundStore);
   private readonly design = inject(BACKGROUND_DESIGN);
   private readonly source = inject(BACKGROUND_SCENE, { optional: true });
+  /** Planets the app makes (an editor's stand-in), where a container above provides them. */
+  private readonly builtIns = inject(BUILT_IN_PLANETS, { optional: true });
+  /** An editing backdrop in place of the sky, where the scene shown has one. */
+  protected readonly backdrop = computed(() => this.source?.backdrop?.() ?? null);
   protected readonly drawing = this.store.drawing;
   private readonly parse = browserColourParser();
   /** The tint over the whole picture: the scene's, where it has one; else the site's. */
@@ -60,7 +65,9 @@ export class PlayBackground {
     params: () => this.src(),
     loader: ({ params, abortSignal }) => loadPlanetIndex(params, abortSignal),
   });
-  private readonly planets = computed(() => new PlanetLoader(this.src()));
+  private readonly planets = computed(
+    () => new PlanetLoader(this.src(), this.builtIns ?? undefined),
+  );
   /** The set up: the scene's, where there is one; else the game's own for 0, else one drawn from the number. */
   private readonly set = computed((): readonly SetPlanet[] | null => {
     const scene = this.source?.planets();

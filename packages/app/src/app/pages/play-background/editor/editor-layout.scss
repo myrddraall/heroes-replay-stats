@@ -1,4 +1,5 @@
 @use '../../../../theme/glass-mixins' as glass;
+@use '../properties/property-row';
 
 :host {
   display: block;
@@ -53,7 +54,8 @@
   position: absolute;
   top: 8px;
   left: 8px;
-  background: rgb(var(--hrs-glass-tint) / var(--hrs-glass-alpha-frame));
+  // Firm enough to read over a bright editing backdrop (a white grid) too.
+  background: rgb(var(--hrs-glass-tint) / 0.85);
   backdrop-filter: var(--hrs-glass-backdrop-frame);
 }
 
@@ -63,7 +65,8 @@
   top: 8px;
   inset-inline-end: 8px;
   z-index: 10001;
-  background: rgb(var(--hrs-glass-tint) / var(--hrs-glass-alpha-frame));
+  // Firm enough to read over a bright editing backdrop (a white grid) too.
+  background: rgb(var(--hrs-glass-tint) / 0.85);
   backdrop-filter: var(--hrs-glass-backdrop-frame);
 
   &--start {
@@ -95,5 +98,23 @@
   100% {
     opacity: 0;
     visibility: hidden;
+  }
+}
+
+// Back from what is open to the library's list, at the top of the left panel, a rule under it.
+.layout__back {
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgb(var(--hrs-glass-edge) / 0.35);
+}
+
+.layout__library {
+  @include property-row.button;
+  gap: 4px;
+
+  mat-icon {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
   }
 }

@@ -1,9 +1,11 @@
-<hrs-property-select
-  label="Planet"
-  [value]="store.review()"
-  [options]="store.reviewOptions()"
-  (valueChange)="planetChange.emit($event)"
-/>
+@if (store.own()) {
+  <hrs-property-select
+    label="Planet"
+    [value]="store.planetId()"
+    [options]="store.planetOptions()"
+    (valueChange)="store.setPlanet($event)"
+  />
+}
 @if (store.focusedName(); as name) {
   <div class="focus">
     <span>Centred on {{ name }}</span>

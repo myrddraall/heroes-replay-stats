@@ -59,7 +59,7 @@ where `DEV_LOCAL` isn't set, read heroes-maps as before; nothing changes at chec
 
 ## The Play screen background
 
-`/play-background` is the game's Play screen background on a page of its own, filling the
+`/edit-background` is the game's Play screen background on a page of its own, filling the
 window: its sky, the energy drifting in towards the horizon, the twinkling stars and the planets, drawn with
 WebGL from the game's own camera, meshes, materials and particles (`hrs-play-background`,
 `packages/app/src/app/scenes/play-background`, fills whatever element holds it).
@@ -103,29 +103,52 @@ CSS's blend modes and the image editors' others (`scene-tints.ts`); heroes-captu
 `tuning` in a planet's file is the default where the data alone isn't right (Korhal's haze
 material at 0.42, its back light's crescent shaded; the nexus style's shield material). The
 design has three layers, each setting only what it changes: the game data with its tuning, the
-library (each planet's, style's and the sky's defaults, wherever they appear, the site's random
-sets too) and the scenes (each a planet with its look, moons and sky, the random sets' under
-`''`, and the colour over the whole picture) (`background-design.ts`). What the site shows is the
+library (each asset's defaults, wherever it appears, the site's random sets too) and the scenes
+(`background-design.ts`). In the library a material has base settings of its own, wherever it is
+used; a planet, style or the sky using it can set it otherwise for itself, and a scene again.
+A scene is a planet with its look, moons and sky, an id and a name (`scene-<n>`). Two are
+presets, their sky and colour set as any scene's: the random sets (`''`) and the game's own Play
+screen (`play-screen`, its three planets where the game puts them). And the colour over the whole picture is the scenes'. What the site shows is the
 published design, a global store kept in `localStorage` (`PublishedDesignStore`, provided as the
 design in effect by the `BACKGROUND_DESIGN` token's root default). The Background page is an
 editor of a draft of it: the page provides `DraftDesignStore` (kept between visits) as the design
 for everything under it, so its background shows the draft while the rest of the site shows what
 is published; Save publishes the draft, Discard takes it back, and the bar counts what is not
-saved. On the left the editor's mode (Scene or Library), a gear menu (names, screenshot mode,
-reset all) and the tree; on the right the properties of what is selected
-(`pages/play-background/editor/`, built of the compact rows in `properties/`). Both modes are
-the same layout over the abstract `Editor` token, provided by `SceneEditorStore` or
-`LibraryEditorStore`, each of which also provides the `BACKGROUND_SCENE` the background shows.
-The Scene mode edits a scene, the planet shown in the URL (`/play-background?planet=korhal`;
-none: the random sets): the sky and its materials, the planet, its materials and its moons, moons
-of moons. A moon is any planet on an orbit about its parent: radius, tilt, turn, a progress round
-it and its size (`background-scene.ts`); one hidden behind a body is shown round its orbit while
-selected, and the planet is drawn smaller where the scene would not fit the view. The Library mode
-edits each asset's defaults, shown on a preview stage (a scene of its own, `@preview`, there only
-to see the asset in). Every property and section shows a reset where it is set. The screenshot
-mode shows the background alone, full screen, until Esc. The stores keep what they keep in
-`localStorage` through the `withLocalStorage` store feature (`data/store-features/`, beside
-`withFolding`; `withPlanetFiles` loads planets' files as a store needs them). A part may carry a
+saved (shown while something is open; the library's list marks each thing not saved with a dot). The left panel starts on the library (`AssetCatalogStore`): the kind of thing listed as
+its title, a choice of the kind (scenes, planets, styles, materials, particle systems, skies),
+a search by name or where a thing is used, the bar, then the things of that kind as one flat
+list (a material with what uses it; for the scenes, a new one made of a planet). A click (or the up and down
+arrows) selects one: it goes in
+the URL (`/edit-background/planet/korhal`, `/edit-background/material/<name>`,
+`/edit-background/scene/<id>`; nothing: the random sets' scene), the background shows it and the right panel tells what it is (what it is
+made of or used by, what of it is set, its textures), with no controls. A double-click (or
+Enter) opens it: the left panel shows its tree (the arrows move through it too), with a way back
+to the lists, and the right panel
+the properties of what is selected in it (`pages/play-background/editor/`, built of the
+compact rows in `properties/`). A material's properties show the textures it reads: where the
+site has each, and where the game data has it (the export says; a baked one, the texture it was
+baked from). A scene opens in `SceneEditorStore`, an asset in `AssetEditorStore`, each provided as
+the abstract `Editor` token the layout, tree and panels use and as the `BACKGROUND_SCENE` the
+background shows. A scene's tree is its sky and its materials, the planet, its materials and its
+moons, moons of moons; its own properties are its name, its deletion and the colour. A moon is
+any planet on an orbit about its parent: radius, tilt, turn, a progress round it and its size
+(`background-scene.ts`); one hidden behind a body is shown round its orbit while selected, and
+the planet is drawn smaller where the scene would not fit the view. An asset is shown on a
+preview stage (a scene of its own, `@preview`, there only to see the asset in): a planet itself, a
+style worn by the planet last opened, a material on the stand-in planet (on what uses it, where
+asked), the sky alone. The stage has two editing aids (`EditingAidsStore`), kept in this browser
+only and never in the design: the backdrop (a sky, chosen there, with the stage's own tint and
+materials for it under it in the tree; a plain colour; or, by default, a transparency grid of
+white and light grey; for a colour or the grid the renderer leaves the sky out and lays the
+backdrop under what the planets cover, after tone mapping, so it shows as chosen and doesn't
+bloom), and the stand-in planet, a plain lit sphere of a colour or the grid that the app makes
+itself (`BUILT_IN_PLANETS`, ids starting `@`), with the material drawn over it on the parts of
+its own planet's file that draw it. A particle system's material
+takes only whether it is drawn and its strength (the particles' own settings aren't editable
+yet). Every property and section shows a reset where it is set. The screenshot mode shows the
+background alone, full screen, until Esc. The stores keep what they keep in `localStorage`
+through the `withLocalStorage` store feature (`data/store-features/`, beside `withFolding`;
+`withPlanetFiles` loads planets' files as a store needs them). A part may carry a
 `pattern` the renderer draws in place of its emissive texture (the nexus shield's hexes: analytic lines
 of a size, width and softness, crisp at any size). Each planet loads the first time a set has
 it (`PlanetLoader`); the layout is `planet-sets.ts` (a set from a number, the same number

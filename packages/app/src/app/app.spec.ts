@@ -1,7 +1,7 @@
-import { provideRouter } from '@angular/router';
+import { provideRouter, UrlSegment } from '@angular/router';
 import { TestBed } from '@angular/core/testing';
 import { describe, expect, it, beforeEach } from 'vitest';
-import { routes } from './app.routes';
+import { editBackgroundMatcher, routes } from './app.routes';
 import { REPLAY_DB, REPLAY_DB_FACTORY } from './data/import/provide-replay-db';
 import { PLATFORM, type Platform } from './platform/platform';
 import { ReplayImportJobStore } from './data/import/replay-import-job.store';
@@ -88,7 +88,19 @@ describe('App shell', () => {
   it('puts the app pages in the shell and the Play screen background on a page of its own', () => {
     const shell = routes.find((r) => r.component === Shell);
     expect(shell?.children?.map((r) => r.path)).toContain('replays');
-    expect(routes.map((r) => r.path)).toContain('play-background');
-    expect(shell?.children?.map((r) => r.path)).not.toContain('play-background');
+    expect(routes.some((r) => r.matcher === editBackgroundMatcher)).toBe(true);
+    expect(shell?.children?.map((r) => r.path)).not.toContain('edit-background');
+  });
+
+  it('takes the Background page with what it has open in its path', () => {
+    const at = (path: string) =>
+      editBackgroundMatcher(path.split('/').map((p) => new UrlSegment(p, {})));
+    expect(at('edit-background')?.posParams).toBeUndefined();
+    expect(at('edit-background')?.consumed).toHaveLength(1);
+    const open = at('edit-background/material/edgeLight222-korhal')?.posParams;
+    expect([open?.['kind']?.path, open?.['id']?.path]).toEqual(['material', 'edgeLight222-korhal']);
+    expect(at('edit-background/planet')).toBeNull();
+    expect(at('play-background')).toBeNull();
+    expect(at('replays')).toBeNull();
   });
 });

@@ -6,7 +6,11 @@ import {
   mergeMaterialSettings,
   NO_MATERIAL_TINT,
 } from '../../../scenes/play-background/material-settings';
-import type { SceneMaterial } from '../../../scenes/play-background/play-scene';
+import {
+  PLAY_SCENE_URL,
+  type SceneMaterial,
+  type SceneTexture,
+} from '../../../scenes/play-background/play-scene';
 import type {
   BodySettings,
   BodyValues,
@@ -18,6 +22,7 @@ import { keyLightFrom, TOWARDS_EYE } from '../../../scenes/play-background/scene
 import {
   DEFAULT_SHADE,
   type MaterialSettings,
+  type MaterialSettingsMap,
   type MaterialTint,
   type PlanetFile,
 } from '../../../scenes/play-background/scene-planets';
@@ -29,7 +34,16 @@ import {
  */
 
 /** What a tree row is, for the properties shown when it is selected. */
-export type TargetKind = 'scene' | 'sky' | 'sky-material' | 'body' | 'material' | 'group';
+export type TargetKind =
+  | 'scene'
+  | 'sky'
+  | 'sky-material'
+  | 'body'
+  | 'material'
+  | 'particle'
+  | 'backdrop'
+  | 'stand-in'
+  | 'group';
 
 /**
  * A body as an editor has it: which planet (or style), its style, its settings in the layer
@@ -47,6 +61,8 @@ export interface BodyInfo {
   /** Its own defaults and its style's, under the layer edited (the library's, under a scene). */
   readonly below?: BodySettings;
   readonly styleBelow?: BodySettings;
+  /** The materials' base settings (the library's), under its own. */
+  readonly materialBase?: MaterialSettingsMap;
   readonly file?: PlanetFile;
   readonly styleFile?: PlanetFile;
   /** Its orbit, where it is a moon in a scene. */
@@ -68,13 +84,54 @@ export interface BodyView {
   readonly canHaveMoons: boolean;
 }
 
-/** A material as its properties show it: its settings as shown, what is set in the layer edited, which controls do anything. */
+/** A texture a material's layer reads: which layer, where the site has it, where the game data has it. */
+export interface TextureEntry {
+  readonly layer: string;
+  /** Its path on the site. */
+  readonly path: string;
+  /** Its path in the game data, where the export says. */
+  readonly source?: string;
+  readonly baked: boolean;
+  readonly width: number;
+  readonly height: number;
+}
+
+/** A material as its properties show it: its settings as shown, what is set in the layer edited, which controls do anything, the textures it reads. */
 export interface MaterialEntry {
   readonly name: string;
   readonly values: MaterialValues;
   readonly controls: MaterialControls;
   readonly set: MaterialSettings | undefined;
   readonly baseTint: MaterialTint;
+  readonly textures: readonly TextureEntry[];
+}
+
+/** The textures a material's layers read, in its layers' order. */
+export function texturesOf(
+  material: SceneMaterial,
+  textures: Readonly<Record<string, SceneTexture>>,
+): TextureEntry[] {
+  const layers = [
+    ['Diffuse', material.diffuse],
+    ['Emissive', material.emissive],
+    ...material.alphaMasks.map(
+      (m, i) => [material.alphaMasks.length > 1 ? `Mask ${i + 1}` : 'Mask', m] as const,
+    ),
+  ] as const;
+  const out: TextureEntry[] = [];
+  for (const [layer, l] of layers) {
+    const texture = l?.texture ? textures[l.texture] : undefined;
+    if (!texture) continue;
+    out.push({
+      layer,
+      path: `${PLAY_SCENE_URL}${texture.file}`,
+      source: texture.source,
+      baked: texture.baked ?? false,
+      width: texture.width,
+      height: texture.height,
+    });
+  }
+  return out;
 }
 
 /** A planet's (or style's) materials, in its parts' order, each once, with whether a pattern is drawn for it. */
@@ -104,16 +161,15 @@ export function materialsOf(b: BodyInfo): MaterialEntry[] {
   return owners.flatMap(([owner, below]) =>
     owner
       ? partMaterials(owner).map(({ name, material, pattern }) => {
-          const under = mergeMaterialSettings(owner.tuning?.materials, below?.materials)[name];
+          const layers = [owner.tuning?.materials, b.materialBase, below?.materials] as const;
+          const under = mergeMaterialSettings(...layers)[name];
           return {
             name,
-            values: materialValues(
-              material,
-              mergeMaterialSettings(owner.tuning?.materials, below?.materials, chosen)[name],
-            ),
+            values: materialValues(material, mergeMaterialSettings(...layers, chosen)[name]),
             controls: materialControls(material, pattern),
             set: chosen?.[name],
             baseTint: under?.tint ?? NO_MATERIAL_TINT,
+            textures: texturesOf(material, owner.textures),
           };
         })
       : [],
@@ -175,28 +231,56 @@ export function skyMaterialsOf(
       Record<string, { readonly planet?: unknown; readonly materials: readonly string[] }>
     >;
     readonly materials: Readonly<Record<string, SceneMaterial>>;
+    readonly textures: Readonly<Record<string, SceneTexture>>;
+    readonly particles: readonly { readonly material: string }[];
   },
   below: SkyChoices | undefined,
   edited: SkyChoices | undefined,
+  base?: MaterialSettingsMap,
 ): MaterialEntry[] {
   const out: MaterialEntry[] = [];
-  for (const mesh of Object.values(scene.meshes)) {
-    if (mesh.planet) continue; // the scene's own planets are placed planets
-    for (const name of mesh.materials) {
-      const material = scene.materials[name];
-      if (!material || out.some((m) => m.name === name)) continue;
-      const under = below?.materials?.[name];
-      out.push({
-        name,
-        values: materialValues(
-          material,
-          mergeMaterialSettings(below?.materials, edited?.materials)[name],
-        ),
-        controls: materialControls(material, false),
-        set: edited?.materials?.[name],
-        baseTint: under?.tint ?? NO_MATERIAL_TINT,
-      });
-    }
+  const meshes = Object.values(scene.meshes)
+    .filter((mesh) => !mesh.planet) // the scene's own planets are placed planets
+    .flatMap((mesh) => mesh.materials.map((name) => ({ name, particles: false })));
+  const particles = scene.particles.map((p) => ({ name: p.material, particles: true }));
+  for (const { name, particles: drawn } of [...meshes, ...particles]) {
+    const material = scene.materials[name];
+    if (!material || out.some((m) => m.name === name)) continue;
+    const under = mergeMaterialSettings(base, below?.materials)[name];
+    out.push({
+      name,
+      values: materialValues(
+        material,
+        mergeMaterialSettings(base, below?.materials, edited?.materials)[name],
+      ),
+      controls: materialControls(material, false, drawn),
+      set: edited?.materials?.[name],
+      baseTint: under?.tint ?? NO_MATERIAL_TINT,
+      textures: texturesOf(material, scene.textures),
+    });
   }
   return out;
+}
+
+/**
+ * A material on its own, as its base settings show it: the data's, through the tuning of the
+ * asset it is shown from, under its base settings.
+ */
+export function baseMaterialOf(
+  name: string,
+  material: SceneMaterial,
+  textures: Readonly<Record<string, SceneTexture>>,
+  pattern: boolean,
+  tuning: MaterialSettingsMap | undefined,
+  base: MaterialSettingsMap | undefined,
+  particles = false,
+): MaterialEntry {
+  return {
+    name,
+    values: materialValues(material, mergeMaterialSettings(tuning, base)[name]),
+    controls: materialControls(material, pattern, particles),
+    set: base?.[name],
+    baseTint: tuning?.[name]?.tint ?? NO_MATERIAL_TINT,
+    textures: texturesOf(material, textures),
+  };
 }

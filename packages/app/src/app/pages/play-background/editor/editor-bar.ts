@@ -5,13 +5,14 @@ import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { MatTooltip } from '@angular/material/tooltip';
 import { DraftDesignStore } from '../draft-design.store';
 import { Editor } from './editor';
-import { type EditorMode, EditorUiStore } from './editor-ui.store';
+import { EditorUiStore } from './editor-ui.store';
 
 /**
- * The editor's bar (container, on the page's stores and the `Editor` in effect): which layer is
- * edited (a scene, or the library), Save (the draft published: the site shows it) and Discard (the
- * published design again), with how many things are not saved yet, and the view's options behind
- * a gear (the names; everything in the layer edited reset, confirmed first).
+ * The editor's bar (container, on the page's stores and the `Editor` in effect): the view's
+ * options behind a gear (the names, the screenshot mode; everything in what is open reset,
+ * confirmed first); and, while something is open (not over the library's list, whose items
+ * show what isn't saved), Save (the draft published: the site shows it) and Discard (the
+ * published design again), with how many things are not saved yet.
  */
 @Component({
   selector: 'hrs-editor-bar',
@@ -23,8 +24,4 @@ export class EditorBar {
   protected readonly ui = inject(EditorUiStore);
   protected readonly draft = inject(DraftDesignStore);
   protected readonly editor = inject(Editor);
-  protected readonly modes: readonly { mode: EditorMode; label: string }[] = [
-    { mode: 'scene', label: 'Scene' },
-    { mode: 'library', label: 'Library' },
-  ];
 }

@@ -13,7 +13,7 @@ import { DEFAULT_DRAWING } from './background.store';
 import { beyondEdge } from './planet-sets';
 import type { LoadedPlayScene } from './play-scene';
 import type { SkySettings } from './scene-planets';
-import { type PlanetPlacement, SceneRenderer } from './scene-renderer';
+import { type Backdrop, type PlanetPlacement, SceneRenderer } from './scene-renderer';
 import { NO_TINT, sameTint, type Tint } from './scene-tints';
 
 /** Device pixels per CSS pixel at most: past this the extra sharpness isn't worth the fill rate. */
@@ -47,6 +47,7 @@ interface Running {
   newPicture(): void;
   replace(placements: readonly PlanetPlacement[]): void;
   resky(sky: SkySettings): void;
+  rebackdrop(backdrop: Backdrop | null): void;
 }
 
 /** A fly from one set of planets to the next, part way through. */
@@ -96,6 +97,8 @@ export class SceneCanvas {
   readonly tint = input<Tint>(NO_TINT);
   /** How the sky shows: its materials' settings by name (those not named as the data has them), its tint. */
   readonly sky = input<SkySettings>({});
+  /** An editing backdrop in place of the sky (none: the sky). */
+  readonly backdrop = input<Backdrop | null>(null);
   /** Whether it moves. */
   readonly animate = input(DEFAULT_DRAWING.animate);
   /** Frames a second at most while it just moves (the scene's motion keeps its speed whatever it is). */
@@ -130,6 +133,10 @@ export class SceneCanvas {
     effect(() => {
       const sky = this.sky();
       untracked(() => this.running?.resky(sky));
+    });
+    effect(() => {
+      const backdrop = this.backdrop();
+      untracked(() => this.running?.rebackdrop(backdrop));
     });
     effect(() => {
       this.animate();
@@ -321,6 +328,10 @@ export class SceneCanvas {
         renderer.setSky(sky);
         if (!frame) draw();
       },
+      rebackdrop: (backdrop) => {
+        renderer.setBackdrop(backdrop);
+        if (!frame) draw();
+      },
       play,
       resize,
       newPicture: () => {
@@ -358,6 +369,7 @@ export class SceneCanvas {
     };
     renderer.tint = NO_TINT; // always shown untinted first
     renderer.setSky(this.sky());
+    renderer.setBackdrop(this.backdrop());
     resize();
     play();
     const placements = this.placements(); // may have loaded before the scene did

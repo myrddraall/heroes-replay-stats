@@ -1,4 +1,4 @@
-import { computed, inject, resource } from '@angular/core';
+import { computed, effect, inject, resource, untracked } from '@angular/core';
 import {
   patchState,
   signalMethod,
@@ -13,6 +13,11 @@ import { withFolding } from '../../../data/store-features/with-folding';
 import { withLocalStorage } from '../../../data/store-features/with-local-storage';
 import { BackgroundStore } from '../../../scenes/play-background/background.store';
 import {
+  ownScene,
+  PLAY_SCREEN_SCENE,
+  RANDOM_SCENE,
+} from '../../../scenes/play-background/background-design';
+import {
   type BodyPath,
   type BodySettings,
   fitRadius,
@@ -25,7 +30,7 @@ import {
   reveal,
 } from '../../../scenes/play-background/background-scene';
 import { NO_MATERIAL_TINT } from '../../../scenes/play-background/material-settings';
-import type { SetPlanet } from '../../../scenes/play-background/planet-sets';
+import { playSet, type SetPlanet } from '../../../scenes/play-background/planet-sets';
 import { loadPlaySceneFile, PLAY_SCENE_URL } from '../../../scenes/play-background/play-scene';
 import {
   loadPlanetIndex,
@@ -45,6 +50,7 @@ import {
   type TargetKind,
 } from './editor-model';
 import { EditorUiStore } from './editor-ui.store';
+import { type OpenTarget, RANDOM_SETS } from './open-target';
 import type { TreeRow } from './scene-tree';
 
 /** Where the scene's planet is put: in the middle of the view, filling much of it (less where its moons wouldn't fit). */
@@ -84,8 +90,8 @@ function targetOf(key: string): Target {
 const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 
 interface SceneEditorState {
-  /** The scene's planet, by id (the URL's); none: the random sets. */
-  readonly review: string;
+  /** The scene, by id (the URL's); '': the random sets'. */
+  readonly scene: string;
   /** The selected row's key. */
   readonly selected: string;
   /** The moon the view is centred on, by its path's key; none: the planet. */
@@ -94,22 +100,21 @@ interface SceneEditorState {
 
 /**
  * The scene editor's store (component store, provided by the scene editor as its `Editor` and its
- * background's scene): one scene of the draft ({@link DraftDesignStore}), its planet by the URL (or
- * the random sets), as a tree (the scene, its sky and the sky's materials, the planet, its
+ * background's scene): one scene of the draft ({@link DraftDesignStore}), by the URL (or the
+ * random sets'), as a tree (the scene, its sky and the sky's materials, the planet, its
  * materials and moons, theirs in turn), what is selected and its properties through the layers
  * (the data, the library, the scene), the moon the view is centred on. The scene's bodies placed
  * for the background: a selected moon shown where it can be seen, the scene fitted to the view.
  */
 export const SceneEditorStore = signalStore(
-  withState<SceneEditorState>({ review: '', selected: SCENE, focus: null }),
+  withState<SceneEditorState>({ scene: RANDOM_SCENE, selected: SCENE, focus: null }),
   withFolding([SCENE, bodyKey([])]),
   withLocalStorage<SceneEditorState & { expanded: readonly string[] }>(
     'hrs.background-scene-editor',
-    ['review', 'selected', 'focus', 'expanded'],
+    ['expanded'],
   ),
   withPlanetFiles(),
   withProps(() => ({
-    resetAllLabel: 'Reset scene',
     _draft: inject(DraftDesignStore),
     _ui: inject(EditorUiStore),
     _background: inject(BackgroundStore),
@@ -118,17 +123,28 @@ export const SceneEditorStore = signalStore(
       loader: ({ abortSignal }) => loadPlaySceneFile(PLAY_SCENE_URL, abortSignal),
     }),
   })),
-  withComputed(({ review, files, focus, selected, _draft, _index, _sceneFile }) => {
-    const choices = computed(() => _draft.scenes().planets[review()] ?? {});
-    const published = computed(() => _draft.publishedScenes().planets[review()] ?? {});
+  withComputed(({ scene: sceneId, files, focus, selected, _draft, _index, _sceneFile }) => {
+    const entry = computed(() => _draft.scenes().planets[sceneId()]);
+    const choices = computed(() => entry() ?? {});
+    const published = computed(() => _draft.publishedScenes().planets[sceneId()] ?? {});
+    /**
+     * The scene's planet: its own, where it names one; else the planet its key is (scenes kept
+     * before they were listed). None for the random sets', or a scene there isn't (deleted).
+     */
+    const planetId = computed(() => {
+      const e = entry();
+      const id = sceneId();
+      if (!ownScene(id) || !e) return '';
+      // Scenes kept by a planet's id before scenes were listed have that planet; a new one, its own or none.
+      return e.planet ?? (/^scene-\d+$/.test(id) ? '' : id);
+    });
     const moons = computed(() => choices().moons ?? []);
     const library = _draft.library;
 
     /** The scene's bodies, the planet first, then each moon after its parent. */
     const bodies = computed((): BodyInfo[] => {
       const planet = choices();
-      // A scene's planet: its own, where it names one; else the planet its key is.
-      const id = review() ? (planet.planet ?? review()) : '';
+      const id = planetId();
       if (!id) return [];
       const all = files();
       const lib = library();
@@ -149,6 +165,7 @@ export const SceneEditorStore = signalStore(
         settings,
         below: lib.planets[bodyId],
         styleBelow: bodyStyle ? lib.styles[bodyStyle] : undefined,
+        materialBase: lib.materials,
         file: all[bodyId],
         styleFile: bodyStyle ? all[`style-${bodyStyle}`] : undefined,
         orbit,
@@ -187,7 +204,7 @@ export const SceneEditorStore = signalStore(
     const sky = computed(() => choices().sky ?? {});
     const skyMaterials = computed(() => {
       const scene = _sceneFile.hasValue() ? _sceneFile.value() : null;
-      return scene ? skyMaterialsOf(scene, library().sky, sky()) : [];
+      return scene ? skyMaterialsOf(scene, library().sky, sky(), library().materials) : [];
     });
     const target = computed(() => targetOf(selected()));
     const body = computed(() => {
@@ -219,6 +236,21 @@ export const SceneEditorStore = signalStore(
       return out;
     });
     return {
+      planetId,
+      resetAllLabel: computed(() => 'Reset scene'),
+      opened: computed((): OpenTarget => ({ kind: 'scene', id: sceneId() })),
+      /** What the scene is called: its name, else its planet's id. */
+      sceneName: computed(() => choices().name ?? ''),
+      heading: computed(() => {
+        const id = sceneId();
+        if (id === RANDOM_SCENE) return 'Scene · Random sets';
+        if (id === PLAY_SCREEN_SCENE) return 'Scene · Play screen';
+        return `Scene · ${choices().name ?? planetId()}`;
+      }),
+      /** Whether the scene is one of the user's own (named, of a planet, deletable). */
+      own: computed(() => ownScene(sceneId())),
+      /** Whether it is one of the user's own that isn't there (deleted, or discarded unsaved). */
+      missing: computed(() => ownScene(sceneId()) && !entry()),
       moons,
       bodies,
       bodyByKey,
@@ -255,21 +287,16 @@ export const SceneEditorStore = signalStore(
       skyChanged: computed(() => !!sky().materials || !!sky().tint),
       skyTint: computed((): MaterialTint => sky().tint ?? library().sky.tint ?? NO_MATERIAL_TINT),
       skyTintSet: computed(() => sky().tint),
-      sets: computed(() => !review()),
+      sets: computed(() => sceneId() === RANDOM_SCENE),
       planetIds: computed(() => (_index.hasValue() ? _index.value().planets.map((p) => p.id) : [])),
-      reviewOptions: computed((): PropertyOption[] => {
+      planetOptions: computed((): PropertyOption[] => {
         const planets = _index.hasValue() ? _index.value().planets : [];
         const of = (kind: string) =>
           planets
             .filter((p) => p.kind === kind)
             .map((p) => p.id)
             .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-        return grouped(
-          [{ value: '', label: 'Sets (random)' }],
-          of('play'),
-          of('world'),
-          of('painted'),
-        );
+        return grouped([{ value: '', label: 'None' }], of('play'), of('world'), of('painted'));
       }),
       styleOptions: computed((): PropertyOption[] =>
         grouped(
@@ -303,8 +330,24 @@ export const SceneEditorStore = signalStore(
     rows: computed((): TreeRow[] => {
       const open = store.unfolded();
       const rows: TreeRow[] = [];
-      const row = (key: string, label: string, icon: string, depth: number, unsaved = false) =>
-        rows.push({ key, label, icon, depth, expandable: true, expanded: open.has(key), unsaved });
+      const row = (
+        key: string,
+        label: string,
+        icon: string,
+        depth: number,
+        unsaved = false,
+        group = false,
+      ) =>
+        rows.push({
+          key,
+          label,
+          icon,
+          depth,
+          expandable: true,
+          expanded: open.has(key),
+          unsaved,
+          group,
+        });
       const leaf = (key: string, label: string, depth: number, enabled: boolean) =>
         rows.push({
           key,
@@ -332,7 +375,7 @@ export const SceneEditorStore = signalStore(
         );
         if (!open.has(b.key)) return;
         const group = materialsKey(path);
-        row(group, 'Materials', 'layers', depth + 1);
+        row(group, 'Materials', 'layers', depth + 1, false, true);
         if (open.has(group))
           for (const m of materialsOf(b))
             leaf(materialKey(path, m.name), m.name, depth + 2, m.values.enabled);
@@ -345,10 +388,17 @@ export const SceneEditorStore = signalStore(
       if (planet) body(planet, 1);
       return rows;
     }),
-    /** The scene's bodies placed for the background; null for the random sets, or while what they need is loading. */
+    /**
+     * The scene's bodies placed for the background: the game's own three for the Play screen; null
+     * for the random sets, or while what they need is loading.
+     */
     scenePlanets: computed((): SetPlanet[] | null => {
+      if (store.scene() === PLAY_SCREEN_SCENE)
+        return store._index.hasValue() ? [...playSet(store._index.value())] : null;
+      // A scene with no planet yet: its sky alone.
+      if (store.scene() && !store.planetId()) return [];
       const scene = store._sceneFile.hasValue() ? store._sceneFile.value() : null;
-      if (!scene || !store.review()) return null;
+      if (!scene || !store.scene()) return null;
       const focus = store.focusPath();
       const centre = focus.length ? (moonAt(store.moons(), focus)?.moons ?? []) : store.moons();
       const eye = scene.camera.eye;
@@ -391,7 +441,7 @@ export const SceneEditorStore = signalStore(
   withMethods((store) => {
     const d = store._draft;
     /** The scene's planet and the style its own settings are kept by. */
-    const scene = () => ({ id: store.review(), style: store.bodies()[0]?.style ?? '' });
+    const scene = () => ({ id: store.scene(), style: store.bodies()[0]?.style ?? '' });
     /** The selected body's path, if a body (or one of its materials) is selected. */
     const selectedPath = (): BodyPath | null => {
       const t = store.target();
@@ -404,14 +454,26 @@ export const SceneEditorStore = signalStore(
       else if (t.kind === 'material') d.setMaterial(id, t.path, style, t.name, change);
     };
     return {
-      /** The planet shown, as the URL says (none: the random sets); a new one is selected, the view on it. */
-      showPlanet: signalMethod<string | undefined>((id) => {
-        const next = id ?? '';
-        if (next === store.review()) return;
-        patchState(store, { review: next, focus: null, selected: next ? bodyKey([]) : SCENE });
+      /** The scene shown, as the URL says ('': the random sets'); its planet selected, the view on it. */
+      showScene: signalMethod<string>((id) => {
+        if (id === store.scene()) return;
+        patchState(store, { scene: id, focus: null, selected: id ? bodyKey([]) : SCENE });
         store._ui.confirmReset(false);
         store.expand(SCENE, bodyKey([]));
       }),
+      /** The scene's planet changed (its looks were the old planet's: they go). */
+      setPlanet(planet: string): void {
+        if (ownScene(store.scene()) && planet) d.setScenePlanet(store.scene(), planet);
+      },
+      rename(name: string): void {
+        if (ownScene(store.scene())) d.renameScene(store.scene(), name);
+      },
+      /** The scene taken out of the draft; the random sets' opened. */
+      deleteScene(): void {
+        if (!ownScene(store.scene())) return;
+        d.deleteScene(store.scene());
+        store._ui.open(RANDOM_SETS);
+      },
       /** A row selected; the materials' group only folds (there is nothing of its own to set). */
       select(key: string): void {
         if (targetOf(key).kind === 'group') store.toggleExpanded(key);
@@ -446,21 +508,21 @@ export const SceneEditorStore = signalStore(
       },
       setStyle(style: string): void {
         const path = selectedPath();
-        if (path) d.setStyle(store.review(), path, style);
+        if (path) d.setStyle(store.scene(), path, style);
       },
       resetStyle(): void {
         const path = selectedPath();
-        if (path) d.resetStyle(store.review(), path);
+        if (path) d.resetStyle(store.scene(), path);
       },
       setOrbit(change: Partial<Orbit>): void {
         const path = selectedPath();
-        if (path?.length) d.setOrbit(store.review(), path, change);
+        if (path?.length) d.setOrbit(store.scene(), path, change);
       },
       /** A moon added about the selected body: shown in the tree and selected. */
       addMoon(moon: string): void {
         const parent = selectedPath();
         if (!parent) return;
-        const path = d.addMoon(store.review(), parent, moon);
+        const path = d.addMoon(store.scene(), parent, moon);
         store.expand(bodyKey(parent));
         patchState(store, { selected: bodyKey(path) });
       },
@@ -468,7 +530,7 @@ export const SceneEditorStore = signalStore(
       removeMoon(): void {
         const path = selectedPath();
         if (!path?.length) return;
-        d.removeMoon(store.review(), path);
+        d.removeMoon(store.scene(), path);
         const focus = store.focus();
         patchState(store, {
           selected: bodyKey(path.slice(0, -1)),
@@ -486,13 +548,13 @@ export const SceneEditorStore = signalStore(
         patchState(store, { focus: null });
       },
       setSkyTint(tint: MaterialTint): void {
-        d.setSkyTint(store.review(), tint);
+        d.setSkyTint(store.scene(), tint);
       },
       clearSkyTint(): void {
-        d.clearSkyTint(store.review());
+        d.clearSkyTint(store.scene());
       },
       resetSky(): void {
-        d.resetSky(store.review());
+        d.resetSky(store.scene());
       },
       anotherSet(): void {
         store._background.nextPlanetSet();
@@ -503,7 +565,7 @@ export const SceneEditorStore = signalStore(
       setTint: d.setTint,
       /** The whole scene back as the library has it: the planet, its moons, its sky, the colour; the view on the planet. */
       resetAll(): void {
-        d.resetScene(store.review());
+        d.resetScene(store.scene());
         d.resetTint();
         patchState(store, { focus: null, selected: SCENE });
         store._ui.confirmReset(false);
@@ -513,6 +575,14 @@ export const SceneEditorStore = signalStore(
   withHooks({
     onInit(store) {
       store.needFiles(store.neededFiles);
+      // A scene that isn't there any more: back to the scenes' list.
+      effect(() => {
+        if (!store.missing()) return;
+        untracked(() => {
+          store._ui.show(RANDOM_SETS);
+          store._ui.setBrowsing(true);
+        });
+      });
     },
   }),
 );

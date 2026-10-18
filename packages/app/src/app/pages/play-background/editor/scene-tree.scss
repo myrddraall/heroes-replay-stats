@@ -100,3 +100,13 @@
   border-radius: 50%;
   background: var(--mat-sys-primary);
 }
+
+// The editing aids, set apart below what is edited by a rule; their rows quieter.
+.aids {
+  margin: 10px 6px 6px;
+  border-top: 1px solid rgb(var(--hrs-glass-edge) / 0.35);
+}
+
+.row--aid:not(.row--selected) .name {
+  opacity: 0.75;
+}

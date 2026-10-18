@@ -63,6 +63,7 @@ describe('materials’ settings', () => {
       scale: false,
       cut: false,
       lines: false,
+      particles: false,
     });
     const emissive = material({
       emissive: { texture: 'grid', brightMult: 1, fresnel: fresnel(0) },
@@ -73,12 +74,22 @@ describe('materials’ settings', () => {
       scale: true,
       cut: true,
       lines: false,
+      particles: false,
     });
     // A drawn pattern: its lines are set, not a texture's range.
     expect(materialControls(emissive, true)).toMatchObject({
       scale: true,
       cut: false,
       lines: true,
+    });
+    // A particle system's: drawn or not, and its strength.
+    expect(materialControls(emissive, false, true)).toEqual({
+      strength: true,
+      spread: false,
+      scale: false,
+      cut: false,
+      lines: false,
+      particles: true,
     });
   });
 });

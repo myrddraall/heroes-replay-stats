@@ -36,7 +36,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { path: '/maps', label: 'Maps', icon: 'map' },
   { path: '/import', label: 'Import', icon: 'upload_file' },
   { path: '/theme-preview', label: 'Theme preview', icon: 'palette' },
-  { path: '/play-background', label: 'Background', icon: 'wallpaper' },
+  { path: '/edit-background', label: 'Background', icon: 'wallpaper' },
   { path: '/settings', label: 'Settings', icon: 'settings' },
 ];
 

@@ -495,18 +495,39 @@ uniform sampler2D uScene, uBloom;
 uniform float uExposure, uWhitePoint, uFade, uBloomStrength;
 uniform vec3 uTint[2];
 uniform int uBlend[2];
+// An editing backdrop in place of the sky (0: none; 1: a colour; 2: a grid of two, uGridSize
+// pixels a square), under what the scene covers (its alpha), as it is: not tone-mapped or tinted.
+uniform int uBackdrop;
+uniform vec3 uBackdropA, uBackdropB;
+uniform float uGridSize;
 in vec2 vUv;
 out vec4 outColor;
 ${BLEND_GLSL}
 void main() {
-  vec3 hdr = texture(uScene, vUv).rgb + texture(uBloom, vUv).rgb * uBloomStrength;
+  vec4 scene = texture(uScene, vUv);
+  vec3 hdr = scene.rgb + texture(uBloom, vUv).rgb * uBloomStrength;
   float light = dot(hdr, vec3(0.2126, 0.7152, 0.0722));
   vec3 c = hdr * uExposure;
   float l = light * uExposure;
   float mapped = l * (1.0 + l / (uWhitePoint * uWhitePoint)) / (1.0 + l);
   c = clamp(l > 0.0 ? c * (mapped / l) : c, 0.0, 1.0);
-  outColor = vec4(mix(blend(c, uTint[1], uBlend[1]), blend(c, uTint[0], uBlend[0]), uFade), 1.0);
+  vec3 shown = mix(blend(c, uTint[1], uBlend[1]), blend(c, uTint[0], uBlend[0]), uFade);
+  if (uBackdrop > 0) {
+    vec2 cell = floor(gl_FragCoord.xy / uGridSize);
+    vec3 back = uBackdrop == 2 && mod(cell.x + cell.y, 2.0) >= 1.0 ? uBackdropB : uBackdropA;
+    shown = clamp(shown + back * (1.0 - clamp(scene.a, 0.0, 1.0)), 0.0, 1.0);
+  }
+  outColor = vec4(shown, 1.0);
 }`;
+
+/**
+ * An editing aid in place of the sky (none of the sky, its stars or particles drawn): a plain
+ * colour, or a grid of two as image editors show transparency, its squares `size` CSS pixels.
+ * Colours are 0 to 1, shown as they are.
+ */
+export type Backdrop =
+  | { readonly kind: 'colour'; readonly colour: Vec3 }
+  | { readonly kind: 'grid'; readonly size: number; readonly colours: readonly [Vec3, Vec3] };
 
 type Vec3 = readonly [number, number, number];
 
@@ -756,6 +777,8 @@ const moves = (m: SceneMaterial) =>
   [m.diffuse, m.emissive, ...m.alphaMasks].some((layer) => layer?.scroll);
 
 interface ParticleDraw {
+  /** Its material's name (the sky's settings for it apply). */
+  readonly name: string;
   readonly system: ParticleSystem;
   readonly vao: WebGLVertexArrayObject;
   readonly buffer: WebGLBuffer;
@@ -880,6 +903,7 @@ export class SceneRenderer {
       const particles = new ParticleSystem(system, emitter);
       const [vao, buffer] = this.particleVao(particles);
       this.particles.push({
+        name: system.material,
         system: particles,
         vao,
         buffer,
@@ -961,7 +985,12 @@ export class SceneRenderer {
       const centre = project(position);
       const top = project([position[0], position[1], position[2] + radius]);
       if (centre && top)
-        out.push({ id: placement.planet.id, x: centre[0], y: centre[1], top: top[1] });
+        out.push({
+          id: placement.planet.label ?? placement.planet.id,
+          x: centre[0],
+          y: centre[1],
+          top: top[1],
+        });
     }
     return out;
   }
@@ -1104,6 +1133,14 @@ export class SceneRenderer {
   fade = 1;
   /** How the sky shows: its materials' settings by name, and its tint. */
   private sky: SkySettings = {};
+  /** An editing backdrop in place of the sky, if any. */
+  private backdrop: Backdrop | null = null;
+
+  /** An editing backdrop shown in place of the sky (null: the sky again). */
+  setBackdrop(backdrop: Backdrop | null): void {
+    this.backdrop = backdrop;
+    this.stillDirty = true;
+  }
 
   /** The sky shown as these settings say (materials not named, as the data has them). */
   setSky(settings: SkySettings): void {
@@ -1145,8 +1182,11 @@ export class SceneRenderer {
     gl.uniformMatrix4fv(this.uniform(this.particleProgram, 'uProjection'), false, this.projection);
     gl.uniform1f(this.uniform(this.particleProgram, 'uStreak'), this.streak);
     this.bindTint(this.particleProgram, 'uBodyTint', this.sky.tint);
-    for (const p of this.particles) {
+    for (const p of this.backdrop ? [] : this.particles) {
       p.system.update(seconds);
+      // The sky's settings for its material: drawn or not, and how strongly.
+      const settings = this.sky.materials?.[p.name];
+      if (!(settings?.enabled ?? MATERIAL_DEFAULTS.enabled)) continue;
       const layer = p.material.diffuse!;
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, this.textures.get(layer.texture!)!);
@@ -1157,7 +1197,7 @@ export class SceneRenderer {
       );
       gl.uniform1f(
         this.uniform(this.particleProgram, 'uBright'),
-        layerBrightness(layer.brightMult),
+        layerBrightness(layer.brightMult) * (settings?.strength ?? MATERIAL_DEFAULTS.strength),
       );
       gl.bindVertexArray(p.vao);
       gl.bindBuffer(gl.ARRAY_BUFFER, p.buffer);
@@ -1191,6 +1231,23 @@ export class SceneRenderer {
     gl.uniform1f(this.uniform(this.toneProgram, 'uFade'), this.fade);
     gl.uniform1f(this.uniform(this.toneProgram, 'uExposure'), this.loaded.scene.tone.exposure);
     gl.uniform1f(this.uniform(this.toneProgram, 'uWhitePoint'), this.loaded.scene.tone.whitePoint);
+    const b = this.backdrop;
+    gl.uniform1i(
+      this.uniform(this.toneProgram, 'uBackdrop'),
+      b ? (b.kind === 'colour' ? 1 : 2) : 0,
+    );
+    if (b) {
+      const [first, second] = b.kind === 'colour' ? [b.colour, b.colour] : b.colours;
+      gl.uniform3fv(this.uniform(this.toneProgram, 'uBackdropA'), first);
+      gl.uniform3fv(this.uniform(this.toneProgram, 'uBackdropB'), second);
+      // The squares in CSS pixels, whatever share of the display's resolution the canvas has.
+      const cssWidth = this.canvas.clientWidth || width;
+      const size = b.kind === 'grid' ? b.size : 1;
+      gl.uniform1f(
+        this.uniform(this.toneProgram, 'uGridSize'),
+        Math.max(1, (size * width) / cssWidth),
+      );
+    }
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
 
@@ -1259,7 +1316,8 @@ export class SceneRenderer {
     const gl = this.gl;
     gl.bindFramebuffer(gl.FRAMEBUFFER, target.framebuffer);
     gl.viewport(0, 0, this.canvas.width, this.canvas.height);
-    gl.clearColor(0, 0, 0, 1);
+    // Behind a backdrop the alpha keeps what the scene covers (none yet).
+    gl.clearColor(0, 0, 0, this.backdrop ? 0 : 1);
     gl.depthMask(true);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);
@@ -1276,7 +1334,8 @@ export class SceneRenderer {
     gl.enable(gl.BLEND);
     gl.depthMask(false);
     if (blend === 'alpha') gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-    else gl.blendFunc(gl.ONE, gl.ONE);
+    // Added light covers nothing: the alpha (what a backdrop shows under) is left as it is.
+    else gl.blendFuncSeparate(gl.ONE, gl.ONE, gl.ZERO, gl.ONE);
   }
 
   /**
@@ -1320,7 +1379,7 @@ export class SceneRenderer {
     // Each draw as its material's settings say; the sky's in drawing order by the blend they
     // give it, then the planets' likewise.
     const draws = this.draws
-      .filter((draw) => draw.moving === moving)
+      .filter((draw) => draw.moving === moving && (draw.placed || !this.backdrop))
       .map((draw) => {
         const settings = this.settingsOf(draw);
         return { draw, settings, blend: settings?.blend ?? draw.material.blend };

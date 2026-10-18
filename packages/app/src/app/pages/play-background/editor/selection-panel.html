@@ -7,6 +7,11 @@
         [preset]="s.tintChoice()"
         [custom]="s.tintChoice() === 'custom'"
         [sets]="s.sets()"
+        [own]="s.own()"
+        [name]="s.sceneName()"
+        [planet]="s.planetId()"
+        (nameChange)="s.rename($event)"
+        (deleteRequested)="s.deleteScene()"
         (tintChange)="draft.setTint($event)"
         (presetChange)="draft.chooseTint($event)"
         (anotherSet)="s.anotherSet()"
@@ -67,6 +72,7 @@
         [changed]="m.set !== undefined"
         [set]="m.set"
         [baseTint]="m.baseTint"
+        [textures]="m.textures"
         (settingsChange)="editor.setMaterial($event)"
         (clear)="editor.clearMaterial($event)"
         (resetRequested)="editor.clearMaterial()"
@@ -81,11 +87,57 @@
         [changed]="m.set !== undefined"
         [set]="m.set"
         [baseTint]="m.baseTint"
+        [textures]="m.textures"
         (settingsChange)="editor.setMaterial($event)"
         (clear)="editor.clearMaterial($event)"
         (resetRequested)="editor.clearMaterial()"
       />
     }
+  }
+  @case ('backdrop') {
+    <hrs-editing-aid-properties
+      title="Backdrop"
+      [fills]="backdropFills"
+      [skies]="skies()"
+      [values]="backdrop()"
+      [changed]="backdropChanged()"
+      (valuesChange)="setAid('backdrop', $event)"
+      (clear)="clearAid('backdrop', $event)"
+    />
+    @if (aids.backdrop() === 'sky') {
+      <hrs-tint-section
+        [tint]="editor.skyTint()"
+        [set]="editor.skyTintSet()"
+        (tintChange)="editor.setSkyTint($event)"
+        (clear)="editor.clearSkyTint()"
+      />
+      <div class="buttons">
+        <button
+          type="button"
+          class="button"
+          (click)="editor.resetSky()"
+          [disabled]="!editor.skyChanged()"
+        >
+          Reset sky
+        </button>
+      </div>
+    }
+  }
+  @case ('stand-in') {
+    <hrs-editing-aid-properties
+      title="Stand-in planet"
+      [fills]="standInFills"
+      [values]="standIn()"
+      [changed]="standInChanged()"
+      (valuesChange)="setAid('standIn', $event)"
+      (clear)="clearAid('standIn', $event)"
+    />
+  }
+  @case ('particle') {
+    <p class="hint">
+      A particle system of the sky. Its own settings (rate, size, life) are not editable yet; its
+      material is under it in the tree.
+    </p>
   }
   @default {
     <p class="hint">Choose something in the tree to see its properties.</p>

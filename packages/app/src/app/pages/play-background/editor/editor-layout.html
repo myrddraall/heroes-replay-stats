@@ -13,20 +13,36 @@
     (openedChange)="ui.screenshot() || ui.setPanel('left', $event)"
   >
     <hrs-map-panel
-      [title]="ui.mode() === 'scene' ? 'Scene' : 'Library'"
+      [title]="ui.browsing() ? libraryTitle() : editor.heading()"
       (closeRequested)="ui.setPanel('left', false)"
     >
       <div hrsMapPanelPinned>
+        @if (ui.browsing()) {
+          <hrs-library-head />
+        } @else {
+          <div class="layout__back">
+            <button type="button" class="layout__library" (click)="ui.setBrowsing(true)">
+              <mat-icon class="material-symbols-outlined" aria-hidden="true">arrow_back</mat-icon>
+              <span>Library</span>
+            </button>
+          </div>
+        }
         <hrs-editor-bar />
-        <ng-content select="[editorHead]" />
+        @if (!ui.browsing()) {
+          <ng-content select="[editorHead]" />
+        }
       </div>
-      <hrs-scene-tree
-        [rows]="editor.rows()"
-        [selected]="editor.selected()"
-        (rowSelect)="editor.select($event)"
-        (expandToggle)="editor.toggleExpanded($event)"
-        (enabledChange)="editor.setEnabled($event)"
-      />
+      @if (ui.browsing()) {
+        <hrs-asset-browser />
+      } @else {
+        <hrs-scene-tree
+          [rows]="editor.rows()"
+          [selected]="editor.selected()"
+          (rowSelect)="editor.select($event)"
+          (expandToggle)="editor.toggleExpanded($event)"
+          (enabledChange)="editor.setEnabled($event)"
+        />
+      }
     </hrs-map-panel>
   </mat-drawer>
   <mat-drawer
@@ -38,8 +54,15 @@
     [opened]="ui.right() && !ui.screenshot()"
     (openedChange)="ui.screenshot() || ui.setPanel('right', $event)"
   >
-    <hrs-map-panel [title]="editor.title()" (closeRequested)="ui.setPanel('right', false)">
-      <hrs-selection-panel />
+    <hrs-map-panel
+      [title]="ui.browsing() ? editor.heading() : editor.title()"
+      (closeRequested)="ui.setPanel('right', false)"
+    >
+      @if (ui.browsing()) {
+        <hrs-asset-info />
+      } @else {
+        <hrs-selection-panel />
+      }
     </hrs-map-panel>
   </mat-drawer>
   <mat-drawer-content class="layout__content">

@@ -1,6 +1,14 @@
 <ul class="tree" aria-label="Scene">
   @for (row of rows(); track row.key) {
-    <li class="row" [class.row--selected]="row.key === selected()" [style.--depth]="row.depth">
+    @if (startsAids($index)) {
+      <li class="aids" role="separator"></li>
+    }
+    <li
+      class="row"
+      [class.row--selected]="row.key === selected()"
+      [class.row--aid]="row.aid"
+      [style.--depth]="row.depth"
+    >
       @if (row.expandable) {
         <button
           type="button"
@@ -31,6 +39,8 @@
         [class.name--off]="row.enabled === false"
         [attr.aria-pressed]="row.key === selected()"
         (click)="rowSelect.emit(row.key)"
+        (keydown.arrowdown)="move($event, $index, 1)"
+        (keydown.arrowup)="move($event, $index, -1)"
       >
         <mat-icon class="material-symbols-outlined icon" aria-hidden="true">{{
           row.icon

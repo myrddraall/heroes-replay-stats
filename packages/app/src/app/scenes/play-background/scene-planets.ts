@@ -1,5 +1,6 @@
 import type { SceneBlend, SceneColor, SceneMaterial, SceneTexture } from './play-scene';
 import type { TintBlend } from './scene-tints';
+import { BUILT_IN_PREFIX, type BuiltInPlanets } from './built-in-planets';
 
 /**
  * The planets heroes-capture exports beside the Play screen's scene (`heroes-capture ui
@@ -232,6 +233,8 @@ export interface PlanetTuning {
 /** A planet with its textures decoded, ready to draw. */
 export interface LoadedPlanet {
   readonly id: string;
+  /** What it is called where it isn't its id (one the app makes). */
+  readonly label?: string;
   readonly planet: PlanetFile;
   readonly images: Readonly<Record<string, ImageBitmap>>;
 }
@@ -271,7 +274,11 @@ export async function loadPlanetFile(
 export class PlanetLoader {
   private readonly loading = new Map<string, Promise<LoadedPlanet>>();
 
-  constructor(private readonly base: string) {}
+  /** `builtIns`: the planets the app makes (their ids start `@`), where there are any. */
+  constructor(
+    private readonly base: string,
+    private readonly builtIns?: BuiltInPlanets,
+  ) {}
 
   load(id: string, signal?: AbortSignal): Promise<LoadedPlanet> {
     let loading = this.loading.get(id);
@@ -304,9 +311,13 @@ export class PlanetLoader {
   }
 
   private async fetch(id: string): Promise<LoadedPlanet> {
-    const planet = await loadPlanetFile(this.base, id);
+    const built = id.startsWith(BUILT_IN_PREFIX) ? this.builtIns?.(id) : undefined;
+    if (id.startsWith(BUILT_IN_PREFIX) && !built) throw new Error(`no planet ${id} is made here`);
+    const planet = built?.planet ?? (await loadPlanetFile(this.base, id));
     const entries = await Promise.all(
       Object.entries(planet.textures).map(async ([key, texture]) => {
+        const made = built?.images?.[key];
+        if (made) return [key, await made()] as const;
         const image = await fetchOk(at(this.base, texture.file), `the texture ${texture.file}`);
         const bitmap = await createImageBitmap(await image.blob(), {
           premultiplyAlpha: 'none',
@@ -315,6 +326,6 @@ export class PlanetLoader {
         return [key, bitmap] as const;
       }),
     );
-    return { id, planet, images: Object.fromEntries(entries) };
+    return { id, label: built?.label, planet, images: Object.fromEntries(entries) };
   }
 }

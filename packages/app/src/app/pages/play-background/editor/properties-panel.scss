@@ -27,3 +27,48 @@
     color: inherit;
   }
 }
+
+// The textures a material reads: each layer's, its path on the site (opens it), in the game data, its size.
+.textures {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.texture {
+  display: grid;
+  gap: 1px;
+  font: var(--mat-sys-body-small);
+
+  &__layer {
+    opacity: 0.85;
+  }
+
+  &__path,
+  &__source {
+    overflow-wrap: anywhere;
+    font-family: var(--mat-sys-body-small-font), monospace;
+    font-size: 0.85em;
+  }
+
+  &__path {
+    color: var(--mat-sys-primary);
+  }
+
+  &__source,
+  &__size {
+    opacity: 0.75;
+  }
+
+  &__size {
+    font-size: 0.85em;
+  }
+}
+
+.hint {
+  margin: 0;
+  font: var(--mat-sys-body-small);
+  opacity: 0.75;
+}

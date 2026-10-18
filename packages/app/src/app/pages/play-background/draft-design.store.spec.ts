@@ -14,7 +14,10 @@ describe('DraftDesignStore', () => {
   it('starts from what is published, with nothing unsaved', () => {
     TestBed.inject(PublishedDesignStore).publish({
       library: { planets: { korhal: { tint: red } }, styles: {}, sky: {} },
-      scenes: { settings: { background: { on: false, colour: '#ffffff', blend: 'multiply' } }, planets: {} },
+      scenes: {
+        settings: { background: { on: false, colour: '#ffffff', blend: 'multiply' } },
+        planets: {},
+      },
     });
     const draft = TestBed.inject(DraftDesignStore);
     expect(draft.library().planets['korhal']).toEqual({ tint: red });
@@ -58,5 +61,40 @@ describe('DraftDesignStore', () => {
     draft.discard();
     expect(draft.library().planets['korhal']).toBeUndefined();
     expect(draft.unsaved()).toBe(0);
+  });
+
+  it('counts a material base changed, and keeps it out of the planets', () => {
+    const draft = TestBed.inject(DraftDesignStore);
+    draft.setLibraryBaseMaterial('rock', { glow: 2 });
+    expect(draft.library().materials).toEqual({ rock: { glow: 2 } });
+    expect([...draft.unsavedLibraryMaterials()]).toEqual(['rock']);
+    expect(draft.unsaved()).toBe(1);
+    draft.clearLibraryBaseMaterial('rock', ['glow']);
+    expect(draft.unsaved()).toBe(0);
+  });
+
+  it('makes scenes of their own, empty or from another, keeps them through a reset, deletes them', () => {
+    const draft = TestBed.inject(DraftDesignStore);
+    const id = draft.createScene();
+    expect(id).toBe('scene-1');
+    expect(draft.scenes().planets[id]).toEqual({});
+    draft.setScenePlanet(id, 'korhal');
+    draft.renameScene(id, '  Home  ');
+    draft.setSkyTint(id, red);
+    const copy = draft.createScene({ id, name: 'Home copy' });
+    expect(copy).toBe('scene-2');
+    expect(draft.scenes().planets[copy]).toEqual({
+      planet: 'korhal',
+      name: 'Home copy',
+      sky: { tint: red },
+    });
+    draft.resetScene(id);
+    expect(draft.scenes().planets[id]).toEqual({ planet: 'korhal', name: 'Home' });
+    draft.renameScene(id, '');
+    draft.setScenePlanet(id, '');
+    expect(draft.scenes().planets[id]).toEqual({});
+    draft.deleteScene(id);
+    expect(draft.scenes().planets[id]).toBeUndefined();
+    expect(draft.scenes().planets[copy]?.name).toBe('Home copy');
   });
 });

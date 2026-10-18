@@ -1,0 +1,35 @@
+<hrs-property-select
+  label="Type"
+  [value]="catalog.type()"
+  [options]="types"
+  (valueChange)="setType($event)"
+/>
+<input
+  type="search"
+  class="search"
+  placeholder="Search"
+  aria-label="Search the library"
+  [value]="catalog.query()"
+  (input)="search($event)"
+/>
+@if (catalog.type() === 'scene') {
+  <button type="button" class="button new" [matMenuTriggerFor]="newScene">
+    <mat-icon class="material-symbols-outlined" aria-hidden="true">add</mat-icon>
+    <span>New scene</span>
+  </button>
+  <mat-menu #newScene="matMenu">
+    <button mat-menu-item type="button" (click)="catalog.createScene()">
+      <mat-icon class="material-symbols-outlined" aria-hidden="true">add_box</mat-icon>
+      <span>Empty scene</span>
+    </button>
+    @if (templates().length) {
+      <mat-divider />
+      @for (scene of templates(); track scene.id) {
+        <button mat-menu-item type="button" (click)="catalog.createScene(scene.id)">
+          <mat-icon class="material-symbols-outlined" aria-hidden="true">content_copy</mat-icon>
+          <span>From {{ scene.label }}</span>
+        </button>
+      }
+    }
+  </mat-menu>
+}

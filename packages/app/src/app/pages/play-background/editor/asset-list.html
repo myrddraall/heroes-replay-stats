@@ -1,0 +1,34 @@
+<ul class="items">
+  @for (item of items(); track item.key) {
+    <li>
+      <button
+        type="button"
+        class="item"
+        [class.item--selected]="item.key === selected()"
+        [attr.aria-pressed]="item.key === selected()"
+        aria-description="Double-click or press Enter to open"
+        title="Double-click to open"
+        (click)="itemSelect.emit(item.key)"
+        (dblclick)="itemOpen.emit(item.key)"
+        (keydown.enter)="enter($event, item.key)"
+        (keydown.arrowdown)="move($event, $index, 1)"
+        (keydown.arrowup)="move($event, $index, -1)"
+      >
+        <mat-icon class="material-symbols-outlined item__icon" aria-hidden="true">{{
+          icon()
+        }}</mat-icon>
+        <span class="item__text">
+          <span class="item__label">{{ item.label }}</span>
+          @if (item.caption) {
+            <span class="item__caption">{{ item.caption }}</span>
+          }
+        </span>
+        @if (item.unsaved) {
+          <span class="unsaved" title="Not saved yet" aria-label="not saved yet"></span>
+        }
+      </button>
+    </li>
+  } @empty {
+    <li class="empty">Nothing found</li>
+  }
+</ul>

@@ -1,0 +1,54 @@
+@let v = values();
+@let c = changed();
+<hrs-property-section
+  [title]="title()"
+  [changed]="c.fill || c.sky || c.colour || c.gridSize || c.onPlanet"
+  (resetRequested)="clear.emit(['fill', 'sky', 'colour', 'gridSize', 'onPlanet'])"
+>
+  <hrs-property-select
+    label="Fill"
+    [value]="v.fill"
+    [options]="fills()"
+    [changed]="c.fill"
+    (resetRequested)="clear.emit(['fill'])"
+    (valueChange)="valuesChange.emit({ fill: $event })"
+  />
+  @if (v.fill === 'sky' && v.sky !== undefined) {
+    <hrs-property-select
+      label="Sky"
+      [value]="v.sky"
+      [options]="skies()"
+      [changed]="c.sky"
+      (resetRequested)="clear.emit(['sky'])"
+      (valueChange)="valuesChange.emit({ sky: $event })"
+    />
+  }
+  @if (v.fill === 'colour') {
+    <hrs-property-colour
+      label="Colour"
+      [value]="v.colour"
+      [changed]="c.colour"
+      (resetRequested)="clear.emit(['colour'])"
+      (valueChange)="valuesChange.emit({ colour: $event })"
+    />
+  }
+  @if (v.fill === 'grid') {
+    <hrs-property-select
+      label="Squares"
+      [value]="v.gridSize"
+      [options]="sizes"
+      [changed]="c.gridSize"
+      (resetRequested)="clear.emit(['gridSize'])"
+      (valueChange)="valuesChange.emit({ gridSize: $event })"
+    />
+  }
+  @if (v.onPlanet !== undefined) {
+    <hrs-property-check
+      label="Materials on their planet"
+      [checked]="v.onPlanet"
+      [changed]="c.onPlanet"
+      (resetRequested)="clear.emit(['onPlanet'])"
+      (checkedChange)="valuesChange.emit({ onPlanet: $event })"
+    />
+  }
+</hrs-property-section>
