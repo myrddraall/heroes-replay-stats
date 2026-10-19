@@ -6,6 +6,7 @@ import {
 import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { GraphicsStore } from '../../../data/settings/graphics.store';
+import { BARE } from '../../../scenes/play-background/planet-sets';
 import { AssetCatalogStore } from './asset-catalog.store';
 import { PickFlyout, type PickItem } from './pick-flyout';
 
@@ -39,7 +40,11 @@ export class AddPlanet {
     { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'top', offsetY: 4 },
   ];
   protected readonly planets = computed((): PickItem[] =>
-    this.catalog.planets().map((p) => ({ id: p.id, label: p.id, caption: KINDS[p.kind] })),
+    this.catalog.planets().map((p) => ({
+      id: p.id,
+      label: p.id,
+      caption: p.id.endsWith(BARE) ? 'Play screen, no shield' : KINDS[p.kind],
+    })),
   );
 
   protected pick(id: string): void {

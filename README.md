@@ -92,7 +92,9 @@ camera-facing square, finding the shape under each pixel (the body shader in
 `scene-renderer.ts`), turned to face the camera as the game's billboards do and lit by the
 flyby's lights where it is a world's. A planet can wear a style (`style-<id>.json`, the same
 form): its parts go about the body and its shade darkens it from a side; `nexus` is the Play
-screen's look for a world (its hex-grid shield and ring, a crescent left lit). How a planet shows
+screen's look for a world (its hex-grid shield and ring, a crescent left lit). The Play screen
+planets also come bare (`play-<size>-bare`: no shield, no ring) to wear a style; the random sets
+never draw them. How a planet shows
 is settable per placement (`SetPlanet`): its light's strength, where its key light comes from
 (its rig turned together), a shade and where it falls, where its rims and glows lean
 (`scene-directions.ts`), a tint over all its materials, and its materials'

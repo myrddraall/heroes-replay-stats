@@ -63,6 +63,8 @@ const ONLY_PLACES: Readonly<Record<string, readonly number[]>> = {
   'play-medium': [0, 1],
   'play-small': [1, 2],
 };
+/** The id ending of a Play screen planet bare (no shield, no ring: to wear the nexus style or none). */
+export const BARE = '-bare';
 /** The eye, for keeping planets apart on screen: the game's camera. */
 const EYE: readonly [number, number, number] = [0, -41.2, 5.6];
 const TRIES = 40;
@@ -121,7 +123,8 @@ export function randomSet(index: PlanetIndex, random: () => number): PlanetSet {
     }
   }
   const between = ([lo, hi]: readonly [number, number]) => lo + (hi - lo) * random();
-  const pool = index.planets.map((p) => p.id);
+  // The Play screen's planets bare (to dress in a scene) aren't drawn: the sets show them as the game does.
+  const pool = index.planets.map((p) => p.id).filter((id) => !id.endsWith(BARE));
   const set: SetPlanet[] = [];
   const side = random() < 0.5 ? -1 : 1; // the large one's side; the others take the other
   for (let place = 0; place < count && pool.length; place++) {
