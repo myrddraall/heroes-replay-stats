@@ -279,9 +279,8 @@ export const AssetEditorStore = signalStore(
         styleOptions: computed((): PropertyOption[] => grouped([{ value: '', label: 'None' }])),
         sets: computed(() => false),
         /**
-         * The stage: the asset on the planet last opened (a planet itself; a style worn by it); a
-         * material on the stand-in planet, drawn as on what uses it (or on that, where asked); the
-         * sky with no planet.
+         * The stage: a planet itself; a style worn by the stand-in planet; a material on the
+         * stand-in, drawn as on what uses it (or on that, where asked); the sky with no planet.
          */
         stagePlanets: computed((): SetPlanet[] => {
           const a = asset();
@@ -301,13 +300,8 @@ export const AssetEditorStore = signalStore(
             };
           };
           if (a.kind === 'sky') return []; // the sky alone
-          if (a.kind === 'material' && !_aids.materialOnPlanet()) {
-            const owner =
-              use?.kind === 'planet'
-                ? use.id
-                : use?.kind === 'style'
-                  ? `style-${use.id}`
-                  : undefined;
+          /** The stand-in planet, a material drawn over it from where it is used (`owner`), if any. */
+          const standIn = (owner?: string): SetPlanet => {
             const fill = _aids.standIn();
             const id = standInId({
               fill,
@@ -316,13 +310,20 @@ export const AssetEditorStore = signalStore(
               material: owner ? a.id : undefined,
             });
             const tint = { colour: _aids.standInColour(), blend: 'multiply' as const, strength: 1 };
-            return [
-              {
-                id,
-                ...fitted(owner),
-                materials: fill === 'colour' ? { [STAND_IN_MATERIAL]: { tint } } : undefined,
-              },
-            ];
+            return {
+              id,
+              ...fitted(owner),
+              materials: fill === 'colour' ? { [STAND_IN_MATERIAL]: { tint } } : undefined,
+            };
+          };
+          if (a.kind === 'material' && !_aids.materialOnPlanet()) {
+            const owner =
+              use?.kind === 'planet'
+                ? use.id
+                : use?.kind === 'style'
+                  ? `style-${use.id}`
+                  : undefined;
+            return [standIn(owner)];
           }
           if (a.kind === 'planet') {
             const style = files[a.id]?.tuning?.style;
@@ -330,10 +331,9 @@ export const AssetEditorStore = signalStore(
               ? [{ id: a.id, style, ...fitted(a.id, `style-${style}`) }]
               : [{ id: a.id, ...fitted(a.id) }];
           }
+          // A style on the stand-in: what it adds, on a plain body.
           if (a.kind === 'style')
-            return [
-              { id: previewPlanet(), style: a.id, ...fitted(previewPlanet(), `style-${a.id}`) },
-            ];
+            return [{ ...standIn(), style: a.id, ...fitted(undefined, `style-${a.id}`) }];
           if (use?.kind === 'planet') return [{ id: use.id, ...fitted(use.id) }];
           if (use?.kind === 'style')
             return [
@@ -484,8 +484,8 @@ export const AssetEditorStore = signalStore(
               expandable: false,
               expanded: false,
             });
-          // The stand-in only where it is shown: a material opened on its own.
-          if (a.kind === 'material')
+          // The stand-in only where it is shown: a material or a style opened on its own.
+          if (a.kind === 'material' || a.kind === 'style')
             rows.push({
               key: STAGE_STAND_IN,
               label: 'Stand-in planet',

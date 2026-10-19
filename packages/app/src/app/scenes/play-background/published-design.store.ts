@@ -35,6 +35,15 @@ export const PublishedDesignStore = signalStore(
     publish(design: Design): void {
       patchState(store, { library: design.library, scenes: design.scenes });
     },
+    /** Nothing published: the site's random sets, the game data's defaults (the old scenes' key gone too). */
+    clear(): void {
+      patchState(store, { library: EMPTY_LIBRARY, scenes: EMPTY_SCENES });
+      try {
+        localStorage.removeItem(OLD_SCENES_KEY);
+      } catch {
+        // nowhere it was kept
+      }
+    },
     /** One scene published as it is (a new one starts saved), the rest as they were. */
     publishScene(id: string, scene: PlanetChoices): void {
       const scenes = store.scenes();

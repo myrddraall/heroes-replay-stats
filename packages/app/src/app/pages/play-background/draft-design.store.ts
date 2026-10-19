@@ -14,6 +14,8 @@ import {
   type LibraryState,
   ownScene,
   type ScenesState,
+  EMPTY_LIBRARY,
+  EMPTY_SCENES,
 } from '../../scenes/play-background/background-design';
 import {
   type BodySettings,
@@ -167,6 +169,11 @@ export const DraftDesignStore = signalStore(
       /** The draft published: the site shows it from now on. */
       save(): void {
         store._published.publish({ library: store.library(), scenes: store.scenes() });
+      },
+      /** Everything saved and drafted thrown away: nothing published, nothing drafted. */
+      clearAll(): void {
+        store._published.clear();
+        patchState(store, { library: EMPTY_LIBRARY, scenes: EMPTY_SCENES });
       },
       /** The draft thrown away: the published design again. */
       discard(): void {

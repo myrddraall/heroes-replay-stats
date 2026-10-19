@@ -23,6 +23,8 @@ interface EditorUiState {
   readonly aspect: number;
   /** Whether a reset of everything in what is open was asked for and waits to be confirmed. */
   readonly confirmingReset: boolean;
+  /** Whether clearing all the saved and drafted design was asked for and waits to be confirmed. */
+  readonly confirmingClear: boolean;
   /** Whether the page shows nothing but the background, full screen (to take a screenshot). */
   readonly screenshot: boolean;
 }
@@ -41,6 +43,7 @@ export const EditorUiStore = signalStore(
     right: true,
     aspect: 16 / 9,
     confirmingReset: false,
+    confirmingClear: false,
     screenshot: false,
   }),
   withLocalStorage<EditorUiState>('hrs.background-editor', ['names', 'left', 'right']),
@@ -84,7 +87,10 @@ export const EditorUiStore = signalStore(
         if (Number.isFinite(aspect) && aspect > 0) patchState(store, { aspect });
       },
       confirmReset(asked: boolean): void {
-        patchState(store, { confirmingReset: asked });
+        patchState(store, { confirmingReset: asked, confirmingClear: false });
+      },
+      confirmClear(asked: boolean): void {
+        patchState(store, { confirmingClear: asked, confirmingReset: false });
       },
       setScreenshot(screenshot: boolean): void {
         patchState(store, { screenshot });

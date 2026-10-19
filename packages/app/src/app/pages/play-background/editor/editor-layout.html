@@ -33,6 +33,9 @@
         @if (ui.confirmingReset()) {
           <hrs-reset-confirm />
         }
+        @if (ui.confirmingClear()) {
+          <hrs-clear-confirm />
+        }
         @if (!ui.browsing()) {
           <ng-content select="[editorHead]" />
         }

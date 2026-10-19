@@ -29,4 +29,8 @@
     <mat-icon class="material-symbols-outlined" aria-hidden="true">restart_alt</mat-icon>
     <span>{{ editor.resetAllLabel() }}…</span>
   </button>
+  <button mat-menu-item type="button" (click)="ui.confirmClear(true)">
+    <mat-icon class="material-symbols-outlined" aria-hidden="true">delete_forever</mat-icon>
+    <span>Clear saved data…</span>
+  </button>
 </mat-menu>

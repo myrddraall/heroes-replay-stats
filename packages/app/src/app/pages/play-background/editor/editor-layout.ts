@@ -22,6 +22,7 @@ import { AssetCatalogStore } from './asset-catalog.store';
 import { AssetInfo } from './asset-info';
 import { LibraryHead } from './library-head';
 import { ResetConfirm } from './reset-confirm';
+import { ClearConfirm } from './clear-confirm';
 import { typeLabel } from './library-types';
 import { Editor } from './editor';
 import { EditorBar } from './editor-bar';
@@ -60,6 +61,7 @@ import { ReferenceOverlay } from './reference-overlay';
     AssetInfo,
     LibraryHead,
     ResetConfirm,
+    ClearConfirm,
     ReferenceOverlay,
   ],
   templateUrl: './editor-layout.html',
