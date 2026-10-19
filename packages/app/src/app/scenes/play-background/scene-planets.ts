@@ -82,6 +82,11 @@ export type PartShape =
       readonly inner: number;
       readonly outer: number;
       readonly depth: number;
+      /**
+       * How far away (in the body's radii) it was modelled to be seen from, lying on the body's
+       * limb from there: seen from elsewhere it is sized to lie there still. None: as it is.
+       */
+      readonly seen?: number;
     };
 
 /**
@@ -106,7 +111,13 @@ export type PartMapping =
       readonly u: readonly [number, number, number, number];
       readonly v: readonly [number, number, number, number];
     }
-  | { readonly kind: 'ring'; readonly from: number; readonly uMax: number };
+  | {
+      readonly kind: 'ring';
+      readonly from: number;
+      readonly uMax: number;
+      /** How far across the ring (from its inner edge, 0 to 1) v is greatest (none: midway). */
+      readonly mid?: number;
+    };
 
 /** What a part is to its body: its surface, a layer on it, its atmosphere shell, a ring, a style's shield. */
 export type PartRole = 'surface' | 'layer' | 'shell' | 'ring' | 'shield';
@@ -134,6 +145,11 @@ export interface MaterialSettings {
    */
   readonly spreadFrom?: Vec3;
   /**
+   * How sharply its layers' fresnel (the kind strongest edge-on) rises toward the edge: the
+   * formula to this power (2, as measured on the Play screen planets' grid, unless set).
+   */
+  readonly falloff?: number;
+  /**
    * How large its emissive pattern is, drawn or textured alike (2: twice the size): a texture's
    * tiling over this, a drawn pattern's cells round the part over this.
    */
@@ -143,6 +159,11 @@ export interface MaterialSettings {
    * its emissive texture (`texture`), to compare the two.
    */
   readonly drawAs?: MaterialDrawAs;
+  /**
+   * The textures its alpha masks read, in place of its own, in order (by name: a texture of a
+   * planet it is drawn on, so loaded with it): a body wearing a style its own mask on its parts.
+   */
+  readonly masks?: readonly string[];
   /** How much of its emissive pattern is cut to black, 0 to 1: a grid's cells go, its lines stay. */
   readonly cut?: number;
   /** How wide its drawn pattern's lines are, as a share of a cell (0 to 0.5). */
@@ -257,15 +278,47 @@ export interface PlanetTuning {
   readonly rim?: Vec3;
 }
 
-/** How a planet wears a style: its shade and the style's materials' settings, over the style's. */
+/** A style's part as a body wears it: its shape and mapping in place of the style's. */
+export interface PartOverride {
+  readonly shape?: PartShape;
+  readonly mapping?: PartMapping;
+}
+
+/**
+ * How a planet wears a style: its shade and the style's materials' settings, over the style's;
+ * and the style's parts, by their role, shaped and mapped as its own.
+ */
 export interface StyleWear {
   readonly shade?: Partial<BodyShade>;
   readonly materials?: MaterialSettingsMap;
+  readonly parts?: Readonly<Partial<Record<PartRole, PartOverride>>>;
 }
 
 /** How a planet (its file) wears a style (by its id; none: none). */
 export const wearOf = (planet: PlanetFile | undefined, style: string | undefined) =>
   style ? planet?.tuning?.variants?.[style] : undefined;
+
+/** A style's parts as a planet wears them (its own shapes and mappings for them, where it has any). */
+export function wornParts(
+  planet: PlanetFile | undefined,
+  style: string | undefined,
+  parts: readonly BodyPart[],
+): readonly BodyPart[] {
+  const own = wearOf(planet, style)?.parts;
+  return own ? parts.map((p) => (own[p.role] ? { ...p, ...own[p.role] } : p)) : parts;
+}
+
+/** A material with its alpha masks reading other textures (`masks`, in order), where given. */
+export function withMasks(
+  material: SceneMaterial,
+  masks: readonly string[] | undefined,
+): SceneMaterial {
+  if (!masks?.length) return material;
+  return {
+    ...material,
+    alphaMasks: material.alphaMasks.map((m, i) => (masks[i] ? { ...m, texture: masks[i] } : m)),
+  };
+}
 
 /** A planet with its textures decoded, ready to draw. */
 export interface LoadedPlanet {

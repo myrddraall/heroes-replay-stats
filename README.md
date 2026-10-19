@@ -96,7 +96,23 @@ screen's look for a world (its hex-grid shield and ring, a crescent left lit). A
 a style of its own (the index's `style`, from its tuning) unless a scene says otherwise, and its
 tuning's `variants` say how it wears a style, over the style's own (its shade, the style's
 materials' settings): the Play screen planets are their paintings alone, wearing `nexus` as each
-one's own shield is in the game data (unshaded). A material's `spreadFrom` is the side its
+one's own shield is in the game data (unshaded, the game's grid texture, each its own mask (`masks`, in place of a material's own) and its
+own ring and shield placement (`parts`, by role, in place of the style's shapes and mappings)). A
+ring keeps to the body's limb seen from any distance: the exporter gives the distance it was
+modelled to be seen from (`seen`, in the body's radii: the game's camera), and the renderer sizes
+it to lie there from where it is seen (`ringFit`); each body's square is sized from all its parts
+(`partsExtent`: its spheres widened for perspective, its rings projected from their plane). A
+mask at its full midtone offset cuts nothing out of an opaque material: the Play screen
+planets' paintings are cut by their birth masks while they are born (the model's Birth sequence
+lifts the masks' midtone from 0 to 1) and rest whole at 1, as the game shows them. A ring's
+texture v peaks on the circle the game's mesh has it on (`mid`, from the exporter; the large
+planet's, a third of the way across, on its limb from the game's camera), and a ring is shaded at
+several points across each pixel's width and averaged, so its brightest circle (a crease about a
+pixel wide at the Play screen's sizes) is a smooth line, not a staircase. A
+body's outline, and a ring's edges, are smoothed over a pixel (how much of the pixel the shape
+covers, blended by it), as the game's meshes are; a pixel the shape misses is shaded and given
+nothing rather than dropped (dropping it leaves its neighbours' texture derivatives undefined), and
+one past a sphere's outline reads its textures at their coarsest (seen wholly edge-on there). A material's `falloff` is how sharply its edge-on fresnel rises toward the limb (the formula to that power: 2 unless set; the Play screen planets' grid 1.3, measured against a Quick Match screenshot). A material's `spreadFrom` is the side its
 fresnel is brightest on (the editor's Spread from), in place of its layers' own turn. How a planet shows
 is settable per placement (`SetPlanet`): its light's strength, where its key light comes from
 (its rig turned together), a shade and where it falls, where its rims and glows lean

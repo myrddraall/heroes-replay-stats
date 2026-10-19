@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { bodyExtent, layerBrightness, projectionMatrix, viewMatrix } from './scene-renderer';
+import {
+  bodyExtent,
+  layerBrightness,
+  partsExtent,
+  projectionMatrix,
+  viewMatrix,
+} from './scene-renderer';
+import type { BodyPart } from './scene-planets';
 
 /** A point through a column-major matrix, divided by w: normalized device coordinates. */
 function transform(m: Float32Array, [x, y, z]: [number, number, number]): [number, number, number] {
@@ -54,5 +61,35 @@ describe('bodyExtent', () => {
 
   it('stays finite with the eye inside the body', () => {
     expect(Number.isFinite(bodyExtent(10, 1, 5))).toBe(true);
+  });
+});
+
+describe('partsExtent', () => {
+  const ring = (seen?: number): BodyPart => ({
+    role: 'ring',
+    shape: { kind: 'ring', inner: 0.84, outer: 0.92, depth: -0.67, seen },
+    mapping: { kind: 'ring', from: 0, uMax: 0.5 },
+    materials: [],
+  });
+  const body: BodyPart = {
+    role: 'surface',
+    shape: { kind: 'sphere', radius: 1, side: 'near' },
+    mapping: { kind: 'ring', from: 0, uMax: 0.5 },
+    materials: [],
+  };
+
+  it('widens for a ring nearer the eye than the body’s centre, past its sphere', () => {
+    // A ring 0.92 out, 0.67 nearer an eye 4.33 away: 0.92 · 4.33 / 3.66 on the square.
+    expect(partsExtent(1, [body, ring()], 4.33)).toBeCloseTo((0.92 * 4.33) / 3.66, 4);
+    expect(partsExtent(1, [body], 4.33)).toBeCloseTo(bodyExtent(1, 1, 4.33), 6);
+  });
+
+  it('sizes a ring modelled to be seen from one distance to lie on the limb from another', () => {
+    // Seen from where it was modelled: as modelled. From further: bigger than modelled, on the limb.
+    expect(partsExtent(1, [ring(4.33)], 4.33)).toBeCloseTo(partsExtent(1, [ring()], 4.33), 6);
+    const far = 20;
+    const limb = (d: number) => 1 / Math.sqrt(d * d - 1); // the limb's tangent from d
+    const asModelled = 0.92 / (4.33 - 0.67) / limb(4.33); // the ring's edge against the limb
+    expect(partsExtent(1, [ring(4.33)], far) / far / limb(far)).toBeCloseTo(asModelled, 3);
   });
 });

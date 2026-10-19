@@ -288,11 +288,15 @@ export const AssetEditorStore = signalStore(
           const files = _catalog.files();
           const scene = _sceneFile.hasValue() ? _sceneFile.value() : null;
           /** The stage's place, the asset as big as fits the view with its shells and halo. */
-          const fitted = (...ids: (string | undefined)[]) => {
+          const fitted = (planet?: string, styleFile?: string) => {
             const root = { position: PREVIEW_POSITION, radius: PREVIEW_RADIUS };
             if (!scene) return root;
             const up = Math.tan((scene.camera.fovY * Math.PI) / 360);
-            const extent = visualExtent(...ids.map((id) => (id ? files[id] : undefined)));
+            const extent = visualExtent(
+              planet ? files[planet] : undefined,
+              styleFile ? files[styleFile] : undefined,
+              styleFile?.replace(/^style-/, ''),
+            );
             const view = { up, across: up * _ui.aspect() };
             return {
               ...root,

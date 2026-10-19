@@ -13,7 +13,7 @@ import {
   type Vec3,
   without,
 } from './background-scene';
-import type { MaterialSettings, PlanetFile } from './scene-planets';
+import { type MaterialSettings, type PlanetFile, wornParts } from './scene-planets';
 import { reach } from './scene-renderer';
 
 /**
@@ -220,10 +220,18 @@ export function withoutMaterial(
 }
 
 /**
- * How much of the view a body of these files takes, in its radii: as far as its parts reach (its
- * atmosphere's shells, its style's rings), and past that the bloom its glow spreads into.
+ * How much of the view a body takes, in its radii: its spheres (its own, its atmosphere's shells,
+ * its style's as it wears them) and past them the bloom their glow spreads into; and its rings
+ * (its style's, its own for them where it has any), sized as seen from afar (their biggest), a
+ * glow at the limb of their own (the bloom isn't added past them again).
  */
 export const HALO_MARGIN = 1.12;
-export function visualExtent(...files: readonly (PlanetFile | undefined)[]): number {
-  return HALO_MARGIN * Math.max(1, ...files.map((f) => (f ? reach(f.parts) : 1)));
+export function visualExtent(file?: PlanetFile, styleFile?: PlanetFile, style?: string): number {
+  const parts = [
+    ...(file?.parts ?? []),
+    ...(styleFile ? wornParts(file, style, styleFile.parts) : []),
+  ];
+  const spheres = parts.filter((p) => p.shape.kind === 'sphere');
+  const rings = parts.filter((p) => p.shape.kind === 'ring');
+  return Math.max(HALO_MARGIN * reach(spheres), reach(rings, Infinity));
 }

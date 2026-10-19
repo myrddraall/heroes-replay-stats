@@ -24,6 +24,7 @@ export interface MaterialValues {
   readonly glow: number;
   readonly spread: number;
   readonly spreadFrom: Vec3;
+  readonly falloff: number;
   readonly scale: number;
   readonly drawAs: MaterialDrawAs;
   readonly cut: number;
@@ -59,6 +60,7 @@ export const MATERIAL_DEFAULTS = {
   strength: 1,
   glow: 1,
   scale: 1,
+  falloff: 2,
   cut: 0,
   width: 0.08,
   soft: 0.3,
@@ -119,6 +121,7 @@ export function materialValues(
     glow: settings?.glow ?? MATERIAL_DEFAULTS.glow,
     spread: settings?.spread ?? ownSpread(material),
     spreadFrom: settings?.spreadFrom ?? ownSpreadFrom(material),
+    falloff: settings?.falloff ?? MATERIAL_DEFAULTS.falloff,
     scale: settings?.scale ?? MATERIAL_DEFAULTS.scale,
     drawAs: settings?.drawAs ?? 'pattern',
     cut: settings?.cut ?? MATERIAL_DEFAULTS.cut,

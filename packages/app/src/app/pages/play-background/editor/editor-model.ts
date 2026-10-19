@@ -29,6 +29,7 @@ import {
   type MaterialTint,
   type PlanetFile,
   wearOf,
+  withMasks,
 } from '../../../scenes/play-background/scene-planets';
 
 /**
@@ -171,14 +172,19 @@ export function materialsOf(b: BodyInfo): MaterialEntry[] {
       ? partMaterials(owner).map(({ name, material, pattern }) => {
           const layers = [owner.tuning?.materials, worn, b.materialBase, below?.materials] as const;
           const under = mergeMaterialSettings(...layers)[name];
-          const values = materialValues(material, mergeMaterialSettings(...layers, chosen)[name]);
+          const settings = mergeMaterialSettings(...layers, chosen)[name];
+          const values = materialValues(material, settings);
           return {
             name,
             values,
             controls: materialControls(material, pattern, false, values.drawAs),
             set: chosen?.[name],
             baseTint: under?.tint ?? NO_MATERIAL_TINT,
-            textures: texturesOf(material, owner.textures),
+            // The textures it reads as worn here (a body's own masks on a style's material).
+            textures: texturesOf(withMasks(material, settings?.masks), {
+              ...owner.textures,
+              ...b.file?.textures,
+            }),
           };
         })
       : [],

@@ -458,7 +458,7 @@ export const SceneEditorStore = signalStore(
         // What must stay in view of each body: as far as its parts and its halo reach.
         const extent = (path: BodyPath) => {
           const b = store.bodyByKey().get(bodyKey([...under, ...path]));
-          return visualExtent(b?.file, b?.styleFile);
+          return visualExtent(b?.file, b?.styleFile, b?.style);
         };
         const base = fit
           ? { ...root, radius: fitRadius(root, moons, eye, reach, overrides, extent) }
@@ -467,7 +467,7 @@ export const SceneEditorStore = signalStore(
           const b = store.bodyByKey().get(bodyKey([...under, ...p.path]));
           if (!b?.file || (b.style && !b.styleFile)) return null;
           const s = b.settings;
-          extents.push(visualExtent(b.file, b.styleFile));
+          extents.push(visualExtent(b.file, b.styleFile, b.style));
           paths.push([...under, ...p.path]);
           out.push({
             id: b.id,

@@ -22,6 +22,8 @@ import {
   type PlanetLight,
   type PartMapping,
   wearOf,
+  withMasks,
+  wornParts,
 } from './scene-planets';
 import {
   BLEND_GLSL,
@@ -83,6 +85,9 @@ void main() {
  * offset moves the texture: the scrolls then carry the energy inwards, as the game's sequence names
  * it, and the nebula sits where the game shows it), and its rotation. A layer's midtone offset lifts
  * its middle values (a gamma curve; the data doesn't say which curve, and it changes little here).
+ * A mask at its full offset (1) cuts nothing out of an opaque material: the Play screen planets'
+ * birth masks run from 0 (their hex dissolve, cut at half) to 1 as they are born and rest there,
+ * born whole (as the game shows them), while what they fade (the birth glow) keeps its curve.
  * A layer may be a colour of its own instead of a texture, and may fade by its fresnel: from its
  * minimum where the surface faces the camera to its maximum edge-on, the view first turned by its
  * yaw and pitch (the planets' hex grid brightens towards one side of their rims). The game's
@@ -123,7 +128,7 @@ uniform int uLightCount;
 uniform float uLightScale;
 uniform vec3 uEye, uRight, uUp;
 uniform float uGlowThreshold, uSceneThreshold, uGlowBoost;
-uniform float uStrength, uSpread, uCut;
+uniform float uStrength, uSpread, uCut, uFalloff;
 uniform int uPattern;
 uniform vec3 uPatternParams;
 uniform vec3 uShadeDir;
@@ -134,6 +139,12 @@ uniform int uTintBlend, uBodyTintBlend;
 uniform float uTintStrength, uBodyTintStrength;
 layout(location = 0) out vec4 outColor;
 layout(location = 1) out vec4 outGlow;
+// How much of the pixel the shape covers (a body's edge, smoothed; a mesh's: all of it).
+float coverage = 1.0;
+// Whether the pixel is past a sphere's outline (in its smoothed edge): its textures are seen
+// wholly edge-on there, so read at their coarsest (the point it takes, the outline's, is the
+// same for its neighbours, which would otherwise read them sharpest and alias).
+bool pastOutline = false;
 ${BLEND_GLSL}
 ${TINT_GLSL}
 // The material's own tint, then its body's over all its materials (a planet's; the sky's over the sky's).
@@ -176,7 +187,8 @@ float fresnelFormula(Layer l) {
 float fresnel(Layer l) {
   if (l.fresnel == 0) return 1.0;
   float f = fresnelFormula(l);
-  return l.fresnel == 2 ? f * f : f * f * FRESNEL_GAIN;
+  // Type 1 to the material's falloff (2, as measured on the planets' grid, unless set).
+  return l.fresnel == 2 ? f * f : pow(f, uFalloff) * FRESNEL_GAIN;
 }
 vec4 midtone(vec4 v, float m) {
   return m > 0.0 ? pow(v, vec4(1.0 / (1.0 + m))) : v;
@@ -185,6 +197,7 @@ vec4 midtone(vec4 v, float m) {
 // from the coordinates' change across the pixel, taken where they don't jump (the same
 // coordinates wrapped elsewhere change less there), so the wrap leaves no seam.
 vec4 sampled(sampler2D tex, vec2 uv) {
+  if (pastOutline) return textureGrad(tex, uv, vec2(1.0, 0.0), vec2(0.0, 1.0));
   vec2 dx = dFdx(uv), dy = dFdy(uv);
   vec2 elsewhere = fract(uv + 0.5);
   vec2 dxb = dFdx(elsewhere), dyb = dFdy(elsewhere);
@@ -229,6 +242,7 @@ vec4 patternLayer(Layer l) {
 }
 float maskLayer(sampler2D tex, Layer l) {
   if (!l.used) return 1.0;
+  if (uOpaque && l.midtone >= 1.0) return 1.0; // fully born: nothing cut out
   float v = clamp(channel(sampled(tex, layerUv(l)), l.channel).a * l.bright, 0.0, 1.0);
   return midtone(vec4(v), l.midtone).a * (l.fresnel == 0 ? 1.0 : clamp(fresnelFormula(l), 0.0, 1.0));
 }
@@ -257,8 +271,10 @@ void shade() {
   if (!uOpaque) alpha *= uStrength; // a part shown less strongly: its blended materials fainter
   if (uOpaque) {
     if (alpha < uCutout) discard;
-    outColor = vec4(rgb, 1.0);
+    // Opaque, but for its edge: blended there by how much of the pixel it covers.
+    outColor = vec4(rgb * coverage, coverage);
   } else {
+    alpha *= coverage;
     outColor = vec4(rgb * alpha, alpha);
   }
   // What blooms under its own light's threshold that the scene's wouldn't (the glow up to 1 of
@@ -269,7 +285,7 @@ void shade() {
   vec3 shine = uEmissiveBlend == 2 ? tinted(glow) : rgb;
   float up = min(uGlowBoost, 1.0);
   outGlow = vec4(up * max(outColor.rgb - uGlowThreshold, 0.0) - max(outColor.rgb - uSceneThreshold, 0.0)
-    + max(uGlowBoost - 1.0, 0.0) * shine * (uOpaque ? 1.0 : alpha), outColor.a);
+    + max(uGlowBoost - 1.0, 0.0) * shine * (uOpaque ? coverage : alpha), outColor.a);
 }
 `;
 
@@ -310,6 +326,7 @@ void main() {
 
 const BODY_FRAGMENT = `#version 300 es
 precision highp float;
+const int RING_SAMPLES = 4;
 vec2 vUv;
 vec2 vUv2;
 vec3 vNormal;
@@ -344,40 +361,73 @@ vec2 mapped(Mapping m, vec3 p, float across) {
   }
   if (m.kind == 1) return vec2(dot(m.a, vec4(p, 1.0)), dot(m.b, vec4(p, 1.0)));
   float az = abs(mod(atan(p.z, p.x) - m.a.x + PI, 2.0 * PI) - PI);
-  return vec2(m.a.y * (1.0 - az / PI), 1.0 - abs(2.0 * across - 1.0));
+  // v: nothing at both edges, all at the circle a.z of the way across (as the mesh has it).
+  float mid = clamp(m.a.z, 0.001, 0.999);
+  return vec2(m.a.y * (1.0 - az / PI), across < mid ? across / mid : (1.0 - across) / (1.0 - mid));
 }
 void main() {
   vec3 eye = uEye;
   vec3 d = normalize(vec3(vQuad.x, 0.0, vQuad.y) / uRadius - eye);
   vec3 p, n;
+  // Each shape's edge smoothed over a pixel: how far inside it the pixel is, over how much that
+  // changes across the pixel (worked out for every pixel of the square, before any is dropped).
+  float r = uShapeParams.x;
+  vec3 from = eye - uShapeCentre;
+  float b = dot(from, d);
+  float disc = b * b - dot(from, from) + r * r;
+  float tRing = (uShapeParams.z - eye.y) / d.y;
+  float rr = length((eye + tRing * d).xz);
+  float inside = uShape <= 1 ? disc : min(rr - uShapeParams.x, uShapeParams.y - rr);
+  coverage = clamp(inside / max(fwidth(inside), 1e-6) + 0.5, 0.0, 1.0);
+  // A pixel the shape misses isn't dropped (its neighbours' texture derivatives need it: a
+  // dropped one leaves them undefined, and the textures alias along the edge); it is shaded as
+  // the edge and given nothing, below.
   if (uShape <= 1) {
-    float r = uShapeParams.x;
-    vec3 from = eye - uShapeCentre;
-    float b = dot(from, d);
-    float disc = b * b - dot(from, from) + r * r;
-    if (disc < 0.0) discard;
-    float t = uShape == 0 ? -b - sqrt(disc) : -b + sqrt(disc);
+    // Past the edge but within the pixel: the edge itself.
+    pastOutline = disc < 0.0;
+    float t = uShape == 0 ? -b - sqrt(max(disc, 0.0)) : -b + sqrt(max(disc, 0.0));
     if (t <= 0.0) discard;
     p = from + t * d;
     n = p / r * (uShape == 0 ? 1.0 : -1.0);
   } else {
-    float t = (uShapeParams.z - eye.y) / d.y;
-    if (t <= 0.0) discard;
-    p = eye + t * d;
-    float rr = length(p.xz);
-    if (rr < uShapeParams.x || rr > uShapeParams.y) discard;
+    if (tRing <= 0.0) discard;
+    p = eye + tRing * d;
     n = vec3(0.0, -1.0, 0.0);
   }
   float across = uShape == 2 ? (length(p.xz) - uShapeParams.x) / max(1e-5, uShapeParams.y - uShapeParams.x) : 0.0;
-  vUv = mapped(uMap, p, across);
-  vUv2 = mapped(uMap2, p, across);
   vNormal = n;
   vWorld = p;
   vColor = uPartColor;
-  if (uShape <= 1) p += uShapeCentre;
-  vec4 clip = uViewProjection * vec4(uCentre + uAxes * (p * uRadius), 1.0);
+  vec3 at = uShape <= 1 ? p + uShapeCentre : p;
+  vec4 clip = uViewProjection * vec4(uCentre + uAxes * (at * uRadius), 1.0);
   gl_FragDepth = clip.z / clip.w * 0.5 + 0.5;
-  shade();
+  if (uShape == 2) {
+    // A ring is brightest along one circle (its v's peak: a crease a pixel or so wide when
+    // small): shaded at RING_SAMPLES points across the pixel's width of it, and averaged, so the
+    // line is as smooth as the game's drawn larger and scaled down, not a staircase.
+    float width = fwidth(across);
+    vec4 colour = vec4(0.0), glow = vec4(0.0);
+    for (int i = 0; i < RING_SAMPLES; i++) {
+      float a = clamp(across + width * ((float(i) + 0.5) / float(RING_SAMPLES) - 0.5), 0.0, 1.0);
+      vUv = mapped(uMap, p, a);
+      vUv2 = mapped(uMap2, p, a);
+      shade();
+      colour += outColor;
+      glow += outGlow;
+    }
+    outColor = colour / float(RING_SAMPLES);
+    outGlow = glow / float(RING_SAMPLES);
+  } else {
+    vUv = mapped(uMap, p, across);
+    vUv2 = mapped(uMap2, p, across);
+    shade();
+  }
+  if (coverage <= 0.0) {
+    // Missed: nothing drawn, nothing hidden.
+    outColor = vec4(0.0);
+    outGlow = vec4(0.0);
+    gl_FragDepth = 1.0;
+  }
 }`;
 
 /**
@@ -735,13 +785,37 @@ function intoFrame(axes: Float32Array, v: Vec3): Vec3 {
   ];
 }
 
+/**
+ * How big a flat ring at `depth` (towards the eye, negative) must be to lie on a body's limb seen
+ * from `distance` (both in the body's radii), but for a factor: the limb's tangent (1 over the
+ * root of distance² - 1) times the ring's distance from the eye. A ring modelled to lie on the
+ * limb from one distance keeps to it from another, scaled by the ratio of the two.
+ */
+const ringFit = (distance: number, depth: number) =>
+  Number.isFinite(distance)
+    ? (distance + depth) / Math.sqrt(Math.max(distance * distance - 1, 1e-6))
+    : 1; // from afar: the limb as far as the ring
+
+/** How much bigger a ring is drawn seen from `distance` (the body's radii) than as modelled. */
+const ringScale = (shape: { readonly depth: number; readonly seen?: number }, distance: number) =>
+  shape.seen ? ringFit(distance, shape.depth) / ringFit(shape.seen, shape.depth) : 1;
+
+/** The id of the style a placed planet wears, if any. */
+const styleIdOf = (placement: PlanetPlacement) => placement.style?.id.replace(/^style-/, '');
+
 /** How a placed planet wears its style (its tuning's say), if it wears one. */
 const wearIn = (placement: PlanetPlacement) =>
-  wearOf(placement.planet.planet, placement.style?.id.replace(/^style-/, ''));
+  wearOf(placement.planet.planet, styleIdOf(placement));
 
-/** A placed planet's parts: its body's, and its style's. */
+/** A placed planet's style's parts, as it wears them. */
+const styleParts = (placement: PlanetPlacement): readonly BodyPart[] =>
+  placement.style
+    ? wornParts(placement.planet.planet, styleIdOf(placement), placement.style.planet.parts)
+    : [];
+
+/** A placed planet's parts: its body's, and its style's as it wears them. */
 function partsOf(placement: PlanetPlacement): readonly BodyPart[] {
-  return [...placement.planet.planet.parts, ...(placement.style?.planet.parts ?? [])];
+  return [...placement.planet.planet.parts, ...styleParts(placement)];
 }
 
 /**
@@ -757,15 +831,35 @@ export function bodyExtent(radius: number, reachOf: number, eyeDistance: number)
   return (r * d) / Math.sqrt(d * d - r * r);
 }
 
-/** How far a body's parts reach from its centre, in units of its radius. */
+/**
+ * The half-side of the square a body's parts are drawn on (see `bodyExtent`), from all of them:
+ * its spheres widened for perspective, and its rings (flat, facing the eye, `depth` from its
+ * centre: one nearer the eye shows wider on the square, by d over its plane's distance), sized
+ * as seen from there.
+ */
+export function partsExtent(
+  radius: number,
+  parts: readonly BodyPart[],
+  eyeDistance: number,
+): number {
+  const d = eyeDistance / radius;
+  let out = bodyExtent(radius, reach(parts.filter((p) => p.shape.kind === 'sphere')), eyeDistance);
+  for (const { shape } of parts) {
+    if (shape.kind !== 'ring') continue;
+    const plane = d + shape.depth;
+    if (plane > 0) out = Math.max(out, (radius * shape.outer * ringScale(shape, d) * d) / plane);
+  }
+  return out;
+}
+
 /** How far a body's parts reach from its centre, in its radii (its shells, rings, offset moons): at least 1. */
-export function reach(parts: readonly BodyPart[]): number {
+export function reach(parts: readonly BodyPart[], distance?: number): number {
   return Math.max(
     1,
     ...parts.map((p) =>
       p.shape.kind === 'sphere'
         ? p.shape.radius + Math.hypot(...(p.shape.centre ?? [0, 0, 0]))
-        : p.shape.outer,
+        : p.shape.outer * (distance ? ringScale(p.shape, distance) : 1),
     ),
   );
 }
@@ -930,11 +1024,7 @@ export class SceneRenderer {
     this.placed = placements.map((placement) => ({
       placement,
       frame: bodyFrame(placement.position, placement.radius, eye),
-      extent: bodyExtent(
-        placement.radius,
-        reach(partsOf(placement)),
-        distance(placement.position, eye),
-      ),
+      extent: partsExtent(placement.radius, partsOf(placement), distance(placement.position, eye)),
     }));
     const draws: MeshDraw[] = [];
     for (const placed of this.placed) {
@@ -948,7 +1038,8 @@ export class SceneRenderer {
       // The body's own parts lit by the style's light where it has one, then the style's parts.
       const light = style?.planet.light ?? planet.planet.light;
       for (const loaded of style ? [planet, style] : [planet]) {
-        loaded.planet.parts.forEach((part, i) => {
+        const parts = loaded === style ? styleParts(placed.placement) : loaded.planet.parts;
+        parts.forEach((part, i) => {
           for (const m of part.materials) {
             const material = this.material(m, `${loaded.id}/${i}`, loaded.planet.materials);
             draws.push({
@@ -1037,7 +1128,7 @@ export class SceneRenderer {
       const radius = radii?.[i] ?? placed.placement.radius;
       placed.placement = { ...placed.placement, position, radius };
       placed.frame = bodyFrame(position, radius, eye);
-      placed.extent = bodyExtent(radius, reach(partsOf(placed.placement)), distance(position, eye));
+      placed.extent = partsExtent(radius, partsOf(placed.placement), distance(position, eye));
     });
     this.stillDirty = true;
   }
@@ -1361,7 +1452,9 @@ export class SceneRenderer {
   private blend(blend: SceneBlend): void {
     const gl = this.gl;
     if (blend === 'opaque') {
-      gl.disable(gl.BLEND);
+      // Opaque but for a body's smoothed edge, which it gives as its alpha (premultiplied).
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
       gl.depthMask(true);
       return;
     }
@@ -1431,9 +1524,17 @@ export class SceneRenderer {
       gl.bindVertexArray(draw.vao);
       this.blend(blend);
       const scale = settings?.scale ?? MATERIAL_DEFAULTS.scale;
-      this.bindMaterial(p, draw.material, seconds, scale, blend, settings?.spreadFrom);
+      this.bindMaterial(
+        p,
+        withMasks(draw.material, settings?.masks),
+        seconds,
+        scale,
+        blend,
+        settings?.spreadFrom,
+      );
       gl.uniform1f(this.uniform(p, 'uGlowBoost'), settings?.glow ?? MATERIAL_DEFAULTS.glow);
       gl.uniform1f(this.uniform(p, 'uSpread'), settings?.spread ?? -1);
+      gl.uniform1f(this.uniform(p, 'uFalloff'), settings?.falloff ?? MATERIAL_DEFAULTS.falloff);
       gl.uniform1f(this.uniform(p, 'uCut'), settings?.cut ?? MATERIAL_DEFAULTS.cut);
       gl.uniform1f(this.uniform(p, 'uStrength'), settings?.strength ?? MATERIAL_DEFAULTS.strength);
       this.bindTint(p, 'uTint', settings?.tint);
@@ -1503,7 +1604,8 @@ export class SceneRenderer {
       gl.uniform3fv(this.uniform(p, 'uShapeCentre'), shape.centre ?? [0, 0, 0]);
     } else {
       gl.uniform1i(this.uniform(p, 'uShape'), 2);
-      gl.uniform3f(this.uniform(p, 'uShapeParams'), shape.inner, shape.outer, shape.depth);
+      const k = ringScale(shape, Math.hypot(eye[0], eye[1], eye[2]));
+      gl.uniform3f(this.uniform(p, 'uShapeParams'), shape.inner * k, shape.outer * k, shape.depth);
     }
     this.bindMapping('uMap', mapping);
     this.bindMapping('uMap2', part.mapping2 ?? mapping);
@@ -1529,7 +1631,7 @@ export class SceneRenderer {
       gl.uniform4fv(at('b'), mapping.v);
     } else {
       gl.uniform1i(at('kind'), 2);
-      gl.uniform4f(at('a'), mapping.from, mapping.uMax, 0, 0);
+      gl.uniform4f(at('a'), mapping.from, mapping.uMax, mapping.mid ?? 0.5, 0);
     }
   }
 
