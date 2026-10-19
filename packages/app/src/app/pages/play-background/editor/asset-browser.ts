@@ -1,5 +1,4 @@
 import { Component, computed, inject } from '@angular/core';
-import { BARE } from '../../../scenes/play-background/planet-sets';
 import { DraftDesignStore } from '../draft-design.store';
 import { AssetCatalogStore } from './asset-catalog.store';
 import { AssetList, type BrowserItem } from './asset-list';
@@ -64,7 +63,7 @@ export class AssetBrowser {
           return c.planets().map((p) => ({
             key: key(p.id),
             label: p.id,
-            caption: p.id.endsWith(BARE) ? 'Play screen, no shield' : KIND_LABELS[p.kind],
+            caption: KIND_LABELS[p.kind],
             unsaved: d.unsavedLibraryPlanets().has(p.id),
           }));
         case 'style':

@@ -78,6 +78,18 @@
       [pickable]="!ui.screenshot()"
       (planetPick)="pick($event)"
     />
+    @if (aids.referenceUrl(); as url) {
+      @if (aids.referenceShown() && !ui.screenshot()) {
+        <hrs-reference-overlay
+          [url]="url"
+          [mode]="aids.referenceMode()"
+          [amount]="aids.referenceAmount()"
+          [scale]="aids.referenceScale()"
+          [across]="aids.referenceAcross()"
+          [up]="aids.referenceUp()"
+        />
+      }
+    }
     @if (ui.screenshot()) {
       <p class="layout__hint" role="status">Screenshot mode: press Esc to leave</p>
     } @else {

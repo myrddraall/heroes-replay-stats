@@ -65,9 +65,11 @@ import {
   type BodyInfo,
   bodyView,
   materialsOf,
+  referenceRow,
   skyMaterialsOf,
   type TargetKind,
 } from './editor-model';
+import { REFERENCE_KEY } from './editing-aids.store';
 import { EditorUiStore } from './editor-ui.store';
 import { type OpenTarget, RANDOM_SETS } from './open-target';
 import type { TreeRow } from './scene-tree';
@@ -87,9 +89,12 @@ type Target =
   | { readonly kind: 'sky-material'; readonly name: string }
   | { readonly kind: 'body'; readonly path: BodyPath }
   | { readonly kind: 'group'; readonly path: BodyPath }
-  | { readonly kind: 'material'; readonly path: BodyPath; readonly name: string };
+  | { readonly kind: 'material'; readonly path: BodyPath; readonly name: string }
+  /** The reference image laid over the view (an editing aid). */
+  | { readonly kind: 'reference' };
 
 function targetOf(key: string): Target {
+  if (key === REFERENCE_KEY) return { kind: 'reference' };
   if (key.startsWith(`${SKY}/m/`)) return { kind: 'sky-material', name: key.slice(SKY.length + 3) };
   if (key === SKY) return { kind: 'sky' };
   if (!key.startsWith('body:')) return { kind: 'scene' };
@@ -199,8 +204,8 @@ export const SceneEditorStore = signalStore(
             info(
               path,
               moon.id,
-              moon.style ?? '',
-              !!moon.style,
+              moon.style ?? all[moon.id]?.tuning?.style ?? '',
+              moon.style !== undefined,
               moon.settings ?? {},
               moon.moons ?? [],
               moon.orbit,
@@ -307,6 +312,7 @@ export const SceneEditorStore = signalStore(
         if (t.kind === 'scene') return 'Scene';
         if (t.kind === 'sky') return 'Sky';
         if (t.kind === 'sky-material' || t.kind === 'material') return t.name;
+        if (t.kind === 'reference') return 'Reference';
         return body()?.id ?? 'Properties';
       }),
       skyChanged: computed(() => !!sky().materials || !!sky().tint),
@@ -403,6 +409,7 @@ export const SceneEditorStore = signalStore(
         const planet = store.bodyByKey().get(bodyKey([i]));
         if (planet) body(planet, 1);
       });
+      rows.push(referenceRow());
       return rows;
     }),
     /**

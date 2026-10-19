@@ -1,5 +1,11 @@
 import type { SceneBlend, SceneMaterial } from './play-scene';
-import type { MaterialSettings, MaterialSettingsMap, MaterialTint } from './scene-planets';
+import { TOWARDS_EYE, type Vec3 } from './scene-directions';
+import type {
+  MaterialDrawAs,
+  MaterialSettings,
+  MaterialSettingsMap,
+  MaterialTint,
+} from './scene-planets';
 
 /**
  * Materials' settings as the renderer and the Background page's panel read them: what a
@@ -17,7 +23,9 @@ export interface MaterialValues {
   readonly blend: SceneBlend;
   readonly glow: number;
   readonly spread: number;
+  readonly spreadFrom: Vec3;
   readonly scale: number;
+  readonly drawAs: MaterialDrawAs;
   readonly cut: number;
   readonly width: number;
   readonly soft: number;
@@ -31,10 +39,12 @@ export const NO_MATERIAL_TINT: MaterialTint = { colour: '#ffffff', blend: 'multi
 export interface MaterialControls {
   /** A blended material's alpha scales; an opaque one's doesn't. */
   readonly strength: boolean;
-  /** A layer with a fresnel has a floor to set. */
+  /** A layer with a fresnel has a floor to set, and a side it spreads from. */
   readonly spread: boolean;
   /** An emissive layer has a pattern to size. */
   readonly scale: boolean;
+  /** A drawn pattern can be shown as its texture instead (the game's way). */
+  readonly drawAs: boolean;
   /** A textured emissive has a range to cut; a drawn pattern's lines are set instead. */
   readonly cut: boolean;
   /** A drawn pattern's lines have a width and a softness. */
@@ -82,6 +92,21 @@ export function ownSpread(material: SceneMaterial): number {
   );
 }
 
+/**
+ * The side a material spreads from of its own: where its first fresnel layer is brightest, the
+ * point on the face opposite where its turn leans (none turned, or none with a fresnel: straight
+ * at the eye). A turn of `yaw` to the right and `pitch` upwards (negative), as `rimTurn` gives one
+ * for the point it leans to.
+ */
+export function ownSpreadFrom(material: SceneMaterial): Vec3 {
+  const f = [material.diffuse, material.emissive, ...material.alphaMasks].find(
+    (l) => l?.fresnel,
+  )?.fresnel;
+  if (!f) return TOWARDS_EYE;
+  const { yaw, pitch } = f;
+  return [-Math.cos(pitch) * Math.sin(yaw), -Math.cos(pitch) * Math.cos(yaw), Math.sin(pitch)];
+}
+
 /** A material's settings as shown: what is set, over the material's own ways, over the defaults. */
 export function materialValues(
   material: SceneMaterial,
@@ -93,7 +118,9 @@ export function materialValues(
     blend: settings?.blend ?? material.blend,
     glow: settings?.glow ?? MATERIAL_DEFAULTS.glow,
     spread: settings?.spread ?? ownSpread(material),
+    spreadFrom: settings?.spreadFrom ?? ownSpreadFrom(material),
     scale: settings?.scale ?? MATERIAL_DEFAULTS.scale,
+    drawAs: settings?.drawAs ?? 'pattern',
     cut: settings?.cut ?? MATERIAL_DEFAULTS.cut,
     width: settings?.width ?? MATERIAL_DEFAULTS.width,
     soft: settings?.soft ?? MATERIAL_DEFAULTS.soft,
@@ -101,21 +128,35 @@ export function materialValues(
   };
 }
 
-/** Which of a material's controls do anything: by its layers, and whether a pattern is drawn for its emissive. */
+/**
+ * Which of a material's controls do anything: by its layers, and whether a pattern is drawn for
+ * its emissive (`pattern`: its part has one; `drawAs`: whether it is drawn or shown as its texture).
+ */
 export function materialControls(
   material: SceneMaterial,
   pattern: boolean,
   particles = false,
+  drawAs: MaterialDrawAs = 'pattern',
 ): MaterialControls {
   if (particles)
-    return { strength: true, spread: false, scale: false, cut: false, lines: false, particles };
+    return {
+      strength: true,
+      spread: false,
+      scale: false,
+      drawAs: false,
+      cut: false,
+      lines: false,
+      particles,
+    };
   const layers = [material.diffuse, material.emissive, ...material.alphaMasks];
+  const drawn = pattern && drawAs === 'pattern';
   return {
     particles,
     strength: material.blend !== 'opaque',
     spread: layers.some((l) => l?.fresnel !== undefined),
     scale: material.emissive !== null || pattern,
-    cut: material.emissive !== null && !pattern,
-    lines: pattern,
+    drawAs: pattern && material.emissive?.texture !== undefined,
+    cut: material.emissive !== null && !drawn,
+    lines: drawn,
   };
 }

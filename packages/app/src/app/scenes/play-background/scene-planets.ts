@@ -23,6 +23,8 @@ export type PlanetKind = 'play' | 'world' | 'painted' | 'style';
 export interface PlanetIndexEntry {
   readonly id: string;
   readonly kind: PlanetKind;
+  /** The style it wears unless a scene says otherwise (its tuning's). */
+  readonly style?: string;
 }
 
 /** One of the Play screen's own planets where the game puts it, at its body's radius there. */
@@ -126,8 +128,21 @@ export interface MaterialSettings {
   readonly glow?: number;
   /** How far it shows away from the limb, 0 to 1: a floor under its layers' fresnel (unset: each layer's own). */
   readonly spread?: number;
-  /** How large its emissive pattern is: its tiling times this (0.5: twice the size). */
+  /**
+   * The side it spreads from: the point on its face (body frame) its layers' fresnel is brightest
+   * on, as a light comes from one (unset: each layer's own turn).
+   */
+  readonly spreadFrom?: Vec3;
+  /**
+   * How large its emissive pattern is, drawn or textured alike (2: twice the size): a texture's
+   * tiling over this, a drawn pattern's cells round the part over this.
+   */
   readonly scale?: number;
+  /**
+   * How a part with a drawn pattern shows it: drawn (`pattern`, the default) or as the game does,
+   * its emissive texture (`texture`), to compare the two.
+   */
+  readonly drawAs?: MaterialDrawAs;
   /** How much of its emissive pattern is cut to black, 0 to 1: a grid's cells go, its lines stay. */
   readonly cut?: number;
   /** How wide its drawn pattern's lines are, as a share of a cell (0 to 0.5). */
@@ -149,6 +164,9 @@ export interface MaterialTint {
   readonly strength: number;
 }
 
+/** How a material with a drawn pattern shows it: drawn, or as its texture (the game's way). */
+export type MaterialDrawAs = 'pattern' | 'texture';
+
 /** Materials' settings by the materials' names. */
 export type MaterialSettingsMap = Readonly<Record<string, MaterialSettings>>;
 
@@ -165,6 +183,12 @@ export interface SkySettings {
  */
 export interface PartPattern {
   readonly kind: 'hex';
+  /**
+   * The hexes across one tile of the texture it stands for (counted in it): drawn as many round
+   * the part as the texture's tiling makes them, so its size 1 is the texture's. Without it, a
+   * set number round (the renderer's own).
+   */
+  readonly across?: number;
 }
 
 export interface BodyPart {
@@ -216,7 +240,10 @@ export interface PlanetFile {
 
 /** Settings a planet (or a style's parts) is shown with unless a placement says otherwise. */
 export interface PlanetTuning {
+  /** The style it wears unless a scene says otherwise. */
   readonly style?: string;
+  /** How it wears a style, by the style's id: over the style's own shade and materials' settings. */
+  readonly variants?: Readonly<Record<string, StyleWear>>;
   /** How strongly its light lights it, times this (1: as the data has it). */
   readonly lighting?: number;
   readonly shade?: Partial<BodyShade>;
@@ -229,6 +256,16 @@ export interface PlanetTuning {
   /** Where its rims and glows lean: a point on its face (body frame). */
   readonly rim?: Vec3;
 }
+
+/** How a planet wears a style: its shade and the style's materials' settings, over the style's. */
+export interface StyleWear {
+  readonly shade?: Partial<BodyShade>;
+  readonly materials?: MaterialSettingsMap;
+}
+
+/** How a planet (its file) wears a style (by its id; none: none). */
+export const wearOf = (planet: PlanetFile | undefined, style: string | undefined) =>
+  style ? planet?.tuning?.variants?.[style] : undefined;
 
 /** A planet with its textures decoded, ready to draw. */
 export interface LoadedPlanet {

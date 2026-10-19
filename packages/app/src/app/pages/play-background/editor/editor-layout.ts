@@ -28,6 +28,8 @@ import { EditorBar } from './editor-bar';
 import { EditorUiStore } from './editor-ui.store';
 import { SceneTree } from './scene-tree';
 import { SelectionPanel } from './selection-panel';
+import { EditingAidsStore } from './editing-aids.store';
+import { ReferenceOverlay } from './reference-overlay';
 
 /**
  * An editor's layout (container, on the `Editor` in effect and the page's UI store): on the left
@@ -35,7 +37,8 @@ import { SelectionPanel } from './selection-panel';
  * the list), or (once something is opened from them) a way back
  * to them, the editor's own head (`[editorHead]`) and its tree; on the right, while the lists
  * show, what is selected in them as information, else the properties of what is selected in the
- * tree; the background between them, showing what the editor provides; a back button
+ * tree; the background between them, showing what the editor provides (the reference image over
+ * it, where one is chosen and shown); a back button
  * at the top left. The view's shape between the panels goes to the UI store, to fit a scene to it.
  * In the screenshot mode it shows nothing but the background, full screen, until Esc.
  */
@@ -57,6 +60,7 @@ import { SelectionPanel } from './selection-panel';
     AssetInfo,
     LibraryHead,
     ResetConfirm,
+    ReferenceOverlay,
   ],
   templateUrl: './editor-layout.html',
   styleUrl: './editor-layout.scss',
@@ -69,6 +73,7 @@ export class EditorLayout {
   protected readonly editor = inject(Editor);
   protected readonly ui = inject(EditorUiStore);
   protected readonly graphics = inject(GraphicsStore);
+  protected readonly aids = inject(EditingAidsStore);
   private readonly catalog = inject(AssetCatalogStore);
   /** The left panel's title while the library shows: the kind of thing listed. */
   protected readonly libraryTitle = computed(() => typeLabel(this.catalog.type()));

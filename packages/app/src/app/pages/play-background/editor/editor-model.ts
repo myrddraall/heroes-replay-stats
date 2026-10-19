@@ -20,12 +20,15 @@ import type {
   Vec3,
 } from '../../../scenes/play-background/background-scene';
 import { keyLightFrom, TOWARDS_EYE } from '../../../scenes/play-background/scene-directions';
+import { REFERENCE_KEY } from './editing-aids.store';
+import type { TreeRow } from './scene-tree';
 import {
   DEFAULT_SHADE,
   type MaterialSettings,
   type MaterialSettingsMap,
   type MaterialTint,
   type PlanetFile,
+  wearOf,
 } from '../../../scenes/play-background/scene-planets';
 
 /**
@@ -44,6 +47,7 @@ export type TargetKind =
   | 'particle'
   | 'backdrop'
   | 'stand-in'
+  | 'reference'
   | 'group';
 
 /**
@@ -152,11 +156,12 @@ export function partMaterials(
 }
 
 /**
- * A body's materials, its own then its style's, as shown: each through its file's tuning, the
- * defaults under the layer edited, and the layer edited.
+ * A body's materials, its own then its style's, as shown: each through its file's tuning (and how
+ * the body wears its style), the defaults under the layer edited, and the layer edited.
  */
 export function materialsOf(b: BodyInfo): MaterialEntry[] {
   const chosen = b.settings.materials;
+  const worn = wearOf(b.file, b.style)?.materials;
   const owners: [PlanetFile | undefined, BodySettings | undefined][] = [
     [b.file, b.below],
     [b.styleFile, b.styleBelow],
@@ -164,12 +169,13 @@ export function materialsOf(b: BodyInfo): MaterialEntry[] {
   return owners.flatMap(([owner, below]) =>
     owner
       ? partMaterials(owner).map(({ name, material, pattern }) => {
-          const layers = [owner.tuning?.materials, b.materialBase, below?.materials] as const;
+          const layers = [owner.tuning?.materials, worn, b.materialBase, below?.materials] as const;
           const under = mergeMaterialSettings(...layers)[name];
+          const values = materialValues(material, mergeMaterialSettings(...layers, chosen)[name]);
           return {
             name,
-            values: materialValues(material, mergeMaterialSettings(...layers, chosen)[name]),
-            controls: materialControls(material, pattern),
+            values,
+            controls: materialControls(material, pattern, false, values.drawAs),
             set: chosen?.[name],
             baseTint: under?.tint ?? NO_MATERIAL_TINT,
             textures: texturesOf(material, owner.textures),
@@ -186,14 +192,16 @@ export function valuesOf(b: BodyInfo): BodyValues {
   const s = b.settings;
   const own = b.below;
   const styled = b.styleBelow;
+  const wear = wearOf(b.file, b.style)?.shade;
   return {
     style: b.style,
     lighting: s.lighting ?? own?.lighting ?? tuning?.lighting ?? 1,
-    // A style it wears shades it its way; else its own.
+    // A style it wears shades it its way (as it wears it); else its own.
     shade:
       s.shade ??
       styled?.shade ??
       own?.shade ??
+      wear?.strength ??
       style?.shade?.strength ??
       tuning?.shade?.strength ??
       DEFAULT_SHADE.strength,
@@ -207,6 +215,7 @@ export function valuesOf(b: BodyInfo): BodyValues {
       s.shadeTowards ??
       styled?.shadeTowards ??
       own?.shadeTowards ??
+      wear?.direction ??
       style?.shade?.direction ??
       tuning?.shade?.direction ??
       DEFAULT_SHADE.direction,
@@ -278,12 +287,24 @@ export function baseMaterialOf(
   base: MaterialSettingsMap | undefined,
   particles = false,
 ): MaterialEntry {
+  const values = materialValues(material, mergeMaterialSettings(tuning, base)[name]);
   return {
     name,
-    values: materialValues(material, mergeMaterialSettings(tuning, base)[name]),
-    controls: materialControls(material, pattern, particles),
+    values,
+    controls: materialControls(material, pattern, particles, values.drawAs),
     set: base?.[name],
     baseTint: tuning?.[name]?.tint ?? NO_MATERIAL_TINT,
     textures: texturesOf(material, textures),
   };
 }
+
+/** The reference image's row: an editing aid, after what is edited, in either editor's tree. */
+export const referenceRow = (): TreeRow => ({
+  key: REFERENCE_KEY,
+  label: 'Reference',
+  icon: 'compare',
+  depth: 0,
+  expandable: false,
+  expanded: false,
+  aid: true,
+});

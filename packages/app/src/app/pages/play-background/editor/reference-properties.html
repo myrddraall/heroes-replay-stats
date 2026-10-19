@@ -1,0 +1,96 @@
+@let v = values();
+@let c = changed();
+<hrs-property-section
+  title="Reference"
+  [changed]="layChanged()"
+  (resetRequested)="clear.emit(['shown', 'mode', 'amount'])"
+>
+  <div class="image">
+    <span class="image__label">Image</span>
+    <span class="image__control">
+      <button type="button" class="button" (click)="file.click()">
+        {{ hasImage() ? 'Change…' : 'Choose…' }}
+      </button>
+      @if (hasImage()) {
+        <span class="image__name" [title]="name()">{{ name() }}</span>
+      }
+    </span>
+    <input
+      #file
+      type="file"
+      accept="image/*"
+      class="image__file"
+      tabindex="-1"
+      aria-hidden="true"
+      (change)="choose($event)"
+    />
+  </div>
+  @if (hasImage()) {
+    <hrs-property-check
+      label="Show"
+      [checked]="v.shown"
+      [changed]="c.shown"
+      (resetRequested)="clear.emit(['shown'])"
+      (checkedChange)="valuesChange.emit({ shown: $event })"
+    />
+    <hrs-property-select
+      label="Mode"
+      [value]="v.mode"
+      [options]="modes"
+      [changed]="c.mode"
+      (resetRequested)="clear.emit(['mode'])"
+      (valueChange)="mode($event)"
+    />
+    <hrs-property-slider
+      [label]="amountLabel()"
+      [value]="v.amount"
+      [min]="0"
+      [max]="1"
+      [step]="0.01"
+      [changed]="c.amount"
+      (resetRequested)="clear.emit(['amount'])"
+      (valueChange)="valuesChange.emit({ amount: $event })"
+    />
+  }
+</hrs-property-section>
+@if (hasImage()) {
+  <hrs-property-section
+    title="Fit"
+    [changed]="fitChanged()"
+    (resetRequested)="clear.emit(['scale', 'across', 'up'])"
+  >
+    <hrs-property-slider
+      label="Size"
+      [value]="v.scale"
+      [min]="0.25"
+      [max]="4"
+      [step]="0.005"
+      [changed]="c.scale"
+      (resetRequested)="clear.emit(['scale'])"
+      (valueChange)="valuesChange.emit({ scale: $event })"
+    />
+    <hrs-property-slider
+      label="Across"
+      [value]="v.across"
+      [min]="-0.5"
+      [max]="0.5"
+      [step]="0.001"
+      [changed]="c.across"
+      (resetRequested)="clear.emit(['across'])"
+      (valueChange)="valuesChange.emit({ across: $event })"
+    />
+    <hrs-property-slider
+      label="Up"
+      [value]="v.up"
+      [min]="-0.5"
+      [max]="0.5"
+      [step]="0.001"
+      [changed]="c.up"
+      (resetRequested)="clear.emit(['up'])"
+      (valueChange)="valuesChange.emit({ up: $event })"
+    />
+  </hrs-property-section>
+  <div class="buttons">
+    <button type="button" class="button" (click)="imageRemoved.emit()">Remove image</button>
+  </div>
+}

@@ -31,10 +31,11 @@ import {
   bodyView,
   type MaterialEntry,
   materialsOf,
+  referenceRow,
   skyMaterialsOf,
   type TargetKind,
 } from './editor-model';
-import { EditingAidsStore, GRID_CELLS } from './editing-aids.store';
+import { EditingAidsStore, GRID_CELLS, REFERENCE_KEY } from './editing-aids.store';
 import { EditorUiStore } from './editor-ui.store';
 import type { AssetKind, AssetTarget, OpenTarget } from './open-target';
 import type { TreeRow } from './scene-tree';
@@ -79,10 +80,12 @@ type Target =
   | { readonly kind: 'particle' }
   /** The editing aids: the stage's backdrop, the stand-in planet. */
   | { readonly kind: 'backdrop' }
-  | { readonly kind: 'stand-in' };
+  | { readonly kind: 'stand-in' }
+  | { readonly kind: 'reference' };
 
 function targetOf(key: string, asset: AssetTarget): Target {
   if (key === STAGE_BACKDROP) return { kind: 'backdrop' };
+  if (key === REFERENCE_KEY) return { kind: 'reference' };
   if (key === STAGE_STAND_IN) return { kind: 'stand-in' };
   if (key.startsWith(`${STAGE_SKY}/m/`))
     return { kind: 'sky-material', stage: true, name: key.slice(STAGE_SKY.length + 3) };
@@ -172,19 +175,27 @@ export const AssetEditorStore = signalStore(
         const { below, edited } = skyOf(stage);
         return scene ? skyMaterialsOf(scene, below, edited, library().materials) : [];
       },
-      /** The planet or style open, as the editor has it: its defaults over its file's tuning. */
+      /**
+       * The planet or style open, as the editor has it: its defaults over its file's tuning; a
+       * planet in the style it wears of its own, whose settings it sets as it wears it.
+       */
       _body: computed((): BodyInfo | null => {
         const a = asset();
         const kind = libraryKind(a.kind);
         if (!kind) return null;
+        const files = _catalog.files();
+        const file = files[a.kind === 'planet' ? a.id : `style-${a.id}`];
+        const style = (a.kind === 'planet' && file?.tuning?.style) || '';
         return {
           key: ASSET,
           id: a.id,
-          style: '',
+          style,
           styleSet: false,
           settings: library()[kind][a.id] ?? {},
+          styleBelow: style ? library().styles[style] : undefined,
           materialBase: library().materials,
-          file: _catalog.files()[a.kind === 'planet' ? a.id : `style-${a.id}`],
+          file,
+          styleFile: style ? files[`style-${style}`] : undefined,
           moons: [],
         };
       }),
@@ -251,6 +262,7 @@ export const AssetEditorStore = signalStore(
           if (t.kind === 'sky') return t.stage ? 'Stage sky' : 'Sky';
           if (t.kind === 'backdrop') return 'Backdrop';
           if (t.kind === 'stand-in') return 'Stand-in planet';
+          if (t.kind === 'reference') return 'Reference';
           if (t.kind === 'sky-material' || t.kind === 'material') return t.name;
           if (t.kind === 'group') return 'Properties';
           return a.id;
@@ -312,7 +324,12 @@ export const AssetEditorStore = signalStore(
               },
             ];
           }
-          if (a.kind === 'planet') return [{ id: a.id, ...fitted(a.id) }];
+          if (a.kind === 'planet') {
+            const style = files[a.id]?.tuning?.style;
+            return style
+              ? [{ id: a.id, style, ...fitted(a.id, `style-${style}`) }]
+              : [{ id: a.id, ...fitted(a.id) }];
+          }
           if (a.kind === 'style')
             return [
               { id: previewPlanet(), style: a.id, ...fitted(previewPlanet(), `style-${a.id}`) },
@@ -479,6 +496,7 @@ export const AssetEditorStore = signalStore(
             });
         }
       }
+      rows.push(referenceRow());
       for (let i = aidsFrom; i < rows.length; i++) rows[i] = { ...rows[i]!, aid: true };
       return rows;
     }),

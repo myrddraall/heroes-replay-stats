@@ -4,7 +4,9 @@ import {
   materialValues,
   mergeMaterialSettings,
   ownSpread,
+  ownSpreadFrom,
 } from './material-settings';
+import { rimTurn, TOWARDS_EYE } from './scene-directions';
 import type { SceneMaterial } from './play-scene';
 
 const material = (over: Partial<SceneMaterial> = {}): SceneMaterial => ({
@@ -61,6 +63,7 @@ describe('materials’ settings', () => {
       strength: false,
       spread: false,
       scale: false,
+      drawAs: false,
       cut: false,
       lines: false,
       particles: false,
@@ -72,6 +75,7 @@ describe('materials’ settings', () => {
       strength: true,
       spread: true,
       scale: true,
+      drawAs: false,
       cut: true,
       lines: false,
       particles: false,
@@ -82,14 +86,35 @@ describe('materials’ settings', () => {
       cut: false,
       lines: true,
     });
+    // Shown as its texture instead (the game's way): the texture's range again, no lines.
+    expect(materialControls(emissive, true, false, 'texture')).toMatchObject({
+      drawAs: true,
+      cut: true,
+      lines: false,
+    });
     // A particle system's: drawn or not, and its strength.
     expect(materialControls(emissive, false, true)).toEqual({
       strength: true,
       spread: false,
       scale: false,
+      drawAs: false,
       cut: false,
       lines: false,
       particles: true,
     });
+  });
+
+  it('spread from where their fresnel turns to, a turn rimTurn gives back', () => {
+    const turned = { ...fresnel(0.2), yaw: 0.5236, pitch: -0.43633 };
+    const from = ownSpreadFrom(material({ emissive: { brightMult: 1, fresnel: turned } }));
+    // Brightest opposite where the turn leans: to the left and down.
+    expect(rimTurn(from)[0]).toBeCloseTo(-0.5236, 4);
+    expect(rimTurn(from)[1]).toBeCloseTo(0.43633, 4);
+    expect(ownSpreadFrom(material())).toEqual(TOWARDS_EYE);
+    expect(
+      materialValues(material({ emissive: { brightMult: 1, fresnel: turned } }), {
+        spreadFrom: [1, 0, 0],
+      }).spreadFrom,
+    ).toEqual([1, 0, 0]);
   });
 });

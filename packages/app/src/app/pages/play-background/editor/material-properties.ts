@@ -6,12 +6,17 @@ import {
   type MaterialValues,
 } from '../../../scenes/play-background/material-settings';
 import type { SceneBlend } from '../../../scenes/play-background/play-scene';
-import type { MaterialSettings, MaterialTint } from '../../../scenes/play-background/scene-planets';
+import type {
+  MaterialDrawAs,
+  MaterialSettings,
+  MaterialTint,
+} from '../../../scenes/play-background/scene-planets';
 import { PropertySection } from '../properties/property-section';
 import type { TextureEntry } from './editor-model';
 import { TintSection } from './tint-section';
-import { PropertySelect } from '../properties/property-select';
+import { type PropertyOption, PropertySelect } from '../properties/property-select';
 import { PropertySlider } from '../properties/property-slider';
+import { PropertyDirection } from '../properties/property-direction';
 
 /**
  * A material's properties (presentational), in sections as a design tool shows them: how it is
@@ -20,7 +25,7 @@ import { PropertySlider } from '../properties/property-slider';
  */
 @Component({
   selector: 'hrs-material-properties',
-  imports: [TintSection, PropertySection, PropertySlider, PropertySelect],
+  imports: [TintSection, PropertySection, PropertySlider, PropertySelect, PropertyDirection],
   templateUrl: './material-properties.html',
   styleUrl: './properties-panel.scss',
 })
@@ -40,10 +45,19 @@ export class MaterialProperties {
   readonly clear = output<readonly (keyof MaterialSettings)[]>();
   readonly resetRequested = output<void>();
   protected readonly blends = MATERIAL_BLENDS;
+  protected readonly drawAsOptions: readonly PropertyOption[] = [
+    { value: 'pattern', label: 'Hex pattern' },
+    { value: 'texture', label: 'Texture (game)' },
+  ];
 
   protected blend(blend: string): void {
     if (MATERIAL_BLENDS.includes(blend as SceneBlend))
       this.settingsChange.emit({ blend: blend as SceneBlend });
+  }
+
+  protected drawAs(value: string): void {
+    if (value === 'pattern' || value === 'texture')
+      this.settingsChange.emit({ drawAs: value satisfies MaterialDrawAs });
   }
 
   protected isSet(key: keyof MaterialSettings): boolean {

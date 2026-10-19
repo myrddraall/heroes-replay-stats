@@ -138,6 +138,18 @@
       (clear)="clearAid('standIn', $event)"
     />
   }
+  @case ('reference') {
+    <hrs-reference-properties
+      [name]="aids.referenceName()"
+      [hasImage]="aids.referenceUrl() !== null"
+      [values]="reference()"
+      [changed]="referenceChanged()"
+      (imageChosen)="aids.chooseReference($event, $event.name)"
+      (imageRemoved)="aids.clearReference()"
+      (valuesChange)="setReference($event)"
+      (clear)="clearReference($event)"
+    />
+  }
   @case ('particle') {
     <p class="hint">
       A particle system of the sky. Its own settings (rate, size, life) are not editable yet; its

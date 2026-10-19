@@ -6,9 +6,9 @@ import type { PlanetIndex } from './scene-planets';
 
 const index: PlanetIndex = {
   planets: [
-    { id: 'play-large', kind: 'play' },
-    { id: 'play-medium', kind: 'play' },
-    { id: 'play-small', kind: 'play' },
+    { id: 'play-large', kind: 'play', style: 'nexus' },
+    { id: 'play-medium', kind: 'play', style: 'nexus' },
+    { id: 'play-small', kind: 'play', style: 'nexus' },
     { id: 'azeroth', kind: 'world' },
     { id: 'planet-1', kind: 'painted' },
     { id: 'planet-2', kind: 'painted' },
@@ -24,6 +24,13 @@ const index: PlanetIndex = {
 describe('planet sets', () => {
   it("are the game's own as the index has it", () => {
     expect(playSet(index).map((p) => p.id)).toEqual(['play-large', 'play-medium', 'play-small']);
+  });
+
+  it('put each planet in the style it wears of its own', () => {
+    expect(playSet(index).every((p) => p.style === 'nexus')).toBe(true);
+    for (let n = 1; n < 20; n++)
+      for (const p of randomSet(index, seeded(n)))
+        expect(p.style).toBe(p.id.startsWith('play-') ? 'nexus' : undefined);
   });
 
   it('come out the same from the same seed, and different from another', () => {

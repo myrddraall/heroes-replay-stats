@@ -92,9 +92,12 @@ camera-facing square, finding the shape under each pixel (the body shader in
 `scene-renderer.ts`), turned to face the camera as the game's billboards do and lit by the
 flyby's lights where it is a world's. A planet can wear a style (`style-<id>.json`, the same
 form): its parts go about the body and its shade darkens it from a side; `nexus` is the Play
-screen's look for a world (its hex-grid shield and ring, a crescent left lit). The Play screen
-planets also come bare (`play-<size>-bare`: no shield, no ring) to wear a style; the random sets
-never draw them. How a planet shows
+screen's look for a world (its hex-grid shield and ring, a crescent left lit). A planet may wear
+a style of its own (the index's `style`, from its tuning) unless a scene says otherwise, and its
+tuning's `variants` say how it wears a style, over the style's own (its shade, the style's
+materials' settings): the Play screen planets are their paintings alone, wearing `nexus` as each
+one's own shield is in the game data (unshaded). A material's `spreadFrom` is the side its
+fresnel is brightest on (the editor's Spread from), in place of its layers' own turn. How a planet shows
 is settable per placement (`SetPlanet`): its light's strength, where its key light comes from
 (its rig turned together), a shade and where it falls, where its rims and glows lean
 (`scene-directions.ts`), a tint over all its materials, and its materials'
@@ -158,14 +161,21 @@ white and light grey; for a colour or the grid the renderer leaves the sky out a
 backdrop under what the planets cover, after tone mapping, so it shows as chosen and doesn't
 bloom), and the stand-in planet, a plain lit sphere of a colour or the grid that the app makes
 itself (`BUILT_IN_PLANETS`, ids starting `@`), with the material drawn over it on the parts of
-its own planet's file that draw it. A particle system's material
+its own planet's file that draw it. Either editor's tree ends with one more aid, the reference:
+a picture chosen from this computer (a screenshot of the game's own screen, to compare with),
+kept in this browser's IndexedDB (`reference-image.ts`), laid over the view (`ReferenceOverlay`)
+split past a line or faded, as tall as the view (the camera keeps its height's angle, so a
+screenshot fits by its height) and nudged to fit. A particle system's material
 takes only whether it is drawn and its strength (the particles' own settings aren't editable
 yet). Every property and section shows a reset where it is set. The screenshot mode shows the
 background alone, full screen, until Esc. The stores keep what they keep in `localStorage`
 through the `withLocalStorage` store feature (`data/store-features/`, beside `withFolding`;
 `withPlanetFiles` loads planets' files as a store needs them). A part may carry a
 `pattern` the renderer draws in place of its emissive texture (the nexus shield's hexes: analytic lines
-of a size, width and softness, crisp at any size). Each planet loads the first time a set has
+of a size, width and softness, crisp at any size), as many round the part as the texture it stands
+for has (its `across`, counted in the texture, times the texture's tiling), so a material's Size
+means the same drawn or textured (2: twice as big) and its Draw as shows it either way, the game's
+texture or the pattern, to compare them. Each planet loads the first time a set has
 it (`PlanetLoader`); the layout is `planet-sets.ts` (a set from a number, the same number
 the same set). What glows past the light's bloom threshold (in the scene's tone data) blooms: blurred
 small and added back, as the game's HDR does, which spreads the flyby planets' atmospheres into

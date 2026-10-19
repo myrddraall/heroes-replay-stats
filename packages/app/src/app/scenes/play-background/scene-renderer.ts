@@ -21,6 +21,7 @@ import {
   type SkySettings,
   type PlanetLight,
   type PartMapping,
+  wearOf,
 } from './scene-planets';
 import {
   BLEND_GLSL,
@@ -39,7 +40,7 @@ const CHANNELS: Record<LayerChannel, number> = { rgb: 0, rgba: 1, a: 2, r: 3, g:
 const SLOTS = ['uDiffuse', 'uEmissive', 'uMask0', 'uMask1'] as const;
 /** How many values a uv sphere's v table has, from the pole to the opposite one (as exported). */
 const V_SAMPLES = 32;
-/** How many hexes a drawn hex pattern has round a body at scale 1. */
+/** How many hexes a drawn hex pattern has round a body at scale 1, where it doesn't say how many its texture has. */
 const HEX_ROUND = 24;
 
 /**
@@ -734,6 +735,10 @@ function intoFrame(axes: Float32Array, v: Vec3): Vec3 {
   ];
 }
 
+/** How a placed planet wears its style (its tuning's say), if it wears one. */
+const wearIn = (placement: PlanetPlacement) =>
+  wearOf(placement.planet.planet, placement.style?.id.replace(/^style-/, ''));
+
 /** A placed planet's parts: its body's, and its style's. */
 function partsOf(placement: PlanetPlacement): readonly BodyPart[] {
   return [...placement.planet.planet.parts, ...(placement.style?.planet.parts ?? [])];
@@ -1369,14 +1374,16 @@ export class SceneRenderer {
 
   /**
    * A draw's material's settings: the placement's say over its owner's tuning (a planet's for its
-   * materials, its style's for the style's), or the sky's as set.
+   * materials, its style's for the style's) and how the planet wears its style, or the sky's as set.
    */
   private settingsOf(draw: MeshDraw): MaterialSettings | undefined {
     const placement = draw.placed?.placement;
     if (!placement) return this.sky.materials?.[draw.name];
-    return mergeMaterialSettings(draw.owner?.planet.tuning?.materials, placement.materials)[
-      draw.name
-    ];
+    return mergeMaterialSettings(
+      draw.owner?.planet.tuning?.materials,
+      wearIn(placement)?.materials,
+      placement.materials,
+    )[draw.name];
   }
 
   /** The mesh draws that move, or those that don't, into the bound target. */
@@ -1424,7 +1431,7 @@ export class SceneRenderer {
       gl.bindVertexArray(draw.vao);
       this.blend(blend);
       const scale = settings?.scale ?? MATERIAL_DEFAULTS.scale;
-      this.bindMaterial(p, draw.material, seconds, scale, blend);
+      this.bindMaterial(p, draw.material, seconds, scale, blend, settings?.spreadFrom);
       gl.uniform1f(this.uniform(p, 'uGlowBoost'), settings?.glow ?? MATERIAL_DEFAULTS.glow);
       gl.uniform1f(this.uniform(p, 'uSpread'), settings?.spread ?? -1);
       gl.uniform1f(this.uniform(p, 'uCut'), settings?.cut ?? MATERIAL_DEFAULTS.cut);
@@ -1444,11 +1451,17 @@ export class SceneRenderer {
         // The body glows under its own light's bloom threshold, lit or not (its city lights aren't lit).
         const own = (placement.style ?? placement.planet).planet.light;
         gl.uniform1f(this.uniform(p, 'uGlowThreshold'), own?.bloomThreshold ?? threshold);
-        // A drawn pattern: so many cells round the part (HEX_ROUND over its scale), its lines' width and glow.
-        gl.uniform1i(this.uniform(p, 'uPattern'), draw.part.pattern?.kind === 'hex' ? 1 : 0);
+        // A drawn pattern (unless shown as its texture, as the game does): as many cells round
+        // the part as its texture has (or HEX_ROUND), over its scale; its lines' width and glow.
+        const pattern = draw.part.pattern;
+        const drawn = pattern?.kind === 'hex' && settings?.drawAs !== 'texture';
+        const round = pattern?.across
+          ? pattern.across * (draw.material.emissive?.tiling?.[0] ?? 1)
+          : HEX_ROUND;
+        gl.uniform1i(this.uniform(p, 'uPattern'), drawn ? 1 : 0);
         gl.uniform3f(
           this.uniform(p, 'uPatternParams'),
-          HEX_ROUND / scale,
+          round / scale,
           settings?.width ?? MATERIAL_DEFAULTS.width,
           settings?.soft ?? MATERIAL_DEFAULTS.soft,
         );
@@ -1524,11 +1537,13 @@ export class SceneRenderer {
   private bindShade(placement: PlanetPlacement): void {
     const gl = this.gl;
     const p = this.bodyProgram;
-    // The planet's own tuning shades it as it is; a style it wears shades it its way instead.
+    // The planet's own tuning shades it as it is; a style it wears shades it its way instead,
+    // as the planet wears it.
     const shade = {
       ...DEFAULT_SHADE,
       ...placement.planet.planet.tuning?.shade,
       ...placement.style?.planet.shade,
+      ...wearIn(placement)?.shade,
       ...placement.shade,
     };
     gl.uniform3fv(this.uniform(p, 'uShadeDir'), normalize(shade.direction));
@@ -1571,8 +1586,9 @@ export class SceneRenderer {
   }
 
   /**
-   * `emissiveScale` scales the emissive layer's tiling (a pattern made larger or smaller);
-   * `blend` is the blend it is drawn with (its own, or its settings').
+   * `emissiveScale` sizes the emissive layer's pattern (its tiling over it: 2, twice the size);
+   * `blend` is the blend it is drawn with (its own, or its settings'); `spreadFrom`, where set, is
+   * the side its layers' fresnel is brightest on, in place of their own turn (which leans the other way).
    */
   private bindMaterial(
     p: WebGLProgram,
@@ -1580,7 +1596,9 @@ export class SceneRenderer {
     seconds: number,
     emissiveScale: number,
     blend: SceneBlend,
+    spreadFrom?: Vec3,
   ): void {
+    const turn = spreadFrom ? rimTurn(spreadFrom).map((a) => -a) : null;
     const gl = this.gl;
     const layers: (SceneLayer | null | undefined)[] = [
       material.diffuse,
@@ -1609,13 +1627,13 @@ export class SceneRenderer {
       gl.uniform1f(at('angle'), layer.angle ?? 0);
       const tiling = layer.tiling ?? [1, 1];
       const scale = i === 1 ? emissiveScale : 1;
-      gl.uniform2f(at('tiling'), tiling[0] * scale, tiling[1] * scale);
+      gl.uniform2f(at('tiling'), tiling[0] / scale, tiling[1] / scale);
       const f = layer.fresnel;
       gl.uniform1i(at('fresnel'), f?.type ?? 0);
       gl.uniform1f(at('fExponent'), f?.exponent ?? 1);
       gl.uniform1f(at('fMin'), f?.min ?? 0);
       gl.uniform1f(at('fMax'), f?.max ?? 1);
-      gl.uniform2f(at('fTurn'), f?.yaw ?? 0, f?.pitch ?? 0);
+      gl.uniform2f(at('fTurn'), turn?.[0] ?? f?.yaw ?? 0, turn?.[1] ?? f?.pitch ?? 0);
     });
     gl.uniform1i(this.uniform(p, 'uUnshaded'), material.unshaded ? 1 : 0);
     gl.uniform1i(this.uniform(p, 'uVertexAlpha'), material.vertexAlpha ? 1 : 0);

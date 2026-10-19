@@ -82,13 +82,13 @@ export function changeAt(
   return changed ? bodies.map((x, i) => (i === b ? changed : x)) : bodies.filter((_, i) => i !== b);
 }
 
-/** A body's style chosen ('': none, over its own); a planet keeps '' (chosen), a moon none. */
+/** A body's style chosen ('': none, over its own). */
 export const setStyle = (bodies: readonly SceneBody[], path: BodyPath, style: string) =>
   changeAt(
     bodies,
     path,
     (p) => ({ ...p, style }),
-    (m) => ({ ...m, style: style || undefined }),
+    (m) => ({ ...m, style }),
   );
 
 /** A body's style back as its own. */

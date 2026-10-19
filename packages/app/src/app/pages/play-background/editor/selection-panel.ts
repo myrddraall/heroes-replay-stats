@@ -19,6 +19,7 @@ import {
 } from './editing-aids.store';
 import { Editor } from './editor';
 import { MaterialProperties } from './material-properties';
+import { ReferenceProperties, type ReferenceValues } from './reference-properties';
 import { SceneEditorStore } from './scene-editor.store';
 import { SceneProperties } from './scene-properties';
 import { TintSection } from './tint-section';
@@ -28,7 +29,7 @@ import { TintSection } from './tint-section';
  * editor's or the asset editor's): the scene's own (the scene editor's only), a sky's (a tint
  * over all of it), a body's or a material's, each as its presentational properties show them,
  * what they change going back to the editor, which writes it to the layer it edits; and the
- * editing aids' (the page's aids store: never the design).
+ * editing aids' (the page's aids store: never the design), the reference image's among them.
  */
 @Component({
   selector: 'hrs-selection-panel',
@@ -38,6 +39,7 @@ import { TintSection } from './tint-section';
     BodyProperties,
     MaterialProperties,
     EditingAidProperties,
+    ReferenceProperties,
     AddPlanet,
   ],
   templateUrl: './selection-panel.html',
@@ -96,6 +98,33 @@ export class SelectionPanel {
     gridSize: this.aids.gridSize(),
     onPlanet: this.aids.materialOnPlanet(),
   }));
+  /** The reference image's settings, each by the aids store's name for it. */
+  private readonly referenceKeys = {
+    shown: 'referenceShown',
+    mode: 'referenceMode',
+    amount: 'referenceAmount',
+    scale: 'referenceScale',
+    across: 'referenceAcross',
+    up: 'referenceUp',
+  } as const satisfies Record<keyof ReferenceValues, keyof EditingAidsState>;
+  protected readonly reference = computed((): ReferenceValues => ({
+    shown: this.aids.referenceShown(),
+    mode: this.aids.referenceMode(),
+    amount: this.aids.referenceAmount(),
+    scale: this.aids.referenceScale(),
+    across: this.aids.referenceAcross(),
+    up: this.aids.referenceUp(),
+  }));
+  protected readonly referenceChanged = computed(() => {
+    const values = this.reference();
+    const changed = {} as Record<keyof ReferenceValues, boolean>;
+    for (const [k, key] of Object.entries(this.referenceKeys) as [
+      keyof ReferenceValues,
+      keyof EditingAidsState,
+    ][])
+      changed[k] = values[k] !== EDITING_AIDS_DEFAULTS[key];
+    return changed;
+  });
   protected readonly backdropChanged = computed(() => this.changedOf('backdrop'));
   protected readonly standInChanged = computed(() => this.changedOf('standIn'));
 
@@ -129,6 +158,17 @@ export class SelectionPanel {
       ...(change.gridSize !== undefined ? { gridSize: change.gridSize as GridSize } : {}),
       ...(change.onPlanet !== undefined ? { materialOnPlanet: change.onPlanet } : {}),
     });
+  }
+
+  protected setReference(change: Partial<ReferenceValues>): void {
+    const out: Partial<Record<keyof EditingAidsState, unknown>> = {};
+    for (const [k, v] of Object.entries(change) as [keyof ReferenceValues, unknown][])
+      out[this.referenceKeys[k]] = v;
+    this.aids.set(out as Partial<EditingAidsState>);
+  }
+
+  protected clearReference(fields: readonly (keyof ReferenceValues)[]): void {
+    this.aids.reset(fields.map((f) => this.referenceKeys[f]));
   }
 
   protected clearAid(
