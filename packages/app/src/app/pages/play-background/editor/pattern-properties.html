@@ -1,0 +1,113 @@
+@let v = values();
+@let c = controls();
+@if (c.colours) {
+  <!-- A shield's: its cells (drawn, or the game's texture), and its colour where inactive. -->
+  <hrs-property-section
+    title="Cells"
+    [changed]="anySet(['drawAs', 'scale', 'width', 'soft', 'cut'])"
+    (resetRequested)="clear.emit(['drawAs', 'scale', 'width', 'soft', 'cut'])"
+  >
+    @if (c.drawAs) {
+      <hrs-property-select
+        label="Draw as"
+        [value]="v.drawAs"
+        [options]="drawAsOptions"
+        [changed]="isSet('drawAs')"
+        [origin]="origins()?.drawAs"
+        (resetRequested)="clear.emit(['drawAs'])"
+        (valueChange)="drawAs($event)"
+      />
+    }
+    <hrs-property-number
+      label="Scale"
+      [value]="v.scale"
+      [min]="0.01"
+      [step]="0.05"
+      [changed]="isSet('scale')"
+      [origin]="origins()?.scale"
+      (resetRequested)="clear.emit(['scale'])"
+      (valueChange)="settingsChange.emit({ scale: $event })"
+    />
+    @if (c.lines) {
+      <hrs-property-number
+        label="Line width"
+        [value]="v.width"
+        [min]="0"
+        [max]="0.5"
+        [step]="0.01"
+        [changed]="isSet('width')"
+        [origin]="origins()?.width"
+        (resetRequested)="clear.emit(['width'])"
+        (valueChange)="settingsChange.emit({ width: $event })"
+      />
+      <hrs-property-number
+        label="Line softness"
+        [value]="v.soft"
+        [min]="0"
+        [max]="1"
+        [step]="0.05"
+        [changed]="isSet('soft')"
+        [origin]="origins()?.soft"
+        (resetRequested)="clear.emit(['soft'])"
+        (valueChange)="settingsChange.emit({ soft: $event })"
+      />
+    } @else if (c.cut) {
+      <hrs-property-number
+        label="Contrast"
+        [value]="v.cut"
+        [min]="0"
+        [max]="0.9"
+        [step]="0.05"
+        [changed]="isSet('cut')"
+        [origin]="origins()?.cut"
+        (resetRequested)="clear.emit(['cut'])"
+        (valueChange)="settingsChange.emit({ cut: $event })"
+      />
+    }
+  </hrs-property-section>
+  <hrs-property-section
+    title="Colours"
+    [changed]="isSet('inactive')"
+    (resetRequested)="clear.emit(['inactive'])"
+  >
+    <hrs-property-colour
+      label="Inactive"
+      [value]="v.inactive"
+      [changed]="isSet('inactive')"
+      [origin]="origins()?.inactive"
+      (resetRequested)="clear.emit(['inactive'])"
+      (valueChange)="settingsChange.emit({ inactive: $event })"
+    />
+  </hrs-property-section>
+} @else {
+  <!-- Any other's emissive texture: how large, and how much of it is cut away. -->
+  <hrs-property-section
+    title="Texture"
+    [changed]="anySet(['scale', 'cut'])"
+    (resetRequested)="clear.emit(['scale', 'cut'])"
+  >
+    <hrs-property-number
+      label="Scale"
+      [value]="v.scale"
+      [min]="0.01"
+      [step]="0.05"
+      [changed]="isSet('scale')"
+      [origin]="origins()?.scale"
+      (resetRequested)="clear.emit(['scale'])"
+      (valueChange)="settingsChange.emit({ scale: $event })"
+    />
+    @if (c.cut) {
+      <hrs-property-number
+        label="Contrast"
+        [value]="v.cut"
+        [min]="0"
+        [max]="0.9"
+        [step]="0.05"
+        [changed]="isSet('cut')"
+        [origin]="origins()?.cut"
+        (resetRequested)="clear.emit(['cut'])"
+        (valueChange)="settingsChange.emit({ cut: $event })"
+      />
+    }
+  </hrs-property-section>
+}

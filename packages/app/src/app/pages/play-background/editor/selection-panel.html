@@ -120,7 +120,6 @@
         [changed]="m.set !== undefined"
         [set]="m.set"
         [baseTint]="m.baseTint"
-        [layers]="m.layers"
         [labelBelow]="m.labelBelow"
         (settingsChange)="editor.setMaterial($event)"
         (clear)="editor.clearMaterial($event)"
@@ -135,6 +134,58 @@
       />
     }
   }
+  @case ('shader') {
+    @if (editor.material(); as m) {
+      <hrs-pattern-properties
+        [values]="m.values"
+        [controls]="m.controls"
+        [set]="m.set"
+        [origins]="m.origins"
+        (settingsChange)="editor.setMaterial($event)"
+        (clear)="editor.clearMaterial($event)"
+      />
+    }
+  }
+  @case ('effect') {
+    @if (editor.material(); as m) {
+      @if (editor.materialView(); as view) {
+        @if (view.kind === 'effect') {
+          <hrs-effect-properties
+            [effect]="view.effect"
+            [values]="m.values"
+            [set]="m.set"
+            [origins]="m.origins"
+            (settingsChange)="editor.setMaterial($event)"
+            (clear)="editor.clearMaterial($event)"
+          />
+        }
+      }
+    }
+  }
+  @case ('layer') {
+    @if (layer(); as l) {
+      <hrs-layer-properties
+        [layer]="l.layer"
+        [open]="true"
+        [transforms]="!l.material.controls.particles"
+        (settingsChange)="layerChange(l.layer.slot, $event)"
+        (clear)="layerClear(l.layer.slot, $event)"
+      />
+      <!-- An emissive texture's own (a shield's is its shader's): how large, how much cut away. -->
+      @if (
+        l.layer.slot === 'emissive' && l.material.controls.scale && !l.material.controls.colours
+      ) {
+        <hrs-pattern-properties
+          [values]="l.material.values"
+          [controls]="l.material.controls"
+          [set]="l.material.set"
+          [origins]="l.material.origins"
+          (settingsChange)="editor.setMaterial($event)"
+          (clear)="editor.clearMaterial($event)"
+        />
+      }
+    }
+  }
   @case ('sky-material') {
     @if (editor.material(); as m) {
       <hrs-material-properties
@@ -145,7 +196,6 @@
         [changed]="m.set !== undefined"
         [set]="m.set"
         [baseTint]="m.baseTint"
-        [layers]="m.layers"
         [labelBelow]="m.labelBelow"
         (settingsChange)="editor.setMaterial($event)"
         (clear)="editor.clearMaterial($event)"

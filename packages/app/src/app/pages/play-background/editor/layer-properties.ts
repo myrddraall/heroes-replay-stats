@@ -26,6 +26,8 @@ export class LayerProperties {
   readonly layer = input.required<LayerEntry>();
   /** Whether its transforms do anything (a particle system's texture only shows as it is). */
   readonly transforms = input(true);
+  /** Whether its section starts open (selected on its own); else only while something of it is set here. */
+  readonly open = input(false);
   readonly settingsChange = output<Partial<LayerSettings>>();
   /** Settings set here to take back (all of them: the layer as it is under the level edited). */
   readonly clear = output<readonly (keyof LayerSettings)[]>();

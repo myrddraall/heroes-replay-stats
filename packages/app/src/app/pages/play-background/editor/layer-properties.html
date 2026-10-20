@@ -2,7 +2,7 @@
 @let v = l.values;
 <hrs-property-section
   [title]="l.label"
-  [open]="changed()"
+  [open]="open() || changed()"
   [changed]="changed()"
   (resetRequested)="clear.emit(all())"
 >

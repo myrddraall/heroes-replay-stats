@@ -11,6 +11,7 @@ import type {
   LightEntry,
   LitByEntry,
   MaterialEntry,
+  MaterialView,
   PartEntry,
   TargetKind,
 } from './editor-model';
@@ -68,6 +69,8 @@ export abstract class Editor {
   abstract setStyle(style: string): void;
   abstract resetStyle(): void;
 
+  /** What of the selected material its row shows (a layer, its shield shader, an effect); none: the material itself. */
+  abstract readonly materialView: Signal<MaterialView | null>;
   /** The selected material, as its properties show it. */
   abstract readonly material: Signal<MaterialEntry | undefined>;
   abstract setMaterial(change: Partial<MaterialSettings>): void;

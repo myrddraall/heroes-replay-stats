@@ -32,7 +32,7 @@ import {
   type Vec3,
   without,
 } from '../../../scenes/play-background/background-scene';
-import { NO_MATERIAL_TINT } from '../../../scenes/play-background/material-settings';
+import { GRID_DEFAULTS, NO_MATERIAL_TINT } from '../../../scenes/play-background/material-settings';
 import { playSet, type SetPlanet } from '../../../scenes/play-background/planet-sets';
 import { loadPlaySceneFile, PLAY_SCENE_URL } from '../../../scenes/play-background/play-scene';
 import {
@@ -104,6 +104,11 @@ import {
   litByOf,
   type OuterLight,
   withLitBy,
+  type MaterialView,
+  splitViewKey,
+  layerRows,
+  partMaterialRows,
+  viewTitle,
 } from './editor-model';
 import { REFERENCE_KEY } from './editing-aids.store';
 import { EditorUiStore } from './editor-ui.store';
@@ -146,10 +151,16 @@ const skyDepthKey = (depth: string) => `${SKY}/depth/${depth}`;
 type Target =
   | { readonly kind: 'scene' }
   | { readonly kind: 'sky' }
-  | { readonly kind: 'sky-material'; readonly name: string }
+  | { readonly kind: 'sky-material'; readonly name: string; readonly view?: MaterialView }
   | { readonly kind: 'body'; readonly path: BodyPath }
   | { readonly kind: 'group'; readonly path: BodyPath }
-  | { readonly kind: 'material'; readonly path: BodyPath; readonly name: string }
+  | {
+      readonly kind: 'material';
+      readonly path: BodyPath;
+      readonly name: string;
+      /** What of it the row shows, where not the material itself. */
+      readonly view?: MaterialView;
+    }
   | { readonly kind: 'part'; readonly path: BodyPath; readonly key: PartKey }
   | { readonly kind: 'light'; readonly path: BodyPath; readonly id: LightId }
   /** One of the scene's own lights. */
@@ -166,6 +177,13 @@ function receiverOf(t: Target): Receiver | null | undefined {
 }
 
 function targetOf(key: string): Target {
+  // What of a material a row shows (a layer, its shader, an effect), or a shader's group.
+  const split = splitViewKey(key);
+  if (split) {
+    const t = targetOf(split.base);
+    if (split.view === 'group') return { kind: 'group', path: 'path' in t ? t.path : [] };
+    return t.kind === 'material' || t.kind === 'sky-material' ? { ...t, view: split.view } : t;
+  }
   if (key === REFERENCE_KEY) return { kind: 'reference' };
   if (key.startsWith(`${SKY}/m/`)) return { kind: 'sky-material', name: key.slice(SKY.length + 3) };
   if (key.startsWith(`${SKY}/depth/`)) return { kind: 'group', path: [] };
@@ -417,8 +435,13 @@ export const SceneEditorStore = signalStore(
         ...new Set(bodies().flatMap((b) => (b.style ? [b.id, `style-${b.style}`] : [b.id]))),
       ]),
       kind: computed((): TargetKind => {
-        const k = target().kind;
-        return k === 'scene-light' ? 'light' : k; // the scene's lights shown as any light is
+        const t = target();
+        if ('view' in t && t.view) return t.view.kind;
+        return t.kind === 'scene-light' ? 'light' : t.kind; // the scene's lights shown as any light is
+      }),
+      materialView: computed((): MaterialView | null => {
+        const t = target();
+        return 'view' in t && t.view ? t.view : null;
       }),
       bodyView: computed(() => {
         const b = body();
@@ -458,6 +481,14 @@ export const SceneEditorStore = signalStore(
       }),
       title: computed(() => {
         const t = target();
+        if ('view' in t && t.view) {
+          const b = body();
+          const m =
+            t.kind === 'sky-material'
+              ? skyMaterials().find((x) => x.name === t.name)
+              : b && materialsOf(b).find((x) => x.name === t.name);
+          return viewTitle(t.view, m ?? undefined);
+        }
         if (t.kind === 'scene') return 'Scene';
         if (t.kind === 'sky') return 'Sky';
         if (t.kind === 'sky-material')
@@ -537,18 +568,21 @@ export const SceneEditorStore = signalStore(
           enabled,
         });
       /** A material's row: movable (its draw order) unless opaque, drawn first wherever it is. */
-      const leaf = (key: string, m: MaterialEntry, depth: number) =>
+      /** A material's row, its layers under it (folded unless unfolded). */
+      const leaf = (key: string, m: MaterialEntry, depth: number) => {
         rows.push({
           key,
           label: m.label,
           detail: m.name,
           icon: 'texture',
           depth,
-          expandable: false,
-          expanded: false,
+          expandable: m.layers.length > 0,
+          expanded: open.has(key),
           enabled: m.values.enabled,
           movable: m.values.blend !== 'opaque',
         });
+        if (open.has(key)) rows.push(...layerRows(key, m, depth + 1));
+      };
       row(SCENE, 'Scene', 'landscape', 0, store.sceneUnsaved());
       if (!open.has(SCENE)) return rows;
       // The scene's own lights, where it has any.
@@ -621,7 +655,14 @@ export const SceneEditorStore = signalStore(
               enabled: part.enabled,
             });
             if (!open.has(key))
-              for (const m of materials) leaf(materialKey(path, m.name), m, at + 1);
+              partMaterialRows(
+                materials,
+                at + 1,
+                open,
+                (name) => materialKey(path, name),
+                leaf,
+                (r) => rows.push(r),
+              );
           }
         };
         const lightGroup = (group: string, list: readonly LightEntry[], at: number) => {
@@ -883,6 +924,14 @@ export const SceneEditorStore = signalStore(
           const below = store.skyMaterials().find((m) => m.name === t.name)?.enabledBelow ?? true;
           if (on === below) d.clearSkyMaterial(store.scene(), t.name, ['enabled']);
           else materialChange(change.key, { enabled: on });
+        } else if (t.kind === 'material' && t.view?.kind === 'effect') {
+          // A shield's effect switched: as it starts, nothing set.
+          const field = t.view.effect === 'reveal' ? 'revealOn' : 'activationOn';
+          settings(t.path, (s) =>
+            on === GRID_DEFAULTS[field]
+              ? withoutMaterial(s, t.name, [field])
+              : withMaterial(s, t.name, { [field]: on }),
+          );
         } else if (t.kind === 'material' && b) {
           const below = materialsOf(b).find((m) => m.name === t.name)?.enabledBelow ?? true;
           settings(t.path, (s) => withMaterialSwitched(s, t.name, on, below));

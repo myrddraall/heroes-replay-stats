@@ -1,4 +1,5 @@
 import { Component, computed, inject } from '@angular/core';
+import type { LayerSettings, LayerSlot } from '../../../scenes/play-background/scene-planets';
 import { DraftDesignStore } from '../draft-design.store';
 import type { PropertyOption } from '../properties/property-select';
 import { AddPlanet } from './add-planet';
@@ -19,7 +20,11 @@ import {
 } from './editing-aids.store';
 import { Editor } from './editor';
 import { EditorUiStore } from './editor-ui.store';
+import { EffectProperties } from './effect-properties';
+import type { LayerEntry, MaterialEntry } from './editor-model';
+import { LayerProperties } from './layer-properties';
 import { MaterialProperties } from './material-properties';
+import { PatternProperties } from './pattern-properties';
 import { PartProperties } from './part-properties';
 import { LightProperties } from './light-properties';
 import { AddLight } from './add-light';
@@ -43,6 +48,9 @@ import { TintSection } from './tint-section';
     SceneProperties,
     BodyProperties,
     MaterialProperties,
+    PatternProperties,
+    EffectProperties,
+    LayerProperties,
     PartProperties,
     LightProperties,
     AddLight,
@@ -167,6 +175,34 @@ export class SelectionPanel {
       ...(change.sky !== undefined ? { backdropSky: change.sky } : {}),
       ...(change.gridSize !== undefined ? { gridSize: change.gridSize as GridSize } : {}),
     });
+  }
+
+  /** The selected layer, with the material it is a layer of. */
+  protected readonly layer = computed(
+    (): { readonly layer: LayerEntry; readonly material: MaterialEntry } | null => {
+      const view = this.editor.materialView();
+      const material = this.editor.material();
+      const layer =
+        view?.kind === 'layer' ? material?.layers.find((l) => l.slot === view.slot) : undefined;
+      return material && layer ? { layer, material } : null;
+    },
+  );
+
+  /** A layer's settings changed: its others, and the other layers', as set here, kept. */
+  protected layerChange(slot: LayerSlot, change: Partial<LayerSettings>): void {
+    const layers = this.editor.material()?.set?.layers ?? {};
+    this.editor.setMaterial({ layers: { ...layers, [slot]: { ...layers[slot], ...change } } });
+  }
+
+  /** A layer's settings taken back; no layer's left set here: the layers as they are under it. */
+  protected layerClear(slot: LayerSlot, keys: readonly (keyof LayerSettings)[]): void {
+    const { [slot]: own, ...others } = this.editor.material()?.set?.layers ?? {};
+    const kept = Object.fromEntries(
+      Object.entries(own ?? {}).filter(([k]) => !keys.includes(k as keyof LayerSettings)),
+    );
+    const layers = Object.keys(kept).length ? { ...others, [slot]: kept } : others;
+    if (Object.keys(layers).length) this.editor.setMaterial({ layers });
+    else this.editor.clearMaterial(['layers']);
   }
 
   /** The selected material as the library has it (shared), opened from what it is selected in. */
