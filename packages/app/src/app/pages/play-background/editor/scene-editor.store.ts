@@ -30,6 +30,7 @@ import {
   pathOf,
   placeBodies,
   reveal,
+  type GroupPlacement,
   type SceneBody,
   type Vec3,
   without,
@@ -42,6 +43,9 @@ import {
 import { playSet, type SetPlanet } from '../../../scenes/play-background/planet-sets';
 import { PLAY_SCENE_URL } from '../../../scenes/play-background/play-scene';
 import {
+  canPutGroup,
+  groupBodies,
+  isGroup,
   addMoonAt,
   addPlanet,
   bodyAt,
@@ -73,6 +77,7 @@ import {
   loadPlanetIndex,
   type MaterialSettings,
   type MaterialTint,
+  partId,
   type PartKey,
   type PartSettings,
   reordered,
@@ -115,6 +120,7 @@ import {
   byDepth,
   referenceRow,
   skyMaterialsOf,
+  ownSkyInfo,
   type TargetKind,
   type LitByEntry,
   litByOf,
@@ -128,11 +134,28 @@ import {
 } from './editor-model';
 import { chosenOverlays, ownOverlays, wornKey } from '../../../scenes/play-background/overlays';
 import {
+  addedSourced,
+  createdSkyFile,
   type CreatedShape,
+  mergeAddedParts,
   overlayFileFor,
+  PART_SHAPES,
+  sourceFiles,
+  withAddedParts,
 } from '../../../scenes/play-background/created-overlays';
+import { AssetCatalogStore } from './asset-catalog.store';
+import {
+  addMaterial,
+  addReused,
+  addShape,
+  type PartHost,
+  removeMaterial,
+  removePart,
+  settingsAsOverlay,
+} from './part-hosts';
 import { REFERENCE_KEY } from './editing-aids.store';
 import type { PickChoice } from './pick-list';
+import type { PickItem } from './pick-flyout';
 import { EditorUiStore } from './editor-ui.store';
 import { type AssetTarget, type OpenTarget, RANDOM_SETS } from './open-target';
 import type { TreeMove, TreeRow } from './scene-tree';
@@ -161,6 +184,15 @@ const overlayLightsKey = (path: BodyPath, id: string) => `${bodyKey(path)}/overl
 const materialRowKey = (path: BodyPath, name: string, overlay?: string) =>
   overlay ? `${bodyKey(path)}/om/${overlay}/${name}` : `${bodyKey(path)}/m/${name}`;
 const partRowKey = (path: BodyPath, key: PartKey) => `${bodyKey(path)}/p/${key}`;
+/** The room a body's glow is given where the view is fitted to it (as set, else under it). */
+const glowMarginOf = (b: BodyInfo) => b.settings.glowMargin ?? b.below?.glowMargin;
+/** A group put in the scene, by its index there. */
+const placementKey = (index: number) => `place/${index}`;
+/** A body of a group put in the scene (by the index of its planet among them all, and its moon path): not a row. */
+const groupBodyKey = (planet: number, moon: BodyPath) => `gbody:${planet}/${pathKey(moon)}`;
+/** Planets in words: their ids, or that there are none. */
+const planetsIn = (bodies: readonly SceneBody[]) =>
+  bodies.length ? bodies.map((b) => b.id).join(', ') : 'No planets yet';
 /** Its lights (its rig's and its shadow), a group of their own. */
 const lightsKey = (path: BodyPath) => `${bodyKey(path)}/lights`;
 const lightRowKey = (path: BodyPath, id: LightId) => `${bodyKey(path)}/l/${id}`;
@@ -216,7 +248,9 @@ type Target =
   /** One of the scene's own lights. */
   | { readonly kind: 'scene-light'; readonly id: LightId }
   /** The reference image laid over the view (an editing aid). */
-  | { readonly kind: 'reference' };
+  | { readonly kind: 'reference' }
+  /** A group put in the scene, by its index there. */
+  | { readonly kind: 'placement'; readonly index: number };
 
 /** What of a body a target is, as a light reaches it: the body (none), a part or a material; not one (undefined). */
 function receiverOf(t: Target): Receiver | null | undefined {
@@ -253,6 +287,7 @@ function targetOf(key: string): Target {
   if (key === SCENE_LIGHTS) return { kind: 'group', path: [] };
   if (key.startsWith('scene-light/'))
     return { kind: 'scene-light', id: key.slice('scene-light/'.length) as LightId };
+  if (key.startsWith('place/')) return { kind: 'placement', index: Number(key.slice(6)) };
   if (!key.startsWith('body:')) return { kind: 'scene' };
   const rest = key.slice(5);
   const slash = rest.indexOf('/');
@@ -308,6 +343,7 @@ export const SceneEditorStore = signalStore(
     _draft: inject(DraftDesignStore),
     _ui: inject(EditorUiStore),
     _background: inject(BackgroundStore),
+    _catalog: inject(AssetCatalogStore),
     _index: resource({ loader: ({ abortSignal }) => loadPlanetIndex(PLAY_SCENE_URL, abortSignal) }),
   })),
   withComputed(
@@ -338,8 +374,14 @@ export const SceneEditorStore = signalStore(
         return (id: string) => overlayFileFor(lib, id);
       });
 
-      /** The scene's bodies: each planet, then its moons after it (theirs after each). */
-      const bodies = computed((): BodyInfo[] => {
+      /**
+       * Planets' bodies as the editor has them: each planet, then its moons after it (theirs after
+       * each), each named by `keyOf` its path.
+       */
+      const bodiesOf = (
+        planets: readonly SceneBody[],
+        keyOf: (path: BodyPath) => string,
+      ): BodyInfo[] => {
         const all = files();
         const lib = library();
         const out: BodyInfo[] = [];
@@ -354,7 +396,7 @@ export const SceneEditorStore = signalStore(
           orbit?: Orbit,
           place?: { readonly position: Vec3; readonly radius: number },
         ): BodyInfo => ({
-          key: bodyKey(path),
+          key: keyOf(path),
           id: bodyId,
           overlays: worn.map((id) => ({
             id,
@@ -366,7 +408,14 @@ export const SceneEditorStore = signalStore(
           settings,
           below: lib.planets[bodyId],
           materialBase: lib.materials,
-          file: all[bodyId],
+          // Its own parts as its data has them, with those added onto it (the library's, the scene's).
+          file:
+            all[bodyId] &&
+            withAddedParts(
+              all[bodyId],
+              mergeAddedParts(lib.planets[bodyId]?.addedParts, settings.addedParts),
+              madeLookup(),
+            ),
           orbit,
           place,
           moons: children,
@@ -391,7 +440,7 @@ export const SceneEditorStore = signalStore(
             );
             walk(path, moon.moons ?? []);
           });
-        sceneBodiesNow().forEach((planet, b) => {
+        planets.forEach((planet, b) => {
           const chosen = chosenOverlays(planet);
           const wears = worn(chosen, planet.id);
           out.push(
@@ -409,8 +458,27 @@ export const SceneEditorStore = signalStore(
           walk([b], planet.moons ?? []);
         });
         return out;
-      });
+      };
+      /** The scene's bodies: each planet, then its moons after it (theirs after each). */
+      const bodies = computed((): BodyInfo[] => bodiesOf(sceneBodiesNow(), bodyKey));
       const bodyByKey = computed(() => new Map(bodies().map((b) => [b.key, b] as const)));
+      /** Whether what is open is a group (a scene within scenes: no sky of its own). */
+      const groupOpen = computed(() => isGroup(sceneId()));
+      /** The groups put in it, in order. */
+      const placements = computed(() => choices().groups ?? []);
+      /** A group (kept with the scenes), by its id. */
+      const groupOf = (id: string) => _draft.scenes().planets[id];
+      /** The planets of the groups put in it, where they are put (theirs in turn). */
+      const placedGroups = computed(() => groupBodies(placements(), groupOf));
+      /** Those planets' bodies (their moons too), by `groupBodyKey`. */
+      const groupInfos = computed(
+        () =>
+          new Map(
+            placedGroups()
+              .flatMap((g, j) => bodiesOf([g.body], (path) => groupBodyKey(j, path.slice(1))))
+              .map((b) => [b.key, b] as const),
+          ),
+      );
       const sky = computed(() => choices().sky ?? {});
       const sceneFile = computed(() => (_sceneFile.hasValue() ? _sceneFile.value() : null));
       /** The overlays the sky wears (switched on or off), in order. */
@@ -418,15 +486,34 @@ export const SceneEditorStore = signalStore(
       const skyOverlays = computed(() =>
         skyOverlayInfos(sceneFile(), library(), skyWorn(), madeLookup()),
       );
+      /** The parts added onto the sky (the library's, then the scene's). */
+      const skyAdded = computed(() => mergeAddedParts(library().sky.addedParts, sky().addedParts));
+      /** The sky's own parts (added onto it), as its overlays are had; none: none. */
+      const skyOwn = computed(() =>
+        skyAdded().length
+          ? [ownSkyInfo(createdSkyFile(addedSourced(skyAdded()), madeLookup()))]
+          : [],
+      );
       const skyMaterials = computed(() => {
         const scene = sceneFile();
         return scene
-          ? skyMaterialsOf(scene, library().sky, sky(), library().materials, skyOverlays())
+          ? skyMaterialsOf(scene, library().sky, sky(), library().materials, [
+              ...skyOwn(),
+              ...skyOverlays(),
+            ])
           : [];
       });
-      /** The parts of the overlays the sky wears, as shown. */
+      /** The sky's own parts (added onto it) and those of the overlays it wears, as shown. */
       const skyParts = computed(() =>
-        skyOverlays().flatMap((o) => skyPartsOf(o, library().sky.parts, sky().parts)),
+        [...skyOwn(), ...skyOverlays()].flatMap((o) =>
+          skyPartsOf(
+            o,
+            library().sky.parts,
+            sky().parts,
+            false,
+            (sky().addedParts ?? []).map((p) => p.id),
+          ),
+        ),
       );
       const target = computed(() => targetOf(selected()));
       const body = computed(() => {
@@ -482,12 +569,12 @@ export const SceneEditorStore = signalStore(
       const label = computed(() => choices().name ?? sceneBodiesNow()[0]?.id ?? sceneId());
       return {
         resetAllLabel: computed(() => 'Reset scene'),
-        // A scene's: overlays are made and changed in the library.
-        partShapes: computed((): readonly CreatedShape[] => []),
-        partMaterials: computed(() => null),
         deletable: computed(() => false),
         skyOverlayOpen: computed(() => false),
-        opened: computed((): OpenTarget => ({ kind: 'scene', id: sceneId() })),
+        opened: computed((): OpenTarget => ({
+          kind: groupOpen() ? 'group' : 'scene',
+          id: sceneId(),
+        })),
         parent: computed(() => null),
         sharedMaterial: computed((): AssetTarget | null => {
           const t = target();
@@ -508,7 +595,7 @@ export const SceneEditorStore = signalStore(
           const id = sceneId();
           if (id === RANDOM_SCENE) return 'Scene · Random sets';
           if (id === PLAY_SCREEN_SCENE) return 'Scene · Play screen';
-          return `Scene · ${label()}`;
+          return `${groupOpen() ? 'Group' : 'Scene'} · ${label()}`;
         }),
         /** Whether the scene is one of the user's own (named, deletable). */
         own: computed(() => ownScene(sceneId())),
@@ -519,6 +606,24 @@ export const SceneEditorStore = signalStore(
         sceneBodies: sceneBodiesNow,
         bodies,
         bodyByKey,
+        groupOpen,
+        placements,
+        placedGroups,
+        groupInfos,
+        /** The groups that may be put in it (none it is in, round about), by name. */
+        groupOptions: computed((): readonly PickItem[] =>
+          Object.entries(_draft.scenes().planets)
+            .filter(([id]) => isGroup(id) && canPutGroup(id, sceneId(), groupOf))
+            .map(([id, g]) => ({
+              id,
+              label: g.name ?? id,
+              caption: planetsIn(g.bodies ?? []),
+            })),
+        ),
+        /** A group put in it: its name there, else the group's own. */
+        placementLabel: computed(
+          () => (p: GroupPlacement) => p.label ?? groupOf(p.group)?.name ?? p.group,
+        ),
         skyMaterials,
         target,
         focusPath,
@@ -538,7 +643,31 @@ export const SceneEditorStore = signalStore(
         sceneTint: computed(() => _draft.scenes().settings),
         neededFiles: computed(() => {
           const file = overlayFileOf();
-          return [...new Set(bodies().flatMap((b) => [b.id, ...wornIds(b).map(file)]))];
+          const lib = library();
+          // Each body, what it wears, and the files what is added onto it (and the sky) reads.
+          return [
+            ...new Set([
+              ...bodies().flatMap((b) => [
+                b.id,
+                ...wornIds(b).map(file),
+                ...sourceFiles(
+                  addedSourced(
+                    mergeAddedParts(lib.planets[b.id]?.addedParts, b.settings.addedParts),
+                  ),
+                ),
+              ]),
+              ...[...groupInfos().values()].flatMap((b) => [
+                b.id,
+                ...wornIds(b).map(file),
+                ...sourceFiles(
+                  addedSourced(
+                    mergeAddedParts(lib.planets[b.id]?.addedParts, b.settings.addedParts),
+                  ),
+                ),
+              ]),
+              ...sourceFiles(addedSourced(skyAdded())),
+            ]),
+          ];
         }),
         kind: computed((): TargetKind => {
           const t = target();
@@ -597,7 +726,7 @@ export const SceneEditorStore = signalStore(
                   : undefined;
             return viewTitle(t.view, m ?? undefined);
           }
-          if (t.kind === 'scene') return 'Scene';
+          if (t.kind === 'scene') return groupOpen() ? 'Group' : 'Scene';
           if (t.kind === 'sky') return 'Sky';
           if (t.kind === 'sky-material') return materialAt(skyMaterials(), t.key)?.label ?? t.name;
           if (t.kind === 'material') {
@@ -617,6 +746,10 @@ export const SceneEditorStore = signalStore(
           if (t.kind === 'scene-light')
             return choices().lights?.find((l) => l.id === t.id)?.name ?? 'Properties';
           if (t.kind === 'reference') return 'Reference';
+          if (t.kind === 'placement') {
+            const p = placements()[t.index];
+            return p ? `Group · ${p.label ?? groupOf(p.group)?.name ?? p.group}` : 'Group';
+          }
           const b = body();
           return b ? bodyLabel(b) : 'Properties';
         }),
@@ -651,6 +784,69 @@ export const SceneEditorStore = signalStore(
       };
     },
   ),
+  withComputed((store) => {
+    const d = store._draft;
+    /** The parts added onto a body of the scene (its settings', in the scene), to change them by. */
+    const bodyHost = (path: BodyPath): PartHost | null => {
+      const b = store.bodyByKey().get(bodyKey(path));
+      if (!b) return null;
+      return {
+        kind: 'planet',
+        parts: b.settings.addedParts ?? [],
+        taken: (b.file?.parts ?? []).map(partId),
+        set: (parts) =>
+          d.setSceneBodies(
+            store.scene(),
+            changeSettings(store.sceneBodies(), path, wornKeyOf(b), (s) =>
+              without({ ...s, addedParts: parts }, parts.length ? [] : ['addedParts']),
+            ),
+          ),
+      };
+    };
+    /** The parts added onto the scene's sky, to change them by. */
+    const skyHost = (): PartHost => ({
+      kind: 'sky',
+      parts: store.sceneSky().addedParts ?? [],
+      taken: store
+        .skyParts()
+        .filter((p) => !p.overlay)
+        .map((p) => p.key.slice(4)),
+      set: (parts) => d.setSkyAddedParts(store.scene(), parts),
+    });
+    /** Where parts are added for what is selected: the body selected, or the sky. */
+    const addHost = computed((): PartHost | null => {
+      const t = store.target();
+      return t.kind === 'body' ? bodyHost(t.path) : t.kind === 'sky' ? skyHost() : null;
+    });
+    /** The part selected and where it is kept, where it was added in the scene. */
+    const partHost = computed((): { host: PartHost; id: string } | null => {
+      const t = store.target();
+      if ((t.kind !== 'part' && t.kind !== 'sky-part') || !t.key.startsWith('own:')) return null;
+      const host = t.kind === 'part' ? bodyHost(t.path) : skyHost();
+      const id = t.key.slice(4);
+      return host?.parts.some((p) => p.id === id) ? { host, id } : null;
+    });
+    return {
+      _addHost: addHost,
+      _partHost: partHost,
+      partShapes: computed((): readonly CreatedShape[] => {
+        const host = addHost();
+        return host ? PART_SHAPES[host.kind] : [];
+      }),
+      reusableParts: computed((): readonly PickChoice[] => {
+        const host = addHost();
+        if (!host) return [];
+        const offered = store._catalog.reusableParts()[host.kind];
+        return offered.map((r, i) => ({ value: String(i), label: r.label }));
+      }),
+      canSaveAsOverlay: computed(() => (addHost()?.parts.length ?? 0) > 0),
+      partMaterials: computed(() => {
+        const at = partHost();
+        const part = at?.host.parts.find((p) => p.id === at.id);
+        return part ? { picked: part.materials, choices: store._catalog.materialChoices() } : null;
+      }),
+    };
+  }),
   withComputed((store) => ({
     rows: computed((): TreeRow[] => {
       const open = store.unfolded();
@@ -691,7 +887,8 @@ export const SceneEditorStore = signalStore(
         });
         if (open.has(key)) rows.push(...layerRows(key, m, depth + 1));
       };
-      row(SCENE, 'Scene', 'landscape', 0, store.sceneUnsaved());
+      if (store.groupOpen()) row(SCENE, 'Group', 'workspaces', 0, store.sceneUnsaved());
+      else row(SCENE, 'Scene', 'landscape', 0, store.sceneUnsaved());
       if (!open.has(SCENE)) return rows;
       // The scene's own lights, where it has any.
       const own = sceneLightsOf(store.sceneLights());
@@ -717,11 +914,13 @@ export const SceneEditorStore = signalStore(
               enabled: light.enabled,
             });
       }
-      row(SKY, 'Sky', 'blur_on', 1, store.skyUnsaved());
+      // A group has no sky of its own (it is drawn under the scene's it is put in).
+      const sky = !store.groupOpen();
+      if (sky) row(SKY, 'Sky', 'blur_on', 1, store.skyUnsaved());
       // Its materials by where they are drawn among the scene's objects: behind, among, in front;
       // then each overlay it wears, its parts with their materials under it.
-      if (open.has(SKY))
-        for (const g of byDepth(store.skyMaterials().filter((m) => !m.overlay))) {
+      if (sky && open.has(SKY))
+        for (const g of byDepth(store.skyMaterials().filter((m) => !m.overlay && !m.added))) {
           const group = skyDepthKey(g.depth);
           rows.push({
             key: group,
@@ -734,7 +933,25 @@ export const SceneEditorStore = signalStore(
           });
           if (!open.has(group)) for (const m of g.materials) leaf(skyMaterialKey(m.name), m, 3);
         }
-      if (open.has(SKY))
+      // The parts added onto it (its own), each with the materials it draws.
+      if (sky && open.has(SKY))
+        for (const part of store.skyParts().filter((p) => !p.overlay)) {
+          const key = skyPartKey(part.key);
+          const materials = store
+            .skyMaterials()
+            .filter((m) => m.added && part.materials.includes(m.name));
+          rows.push({
+            key,
+            label: part.label,
+            icon: part.band ? 'panorama_horizontal' : 'category',
+            depth: 2,
+            expandable: materials.length > 0,
+            expanded: !open.has(key),
+            enabled: part.enabled,
+          });
+          if (!open.has(key)) for (const m of materials) leaf(skyMaterialKey(m.name), m, 3);
+        }
+      if (sky && open.has(SKY))
         for (const o of store.skyOverlays()) {
           const group = skyOverlayKey(o.id);
           rows.push({
@@ -871,6 +1088,19 @@ export const SceneEditorStore = signalStore(
         const planet = store.bodyByKey().get(bodyKey([i]));
         if (planet) body(planet, 1);
       });
+      // The groups put in it, each switched by its checkbox (what is in it is set in the group).
+      store.placements().forEach((p, i) =>
+        rows.push({
+          key: placementKey(i),
+          label: store.placementLabel()(p),
+          detail: 'group',
+          icon: 'workspaces',
+          depth: 1,
+          expandable: false,
+          expanded: false,
+          enabled: p.enabled !== false,
+        }),
+      );
       rows.push(referenceRow());
       return rows;
     }),
@@ -879,10 +1109,11 @@ export const SceneEditorStore = signalStore(
      * centred on a moon, that moon in the middle of the view with its own. Null for the random
      * sets (the background draws them), or while what they need is loading.
      */
-    _placed: computed((): { planets: SetPlanet[]; paths: BodyPath[] } | null => {
+    _placed: computed((): { planets: SetPlanet[]; picks: string[] } | null => {
       if (!store.hasPlanets()) return null;
       const planets = store.sceneBodies();
-      if (!planets.length) return { planets: [], paths: [] };
+      const grouped = store.placedGroups();
+      if (!planets.length && !grouped.length) return { planets: [], picks: [] };
       const scene = store._sceneFile.hasValue() ? store._sceneFile.value() : null;
       if (!scene) return null;
       const eye = scene.camera.eye;
@@ -890,28 +1121,70 @@ export const SceneEditorStore = signalStore(
       const reach = { up, across: up * store._ui.aspect() };
       const t = store.target();
       const selected = 'path' in t ? t.path : null;
-      // Each group: a root (a planet where it is, or the moon centred on), its moons, and the
-      // path its bodies' own paths are under.
+      /** The scene's bodies from its planet down to the one at a path. */
+      const sceneChain = (at: BodyPath) =>
+        at.map((_, i) => store.bodyByKey().get(bodyKey(at.slice(0, i + 1))));
+      // Each root: a planet where it is (the scene's, or a group's put in it), or the moon
+      // centred on; its moons; the path its bodies' own paths are under (the scene's); its
+      // bodies from it down to each (`chain`); what picking one selects; the lights of the
+      // groups it is in.
+      interface Root {
+        readonly root: { readonly position: Vec3; readonly radius: number };
+        readonly moons: readonly MoonChoices[];
+        readonly under: BodyPath;
+        readonly fit: boolean;
+        readonly chain: (path: BodyPath) => (BodyInfo | undefined)[];
+        readonly pick: (path: BodyPath) => string;
+        readonly lights: readonly AddedLight[];
+      }
       const focus = store.focusPath();
       const focused = focus.length ? bodyAt(planets, focus) : undefined;
-      const groups = focused
-        ? [{ root: SCENE_CENTRE, moons: focused.moons ?? [], under: focus, fit: true }]
-        : planets.map((p, i) => ({
-            root: { position: p.position, radius: p.radius },
-            moons: p.moons ?? [],
-            under: [i],
-            // A scene of one planet is kept in view; several are where they are put.
-            fit: planets.length === 1,
-          }));
+      const roots: Root[] = focused
+        ? [
+            {
+              root: SCENE_CENTRE,
+              moons: focused.moons ?? [],
+              under: focus,
+              fit: true,
+              chain: (path) => sceneChain([...focus, ...path]),
+              pick: (path) => bodyKey([...focus, ...path]),
+              lights: [],
+            },
+          ]
+        : [
+            ...planets.map((p, i): Root => ({
+              root: { position: p.position, radius: p.radius },
+              moons: p.moons ?? [],
+              under: [i],
+              // A scene of one planet is kept in view; several are where they are put.
+              fit: planets.length === 1 && !grouped.length,
+              chain: (path) => sceneChain([i, ...path]),
+              pick: (path) => bodyKey([i, ...path]),
+              lights: [],
+            })),
+            // The groups' planets where they are put: picked, the group put in it is selected.
+            ...grouped.map((g, j): Root => ({
+              root: { position: g.body.position, radius: g.body.radius },
+              moons: g.body.moons ?? [],
+              under: [],
+              fit: false,
+              chain: (path) =>
+                [[], ...path.map((_, k) => path.slice(0, k + 1))].map((at) =>
+                  store.groupInfos().get(groupBodyKey(j, at)),
+                ),
+              pick: () => placementKey(g.placement[0]!),
+              lights: g.lights,
+            })),
+          ];
       const out: SetPlanet[] = [];
-      /** Each body put out's path, in the same order (to pick it by). */
-      const paths: BodyPath[] = [];
+      /** What picking each body put out selects, in the same order. */
+      const picks: string[] = [];
       /** What must stay in view of each body put out, in its radii. */
       const extents: number[] = [];
-      for (const { root, moons, under, fit } of groups) {
+      for (const { root, moons, under, fit, chain, pick, lights } of roots) {
         // A selected moon among these is shown where it can be seen.
         const inside =
-          selected && under.every((v, i) => selected[i] === v)
+          selected && under.length && under.every((v, i) => selected[i] === v)
             ? selected.slice(under.length)
             : null;
         const overrides = inside?.length
@@ -919,29 +1192,28 @@ export const SceneEditorStore = signalStore(
           : new Map<string, number>();
         // What must stay in view of each body: as far as its parts and its halo reach.
         const extent = (path: BodyPath) => {
-          const b = store.bodyByKey().get(bodyKey([...under, ...path]));
-          return b ? visualExtent(b.file, b.overlays, bodyParts(b)) : visualExtent();
+          const b = chain(path).at(-1);
+          return b
+            ? visualExtent(b.file, b.overlays, bodyParts(b), glowMarginOf(b))
+            : visualExtent();
         };
         const base = fit
           ? { ...root, radius: fitRadius(root, moons, eye, reach, overrides, extent) }
           : root;
         for (const p of placeBodies(base, moons, eye, overrides)) {
-          const b = store.bodyByKey().get(bodyKey([...under, ...p.path]));
+          const bodies = chain(p.path);
+          const b = bodies.at(-1);
           if (!b || !filesLoaded(b)) return null;
           const s = b.settings;
           // Drawn where it and every body it is a moon of are switched on.
-          const at = [...under, ...p.path];
-          const drawn = at.every(
-            (_, i) =>
-              store.bodyByKey().get(bodyKey(at.slice(0, i + 1)))?.settings.enabled !== false,
-          );
-          // The lights of the bodies it is a moon of that reach their moons.
-          const inherited = at.slice(0, -1).flatMap((_, i) => {
-            const parent = store.bodyByKey().get(bodyKey(at.slice(0, i + 1)));
-            return parent ? moonLightsOf(parent) : [];
-          });
-          extents.push(visualExtent(b.file, b.overlays, bodyParts(b)));
-          paths.push([...under, ...p.path]);
+          const drawn = bodies.every((x) => x?.settings.enabled !== false);
+          // The lights of the bodies it is a moon of that reach their moons, and its groups'.
+          const inherited = [
+            ...bodies.slice(0, -1).flatMap((parent) => (parent ? moonLightsOf(parent) : [])),
+            ...lights,
+          ];
+          extents.push(visualExtent(b.file, b.overlays, bodyParts(b), glowMarginOf(b)));
+          picks.push(pick(p.path));
           out.push({
             id: b.id,
             position: p.position,
@@ -957,6 +1229,7 @@ export const SceneEditorStore = signalStore(
             },
             materials: s.materials,
             parts: s.parts,
+            ...(s.addedParts ? { addedParts: s.addedParts } : {}),
             order: s.order,
             lights: s.lights,
             added: inherited.length ? [...(s.added ?? []), ...inherited] : s.added,
@@ -968,8 +1241,8 @@ export const SceneEditorStore = signalStore(
       }
       // Several planets where they are put: the whole drawn smaller where any would leave the view.
       return {
-        planets: groups.length > 1 ? fitScene(out, extents, scene.camera, reach) : out,
-        paths,
+        planets: roots.length > 1 ? fitScene(out, extents, scene.camera, reach) : out,
+        picks,
       };
     }),
   })),
@@ -1007,6 +1280,29 @@ export const SceneEditorStore = signalStore(
         d.setSceneLights(store.scene(), changedLight(store.sceneLights(), t.id, change));
       else if (t.kind === 'light') settings(t.path, (s) => withLightChange(s, t.id, change));
     };
+    /** A group put in the scene changed (a setting given as none: taken back). */
+    const changePlacement = (index: number, change: Partial<GroupPlacement>) => {
+      const placements = store.placements();
+      const p = placements[index];
+      if (!p) return;
+      const next = { ...p, ...change } as Record<string, unknown>;
+      for (const k of Object.keys(change)) if (next[k] === undefined) delete next[k];
+      d.setSceneGroups(
+        store.scene(),
+        placements.map((x, i) => (i === index ? (next as unknown as GroupPlacement) : x)),
+      );
+    };
+    /** A part just added onto the body or sky selected selected, its row shown. */
+    const selectAdded = (id: string) => {
+      const t = store.target();
+      if (t.kind === 'body') {
+        store.expand(bodyKey(t.path));
+        patchState(store, { selected: partRowKey(t.path, `own:${id}`) });
+      } else {
+        store.expand(SKY);
+        patchState(store, { selected: skyPartKey(`own:${id}`) });
+      }
+    };
     const materialChange = (key: string, change: Partial<MaterialSettings>) => {
       const t = targetOf(key);
       if (t.kind === 'sky-material') d.setSkyMaterial(store.scene(), t.key, change);
@@ -1016,7 +1312,9 @@ export const SceneEditorStore = signalStore(
       /** The scene shown, as the URL says ('': the random sets'); its first planet selected. */
       showScene: signalMethod<string>((id) => {
         if (id === store.scene()) return;
-        patchState(store, { scene: id, focus: null, selected: id ? bodyKey([0]) : SCENE });
+        patchState(store, { scene: id, focus: null });
+        // Its first planet selected, where it has one (else the scene itself).
+        patchState(store, { selected: id && store.sceneBodies().length ? bodyKey([0]) : SCENE });
         store._ui.confirmReset(false);
         store.expand(SCENE, bodyKey([0]));
       }),
@@ -1029,6 +1327,39 @@ export const SceneEditorStore = signalStore(
         d.deleteScene(store.scene());
         store._ui.open(RANDOM_SETS);
       },
+      /** A group put in the scene, its middle where a first planet goes: selected. */
+      addGroup(id: string): void {
+        if (!store.hasPlanets() || !canPutGroup(id, store.scene(), (g) => d.scenes().planets[g]))
+          return;
+        const placements = store.placements();
+        d.setSceneGroups(store.scene(), [
+          ...placements,
+          { group: id, position: SCENE_CENTRE.position },
+        ]);
+        store.expand(SCENE);
+        patchState(store, { selected: placementKey(placements.length) });
+      },
+      /** The group put in the scene selected changed (where it is, how big, its name there). */
+      setPlacement(change: Partial<GroupPlacement>): void {
+        const t = store.target();
+        if (t.kind === 'placement') changePlacement(t.index, change);
+      },
+      /** The group put in the scene selected taken out: the scene selected. */
+      removePlacement(): void {
+        const t = store.target();
+        if (t.kind !== 'placement') return;
+        d.setSceneGroups(
+          store.scene(),
+          store.placements().filter((_, i) => i !== t.index),
+        );
+        patchState(store, { selected: SCENE });
+      },
+      /** The group put in the scene selected opened (what is in it is set there). */
+      editPlacedGroup(): void {
+        const t = store.target();
+        const p = t.kind === 'placement' ? store.placements()[t.index] : undefined;
+        if (p) store._ui.open({ kind: 'group', id: p.group });
+      },
       /** A planet, by id, put in the scene: shown in the tree and selected. */
       addPlanet(id: string): void {
         if (!store.hasPlanets()) return;
@@ -1039,10 +1370,12 @@ export const SceneEditorStore = signalStore(
       },
       /** The body clicked in the view (by its index as put up) selected, its rows unfolded to it. */
       selectPlaced(index: number): boolean {
-        const path = store._placed()?.paths[index];
-        if (!path) return false;
+        const key = store._placed()?.picks[index];
+        if (!key) return false;
+        // A group's planet: the group put in the scene.
+        const path = key.startsWith('body:') ? pathOf(key.slice(5)) : [];
         store.expand(SCENE, ...path.slice(0, -1).map((_, i) => bodyKey(path.slice(0, i + 1))));
-        patchState(store, { selected: bodyKey(path) });
+        patchState(store, { selected: key });
         return true;
       },
       /** A row selected; the materials' group only folds (there is nothing of its own to set). */
@@ -1053,6 +1386,10 @@ export const SceneEditorStore = signalStore(
       setEnabled(change: { key: string; enabled: boolean }): void {
         const t = targetOf(change.key);
         const on = change.enabled;
+        if (t.kind === 'placement') {
+          changePlacement(t.index, { enabled: on ? undefined : false });
+          return;
+        }
         const b = 'path' in t ? store.bodyByKey().get(bodyKey(t.path)) : undefined;
         // Each back to what is under it where that is the same, else set here (a scene's own
         // light: switched on is as it starts).
@@ -1325,17 +1662,51 @@ export const SceneEditorStore = signalStore(
           focus: gone ? null : focus,
         });
       },
-      addPart(): void {
-        // overlays are made and changed in the library
+      /** A new part of a shape added onto the body or sky selected: selected. */
+      addPart(shape: CreatedShape): void {
+        const host = store._addHost();
+        if (host) selectAdded(addShape(host, shape));
       },
+      /** One of the game data's parts added onto the body or sky selected, reused: selected. */
+      reusePart(value: string): void {
+        const host = store._addHost();
+        const reused = host && store._catalog.reusableParts()[host.kind][Number(value)];
+        if (host && reused) selectAdded(addReused(host, reused));
+      },
+      /** The selected part taken off (one added in the scene): its owner selected. */
       removePart(): void {
-        // as above
+        const at = store._partHost();
+        const t = store.target();
+        if (!at) return;
+        removePart(at.host, at.id);
+        patchState(store, { selected: t.kind === 'part' ? bodyKey(t.path) : SKY });
       },
-      addPartMaterial(): void {
-        // as above
+      addPartMaterial(name: string): void {
+        const at = store._partHost();
+        const source = store._catalog.materialSource()(name);
+        if (at && source) addMaterial(at.host, at.id, name, source);
       },
-      removePartMaterial(): void {
-        // as above
+      removePartMaterial(name: string): void {
+        const at = store._partHost();
+        if (at) removeMaterial(at.host, at.id, name);
+      },
+      /**
+       * The parts added onto the body or sky selected saved as a new overlay, worn in their place
+       * (what was set for them kept, as the overlay's).
+       */
+      saveAsOverlay(): void {
+        const host = store._addHost();
+        const t = store.target();
+        if (!host?.parts.length) return;
+        const parts = host.parts;
+        const id = d.createOverlay(host.kind, parts);
+        if (t.kind === 'body') {
+          settings(t.path, (s) => settingsAsOverlay(s, id, parts));
+          wear((worn) => [...worn, id]);
+        } else {
+          d.changeSky(store.scene(), (sky) => settingsAsOverlay(sky, id, parts));
+          d.setSkyOverlays(store.scene(), [...store.skyWorn(), id]);
+        }
       },
       deleteAsset(): void {
         // a scene is deleted from its own panel

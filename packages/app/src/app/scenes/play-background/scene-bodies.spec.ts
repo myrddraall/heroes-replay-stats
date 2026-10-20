@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { placeBodies, type SceneBody } from './background-scene';
+import { type PlanetChoices, placeBodies, type SceneBody } from './background-scene';
 import {
   withOverlaySwitched,
   addMoonAt,
   addPlanet,
+  canPutGroup,
+  groupBodies,
   bodyAt,
   changeSettings,
   playScreenBodies,
@@ -147,5 +149,63 @@ describe('the overlays a body wears', () => {
     expect(
       withOverlaySwitched({ overlaysEnabled: { nexus: false } }, 'nexus', true, true),
     ).toBeUndefined();
+  });
+});
+
+describe('groups', () => {
+  const lamp = { id: 'added-1', kind: 'ambient', name: 'Lamp' } as const;
+  const groups: Record<string, PlanetChoices> = {
+    'group-1': {
+      group: true,
+      bodies: [korhal, { ...korhal, id: 'sanctuary', position: [20, 65, 4], radius: 6 }],
+      lights: [lamp],
+    },
+    'group-2': {
+      group: true,
+      bodies: [{ ...korhal, id: 'azeroth' }],
+      groups: [{ group: 'group-1', position: [0, 65, 4], size: 0.5 }],
+    },
+  };
+  const find = (id: string) => groups[id];
+
+  it("puts a group's planets where it is placed: about its middle, sized, its lights theirs", () => {
+    const bodies = groupBodies([{ group: 'group-1', position: [10, 80, 0], size: 2 }], find);
+    expect(bodies.map((b) => b.body.id)).toEqual(['korhal', 'sanctuary']);
+    // Its middle (where a scene's first planet goes) where it is put.
+    expect(bodies[0]!.body.position).toEqual([10, 80, 0]);
+    expect(bodies[0]!.body.radius).toBe(36);
+    // 20 to the right of its middle, twice as far.
+    expect(bodies[1]!.body.position).toEqual([50, 80, 0]);
+    expect(bodies[1]!.lights).toEqual([lamp]);
+  });
+
+  it('turns a group about the up through its middle', () => {
+    const [, turned] = groupBodies([{ group: 'group-1', position: [0, 65, 4], turn: 90 }], find);
+    expect(turned!.body.position[0]).toBeCloseTo(0);
+    expect(turned!.body.position[1]).toBeCloseTo(45);
+  });
+
+  it('puts the groups in a group in too, and leaves out those switched off', () => {
+    const bodies = groupBodies([{ group: 'group-2', position: [0, 65, 4] }], find);
+    expect(bodies.map((b) => [b.body.id, b.placement])).toEqual([
+      ['azeroth', [0]],
+      ['korhal', [0, 0]],
+      ['sanctuary', [0, 0]],
+    ]);
+    expect(groupBodies([{ group: 'group-2', position: [0, 65, 4], enabled: false }], find)).toEqual(
+      [],
+    );
+  });
+
+  it('keeps a group from being put in itself, or round about', () => {
+    expect(canPutGroup('group-1', 'group-2', find)).toBe(true);
+    expect(canPutGroup('group-2', 'group-1', find)).toBe(false);
+    expect(canPutGroup('group-1', 'group-1', find)).toBe(false);
+    // Put in itself anyway (an old design): it stops where it would go round again.
+    const self = (id: string) =>
+      id === 'group-3'
+        ? { bodies: [korhal], groups: [{ group: 'group-3', position: [0, 65, 4] as const }] }
+        : undefined;
+    expect(groupBodies([{ group: 'group-3', position: [0, 65, 4] }], self)).toHaveLength(1);
   });
 });

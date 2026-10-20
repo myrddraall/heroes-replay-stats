@@ -13,15 +13,20 @@ import { BUILT_IN_PLANETS } from './built-in-planets';
 import { type LibraryState, skyOverlaysOf, skyWithLibrary, withLibrary } from './background-design';
 import { BackgroundStore } from './background.store';
 import {
-  type CreatedOverlay,
+  type AddedPart,
+  addedSourced,
   createdOf,
   createdPlanetFile,
   createdSkyFile,
   loadSources,
+  lookupIn,
   overlayFileFor,
+  type Sourced,
+  sourceFiles,
+  withAddedParts,
 } from './created-overlays';
 import { overlayOfFile } from './overlays';
-import type { SkyOverlayFile } from './play-scene';
+import type { LoadedPlayScene, SkyOverlayFile } from './play-scene';
 import { playSet, randomSet, seeded, type SetPlanet } from './planet-sets';
 import { loadPlayScene, PLAY_SCENE_URL } from './play-scene';
 import { SceneCanvas } from './scene-canvas';
@@ -42,9 +47,18 @@ const imagesOf = (
   images: Readonly<Record<string, ImageBitmap>>,
 ) => Object.fromEntries(Object.keys(textures).flatMap((k) => (images[k] ? [[k, images[k]]] : [])));
 
-/** What a set needs loaded: its planets and the overlays they wear, by file id. */
+/**
+ * What a set needs loaded: its planets, the overlays they wear, and the files what is added onto
+ * them reads, by file id.
+ */
 const neededBy = (set: readonly SetPlanet[], file: (overlay: string) => string) => [
-  ...new Set(set.flatMap((p) => [p.id, ...(p.overlays ?? []).map(file)])),
+  ...new Set(
+    set.flatMap((p) => [
+      p.id,
+      ...(p.overlays ?? []).map(file),
+      ...sourceFiles(addedSourced(p.addedParts ?? [])),
+    ]),
+  ),
 ];
 
 /**
@@ -103,7 +117,23 @@ export class PlayBackground {
     const wears = this.scene.hasValue() ? this.scene.value().scene.wears : undefined;
     const sky = skyWithLibrary(this.source?.sky(), this.design.library(), wears);
     const made = this.skyMade.hasValue() ? this.skyMade.value() : {};
-    return { ...sky, made };
+    const own = sky.addedParts?.length && this.skyOwn.hasValue() ? this.skyOwn.value() : undefined;
+    return { ...sky, made, ...(own ? { own } : {}) };
+  });
+  /** The parts added onto the sky (the library's, then the scene's), as a key to build them by. */
+  private readonly skyOwnNeeded = computed(() => {
+    const parts = skyWithLibrary(this.source?.sky(), this.design.library()).addedParts ?? [];
+    return parts.length ? JSON.stringify(parts) : '';
+  });
+  /** Those parts built from where they are: their file as the sky draws it, and its textures' images. */
+  private readonly skyOwn = resource({
+    params: () => this.skyOwnNeeded() || undefined,
+    loader: async ({ params, abortSignal }) => {
+      const parts = JSON.parse(params) as AddedPart[];
+      const { lookup, images } = await this.sources(addedSourced(parts), abortSignal);
+      const file = createdSkyFile(addedSourced(parts), lookup);
+      return { file, images: imagesOf(file.textures, images) };
+    },
   });
   /** The sky's overlays made in the editor that it wears, as files to load (with their revisions). */
   private readonly skyMadeNeeded = computed(() => {
@@ -188,7 +218,13 @@ export class PlayBackground {
   /** What the set needs loaded, as a key: loading follows it alone (not every change of a setting). */
   private readonly needed = computed(() => {
     const set = this.set();
-    return set ? neededBy(set, this.overlayFile()).join(',') : null;
+    const library = this.design.library();
+    return set
+      ? neededBy(
+          set.map((s) => withLibrary(s, library)),
+          this.overlayFile(),
+        ).join(',')
+      : null;
   });
   /** The planets and styles the set needs, loaded. */
   private readonly loaded = resource({
@@ -214,20 +250,51 @@ export class PlayBackground {
     },
   });
   /** A planet's overlay made in the editor, built from where its materials are (their files loaded). */
-  private async madePlanet(id: string, o: CreatedOverlay): Promise<LoadedPlanet> {
+  private async madePlanet(id: string, o: Sourced): Promise<LoadedPlanet> {
     const { lookup, images } = await this.sources(o);
     const planet = createdPlanetFile(o, lookup);
     return { id, planet, images: imagesOf(planet.textures, images) };
   }
 
-  /** What an overlay made in the editor is built from, loaded: the files its materials are in, the scene. */
-  private sources(o: CreatedOverlay, signal?: AbortSignal) {
+  /** What parts made in the editor are built from, loaded: the files their materials are in, the scene. */
+  private sources(o: Sourced, signal?: AbortSignal) {
     const loader = untracked(this.planets);
     return loadSources(
       o,
       (id) => loader.load(id, signal),
       () => untracked(this.sceneLoading),
     );
+  }
+
+  /** Planets with the parts added onto them, by the planet and the parts (each built once). */
+  private readonly withAdded = new WeakMap<LoadedPlanet, Map<string, LoadedPlanet>>();
+
+  /**
+   * A planet with the parts added onto it (its own, after its data's), built from the files loaded
+   * and the scene: the same one for the same parts.
+   */
+  private addedOnto(
+    planet: LoadedPlanet,
+    parts: readonly AddedPart[],
+    loaded: Map<string, LoadedPlanet>,
+    scene: LoadedPlayScene,
+  ): LoadedPlanet {
+    const key = JSON.stringify(parts);
+    let built = this.withAdded.get(planet);
+    if (!built) this.withAdded.set(planet, (built = new Map()));
+    const kept = built.get(key);
+    if (kept) return kept;
+    const files = Object.fromEntries([...loaded].map(([id, l]) => [id, l.planet]));
+    const file = withAddedParts(planet.planet, parts, lookupIn(files, scene.scene));
+    const images = Object.assign(
+      {},
+      scene.images,
+      ...[...loaded.values()].map((l) => l.images),
+      planet.images,
+    ) as Record<string, ImageBitmap>;
+    const out: LoadedPlanet = { ...planet, planet: file, images: imagesOf(file.textures, images) };
+    built.set(key, out);
+    return out;
   }
 
   /**
@@ -239,6 +306,7 @@ export class PlayBackground {
       set: readonly SetPlanet[] | null;
       loaded: Map<string, LoadedPlanet> | undefined;
       library: LibraryState;
+      scene: LoadedPlayScene | undefined;
     },
     readonly PlanetPlacement[] | null
   >({
@@ -246,16 +314,21 @@ export class PlayBackground {
       set: this.set(),
       loaded: this.loaded.hasValue() ? this.loaded.value() : undefined,
       library: this.design.library(),
+      scene: this.scene.hasValue() ? this.scene.value() : undefined,
     }),
-    computation: ({ set, loaded, library }, previous) => {
+    computation: ({ set, loaded, library, scene }, previous) => {
       if (set?.length === 0) return []; // no planets: nothing to wait for
       if (!set || !loaded) return previous?.value ?? null;
       const file = this.overlayFile();
       const out: PlanetPlacement[] = [];
       for (const p of set.map((s) => withLibrary(s, library))) {
-        const planet = loaded.get(p.id);
+        const own = loaded.get(p.id);
         const overlays = (p.overlays ?? []).map((id) => loaded.get(file(id)));
-        if (!planet || overlays.some((o) => !o)) return previous?.value ?? null;
+        if (!own || overlays.some((o) => !o)) return previous?.value ?? null;
+        // What is added onto it is built once the scene is in too (a part may draw the sky's).
+        if (p.addedParts?.length && !scene) return previous?.value ?? null;
+        const planet =
+          p.addedParts?.length && scene ? this.addedOnto(own, p.addedParts, loaded, scene) : own;
         out.push({
           planet,
           overlays: overlays.filter((o) => !!o),

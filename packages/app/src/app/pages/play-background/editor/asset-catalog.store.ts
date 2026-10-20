@@ -17,7 +17,11 @@ import {
 import { BackgroundStore } from '../../../scenes/play-background/background.store';
 import type { SceneBody } from '../../../scenes/play-background/background-scene';
 import { playSet, randomSet, seeded } from '../../../scenes/play-background/planet-sets';
-import { playScreenBodies, sceneBodies } from '../../../scenes/play-background/scene-bodies';
+import {
+  isGroup,
+  playScreenBodies,
+  sceneBodies,
+} from '../../../scenes/play-background/scene-bodies';
 import {
   PLAY_SCENE_URL,
   type SceneMaterial,
@@ -28,15 +32,23 @@ import {
   loadPlanetIndex,
   type MaterialDepth,
   type MaterialSettingsMap,
+  partId,
   type PartRole,
+  type PlanetFile,
   type PlanetKind,
 } from '../../../scenes/play-background/scene-planets';
 import { materialLabel } from '../../../scenes/play-background/material-names';
 import { withPlanetFiles } from '../../../scenes/play-background/with-planet-files';
-import { type OverlayKind, overlayFileFor } from '../../../scenes/play-background/created-overlays';
+import {
+  type MaterialSource,
+  type OverlayKind,
+  overlayFileFor,
+} from '../../../scenes/play-background/created-overlays';
 import { createdOverlay } from '../../../scenes/play-background/overlays';
 import { DraftDesignStore } from '../draft-design.store';
-import { partMaterials } from './editor-model';
+import { partMaterials, partName } from './editor-model';
+import type { ReusablePart } from './part-hosts';
+import type { PickChoice } from './pick-list';
 import { EditorUiStore } from './editor-ui.store';
 import type { OpenKind } from './open-target';
 
@@ -228,6 +240,81 @@ export const AssetCatalogStore = signalStore(
       ]),
       materials,
       materialByName: computed(() => new Map(materials().map((m) => [m.name, m] as const))),
+      /** The materials a part may draw, by name (one shared by name with another: where it is first used too). */
+      materialChoices: computed((): PickChoice[] => {
+        const count = new Map<string, number>();
+        for (const m of materials()) count.set(m.label, (count.get(m.label) ?? 0) + 1);
+        return materials().map((m) => {
+          const use = m.uses[0];
+          const where = use?.kind === 'sky' ? 'sky' : use?.id;
+          return {
+            value: m.name,
+            label: (count.get(m.label) ?? 0) > 1 && where ? `${m.label} · ${where}` : m.label,
+          };
+        });
+      }),
+      /**
+       * Where a material is kept by when it is picked for a part: where it is first used in the game
+       * data (not by an overlay made in the editor, which reads it from there too).
+       */
+      materialSource: computed(() => {
+        const byName = new Map(materials().map((m) => [m.name, m] as const));
+        return (name: string): MaterialSource | undefined => {
+          const use = byName
+            .get(name)
+            ?.uses.find((u) => u.kind !== 'style' || !createdOverlay(u.id));
+          if (!use) return undefined;
+          return use.kind === 'sky' ? { kind: 'sky' } : { kind: use.kind, id: use.id };
+        };
+      }),
+      /**
+       * The game data's parts that may be reused, by what they are about: a planet's and its data
+       * overlays' (spheres, rings, shields…), and the sky's overlays' (about the eye); each with
+       * the materials it draws there, kept by where they are.
+       */
+      reusableParts: computed((): Readonly<Record<OverlayKind, readonly ReusablePart[]>> => {
+        const all = files();
+        const fromFile = (
+          kind: 'planet' | 'style',
+          id: string,
+          owner: string,
+          file: PlanetFile | undefined,
+        ): ReusablePart[] =>
+          (file?.parts ?? []).map((p) => {
+            const drawn = p.materials.filter((m) => file?.materials[m]);
+            return {
+              label: `${partName(p)} · ${owner}`,
+              base: partId(p),
+              part: {
+                shape: p.shape.kind,
+                materials: drawn,
+                from: { kind, id, part: partId(p) },
+                sources: Object.fromEntries(drawn.map((m) => [m, { kind, id }])),
+              },
+            };
+          });
+        const scene = sceneFile();
+        return {
+          planet: [
+            ...planets().flatMap((p) => fromFile('planet', p.id, p.id, all[p.id])),
+            ...(index()?.styles ?? []).flatMap((s) =>
+              fromFile('style', s.id, s.id, all[overlayFileFor(_draft.library(), s.id)]),
+            ),
+          ],
+          sky: Object.entries(scene?.overlays ?? {}).flatMap(([id, o]) =>
+            o.parts.map((p) => ({
+              label: `${p.id} · ${o.label ?? id}`,
+              base: 'mesh',
+              part: {
+                shape: p.shape.kind,
+                materials: p.materials,
+                from: { kind: 'sky' as const, overlay: id, part: p.id },
+                sources: Object.fromEntries(p.materials.map((m) => [m, { kind: 'sky' as const }])),
+              },
+            })),
+          ),
+        };
+      }),
       particles: computed(
         () =>
           sceneFile()?.particles.map((p) => ({
@@ -252,9 +339,21 @@ export const AssetCatalogStore = signalStore(
     };
   }),
   withComputed(({ _draft, planetsOf }) => ({
+    /** The groups (scenes within scenes, to put in them), by name. */
+    groups: computed((): CatalogScene[] =>
+      Object.entries(_draft.scenes().planets)
+        .filter(([id]) => isGroup(id))
+        .map(([id, p]) => {
+          const bodies = p.bodies ?? [];
+          const placed = p.groups?.length ?? 0;
+          const shows = [planetWords(bodies), ...(placed ? [`${placed} groups`] : [])].join(' · ');
+          return { id, label: p.name ?? bodies[0]?.id ?? id, shows };
+        })
+        .sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true })),
+    ),
     scenes: computed((): CatalogScene[] => {
       const listed = Object.entries(_draft.scenes().planets)
-        .filter(([id]) => ownScene(id))
+        .filter(([id]) => ownScene(id) && !isGroup(id))
         .map(([id, p]) => {
           const bodies = planetsOf()(id);
           return { id, label: p.name ?? bodies[0]?.id ?? id, shows: planetWords(bodies) };
@@ -293,6 +392,11 @@ export const AssetCatalogStore = signalStore(
   }),
   withMethods((store) => ({
     /** A new overlay (to wear on a planet, or the sky), opened. */
+    /** A new group, empty, named as it starts: opened. */
+    createGroup(): void {
+      const id = store._draft.createGroup();
+      store._ui.open({ kind: 'group', id });
+    },
     createOverlay(kind: OverlayKind): void {
       const id = store._draft.createOverlay(kind);
       store._ui.open({ kind: 'style', id });

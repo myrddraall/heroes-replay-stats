@@ -6,6 +6,7 @@ import {
   type SceneLayer,
   type SceneMaterial,
   type SceneMesh,
+  type SkyOverlayFile,
 } from './play-scene';
 import { INSTANCE_FLOATS, ParticleSystem } from './scene-particles';
 import {
@@ -1117,7 +1118,7 @@ export class SceneRenderer {
   private skyOverlayVaos: WebGLVertexArrayObject[] = [];
   private skyOverlayKey = '';
   /** The placed planets whose textures are on the GPU; kept while the renderer lives. */
-  private readonly planetsOnGpu = new Set<string>();
+  private readonly planetsOnGpu = new WeakSet<LoadedPlanet>();
   private placed: Placed[] = [];
   private readonly particles: ParticleDraw[] = [];
   private readonly uniforms = new Map<WebGLProgram, Map<string, WebGLUniformLocation | null>>();
@@ -1234,10 +1235,10 @@ export class SceneRenderer {
       const { planet } = placed.placement;
       const overlays = overlaysOf(placed.placement);
       for (const loaded of [planet, ...overlays]) {
-        if (this.planetsOnGpu.has(loaded.id)) continue;
+        if (this.planetsOnGpu.has(loaded)) continue;
         for (const [textureKey, image] of Object.entries(loaded.images))
           if (!this.textures.has(textureKey)) this.textures.set(textureKey, this.texture(image));
-        this.planetsOnGpu.add(loaded.id);
+        this.planetsOnGpu.add(loaded);
       }
       // The body's own parts lit by its overlays' light where one has one, then the overlays' parts.
       const light = overlays.find((o) => o.planet.light)?.planet.light ?? planet.planet.light;
@@ -1629,11 +1630,19 @@ export class SceneRenderer {
    */
   private placeSkyOverlays(): void {
     const scene = this.loaded.scene;
-    const worn = (this.sky.overlays ?? scene.wears ?? []).flatMap((id) => {
-      const made = this.sky.made?.[id];
-      const file = made?.file ?? scene.overlays?.[id];
-      return file ? [{ id, file, images: made?.images }] : [];
-    });
+    const worn: {
+      id: string;
+      file: SkyOverlayFile;
+      images?: Readonly<Record<string, ImageBitmap>>;
+    }[] = [
+      // Its own parts (added onto it), then the overlays it wears.
+      ...(this.sky.own ? [{ id: '', ...this.sky.own }] : []),
+      ...(this.sky.overlays ?? scene.wears ?? []).flatMap((id) => {
+        const made = this.sky.made?.[id];
+        const file = made?.file ?? scene.overlays?.[id];
+        return file ? [{ id, file, images: made?.images }] : [];
+      }),
+    ];
     const key = JSON.stringify([
       worn.map(({ id, file }) => [id, fileId(file)]),
       this.sky.parts ?? null,
@@ -1649,14 +1658,14 @@ export class SceneRenderer {
         if (!this.textures.has(textureKey)) this.textures.set(textureKey, this.texture(image));
     const files = new Map(worn.map((w) => [w.id, w.file]));
     for (const part of skyOverlayParts(worn, this.sky.parts, scene.camera)) {
-      const file = files.get(overlayOfPartKey(part.key as PartKey) ?? '');
+      const file = files.get(overlayOfPartKey(part.key) ?? '');
       if (!file) continue;
       const vao = this.meshVao({ ...part.mesh, materials: part.materials });
       this.skyOverlayVaos.push(vao);
       for (const m of part.materials) {
         if (!file.materials[m]) continue;
         const material = this.material(m, part.key, file.materials);
-        const overlay = overlayOfPartKey(part.key as PartKey);
+        const overlay = overlayOfPartKey(part.key);
         this.skyOverlayDraws.push({
           vao,
           count: part.mesh.indices.length,

@@ -7,6 +7,7 @@ import type {
   PlanetIndex,
 } from './scene-planets';
 import type { AddedLight, LightSettingsMap } from './scene-lights';
+import type { AddedPart } from './created-overlays';
 
 /** A planet in a set: which, where (the scene's units), and its body's radius there. */
 export interface SetPlanet {
@@ -15,6 +16,8 @@ export interface SetPlanet {
   readonly radius: number;
   /** The overlays it wears, by id, the later over the earlier (none: none). */
   readonly overlays?: readonly string[];
+  /** Parts added onto it (its own, after its data's). */
+  readonly addedParts?: readonly AddedPart[];
   /** Whether the overlays it wears are drawn (off: drawn as if it wore none); kept before each had its own. */
   readonly overlayEnabled?: boolean;
   /** Whether each overlay it wears is drawn, by id (off: drawn as if it didn't wear it). */

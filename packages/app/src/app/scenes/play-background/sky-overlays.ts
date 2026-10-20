@@ -1,6 +1,6 @@
 import type { SceneCamera, SceneMesh, SkyOverlayFile, SkyPart, SkyShape } from './play-scene';
 import type { PartSettings, PartSettingsMap } from './scene-planets';
-import { overlayPartKey } from './scene-planets';
+import { overlayPartKey, type PartKey } from './scene-planets';
 
 /**
  * A sky's overlays: parts about the eye (meshes as the sky's are, or bands), each drawing its
@@ -154,12 +154,15 @@ export function placedSkyMesh(
 
 /** A sky overlay's part ready to draw: its mesh as placed, the materials on it, its key. */
 export interface PlacedSkyPart {
-  readonly key: string;
+  readonly key: PartKey;
   readonly mesh: Omit<SceneMesh, 'materials'>;
   readonly materials: readonly string[];
 }
 
-/** The parts of the overlays a sky wears, as their settings place them (those switched off left out). */
+/**
+ * The parts of the overlays a sky wears, as their settings place them (those switched off left
+ * out); its own (added onto it) by the id '': keyed as its own (`own:<part>`).
+ */
 export function skyOverlayParts(
   worn: readonly { readonly id: string; readonly file: SkyOverlayFile }[],
   parts: PartSettingsMap | undefined,
@@ -167,7 +170,9 @@ export function skyOverlayParts(
 ): PlacedSkyPart[] {
   return worn.flatMap(({ id, file }) =>
     file.parts.flatMap((part: SkyPart) => {
-      const key = overlayPartKey(id, { id: part.id, role: 'band' });
+      const key: PartKey = id
+        ? overlayPartKey(id, { id: part.id, role: 'band' })
+        : `own:${part.id}`;
       const settings = parts?.[key];
       if (settings?.enabled === false) return [];
       return [

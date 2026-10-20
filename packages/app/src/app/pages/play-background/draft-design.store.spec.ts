@@ -110,6 +110,26 @@ describe('DraftDesignStore', () => {
     expect(draft.scenes().planets['play-screen']?.lights).toEqual([lamp]);
   });
 
+  it('keeps a group, and the groups put in a scene, when planets change or the scene is reset', () => {
+    const draft = TestBed.inject(DraftDesignStore);
+    const group = draft.createGroup();
+    const scene = draft.createScene();
+    const placed = [{ group, position: [10, 80, 0] as const }];
+    draft.setSceneGroups(scene, placed);
+    const korhal = { id: 'korhal', position: [0, 0, 0] as const, radius: 1 };
+    draft.setSceneBodies(scene, [korhal]);
+    draft.setSceneBodies(group, [korhal]);
+    expect(draft.scenes().planets[scene]?.groups).toEqual(placed);
+    expect(draft.scenes().planets[group]?.group).toBe(true);
+    draft.resetScene(scene);
+    draft.resetScene(group);
+    expect(draft.scenes().planets[scene]?.groups).toEqual(placed);
+    expect(draft.scenes().planets[group]?.group).toBe(true);
+    // A group deleted: taken out of the scene it was put in.
+    draft.deleteScene(group);
+    expect(draft.scenes().planets[scene]?.groups).toBeUndefined();
+  });
+
   it("resets a preset to its own (the Play screen to the game's three)", () => {
     const draft = TestBed.inject(DraftDesignStore);
     draft.setSceneBodies('play-screen', [{ id: 'korhal', position: [0, 0, 0], radius: 1 }]);

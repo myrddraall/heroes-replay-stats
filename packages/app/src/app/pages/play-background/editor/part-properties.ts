@@ -16,6 +16,9 @@ const SHAPE_KEYS: readonly (keyof PartSettings)[] = [
   'depth',
   'mid',
   'keepToLimb',
+  'flip',
+  'from',
+  'repeat',
 ];
 
 /**

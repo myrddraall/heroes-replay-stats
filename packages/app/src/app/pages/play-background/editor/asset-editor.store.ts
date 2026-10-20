@@ -16,7 +16,7 @@ import {
   skyOverlayOn,
   skyWornOf,
 } from '../../../scenes/play-background/background-design';
-import { fitRadius } from '../../../scenes/play-background/background-scene';
+import { fitRadius, without } from '../../../scenes/play-background/background-scene';
 import {
   GRID_DEFAULTS,
   materialKey,
@@ -46,12 +46,13 @@ import {
   type MaterialSettings,
   type MaterialTint,
   mergePartSettings,
+  partId,
   type PartKey,
   type PartSettings,
   reordered,
 } from '../../../scenes/play-background/scene-planets';
 import { DraftDesignStore, type LibraryKind } from '../draft-design.store';
-import { AssetCatalogStore, type CatalogMaterial, type MaterialUse } from './asset-catalog.store';
+import { AssetCatalogStore, type MaterialUse } from './asset-catalog.store';
 import {
   baseMaterialOf,
   type BodyInfo,
@@ -87,18 +88,32 @@ import {
   withLitBy,
   referenceRow,
   skyMaterialsOf,
+  ownSkyInfo,
   type TargetKind,
 } from './editor-model';
 import {
+  addedSourced,
+  type CreatedOverlay,
+  createdSkyFile,
   type CreatedShape,
-  nextPartId,
+  mergeAddedParts,
   overlayFileFor,
   overlayName,
   PART_SHAPES,
-  withUnused,
-  type MaterialSource,
+  withAddedParts,
 } from '../../../scenes/play-background/created-overlays';
-import { createdOverlay, ownOverlays } from '../../../scenes/play-background/overlays';
+import {
+  addMaterial,
+  addReused,
+  addShape,
+  overlayParts,
+  type PartHost,
+  removeMaterial,
+  removePart,
+  settingsAsOverlay,
+  withOverlayParts,
+} from './part-hosts';
+import { ownOverlays } from '../../../scenes/play-background/overlays';
 import { EditingAidsStore, GRID_CELLS, REFERENCE_KEY } from './editing-aids.store';
 import type { PickChoice } from './pick-list';
 import { EditorUiStore } from './editor-ui.store';
@@ -287,23 +302,6 @@ function targetOf(key: string, asset: AssetTarget): Target {
   return { kind: 'group' };
 }
 
-/**
- * The materials there are to draw, by name; those that read alike told apart by where they are
- * used (their first use: a planet's or overlay's id, or the sky).
- */
-function materialChoices(materials: readonly CatalogMaterial[]): PickChoice[] {
-  const count = new Map<string, number>();
-  for (const m of materials) count.set(m.label, (count.get(m.label) ?? 0) + 1);
-  return materials.map((m) => {
-    const use = m.uses[0];
-    const where = use?.kind === 'sky' ? 'sky' : use?.id;
-    return {
-      value: m.name,
-      label: (count.get(m.label) ?? 0) > 1 && where ? `${m.label} · ${where}` : m.label,
-    };
-  });
-}
-
 /** The library's list a planet or style is kept in. */
 const libraryKind = (kind: AssetKind): LibraryKind | null =>
   kind === 'planet' ? 'planets' : kind === 'style' ? 'styles' : null;
@@ -387,6 +385,14 @@ export const AssetEditorStore = signalStore(
       const [info] = skyOverlayInfos(sceneFile(), library(), [a.id], _catalog.madeLookup());
       return info ? { ...info, below: undefined } : null;
     });
+    /** The parts added onto a sky (the library's; the stage's over them). */
+    const skyAdded = (stage: boolean) =>
+      mergeAddedParts(library().sky.addedParts, stage ? stageScene().sky?.addedParts : undefined);
+    /** A sky's own parts (added onto it), as its overlays are had; none: none. */
+    const skyOwn = (stage: boolean): SkyOverlayInfo[] =>
+      skyAdded(stage).length
+        ? [ownSkyInfo(createdSkyFile(addedSourced(skyAdded(stage)), _catalog.madeLookup()))]
+        : [];
     return {
       /** The overlay open, where it is one made in the editor. */
       _created: computed(() => {
@@ -403,13 +409,19 @@ export const AssetEditorStore = signalStore(
         const scene = sceneFile();
         const { below, edited } = skyOf(stage);
         return scene
-          ? skyMaterialsOf(scene, below, edited, library().materials, skyOverlays(stage))
+          ? skyMaterialsOf(scene, below, edited, library().materials, [
+              ...skyOwn(stage),
+              ...skyOverlays(stage),
+            ])
           : [];
       },
-      /** A sky's overlays' parts as shown. */
+      /** A sky's own parts (added onto it) and its overlays' parts, as shown. */
       _skyParts: (stage: boolean): PartEntry[] => {
         const { below, edited } = skyOf(stage);
-        return skyOverlays(stage).flatMap((o) => skyPartsOf(o, below?.parts, edited.parts));
+        const here = (edited.addedParts ?? []).map((p) => p.id);
+        return [...skyOwn(stage), ...skyOverlays(stage)].flatMap((o) =>
+          skyPartsOf(o, below?.parts, edited.parts, false, here),
+        );
       },
       /** The sky overlay open's materials, as it sets them for itself. */
       _skyOverlayMaterials: computed((): MaterialEntry[] => {
@@ -438,7 +450,14 @@ export const AssetEditorStore = signalStore(
         // A sky's overlay open: a body with no parts of its own (its parts are the sky's).
         const file = skyOverlay()
           ? { kind: 'style' as const, parts: [], materials: {}, textures: {} }
-          : files[a.kind === 'planet' ? a.id : overlayFileFor(library(), a.id)];
+          : a.kind === 'planet'
+            ? files[a.id] &&
+              withAddedParts(
+                files[a.id],
+                library().planets[a.id]?.addedParts,
+                _catalog.madeLookup(),
+              )
+            : files[overlayFileFor(library(), a.id)];
         // A planet wears what its data says (overlays are worn in scenes); an overlay, none.
         const worn = a.kind === 'planet' ? ownOverlays(file?.tuning?.style) : [];
         const name = (id: string) => library().created?.[id]?.label;
@@ -555,10 +574,6 @@ export const AssetEditorStore = signalStore(
               : overlayName(library(), on.id);
           return { target: { kind: on.kind, id: on.id }, label };
         }),
-        partShapes: computed((): readonly CreatedShape[] => {
-          const o = _created();
-          return o ? PART_SHAPES[o.kind] : [];
-        }),
         deletable: computed(() => _created() !== undefined),
         skyOverlayOpen: computed(() => _skyOverlay() !== null),
         resetAllLabel: computed(() => {
@@ -674,6 +689,7 @@ export const AssetEditorStore = signalStore(
                 planet ? lib.planets[planet]?.parts : undefined,
                 ...overlays.map((id) => lib.styles[id]?.parts),
               ),
+              planet ? lib.planets[planet]?.glowMargin : undefined,
             );
             const view = { up, across: up * _ui.aspect() };
             return {
@@ -779,25 +795,80 @@ export const AssetEditorStore = signalStore(
       };
     },
   ),
-  withComputed((store) => ({
-    /** The part selected, where it is one of an overlay made in the editor. */
-    _createdPart: computed(() => {
+  withComputed((store) => {
+    const d = store._draft;
+    const asset = store.asset;
+    /** The overlay open's parts (one made in the editor), to change them by. */
+    const overlayHost = (o: CreatedOverlay): PartHost => ({
+      kind: o.kind,
+      parts: overlayParts(o),
+      taken: [],
+      set: (parts) => d.changeOverlay(asset().id, (x) => withOverlayParts(x, parts)),
+    });
+    /** The parts added onto the planet open (in the library), to change them by. */
+    const planetHost = (): PartHost | null => {
+      const a = asset();
+      if (a.kind !== 'planet') return null;
+      return {
+        kind: 'planet',
+        parts: d.library().planets[a.id]?.addedParts ?? [],
+        taken: (store._catalog.files()[a.id]?.parts ?? []).map(partId),
+        set: (parts) =>
+          parts.length
+            ? d.setLibraryBody('planets', a.id, { addedParts: parts })
+            : d.clearLibraryBody('planets', a.id, ['addedParts']),
+      };
+    };
+    /** The parts added onto a sky (the stage's, or the library's), to change them by. */
+    const skyHost = (stage: boolean): PartHost => ({
+      kind: 'sky',
+      parts: (stage ? store._stageScene().sky : d.library().sky)?.addedParts ?? [],
+      taken: store
+        ._skyParts(stage)
+        .filter((p) => !p.overlay)
+        .map((p) => p.key.slice(4)),
+      set: (parts) => d.setSkyAddedParts(stage ? PREVIEW_SCENE : null, parts),
+    });
+    /** Where parts are added for what is selected: the overlay or planet open, or a sky. */
+    const addHost = computed((): PartHost | null => {
       const t = store.target();
       const o = store._created();
-      return t.kind === 'part' && o
-        ? o.parts.find((p) => t.key === `style:${store.asset().id}:${p.id}`)
-        : undefined;
-    }),
-  })),
+      if (t.kind === 'body') return o ? overlayHost(o) : planetHost();
+      return t.kind === 'sky' ? skyHost(t.stage) : null;
+    });
+    /** The part selected and where it is kept, where it was made at the level edited. */
+    const partHost = computed((): { host: PartHost; id: string } | null => {
+      const t = store.target();
+      const o = store._created();
+      if (t.kind === 'part' && o && t.key.startsWith(`style:${asset().id}:`))
+        return { host: overlayHost(o), id: t.key.slice(`style:${asset().id}:`.length) };
+      if ((t.kind !== 'part' && t.kind !== 'sky-part') || !t.key.startsWith('own:')) return null;
+      const host = t.kind === 'part' ? planetHost() : skyHost(t.stage);
+      const id = t.key.slice(4);
+      return host?.parts.some((p) => p.id === id) ? { host, id } : null;
+    });
+    return {
+      _addHost: addHost,
+      _partHost: partHost,
+      partShapes: computed((): readonly CreatedShape[] => {
+        const host = addHost();
+        return host ? PART_SHAPES[host.kind] : [];
+      }),
+      reusableParts: computed((): readonly PickChoice[] => {
+        const host = addHost();
+        if (!host) return [];
+        const offered = store._catalog.reusableParts()[host.kind];
+        return offered.map((r, i) => ({ value: String(i), label: r.label }));
+      }),
+      // An overlay is saved from what is added onto a planet or a sky (not from an overlay).
+      canSaveAsOverlay: computed(() => !store._created() && (addHost()?.parts.length ?? 0) > 0),
+    };
+  }),
   withComputed((store) => ({
     partMaterials: computed(() => {
-      const part = store._createdPart();
-      return part
-        ? {
-            picked: part.materials,
-            choices: materialChoices(store._catalog.materials()),
-          }
-        : null;
+      const at = store._partHost();
+      const part = at?.host.parts.find((p) => p.id === at.id);
+      return part ? { picked: part.materials, choices: store._catalog.materialChoices() } : null;
     }),
     litBy: computed((): readonly LitByEntry[] | null => {
       const b = store._body();
@@ -932,13 +1003,17 @@ export const AssetEditorStore = signalStore(
        * A sky's materials by where they are drawn among the scene's objects: behind, among, in front
        * (each group open unless folded: its key among those kept means folded).
        */
-      /** A sky's overlays' parts' rows (under the overlay they are of), their materials under each. */
+      /**
+       * A sky's parts' rows (its own added onto it, or under the overlay they are of), their
+       * materials under each (its own's by `ownMaterialKey`).
+       */
       const skyPartRows = (
         parts: readonly PartEntry[],
         materials: readonly MaterialEntry[],
         partKey: (key: PartKey) => string,
         materialKey: (overlay: string, name: string) => string,
         depth: number,
+        ownMaterialKey?: (name: string) => string,
       ) => {
         for (const part of parts) {
           const key = partKey(part.key);
@@ -948,7 +1023,7 @@ export const AssetEditorStore = signalStore(
           rows.push({
             key,
             label: part.label,
-            icon: 'panorama_horizontal',
+            icon: part.band || part.overlay ? 'panorama_horizontal' : 'category',
             depth,
             expandable: drawn.length > 0,
             expanded: !open.has(key),
@@ -956,7 +1031,13 @@ export const AssetEditorStore = signalStore(
           });
           if (!open.has(key))
             for (const m of drawn)
-              materialRow(materialKey(part.overlay ?? '', m.name), m, depth + 1);
+              materialRow(
+                part.overlay || !ownMaterialKey
+                  ? materialKey(part.overlay ?? '', m.name)
+                  : ownMaterialKey(m.name),
+                m,
+                depth + 1,
+              );
         }
       };
       /**
@@ -972,7 +1053,7 @@ export const AssetEditorStore = signalStore(
         const materials = store._skyMaterials(stage);
         const keys = skyRowKeys(stage);
         ownSkyRows(
-          materials.filter((m) => !m.overlay),
+          materials.filter((m) => !m.overlay && !m.added),
           groupKey,
           materialKey,
           depth,
@@ -980,6 +1061,15 @@ export const AssetEditorStore = signalStore(
         const sky = stage ? store._stageScene().sky : undefined;
         const overlays = store._skyOverlays(stage);
         const parts = store._skyParts(stage);
+        // The parts added onto it (its own), each with the materials it draws.
+        skyPartRows(
+          parts.filter((p) => !p.overlay),
+          materials,
+          keys.part,
+          keys.material,
+          depth,
+          materialKey,
+        );
         for (const o of overlays) {
           const group = keys.overlay(o.id);
           rows.push({
@@ -1243,6 +1333,20 @@ export const AssetEditorStore = signalStore(
       const m = t.kind === 'material' && b && materialAt(store._ownMaterials(), t.key);
       return m ? m.enabledBelow : true;
     };
+    /** A part just added onto what is selected selected, its row shown. */
+    const selectAdded = (id: string) => {
+      const t = store.target();
+      if (t.kind === 'sky') {
+        const keys = skyRowKeys(t.stage);
+        if (!t.stage) store.expand(ASSET);
+        patchState(store, { selected: keys.part(`own:${id}`) });
+      } else {
+        store.expand(ASSET);
+        patchState(store, {
+          selected: assetPartKey(store._created() ? `style:${asset().id}:${id}` : `own:${id}`),
+        });
+      }
+    };
     const selectedSky = () => {
       const t = store.target();
       if (t.kind === 'backdrop') return { stage: true };
@@ -1500,62 +1604,64 @@ export const AssetEditorStore = signalStore(
         const kind = body();
         if (kind) d.resetLibraryBody(kind, asset().id);
       },
-      /** A part of a shape added to the overlay open (made in the editor), drawing nothing yet: selected. */
+      /** A new part of a shape added onto what is selected (the overlay or planet open, a sky): selected. */
       addPart(shape: CreatedShape): void {
-        const o = store._created();
-        if (!o) return;
-        const id = nextPartId(o, shape);
-        d.changeOverlay(asset().id, (x) => ({
-          ...x,
-          parts: [...x.parts, { id, shape, materials: [] }],
-        }));
-        store.expand(ASSET);
-        patchState(store, { selected: assetPartKey(`style:${asset().id}:${id}`) });
+        const host = store._addHost();
+        if (host) selectAdded(addShape(host, shape));
       },
-      /** The selected part taken out of the overlay open (what only it drew, with it). */
+      /** One of the game data's parts added onto what is selected, reused: selected. */
+      reusePart(value: string): void {
+        const host = store._addHost();
+        const reused = host && store._catalog.reusableParts()[host.kind][Number(value)];
+        if (host && reused) selectAdded(addReused(host, reused));
+      },
+      /** The selected part taken out (one made at this level: what only it drew, with it). */
       removePart(): void {
-        const part = store._createdPart();
-        if (!part) return;
-        d.changeOverlay(asset().id, (x) =>
-          withUnused({ ...x, parts: x.parts.filter((p) => p.id !== part.id) }),
-        );
-        patchState(store, { selected: ASSET });
+        const at = store._partHost();
+        const t = store.target();
+        if (!at) return;
+        removePart(at.host, at.id);
+        patchState(store, {
+          selected: t.kind === 'sky-part' ? (t.stage ? STAGE_SKY : ASSET) : ASSET,
+        });
       },
       /**
        * A material drawn on the selected part too, over the rest: as the game data has it where it
        * is first used there (kept by where that is, not copied).
        */
       addPartMaterial(name: string): void {
-        const part = store._createdPart();
-        const use = store._catalog
-          .materialByName()
-          .get(name)
-          ?.uses.find((u) => u.kind !== 'style' || !createdOverlay(u.id));
-        if (!part || !use) return;
-        const source: MaterialSource =
-          use.kind === 'sky' ? { kind: 'sky' } : { kind: use.kind, id: use.id };
-        d.changeOverlay(asset().id, (x) => ({
-          ...x,
-          parts: x.parts.map((p) =>
-            p.id === part.id && !p.materials.includes(name)
-              ? { ...p, materials: [...p.materials, name] }
-              : p,
-          ),
-          sources: { ...x.sources, [name]: x.sources[name] ?? source },
-        }));
+        const at = store._partHost();
+        const source = store._catalog.materialSource()(name);
+        if (at && source) addMaterial(at.host, at.id, name, source);
       },
       /** A material no longer drawn on the selected part. */
       removePartMaterial(name: string): void {
-        const part = store._createdPart();
-        if (!part) return;
-        d.changeOverlay(asset().id, (x) =>
-          withUnused({
-            ...x,
-            parts: x.parts.map((p) =>
-              p.id === part.id ? { ...p, materials: p.materials.filter((m) => m !== name) } : p,
-            ),
-          }),
-        );
+        const at = store._partHost();
+        if (at) removeMaterial(at.host, at.id, name);
+      },
+      /**
+       * The parts added onto the planet or sky selected saved as a new overlay: a sky wears it in
+       * their place (what was set for them kept as the overlay's); a planet keeps them (a library
+       * planet wears what its data says), the overlay starting as they are set.
+       */
+      saveAsOverlay(): void {
+        const host = store._addHost();
+        const t = store.target();
+        if (!host?.parts.length || store._created()) return;
+        const parts = host.parts;
+        const id = d.createOverlay(host.kind, parts);
+        const kept = (s: BodySettings) => settingsAsOverlay({ ...s, addedParts: parts }, id, parts);
+        if (t.kind === 'sky') {
+          const scene = t.stage ? PREVIEW_SCENE : null;
+          d.changeSky(scene, (sky) => settingsAsOverlay(sky, id, parts));
+          d.setSkyOverlays(scene, [...store._skyOverlays(t.stage).map((o) => o.id), id]);
+        } else {
+          // The overlay's own settings start as the planet's for those parts.
+          const own = kept(d.library().planets[asset().id] ?? {});
+          const settings = without(own, ['label', 'enabled', 'lights', 'added', 'tint', 'rim']);
+          if (settings) d.setLibraryBody('styles', id, settings);
+        }
+        store._ui.open({ kind: 'style', id });
       },
       /** The overlay open (made in the editor) deleted, and off whatever wore it: the library shown. */
       deleteAsset(): void {

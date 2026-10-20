@@ -32,6 +32,8 @@ import { AddPart } from './add-part';
 import { PickList } from './pick-list';
 import { LitBy } from './lit-by';
 import { ReferenceProperties, type ReferenceValues } from './reference-properties';
+import { AddGroup } from './add-group';
+import { GroupPlacementProperties } from './group-placement-properties';
 import { SceneEditorStore } from './scene-editor.store';
 import { SceneProperties } from './scene-properties';
 import { TintSection } from './tint-section';
@@ -62,6 +64,8 @@ import { TintSection } from './tint-section';
     EditingAidProperties,
     ReferenceProperties,
     AddPlanet,
+    AddGroup,
+    GroupPlacementProperties,
   ],
   templateUrl: './selection-panel.html',
   styleUrl: './selection-panel.scss',

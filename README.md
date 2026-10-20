@@ -319,6 +319,38 @@ from the files its materials are in, loaded for it (`loadSources`, `createdPlane
 carries its revision, so a change is built anew), and deleting it takes it off everything wearing
 it.
 
+Overlays are only collections that work together: parts can be added straight onto a planet or
+moon (in the library, or a scene) and onto a sky (`addedParts` on its settings at the level they
+are added, after those under it: `mergeAddedParts`), with no overlay. They are its own parts,
+keyed `own:<id>`, their materials by name as its data's are (`withAddedParts` builds the body's
+file with them; the renderer uploads textures per loaded planet, so one with parts added gets its
+own; a sky's own parts are drawn as an overlay with no id). A part is new (a sphere or a ring
+about a planet, a band about the eye) or one the game data has, reused by reference (`from`: a
+planet's or a data overlay's part, its shape, mapping, pattern and masks that part's; or one of
+the sky's overlays' parts), its materials picked as any part's are (`sources`; the catalog's
+`reusableParts`, `materialSource`). The panel's Add part section offers the shapes, an Existing
+list of the data's parts, and Save as overlay: the parts added at the level edited become a new
+overlay made in the editor (`settingsAsOverlay` keeps what was set for them as the overlay's); a
+scene's body or a sky then wears it in their place, a library planet keeps them (it wears what
+its data says). The editors change such parts through one interface (`part-hosts.ts`: an
+overlay's, or a body's or a sky's).
+
+Groups are scenes within scenes (`group: true` on a scene's choices, ids `group-<n>`, listed in
+the library's Groups and opened at `/edit-background/group/<id>` in the scene editor, with no sky
+of their own): planets with their moons, and lights that light the group's planets alone. A scene
+(or another group) puts groups in it (`groups`: each a group's id, where its middle goes, its
+size, its turn about the up through its middle, on or off, a name there); the scene editor draws
+their planets where they are put (`groupBodies`, groups in groups in turn, one put in itself
+stopping where it would go round again; `canPutGroup` keeps it from being offered), a row for
+each with its Place panel and Edit group, and picking one of its planets selects it. Deleting a
+group takes it out of everywhere it was put. Groups are the start of scenes built from parts: a
+group could later be drawn at random (a planet or a set from a pool, by filters), some of its
+settings drawn and others set.
+
+Parts' mappings can be set too: a sphere's textures Mirrored (`flip`), a ring's Texture turn
+(`from`, degrees) and Repeats (`repeat`); and a body's Glow margin (`glowMargin`, the room its glow
+is given where the view is fitted to it, `HALO_MARGIN` unless set).
+
 The Graphics settings (Settings page; `GraphicsStore`, `packages/app/src/app/data/settings/graphics.store.ts`,
 kept in `localStorage`: `hrs.graphics.quality` holds the preset's id, or all the quality settings as
 JSON when they are Custom; `hrs.graphics.custom` the last custom settings, as JSON; `hrs.graphics`

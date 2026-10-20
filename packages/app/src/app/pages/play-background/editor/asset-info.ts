@@ -84,6 +84,22 @@ export class AssetInfo {
           ],
         };
       }
+      case 'group': {
+        const group = this.draft.scenes().planets[id];
+        const shows = this.catalog.groups().find((g) => g.id === id)?.shows ?? '';
+        const placed = Object.values(this.draft.scenes().planets).filter((p) =>
+          p.groups?.some((g) => g.group === id),
+        ).length;
+        return {
+          ...none,
+          kind: 'Group',
+          facts: [
+            { label: 'Name', value: group?.name ?? '(none)' },
+            { label: 'Has', value: shows },
+            { label: 'Put in', value: placed ? `${placed} scenes or groups` : 'Nowhere yet' },
+          ],
+        };
+      }
       case 'planet':
       case 'style': {
         const file = c.files()[kind === 'planet' ? id : overlayFileFor(library, id)];

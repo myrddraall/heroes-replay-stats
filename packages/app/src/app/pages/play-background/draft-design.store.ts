@@ -21,12 +21,15 @@ import {
 } from '../../scenes/play-background/background-design';
 import {
   type BodySettings,
+  type GroupPlacement,
   type PlanetChoices,
   type SceneBody,
   type SkyChoices,
   without,
 } from '../../scenes/play-background/background-scene';
 import {
+  GROUP_PREFIX,
+  isGroup,
   placesOnly,
   sceneBodies,
   withMaterial,
@@ -37,7 +40,9 @@ import {
   type CreatedOverlay,
   nextOverlayId,
   type OverlayKind,
+  type AddedPart,
 } from '../../scenes/play-background/created-overlays';
+import { withOverlayParts } from './editor/part-hosts';
 import { PublishedDesignStore } from '../../scenes/play-background/published-design.store';
 import type {
   MaterialSettings,
@@ -237,14 +242,15 @@ export const DraftDesignStore = signalStore(
         updateLibraryBody(kind, id, (s) => withoutMaterial(s, name, keys));
       },
       /** A material's base settings, wherever it is used. */
-      /** A new overlay (to wear on a planet, or the sky), empty, named; its id. */
-      createOverlay(kind: OverlayKind): string {
+      /**
+       * A new overlay (to wear on a planet, or the sky), named: empty, or with parts (`parts`: as
+       * added onto a body or a sky, each with where its materials are); its id.
+       */
+      createOverlay(kind: OverlayKind, parts: readonly AddedPart[] = []): string {
         const { id, n } = nextOverlayId(store.library());
         const label = `${kind === 'sky' ? 'Sky overlay' : 'Overlay'} ${n}`;
-        setLibrary((l) => ({
-          ...l,
-          created: { ...l.created, [id]: { kind, label, parts: [], sources: {} } },
-        }));
+        const made = withOverlayParts({ kind, label, parts: [], sources: {} }, parts);
+        setLibrary((l) => ({ ...l, created: { ...l.created, [id]: made } }));
         return id;
       },
       /** An overlay made in the editor changed (its parts, the materials they draw). */
@@ -319,6 +325,14 @@ export const DraftDesignStore = signalStore(
           return { ...sky, overlaysEnabled: Object.keys(enabled).length ? enabled : undefined };
         });
       },
+      /** The parts added onto a sky at its level (a scene's sky, or the library's: null); none: none. */
+      setSkyAddedParts(scene: string | null, parts: readonly AddedPart[]): void {
+        changeSky(scene, (sky) => ({ ...sky, addedParts: parts.length ? parts : undefined }));
+      },
+      /** A sky's settings changed as a whole (a scene's sky, or the library's: null). */
+      changeSky(scene: string | null, change: (sky: SkyChoices) => SkyChoices): void {
+        changeSky(scene, change);
+      },
       /** One of a sky's overlays' parts' settings changed (a scene's sky, or the library's: null). */
       setSkyPart(scene: string | null, key: PartKey, change: Partial<PartSettings>): void {
         changeSky(scene, (sky) => ({
@@ -372,7 +386,14 @@ export const DraftDesignStore = signalStore(
       },
       /** A scene's planets as they are now (what kept them before scenes had several goes); its lights kept. */
       setSceneBodies(id: string, bodies: readonly SceneBody[]): void {
-        setScene(id, (p) => ({ bodies, name: p.name, sky: p.sky, lights: p.lights }));
+        setScene(id, (p) => ({
+          bodies,
+          name: p.name,
+          sky: p.sky,
+          lights: p.lights,
+          group: p.group,
+          groups: p.groups,
+        }));
       },
       /** A scene taken out (a preset's or the stage's is only reset). */
       deleteScene(id: string): void {
@@ -383,8 +404,28 @@ export const DraftDesignStore = signalStore(
         setScenes((s) => {
           const planets = { ...s.planets };
           delete planets[id];
+          // A group deleted: taken out of every scene (and group) it was put in.
+          if (isGroup(id))
+            for (const [key, p] of Object.entries(planets))
+              if (p.groups?.some((g) => g.group === id))
+                planets[key] = { ...p, groups: p.groups.filter((g) => g.group !== id) };
           return { ...s, planets };
         });
+      },
+      /** A new group: empty, named (`Group <n>`), saved as it is made. Its id (`group-<n>`). */
+      createGroup(): string {
+        const taken = store.scenes().planets;
+        let n = 1;
+        while (taken[`${GROUP_PREFIX}${n}`]) n++;
+        const id = `${GROUP_PREFIX}${n}`;
+        const group: PlanetChoices = { group: true, bodies: [], name: `Group ${n}` };
+        setScenes((s) => ({ ...s, planets: { ...s.planets, [id]: group } }));
+        store._published.publishScene(id, group);
+        return id;
+      },
+      /** The groups put in a scene (or a group), as they are to be; none: none. */
+      setSceneGroups(id: string, groups: readonly GroupPlacement[]): void {
+        setScene(id, (p) => ({ ...p, groups: groups.length ? groups : undefined }));
       },
       /**
        * A scene back as the library has it: its planets' styles, looks and moons, its sky (a
@@ -392,7 +433,15 @@ export const DraftDesignStore = signalStore(
        */
       resetScene(id: string): void {
         setScene(id, (p) =>
-          ownScene(id) ? { name: p.name, bodies: placesOnly(sceneBodies(p, id)) } : null,
+          ownScene(id)
+            ? {
+                name: p.name,
+                bodies: placesOnly(sceneBodies(p, id)),
+                // What it is, and the groups put in it where they are (as its planets are).
+                group: p.group,
+                groups: p.groups,
+              }
+            : null,
         );
       },
       setSkyMaterial(id: string, name: string, change: Partial<MaterialSettings>): void {

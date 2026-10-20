@@ -1,5 +1,6 @@
 import type { MaterialSettingsMap, MaterialTint, PartSettingsMap } from './scene-planets';
 import type { AddedLight, LightSettingsMap } from './scene-lights';
+import type { AddedPart } from './created-overlays';
 import { bodyFrame } from './scene-renderer';
 
 /**
@@ -49,6 +50,11 @@ export interface BodySettings {
   readonly shade?: number;
   /** A tint over all its materials. */
   readonly tint?: MaterialTint;
+  /**
+   * How much room its glow is given past its spheres where the view is fitted to it, times their
+   * reach (`HALO_MARGIN` unless set).
+   */
+  readonly glowMargin?: number;
   /** (See `lighting`.) Where its shade darkens it and its rims and glows lean (its frame). */
   readonly lightFrom?: Vec3;
   readonly shadeTowards?: Vec3;
@@ -63,6 +69,11 @@ export interface BodySettings {
   readonly added?: readonly AddedLight[];
   /** Its materials' draw order, by `materialKey` (the later over the earlier; see `drawOrder`), where set. */
   readonly order?: readonly string[];
+  /**
+   * Parts added onto it at this level (its own, as its data's are: keyed `own:<id>`, their
+   * materials by name), after those added under it.
+   */
+  readonly addedParts?: readonly AddedPart[];
 }
 
 /** A moon of a body: which planet it is, its orbit, what it wears and its settings, and its own moons. */
@@ -280,6 +291,7 @@ export interface BodyValues {
   readonly lightFrom: Vec3 | null;
   readonly shadeTowards: Vec3;
   readonly rim: Vec3;
+  readonly glowMargin: number;
 }
 
 /** How far the view reaches either way from its middle: the tangents of its half-angles. */
@@ -385,8 +397,10 @@ export interface SkyChoices {
   readonly overlays?: readonly string[];
   /** Whether each overlay it wears is drawn, by id (off: as if it didn't wear it, kept). */
   readonly overlaysEnabled?: Readonly<Record<string, boolean>>;
-  /** Its overlays' parts' settings, by part (`style:<overlay>:<part>`). */
+  /** Its overlays' parts' settings, by part (`style:<overlay>:<part>`; its own added: `own:<id>`). */
   readonly parts?: PartSettingsMap;
+  /** Parts added onto it at this level (its own: bands, or its overlays' parts reused), after those under it. */
+  readonly addedParts?: readonly AddedPart[];
 }
 
 /**
@@ -411,14 +425,36 @@ export interface SceneBody {
 }
 
 /**
+ * A group put in a scene (or in another group): which (its id), where its middle is put (in the
+ * scene's space; its middle: where a scene's first planet goes, `SCENE_CENTRE`), how big (times
+ * its own), turned about the up through its middle (degrees, to the right), switched on or off, and
+ * named where it is.
+ */
+export interface GroupPlacement {
+  readonly group: string;
+  readonly position: Vec3;
+  readonly size?: number;
+  readonly turn?: number;
+  readonly enabled?: boolean;
+  readonly label?: string;
+}
+
+/**
  * A scene as set on the Background page: its planets (each with its moons), its name, its sky.
  * Scenes kept before scenes had several planets have one (`planet`, `style`, `variants`, `moons`),
  * read as one planet in the middle of the view (`sceneBodies`); what is set now is `bodies`.
  */
 export interface PlanetChoices {
   readonly bodies?: readonly SceneBody[];
-  /** The scene's lights, lighting every planet in it. */
+  /** The scene's lights, lighting every planet in it (a group's: its own planets alone). */
   readonly lights?: readonly AddedLight[];
+  /**
+   * Whether it is a group: planets (with their moons and lights) to put in scenes, as a scene
+   * within a scene; kept with the scenes, listed apart, with no sky of its own.
+   */
+  readonly group?: boolean;
+  /** The groups put in it, in order. */
+  readonly groups?: readonly GroupPlacement[];
   /** What the scene is called, where it is named (else its first planet's id, or its own). */
   readonly name?: string;
   readonly sky?: SkyChoices;

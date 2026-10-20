@@ -118,6 +118,15 @@ describe('a body’s parts', () => {
     expect(set.mapping).toMatchObject({ mid: 0.5 });
   });
 
+  it('mirror a sphere’s textures, and turn and repeat a ring’s round it', () => {
+    expect(withPart(sphere, { flip: true }).mapping).toMatchObject({ flip: true });
+    expect(withPart(ring, { from: 90, repeat: 3 }).mapping).toMatchObject({
+      from: Math.PI / 2,
+      uMax: 3,
+      mid: 0.25,
+    });
+  });
+
   it('let a ring go of its body’s limb', () => {
     expect(withPart(ring, { keepToLimb: false }).shape).not.toHaveProperty('seen');
     expect(withPart(ring, { keepToLimb: true }).shape).toHaveProperty('seen', 12);

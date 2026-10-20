@@ -1,0 +1,21 @@
+@use '../properties/property-row';
+
+// The game data's parts to reuse: a short row, as a property's.
+.row {
+  @include property-row.row;
+  grid-template-columns: 84px minmax(0, 1fr) property-row.$reset-column;
+}
+
+.label {
+  @include property-row.label;
+}
+
+.select {
+  @include property-row.field;
+  width: 100%;
+
+  option {
+    background: rgb(var(--hrs-glass-tint));
+    color: inherit;
+  }
+}

@@ -53,6 +53,16 @@
       (resetRequested)="clear.emit(['tilt'])"
       (valueChange)="settingsChange.emit({ tilt: $event })"
     />
+    @if (p.kind === 'sphere') {
+      <hrs-property-check
+        label="Mirror"
+        [checked]="v.flip"
+        [changed]="isSet('flip')"
+        [origin]="p.origins.flip"
+        (resetRequested)="clear.emit(['flip'])"
+        (checkedChange)="settingsChange.emit({ flip: $event })"
+      />
+    }
     @if (p.band) {
       <hrs-property-number
         label="Width"
@@ -105,6 +115,25 @@
       [origin]="p.origins.mid"
       (resetRequested)="clear.emit(['mid'])"
       (valueChange)="settingsChange.emit({ mid: $event })"
+    />
+    <hrs-property-number
+      label="Texture turn"
+      [value]="v.from"
+      [step]="1"
+      [changed]="isSet('from')"
+      [origin]="p.origins.from"
+      (resetRequested)="clear.emit(['from'])"
+      (valueChange)="settingsChange.emit({ from: $event })"
+    />
+    <hrs-property-number
+      label="Repeats"
+      [value]="v.repeat"
+      [min]="0.01"
+      [step]="0.1"
+      [changed]="isSet('repeat')"
+      [origin]="p.origins.repeat"
+      (resetRequested)="clear.emit(['repeat'])"
+      (valueChange)="settingsChange.emit({ repeat: $event })"
     />
     @if (p.canKeepToLimb) {
       <hrs-property-check

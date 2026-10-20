@@ -1,0 +1,56 @@
+@let p = placement();
+<hrs-property-section
+  title="General"
+  [changed]="!!p.label"
+  (resetRequested)="placementChange.emit({ label: undefined })"
+>
+  <hrs-property-text
+    label="Name"
+    [value]="p.label ?? ''"
+    [placeholder]="groupName()"
+    [changed]="!!p.label"
+    (resetRequested)="placementChange.emit({ label: undefined })"
+    (valueChange)="placementChange.emit({ label: $event || undefined })"
+  />
+  <div class="buttons">
+    <button type="button" class="button" (click)="editRequested.emit()">Edit group</button>
+    <button type="button" class="button" (click)="removeRequested.emit()">Remove group</button>
+  </div>
+</hrs-property-section>
+<hrs-property-section title="Place">
+  <hrs-property-number
+    label="Across"
+    [value]="p.position[0]"
+    [step]="0.5"
+    (valueChange)="move(0, $event)"
+  />
+  <hrs-property-number
+    label="Up"
+    [value]="p.position[2]"
+    [step]="0.5"
+    (valueChange)="move(2, $event)"
+  />
+  <hrs-property-number
+    label="Distance"
+    [value]="p.position[1]"
+    [step]="1"
+    (valueChange)="move(1, $event)"
+  />
+  <hrs-property-number
+    label="Size"
+    [value]="p.size ?? 1"
+    [min]="0.01"
+    [step]="0.01"
+    [changed]="p.size !== undefined && p.size !== 1"
+    (resetRequested)="placementChange.emit({ size: undefined })"
+    (valueChange)="placementChange.emit({ size: $event })"
+  />
+  <hrs-property-number
+    label="Turn"
+    [value]="p.turn ?? 0"
+    [step]="1"
+    [changed]="!!p.turn"
+    (resetRequested)="placementChange.emit({ turn: undefined })"
+    (valueChange)="placementChange.emit({ turn: $event })"
+  />
+</hrs-property-section>

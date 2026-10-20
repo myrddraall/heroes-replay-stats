@@ -2,7 +2,7 @@ import type { Signal } from '@angular/core';
 import type { BodySettings, PlanetChoices, SkyChoices } from './background-scene';
 import { mergeMaterialSettings } from './material-settings';
 import { type AddedLight, mergeLightSettings } from './scene-lights';
-import type { CreatedOverlay } from './created-overlays';
+import { type CreatedOverlay, mergeAddedParts } from './created-overlays';
 import { createdOverlay, overlayOn } from './overlays';
 import type { SetPlanet } from './planet-sets';
 import {
@@ -139,6 +139,7 @@ export function withLibrary(set: SetPlanet, library: LibraryState): SetPlanet {
     ),
     ...(base ? { base } : {}),
     parts: mergePartSettings(own?.parts, ...styles.map((s) => s.parts), planet.parts),
+    addedParts: mergeAddedParts(own?.addedParts, planet.addedParts),
     order: planet.order ?? own?.order ?? (orders.length ? orders.flat() : undefined),
     lights: mergeLightSettings(own?.lights, ...styles.map((s) => s.lights), planet.lights),
     added: [
@@ -208,5 +209,6 @@ export function skyWithLibrary(
     order: sky?.order ?? library.sky.order,
     overlays,
     parts: mergePartSettings(...styles.map((s) => s?.parts), library.sky.parts, sky?.parts),
+    addedParts: mergeAddedParts(library.sky.addedParts, sky?.addedParts),
   };
 }

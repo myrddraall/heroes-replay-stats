@@ -117,14 +117,25 @@ export abstract class Editor {
   abstract resetSky(): void;
 
   /** Everything in the layer edited back as what is under it (a scene; the whole library). */
-  /** The shapes of part the overlay open may have added (one made in the editor; none: none). */
-  abstract readonly partShapes: Signal<readonly CreatedShape[]>;
-  /** A part of a shape added to the overlay open (selected), or the selected one taken out. */
-  abstract addPart(shape: CreatedShape): void;
-  abstract removePart(): void;
   /**
-   * The materials the selected part draws (one of an overlay made in the editor's), in order, and
-   * those it may draw; null where its materials are its data's.
+   * The shapes of part that may be added to what is selected (a body, a sky, an overlay made in the
+   * editor, at the level edited); none: nothing may be.
+   */
+  abstract readonly partShapes: Signal<readonly CreatedShape[]>;
+  /** The game data's parts that may be reused there, by name. */
+  abstract readonly reusableParts: Signal<readonly PickChoice[]>;
+  /** A new part of a shape added there (selected), one of the game data's reused, or the selected one taken out. */
+  abstract addPart(shape: CreatedShape): void;
+  abstract reusePart(value: string): void;
+  abstract removePart(): void;
+  /** Whether the parts added onto what is selected at the level edited may be saved as an overlay. */
+  abstract readonly canSaveAsOverlay: Signal<boolean>;
+  /** Those parts saved as a new overlay (what is selected wearing it in their place, where it can). */
+  abstract saveAsOverlay(): void;
+  /**
+   * The materials the selected part draws (one made in the editor at the level edited: an
+   * overlay's, or added onto a body or sky), in order, and those it may draw; null where its
+   * materials are its data's.
    */
   abstract readonly partMaterials: Signal<{
     readonly picked: readonly string[];

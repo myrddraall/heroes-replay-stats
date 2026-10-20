@@ -1,6 +1,10 @@
 @let t = tint();
 @if (own()) {
-  <hrs-property-section title="Scene" [changed]="!!name()" (resetRequested)="nameChange.emit('')">
+  <hrs-property-section
+    [title]="group() ? 'Group' : 'Scene'"
+    [changed]="!!name()"
+    (resetRequested)="nameChange.emit('')"
+  >
     <hrs-property-text
       label="Name"
       [value]="name()"
@@ -10,7 +14,9 @@
       (valueChange)="nameChange.emit($event)"
     />
     <div class="buttons">
-      <button type="button" class="button" (click)="deleteRequested.emit()">Delete scene</button>
+      <button type="button" class="button" (click)="deleteRequested.emit()">
+        {{ group() ? 'Delete group' : 'Delete scene' }}
+      </button>
     </div>
   </hrs-property-section>
 }
@@ -21,33 +27,35 @@
     </div>
   </hrs-property-section>
 }
-<hrs-property-section
-  title="Colour"
-  [changed]="tinted()"
-  (resetRequested)="presetChange.emit(none)"
->
-  <hrs-property-select
-    label="Tint"
+@if (!group()) {
+  <hrs-property-section
+    title="Colour"
     [changed]="tinted()"
     (resetRequested)="presetChange.emit(none)"
-    [value]="preset()"
-    [options]="presetOptions()"
-    (valueChange)="presetChange.emit($event)"
-  />
-  @if (custom()) {
-    <hrs-property-colour
-      label="Colour"
-      [value]="t.colour"
-      (valueChange)="tintChange.emit({ colour: $event })"
-    />
+  >
     <hrs-property-select
-      label="Blend"
-      [value]="t.blend"
-      [options]="blends"
-      (valueChange)="blend($event)"
+      label="Tint"
+      [changed]="tinted()"
+      (resetRequested)="presetChange.emit(none)"
+      [value]="preset()"
+      [options]="presetOptions()"
+      (valueChange)="presetChange.emit($event)"
     />
-  }
-</hrs-property-section>
+    @if (custom()) {
+      <hrs-property-colour
+        label="Colour"
+        [value]="t.colour"
+        (valueChange)="tintChange.emit({ colour: $event })"
+      />
+      <hrs-property-select
+        label="Blend"
+        [value]="t.blend"
+        [options]="blends"
+        (valueChange)="blend($event)"
+      />
+    }
+  </hrs-property-section>
+}
 @if (sets()) {
   <hrs-property-section title="Sets">
     <div class="buttons">

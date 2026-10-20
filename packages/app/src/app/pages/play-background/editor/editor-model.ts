@@ -50,6 +50,7 @@ import {
   withReceiver,
 } from '../../../scenes/play-background/scene-lights';
 import {
+  HALO_MARGIN,
   legacyShadow,
   withLightSetting,
   withLightSwitched,
@@ -60,7 +61,7 @@ import { overlayOn, wornKey } from '../../../scenes/play-background/overlays';
 import type { LibraryState } from '../../../scenes/play-background/background-design';
 import {
   createdSkyFile,
-  type MaterialLookup,
+  type SourceLookup,
   overlayName,
 } from '../../../scenes/play-background/created-overlays';
 import type { PlanetIndex } from '../../../scenes/play-background/scene-planets';
@@ -111,6 +112,8 @@ export type TargetKind =
   | 'stand-in'
   | 'reference'
   | 'group'
+  /** A group put in a scene. */
+  | 'placement'
   | 'part'
   | 'light'
   /** What of a material a row shows: one of its layers, its shield shader, one of that's effects. */
@@ -215,6 +218,8 @@ export interface MaterialEntry {
   readonly baseTint: MaterialTint;
   /** Its layers: each one's texture and how it lies on it. */
   readonly layers: readonly LayerEntry[];
+  /** Whether it is drawn by a part added onto its owner (a sky's: listed with that part). */
+  readonly added?: boolean;
 }
 
 /** A layer's texture and how it lies on its material, as in effect (the data's where nothing is set). */
@@ -559,6 +564,7 @@ export function valuesOf(b: BodyInfo): BodyValues {
       tuning?.shade?.direction ??
       DEFAULT_SHADE.direction,
     rim: s.rim ?? own?.rim ?? tuning?.rim ?? TOWARDS_EYE,
+    glowMargin: s.glowMargin ?? own?.glowMargin ?? HALO_MARGIN,
   };
 }
 
@@ -572,6 +578,9 @@ export interface PartValues {
   readonly depth: number;
   readonly mid: number;
   readonly keepToLimb: boolean;
+  readonly flip: boolean;
+  readonly from: number;
+  readonly repeat: number;
 }
 
 /** A body's part as its properties show it. */
@@ -603,6 +612,8 @@ export interface PartEntry {
   readonly overlay?: string;
   /** That overlay's name, where it is one worn (not the overlay open itself). */
   readonly overlayName?: string;
+  /** Whether it was added onto its owner at the level edited (it can be taken off, its materials picked). */
+  readonly added?: boolean;
 }
 
 /** A part as the tree shows it: with the materials drawn on it, in the order they are drawn. */
@@ -651,6 +662,9 @@ const PART_NAMES: Record<PartRole, string> = {
   sphere: 'Sphere',
   band: 'Band',
 };
+
+/** A part of the game data's name: its role's (Surface, Shell, Ring…). */
+export const partName = (part: { readonly role: PartRole }) => PART_NAMES[part.role];
 
 /** A part's name made from its id, where it has one (an overlay's made in the editor: `ring-2`, Ring 2). */
 const idLabel = (id: string) => {
@@ -711,6 +725,11 @@ export function partsOfBody(b: BodyInfo): PartEntry[] {
           depth: settings?.depth ?? (shape.kind === 'ring' ? shape.depth : 0),
           mid: settings?.mid ?? (mapping.kind === 'ring' ? (mapping.mid ?? 0.5) : 0.5),
           keepToLimb: settings?.keepToLimb ?? (shape.kind === 'ring' && shape.seen !== undefined),
+          flip: settings?.flip ?? (mapping.kind === 'sphere' && mapping.flip),
+          from:
+            settings?.from ??
+            (mapping.kind === 'ring' ? Math.round(((mapping.from * 180) / Math.PI) * 10) / 10 : 0),
+          repeat: settings?.repeat ?? (mapping.kind === 'ring' ? mapping.uMax : 1),
         },
         set,
         origins: originsOf(levels.map(([name, l]) => [name, l?.[key]] as const)),
@@ -719,6 +738,9 @@ export function partsOfBody(b: BodyInfo): PartEntry[] {
         enabled: settings?.enabled ?? true,
         enabledBelow: below?.enabled ?? true,
         ...(overlay ? { overlay, overlayName: overlayNamed(overlay) } : {}),
+        ...(!overlay && part.id && b.settings.addedParts?.some((a) => a.id === part.id)
+          ? { added: true }
+          : {}),
       };
     }),
   );
@@ -1102,6 +1124,7 @@ export function bodyOrigins(b: BodyInfo): SettingOrigins<keyof BodySettings> {
       ['its tuning', tuning?.shade?.direction],
     ),
     rim: first([library, own?.rim], ['its tuning', tuning?.rim]),
+    glowMargin: first([library, own?.glowMargin]),
   };
   return Object.fromEntries(Object.entries(out).filter(([, v]) => v)) as SettingOrigins<
     keyof BodySettings
@@ -1214,12 +1237,12 @@ export function skyMaterialsOf(
     });
   }
   // The overlays' it wears: each drawn as the sky's are, its settings the overlay's (the library's
-  // for it) under the sky's.
+  // for it) under the sky's. Its own parts (added onto it: the overlay with no id) draw its own.
   for (const o of overlays)
     for (const part of o.file?.parts ?? [])
       for (const name of part.materials) {
         const material = o.file?.materials[name];
-        const key = materialKey(name, o.id);
+        const key = materialKey(name, o.id || undefined);
         if (!material || out.some((m) => m.key === key)) continue;
         const levels = [
           ['the library (material)', base?.[name]],
@@ -1236,8 +1259,9 @@ export function skyMaterialsOf(
           ...(material.priority !== undefined ? { priority: material.priority } : {}),
           label: edited?.materials?.[key]?.label ?? named,
           labelBelow: named,
-          from: 'style',
-          overlay: o.id,
+          ...(o.id
+            ? { from: 'style' as const, overlay: o.id }
+            : { from: 'own' as const, added: true }),
           origins: originsOf(levels),
           values: materialValues(material, settings, skyDepths(scene)[name]),
           enabledBelow: under?.enabled ?? MATERIAL_DEFAULTS.enabled,
@@ -1269,7 +1293,7 @@ export function skyOverlayInfos(
   scene: PlayScene | null,
   library: LibraryState,
   worn: readonly string[],
-  lookup: MaterialLookup,
+  lookup: SourceLookup,
 ): SkyOverlayInfo[] {
   return worn.map((id) => {
     const made = library.created?.[id];
@@ -1311,6 +1335,8 @@ export function skyPartsOf(
   edited: PartSettingsMap | undefined,
   /** Whether the overlay is the one open (its parts are its own, not another's it wears). */
   own = false,
+  /** The parts added at the level edited, by id (the sky's own: `o` with no id). */
+  addedHere: readonly string[] = [],
 ): PartEntry[] {
   const levels: [string, PartSettingsMap | undefined][] = [
     [`the library (${skyOverlayLabel(o)})`, o.below?.parts],
@@ -1318,11 +1344,13 @@ export function skyPartsOf(
   ];
   const parts = o.file?.parts ?? [];
   return parts.map((part): PartEntry => {
-    const key = overlayPartKey(o.id, { id: part.id, role: 'band' });
+    const key: PartKey = o.id
+      ? overlayPartKey(o.id, { id: part.id, role: 'band' })
+      : `own:${part.id}`;
     const under = mergePartSettings(...levels.map(([, l]) => l))[key];
     const settings = mergePartSettings(...levels.map(([, l]) => l), edited)[key];
     const band = part.shape.kind === 'band';
-    const named = under?.label ?? (band ? idLabel(part.id) : skyOverlayLabel(o));
+    const named = under?.label ?? (band || !o.id ? idLabel(part.id) : skyOverlayLabel(o));
     return {
       key,
       label: settings?.label ?? named,
@@ -1339,6 +1367,9 @@ export function skyPartsOf(
         depth: 0,
         mid: 0.5,
         keepToLimb: false,
+        flip: false,
+        from: 0,
+        repeat: 1,
       },
       set: edited?.[key],
       origins: originsOf(levels.map(([name, l]) => [name, l?.[key]] as const)),
@@ -1346,11 +1377,18 @@ export function skyPartsOf(
       materials: part.materials,
       enabled: settings?.enabled ?? true,
       enabledBelow: under?.enabled ?? true,
-      overlay: o.id,
-      ...(own ? {} : { overlayName: skyOverlayLabel(o) }),
+      ...(o.id ? { overlay: o.id } : {}),
+      ...(own || !o.id ? {} : { overlayName: skyOverlayLabel(o) }),
+      ...(!o.id && addedHere.includes(part.id) ? { added: true } : {}),
     };
   });
 }
+
+/** A sky's own parts (added onto it), as the overlays it wears are had: one with no id. */
+export const ownSkyInfo = (file: SkyOverlayFile | undefined): SkyOverlayInfo => ({
+  id: '',
+  ...(file ? { file } : {}),
+});
 
 /** Materials as shown, in the order they are drawn (see `drawOrder`). */
 function inDrawOrder(

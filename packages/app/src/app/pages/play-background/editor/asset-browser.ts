@@ -15,6 +15,7 @@ const KIND_LABELS: Readonly<Record<string, string>> = {
 
 const ICONS: Readonly<Record<OpenKind, string>> = {
   scene: 'landscape',
+  group: 'workspaces',
   planet: 'public',
   style: 'style',
   material: 'texture',
@@ -59,6 +60,13 @@ export class AssetBrowser {
             label: s.label,
             caption: s.shows !== s.label ? s.shows : undefined,
             unsaved: d.unsavedScenes().has(s.id),
+          }));
+        case 'group':
+          return c.groups().map((g) => ({
+            key: key(g.id),
+            label: g.label,
+            caption: g.shows !== g.label ? g.shows : undefined,
+            unsaved: d.unsavedScenes().has(g.id),
           }));
         case 'planet':
           return c.planets().map((p) => ({

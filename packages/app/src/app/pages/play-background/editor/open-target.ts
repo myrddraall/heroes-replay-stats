@@ -7,7 +7,8 @@
 
 /** The library's kinds of asset, each a list in the browser. */
 export type AssetKind = 'planet' | 'style' | 'material' | 'particle' | 'sky';
-export type OpenKind = 'scene' | AssetKind;
+/** What may be open: a scene, a group (edited as a scene is), or one of the library's assets. */
+export type OpenKind = 'scene' | 'group' | AssetKind;
 
 export interface OpenTarget {
   readonly kind: OpenKind;
@@ -26,7 +27,15 @@ export interface AssetTarget extends OpenTarget {
   readonly on?: MaterialContext;
 }
 
-const KINDS: readonly OpenKind[] = ['scene', 'planet', 'style', 'material', 'particle', 'sky'];
+const KINDS: readonly OpenKind[] = [
+  'scene',
+  'group',
+  'planet',
+  'style',
+  'material',
+  'particle',
+  'sky',
+];
 
 /** The random sets' scene: what is open when nothing is. */
 export const RANDOM_SETS: OpenTarget = { kind: 'scene', id: '' };
@@ -75,4 +84,6 @@ export function parseOpen(key: string | undefined): OpenTarget {
   return KINDS.includes(kind) ? { kind, id: key.slice(colon + 1) } : RANDOM_SETS;
 }
 
-export const isAsset = (target: OpenTarget): target is AssetTarget => target.kind !== 'scene';
+/** Whether what is open is one of the library's assets (else a scene or a group: the scene editor's). */
+export const isAsset = (target: OpenTarget): target is AssetTarget =>
+  target.kind !== 'scene' && target.kind !== 'group';

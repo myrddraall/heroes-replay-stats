@@ -2,6 +2,7 @@ import { ownScene } from './background-design';
 import {
   addMoon,
   type BodyPath,
+  type GroupPlacement,
   type BodySettings,
   changeMoon,
   DEFAULT_ORBIT,
@@ -44,6 +45,94 @@ export const SCENE_CENTRE: { readonly position: Vec3; readonly radius: number } 
 
 /** The ids new scenes are given (`scene-<n>`): unlike scenes kept by a planet's id, they name no planet. */
 const NEW_SCENE = /^scene-\d+$/;
+
+/** What the ids of groups start with (`group-<n>`): kept with the scenes, they are none. */
+export const GROUP_PREFIX = 'group-';
+/** Whether a scene's id is a group's. */
+export const isGroup = (id: string) => id.startsWith(GROUP_PREFIX);
+
+/** How deep groups are put in groups before the deeper are left out (one put in itself, or round about). */
+const GROUP_DEPTH = 6;
+
+/** A group's planet as put in a scene: which placement it comes from (by index, outermost first), and what it is there. */
+export interface GroupBody {
+  readonly placement: readonly number[];
+  /** Its index among its group's own planets. */
+  readonly index: number;
+  /** The group it is a planet of (its settings are kept there). */
+  readonly group: string;
+  readonly body: SceneBody;
+  /** The lights of the groups it is in (they light their own planets alone). */
+  readonly lights: readonly AddedLight[];
+}
+
+/** A point of a group put where a placement puts it: about its middle, sized and turned, then moved. */
+function placed(p: Vec3, placement: GroupPlacement): Vec3 {
+  const size = placement.size ?? 1;
+  const a = ((placement.turn ?? 0) * Math.PI) / 180;
+  const centre = SCENE_CENTRE.position;
+  const [x, y, z] = [p[0] - centre[0], p[1] - centre[1], p[2] - centre[2]];
+  // Turned about the up (z) through its middle, to the right seen from the eye.
+  const rx = x * Math.cos(a) + y * Math.sin(a);
+  const ry = -x * Math.sin(a) + y * Math.cos(a);
+  return [
+    placement.position[0] + rx * size,
+    placement.position[1] + ry * size,
+    placement.position[2] + z * size,
+  ];
+}
+
+/**
+ * The planets of the groups put in a scene (or a group), where they are put: each group's own, and
+ * those of the groups put in it, in turn; those switched off left out. `groups` finds a group by
+ * its id. One put in itself (or round about) stops where it would go round again.
+ */
+export function groupBodies(
+  placements: readonly GroupPlacement[] | undefined,
+  groups: (id: string) => PlanetChoices | undefined,
+  within: readonly string[] = [],
+): GroupBody[] {
+  if (within.length >= GROUP_DEPTH) return [];
+  return (placements ?? []).flatMap((placement, i) => {
+    const group = groups(placement.group);
+    if (!group || placement.enabled === false || within.includes(placement.group)) return [];
+    const lights = group.lights ?? [];
+    const size = placement.size ?? 1;
+    const own = (group.bodies ?? []).map((body, index): GroupBody => ({
+      placement: [i],
+      index,
+      group: placement.group,
+      body: { ...body, position: placed(body.position, placement), radius: body.radius * size },
+      lights,
+    }));
+    const inner = groupBodies(group.groups, groups, [...within, placement.group]).map(
+      (g): GroupBody => ({
+        ...g,
+        placement: [i, ...g.placement],
+        body: {
+          ...g.body,
+          position: placed(g.body.position, placement),
+          radius: g.body.radius * size,
+        },
+        lights: [...g.lights, ...lights],
+      }),
+    );
+    return [...own, ...inner];
+  });
+}
+
+/** Whether a group may be put in another (`into`): not itself, nor one it is in, round about. */
+export function canPutGroup(
+  group: string,
+  into: string,
+  groups: (id: string) => PlanetChoices | undefined,
+): boolean {
+  if (group === into) return false;
+  const holds = (id: string, seen: readonly string[]): boolean =>
+    !seen.includes(id) &&
+    (groups(id)?.groups ?? []).some((p) => p.group === into || holds(p.group, [...seen, id]));
+  return !holds(group, []);
+}
 
 /**
  * The Play screen's planets, from the game's set (`playSet`'s): each where the game puts it, its
@@ -317,6 +406,8 @@ export function visualExtent(
   file?: PlanetFile,
   overlays: readonly { readonly id: string; readonly file?: PlanetFile }[] = [],
   set?: PartSettingsMap,
+  /** The room its glow is given past its spheres (times their reach). */
+  margin = HALO_MARGIN,
 ): number {
   const parts = [
     ...(file?.parts ?? []).map((p) => withPart(p, set?.[ownPartKey(p)])),
@@ -328,7 +419,7 @@ export function visualExtent(
   ];
   const spheres = parts.filter((p) => p.shape.kind === 'sphere');
   const rings = parts.filter((p) => p.shape.kind === 'ring');
-  return Math.max(HALO_MARGIN * reach(spheres), reach(rings, Infinity));
+  return Math.max(margin * reach(spheres), reach(rings, Infinity));
 }
 
 /** A body's parts' settings in effect: under the level edited (its own defaults, its overlays'), then that level's. */

@@ -8,6 +8,7 @@ import type {
 } from './play-scene';
 import type { TintBlend } from './scene-tints';
 import { BUILT_IN_PREFIX, type BuiltInPlanets } from './built-in-planets';
+import type { AddedPart } from './created-overlays';
 
 /**
  * The planets heroes-capture exports beside the Play screen's scene (`heroes-capture ui
@@ -177,6 +178,12 @@ export interface PartSettings {
   readonly depth?: number;
   readonly mid?: number;
   readonly keepToLimb?: boolean;
+  /** A sphere's textures round it the other way (mirrored), in place of its own way. */
+  readonly flip?: boolean;
+  /** A ring's texture turned round it: where it is greatest (degrees round its plane), in place of its own. */
+  readonly from?: number;
+  /** How many times a ring's texture goes round it (its u at its greatest), in place of its own. */
+  readonly repeat?: number;
 }
 
 /** Parts' settings by part. */
@@ -230,10 +237,14 @@ export function withPart(part: BodyPart, settings: PartSettings | undefined): Bo
   const { size = 1, turn = 0, tilt = 0 } = settings;
   const { shape } = part;
   if (shape.kind === 'sphere') {
+    const mapping = turnedMapping(part.mapping, turn, tilt);
     return {
       ...part,
       shape: { ...shape, radius: shape.radius * size },
-      mapping: turnedMapping(part.mapping, turn, tilt),
+      mapping:
+        mapping.kind === 'sphere' && settings.flip !== undefined
+          ? { ...mapping, flip: settings.flip }
+          : mapping,
       ...(part.mapping2 ? { mapping2: turnedMapping(part.mapping2, turn, tilt) } : {}),
     };
   }
@@ -251,8 +262,13 @@ export function withPart(part: BodyPart, settings: PartSettings | undefined): Bo
       ...(keep && seen !== undefined ? { seen } : {}),
     },
     mapping:
-      part.mapping.kind === 'ring' && settings.mid !== undefined
-        ? { ...part.mapping, mid: settings.mid }
+      part.mapping.kind === 'ring'
+        ? {
+            ...part.mapping,
+            ...(settings.mid !== undefined ? { mid: settings.mid } : {}),
+            ...(settings.from !== undefined ? { from: (settings.from * Math.PI) / 180 } : {}),
+            ...(settings.repeat !== undefined ? { uMax: settings.repeat } : {}),
+          }
         : part.mapping,
   };
 }
@@ -465,6 +481,13 @@ export interface SkySettings {
   readonly overlays?: readonly string[];
   /** Its overlays' parts' settings, by part (`style:<overlay>:<part>`). */
   readonly parts?: PartSettingsMap;
+  /** Its own parts (added onto it): their file, and the images their textures are. */
+  readonly own?: {
+    readonly file: SkyOverlayFile;
+    readonly images: Readonly<Record<string, ImageBitmap>>;
+  };
+  /** The parts added onto it, under those built (`own`): as the design has them. */
+  readonly addedParts?: readonly AddedPart[];
   /** Overlays made in the editor it wears, by id: their files, and the images their textures are. */
   readonly made?: Readonly<
     Record<

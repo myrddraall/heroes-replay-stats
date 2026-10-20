@@ -159,6 +159,24 @@
     />
   </hrs-property-section>
 }
+@if (!overlay()) {
+  <hrs-property-section
+    title="Fit"
+    [changed]="isSet('glowMargin')"
+    (resetRequested)="clear.emit(['glowMargin'])"
+  >
+    <hrs-property-number
+      label="Glow margin"
+      [value]="v.glowMargin"
+      [min]="1"
+      [step]="0.01"
+      [changed]="isSet('glowMargin')"
+      [origin]="origins()?.glowMargin"
+      (resetRequested)="clear.emit(['glowMargin'])"
+      (valueChange)="settingsChange.emit({ glowMargin: $event })"
+    />
+  </hrs-property-section>
+}
 @if (lit()) {
   <ng-content select="[lightAdd]" />
 }

@@ -9,4 +9,20 @@
       </button>
     }
   </div>
+  @if (existing().length) {
+    <div class="row">
+      <label class="label" [for]="id">Existing</label>
+      <select class="select" [id]="id" (change)="reuse($event)">
+        <option value="" selected>Part…</option>
+        @for (o of existing(); track o.value) {
+          <option [value]="o.value">{{ o.label }}</option>
+        }
+      </select>
+    </div>
+  }
+  @if (savable()) {
+    <div class="buttons">
+      <button type="button" class="button" (click)="saved.emit()">Save as overlay</button>
+    </div>
+  }
 </hrs-property-section>

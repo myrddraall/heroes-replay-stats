@@ -29,6 +29,14 @@
     </button>
   </div>
 }
+@if (catalog.type() === 'group') {
+  <div class="row">
+    <button type="button" class="button new" (click)="catalog.createGroup()">
+      <mat-icon class="material-symbols-outlined" aria-hidden="true">add</mat-icon>
+      <span>New group</span>
+    </button>
+  </div>
+}
 @if (catalog.type() === 'scene') {
   <div class="row">
     <button
