@@ -119,3 +119,27 @@ $reset-column: 16px;
     outline-offset: -1px;
   }
 }
+
+// A value set at a level under the one edited: a small hollow dot after the label (which level, in
+// its title, and in words for assistive technology).
+@mixin origin {
+  .origin {
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    margin-left: 4px;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    vertical-align: middle;
+    opacity: 0.7;
+  }
+
+  .origin__text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}

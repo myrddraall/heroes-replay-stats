@@ -35,3 +35,5 @@
 .reset-slot {
   @include property-row.reset-slot;
 }
+
+@include property-row.origin;

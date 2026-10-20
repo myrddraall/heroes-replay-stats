@@ -14,6 +14,8 @@ export class PropertyColour {
   readonly label = input.required<string>();
   /** Whether it is set here (shown so, with a reset). */
   readonly changed = input(false);
+  /** Where its value comes from where it isn't set here (a level under the one edited), if anywhere. */
+  readonly origin = input<string>();
   /** Its reset was pressed: back to what it would be. */
   readonly resetRequested = output<void>();
   /** `#rrggbb`. */

@@ -61,3 +61,16 @@
   font: var(--mat-sys-body-small);
   opacity: 0.75;
 }
+
+// A material's name in the game data, under its readable one (the panel's title).
+.data-name {
+  margin: 0 0 2px;
+  font: var(--mat-sys-body-small);
+  opacity: 0.7;
+
+  &__value {
+    font-family: var(--mat-sys-body-small-font), monospace;
+    font-size: 0.9em;
+    overflow-wrap: anywhere;
+  }
+}

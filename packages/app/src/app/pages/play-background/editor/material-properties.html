@@ -1,7 +1,15 @@
 @let v = values();
 @let c = controls();
+@if (origin(); as from) {
+  <p class="data-name">{{ from }}</p>
+}
+@if (name(); as data) {
+  <p class="data-name">
+    In the game data: <span class="data-name__value">{{ data }}</span>
+  </p>
+}
 <hrs-property-section
-  title="Compositing"
+  title="Surface"
   [changed]="anySet(['strength', 'blend'])"
   (resetRequested)="clear.emit(['strength', 'blend'])"
 >
@@ -13,6 +21,7 @@
       [max]="1"
       [step]="0.01"
       [changed]="isSet('strength')"
+      [origin]="origins()?.strength"
       (resetRequested)="clear.emit(['strength'])"
       (valueChange)="settingsChange.emit({ strength: $event })"
     />
@@ -23,6 +32,7 @@
       [value]="v.blend"
       [options]="blends"
       [changed]="isSet('blend')"
+      [origin]="origins()?.blend"
       (resetRequested)="clear.emit(['blend'])"
       (valueChange)="blend($event)"
     />
@@ -48,6 +58,7 @@
       [max]="4"
       [step]="0.1"
       [changed]="isSet('glow')"
+      [origin]="origins()?.glow"
       (resetRequested)="clear.emit(['glow'])"
       (valueChange)="settingsChange.emit({ glow: $event })"
     />
@@ -59,6 +70,7 @@
         [max]="1"
         [step]="0.05"
         [changed]="isSet('spread')"
+        [origin]="origins()?.spread"
         (resetRequested)="clear.emit(['spread'])"
         (valueChange)="settingsChange.emit({ spread: $event })"
       />
@@ -66,6 +78,7 @@
         label="Spread from"
         [value]="v.spreadFrom"
         [changed]="isSet('spreadFrom')"
+        [origin]="origins()?.spreadFrom"
         (resetRequested)="clear.emit(['spreadFrom'])"
         (valueChange)="settingsChange.emit({ spreadFrom: $event })"
       />
@@ -76,6 +89,7 @@
         [max]="4"
         [step]="0.05"
         [changed]="isSet('falloff')"
+        [origin]="origins()?.falloff"
         (resetRequested)="clear.emit(['falloff'])"
         (valueChange)="settingsChange.emit({ falloff: $event })"
       />
@@ -94,17 +108,19 @@
         [value]="v.drawAs"
         [options]="drawAsOptions"
         [changed]="isSet('drawAs')"
+        [origin]="origins()?.drawAs"
         (resetRequested)="clear.emit(['drawAs'])"
         (valueChange)="drawAs($event)"
       />
     }
     <hrs-property-slider
-      label="Size"
+      label="Scale"
       [value]="v.scale"
       [min]="0.1"
       [max]="6"
       [step]="0.05"
       [changed]="isSet('scale')"
+      [origin]="origins()?.scale"
       (resetRequested)="clear.emit(['scale'])"
       (valueChange)="settingsChange.emit({ scale: $event })"
     />
@@ -116,16 +132,18 @@
         [max]="0.4"
         [step]="0.01"
         [changed]="isSet('width')"
+        [origin]="origins()?.width"
         (resetRequested)="clear.emit(['width'])"
         (valueChange)="settingsChange.emit({ width: $event })"
       />
       <hrs-property-slider
-        label="Line soft"
+        label="Line softness"
         [value]="v.soft"
         [min]="0"
         [max]="1"
         [step]="0.05"
         [changed]="isSet('soft')"
+        [origin]="origins()?.soft"
         (resetRequested)="clear.emit(['soft'])"
         (valueChange)="settingsChange.emit({ soft: $event })"
       />
@@ -137,6 +155,7 @@
         [max]="0.9"
         [step]="0.05"
         [changed]="isSet('cut')"
+        [origin]="origins()?.cut"
         (resetRequested)="clear.emit(['cut'])"
         (valueChange)="settingsChange.emit({ cut: $event })"
       />

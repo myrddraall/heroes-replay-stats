@@ -27,8 +27,10 @@ import {
 import {
   loadPlanetIndex,
   type MaterialSettingsMap,
+  type PartRole,
   type PlanetKind,
 } from '../../../scenes/play-background/scene-planets';
+import { materialLabel } from '../../../scenes/play-background/material-names';
 import { withPlanetFiles } from '../../../scenes/play-background/with-planet-files';
 import { DraftDesignStore } from '../draft-design.store';
 import { partMaterials } from './editor-model';
@@ -42,6 +44,8 @@ export const PLAY_SKY = 'play';
 export interface MaterialUse {
   readonly kind: 'planet' | 'style' | 'sky';
   readonly id: string;
+  /** The role of the part it is drawn on there (none: the sky's). */
+  readonly role?: PartRole;
   readonly material: SceneMaterial;
   readonly textures: Readonly<Record<string, SceneTexture>>;
   /** Whether a pattern is drawn for it there (in place of its emissive texture). */
@@ -55,6 +59,8 @@ export interface MaterialUse {
 /** A material of the library: its name, and each asset using it (the first is how it is shown). */
 export interface CatalogMaterial {
   readonly name: string;
+  /** Its name as people read it (from how its first use shows it). */
+  readonly label: string;
   readonly uses: readonly MaterialUse[];
 }
 
@@ -120,6 +126,7 @@ export const AssetCatalogStore = signalStore(
           use(m.name, {
             kind: 'planet',
             id: p.id,
+            role: m.role,
             material: m.material,
             textures: file.textures,
             pattern: m.pattern,
@@ -133,6 +140,7 @@ export const AssetCatalogStore = signalStore(
           use(m.name, {
             kind: 'style',
             id,
+            role: m.role,
             material: m.material,
             textures: file.textures,
             pattern: m.pattern,
@@ -158,8 +166,12 @@ export const AssetCatalogStore = signalStore(
         for (const p of scene.particles) sky(p.material, true);
       }
       return [...uses]
-        .map(([name, u]) => ({ name, uses: u }))
-        .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+        .map(([name, u]) => ({
+          name,
+          label: materialLabel(name, u[0]?.material, u[0]?.textures ?? {}, u[0]?.role),
+          uses: u,
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }));
     });
     return {
       planets,

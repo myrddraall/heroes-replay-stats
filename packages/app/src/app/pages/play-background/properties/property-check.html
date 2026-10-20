@@ -1,7 +1,14 @@
 <span class="label"></span>
 <span class="control">
   <input type="checkbox" class="check" [id]="id" [checked]="checked()" (change)="update($event)" />
-  <label class="text" [class.label--changed]="changed()" [for]="id">{{ label() }}</label>
+  <label class="text" [class.label--changed]="changed()" [for]="id"
+    >{{ label() }}
+    @if (origin() && !changed()) {
+      <span class="origin" [title]="'Set in ' + origin()"
+        ><span class="origin__text">, set in {{ origin() }}</span></span
+      >
+    }
+  </label>
 </span>
 <span class="reset-slot">
   @if (changed()) {

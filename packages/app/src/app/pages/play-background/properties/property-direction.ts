@@ -11,8 +11,8 @@ const KEY_STEP = 0.05;
 /**
  * A direction on one short row of a properties panel (presentational), as a point on a disc that
  * is the planet's face as the eye sees it: dragged (or moved with the arrow keys) to where on the
- * face the direction points; on the near side of the planet, or on the far side where `back` is
- * allowed (a hollow point; a switch beside the disc flips it).
+ * face the direction points; on the near side of the planet or on its far side (a hollow point; a
+ * switch beside the disc flips it), the same for every direction.
  */
 @Component({
   selector: 'hrs-property-direction',
@@ -24,11 +24,11 @@ export class PropertyDirection {
   readonly label = input.required<string>();
   /** Whether it is set here (shown so, with a reset). */
   readonly changed = input(false);
+  /** Where its value comes from where it isn't set here (a level under the one edited), if anywhere. */
+  readonly origin = input<string>();
   /** Its reset was pressed: back to what it would be. */
   readonly resetRequested = output<void>();
   readonly value = input.required<Direction>();
-  /** Whether it may point to the far side. */
-  readonly back = input(false);
   readonly valueChange = output<Direction>();
   protected readonly id = `property-direction-${next++}`;
 
@@ -44,13 +44,18 @@ export class PropertyDirection {
   });
   /** Whether it points to the far side. */
   protected readonly behind = computed(() => this.unit()[1] > 0);
-  protected readonly text = computed(() => {
-    const [x, y, z] = this.unit();
+  /** Where it points across the face, in words: how far right or left, up or down (or the centre). */
+  protected readonly offsets = computed(() => {
+    const [x, , z] = this.unit();
     const side = (v: number, plus: string, minus: string) =>
       Math.abs(v) < 0.15 ? '' : `${Math.round(Math.abs(v) * 100)}% ${v > 0 ? plus : minus}`;
     const parts = [side(x, 'right', 'left'), side(z, 'up', 'down')].filter(Boolean);
-    return `${parts.length ? parts.join(', ') : 'centre'}, ${y > 0 ? 'far side' : 'near side'}`;
+    return parts.length ? parts : ['centre'];
   });
+  /** Where it points, in words, the side too (for assistive technology; the switch shows the side). */
+  protected readonly text = computed(
+    () => `${this.offsets().join(', ')}, ${this.behind() ? 'far side' : 'near side'}`,
+  );
 
   private unit(): Direction {
     const [x, y, z] = this.value();

@@ -44,6 +44,7 @@
     @if (editor.bodyView(); as b) {
       <hrs-body-properties
         [values]="b.values"
+        [origins]="b.origins"
         [styleOptions]="editor.styleOptions()"
         [canLight]="b.canLight"
         [orbit]="b.info.orbit ?? null"
@@ -72,6 +73,9 @@
   @case ('material') {
     @if (editor.material(); as m) {
       <hrs-material-properties
+        [name]="m.name"
+        [origin]="m.origin"
+        [origins]="m.origins"
         [values]="m.values"
         [controls]="m.controls"
         [changed]="m.set !== undefined"
@@ -87,6 +91,8 @@
   @case ('sky-material') {
     @if (editor.material(); as m) {
       <hrs-material-properties
+        [name]="m.name"
+        [origins]="m.origins"
         [values]="m.values"
         [controls]="m.controls"
         [changed]="m.set !== undefined"

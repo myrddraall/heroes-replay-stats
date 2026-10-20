@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import type { MaterialTint } from '../../../scenes/play-background/scene-planets';
 import {
   type BodySettings,
@@ -7,7 +7,10 @@ import {
   type Orbit,
   type Vec3,
 } from '../../../scenes/play-background/background-scene';
-import { NO_MATERIAL_TINT } from '../../../scenes/play-background/material-settings';
+import {
+  NO_MATERIAL_TINT,
+  type SettingOrigins,
+} from '../../../scenes/play-background/material-settings';
 import { PropertyDirection } from '../properties/property-direction';
 import { PropertySection } from '../properties/property-section';
 import { TintSection } from './tint-section';
@@ -28,6 +31,13 @@ import { PropertySlider } from '../properties/property-slider';
 })
 export class BodyProperties {
   readonly values = input.required<BodyValues>();
+  /** Which level under the one edited sets each setting, where one does (shown by its row). */
+  readonly origins = input<SettingOrigins<keyof BodySettings>>();
+  /**
+   * The side its rims and glows come from: the bright side, opposite the point they lean to (what
+   * is kept), as every direction here is a side something comes from.
+   */
+  protected readonly rimFrom = computed(() => this.mirrored(this.values().rim));
   readonly styleOptions = input.required<readonly PropertyOption[]>();
   /** Whether it is lit (its light's strength and direction apply). */
   readonly canLight = input(false);
@@ -96,5 +106,10 @@ export class BodyProperties {
   /** Its orbit (or one part of it) back to a new moon's. */
   protected resetOrbit(field?: keyof Orbit): void {
     this.orbitChange.emit(field ? { [field]: DEFAULT_ORBIT[field] } : DEFAULT_ORBIT);
+  }
+
+  /** A point on the face mirrored through its centre, on the same side: a lean and the side it is bright on. */
+  protected mirrored(d: readonly [number, number, number]): [number, number, number] {
+    return [-d[0], d[1], -d[2]];
   }
 }

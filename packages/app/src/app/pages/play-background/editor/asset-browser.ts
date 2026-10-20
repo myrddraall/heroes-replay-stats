@@ -75,8 +75,8 @@ export class AssetBrowser {
         case 'material':
           return c.materials().map((m) => ({
             key: key(m.name),
-            label: m.name,
-            caption: m.uses.map((u) => (u.kind === 'sky' ? 'sky' : u.id)).join(', '),
+            label: m.label,
+            caption: `${m.name} · ${m.uses.map((u) => (u.kind === 'sky' ? 'sky' : u.id)).join(', ')}`,
             unsaved: d.unsavedLibraryMaterials().has(m.name),
           }));
         case 'particle':

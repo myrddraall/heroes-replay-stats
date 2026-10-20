@@ -5,6 +5,8 @@ import {
   materialValues,
   mergeMaterialSettings,
   NO_MATERIAL_TINT,
+  originsOf,
+  type SettingOrigins,
 } from '../../../scenes/play-background/material-settings';
 import {
   PLAY_SCENE_URL,
@@ -20,6 +22,7 @@ import type {
   Vec3,
 } from '../../../scenes/play-background/background-scene';
 import { keyLightFrom, TOWARDS_EYE } from '../../../scenes/play-background/scene-directions';
+import { materialLabel } from '../../../scenes/play-background/material-names';
 import { REFERENCE_KEY } from './editing-aids.store';
 import type { TreeRow } from './scene-tree';
 import {
@@ -27,6 +30,7 @@ import {
   type MaterialSettings,
   type MaterialSettingsMap,
   type MaterialTint,
+  type PartRole,
   type PlanetFile,
   wearOf,
   withMasks,
@@ -90,6 +94,8 @@ export interface BodyView {
   readonly focused: boolean;
   /** Whether moons can be put about it (a scene's bodies). */
   readonly canHaveMoons: boolean;
+  /** Which level under the one edited sets each of its settings, where one does. */
+  readonly origins: SettingOrigins<keyof BodySettings>;
 }
 
 /** A texture a material's layer reads: which layer, where the site has it, where the game data has it. */
@@ -106,7 +112,16 @@ export interface TextureEntry {
 
 /** A material as its properties show it: its settings as shown, what is set in the layer edited, which controls do anything, the textures it reads. */
 export interface MaterialEntry {
+  /** Its name in the game data (what settings are kept by). */
   readonly name: string;
+  /** Its name as people read it (`materialLabel`). */
+  readonly label: string;
+  /** Whose it is: the body's own, or the style it wears. */
+  readonly from: 'own' | 'style';
+  /** Where it comes from, in words, where it isn't the body's own (a style's: which, and for whom). */
+  readonly origin?: string;
+  /** Which level under the one edited sets each of its settings, where one does. */
+  readonly origins: SettingOrigins<keyof MaterialSettings>;
   readonly values: MaterialValues;
   readonly controls: MaterialControls;
   readonly set: MaterialSettings | undefined;
@@ -142,16 +157,22 @@ export function texturesOf(
   return out;
 }
 
-/** A planet's (or style's) materials, in its parts' order, each once, with whether a pattern is drawn for it. */
-export function partMaterials(
-  file: PlanetFile,
-): { name: string; material: SceneMaterial; pattern: boolean }[] {
-  const out: { name: string; material: SceneMaterial; pattern: boolean }[] = [];
+/** A material of a planet's (or style's) parts: whether a pattern is drawn for it, and its part's role. */
+export interface PartMaterial {
+  readonly name: string;
+  readonly material: SceneMaterial;
+  readonly pattern: boolean;
+  readonly role: PartRole;
+}
+
+/** A planet's (or style's) materials, in its parts' order, each once (with its first part's role). */
+export function partMaterials(file: PlanetFile): PartMaterial[] {
+  const out: PartMaterial[] = [];
   for (const part of file.parts)
     for (const name of part.materials) {
       const material = file.materials[name];
       if (material && !out.some((m) => m.name === name))
-        out.push({ name, material, pattern: part.pattern !== undefined });
+        out.push({ name, material, pattern: part.pattern !== undefined, role: part.role });
     }
   return out;
 }
@@ -163,19 +184,29 @@ export function partMaterials(
 export function materialsOf(b: BodyInfo): MaterialEntry[] {
   const chosen = b.settings.materials;
   const worn = wearOf(b.file, b.style)?.materials;
-  const owners: [PlanetFile | undefined, BodySettings | undefined][] = [
-    [b.file, b.below],
-    [b.styleFile, b.styleBelow],
+  const owners: [PlanetFile | undefined, BodySettings | undefined, 'own' | 'style'][] = [
+    [b.file, b.below, 'own'],
+    [b.styleFile, b.styleBelow, 'style'],
   ];
-  return owners.flatMap(([owner, below]) =>
+  return owners.flatMap(([owner, below, from]) =>
     owner
-      ? partMaterials(owner).map(({ name, material, pattern }) => {
+      ? partMaterials(owner).map(({ name, material, pattern, role }) => {
           const layers = [owner.tuning?.materials, worn, b.materialBase, below?.materials] as const;
+          const names = [
+            from === 'style' ? `the ${b.style} style` : 'its tuning',
+            `${b.id}'s tuning for ${b.style}`,
+            'the library (material)',
+            from === 'style' ? `the library (${b.style})` : 'the library (planet)',
+          ];
           const under = mergeMaterialSettings(...layers)[name];
           const settings = mergeMaterialSettings(...layers, chosen)[name];
           const values = materialValues(material, settings);
           return {
             name,
+            label: materialLabel(name, material, owner.textures, role),
+            from,
+            origin: from === 'style' ? `From the ${b.style} style, set for ${b.id}` : undefined,
+            origins: originsOf(layers.map((l, i) => [names[i]!, l?.[name]] as const)),
             values,
             controls: materialControls(material, pattern, false, values.drawAs),
             set: chosen?.[name],
@@ -229,6 +260,46 @@ export function valuesOf(b: BodyInfo): BodyValues {
   };
 }
 
+/**
+ * Which level under the one edited sets each of a body's settings, as `valuesOf` resolves them:
+ * the first that sets it, from the nearest down (a style it wears over its own, as it shades).
+ */
+export function bodyOrigins(b: BodyInfo): SettingOrigins<keyof BodySettings> {
+  const tuning = b.file?.tuning;
+  const style = b.styleFile;
+  const own = b.below;
+  const styled = b.styleBelow;
+  const wear = wearOf(b.file, b.style)?.shade;
+  const first = (...levels: [string, unknown][]) => levels.find(([, v]) => v !== undefined)?.[0];
+  const library = 'the library (planet)';
+  const libraryStyle = `the library (${b.style})`;
+  const worn = `its tuning for ${b.style}`;
+  const styleOwn = `the ${b.style} style`;
+  const out: SettingOrigins<keyof BodySettings> = {
+    lighting: first([library, own?.lighting], ['its tuning', tuning?.lighting]),
+    shade: first(
+      [libraryStyle, styled?.shade],
+      [library, own?.shade],
+      [worn, wear?.strength],
+      [styleOwn, style?.shade?.strength],
+      ['its tuning', tuning?.shade?.strength],
+    ),
+    tint: first([library, own?.tint], ['its tuning', tuning?.tint]),
+    lightFrom: first([library, own?.lightFrom], ['its tuning', tuning?.lightFrom]),
+    shadeTowards: first(
+      [libraryStyle, styled?.shadeTowards],
+      [library, own?.shadeTowards],
+      [worn, wear?.direction],
+      [styleOwn, style?.shade?.direction],
+      ['its tuning', tuning?.shade?.direction],
+    ),
+    rim: first([library, own?.rim], ['its tuning', tuning?.rim]),
+  };
+  return Object.fromEntries(Object.entries(out).filter(([, v]) => v)) as SettingOrigins<
+    keyof BodySettings
+  >;
+}
+
 /** A body as its properties show it, for an editor. */
 export function bodyView(b: BodyInfo, focused: boolean, canHaveMoons: boolean): BodyView {
   return {
@@ -239,6 +310,7 @@ export function bodyView(b: BodyInfo, focused: boolean, canHaveMoons: boolean): 
     baseTint: b.below?.tint ?? b.file?.tuning?.tint ?? NO_MATERIAL_TINT,
     focused,
     canHaveMoons,
+    origins: bodyOrigins(b),
   };
 }
 
@@ -267,6 +339,12 @@ export function skyMaterialsOf(
     const under = mergeMaterialSettings(base, below?.materials)[name];
     out.push({
       name,
+      label: materialLabel(name, material, scene.textures),
+      from: 'own',
+      origins: originsOf([
+        ['the library (material)', base?.[name]],
+        ['the library (sky)', below?.materials?.[name]],
+      ]),
       values: materialValues(
         material,
         mergeMaterialSettings(base, below?.materials, edited?.materials)[name],
@@ -292,10 +370,14 @@ export function baseMaterialOf(
   tuning: MaterialSettingsMap | undefined,
   base: MaterialSettingsMap | undefined,
   particles = false,
+  role?: PartRole,
 ): MaterialEntry {
   const values = materialValues(material, mergeMaterialSettings(tuning, base)[name]);
   return {
     name,
+    label: materialLabel(name, material, textures, role),
+    from: 'own',
+    origins: originsOf([['its tuning', tuning?.[name]]]),
     values,
     controls: materialControls(material, pattern, particles, values.drawAs),
     set: base?.[name],

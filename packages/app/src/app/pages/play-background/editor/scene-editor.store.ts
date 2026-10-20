@@ -79,6 +79,8 @@ const SCENE = 'scene';
 const SKY = 'sky';
 const bodyKey = (path: BodyPath) => `body:${pathKey(path)}`;
 const materialsKey = (path: BodyPath) => `${bodyKey(path)}/materials`;
+/** The materials its style brings, a group of their own. */
+const styleMaterialsKey = (path: BodyPath) => `${bodyKey(path)}/style-materials`;
 const materialKey = (path: BodyPath, name: string) => `${bodyKey(path)}/m/${name}`;
 const skyMaterialKey = (name: string) => `${SKY}/m/${name}`;
 
@@ -102,7 +104,7 @@ function targetOf(key: string): Target {
   const slash = rest.indexOf('/');
   const path = pathOf(slash < 0 ? rest : rest.slice(0, slash));
   const tail = slash < 0 ? '' : rest.slice(slash);
-  if (tail === '/materials') return { kind: 'group', path };
+  if (tail === '/materials' || tail === '/style-materials') return { kind: 'group', path };
   if (tail.startsWith('/m/')) return { kind: 'material', path, name: tail.slice(3) };
   return { kind: 'body', path };
 }
@@ -311,7 +313,12 @@ export const SceneEditorStore = signalStore(
         const t = target();
         if (t.kind === 'scene') return 'Scene';
         if (t.kind === 'sky') return 'Sky';
-        if (t.kind === 'sky-material' || t.kind === 'material') return t.name;
+        if (t.kind === 'sky-material')
+          return skyMaterials().find((m) => m.name === t.name)?.label ?? t.name;
+        if (t.kind === 'material') {
+          const b = body();
+          return (b && materialsOf(b).find((m) => m.name === t.name)?.label) ?? t.name;
+        }
         if (t.kind === 'reference') return 'Reference';
         return body()?.id ?? 'Properties';
       }),
@@ -369,10 +376,11 @@ export const SceneEditorStore = signalStore(
           unsaved,
           group,
         });
-      const leaf = (key: string, label: string, depth: number, enabled: boolean) =>
+      const leaf = (key: string, label: string, depth: number, enabled: boolean, detail?: string) =>
         rows.push({
           key,
           label,
+          detail,
           icon: 'texture',
           depth,
           expandable: false,
@@ -384,7 +392,7 @@ export const SceneEditorStore = signalStore(
       row(SKY, 'Sky', 'blur_on', 1, store.skyUnsaved());
       if (open.has(SKY))
         for (const m of store.skyMaterials())
-          leaf(skyMaterialKey(m.name), m.name, 2, m.values.enabled);
+          leaf(skyMaterialKey(m.name), m.label, 2, m.values.enabled, m.name);
       const body = (b: BodyInfo, depth: number) => {
         const path = pathOf(b.key.slice(5));
         row(
@@ -395,11 +403,29 @@ export const SceneEditorStore = signalStore(
           store.unsavedBodies().has(b.key),
         );
         if (!open.has(b.key)) return;
-        const group = materialsKey(path);
-        row(group, 'Materials', 'layers', depth + 1, false, true);
-        if (open.has(group))
-          for (const m of materialsOf(b))
-            leaf(materialKey(path, m.name), m.name, depth + 2, m.values.enabled);
+        // Its materials by whose they are: its own, then its style's (what the style brings).
+        const materials = materialsOf(b);
+        const groups: [string, string, string, 'own' | 'style', string?][] = [
+          [materialsKey(path), 'Materials', 'layers', 'own'],
+          [styleMaterialsKey(path), b.style, 'style', 'style', 'style'],
+        ];
+        for (const [group, label, icon, from, detail] of groups) {
+          const own = materials.filter((m) => m.from === from);
+          if (!own.length) continue;
+          rows.push({
+            key: group,
+            label,
+            detail,
+            icon,
+            depth: depth + 1,
+            expandable: true,
+            expanded: open.has(group),
+            group: true,
+          });
+          if (open.has(group))
+            for (const m of own)
+              leaf(materialKey(path, m.name), m.label, depth + 2, m.values.enabled, m.name);
+        }
         b.moons.forEach((_, i) => {
           const child = store.bodyByKey().get(bodyKey([...path, i]));
           if (child) body(child, depth + 1);

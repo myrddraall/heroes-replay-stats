@@ -1,4 +1,11 @@
-<label class="label" [class.label--changed]="changed()" [for]="id">{{ label() }}</label>
+<label class="label" [class.label--changed]="changed()" [for]="id"
+  >{{ label() }}
+  @if (origin() && !changed()) {
+    <span class="origin" [title]="'Set in ' + origin()"
+      ><span class="origin__text">, set in {{ origin() }}</span></span
+    >
+  }
+</label>
 <select class="select" [id]="id" (change)="update($event)">
   @for (option of choices(); track option.key) {
     @if (option.value === null) {

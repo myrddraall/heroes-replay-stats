@@ -114,6 +114,7 @@
       [max]="3"
       [step]="0.05"
       [changed]="isSet('lighting')"
+      [origin]="origins()?.lighting"
       (resetRequested)="clear.emit(['lighting'])"
       (valueChange)="settingsChange.emit({ lighting: $event })"
     />
@@ -121,8 +122,8 @@
       <hrs-property-direction
         label="Light from"
         [value]="from"
-        [back]="true"
         [changed]="isSet('lightFrom')"
+        [origin]="origins()?.lightFrom"
         (resetRequested)="clear.emit(['lightFrom'])"
         (valueChange)="settingsChange.emit({ lightFrom: $event })"
       />
@@ -135,23 +136,25 @@
     [max]="1"
     [step]="0.05"
     [changed]="isSet('shade')"
+    [origin]="origins()?.shade"
     (resetRequested)="clear.emit(['shade'])"
     (valueChange)="settingsChange.emit({ shade: $event })"
   />
   <hrs-property-direction
-    label="Shade on"
+    label="Shade from"
     [value]="v.shadeTowards"
-    [back]="true"
     [changed]="isSet('shadeTowards')"
+    [origin]="origins()?.shadeTowards"
     (resetRequested)="clear.emit(['shadeTowards'])"
     (valueChange)="settingsChange.emit({ shadeTowards: $event })"
   />
   <hrs-property-direction
-    label="Rims lean"
-    [value]="v.rim"
+    label="Rim from"
+    [value]="rimFrom()"
     [changed]="isSet('rim')"
+    [origin]="origins()?.rim"
     (resetRequested)="clear.emit(['rim'])"
-    (valueChange)="settingsChange.emit({ rim: $event })"
+    (valueChange)="settingsChange.emit({ rim: mirrored($event) })"
   />
 </hrs-property-section>
 <hrs-tint-section

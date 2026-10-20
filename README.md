@@ -183,7 +183,14 @@ kept in this browser's IndexedDB (`reference-image.ts`), laid over the view (`Re
 split past a line or faded, as tall as the view (the camera keeps its height's angle, so a
 screenshot fits by its height) and nudged to fit. A particle system's material
 takes only whether it is drawn and its strength (the particles' own settings aren't editable
-yet). Every property and section shows a reset where it is set. The screenshot mode shows the
+yet). Every property and section shows a reset where it is set. The properties use one vocabulary: a
+direction is always the side something comes from ("Light from", "Shade from", "Rim from",
+"Spread from": the rim's is the bright side, mirrored from the lean the design keeps), on the same
+disc with a Front/Behind switch; colour sections are "Colour", a material's compositing "Surface",
+its pattern's size "Scale". Materials show by readable names (`material-names.ts`: their part's
+role, a shield's grid or a ring; else their own name where it says something; else their main
+texture's), the game data's name beside them; a body's are grouped by whose they are, its own and
+its style's (which says it comes from that style, and for which body). The screenshot mode shows the
 background alone, full screen, until Esc. The stores keep what they keep in `localStorage`
 through the `withLocalStorage` store feature (`data/store-features/`, beside `withFolding`;
 `withPlanetFiles` loads planets' files as a store needs them). A part may carry a

@@ -1,4 +1,11 @@
-<span class="label" [class.label--changed]="changed()" [id]="id">{{ label() }}</span>
+<span class="label" [class.label--changed]="changed()" [id]="id"
+  >{{ label() }}
+  @if (origin() && !changed()) {
+    <span class="origin" [title]="'Set in ' + origin()"
+      ><span class="origin__text">, set in {{ origin() }}</span></span
+    >
+  }
+</span>
 <span class="control">
   <span
     class="disc"
@@ -22,12 +29,14 @@
       aria-hidden="true"
     ></span>
   </span>
-  @if (back()) {
-    <button type="button" class="side" (click)="flip()" [attr.aria-pressed]="behind()">
-      {{ behind() ? 'Behind' : 'Front' }}
-    </button>
-  }
-  <span class="readout" aria-hidden="true">{{ text() }}</span>
+  <button type="button" class="side" (click)="flip()" [attr.aria-pressed]="behind()">
+    {{ behind() ? 'Behind' : 'Front' }}
+  </button>
+  <span class="readout" aria-hidden="true">
+    @for (part of offsets(); track part) {
+      <span class="readout__line">{{ part }}</span>
+    }
+  </span>
 </span>
 <span class="reset-slot">
   @if (changed()) {

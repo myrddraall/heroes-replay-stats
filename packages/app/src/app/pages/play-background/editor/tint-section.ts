@@ -19,7 +19,7 @@ import { PropertySlider } from '../properties/property-slider';
   templateUrl: './tint-section.html',
 })
 export class TintSection {
-  readonly title = input('Tint');
+  readonly title = input('Colour');
   /** The tint as shown. */
   readonly tint = input.required<MaterialTint>();
   /** What it would be where none is set here: its own, or none. */

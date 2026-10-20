@@ -4,6 +4,7 @@ import {
   NO_MATERIAL_TINT,
   type MaterialControls,
   type MaterialValues,
+  type SettingOrigins,
 } from '../../../scenes/play-background/material-settings';
 import type { SceneBlend } from '../../../scenes/play-background/play-scene';
 import type {
@@ -30,7 +31,13 @@ import { PropertyDirection } from '../properties/property-direction';
   styleUrl: './properties-panel.scss',
 })
 export class MaterialProperties {
+  /** Its name in the game data (shown under its readable one, the panel's title). */
+  readonly name = input<string>();
+  /** Where it comes from, where it isn't its body's own (a style it wears). */
+  readonly origin = input<string>();
   readonly values = input.required<MaterialValues>();
+  /** Which level under the one edited sets each setting, where one does (shown by its row). */
+  readonly origins = input<SettingOrigins<keyof MaterialSettings>>();
   readonly controls = input.required<MaterialControls>();
   /** Whether anything of it is set here, to reset. */
   readonly changed = input(false);

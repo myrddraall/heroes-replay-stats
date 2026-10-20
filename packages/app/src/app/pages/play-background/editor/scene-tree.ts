@@ -6,6 +6,8 @@ export interface TreeRow {
   /** What it is, as the page knows it (selection, folding). */
   readonly key: string;
   readonly label: string;
+  /** What it is beside its name, smaller (a material's name in the game data; a group's kind). */
+  readonly detail?: string;
   /** Material Symbols' name for what kind of thing it is. */
   readonly icon: string;
   readonly depth: number;

@@ -54,6 +54,8 @@ const STAGE_BACKDROP = 'stage/backdrop';
 const STAGE_STAND_IN = 'stage/stand-in';
 const ASSET = 'asset';
 const ASSET_MATERIALS = 'asset/materials';
+/** The materials the style a planet wears brings, a group of their own. */
+const ASSET_STYLE_MATERIALS = 'asset/style-materials';
 const stageMaterialKey = (name: string) => `${STAGE_SKY}/m/${name}`;
 const assetMaterialKey = (name: string) => `${ASSET}/m/${name}`;
 
@@ -208,6 +210,7 @@ export const AssetEditorStore = signalStore(
       previewPlanet,
       _draft,
       _skyOf,
+      _skyMaterials,
       _body,
       _materialUse,
       _aids,
@@ -253,6 +256,7 @@ export const AssetEditorStore = signalStore(
                 use.tuning,
                 library().materials,
                 use.particles,
+                use.role,
               )
             : undefined;
         }),
@@ -263,7 +267,13 @@ export const AssetEditorStore = signalStore(
           if (t.kind === 'backdrop') return 'Backdrop';
           if (t.kind === 'stand-in') return 'Stand-in planet';
           if (t.kind === 'reference') return 'Reference';
-          if (t.kind === 'sky-material' || t.kind === 'material') return t.name;
+          if (t.kind === 'sky-material')
+            return _skyMaterials(t.stage).find((m) => m.name === t.name)?.label ?? t.name;
+          if (t.kind === 'material') {
+            const b = _body();
+            return (b && materialsOf(b).find((m) => m.name === t.name)?.label) ?? t.name;
+          }
+          if (t.kind === 'base-material') return _catalog.materialByName().get(a.id)?.label ?? a.id;
           if (t.kind === 'group') return 'Properties';
           return a.id;
         }),
@@ -425,10 +435,18 @@ export const AssetEditorStore = signalStore(
           unsaved,
           group,
         });
-      const leaf = (key: string, label: string, depth: number, enabled: boolean, unsaved = false) =>
+      const leaf = (
+        key: string,
+        label: string,
+        depth: number,
+        enabled: boolean,
+        unsaved = false,
+        detail?: string,
+      ) =>
         rows.push({
           key,
           label,
+          detail,
           icon: 'texture',
           depth,
           expandable: false,
@@ -443,28 +461,49 @@ export const AssetEditorStore = signalStore(
           row(ASSET, a.id, a.kind === 'planet' ? 'public' : 'style', 0, store.assetUnsaved());
           const b = store._body();
           if (!open.has(ASSET) || !b) break;
-          row(ASSET_MATERIALS, 'Materials', 'layers', 1, false, true);
-          if (open.has(ASSET_MATERIALS))
-            for (const m of materialsOf(b))
-              leaf(assetMaterialKey(m.name), m.name, 2, m.values.enabled);
+          // Its materials by whose they are: its own, then the style's it wears.
+          const materials = materialsOf(b);
+          const groups: [string, string, string, 'own' | 'style', string?][] = [
+            [ASSET_MATERIALS, 'Materials', 'layers', 'own'],
+            [ASSET_STYLE_MATERIALS, b.style, 'style', 'style', 'style'],
+          ];
+          for (const [group, label, icon, from, detail] of groups) {
+            const own = materials.filter((m) => m.from === from);
+            if (!own.length) continue;
+            rows.push({
+              key: group,
+              label,
+              detail,
+              icon,
+              depth: 1,
+              expandable: true,
+              expanded: open.has(group),
+              group: true,
+            });
+            if (open.has(group))
+              for (const m of own)
+                leaf(assetMaterialKey(m.name), m.label, 2, m.values.enabled, false, m.name);
+          }
           break;
         }
         case 'material': {
           const m = store.baseMaterial();
-          leaf(ASSET, a.id, 0, m?.values.enabled ?? true, store.assetUnsaved());
+          leaf(ASSET, m?.label ?? a.id, 0, m?.values.enabled ?? true, store.assetUnsaved(), a.id);
           break;
         }
         case 'particle': {
           const material = store._catalog.particles().find((p) => p.id === a.id)?.material;
           row(ASSET, a.id, 'grain', 0);
           const m = sky.find((s) => s.name === material);
-          if (open.has(ASSET) && m) leaf(assetMaterialKey(m.name), m.name, 1, m.values.enabled);
+          if (open.has(ASSET) && m)
+            leaf(assetMaterialKey(m.name), m.label, 1, m.values.enabled, false, m.name);
           break;
         }
         case 'sky':
           row(ASSET, 'Sky', 'blur_on', 0, store.assetUnsaved());
           if (open.has(ASSET))
-            for (const m of sky) leaf(assetMaterialKey(m.name), m.name, 1, m.values.enabled);
+            for (const m of sky)
+              leaf(assetMaterialKey(m.name), m.label, 1, m.values.enabled, false, m.name);
           break;
       }
       // The stage, after what is edited and set apart from it: only there to see it (the sky open
@@ -478,7 +517,7 @@ export const AssetEditorStore = signalStore(
             row(STAGE_BACKDROP, 'Backdrop', 'wallpaper', 1);
             if (open.has(STAGE_BACKDROP))
               for (const m of store._skyMaterials(true))
-                leaf(stageMaterialKey(m.name), m.name, 2, m.values.enabled);
+                leaf(stageMaterialKey(m.name), m.label, 2, m.values.enabled, false, m.name);
           } else
             rows.push({
               key: STAGE_BACKDROP,

@@ -91,6 +91,18 @@
   white-space: nowrap;
 }
 
+// Beside the name, smaller and fainter: a material's name in the game data, a group's kind. It
+// gives way first where the row is narrow.
+.detail {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.85em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.6;
+}
+
 // Not saved yet: a small dot after the name.
 .unsaved {
   flex: none;
