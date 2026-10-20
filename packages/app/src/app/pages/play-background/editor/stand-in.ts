@@ -6,12 +6,13 @@ import type {
   PlanetFile,
   PlanetLight,
 } from '../../../scenes/play-background/scene-planets';
-import { GRID_COLOURS, type StandInFill } from './editing-aids.store';
+import { GRID_COLOURS, STAND_IN_LIGHT_FROM, type StandInFill } from './editing-aids.store';
 
 /**
  * The stand-in planet: a plain sphere an asset is shown on while it is edited (a material opened
  * on its own), a plain colour (its material tinted) or a transparency grid, lit by a plain key
- * light. Made by the app (an editing aid), never exported or published.
+ * light (turned, and with light from all round added, by the stage). Made by the app (an editing
+ * aid), never exported or published.
  */
 export const STAND_IN = '@stand-in';
 /** Its own material: tinted to the colour chosen. */
@@ -51,10 +52,19 @@ const MAPPING: PartMapping = {
   v: Array.from({ length: 32 }, (_, i) => i / 31),
 };
 
-/** A plain key light from the upper left, in front, and a little ambient. */
+/**
+ * A plain directional light from the upper left, in front, and no ambient: the stage adds light
+ * from all round, and switches the directional light on (turned, as strong as asked) or off, as the editing aids say (by
+ * default all round only: even).
+ */
 const LIGHT: PlanetLight = {
-  ambient: [0.06, 0.06, 0.06],
-  directional: [{ direction: [0.55, 0.45, -0.7], color: [1.6, 1.6, 1.6] }],
+  ambient: [0, 0, 0],
+  directional: [
+    {
+      direction: [-STAND_IN_LIGHT_FROM[0], -STAND_IN_LIGHT_FROM[1], -STAND_IN_LIGHT_FROM[2]],
+      color: [1, 1, 1],
+    },
+  ],
   exposure: 1,
 };
 

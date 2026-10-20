@@ -2,7 +2,7 @@ import { Component, computed, input, output } from '@angular/core';
 import { PropertyCheck } from '../properties/property-check';
 import { PropertySection } from '../properties/property-section';
 import { type PropertyOption, PropertySelect } from '../properties/property-select';
-import { PropertySlider } from '../properties/property-slider';
+import { PropertyNumber } from '../properties/property-number';
 import type { ReferenceMode } from './editing-aids.store';
 
 /** The reference image's settings, as its properties show them. */
@@ -22,7 +22,7 @@ export interface ReferenceValues {
  */
 @Component({
   selector: 'hrs-reference-properties',
-  imports: [PropertySection, PropertyCheck, PropertySelect, PropertySlider],
+  imports: [PropertySection, PropertyCheck, PropertySelect, PropertyNumber],
   templateUrl: './reference-properties.html',
   styleUrl: './reference-properties.scss',
 })

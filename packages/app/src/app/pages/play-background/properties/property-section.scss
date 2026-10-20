@@ -1,3 +1,4 @@
+@use 'pod';
 @use 'property-row';
 
 :host {
@@ -56,4 +57,22 @@
   display: grid;
   gap: 2px;
   padding: 0 0 6px 4px;
+}
+
+// At the top of a panel: a pod (its heading the bar across its top).
+:host(.pod) {
+  @include pod.box;
+
+  .head {
+    @include pod.head;
+    padding: 0 pod.$inline 0 calc(#{pod.$inline} - 4px);
+  }
+
+  .head--open {
+    @include pod.head-line;
+  }
+
+  .rows {
+    padding: 6px pod.$inline;
+  }
 }

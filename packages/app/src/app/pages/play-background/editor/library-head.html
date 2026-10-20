@@ -1,9 +1,14 @@
-<hrs-property-select
-  label="Type"
-  [value]="catalog.type()"
-  [options]="types"
-  (valueChange)="setType($event)"
-/>
+<div class="type">
+  <label class="type__label" for="library-type">Type</label>
+  <select id="library-type" class="type__select" (change)="typeChosen($event)">
+    @for (type of types; track type.value) {
+      <option [value]="type.value" [selected]="type.value === catalog.type()">
+        {{ type.label }}
+      </option>
+    }
+  </select>
+  <hrs-view-menu />
+</div>
 <input
   type="search"
   class="search"
@@ -12,8 +17,8 @@
   [value]="catalog.query()"
   (input)="search($event)"
 />
-<div class="row">
-  @if (catalog.type() === 'scene') {
+@if (catalog.type() === 'scene') {
+  <div class="row">
     <button
       type="button"
       class="button new"
@@ -43,6 +48,5 @@
         (closed)="flyout.set(false)"
       />
     </ng-template>
-  }
-  <span class="end"><hrs-view-menu /></span>
-</div>
+  </div>
+}

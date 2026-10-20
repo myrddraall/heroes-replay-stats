@@ -1,3 +1,4 @@
+import type { AddedLight } from '../../scenes/play-background/scene-lights';
 import { DOCUMENT } from '@angular/common';
 import { computed, inject } from '@angular/core';
 import {
@@ -144,7 +145,7 @@ export const DraftDesignStore = signalStore(
     const setSceneSky = (id: string, change: (sky: SkyChoices) => SkyChoices) =>
       setScene(id, (p) => {
         const sky = change(p.sky ?? {});
-        return { ...p, sky: sky.materials || sky.tint ? sky : undefined };
+        return { ...p, sky: sky.materials || sky.tint || sky.order ? sky : undefined };
       });
     /** A library body's defaults changed (none left: none kept). */
     const updateLibraryBody = (
@@ -162,7 +163,7 @@ export const DraftDesignStore = signalStore(
     const setLibrarySky = (change: (sky: SkyChoices) => SkyChoices) =>
       setLibrary((l) => {
         const sky = change(l.sky);
-        return { ...l, sky: { materials: sky.materials, tint: sky.tint } };
+        return { ...l, sky: { materials: sky.materials, tint: sky.tint, order: sky.order } };
       });
 
     return {
@@ -237,6 +238,10 @@ export const DraftDesignStore = signalStore(
       clearLibrarySkyTint(): void {
         setLibrarySky((sky) => ({ ...sky, tint: undefined }));
       },
+      /** The library sky's materials' draw order (none: as the data has it). */
+      setLibrarySkyOrder(order: readonly string[] | undefined): void {
+        setLibrarySky((sky) => ({ ...sky, order }));
+      },
       resetLibrarySky(): void {
         setLibrarySky(() => ({}));
       },
@@ -306,6 +311,14 @@ export const DraftDesignStore = signalStore(
       },
       clearSkyTint(id: string): void {
         setSceneSky(id, (sky) => ({ ...sky, tint: undefined }));
+      },
+      /** A scene's own lights (none: none). */
+      setSceneLights(id: string, lights: readonly AddedLight[]): void {
+        setScene(id, (p) => ({ ...p, lights: lights.length ? lights : undefined }));
+      },
+      /** A scene's sky's materials' draw order (none: as the library has it). */
+      setSkyOrder(id: string, order: readonly string[] | undefined): void {
+        setSceneSky(id, (sky) => ({ ...sky, order }));
       },
       resetSky(id: string): void {
         setSceneSky(id, () => ({}));

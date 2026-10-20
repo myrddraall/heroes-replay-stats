@@ -34,6 +34,21 @@ describe('withLibrary', () => {
     expect(shown.shade).toEqual({ strength: 0.3, direction: [1, 0, 0] });
   });
 
+  it('draws a planet whose overlay is switched off as if it wore none (the scene over the library)', () => {
+    const library: LibraryState = {
+      planets: { korhal: { overlayEnabled: false } },
+      styles: { nexus: { shade: 0.8, added: [{ id: 'added-x', kind: 'ambient', name: 'Glow' }] } },
+      sky: {},
+    };
+    const off = withLibrary({ ...korhal, style: 'nexus' }, library);
+    expect(off.style).toBeUndefined();
+    expect(off.added).toEqual([]);
+    expect(off.shade).toEqual({});
+    const on = withLibrary({ ...korhal, style: 'nexus', overlayEnabled: true }, library);
+    expect(on.style).toBe('nexus');
+    expect(on.added).toHaveLength(1);
+  });
+
   it("lets a style's shade win over the planet's own", () => {
     const library: LibraryState = {
       planets: { korhal: { shade: 0.3 } },

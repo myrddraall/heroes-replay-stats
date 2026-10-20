@@ -8,13 +8,26 @@ import {
   moonAt,
   type MoonChoices,
   type Orbit,
+  orbitTo,
   type PlanetChoices,
   type SceneBody,
   type Vec3,
   without,
 } from './background-scene';
-import { type MaterialSettings, type PlanetFile, wornParts } from './scene-planets';
+import {
+  type MaterialSettings,
+  mergePartSettings,
+  partKey,
+  type PartKey,
+  type PartSettings,
+  type PartSettingsMap,
+  type PlanetFile,
+  withPart,
+  wornParts,
+} from './scene-planets';
 import { reach } from './scene-renderer';
+import type { AddedLight, LightId, LightSettings } from './scene-lights';
+import type { PlanetSet } from './planet-sets';
 
 /**
  * A scene's planets and what is done to them on the Background page: a body is found by its path
@@ -29,6 +42,23 @@ export const SCENE_CENTRE: { readonly position: Vec3; readonly radius: number } 
 
 /** The ids new scenes are given (`scene-<n>`): unlike scenes kept by a planet's id, they name no planet. */
 const NEW_SCENE = /^scene-\d+$/;
+
+/**
+ * The Play screen's planets, from the game's set (`playSet`'s): each where the game puts it, its
+ * small one a moon of its medium one, on the orbit that puts it there.
+ */
+export function playScreenBodies(set: PlanetSet, eye: Vec3): SceneBody[] {
+  const medium = set.find((p) => p.id === 'play-medium');
+  const small = set.find((p) => p.id === 'play-small');
+  return set
+    .filter((p) => !(medium && p === small))
+    .map((p): SceneBody => {
+      const body = { id: p.id, position: p.position, radius: p.radius };
+      return p === medium && small
+        ? { ...body, moons: [{ id: small.id, orbit: orbitTo(medium, small, eye) }] }
+        : body;
+    });
+}
 
 /**
  * A scene's planets: its own; or, for a scene kept before scenes had several, its one planet (the
@@ -219,19 +249,135 @@ export function withoutMaterial(
   return without({ ...s, materials }, Object.keys(materials).length ? [] : ['materials']);
 }
 
+/** Settings with one part's changed (its others, and the other parts', kept). */
+export function withPartSetting(
+  s: BodySettings,
+  key: PartKey,
+  change: Partial<PartSettings>,
+): BodySettings {
+  return { ...s, parts: { ...s.parts, [key]: { ...s.parts?.[key], ...change } } };
+}
+
+/** Settings with one part's taken back (all of it: `keys` left out); none left: none at all. */
+export function withoutPartSetting(
+  s: BodySettings,
+  key: PartKey,
+  keys?: readonly (keyof PartSettings)[],
+): BodySettings | undefined {
+  const parts: Partial<Record<PartKey, PartSettings>> = { ...s.parts };
+  const left = keys ? without(parts[key], keys) : undefined;
+  if (left) parts[key] = left;
+  else delete parts[key];
+  return without({ ...s, parts }, Object.keys(parts).length ? [] : ['parts']);
+}
+
 /**
- * How much of the view a body takes, in its radii: its spheres (its own, its atmosphere's shells,
- * its style's as it wears them) and past them the bloom their glow spreads into; and its rings
+ * How much of the view a body takes, in its radii: its parts as set (`set`); its spheres (its
+ * own, its atmosphere's shells, its style's as it wears them) and past them the bloom their glow spreads into; and its rings
  * (its style's, its own for them where it has any), sized as seen from afar (their biggest), a
  * glow at the limb of their own (the bloom isn't added past them again).
  */
 export const HALO_MARGIN = 1.12;
-export function visualExtent(file?: PlanetFile, styleFile?: PlanetFile, style?: string): number {
+export function visualExtent(
+  file?: PlanetFile,
+  styleFile?: PlanetFile,
+  style?: string,
+  set?: PartSettingsMap,
+): number {
   const parts = [
-    ...(file?.parts ?? []),
-    ...(styleFile ? wornParts(file, style, styleFile.parts) : []),
+    ...(file?.parts ?? []).map((p) => withPart(p, set?.[partKey('own', p.role)])),
+    ...(styleFile ? wornParts(file, style, styleFile.parts) : []).map((p) =>
+      withPart(p, set?.[partKey('style', p.role)]),
+    ),
   ];
   const spheres = parts.filter((p) => p.shape.kind === 'sphere');
   const rings = parts.filter((p) => p.shape.kind === 'ring');
   return Math.max(HALO_MARGIN * reach(spheres), reach(rings, Infinity));
+}
+
+/** A body's parts' settings in effect: under the level edited (its own defaults, its style's), then that level's. */
+export const bodyParts = (b: {
+  readonly below?: { readonly parts?: PartSettingsMap };
+  readonly styleBelow?: { readonly parts?: PartSettingsMap };
+  readonly settings: { readonly parts?: PartSettingsMap };
+}): PartSettingsMap => mergePartSettings(b.below?.parts, b.styleBelow?.parts, b.settings.parts);
+
+/**
+ * A body's shadow as set before its lights were objects (`shade`, `shadeTowards`), as its shadow
+ * light's settings.
+ */
+export function legacyShadow(s: BodySettings): LightSettings {
+  return {
+    ...(s.shade !== undefined ? { strength: s.shade } : {}),
+    ...(s.shadeTowards !== undefined ? { from: s.shadeTowards } : {}),
+  };
+}
+
+/**
+ * Settings with one light's changed (its others, and the other lights', kept); the shadow's taking
+ * in what was set for it before lights were objects.
+ */
+export function withLightSetting(
+  s: BodySettings,
+  id: LightId,
+  change: Partial<LightSettings>,
+): BodySettings {
+  const shadow = id === 'shadow';
+  const rest = shadow ? (without(s, ['shade', 'shadeTowards']) ?? {}) : s;
+  const before = { ...(shadow ? legacyShadow(s) : {}), ...s.lights?.[id] };
+  return { ...rest, lights: { ...s.lights, [id]: { ...before, ...change } } };
+}
+
+/** Settings with one light's taken back (all of it: `keys` left out); none left: none at all. */
+export function withoutLightSetting(
+  s: BodySettings,
+  id: LightId,
+  keys?: readonly (keyof LightSettings)[],
+): BodySettings | undefined {
+  const shadow = id === 'shadow';
+  const before = { ...(shadow ? legacyShadow(s) : {}), ...s.lights?.[id] };
+  const rest = shadow ? (without(s, ['shade', 'shadeTowards']) ?? {}) : s;
+  const lights: Partial<Record<LightId, LightSettings>> = { ...rest.lights };
+  const left = keys ? without(before, keys) : undefined;
+  if (left) lights[id] = left;
+  else delete lights[id];
+  return without({ ...rest, lights }, Object.keys(lights).length ? [] : ['lights']);
+}
+
+/** A light added to the body's settings (after any added before). */
+export function withAddedLight(s: BodySettings, light: AddedLight): BodySettings {
+  return { ...s, added: [...(s.added ?? []), light] };
+}
+
+/**
+ * Settings with a light changed: one added at this level, itself (its settings are its own);
+ * any other (its rig's, or one added under this level), what is set for it here.
+ */
+export function withLightChange(
+  s: BodySettings,
+  id: LightId,
+  change: Partial<LightSettings>,
+): BodySettings {
+  if (s.added?.some((l) => l.id === id)) return { ...s, added: changedLight(s.added, id, change) };
+  return withLightSetting(s, id, change);
+}
+
+/** Settings with an added light taken out, and what was set for it; none left: none at all. */
+export function withoutAddedLight(s: BodySettings, id: LightId): BodySettings | undefined {
+  const added = (s.added ?? []).filter((l) => l.id !== id);
+  const lights: Partial<Record<LightId, LightSettings>> = { ...s.lights };
+  delete lights[id];
+  return without({ ...s, added, lights }, [
+    ...(added.length ? [] : (['added'] as const)),
+    ...(Object.keys(lights).length ? [] : (['lights'] as const)),
+  ]);
+}
+
+/** Lights with one of them changed. */
+export function changedLight(
+  lights: readonly AddedLight[],
+  id: LightId,
+  change: Partial<LightSettings>,
+): AddedLight[] {
+  return lights.map((l) => (l.id === id ? { ...l, ...change } : l));
 }

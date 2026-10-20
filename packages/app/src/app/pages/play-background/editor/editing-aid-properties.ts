@@ -1,5 +1,7 @@
 import { Component, input, output } from '@angular/core';
 import { PropertyCheck } from '../properties/property-check';
+import { type Direction, PropertyDirection } from '../properties/property-direction';
+import { PropertyNumber } from '../properties/property-number';
 import { PropertyColour } from '../properties/property-colour';
 import { PropertySection } from '../properties/property-section';
 import { type PropertyOption, PropertySelect } from '../properties/property-select';
@@ -12,6 +14,11 @@ export interface EditingAidValues {
   readonly colour: string;
   readonly gridSize: string;
   readonly onPlanet?: boolean;
+  /** The stand-in's light: light from all round (ambient); a directional light, on or off, its strength and the side it comes from. */
+  readonly ambient?: number;
+  readonly directional?: boolean;
+  readonly key?: number;
+  readonly lightFrom?: Direction;
 }
 
 /** Which of an aid's properties differ from how it starts. */
@@ -25,12 +32,20 @@ const SIZES: readonly PropertyOption[] = [
 
 /**
  * An editing aid's properties (presentational): the preview stage's backdrop (a sky, chosen here;
- * a colour; or a transparency grid) or the stand-in planet (a colour or the grid; and whether a material
- * opened on its own is shown on its planet instead).
+ * a colour; or a transparency grid) or the stand-in planet (a colour or the grid; whether a material
+ * opened on its own is shown on its planet instead; and its light, as a material preview's: even,
+ * from all round, with a directional light from a side to switch on).
  */
 @Component({
   selector: 'hrs-editing-aid-properties',
-  imports: [PropertySection, PropertySelect, PropertyColour, PropertyCheck],
+  imports: [
+    PropertySection,
+    PropertySelect,
+    PropertyColour,
+    PropertyCheck,
+    PropertyDirection,
+    PropertyNumber,
+  ],
   templateUrl: './editing-aid-properties.html',
   styleUrl: './properties-panel.scss',
 })

@@ -68,8 +68,12 @@ export interface SceneLayer {
   readonly tiling?: readonly [number, number];
   /** Whether a texture repeats across u, and across v; where it doesn't, it stops at its edge. */
   readonly wrap?: readonly [boolean, boolean];
-  /** The offset's steady scroll: `by` over `seconds`, looping. */
-  readonly scroll?: { readonly seconds: number; readonly by: readonly [number, number] };
+  /** The offset's steady scroll: `by` over `seconds`, looping (or, `endless`, going on). */
+  readonly scroll?: {
+    readonly seconds: number;
+    readonly by: readonly [number, number];
+    readonly endless?: boolean;
+  };
 }
 
 export type SceneBlend = 'opaque' | 'alpha' | 'add' | 'alphaAdd';
@@ -192,12 +196,22 @@ export async function loadPlaySceneFile(base: string, signal?: AbortSignal): Pro
   return (await response.json()) as PlayScene;
 }
 
-/** A layer's offset at a time: its own, plus its scroll's progress through the loop. */
+/**
+ * A layer's offset at a time: its own, plus its scroll's progress through the loop (the data's
+ * start again, as the game's do); an endless one's keeps going, less whole texture widths (a
+ * repeating texture looks the same a whole width on).
+ */
 export function layerOffset(layer: SceneLayer, seconds: number): [number, number] {
   const [u, v] = layer.offset ?? [0, 0];
-  if (!layer.scroll) return [u, v];
-  const f = (seconds % layer.scroll.seconds) / layer.scroll.seconds;
-  return [u + layer.scroll.by[0] * f, v + layer.scroll.by[1] * f];
+  const scroll = layer.scroll;
+  if (!scroll) return [u, v];
+  if (scroll.endless) {
+    const t = seconds / scroll.seconds;
+    const fract = (x: number) => x - Math.floor(x);
+    return [u + fract(scroll.by[0] * t), v + fract(scroll.by[1] * t)];
+  }
+  const f = (seconds % scroll.seconds) / scroll.seconds;
+  return [u + scroll.by[0] * f, v + scroll.by[1] * f];
 }
 
 /**

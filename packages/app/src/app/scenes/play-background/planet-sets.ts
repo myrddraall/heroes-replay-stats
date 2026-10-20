@@ -1,5 +1,12 @@
 import type { SceneCamera } from './play-scene';
-import type { BodyShade, MaterialSettingsMap, MaterialTint, PlanetIndex } from './scene-planets';
+import type {
+  BodyShade,
+  MaterialSettingsMap,
+  MaterialTint,
+  PartSettingsMap,
+  PlanetIndex,
+} from './scene-planets';
+import type { AddedLight, LightSettingsMap } from './scene-lights';
 
 /** A planet in a set: which, where (the scene's units), and its body's radius there. */
 export interface SetPlanet {
@@ -8,8 +15,20 @@ export interface SetPlanet {
   readonly radius: number;
   /** A style it wears, by id (the index's), if any. */
   readonly style?: string;
+  /** Whether the style it wears is drawn (off: drawn as if it wore none). */
+  readonly overlayEnabled?: boolean;
+  /** Whether it is drawn at all (off: where it is, but not drawn; its place in the set kept). */
+  readonly enabled?: boolean;
   /** Its materials' settings (its own and its style's, by name), over its tuning's and its style's. */
   readonly materials?: MaterialSettingsMap;
+  /** Its parts' settings (its own and its style's, by part). */
+  readonly parts?: PartSettingsMap;
+  /** Its materials' draw order, by name (its own and its style's), where set. */
+  readonly order?: readonly string[];
+  /** Its lights' settings, by light (its rig's and its shadow). */
+  readonly lights?: LightSettingsMap;
+  /** Lights added to it (its own and its overlay's). */
+  readonly added?: readonly AddedLight[];
   /** A tint over all its materials (its style's too), over its tuning's. */
   readonly tint?: MaterialTint;
   /** Where its key light comes from (its lights turned together; body frame), over its tuning's. */
@@ -18,6 +37,10 @@ export interface SetPlanet {
   readonly rim?: readonly [number, number, number];
   /** How strongly its light lights it, times this (1, as the data has it). */
   readonly lighting?: number;
+  /** Its key light's strength, times this (1, as the data has it; 0: off). */
+  readonly key?: number;
+  /** White light from all round added to its light's own (1: a lit surface as bright as its textures; 0, as the data has it). */
+  readonly surround?: number;
   /** A shade from a side, over its style's (what is given here; the rest the style's or DEFAULT_SHADE). */
   readonly shade?: Partial<BodyShade>;
 }

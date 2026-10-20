@@ -7,6 +7,12 @@ export type Direction = readonly [number, number, number];
 let next = 0;
 /** How far an arrow key moves the point, as a share of the disc's radius. */
 const KEY_STEP = 0.05;
+/**
+ * How far in front of or behind the rim the point always stays: on the rim itself it would be on
+ * neither side, and the side it is on would switch by itself (dragged to the edge, or flipped there).
+ */
+const MIN_DEPTH = 0.02;
+const MAX_REACH = Math.sqrt(1 - MIN_DEPTH * MIN_DEPTH);
 
 /**
  * A direction on one short row of a properties panel (presentational), as a point on a disc that
@@ -29,6 +35,11 @@ export class PropertyDirection {
   /** Its reset was pressed: back to what it would be. */
   readonly resetRequested = output<void>();
   readonly value = input.required<Direction>();
+  /**
+   * Whether the side it is on (in front, behind) is offered: not where only the point across the
+   * face counts (a reveal's, a rim's lean).
+   */
+  readonly sided = input(true);
   readonly valueChange = output<Direction>();
   protected readonly id = `property-direction-${next++}`;
 
@@ -63,21 +74,24 @@ export class PropertyDirection {
     return [x / l, y / l, z / l];
   }
 
-  /** The direction for a point on the disc, on the side it is on now. */
+  /** The direction for a point on the disc, on the side it is on now (never on the rim, between them). */
   private at(x: number, down: number, behind = this.behind()): Direction {
     let px = x;
     let pz = -down;
     const r = Math.hypot(px, pz);
-    if (r > 1) {
-      px /= r;
-      pz /= r;
+    if (r > MAX_REACH) {
+      px *= MAX_REACH / r;
+      pz *= MAX_REACH / r;
     }
-    const depth = Math.sqrt(Math.max(0, 1 - px * px - pz * pz));
+    const depth = Math.sqrt(Math.max(MIN_DEPTH * MIN_DEPTH, 1 - px * px - pz * pz));
     return [px, behind ? depth : -depth, pz];
   }
 
   protected pointerDown(event: PointerEvent): void {
     const disc = event.currentTarget as HTMLElement;
+    // Not the browser's own press: that starts dragging any selected text off (cancelling this drag).
+    event.preventDefault();
+    disc.focus();
     disc.setPointerCapture(event.pointerId);
     this.pointerMove(event);
   }

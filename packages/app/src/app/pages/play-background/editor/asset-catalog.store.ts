@@ -17,15 +17,17 @@ import {
 import { BackgroundStore } from '../../../scenes/play-background/background.store';
 import type { SceneBody } from '../../../scenes/play-background/background-scene';
 import { playSet, randomSet, seeded } from '../../../scenes/play-background/planet-sets';
-import { sceneBodies } from '../../../scenes/play-background/scene-bodies';
+import { playScreenBodies, sceneBodies } from '../../../scenes/play-background/scene-bodies';
 import {
   loadPlaySceneFile,
   PLAY_SCENE_URL,
   type SceneMaterial,
   type SceneTexture,
 } from '../../../scenes/play-background/play-scene';
+import { skyDepths } from '../../../scenes/play-background/sky-depths';
 import {
   loadPlanetIndex,
+  type MaterialDepth,
   type MaterialSettingsMap,
   type PartRole,
   type PlanetKind,
@@ -54,6 +56,8 @@ export interface MaterialUse {
   readonly particles?: boolean;
   /** Its tuning there (the exporter's, where the data alone isn't right). */
   readonly tuning?: MaterialSettingsMap;
+  /** Where the sky's is drawn among the scene's objects, as the game data puts it (see `skyDepths`). */
+  readonly depth?: MaterialDepth;
 }
 
 /** A material of the library: its name, and each asset using it (the first is how it is shown). */
@@ -149,6 +153,7 @@ export const AssetCatalogStore = signalStore(
       }
       const scene = sceneFile();
       if (scene) {
+        const depths = skyDepths(scene);
         const sky = (name: string, particles: boolean) => {
           const material = scene.materials[name];
           if (material)
@@ -159,6 +164,7 @@ export const AssetCatalogStore = signalStore(
               textures: scene.textures,
               pattern: false,
               particles,
+              depth: depths[name],
             });
         };
         for (const mesh of Object.values(scene.meshes))
@@ -168,7 +174,10 @@ export const AssetCatalogStore = signalStore(
       return [...uses]
         .map(([name, u]) => ({
           name,
-          label: materialLabel(name, u[0]?.material, u[0]?.textures ?? {}, u[0]?.role),
+          // As renamed in the library (its own settings), else as made from the data's.
+          label:
+            _draft.library().materials?.[name]?.label ??
+            materialLabel(name, u[0]?.material, u[0]?.textures ?? {}, u[0]?.role),
           uses: u,
         }))
         .sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }));
@@ -192,7 +201,8 @@ export const AssetCatalogStore = signalStore(
       /** A scene's planets: its own; the Play screen's, the game's three until it sets its own. */
       planetsOf: computed(() => {
         const scenes = _draft.scenes().planets;
-        const play = index() ? asBodies(playSet(index()!)) : [];
+        const scene = _sceneFile.hasValue() ? _sceneFile.value() : null;
+        const play = index() && scene ? playScreenBodies(playSet(index()!), scene.camera.eye) : [];
         return (id: string): readonly SceneBody[] =>
           id === RANDOM_SCENE
             ? []

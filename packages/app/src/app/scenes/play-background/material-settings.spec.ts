@@ -4,6 +4,7 @@ import {
   materialValues,
   mergeMaterialSettings,
   ownSpread,
+  originsOf,
   ownSpreadFrom,
 } from './material-settings';
 import { rimTurn, TOWARDS_EYE } from './scene-directions';
@@ -23,6 +24,18 @@ const material = (over: Partial<SceneMaterial> = {}): SceneMaterial => ({
 const fresnel = (min: number) => ({ type: 1, exponent: 1, min, max: 1, yaw: 0, pitch: 0 });
 
 describe('materials’ settings', () => {
+  it('merge their layers’ settings one by one, a level setting one leaving the rest', () => {
+    const merged = mergeMaterialSettings(
+      { grid: { layers: { emissive: { tiling: [4, 4], rotation: 10 } } } },
+      { grid: { strength: 0.5 } },
+      { grid: { layers: { emissive: { rotation: 30 }, mask1: { offset: [0.1, 0] } } } },
+    );
+    expect(merged['grid']).toEqual({
+      strength: 0.5,
+      layers: { emissive: { tiling: [4, 4], rotation: 30 }, mask1: { offset: [0.1, 0] } },
+    });
+  });
+
   it('merge the later layers over the earlier, each setting its own', () => {
     expect(
       mergeMaterialSettings(
@@ -59,48 +72,60 @@ describe('materials’ settings', () => {
   });
 
   it('offer only the controls that do anything', () => {
-    expect(materialControls(material({ blend: 'opaque' }), false)).toEqual({
+    expect(materialControls(material({ blend: 'opaque' }))).toEqual({
       strength: false,
       spread: false,
+      colours: false,
       scale: false,
       drawAs: false,
       cut: false,
       lines: false,
       particles: false,
+      depth: false,
+      lit: true,
     });
     const emissive = material({
       emissive: { texture: 'grid', brightMult: 1, fresnel: fresnel(0) },
     });
-    expect(materialControls(emissive, false)).toEqual({
+    expect(materialControls(emissive)).toEqual({
       strength: true,
       spread: true,
+      colours: false,
       scale: true,
       drawAs: false,
       cut: true,
       lines: false,
       particles: false,
+      depth: false,
+      lit: true,
     });
-    // A drawn pattern: its lines are set, not a texture's range.
-    expect(materialControls(emissive, true)).toMatchObject({
+    // A drawn pattern: its lines are set, not a texture's range; a grid's colours too (its own
+    // fade, spread and its side, still its own: its reveal lights say where it shows).
+    expect(materialControls(emissive, { pattern: true })).toMatchObject({
       scale: true,
       cut: false,
       lines: true,
+      colours: true,
+      spread: true,
     });
     // Shown as its texture instead (the game's way): the texture's range again, no lines.
-    expect(materialControls(emissive, true, false, 'texture')).toMatchObject({
+    expect(materialControls(emissive, { pattern: true, drawAs: 'texture' })).toMatchObject({
       drawAs: true,
       cut: true,
       lines: false,
     });
-    // A particle system's: drawn or not, and its strength.
-    expect(materialControls(emissive, false, true)).toEqual({
+    // A particle system's: drawn or not, its strength, and (the sky's) its depth.
+    expect(materialControls(emissive, { particles: true, sky: true })).toEqual({
       strength: true,
       spread: false,
+      colours: false,
       scale: false,
       drawAs: false,
       cut: false,
       lines: false,
       particles: true,
+      depth: true,
+      lit: false,
     });
   });
 
@@ -116,5 +141,15 @@ describe('materials’ settings', () => {
         spreadFrom: [1, 0, 0],
       }).spreadFrom,
     ).toEqual([1, 0, 0]);
+  });
+
+  it('say which level sets each setting: the last that does', () => {
+    expect(
+      originsOf<'strength' | 'glow' | 'scale'>([
+        ['its tuning', { strength: 0.5, glow: 2 }],
+        ['the library (material)', undefined],
+        ['the library (planet)', { glow: 1, scale: undefined }],
+      ]),
+    ).toEqual({ strength: 'its tuning', glow: 'the library (planet)' });
   });
 });

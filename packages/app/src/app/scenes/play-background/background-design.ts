@@ -1,8 +1,14 @@
 import type { Signal } from '@angular/core';
 import type { BodySettings, PlanetChoices, SkyChoices } from './background-scene';
 import { mergeMaterialSettings } from './material-settings';
+import { type AddedLight, mergeLightSettings } from './scene-lights';
 import type { SetPlanet } from './planet-sets';
-import type { BodyShade, MaterialSettingsMap, SkySettings } from './scene-planets';
+import {
+  type BodyShade,
+  type MaterialSettingsMap,
+  mergePartSettings,
+  type SkySettings,
+} from './scene-planets';
 import type { Backdrop } from './scene-renderer';
 import { type TintSettings, UNTINTED } from './tint-settings';
 
@@ -78,6 +84,8 @@ export interface BackgroundSceneSource {
   /** Whether it shows the random sets (its planets are none of its own). */
   readonly random?: Signal<boolean>;
   readonly sky: Signal<SkySettings>;
+  /** The scene's lights, lighting every planet (none: none). */
+  readonly lights?: Signal<readonly AddedLight[]>;
   readonly tint: Signal<TintSettings | null>;
   /** An editing aid shown in place of the sky (none: the sky); never part of the design. */
   readonly backdrop?: Signal<Backdrop | null>;
@@ -101,14 +109,21 @@ export function shadeOf(settings: BodySettings | undefined): Partial<BodyShade> 
  * (each set value where nothing above sets it), its materials' settings merged by name over the
  * materials' base settings.
  */
-export function withLibrary(planet: SetPlanet, library: LibraryState): SetPlanet {
-  const own = library.planets[planet.id];
+export function withLibrary(set: SetPlanet, library: LibraryState): SetPlanet {
+  const own = library.planets[set.id];
+  // Its overlay switched off (by the scene, else the library): drawn as if it wore none.
+  const worn = (set.overlayEnabled ?? own?.overlayEnabled) !== false;
+  const planet = worn ? set : { ...set, style: undefined };
   const style = planet.style ? library.styles[planet.style] : undefined;
   const base = library.materials;
   if (!own && !style && !Object.keys(base ?? {}).length) return planet;
   return {
     ...planet,
     materials: mergeMaterialSettings(base, own?.materials, style?.materials, planet.materials),
+    parts: mergePartSettings(own?.parts, style?.parts, planet.parts),
+    order: planet.order ?? own?.order ?? style?.order,
+    lights: mergeLightSettings(own?.lights, style?.lights, planet.lights),
+    added: [...(own?.added ?? []), ...(style?.added ?? []), ...(planet.added ?? [])],
     lighting: planet.lighting ?? own?.lighting,
     tint: planet.tint ?? own?.tint,
     lightFrom: planet.lightFrom ?? own?.lightFrom,
@@ -122,5 +137,6 @@ export function skyWithLibrary(sky: SkyChoices | undefined, library: LibraryStat
   return {
     materials: mergeMaterialSettings(library.materials, library.sky.materials, sky?.materials),
     tint: sky?.tint ?? library.sky.tint,
+    order: sky?.order ?? library.sky.order,
   };
 }

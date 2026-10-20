@@ -1,3 +1,4 @@
+import type { AddedLight } from './scene-lights';
 import {
   afterRenderEffect,
   Component,
@@ -48,6 +49,7 @@ interface Running {
   newPicture(): void;
   replace(placements: readonly PlanetPlacement[]): void;
   resky(sky: SkySettings): void;
+  relight(lights: readonly AddedLight[]): void;
   rebackdrop(backdrop: Backdrop | null): void;
 }
 
@@ -108,6 +110,8 @@ export class SceneCanvas {
   readonly tint = input<Tint>(NO_TINT);
   /** How the sky shows: its materials' settings by name (those not named as the data has them), its tint. */
   readonly sky = input<SkySettings>({});
+  /** The scene's lights, lighting every planet (see `scene-lights.ts`). */
+  readonly lights = input<readonly AddedLight[]>([]);
   /** An editing backdrop in place of the sky (none: the sky). */
   readonly backdrop = input<Backdrop | null>(null);
   /**
@@ -157,6 +161,10 @@ export class SceneCanvas {
     effect(() => {
       const sky = this.sky();
       untracked(() => this.running?.resky(sky));
+    });
+    effect(() => {
+      const lights = this.lights();
+      untracked(() => this.running?.relight(lights));
     });
     effect(() => {
       const backdrop = this.backdrop();
@@ -373,6 +381,11 @@ export class SceneCanvas {
         renderer.setSky(sky);
         if (!frame) draw();
       },
+      // The scene's lights changed: drawn again lit by them.
+      relight: (lights) => {
+        renderer.setSceneLights(lights);
+        if (!frame) draw();
+      },
       rebackdrop: (backdrop) => {
         renderer.setBackdrop(backdrop);
         if (!frame) draw();
@@ -421,6 +434,7 @@ export class SceneCanvas {
     };
     renderer.tint = NO_TINT; // always shown untinted first
     renderer.setSky(this.sky());
+    renderer.setSceneLights(this.lights());
     renderer.setBackdrop(this.backdrop());
     resize();
     play();

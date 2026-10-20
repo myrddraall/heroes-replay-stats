@@ -102,10 +102,19 @@
 }
 
 // Back from what is open to the library's list, at the top of the left panel, a rule under it.
+// Back to the library, and the draft's status, discard, save and view options beside it.
 .layout__back {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   margin-bottom: 8px;
   padding-bottom: 8px;
   border-bottom: 1px solid rgb(var(--hrs-glass-edge) / 0.35);
+}
+
+.layout__bar {
+  flex: 1;
+  min-width: 0;
 }
 
 .layout__library {

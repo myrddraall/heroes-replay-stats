@@ -1,10 +1,9 @@
 @use '../properties/property-row';
 
-// The properties' rows: one column, tight, as a design tool's properties panel.
+// The properties: one column of pods the panel's full width (the panel's own padding is all it has).
 :host {
   display: grid;
-  gap: 4px;
-  padding: 4px 12px 12px;
+  padding: 4px 0 12px;
 }
 
 .buttons {

@@ -1,4 +1,5 @@
-import type { MaterialSettingsMap, MaterialTint } from './scene-planets';
+import type { MaterialSettingsMap, MaterialTint, PartSettingsMap } from './scene-planets';
+import type { AddedLight, LightSettingsMap } from './scene-lights';
 import { bodyFrame } from './scene-renderer';
 
 /**
@@ -29,6 +30,12 @@ export const DEFAULT_ORBIT: Orbit = { radius: 2.4, tilt: 12, turn: 0, progress: 
 
 /** A body's settings set on this page, each where set (else its own apply). */
 export interface BodySettings {
+  /** Its name as shown, in place of its id (a style's: the overlay's, wherever it is worn). */
+  readonly label?: string;
+  /** Whether it is drawn, its moons with it (a scene's). */
+  readonly enabled?: boolean;
+  /** Whether the overlay it wears is drawn: off, it is drawn as if it wore none (its style kept). */
+  readonly overlayEnabled?: boolean;
   readonly lighting?: number;
   readonly shade?: number;
   /** A tint over all its materials. */
@@ -39,6 +46,14 @@ export interface BodySettings {
   readonly rim?: Vec3;
   /** Its materials' settings, by name (its own and its style's). */
   readonly materials?: MaterialSettingsMap;
+  /** Its parts' settings, by part (its own and its style's). */
+  readonly parts?: PartSettingsMap;
+  /** Its lights' settings, by light (its rig's and its shadow, and any added under it). */
+  readonly lights?: LightSettingsMap;
+  /** Lights added to it (an overlay's: to the bodies wearing it). */
+  readonly added?: readonly AddedLight[];
+  /** Its materials' draw order, by name (the later over the earlier; see `drawOrder`), where set. */
+  readonly order?: readonly string[];
 }
 
 /** A moon of a body: which planet it is, its orbit, its style and settings, and its own moons. */
@@ -151,6 +166,36 @@ export function placeBodies(
   };
   place(out[0]!, moons);
   return out;
+}
+
+/**
+ * The orbit that puts a moon where a body is, about a parent where it is (as `placeBodies` places
+ * a moon, untilted on the screen: its turn 0), its size the two's radii's ratio: the tilt within a
+ * quarter turn either way, its far side up or down as the body is above or below the parent's
+ * middle, the body behind or in front of it as it is.
+ */
+export function orbitTo(
+  parent: { readonly position: Vec3; readonly radius: number },
+  body: { readonly position: Vec3; readonly radius: number },
+  eye: Vec3,
+): Orbit {
+  const { axes } = bodyFrame(parent.position, parent.radius, eye);
+  const d = sub(body.position, parent.position);
+  const [x, y, z] = [0, 3, 6].map(
+    (k) => (axes[k]! * d[0] + axes[k + 1]! * d[1] + axes[k + 2]! * d[2]) / parent.radius,
+  ) as [number, number, number];
+  // y0 sin a round the circle (before the tilt): its sign the body's side, nearer or further.
+  const side = y < 0 ? -1 : 1;
+  const y0 = side * Math.hypot(y, z);
+  const tilt = (Math.atan2(side * z, side * y) * 180) / Math.PI;
+  const progress = Math.atan2(y0, x) / (2 * Math.PI);
+  return {
+    radius: Math.hypot(x, y, z),
+    tilt,
+    turn: 0,
+    progress: ((progress % 1) + 1) % 1,
+    size: body.radius / parent.radius,
+  };
 }
 
 const sub = (a: Vec3, b: Vec3): Vec3 => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
@@ -319,6 +364,8 @@ export function fitScene<T extends { readonly position: Vec3; readonly radius: n
 export interface SkyChoices {
   readonly materials?: MaterialSettingsMap;
   readonly tint?: MaterialTint;
+  /** Its materials' draw order, by name (the later over the earlier; see `drawOrder`), where set. */
+  readonly order?: readonly string[];
 }
 
 /**
@@ -345,6 +392,8 @@ export interface SceneBody {
  */
 export interface PlanetChoices {
   readonly bodies?: readonly SceneBody[];
+  /** The scene's lights, lighting every planet in it. */
+  readonly lights?: readonly AddedLight[];
   /** What the scene is called, where it is named (else its first planet's id, or its own). */
   readonly name?: string;
   readonly sky?: SkyChoices;

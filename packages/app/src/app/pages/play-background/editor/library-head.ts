@@ -6,7 +6,6 @@ import {
 import { Component, computed, inject, signal } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { GraphicsStore } from '../../../data/settings/graphics.store';
-import { type PropertyOption, PropertySelect } from '../properties/property-select';
 import { AssetCatalogStore } from './asset-catalog.store';
 import { LIBRARY_TYPES } from './library-types';
 import { NewSceneFlyout, type SceneTemplate } from './new-scene-flyout';
@@ -20,20 +19,13 @@ import type { OpenKind } from './open-target';
  */
 @Component({
   selector: 'hrs-library-head',
-  imports: [
-    PropertySelect,
-    MatIcon,
-    ViewMenu,
-    CdkOverlayOrigin,
-    CdkConnectedOverlay,
-    NewSceneFlyout,
-  ],
+  imports: [MatIcon, ViewMenu, CdkOverlayOrigin, CdkConnectedOverlay, NewSceneFlyout],
   templateUrl: './library-head.html',
   styleUrl: './library-head.scss',
 })
 export class LibraryHead {
   protected readonly catalog = inject(AssetCatalogStore);
-  protected readonly types: readonly PropertyOption[] = LIBRARY_TYPES;
+  protected readonly types = LIBRARY_TYPES;
   protected readonly graphics = inject(GraphicsStore);
   /** Whether the new scene's flyout is open. */
   protected readonly flyout = signal(false);
@@ -52,7 +44,11 @@ export class LibraryHead {
     this.catalog.createScene(choice.from, choice.name);
   }
 
-  protected setType(type: string): void {
+  protected typeChosen(event: Event): void {
+    this.setType((event.target as HTMLSelectElement).value);
+  }
+
+  private setType(type: string): void {
     if (LIBRARY_TYPES.some((t) => t.value === type)) this.catalog.setType(type as OpenKind);
   }
 

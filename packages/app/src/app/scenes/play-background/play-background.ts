@@ -67,6 +67,8 @@ export class PlayBackground {
     const own = this.source?.tint();
     return rendererTint(own ? backgroundTints(own) : this.store.tints(), this.parse);
   });
+  /** The scene's lights, where there is a scene that has any. */
+  protected readonly sceneLights = computed(() => this.source?.lights?.() ?? []);
   /** The sky: the scene's, where there is one, over the library's. */
   protected readonly sky = computed(() =>
     skyWithLibrary(this.source?.sky(), this.design.library()),
@@ -154,13 +156,20 @@ export class PlayBackground {
         out.push({
           planet,
           style,
+          ...(p.enabled === false ? { hidden: true } : {}),
           position: p.position,
           radius: p.radius,
           materials: p.materials,
+          parts: p.parts,
+          order: p.order,
+          lights: p.lights,
+          added: p.added,
           tint: p.tint,
           lightFrom: p.lightFrom,
           rim: p.rim,
           lighting: p.lighting,
+          key: p.key,
+          surround: p.surround,
           shade: p.shade,
         });
       }

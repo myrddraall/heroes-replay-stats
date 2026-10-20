@@ -15,17 +15,26 @@ import { PropertyDirection } from '../properties/property-direction';
 import { PropertySection } from '../properties/property-section';
 import { TintSection } from './tint-section';
 import { type PropertyOption, PropertySelect } from '../properties/property-select';
-import { PropertySlider } from '../properties/property-slider';
+import { PropertyNumber } from '../properties/property-number';
+import { PropertyText } from '../properties/property-text';
 
 /**
- * A body's properties (presentational): the planet's or a moon's style, its light, shade and
- * their directions, the lean of its rims, a tint over all its materials; a moon's orbit about its
+ * A body's properties (presentational): the planet's or a moon's style, its lights as a whole
+ * (how strongly they light it, and all of them turned together; each light, its shadow too, is a
+ * row of its own in the tree), the lean of its rims, a tint over all its materials; a moon's orbit about its
  * parent, or a scene's planet's place and size; and its Moons section, whose button to add one
  * is given (`[moonAdd]`).
  */
 @Component({
   selector: 'hrs-body-properties',
-  imports: [TintSection, PropertySection, PropertySlider, PropertySelect, PropertyDirection],
+  imports: [
+    TintSection,
+    PropertySection,
+    PropertyNumber,
+    PropertySelect,
+    PropertyDirection,
+    PropertyText,
+  ],
   templateUrl: './body-properties.html',
   styleUrl: './properties-panel.scss',
 })
@@ -58,6 +67,15 @@ export class BodyProperties {
   readonly baseTint = input<MaterialTint>(NO_MATERIAL_TINT);
   /** Whether its style is chosen here (else its own). */
   readonly styleSet = input(false);
+  /**
+   * Whether it is an overlay itself (a style open in the library): only what an overlay brings
+   * applies to the bodies wearing it (its materials, parts, lights, shade), so its light (how
+   * strongly, from where, its rims' lean) and its tint, a body's own, aren't offered.
+   */
+  readonly overlay = input(false);
+  /** Its name as shown, and as the levels under the one edited have it. */
+  readonly label = input('');
+  readonly labelBelow = input('');
   readonly styleChange = output<string>();
   readonly settingsChange = output<Partial<BodySettings>>();
   readonly orbitChange = output<Partial<Orbit>>();
@@ -70,13 +88,7 @@ export class BodyProperties {
   /** Its style back to its own. */
   readonly styleReset = output<void>();
   /** The light section's settings. */
-  protected readonly lightKeys: readonly (keyof BodySettings)[] = [
-    'lighting',
-    'lightFrom',
-    'shade',
-    'shadeTowards',
-    'rim',
-  ];
+  protected readonly lightKeys: readonly (keyof BodySettings)[] = ['lighting', 'lightFrom', 'rim'];
 
   protected isSet(key: keyof BodySettings): boolean {
     return this.set()[key] !== undefined;
@@ -111,5 +123,12 @@ export class BodyProperties {
   /** A point on the face mirrored through its centre, on the same side: a lean and the side it is bright on. */
   protected mirrored(d: readonly [number, number, number]): [number, number, number] {
     return [-d[0], d[1], -d[2]];
+  }
+
+  /** Renamed here; left empty, back to its name under the level edited. */
+  protected rename(value: string): void {
+    const label = value.trim();
+    if (label) this.settingsChange.emit({ label });
+    else this.clear.emit(['label']);
   }
 }

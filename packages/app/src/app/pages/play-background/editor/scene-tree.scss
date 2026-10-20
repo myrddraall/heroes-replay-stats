@@ -1,9 +1,10 @@
+@use '../properties/pod';
 @use '../properties/property-row';
 
 .tree {
+  @include pod.box;
   display: grid;
-  margin: 0;
-  padding: 4px 0;
+  padding: 0;
   list-style: none;
 }
 
@@ -13,12 +14,25 @@
   align-items: center;
   gap: 2px;
   min-height: 24px;
-  padding-inline-start: calc(var(--depth, 0) * 14px + 4px);
-  padding-inline-end: 6px;
+  padding-inline-start: calc(var(--depth, 0) * 14px + #{pod.$inline} - 4px);
+  padding-inline-end: pod.$inline;
 
   &--selected {
     background: rgb(var(--hrs-glass-edge) / 0.18);
     box-shadow: inset 2px 0 0 var(--mat-sys-primary);
+  }
+
+  &[draggable='true'] {
+    cursor: grab;
+  }
+
+  // Where a dragged row would go: a line above or below this one.
+  &--drop-before {
+    box-shadow: inset 0 2px 0 var(--mat-sys-primary);
+  }
+
+  &--drop-after {
+    box-shadow: inset 0 -2px 0 var(--mat-sys-primary);
   }
 }
 
@@ -113,12 +127,26 @@
   background: var(--mat-sys-primary);
 }
 
-// The editing aids, set apart below what is edited by a rule; their rows quieter.
-.aids {
-  margin: 10px 6px 6px;
-  border-top: 1px solid rgb(var(--hrs-glass-edge) / 0.35);
+// A pod's top rows (what is edited, the preview stage): its heading bars, a line under one open
+// and between them.
+.row--head {
+  @include pod.head;
+  min-height: 28px;
+
+  & + & {
+    border-top: 1px solid var(--mat-sys-outline-variant);
+  }
 }
 
+.row--open {
+  @include pod.head-line;
+}
+
+.row:not(.row--head) + .row--head {
+  border-top: 1px solid var(--mat-sys-outline-variant);
+}
+
+// The editing aids' rows quieter.
 .row--aid:not(.row--selected) .name {
   opacity: 0.75;
 }

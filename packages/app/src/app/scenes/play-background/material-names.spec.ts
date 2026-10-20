@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { materialLabel, textureWords } from './material-names';
+import { materialLabel, textureLabel, textureWords } from './material-names';
 import type { SceneMaterial } from './play-scene';
 
 const material = (texture: string): SceneMaterial => ({
@@ -50,5 +50,17 @@ describe('materials’ names', () => {
       'Blue',
       'Planet',
     ]);
+  });
+
+  it('name a texture by its file name’s words, else its key', () => {
+    expect(
+      textureLabel('grid', {
+        file: 'g.webp',
+        width: 1,
+        height: 1,
+        source: 'Assets/Textures/Storm_LootUI_Grid_DIff.dds',
+      }),
+    ).toBe('Loot grid');
+    expect(textureLabel('ui', undefined)).toBe('ui');
   });
 });

@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import type { SceneBody } from './background-scene';
+import { placeBodies, type SceneBody } from './background-scene';
 import {
   addMoonAt,
   addPlanet,
   bodyAt,
   changeSettings,
+  playScreenBodies,
   removeAt,
   SCENE_CENTRE,
   sceneBodies,
@@ -55,5 +56,25 @@ describe('scene bodies', () => {
     expect(bodyAt(bodies, [0, 0])).toMatchObject({ settings: { shade: 0.5 } });
     expect(removeAt(bodies, [0, 0])[0]?.moons).toBeUndefined();
     expect(removeAt(bodies, [0])).toEqual([]);
+  });
+});
+
+describe('the Play screen’s planets', () => {
+  const eye = [-0.0018, -41.1988, 5.6051] as const;
+  const set = [
+    { id: 'play-large', position: [-48.249, 64.647, 25.444], radius: 27.25 },
+    { id: 'play-medium', position: [37.282, 64.892, 14.189], radius: 9.037 },
+    { id: 'play-small', position: [27.752, 53.789, 7.471], radius: 1.566 },
+  ] as const;
+
+  it('are the game’s, its small one a moon of its medium one where the game puts it', () => {
+    const bodies = playScreenBodies(set, eye);
+    expect(bodies.map((b) => b.id)).toEqual(['play-large', 'play-medium']);
+    expect(bodies[0]).toEqual({ ...set[0] });
+    const medium = bodies[1]!;
+    expect(medium.moons?.map((m) => m.id)).toEqual(['play-small']);
+    const [, small] = placeBodies(medium, medium.moons!, eye);
+    small!.position.forEach((v, k) => expect(v).toBeCloseTo(set[2].position[k]!, 4));
+    expect(small!.radius).toBeCloseTo(set[2].radius, 6);
   });
 });

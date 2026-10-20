@@ -28,8 +28,30 @@
   }
 }
 
-// The view's menu at the row's end, with or without the button before it.
-.end {
+// Which type is listed: its label, its list as wide as the row leaves it, the view's menu; 1em
+// between each as seen (the menu's icon sits 6px inside its button: the list's edge and the row's
+// end give that back, so the icon lines up with the search's end).
+$icon-inset: 6px;
+
+.type {
   display: flex;
-  margin-inline-start: auto;
+  align-items: center;
+  gap: 1em;
+  margin-inline-end: -$icon-inset;
+
+  &__label {
+    @include property-row.label;
+  }
+
+  &__select {
+    @include property-row.field;
+    flex: 1;
+    min-width: 0;
+    margin-inline-end: -$icon-inset;
+
+    option {
+      background: rgb(var(--hrs-glass-tint));
+      color: inherit;
+    }
+  }
 }

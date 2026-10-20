@@ -51,6 +51,4 @@ describe('BackgroundStore', () => {
     other();
     expect([store.fps(), store.fadeFps()]).toEqual([12, 60]);
   });
-
-
 });

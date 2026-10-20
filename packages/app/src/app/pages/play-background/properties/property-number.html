@@ -7,25 +7,28 @@
   }
 </label>
 <input
-  type="range"
-  class="range"
-  [id]="id"
-  [min]="min()"
-  [max]="max()"
-  [step]="step()"
-  [value]="value()"
-  (input)="update($event)"
-/>
-<input
-  type="number"
+  type="text"
+  inputmode="decimal"
+  role="spinbutton"
   class="number"
-  [min]="min()"
-  [max]="max()"
-  [step]="step()"
+  [class.number--scrubbing]="scrubbing()"
+  [id]="id"
   [value]="shown()"
-  (change)="update($event)"
-  [attr.aria-label]="label() + ' value'"
+  [attr.aria-valuenow]="value()"
+  [attr.aria-valuemin]="min()"
+  [attr.aria-valuemax]="max()"
+  [attr.aria-describedby]="id + '-limits'"
+  title="Drag up or down, or scroll, to change; click to type"
+  (pointerdown)="pressed($event)"
+  (pointermove)="moved($event)"
+  (pointerup)="released($event)"
+  (lostpointercapture)="released($event)"
+  (dragstart)="$event.preventDefault()"
+  (keydown)="keyed($event)"
+  (wheel)="wheel($event)"
+  (change)="typed($event)"
 />
+<span class="limits" [id]="id + '-limits'">{{ limits() }}</span>
 <span class="reset-slot">
   @if (changed()) {
     <button

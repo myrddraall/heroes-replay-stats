@@ -52,3 +52,45 @@
     />
   }
 </hrs-property-section>
+@if (v.lightFrom && v.directional !== undefined && v.key !== undefined && v.ambient !== undefined) {
+  <hrs-property-section
+    title="Light"
+    [changed]="c.ambient || c.directional || c.key || c.lightFrom"
+    (resetRequested)="clear.emit(['ambient', 'directional', 'key', 'lightFrom'])"
+  >
+    <hrs-property-number
+      label="Ambient"
+      [value]="v.ambient"
+      [min]="0"
+      [step]="0.05"
+      [changed]="c.ambient"
+      (resetRequested)="clear.emit(['ambient'])"
+      (valueChange)="valuesChange.emit({ ambient: $event })"
+    />
+    <hrs-property-check
+      label="Directional light"
+      [checked]="v.directional"
+      [changed]="c.directional"
+      (resetRequested)="clear.emit(['directional'])"
+      (checkedChange)="valuesChange.emit({ directional: $event })"
+    />
+    @if (v.directional) {
+      <hrs-property-number
+        label="Strength"
+        [value]="v.key"
+        [min]="0"
+        [step]="0.05"
+        [changed]="c.key"
+        (resetRequested)="clear.emit(['key'])"
+        (valueChange)="valuesChange.emit({ key: $event })"
+      />
+      <hrs-property-direction
+        label="Light from"
+        [value]="v.lightFrom"
+        [changed]="c.lightFrom"
+        (resetRequested)="clear.emit(['lightFrom'])"
+        (valueChange)="valuesChange.emit({ lightFrom: $event })"
+      />
+    }
+  </hrs-property-section>
+}

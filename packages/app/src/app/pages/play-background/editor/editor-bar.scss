@@ -1,26 +1,14 @@
 @use '../properties/property-row';
 
 :host {
-  display: grid;
-  gap: 6px;
-  padding-bottom: 8px;
+  display: block;
 }
 
 .row {
   display: flex;
+  justify-content: flex-end;
   align-items: center;
   gap: 6px;
-}
-
-.status {
-  flex: 1;
-  font: var(--mat-sys-body-small);
-  opacity: 0.7;
-
-  &--unsaved {
-    color: var(--mat-sys-primary);
-    opacity: 1;
-  }
 }
 
 .button {

@@ -1,16 +1,15 @@
 @use '../properties/property-row';
 
-// A properties panel's sections, one after another, tight.
+// A properties panel's sections (pods), one under another.
 :host {
   display: grid;
-  gap: 4px;
 }
 
 .buttons {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  padding-top: 4px;
+  padding-top: 10px;
 }
 
 .button {
@@ -64,7 +63,7 @@
 
 // A material's name in the game data, under its readable one (the panel's title).
 .data-name {
-  margin: 0 0 2px;
+  margin: 0 0 10px;
   font: var(--mat-sys-body-small);
   opacity: 0.7;
 
@@ -73,4 +72,9 @@
     font-size: 0.9em;
     overflow-wrap: anywhere;
   }
+}
+
+// A material in a light's Reaches list, under its part.
+.receiver--material {
+  padding-inline-start: 14px;
 }

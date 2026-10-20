@@ -25,10 +25,8 @@
               <mat-icon class="material-symbols-outlined" aria-hidden="true">arrow_back</mat-icon>
               <span>Library</span>
             </button>
+            <hrs-editor-bar class="layout__bar" />
           </div>
-        }
-        @if (!ui.browsing()) {
-          <hrs-editor-bar />
         }
         @if (ui.confirmingReset()) {
           <hrs-reset-confirm />
@@ -49,6 +47,7 @@
           (rowSelect)="editor.select($event)"
           (expandToggle)="editor.toggleExpanded($event)"
           (enabledChange)="editor.setEnabled($event)"
+          (moved)="editor.moveMaterial($event)"
         />
       }
     </hrs-map-panel>

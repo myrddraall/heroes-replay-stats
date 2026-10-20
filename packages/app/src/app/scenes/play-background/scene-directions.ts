@@ -26,11 +26,17 @@ export function normalized(v: Vec3): Vec3 {
 const brightness = (l: PlanetDirectionalLight) =>
   0.2126 * l.color[0] + 0.7152 * l.color[1] + 0.0722 * l.color[2];
 
-/** Where a light rig's key (its brightest) light comes from; none for a rig without a lit one. */
-export function keyLightFrom(light: PlanetLight | undefined): Vec3 | null {
+/** A light rig's key light: its brightest; none for a rig without a lit one. */
+export function keyLight(light: PlanetLight | undefined): PlanetDirectionalLight | null {
   const lights = light?.directional.filter((l) => brightness(l) > 0) ?? [];
   if (!lights.length) return null;
-  const key = lights.reduce((a, b) => (brightness(b) > brightness(a) ? b : a));
+  return lights.reduce((a, b) => (brightness(b) > brightness(a) ? b : a));
+}
+
+/** Where a light rig's key (its brightest) light comes from; none for a rig without a lit one. */
+export function keyLightFrom(light: PlanetLight | undefined): Vec3 | null {
+  const key = keyLight(light);
+  if (!key) return null;
   const d = normalized(key.direction); // the way it travels
   return [-d[0], -d[1], -d[2]];
 }

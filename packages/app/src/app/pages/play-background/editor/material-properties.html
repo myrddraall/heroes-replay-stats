@@ -9,12 +9,27 @@
   </p>
 }
 <hrs-property-section
+  title="Name"
+  [changed]="isSet('label')"
+  (resetRequested)="clear.emit(['label'])"
+>
+  <hrs-property-text
+    label="Name"
+    [value]="set()?.label ?? ''"
+    [placeholder]="labelBelow()"
+    [changed]="isSet('label')"
+    [origin]="origins()?.label"
+    (resetRequested)="clear.emit(['label'])"
+    (valueChange)="rename($event)"
+  />
+</hrs-property-section>
+<hrs-property-section
   title="Surface"
-  [changed]="anySet(['strength', 'blend'])"
-  (resetRequested)="clear.emit(['strength', 'blend'])"
+  [changed]="anySet(['strength', 'blend', 'depth'])"
+  (resetRequested)="clear.emit(['strength', 'blend', 'depth'])"
 >
   @if (c.strength) {
-    <hrs-property-slider
+    <hrs-property-number
       label="Strength"
       [value]="v.strength"
       [min]="0"
@@ -37,6 +52,17 @@
       (valueChange)="blend($event)"
     />
   }
+  @if (c.depth) {
+    <hrs-property-select
+      label="Depth"
+      [value]="v.depth"
+      [options]="depthOptions"
+      [changed]="isSet('depth')"
+      [origin]="origins()?.depth"
+      (resetRequested)="clear.emit(['depth'])"
+      (valueChange)="depth($event)"
+    />
+  }
 </hrs-property-section>
 @if (!c.particles) {
   <hrs-tint-section
@@ -48,14 +74,23 @@
   />
   <hrs-property-section
     title="Light"
-    [changed]="anySet(['glow', 'spread', 'spreadFrom', 'falloff'])"
-    (resetRequested)="clear.emit(['glow', 'spread', 'spreadFrom', 'falloff'])"
+    [changed]="anySet(['lit', 'glow', 'spread', 'spreadFrom', 'falloff'])"
+    (resetRequested)="clear.emit(['lit', 'glow', 'spread', 'spreadFrom', 'falloff'])"
   >
-    <hrs-property-slider
+    @if (c.lit) {
+      <hrs-property-check
+        label="Lit by its light"
+        [checked]="v.lit"
+        [changed]="isSet('lit')"
+        [origin]="origins()?.lit"
+        (resetRequested)="clear.emit(['lit'])"
+        (checkedChange)="settingsChange.emit({ lit: $event })"
+      />
+    }
+    <hrs-property-number
       label="Glow"
       [value]="v.glow"
       [min]="0"
-      [max]="4"
       [step]="0.1"
       [changed]="isSet('glow')"
       [origin]="origins()?.glow"
@@ -63,7 +98,7 @@
       (valueChange)="settingsChange.emit({ glow: $event })"
     />
     @if (c.spread) {
-      <hrs-property-slider
+      <hrs-property-number
         label="Spread"
         [value]="v.spread"
         [min]="0"
@@ -82,11 +117,10 @@
         (resetRequested)="clear.emit(['spreadFrom'])"
         (valueChange)="settingsChange.emit({ spreadFrom: $event })"
       />
-      <hrs-property-slider
+      <hrs-property-number
         label="Falloff"
         [value]="v.falloff"
-        [min]="0.5"
-        [max]="4"
+        [min]="0"
         [step]="0.05"
         [changed]="isSet('falloff')"
         [origin]="origins()?.falloff"
@@ -99,9 +133,27 @@
 @if (c.scale) {
   <hrs-property-section
     title="Pattern"
-    [changed]="anySet(['drawAs', 'scale', 'width', 'soft', 'cut'])"
-    (resetRequested)="clear.emit(['drawAs', 'scale', 'width', 'soft', 'cut'])"
+    [changed]="anySet(['inactive', 'active', 'drawAs', 'scale', 'width', 'soft', 'cut'])"
+    (resetRequested)="clear.emit(['inactive', 'active', 'drawAs', 'scale', 'width', 'soft', 'cut'])"
   >
+    @if (c.colours) {
+      <hrs-property-colour
+        label="Inactive"
+        [value]="v.inactive"
+        [changed]="isSet('inactive')"
+        [origin]="origins()?.inactive"
+        (resetRequested)="clear.emit(['inactive'])"
+        (valueChange)="settingsChange.emit({ inactive: $event })"
+      />
+      <hrs-property-colour
+        label="Active"
+        [value]="v.active"
+        [changed]="isSet('active')"
+        [origin]="origins()?.active"
+        (resetRequested)="clear.emit(['active'])"
+        (valueChange)="settingsChange.emit({ active: $event })"
+      />
+    }
     @if (c.drawAs) {
       <hrs-property-select
         label="Draw as"
@@ -113,11 +165,10 @@
         (valueChange)="drawAs($event)"
       />
     }
-    <hrs-property-slider
+    <hrs-property-number
       label="Scale"
       [value]="v.scale"
-      [min]="0.1"
-      [max]="6"
+      [min]="0.01"
       [step]="0.05"
       [changed]="isSet('scale')"
       [origin]="origins()?.scale"
@@ -125,18 +176,18 @@
       (valueChange)="settingsChange.emit({ scale: $event })"
     />
     @if (c.lines) {
-      <hrs-property-slider
+      <hrs-property-number
         label="Line width"
         [value]="v.width"
-        [min]="0.01"
-        [max]="0.4"
+        [min]="0"
+        [max]="0.5"
         [step]="0.01"
         [changed]="isSet('width')"
         [origin]="origins()?.width"
         (resetRequested)="clear.emit(['width'])"
         (valueChange)="settingsChange.emit({ width: $event })"
       />
-      <hrs-property-slider
+      <hrs-property-number
         label="Line softness"
         [value]="v.soft"
         [min]="0"
@@ -148,7 +199,7 @@
         (valueChange)="settingsChange.emit({ soft: $event })"
       />
     } @else if (c.cut) {
-      <hrs-property-slider
+      <hrs-property-number
         label="Contrast"
         [value]="v.cut"
         [min]="0"
@@ -162,23 +213,13 @@
     }
   </hrs-property-section>
 }
-@if (textures().length) {
-  <hrs-property-section title="Textures">
-    <ul class="textures">
-      @for (t of textures(); track t.layer) {
-        <li class="texture">
-          <span class="texture__layer">{{ t.layer }}</span>
-          <a class="texture__path" [href]="t.path" target="_blank" rel="noopener">{{ t.path }}</a>
-          @if (t.source) {
-            <span class="texture__source" title="In the game data">
-              {{ t.baked ? 'Baked from ' : '' }}{{ t.source }}
-            </span>
-          }
-          <span class="texture__size">{{ t.width }} × {{ t.height }}</span>
-        </li>
-      }
-    </ul>
-  </hrs-property-section>
+@for (l of layers(); track l.slot) {
+  <hrs-layer-properties
+    [layer]="l"
+    [transforms]="!c.particles"
+    (settingsChange)="layerChange(l.slot, $event)"
+    (clear)="layerClear(l.slot, $event)"
+  />
 }
 <div class="buttons">
   <button type="button" class="button" (click)="resetRequested.emit()" [disabled]="!changed()">

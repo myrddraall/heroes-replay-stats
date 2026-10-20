@@ -62,14 +62,18 @@ export class AssetBrowser {
         case 'planet':
           return c.planets().map((p) => ({
             key: key(p.id),
-            label: p.id,
-            caption: KIND_LABELS[p.kind],
+            // As renamed in the library (its id beside), else its id.
+            label: d.library().planets[p.id]?.label ?? p.id,
+            caption: d.library().planets[p.id]?.label
+              ? `${p.id} · ${KIND_LABELS[p.kind]}`
+              : KIND_LABELS[p.kind],
             unsaved: d.unsavedLibraryPlanets().has(p.id),
           }));
         case 'style':
           return c.styles().map((id) => ({
             key: key(id),
-            label: id,
+            label: d.library().styles[id]?.label ?? id,
+            caption: d.library().styles[id]?.label ? id : undefined,
             unsaved: d.unsavedLibraryStyles().has(id),
           }));
         case 'material':

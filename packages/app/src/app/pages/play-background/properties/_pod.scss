@@ -1,0 +1,21 @@
+// A pod: a square box the panel's full width (past the panel's padding, `--hrs-panel-inline`),
+// on a faint fill, a line above and below it and none at its sides; pods one under another share
+// their line.
+@mixin box {
+  overflow: hidden;
+  margin: -1px calc(-1 * var(--hrs-panel-inline, 0px)) 0;
+  border-block: 1px solid var(--mat-sys-outline-variant);
+  background: color-mix(in srgb, var(--mat-sys-surface-container) 40%, transparent);
+}
+
+// A pod's heading: a bar across it, a line under it while what it heads is shown.
+@mixin head {
+  background: color-mix(in srgb, var(--mat-sys-surface-container) 75%, transparent);
+}
+
+@mixin head-line {
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+// What is inside a pod lines up with the panel's own content (its padding, else 8px).
+$inline: var(--hrs-panel-inline, 8px);

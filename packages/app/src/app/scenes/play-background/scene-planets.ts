@@ -1,4 +1,4 @@
-import type { SceneBlend, SceneColor, SceneMaterial, SceneTexture } from './play-scene';
+import type { SceneBlend, SceneColor, SceneLayer, SceneMaterial, SceneTexture } from './play-scene';
 import type { TintBlend } from './scene-tints';
 import { BUILT_IN_PREFIX, type BuiltInPlanets } from './built-in-planets';
 
@@ -122,6 +122,112 @@ export type PartMapping =
 /** What a part is to its body: its surface, a layer on it, its atmosphere shell, a ring, a style's shield. */
 export type PartRole = 'surface' | 'layer' | 'shell' | 'ring' | 'shield';
 
+/** A part of a placed body by whose it is (the body's own, or its style's) and its role: `own:surface`, `style:ring`. */
+export type PartKey = `${'own' | 'style'}:${PartRole}`;
+export const partKey = (from: 'own' | 'style', role: PartRole): PartKey => `${from}:${role}`;
+
+/**
+ * A part's shape and how its textures lie on it, in place of its own (each where set), relative to
+ * its body (so a style's part fits any planet it is worn by): its size (times its own: a sphere's
+ * radius, a ring's radii); a sphere's textures turned about its pole (`turn`, degrees) and its pole
+ * tilted (`tilt`, degrees, its top towards the eye); a ring's width (times its own, about its middle
+ * circle), its plane's depth along the line of sight (body radii; negative: towards the eye), the
+ * circle across it its texture is brightest on (`mid`, 0 its inner edge to 1 its outer), and
+ * whether it keeps to its body's limb seen from wherever its body is (`keepToLimb`, where it was
+ * modelled to).
+ */
+export interface PartSettings {
+  /** Its name as shown, in place of its role's (Surface, Shield, Ring…). */
+  readonly label?: string;
+  /** Whether it is drawn (its materials with it). */
+  readonly enabled?: boolean;
+  readonly size?: number;
+  readonly turn?: number;
+  readonly tilt?: number;
+  readonly width?: number;
+  readonly depth?: number;
+  readonly mid?: number;
+  readonly keepToLimb?: boolean;
+}
+
+/** Parts' settings by part. */
+export type PartSettingsMap = Readonly<Partial<Record<PartKey, PartSettings>>>;
+
+/** Parts' settings from several levels, the later over the earlier, each setting its own. */
+export function mergePartSettings(
+  ...levels: readonly (PartSettingsMap | undefined)[]
+): PartSettingsMap {
+  const out: Partial<Record<PartKey, PartSettings>> = {};
+  for (const level of levels)
+    for (const [key, settings] of Object.entries(level ?? {}) as [PartKey, PartSettings][])
+      out[key] = { ...out[key], ...settings };
+  return out;
+}
+
+/** `v` turned about unit `axis` by `degrees` (right-handed). */
+function turned(v: Vec3, axis: Vec3, degrees: number): Vec3 {
+  const a = (degrees * Math.PI) / 180;
+  const c = Math.cos(a);
+  const s = Math.sin(a);
+  const d = (axis[0] * v[0] + axis[1] * v[1] + axis[2] * v[2]) * (1 - c);
+  return [
+    v[0] * c + (axis[1] * v[2] - axis[2] * v[1]) * s + axis[0] * d,
+    v[1] * c + (axis[2] * v[0] - axis[0] * v[2]) * s + axis[1] * d,
+    v[2] * c + (axis[0] * v[1] - axis[1] * v[0]) * s + axis[2] * d,
+  ];
+}
+
+/**
+ * A mapping turned with its part: about its pole (a uv sphere's; z, its body's up, for a linear
+ * one) by `turn`, then about the body's x (to the right) by `tilt`, its top towards the eye (-y).
+ * The texture moves with it: a point reads what the point turned back read.
+ */
+function turnedMapping(mapping: PartMapping, turn: number, tilt: number): PartMapping {
+  if (mapping.kind === 'ring' || (!turn && !tilt)) return mapping;
+  const pole: Vec3 = mapping.kind === 'sphere' ? mapping.pole : [0, 0, 1];
+  const r = (v: Vec3) => turned(turned(v, pole, turn), [1, 0, 0], tilt);
+  if (mapping.kind === 'sphere')
+    return { ...mapping, pole: r(mapping.pole), meridian: r(mapping.meridian) };
+  const coefficients = (k: readonly [number, number, number, number]) => {
+    const [x, y, z] = r([k[0], k[1], k[2]]);
+    return [x, y, z, k[3]] as const;
+  };
+  return { ...mapping, u: coefficients(mapping.u), v: coefficients(mapping.v) };
+}
+
+/** A part with its settings applied (see `PartSettings`). */
+export function withPart(part: BodyPart, settings: PartSettings | undefined): BodyPart {
+  if (!settings) return part;
+  const { size = 1, turn = 0, tilt = 0 } = settings;
+  const { shape } = part;
+  if (shape.kind === 'sphere') {
+    return {
+      ...part,
+      shape: { ...shape, radius: shape.radius * size },
+      mapping: turnedMapping(part.mapping, turn, tilt),
+      ...(part.mapping2 ? { mapping2: turnedMapping(part.mapping2, turn, tilt) } : {}),
+    };
+  }
+  const middle = ((shape.inner + shape.outer) / 2) * size;
+  const half = ((shape.outer - shape.inner) / 2) * size * (settings.width ?? 1);
+  const { seen, ...rest } = shape;
+  const keep = settings.keepToLimb ?? seen !== undefined;
+  return {
+    ...part,
+    shape: {
+      ...rest,
+      inner: Math.max(0, middle - half),
+      outer: middle + half,
+      depth: settings.depth ?? shape.depth,
+      ...(keep && seen !== undefined ? { seen } : {}),
+    },
+    mapping:
+      part.mapping.kind === 'ring' && settings.mid !== undefined
+        ? { ...part.mapping, mid: settings.mid }
+        : part.mapping,
+  };
+}
+
 /**
  * How a material shows, where something says (a planet's tuning, a style's, a placement): the
  * data's way otherwise. The same settings for any material, a planet's, a style's or the sky's;
@@ -129,6 +235,8 @@ export type PartRole = 'surface' | 'layer' | 'shell' | 'ring' | 'shield';
  * material, a scale without an emissive layer).
  */
 export interface MaterialSettings {
+  /** Its name as shown, in place of the one made from the data's (its data name stays its key). */
+  readonly label?: string;
   /** Whether it is drawn at all. */
   readonly enabled?: boolean;
   /** How strongly it shows, 0 to 1 (1: as the data has it): a blended material's alpha times this. */
@@ -137,6 +245,12 @@ export interface MaterialSettings {
   readonly blend?: SceneBlend;
   /** Its glow: 0 none, 1 its own light's bloom as the data has it, past 1 its emissive light boosted into the bloom. */
   readonly glow?: number;
+  /**
+   * A grid's colours (`#rrggbb`): inactive (its own, the data's) where no activation light
+   * reaches, active where one does fully, blended between.
+   */
+  readonly inactive?: string;
+  readonly active?: string;
   /** How far it shows away from the limb, 0 to 1: a floor under its layers' fresnel (unset: each layer's own). */
   readonly spread?: number;
   /**
@@ -172,6 +286,92 @@ export interface MaterialSettings {
   readonly soft?: number;
   /** A colour blended over it. */
   readonly tint?: MaterialTint;
+  /**
+   * Where it is drawn among the scene's objects (a sky material's say): behind them all, as if
+   * infinitely far (`background`, the sky's default), among them at its own depth (`scene`), or in
+   * front of them all, as if at the camera (`foreground`).
+   */
+  readonly depth?: MaterialDepth;
+  /**
+   * Whether its body's light lights it (`true`), or it shows as its textures have it, flat (a
+   * painting with its light painted in); unset: as the data has it (`unshaded`). A lit one on a
+   * body with no light shows flat.
+   */
+  readonly lit?: boolean;
+  /** Its layers' textures and how they lie on it, each layer's where set (by its slot). */
+  readonly layers?: Partial<Record<LayerSlot, LayerSettings>>;
+}
+
+/** A material's layers by where they are in it: its diffuse, its emissive, its first and second alpha mask. */
+export type LayerSlot = 'diffuse' | 'emissive' | 'mask1' | 'mask2';
+
+/**
+ * A layer's texture and how it lies on its material, in place of the data's (each where set): its
+ * texture (by key: one loaded with what it is drawn on, else its own is kept), how far it is moved
+ * (`offset`, in the texture's own widths), turned (`rotation`, degrees about its middle), repeated
+ * (`tiling`, times across u and v), scrolled (`scroll`, texture widths a second; [0, 0] still) and
+ * whether it repeats or stops at its edges (`wrap`, across u and across v).
+ */
+export interface LayerSettings {
+  /** Its name as shown, in place of its slot's (Diffuse, Emissive, Mask). */
+  readonly label?: string;
+  readonly texture?: string;
+  readonly offset?: readonly [number, number];
+  readonly rotation?: number;
+  readonly tiling?: readonly [number, number];
+  readonly scroll?: readonly [number, number];
+  readonly wrap?: readonly [boolean, boolean];
+}
+
+/** A material's layers that are there, by slot, in order. */
+export function layerSlots(material: SceneMaterial): [LayerSlot, SceneLayer][] {
+  const out: [LayerSlot, SceneLayer][] = [];
+  if (material.diffuse) out.push(['diffuse', material.diffuse]);
+  if (material.emissive) out.push(['emissive', material.emissive]);
+  material.alphaMasks.slice(0, 2).forEach((m, i) => out.push([i ? 'mask2' : 'mask1', m]));
+  return out;
+}
+
+/** A layer with its settings applied (a texture `loaded` doesn't have: its own kept). */
+export function withLayer(
+  layer: SceneLayer,
+  settings: LayerSettings | undefined,
+  loaded: (texture: string) => boolean = () => true,
+): SceneLayer {
+  if (!settings) return layer;
+  const { texture, offset, rotation, tiling, scroll, wrap } = settings;
+  return {
+    ...layer,
+    ...(texture && loaded(texture) ? { texture } : {}),
+    ...(offset ? { offset } : {}),
+    ...(rotation !== undefined ? { angle: (rotation * Math.PI) / 180 } : {}),
+    ...(tiling ? { tiling } : {}),
+    ...(wrap ? { wrap } : {}),
+    ...(scroll
+      ? {
+          scroll: scroll[0] || scroll[1] ? { seconds: 1, by: scroll, endless: true } : undefined,
+        }
+      : {}),
+  };
+}
+
+/** A material with its layers' settings applied, by slot (see `withLayer`). */
+export function withLayers(
+  material: SceneMaterial,
+  layers: MaterialSettings['layers'],
+  loaded?: (texture: string) => boolean,
+): SceneMaterial {
+  if (!layers) return material;
+  const at = (slot: LayerSlot, layer: SceneLayer | null) =>
+    layer ? withLayer(layer, layers[slot], loaded) : layer;
+  return {
+    ...material,
+    diffuse: at('diffuse', material.diffuse),
+    emissive: at('emissive', material.emissive),
+    alphaMasks: material.alphaMasks.map((m, i) =>
+      i < 2 ? withLayer(m, layers[i ? 'mask2' : 'mask1'], loaded) : m,
+    ),
+  };
 }
 
 /**
@@ -185,6 +385,9 @@ export interface MaterialTint {
   readonly strength: number;
 }
 
+/** Where a material is drawn among the scene's objects: behind them, among them or in front. */
+export type MaterialDepth = 'background' | 'scene' | 'foreground';
+
 /** How a material with a drawn pattern shows it: drawn, or as its texture (the game's way). */
 export type MaterialDrawAs = 'pattern' | 'texture';
 
@@ -195,6 +398,8 @@ export type MaterialSettingsMap = Readonly<Record<string, MaterialSettings>>;
 export interface SkySettings {
   readonly materials?: MaterialSettingsMap;
   readonly tint?: MaterialTint;
+  /** Its materials' draw order, by name (the later over the earlier; see `drawOrder`), where set. */
+  readonly order?: readonly string[];
 }
 
 /**
@@ -318,6 +523,62 @@ export function withMasks(
     ...material,
     alphaMasks: material.alphaMasks.map((m, i) => (masks[i] ? { ...m, texture: masks[i] } : m)),
   };
+}
+
+/** A material as its draw order needs it: its name, how it blends, its priority in the data. */
+export interface Ordered {
+  readonly name: string;
+  readonly blend: SceneBlend;
+  readonly priority?: number;
+}
+
+/**
+ * Materials' names in the order they are drawn (the later over the earlier): the opaque ones first,
+ * by priority (a surface under what glows over it); then the rest as `order` lists them
+ * where it is given (those it leaves out after, in their own order), else by their priority,
+ * highest first, ties as the data lists them.
+ */
+export function drawOrder(materials: readonly Ordered[], order?: readonly string[]): string[] {
+  const byPriority = (a: { m: Ordered; i: number }, b: { m: Ordered; i: number }) =>
+    (b.m.priority ?? 0) - (a.m.priority ?? 0) || a.i - b.i;
+  const byData = materials.map((m, i) => ({ m, i }));
+  const opaque = byData.filter(({ m }) => m.blend === 'opaque').sort(byPriority);
+  const rest = byData.filter(({ m }) => m.blend !== 'opaque').sort(byPriority);
+  const rank = (name: string, fallback: number) => {
+    const at = order?.indexOf(name) ?? -1;
+    return at >= 0 ? at : (order?.length ?? 0) + fallback;
+  };
+  const ordered = order
+    ? rest.map((x, i) => ({ ...x, r: rank(x.m.name, i) })).sort((a, b) => a.r - b.r)
+    : rest;
+  return [...new Set([...opaque, ...ordered].map(({ m }) => m.name))];
+}
+
+/**
+ * A draw order with `name` moved to just before (or after) `target`. Moved within its group
+ * (`group`: the names shown with it), it takes one of its group's places, the rest of the order as
+ * it is; moved from another group, it goes beside `target` in the whole order.
+ */
+export function reordered(
+  order: readonly string[],
+  group: readonly string[],
+  name: string,
+  target: string,
+  after: boolean,
+): string[] {
+  if (name === target) return [...order];
+  const place = (list: string[]) => {
+    const at = list.indexOf(target);
+    if (at < 0) return [...list, name];
+    list.splice(at + (after ? 1 : 0), 0, name);
+    return list;
+  };
+  if (!group.includes(name) || !group.includes(target))
+    return place(order.filter((n) => n !== name));
+  const inGroup = order.filter((n) => group.includes(n));
+  const moved = place(inGroup.filter((n) => n !== name));
+  let next = 0;
+  return order.map((n) => (group.includes(n) ? moved[next++]! : n));
 }
 
 /** A planet with its textures decoded, ready to draw. */

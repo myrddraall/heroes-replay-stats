@@ -41,7 +41,7 @@
       (resetRequested)="clear.emit(['mode'])"
       (valueChange)="mode($event)"
     />
-    <hrs-property-slider
+    <hrs-property-number
       [label]="amountLabel()"
       [value]="v.amount"
       [min]="0"
@@ -59,31 +59,26 @@
     [changed]="fitChanged()"
     (resetRequested)="clear.emit(['scale', 'across', 'up'])"
   >
-    <hrs-property-slider
+    <hrs-property-number
       label="Size"
       [value]="v.scale"
-      [min]="0.25"
-      [max]="4"
+      [min]="0.01"
       [step]="0.005"
       [changed]="c.scale"
       (resetRequested)="clear.emit(['scale'])"
       (valueChange)="valuesChange.emit({ scale: $event })"
     />
-    <hrs-property-slider
+    <hrs-property-number
       label="Across"
       [value]="v.across"
-      [min]="-0.5"
-      [max]="0.5"
       [step]="0.001"
       [changed]="c.across"
       (resetRequested)="clear.emit(['across'])"
       (valueChange)="valuesChange.emit({ across: $event })"
     />
-    <hrs-property-slider
+    <hrs-property-number
       label="Up"
       [value]="v.up"
-      [min]="-0.5"
-      [max]="0.5"
       [step]="0.001"
       [changed]="c.up"
       (resetRequested)="clear.emit(['up'])"

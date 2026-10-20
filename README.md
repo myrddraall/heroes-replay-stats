@@ -112,7 +112,50 @@ pixel wide at the Play screen's sizes) is a smooth line, not a staircase. A
 body's outline, and a ring's edges, are smoothed over a pixel (how much of the pixel the shape
 covers, blended by it), as the game's meshes are; a pixel the shape misses is shaded and given
 nothing rather than dropped (dropping it leaves its neighbours' texture derivatives undefined), and
-one past a sphere's outline reads its textures at their coarsest (seen wholly edge-on there). A material's `falloff` is how sharply its edge-on fresnel rises toward the limb (the formula to that power: 2 unless set; the Play screen planets' grid 1.3, measured against a Quick Match screenshot). A material's `spreadFrom` is the side its
+one past a sphere's outline reads its textures at their coarsest (seen wholly edge-on there). A body's lights are objects (`scene-lights.ts`), each a row in its tree's Lights group: its
+light rig from the game data as an ambient light and its directional lights (named Key, Fill and
+Back by how bright they are), and its shadow (the shade: a light that darkens, from a side, how
+softly). Each is switched on and off by its row's checkbox and has a colour and strength (a
+shadow, how dark), the side it comes from and (a shadow) its softness, set per light (`lights`,
+by `ambient`, `directional-<n>`, `shadow`) over the data's only where set, so a body nothing is
+set for is lit exactly as before; the body keeps its rig's overall strength (Light) and all of
+it turned together (Lights from). Lights can be added (Add light: ambient, directional or shadow) to a body (`added` on its
+settings), to an overlay in the library (lighting every body wearing it) and to a scene
+(`lights` on its choices, lighting every planet in it; the scene source gives them to the
+background as it does the sky); an added light is taken out where it was added (Remove light),
+and set over (switched off, recoloured) at any level above. A body is drawn with up to eight
+directional lights and four shades. A shadow set before lights were objects (`shade`,
+`shadeTowards`) is read as its shadow light's, and taken into it when that is edited. Materials are drawn in an order (`drawOrder`): the opaque first, then the rest by the game
+data's priority (highest first), or as a level sets it (`order`, a list of names on a sky's
+settings and on each body's); the tree lists them in that order and they are moved in it by
+dragging (a line shows where) or with Alt and an arrow, opaque rows staying first. A body's own
+and its style's materials keep one order between them (moved within its group, a material takes
+one of its group's places); a sky material dragged into another depth's group takes that depth.
+(Particles are drawn after a depth's meshes whatever their place: they only add light, which
+comes out the same in any order.) A body's parts (its own: surface, layer, shell; its style's: shield, ring) take settings of
+their own, relative to the body so a style's part fits any planet wearing it (`parts`, by
+`own:<role>` or `style:<role>`; `withPart`): a sphere's size, and its textures turned about its
+pole (Turn) and its top tilted towards the eye (Tilt); a ring's size, width (about its middle
+circle), depth along the line of sight, the circle its texture is brightest on, and whether it
+keeps to its body's limb. A body's tree is by owner, then part, then material: its own parts, each with the materials drawn on it (in draw order; a material is dragged only among its part's), then its Lights group, then the overlay it wears (its style) with that overlay's parts, their materials, and the lights added to the overlay. Parts and materials own no lights: the scene, a body and an overlay do. A body's or an overlay's light reaches what its linking says (`reach` on its settings: all of its body unless set; `only` or `except` the parts and materials named, a part standing for every material on it; the light panel's Linking section, its parts and their materials checked): for each part and material drawn, a light that doesn't reach it is off there (`linkedSettings`, rig lights, added lights and shadows alike). A light added to a body reaches its moons (and theirs) only where `moons` is set (Reaches its moons): the scene's placement adds it to each moon whole (`lightsForMoons`), its reach being among its own body's parts. A scene's lights reach every body. Grids (a part with a hex pattern) take two more kinds of light, which neither light nor shade, both shaped as a light reaches a face (`fieldAt`: the more it turns to the light's side, in front or behind; Spread 0 the half facing it, 1 all of it evenly; Falloff sharpening it; times Strength): a Reveal light (where the grid shows at all: its emissive times how much the reveal lights reach, so the grid's own fade, the game's look with its Spread, Spread from and Falloff on the grid's material, stays) and an Activation light (its colour, from its Inactive colour, the data's, towards its Active colour, a magenta unless set). An Activation light can energize too (`energizes`: it reveals that much of what it activates; 0, a new one's, only colours). Each kind adds up with others of its kind, capped at fully revealed or fully active (at most four of each). A grid's body has its own Reveal light (`reveal`: from the front, Spread 1, revealing all its face evenly, so the default looks as the game does; switched off, with no other reveal, the grid doesn't show) and its own Activation light (`activation`: switched off until switched on, as the reveal at half strength, energizing a little, 0.25, and tied to the reveal: `tied`, Same direction as the reveal, while set its From the Reveal light's, turning either turns both); more of each can be added. Each body (a scene's), overlay and part has a checkbox in the tree, as each material does: switched off, it and everything under it isn't drawn (the rows under it dimmed), each keeping its own switch (`enabled`, `overlayEnabled` on a body's settings; `enabled` on a part's). A body switched off keeps its place, so the scene's layout doesn't move, and its moons go with it; an overlay switched off draws the body as if it wore none (its light and shade too), its style kept. A style open in the library (an overlay itself) offers only what an overlay brings to the bodies wearing it (its name, lights, and its parts' and materials' settings): a body's own light, rims' lean and tint aren't read from a style, so its panel doesn't show them (`BodyProperties`' `overlay`). Bodies, overlays (a style's name, set in the library), parts, lights, materials and their layers each have a Name (`label` on a body's, a part's, a material's and a layer's settings; `name` on a light's), set level over level like any other setting: renamed in the library (a material on its own, a planet, a style) it shows so wherever it is used, renamed in a planet it shows so for that planet only, renamed in a scene for that scene only; left empty, back to the name under it. The data name stays the key settings are kept by. The panels' top-level sections are pods (`_pod.scss`): square boxes the panel's full width (past its padding, `--hrs-panel-inline`), their heading a bar across the top, lines above and below and none at the sides; a section inside another (a `PropertySection` finds one above it by injection) keeps the plain folding heading. The tree is two pods: what is edited, and the editing aids (the preview stage, the reference). A body's material is lit by its body's light or drawn flat, as its textures have it (`lit`;
+the editor's "Lit by its light"): as the game data says unless set (the flyby planets' textures
+are plain colour maps, lit; the Play screen planets' paintings have their light painted in, flat);
+a lit one on a body with no light shows flat rather than black. A material's layers (its diffuse, emissive and first two alpha masks, by slot) each take settings
+of their own (`layers`; `withLayers`): the texture read (any loaded with what it is drawn on: the
+body's own, its style's, the sky's), its offset, rotation (degrees), tiling, scroll (texture
+widths a second, going on rather than looping back as the data's do; set, the body is drawn every
+frame) and whether it repeats across u and v; a level setting one of a layer's leaves the rest of
+it to the level below. The editor shows each layer in a section of its own, with the texture it
+reads (where the site and the game data have it). Each sky material is drawn at a depth among the scene's objects (`depth`, the editor's Depth:
+Background, Midground or Foreground, and the groups a sky's materials are under in the tree):
+behind them all, as if infinitely far (`background`), among them at its own depth (`scene`), or in
+front of them all, as if at the camera (`foreground`). Unless set, the game data decides
+(`skyDepths`): looking at the scene's own planets, a sky mesh met only in front of them all is in
+front (the Play screen's horizon energy), one met only behind them is behind (its star cylinder
+and twinkling stars), one met about them is among them. The renderer draws in that order: the
+background (what doesn't move of it kept drawn, then what moves), the objects over it (what doesn't
+move of them kept drawn on their own and laid over it, then what moves, depth-tested), then the
+foreground; its far plane is infinitely far, so an object set however far is never cut off. A material's `falloff` is how sharply its edge-on fresnel rises toward the limb (the formula to that power: 2 unless set; the Play screen planets' grid 1.3, measured against a Quick Match screenshot). A material's `spreadFrom` is the side its
 fresnel is brightest on (the editor's Spread from), in place of its layers' own turn. How a planet shows
 is settable per placement (`SetPlanet`): its light's strength, where its key light comes from
 (its rig turned together), a shade and where it falls, where its rims and glows lean
@@ -130,16 +173,17 @@ used; a planet, style or the sky using it can set it otherwise for itself, and a
 A scene is its planets (each where it is and how big, with its style, looks and moons), its sky,
 an id and a name (`scene-<n>`; `background-scene.ts`, `scene-bodies.ts`). Two are presets: the
 random sets (`''`: a set drawn with each page; its sky set as any scene's) and the game's own Play
-screen (`play-screen`: its three planets where the game puts them, set as any scene's). Scenes
+screen (`play-screen`: its three planets where the game puts them, its small one a moon of its
+medium one on the orbit that puts it there (`playScreenBodies`, `orbitTo`), set as any scene's). Scenes
 kept with one planet before scenes had several open as that planet in the middle of the view.
 The colour over the whole picture is the scenes'. What the site shows is the
 published design, a global store kept in `localStorage` (`PublishedDesignStore`, provided as the
 design in effect by the `BACKGROUND_DESIGN` token's root default). The Background page is an
 editor of a draft of it: the page provides `DraftDesignStore` (kept between visits) as the design
 for everything under it, so its background shows the draft while the rest of the site shows what
-is published; Save publishes the draft, Discard takes it back, and the bar counts what is not
-saved (on one line with the view's menu while something is open; the library's list marks each
-thing not saved with a dot). A new scene starts saved: it is published as it is made. The left panel starts on the library (`AssetCatalogStore`): the kind of thing listed as
+is published; Save publishes the draft and Discard takes it back (on one line with the Library button and the
+view's menu while something is open; the tree and the library's list mark each thing not saved
+with a dot). A new scene starts saved: it is published as it is made. The left panel starts on the library (`AssetCatalogStore`): the kind of thing listed as
 its title, a choice of the kind (scenes, planets, styles, materials, particle systems, skies),
 a search by name or where a thing is used, the bar, then the things of that kind as one flat
 list (a material with what uses it). For the scenes, a New scene button opens a flyout: a name,
@@ -157,7 +201,7 @@ site has each, and where the game data has it (the export says; a baked one, the
 baked from). A scene opens in `SceneEditorStore`, an asset in `AssetEditorStore`, each provided as
 the abstract `Editor` token the layout, tree and panels use and as the `BACKGROUND_SCENE` the
 background shows. A scene's tree is its sky and its materials, then each planet with its
-materials and its moons, moons of moons; its own properties are its name, its deletion, the
+parts, lights and overlay (as above) and its moons, moons of moons; its own properties are its name, its deletion, the
 colour, and an Add planet button (a flyout of the planets, filtered). A planet's properties have
 its place (across, up, distance) and size; a body's, an Add moon button (the same flyout). A moon
 is any planet on an orbit about its parent: radius, tilt, turn, a progress round it and its size;
@@ -175,7 +219,10 @@ only and never in the design: the backdrop (a sky, chosen there, with the stage'
 materials for it under it in the tree; a plain colour; or, by default, a transparency grid of
 white and light grey; for a colour or the grid the renderer leaves the sky out and lays the
 backdrop under what the planets cover, after tone mapping, so it shows as chosen and doesn't
-bloom), and the stand-in planet, a plain lit sphere of a colour or the grid that the app makes
+bloom), and the stand-in planet, a plain sphere of a colour or the grid lit as a 3D tool's material
+preview is: evenly, by light from all round (Ambient, 1 by default: a lit material as bright as
+its textures), with a directional light to switch on (Directional light, off by default; its strength and the side
+it comes from) to show relief (`surround` and `key` on its placement) that the app makes
 itself (`BUILT_IN_PLANETS`, ids starting `@`), with the material drawn over it on the parts of
 its own planet's file that draw it. Either editor's tree ends with one more aid, the reference:
 a picture chosen from this computer (a screenshot of the game's own screen, to compare with),
@@ -183,14 +230,25 @@ kept in this browser's IndexedDB (`reference-image.ts`), laid over the view (`Re
 split past a line or faded, as tall as the view (the camera keeps its height's angle, so a
 screenshot fits by its height) and nudged to fit. A particle system's material
 takes only whether it is drawn and its strength (the particles' own settings aren't editable
-yet). Every property and section shows a reset where it is set. The properties use one vocabulary: a
+yet). Every property and section shows a reset where it is set. A number is a field to scrub
+(`PropertyNumber`, `scrub.ts`): pressed and dragged up or down, it changes the faster the further
+the pointer is from where it was pressed (Esc takes it back; while it is typed in too, what was
+typed kept first, a drag across selecting its text as usual, its text never dragged away), so a number with wide limits or none
+is set finely or fast alike; clicked, it is typed; the arrow keys, and the wheel over it, step it
+(Shift: ten steps; Alt: a hundred). Its
+limits show beside it ("0 – 1", "≥ 0", "Any"): only those it really has (a distance, a size, a
+glow's boost have none above). The properties use one vocabulary: a
 direction is always the side something comes from ("Light from", "Shade from", "Rim from",
 "Spread from": the rim's is the bright side, mirrored from the lean the design keeps), on the same
 disc with a Front/Behind switch; colour sections are "Colour", a material's compositing "Surface",
 its pattern's size "Scale". Materials show by readable names (`material-names.ts`: their part's
 role, a shield's grid or a ring; else their own name where it says something; else their main
 texture's), the game data's name beside them; a body's are grouped by whose they are, its own and
-its style's (which says it comes from that style, and for which body). The screenshot mode shows the
+its style's (which says it comes from that style, and for which body). A setting
+with a value from a level under the one edited (the game data's tuning, the library's material,
+planet or style, a style the body wears, its tuning for that style) shows a small hollow dot after
+its label, which level in its title and to assistive technology (`originsOf`, `bodyOrigins`); one
+set at the level edited shows highlighted, with its reset back to the level below. The screenshot mode shows the
 background alone, full screen, until Esc. The stores keep what they keep in `localStorage`
 through the `withLocalStorage` store feature (`data/store-features/`, beside `withFolding`;
 `withPlanetFiles` loads planets' files as a store needs them). A part may carry a

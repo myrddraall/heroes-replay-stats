@@ -19,6 +19,7 @@
       >
         <hrs-add-planet planetAdd (picked)="s.addPlanet($event)" />
       </hrs-scene-properties>
+      <hrs-add-light (added)="editor.addLight($event)" />
     }
   }
   @case ('sky') {
@@ -54,6 +55,9 @@
         [set]="b.info.settings"
         [baseTint]="b.baseTint"
         [styleSet]="b.info.styleSet"
+        [overlay]="b.info.file?.kind === 'style'"
+        [label]="b.label"
+        [labelBelow]="b.labelBelow"
         [styled]="b.canHaveMoons"
         [moons]="b.canHaveMoons"
         (styleChange)="editor.setStyle($event)"
@@ -66,8 +70,29 @@
         (focusToggle)="editor.toggleFocus()"
         (resetRequested)="editor.resetBody()"
       >
+        <hrs-add-light lightAdd (added)="editor.addLight($event)" />
         <hrs-add-planet moonAdd label="Add moon" (picked)="editor.addMoon($event)" />
       </hrs-body-properties>
+    }
+  }
+  @case ('light') {
+    @if (editor.light(); as l) {
+      <hrs-light-properties
+        [light]="l"
+        (settingsChange)="editor.setLight($event)"
+        (clear)="editor.clearLight($event)"
+        (removed)="editor.removeLight()"
+        (tiedFromChange)="editor.setRevealFrom($event)"
+      />
+    }
+  }
+  @case ('part') {
+    @if (editor.part(); as p) {
+      <hrs-part-properties
+        [part]="p"
+        (settingsChange)="editor.setPart($event)"
+        (clear)="editor.clearPart($event)"
+      />
     }
   }
   @case ('material') {
@@ -81,7 +106,8 @@
         [changed]="m.set !== undefined"
         [set]="m.set"
         [baseTint]="m.baseTint"
-        [textures]="m.textures"
+        [layers]="m.layers"
+        [labelBelow]="m.labelBelow"
         (settingsChange)="editor.setMaterial($event)"
         (clear)="editor.clearMaterial($event)"
         (resetRequested)="editor.clearMaterial()"
@@ -98,7 +124,8 @@
         [changed]="m.set !== undefined"
         [set]="m.set"
         [baseTint]="m.baseTint"
-        [textures]="m.textures"
+        [layers]="m.layers"
+        [labelBelow]="m.labelBelow"
         (settingsChange)="editor.setMaterial($event)"
         (clear)="editor.clearMaterial($event)"
         (resetRequested)="editor.clearMaterial()"

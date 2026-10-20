@@ -9,6 +9,7 @@ import {
   type MoonChoices,
   moonAt,
   orbitOffset,
+  orbitTo,
   pathKey,
   pathOf,
   placeBodies,
@@ -59,6 +60,21 @@ describe('the scene’s moons', () => {
     expect(a!.radius).toBeCloseTo(18 * DEFAULT_ORBIT.size);
     expect(a!.position[0]).toBeGreaterThan(planet!.position[0]); // to its right
     expect(b!.position[0]).toBeLessThan(a!.position[0]); // to the left of its own parent
+  });
+
+  it('are put on the orbit that places them where a body is, in front or behind, above or below', () => {
+    for (const at of [
+      [10, 40, 12],
+      [-6, 80, -9],
+      [25, 66, 4],
+      [0, 50, 30],
+    ] as Vec3[]) {
+      const orbit = orbitTo(root, { position: at, radius: 3 }, eye);
+      expect(Math.abs(orbit.tilt)).toBeLessThanOrEqual(90);
+      const [, placed] = placeBodies(root, [{ id: 'm', orbit }], eye);
+      placed!.position.forEach((v, k) => expect(v).toBeCloseTo(at[k]!, 4));
+      expect(placed!.radius).toBeCloseTo(3);
+    }
   });
 
   it('know a moon behind its planet is hidden, and show it to one side while it is selected', () => {

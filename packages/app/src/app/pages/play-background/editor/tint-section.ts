@@ -5,7 +5,7 @@ import { BLEND_GROUPS, BLENDS, type TintBlend } from '../../../scenes/play-backg
 import { PropertyColour } from '../properties/property-colour';
 import { PropertySection } from '../properties/property-section';
 import { grouped, PropertySelect } from '../properties/property-select';
-import { PropertySlider } from '../properties/property-slider';
+import { PropertyNumber } from '../properties/property-number';
 
 /**
  * A tint's section of a properties panel (presentational), for whatever it tints (a material, a
@@ -15,7 +15,7 @@ import { PropertySlider } from '../properties/property-slider';
  */
 @Component({
   selector: 'hrs-tint-section',
-  imports: [PropertySection, PropertyColour, PropertySelect, PropertySlider],
+  imports: [PropertySection, PropertyColour, PropertySelect, PropertyNumber],
   templateUrl: './tint-section.html',
 })
 export class TintSection {

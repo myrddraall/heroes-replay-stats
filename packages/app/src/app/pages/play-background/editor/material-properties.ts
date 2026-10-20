@@ -8,15 +8,22 @@ import {
 } from '../../../scenes/play-background/material-settings';
 import type { SceneBlend } from '../../../scenes/play-background/play-scene';
 import type {
+  LayerSettings,
+  LayerSlot,
+  MaterialDepth,
   MaterialDrawAs,
   MaterialSettings,
   MaterialTint,
 } from '../../../scenes/play-background/scene-planets';
+import { PropertyCheck } from '../properties/property-check';
 import { PropertySection } from '../properties/property-section';
-import type { TextureEntry } from './editor-model';
+import type { LayerEntry } from './editor-model';
+import { LayerProperties } from './layer-properties';
 import { TintSection } from './tint-section';
 import { type PropertyOption, PropertySelect } from '../properties/property-select';
-import { PropertySlider } from '../properties/property-slider';
+import { PropertyColour } from '../properties/property-colour';
+import { PropertyNumber } from '../properties/property-number';
+import { PropertyText } from '../properties/property-text';
 import { PropertyDirection } from '../properties/property-direction';
 
 /**
@@ -26,7 +33,17 @@ import { PropertyDirection } from '../properties/property-direction';
  */
 @Component({
   selector: 'hrs-material-properties',
-  imports: [TintSection, PropertySection, PropertySlider, PropertySelect, PropertyDirection],
+  imports: [
+    TintSection,
+    PropertySection,
+    PropertyNumber,
+    PropertySelect,
+    PropertyDirection,
+    PropertyCheck,
+    PropertyText,
+    PropertyColour,
+    LayerProperties,
+  ],
   templateUrl: './material-properties.html',
   styleUrl: './properties-panel.scss',
 })
@@ -45,8 +62,10 @@ export class MaterialProperties {
   readonly set = input<MaterialSettings | undefined>(undefined);
   /** Its tint where none is set here: its own (its file's), or none. */
   readonly baseTint = input<MaterialTint>(NO_MATERIAL_TINT);
-  /** The textures its layers read. */
-  readonly textures = input<readonly TextureEntry[]>([]);
+  /** Its layers: the textures they read and how those lie on it. */
+  readonly layers = input<readonly LayerEntry[]>([]);
+  /** Its name as the levels under the one edited have it (shown while it isn't renamed here). */
+  readonly labelBelow = input('');
   readonly settingsChange = output<Partial<MaterialSettings>>();
   /** Settings set here to take back, so they are its own again. */
   readonly clear = output<readonly (keyof MaterialSettings)[]>();
@@ -55,6 +74,11 @@ export class MaterialProperties {
   protected readonly drawAsOptions: readonly PropertyOption[] = [
     { value: 'pattern', label: 'Hex pattern' },
     { value: 'texture', label: 'Texture (game)' },
+  ];
+  protected readonly depthOptions: readonly { value: MaterialDepth; label: string }[] = [
+    { value: 'background', label: 'Background' },
+    { value: 'scene', label: 'Midground' },
+    { value: 'foreground', label: 'Foreground' },
   ];
 
   protected blend(blend: string): void {
@@ -65,6 +89,35 @@ export class MaterialProperties {
   protected drawAs(value: string): void {
     if (value === 'pattern' || value === 'texture')
       this.settingsChange.emit({ drawAs: value satisfies MaterialDrawAs });
+  }
+
+  protected depth(value: string): void {
+    const found = this.depthOptions.find((o) => o.value === value);
+    if (found) this.settingsChange.emit({ depth: found.value });
+  }
+
+  /** A layer's settings changed: its others, and the other layers', as set here, kept. */
+  protected layerChange(slot: LayerSlot, change: Partial<LayerSettings>): void {
+    const layers = this.set()?.layers ?? {};
+    this.settingsChange.emit({ layers: { ...layers, [slot]: { ...layers[slot], ...change } } });
+  }
+
+  /** A layer's settings taken back; no layer's left set here: the layers as they are under it. */
+  protected layerClear(slot: LayerSlot, keys: readonly (keyof LayerSettings)[]): void {
+    const { [slot]: own, ...others } = this.set()?.layers ?? {};
+    const kept = Object.fromEntries(
+      Object.entries(own ?? {}).filter(([k]) => !keys.includes(k as keyof LayerSettings)),
+    );
+    const layers = Object.keys(kept).length ? { ...others, [slot]: kept } : others;
+    if (Object.keys(layers).length) this.settingsChange.emit({ layers });
+    else this.clear.emit(['layers']);
+  }
+
+  /** Renamed here; left empty, back to its name under the level edited. */
+  protected rename(value: string): void {
+    const label = value.trim();
+    if (label) this.settingsChange.emit({ label });
+    else this.clear.emit(['label']);
   }
 
   protected isSet(key: keyof MaterialSettings): boolean {

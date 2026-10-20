@@ -8,19 +8,38 @@ import {
   withProps,
   withState,
 } from '@ngrx/signals';
+import type { Vec3 } from '../../../scenes/play-background/scene-directions';
 import { withFolding } from '../../../data/store-features/with-folding';
 import { withLocalStorage } from '../../../data/store-features/with-local-storage';
 import type { BodySettings, SkyChoices } from '../../../scenes/play-background/background-scene';
 import { PREVIEW_SCENE } from '../../../scenes/play-background/background-design';
 import { fitRadius } from '../../../scenes/play-background/background-scene';
 import { NO_MATERIAL_TINT } from '../../../scenes/play-background/material-settings';
-import { visualExtent } from '../../../scenes/play-background/scene-bodies';
+import {
+  visualExtent,
+  withAddedLight,
+  withLightChange,
+  withoutAddedLight,
+  withoutLightSetting,
+  withoutPartSetting,
+  withPartSetting,
+} from '../../../scenes/play-background/scene-bodies';
+import {
+  type LightId,
+  type LightKind,
+  type LightSettings,
+  newLight,
+} from '../../../scenes/play-background/scene-lights';
 import type { SetPlanet } from '../../../scenes/play-background/planet-sets';
 import { loadPlaySceneFile, PLAY_SCENE_URL } from '../../../scenes/play-background/play-scene';
-import type {
-  MaterialSettings,
-  MaterialTint,
-  SkySettings,
+import {
+  type MaterialSettings,
+  type MaterialTint,
+  mergePartSettings,
+  type PartKey,
+  type PartSettings,
+  reordered,
+  type SkySettings,
 } from '../../../scenes/play-background/scene-planets';
 import { DraftDesignStore, type LibraryKind } from '../draft-design.store';
 import { grouped, type PropertyOption } from '../properties/property-select';
@@ -30,6 +49,18 @@ import {
   type BodyInfo,
   bodyView,
   type MaterialEntry,
+  type LightEntry,
+  LIGHT_ICONS,
+  lightsOfBody,
+  byDepth,
+  partsOfBody,
+  bodyLabel,
+  styleLabel,
+  overlayEnabled,
+  partNodes,
+  partIcon,
+  type PartNode,
+  type PartEntry,
   materialsOf,
   referenceRow,
   skyMaterialsOf,
@@ -38,7 +69,7 @@ import {
 import { EditingAidsStore, GRID_CELLS, REFERENCE_KEY } from './editing-aids.store';
 import { EditorUiStore } from './editor-ui.store';
 import type { AssetKind, AssetTarget, OpenTarget } from './open-target';
-import type { TreeRow } from './scene-tree';
+import type { TreeMove, TreeRow } from './scene-tree';
 import { STAND_IN_MATERIAL, standInId } from './stand-in';
 
 /** The planet a style, a material or the sky is shown on, until a planet has been opened. */
@@ -53,11 +84,18 @@ const STAGE_SKY = 'stage/sky';
 const STAGE_BACKDROP = 'stage/backdrop';
 const STAGE_STAND_IN = 'stage/stand-in';
 const ASSET = 'asset';
-const ASSET_MATERIALS = 'asset/materials';
-/** The materials the style a planet wears brings, a group of their own. */
-const ASSET_STYLE_MATERIALS = 'asset/style-materials';
+/** The overlay a planet wears: its parts and its lights, under it. */
+const ASSET_OVERLAY = 'asset/overlay';
+const ASSET_OVERLAY_LIGHTS = 'asset/overlay-lights';
 const stageMaterialKey = (name: string) => `${STAGE_SKY}/m/${name}`;
+/** A sky's materials at a depth (background, midground, foreground), a group of their own: the sky open's, the stage's. */
+const assetDepthKey = (depth: string) => `${ASSET}/depth/${depth}`;
+const stageDepthKey = (depth: string) => `${STAGE_BACKDROP}/depth/${depth}`;
 const assetMaterialKey = (name: string) => `${ASSET}/m/${name}`;
+const assetPartKey = (key: PartKey) => `${ASSET}/p/${key}`;
+/** Its lights (its rig's, its shadow, those added), a group of their own. */
+const ASSET_LIGHTS = 'asset/lights';
+const assetLightKey = (id: LightId) => `${ASSET}/l/${id}`;
 
 const KIND_TITLES: Readonly<Record<AssetKind, string>> = {
   planet: 'Planet',
@@ -77,6 +115,10 @@ type Target =
   | { readonly kind: 'body' }
   /** A material as the planet or style open sets it for itself. */
   | { readonly kind: 'material'; readonly name: string }
+  /** One of the planet's or style's parts. */
+  | { readonly kind: 'part'; readonly key: PartKey }
+  /** One of the planet's or style's lights. */
+  | { readonly kind: 'light'; readonly id: LightId }
   /** The material open: its base settings. */
   | { readonly kind: 'base-material' }
   | { readonly kind: 'particle' }
@@ -103,6 +145,10 @@ function targetOf(key: string, asset: AssetTarget): Target {
       case 'sky':
         return { kind: 'sky', stage: false };
     }
+  if (key.startsWith(`${ASSET}/p/`))
+    return { kind: 'part', key: key.slice(ASSET.length + 3) as PartKey };
+  if (key.startsWith(`${ASSET}/l/`))
+    return { kind: 'light', id: key.slice(ASSET.length + 3) as LightId };
   if (key.startsWith(`${ASSET}/m/`)) {
     const name = key.slice(ASSET.length + 3);
     return asset.kind === 'planet' || asset.kind === 'style'
@@ -257,6 +303,7 @@ export const AssetEditorStore = signalStore(
                 library().materials,
                 use.particles,
                 use.role,
+                use.depth,
               )
             : undefined;
         }),
@@ -273,9 +320,21 @@ export const AssetEditorStore = signalStore(
             const b = _body();
             return (b && materialsOf(b).find((m) => m.name === t.name)?.label) ?? t.name;
           }
+          if (t.kind === 'light') {
+            const b = _body();
+            return (
+              (b && lightsOfBody(b).find((x) => x.light.id === t.id)?.light.name) ?? 'Properties'
+            );
+          }
+          if (t.kind === 'part') {
+            const b = _body();
+            const p = b && partsOfBody(b).find((x) => x.key === t.key);
+            return p ? (p.style ? `${p.label} · ${p.style}` : p.label) : 'Part';
+          }
           if (t.kind === 'base-material') return _catalog.materialByName().get(a.id)?.label ?? a.id;
           if (t.kind === 'group') return 'Properties';
-          return a.id;
+          const b = _body();
+          return b ? bodyLabel(b) : a.id;
         }),
         skyTint: computed((): MaterialTint => {
           const sky = selectedSky();
@@ -302,10 +361,16 @@ export const AssetEditorStore = signalStore(
             const root = { position: PREVIEW_POSITION, radius: PREVIEW_RADIUS };
             if (!scene) return root;
             const up = Math.tan((scene.camera.fovY * Math.PI) / 360);
+            const style = styleFile?.replace(/^style-/, '');
+            const lib = _draft.library();
             const extent = visualExtent(
               planet ? files[planet] : undefined,
               styleFile ? files[styleFile] : undefined,
-              styleFile?.replace(/^style-/, ''),
+              style,
+              mergePartSettings(
+                planet ? lib.planets[planet]?.parts : undefined,
+                style ? lib.styles[style]?.parts : undefined,
+              ),
             );
             const view = { up, across: up * _ui.aspect() };
             return {
@@ -328,6 +393,10 @@ export const AssetEditorStore = signalStore(
               id,
               ...fitted(owner),
               materials: fill === 'colour' ? { [STAND_IN_MATERIAL]: { tint } } : undefined,
+              // Lit as a material preview is: evenly all round, a directional light from a side where switched on.
+              lightFrom: _aids.standInDirectionalFrom(),
+              key: _aids.standInDirectional() ? _aids.standInDirectionalStrength() : 0,
+              surround: _aids.standInAmbient(),
             };
           };
           if (a.kind === 'material' && !_aids.materialOnPlanet()) {
@@ -399,19 +468,33 @@ export const AssetEditorStore = signalStore(
     },
   ),
   withComputed((store) => ({
+    light: computed((): LightEntry | undefined => {
+      const t = store.target();
+      const b = store._body();
+      return t.kind === 'light' && b ? lightsOfBody(b).find((l) => l.light.id === t.id) : undefined;
+    }),
+    part: computed((): PartEntry | undefined => {
+      const t = store.target();
+      const b = store._body();
+      return t.kind === 'part' && b ? partsOfBody(b).find((p) => p.key === t.key) : undefined;
+    }),
     material: computed((): MaterialEntry | undefined => {
       const t = store.target();
       if (t.kind === 'base-material') return store.baseMaterial();
       if (t.kind === 'sky-material')
         return store._skyMaterials(t.stage).find((m) => m.name === t.name);
       const b = store._body();
-      return t.kind === 'material' && b ? materialsOf(b).find((m) => m.name === t.name) : undefined;
+      // Its layers may read the sky's textures too (always loaded).
+      const sky = store._sceneFile.hasValue() ? store._sceneFile.value().textures : {};
+      return t.kind === 'material' && b
+        ? materialsOf(b, sky).find((m) => m.name === t.name)
+        : undefined;
     }),
     /** The stage's sky: its own, but for the sky open (shown as the library has it). */
     stageSky: computed((): SkySettings => {
       if (store.asset().kind === 'sky') return {};
       const sky = store._stageScene().sky;
-      return { materials: sky?.materials, tint: sky?.tint };
+      return { materials: sky?.materials, tint: sky?.tint, order: sky?.order };
     }),
     rows: computed((): TreeRow[] => {
       const open = store.unfolded();
@@ -442,6 +525,7 @@ export const AssetEditorStore = signalStore(
         enabled: boolean,
         unsaved = false,
         detail?: string,
+        movable = false,
       ) =>
         rows.push({
           key,
@@ -453,36 +537,119 @@ export const AssetEditorStore = signalStore(
           expanded: false,
           enabled,
           unsaved,
+          movable,
         });
+      /** A material's row: movable (its draw order) unless opaque, drawn first wherever it is. */
+      const materialRow = (key: string, m: MaterialEntry, depth: number) =>
+        leaf(key, m.label, depth, m.values.enabled, false, m.name, m.values.blend !== 'opaque');
+      /**
+       * A sky's materials by where they are drawn among the scene's objects: behind, among, in front
+       * (each group open unless folded: its key among those kept means folded).
+       */
+      const skyRows = (
+        materials: readonly MaterialEntry[],
+        groupKey: (depth: string) => string,
+        materialKey: (name: string) => string,
+        depth: number,
+      ) => {
+        for (const g of byDepth(materials)) {
+          const group = groupKey(g.depth);
+          rows.push({
+            key: group,
+            label: g.label,
+            icon: g.icon,
+            depth,
+            expandable: true,
+            expanded: !open.has(group),
+            group: true,
+          });
+          if (!open.has(group))
+            for (const m of g.materials) materialRow(materialKey(m.name), m, depth + 1);
+        }
+      };
       const sky = store._skyMaterials(false);
       switch (a.kind) {
         case 'planet':
         case 'style': {
-          row(ASSET, a.id, a.kind === 'planet' ? 'public' : 'style', 0, store.assetUnsaved());
           const b = store._body();
+          row(
+            ASSET,
+            b ? bodyLabel(b) : a.id,
+            a.kind === 'planet' ? 'public' : 'style',
+            0,
+            store.assetUnsaved(),
+          );
           if (!open.has(ASSET) || !b) break;
-          // Its materials by whose they are: its own, then the style's it wears.
-          const materials = materialsOf(b);
-          const groups: [string, string, string, 'own' | 'style', string?][] = [
-            [ASSET_MATERIALS, 'Materials', 'layers', 'own'],
-            [ASSET_STYLE_MATERIALS, b.style, 'style', 'style', 'style'],
-          ];
-          for (const [group, label, icon, from, detail] of groups) {
-            const own = materials.filter((m) => m.from === from);
-            if (!own.length) continue;
+          // Its parts, each with the materials drawn on it (a part is open unless folded: its key
+          // among those kept means folded); its lights; then the overlay it wears, its parts and
+          // its lights under it.
+          const nodes = partNodes(b, materialsOf(b));
+          const lights = lightsOfBody(b);
+          const parts = (list: readonly PartNode[], at: number) => {
+            for (const { part, materials } of list) {
+              const key = assetPartKey(part.key);
+              rows.push({
+                key,
+                label: part.label,
+                icon: partIcon(part),
+                depth: at,
+                expandable: materials.length > 0,
+                expanded: !open.has(key),
+                enabled: part.enabled,
+              });
+              if (!open.has(key))
+                for (const m of materials) materialRow(assetMaterialKey(m.name), m, at + 1);
+            }
+          };
+          const lightGroup = (group: string, list: readonly LightEntry[], at: number) => {
+            if (!list.length) return;
             rows.push({
               key: group,
-              label,
-              detail,
-              icon,
-              depth: 1,
+              label: 'Lights',
+              icon: 'lightbulb',
+              depth: at,
               expandable: true,
               expanded: open.has(group),
               group: true,
             });
             if (open.has(group))
-              for (const m of own)
-                leaf(assetMaterialKey(m.name), m.label, 2, m.values.enabled, false, m.name);
+              for (const { light } of list)
+                rows.push({
+                  key: assetLightKey(light.id),
+                  label: light.name,
+                  icon: LIGHT_ICONS[light.kind],
+                  depth: at + 1,
+                  expandable: false,
+                  expanded: false,
+                  enabled: light.enabled,
+                });
+          };
+          parts(nodes.own, 1);
+          lightGroup(
+            ASSET_LIGHTS,
+            lights.filter((l) => !l.overlay),
+            1,
+          );
+          if (nodes.overlay.length) {
+            rows.push({
+              key: ASSET_OVERLAY,
+              label: styleLabel(b),
+              detail: 'overlay',
+              icon: 'style',
+              depth: 1,
+              expandable: true,
+              expanded: !open.has(ASSET_OVERLAY),
+              group: true,
+              enabled: overlayEnabled(b),
+            });
+            if (!open.has(ASSET_OVERLAY)) {
+              parts(nodes.overlay, 2);
+              lightGroup(
+                ASSET_OVERLAY_LIGHTS,
+                lights.filter((l) => l.overlay),
+                2,
+              );
+            }
           }
           break;
         }
@@ -501,9 +668,7 @@ export const AssetEditorStore = signalStore(
         }
         case 'sky':
           row(ASSET, 'Sky', 'blur_on', 0, store.assetUnsaved());
-          if (open.has(ASSET))
-            for (const m of sky)
-              leaf(assetMaterialKey(m.name), m.label, 1, m.values.enabled, false, m.name);
+          if (open.has(ASSET)) skyRows(sky, assetDepthKey, assetMaterialKey, 1);
           break;
       }
       // The stage, after what is edited and set apart from it: only there to see it (the sky open
@@ -516,8 +681,7 @@ export const AssetEditorStore = signalStore(
           if (store._aids.backdrop() === 'sky') {
             row(STAGE_BACKDROP, 'Backdrop', 'wallpaper', 1);
             if (open.has(STAGE_BACKDROP))
-              for (const m of store._skyMaterials(true))
-                leaf(stageMaterialKey(m.name), m.label, 2, m.values.enabled, false, m.name);
+              skyRows(store._skyMaterials(true), stageDepthKey, stageMaterialKey, 2);
           } else
             rows.push({
               key: STAGE_BACKDROP,
@@ -563,6 +727,24 @@ export const AssetEditorStore = signalStore(
       return t.kind === 'sky' || t.kind === 'sky-material' ? t : null;
     };
     const body = () => libraryKind(asset().kind);
+    /**
+     * The library body's lights changed: what is left of them written back (none: taken back), and
+     * its shadow as set before lights were objects taken back once it is its shadow light's.
+     */
+    const lightChange = (change: (s: BodySettings) => BodySettings) => {
+      const kind = body();
+      if (!kind) return;
+      const now = d.library()[kind][asset().id] ?? {};
+      const next = change(now);
+      if (next.lights) d.setLibraryBody(kind, asset().id, { lights: next.lights });
+      else d.clearLibraryBody(kind, asset().id, ['lights']);
+      if (next.added) d.setLibraryBody(kind, asset().id, { added: next.added });
+      else if (now.added) d.clearLibraryBody(kind, asset().id, ['added']);
+      const gone = (['shade', 'shadeTowards'] as const).filter(
+        (k) => now[k] !== undefined && next[k] === undefined,
+      );
+      if (gone.length) d.clearLibraryBody(kind, asset().id, gone);
+    };
     return {
       /** The asset the URL opens: its own row selected; a planet opened goes on the stage. */
       showAsset: signalMethod<AssetTarget>((a) => {
@@ -588,7 +770,90 @@ export const AssetEditorStore = signalStore(
         else patchState(store, { selected: key });
       },
       setEnabled(change: { key: string; enabled: boolean }): void {
-        materialChange(change.key, { enabled: change.enabled });
+        const t = targetOf(change.key, asset());
+        const on = change.enabled;
+        const kind = body();
+        // The library's is the lowest level: on is as it is unless set.
+        if (t.kind === 'light') lightChange((s) => withLightChange(s, t.id, { enabled: on }));
+        else if (t.kind === 'part' && kind) {
+          const now = d.library()[kind][asset().id] ?? {};
+          const next = on
+            ? withoutPartSetting(now, t.key, ['enabled'])
+            : withPartSetting(now, t.key, { enabled: false });
+          if (next?.parts) d.setLibraryBody(kind, asset().id, { parts: next.parts });
+          else d.clearLibraryBody(kind, asset().id, ['parts']);
+        } else if (change.key === ASSET_OVERLAY && kind) {
+          if (on) d.clearLibraryBody(kind, asset().id, ['overlayEnabled']);
+          else d.setLibraryBody(kind, asset().id, { overlayEnabled: false });
+        } else materialChange(change.key, { enabled: on });
+      },
+      setLight(change: Partial<LightSettings>): void {
+        const t = store.target();
+        if (t.kind === 'light') lightChange((s) => withLightChange(s, t.id, change));
+      },
+      addLight(kind: LightKind): void {
+        const b = store._body();
+        if (!b) return;
+        const light = newLight(
+          kind,
+          lightsOfBody(b)
+            .map((l) => l.light)
+            .filter((l) => l.id.startsWith('added-')),
+        );
+        lightChange((s) => withAddedLight(s, light));
+        store.expand(ASSET, ASSET_LIGHTS);
+        patchState(store, { selected: assetLightKey(light.id) });
+      },
+      setRevealFrom(from: Vec3): void {
+        lightChange((s) => withLightChange(s, 'reveal', { from }));
+      },
+      removeLight(): void {
+        const t = store.target();
+        if (t.kind !== 'light') return;
+        lightChange((s) => withoutAddedLight(s, t.id) ?? {});
+        patchState(store, { selected: ASSET });
+      },
+      clearLight(keys?: readonly (keyof LightSettings)[]): void {
+        const t = store.target();
+        if (t.kind === 'light') lightChange((s) => withoutLightSetting(s, t.id, keys) ?? {});
+      },
+      moveMaterial(move: TreeMove): void {
+        const from = targetOf(move.key, asset());
+        const to = targetOf(move.target, asset());
+        if (from.kind === 'sky-material' && to.kind === 'sky-material' && from.stage === to.stage) {
+          const all = store._skyMaterials(to.stage);
+          const moving = all.find((m) => m.name === from.name);
+          const target = all.find((m) => m.name === to.name);
+          if (!moving || !target) return;
+          const depth = target.values.depth;
+          const group = all.filter((m) => m.values.depth === depth).map((m) => m.name);
+          const order = reordered(
+            all.map((m) => m.name),
+            group,
+            from.name,
+            to.name,
+            move.after,
+          );
+          if (moving.values.depth !== depth) materialChange(move.key, { depth });
+          if (to.stage) d.setSkyOrder(PREVIEW_SCENE, order);
+          else d.setLibrarySkyOrder(order);
+        } else if (from.kind === 'material' && to.kind === 'material') {
+          const kind = body();
+          const b = store._body();
+          if (!kind || !b) return;
+          const all = materialsOf(b);
+          // Within the part they are drawn on (a material isn't moved to another part).
+          const group = partsOfBody(b).find((p) => p.materials.includes(to.name))?.materials;
+          if (!group?.includes(from.name)) return;
+          const order = reordered(
+            all.map((m) => m.name),
+            group,
+            from.name,
+            to.name,
+            move.after,
+          );
+          d.setLibraryBody(kind, asset().id, { order });
+        }
       },
       setMaterial(change: Partial<MaterialSettings>): void {
         materialChange(store.selected(), change);
@@ -610,6 +875,21 @@ export const AssetEditorStore = signalStore(
       clearBody(keys: readonly (keyof BodySettings)[]): void {
         const kind = body();
         if (kind) d.clearLibraryBody(kind, asset().id, keys);
+      },
+      setPart(change: Partial<PartSettings>): void {
+        const kind = body();
+        const t = store.target();
+        if (!kind || t.kind !== 'part') return;
+        const now = d.library()[kind][asset().id] ?? {};
+        d.setLibraryBody(kind, asset().id, { parts: withPartSetting(now, t.key, change).parts });
+      },
+      clearPart(keys?: readonly (keyof PartSettings)[]): void {
+        const kind = body();
+        const t = store.target();
+        if (!kind || t.kind !== 'part') return;
+        const left = withoutPartSetting(d.library()[kind][asset().id] ?? {}, t.key, keys)?.parts;
+        if (left) d.setLibraryBody(kind, asset().id, { parts: left });
+        else d.clearLibraryBody(kind, asset().id, ['parts']);
       },
       resetBody(): void {
         const kind = body();

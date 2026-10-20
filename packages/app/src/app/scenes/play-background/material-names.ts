@@ -81,3 +81,9 @@ export function materialLabel(
   }
   return name;
 }
+
+/** A texture's name as people read it: its file name's words (its key where they say nothing). */
+export function textureLabel(key: string, texture: SceneTexture | undefined): string {
+  const found = textureWords(texture?.source ?? key);
+  return found.length ? sentence(found) : key;
+}

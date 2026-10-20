@@ -21,6 +21,14 @@ describe('layerOffset', () => {
     expect(layerOffset(layer, 250)).toEqual(layerOffset(layer, 50));
   });
 
+  it('goes on with an endless scroll, a fraction of a width a second, never jumping back', () => {
+    const endless = { ...layer, scroll: { seconds: 1, by: [0.3, 0] as const, endless: true } };
+    const [at3] = layerOffset(endless, 3);
+    const [at3Later] = layerOffset(endless, 3.1);
+    expect(at3).toBeCloseTo(1); // its own 0.1, and 0.9 of a width on (whole widths taken off)
+    expect(at3Later - at3).toBeCloseTo(0.03);
+  });
+
   it('keeps a layer without a scroll where it is', () => {
     expect(layerOffset({ ...layer, scroll: undefined }, 123)).toEqual([0.1, 0]);
   });

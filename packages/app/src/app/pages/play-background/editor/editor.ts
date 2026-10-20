@@ -1,10 +1,16 @@
 import type { Signal } from '@angular/core';
 import type { BodySettings, Orbit } from '../../../scenes/play-background/background-scene';
-import type { MaterialSettings, MaterialTint } from '../../../scenes/play-background/scene-planets';
+import type {
+  MaterialSettings,
+  MaterialTint,
+  PartSettings,
+} from '../../../scenes/play-background/scene-planets';
 import type { PropertyOption } from '../properties/property-select';
-import type { BodyView, MaterialEntry, TargetKind } from './editor-model';
+import type { BodyView, LightEntry, MaterialEntry, PartEntry, TargetKind } from './editor-model';
+import type { LightKind, LightSettings } from '../../../scenes/play-background/scene-lights';
+import type { Vec3 } from '../../../scenes/play-background/scene-directions';
 import type { OpenTarget } from './open-target';
-import type { TreeRow } from './scene-tree';
+import type { TreeMove, TreeRow } from './scene-tree';
 
 /**
  * An editor of the background's design, as the panels under it use one: provided by the scene
@@ -29,6 +35,12 @@ export abstract class Editor {
   abstract toggleExpanded(key: string): void;
   /** A material switched on or off from the tree, by its row's key. */
   abstract setEnabled(change: { key: string; enabled: boolean }): void;
+  /**
+   * A material moved in the tree to just before or after another (rows' keys): the order they are
+   * drawn in changed. A body's stays on its part; a sky's moved into another depth's group takes
+   * that depth too.
+   */
+  abstract moveMaterial(move: TreeMove): void;
 
   /** The selected body, as its properties show it. */
   abstract readonly bodyView: Signal<BodyView | null>;
@@ -43,6 +55,22 @@ export abstract class Editor {
   abstract readonly material: Signal<MaterialEntry | undefined>;
   abstract setMaterial(change: Partial<MaterialSettings>): void;
   abstract clearMaterial(keys?: readonly (keyof MaterialSettings)[]): void;
+
+  /** The selected part of a body, as its properties show it. */
+  abstract readonly part: Signal<PartEntry | undefined>;
+  abstract setPart(change: Partial<PartSettings>): void;
+  abstract clearPart(keys?: readonly (keyof PartSettings)[]): void;
+
+  /** The selected light of a body, as its properties show it. */
+  abstract readonly light: Signal<LightEntry | undefined>;
+  abstract setLight(change: Partial<LightSettings>): void;
+  abstract clearLight(keys?: readonly (keyof LightSettings)[]): void;
+  /** A light added: to the scene where it is selected, else to the body selected; selected. */
+  abstract addLight(kind: LightKind): void;
+  /** The selected light taken out, where it was added at the level edited. */
+  abstract removeLight(): void;
+  /** The selected light's body's reveal light turned to a side (an activation light tied to it moving with it). */
+  abstract setRevealFrom(from: Vec3): void;
 
   /** The sky's tint, as shown and as set in the layer edited; whether anything of the sky is set. */
   abstract readonly skyTint: Signal<MaterialTint>;
