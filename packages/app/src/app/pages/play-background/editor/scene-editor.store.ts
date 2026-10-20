@@ -330,7 +330,7 @@ export const SceneEditorStore = signalStore(
       return [
         ...(choices().lights ?? [])
           .filter((l) => l.enabled !== false)
-          .map((light) => ({ light, from: 'the scene', owner: 'scene' as const })),
+          .map((light) => ({ light, owner: 'scene' as const })),
         ...t.path.slice(0, -1).flatMap((_, i) => {
           const owner = t.path.slice(0, i + 1);
           const parent = bodyByKey().get(bodyKey(owner));
@@ -342,7 +342,6 @@ export const SceneEditorStore = signalStore(
           );
           return moonLightsOf(parent).map((light) => ({
             light,
-            from: bodyLabel(parent),
             owner,
             overlay: overlays.has(light.id),
           }));

@@ -13,20 +13,20 @@
     (valueChange)="rename($event)"
   />
   <div class="buttons">
-  @if (orbit()) {
-    <button
-      type="button"
-      class="button"
-      (click)="focusToggle.emit()"
-      [attr.aria-pressed]="focused()"
-    >
-      {{ focused() ? 'Unfocus' : 'Focus' }}
-    </button>
-    <button type="button" class="button" (click)="removeRequested.emit()">Remove moon</button>
-  }
-  @if (place()) {
-    <button type="button" class="button" (click)="removeRequested.emit()">Remove planet</button>
-  }
+    @if (orbit()) {
+      <button
+        type="button"
+        class="button"
+        (click)="focusToggle.emit()"
+        [attr.aria-pressed]="focused()"
+      >
+        {{ focused() ? 'Unfocus' : 'Focus' }}
+      </button>
+      <button type="button" class="button" (click)="removeRequested.emit()">Remove moon</button>
+    }
+    @if (place()) {
+      <button type="button" class="button" (click)="removeRequested.emit()">Remove planet</button>
+    }
     <button type="button" class="button" (click)="resetRequested.emit()" [disabled]="!changed()">
       {{ overlay() ? 'Reset overlay' : orbit() ? 'Reset moon' : 'Reset planet' }}
     </button>

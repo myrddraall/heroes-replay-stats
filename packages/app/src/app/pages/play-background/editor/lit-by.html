@@ -8,9 +8,7 @@
         [checked]="l.reaches"
         (change)="check(l.id, $event)"
       />
-      <label class="name" [for]="id + '-' + $index"
-        >{{ l.name }}<span class="from"> · {{ l.from }}</span></label
-      >
+      <label class="name" [for]="id + '-' + $index">{{ l.name }}</label>
       <button
         type="button"
         class="show"

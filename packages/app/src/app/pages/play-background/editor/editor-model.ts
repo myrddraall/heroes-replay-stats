@@ -762,12 +762,11 @@ export function sceneLightsOf(lights: readonly AddedLight[] | undefined): LightE
 }
 
 /**
- * A light from beyond a body that lights it too (its scene's, a planet's it is a moon of), where it
- * comes from, and whose it is (the scene, or the planet: its path, and whether its overlay's).
+ * A light from beyond a body that lights it too (its scene's, a planet's it is a moon of), and
+ * whose it is (the scene, or the planet: its path, and whether its overlay's).
  */
 export interface OuterLight {
   readonly light: AddedLight;
-  readonly from: string;
   readonly owner: BodyPath | 'scene';
   readonly overlay?: boolean;
 }
@@ -777,8 +776,6 @@ export interface LitByEntry {
   readonly id: LightId;
   readonly kind: LightKind;
   readonly name: string;
-  /** Where it comes from, in words (a body's, its overlay's, the library's, the scene's). */
-  readonly from: string;
   /** Whether it lights it (a body: whether it is on for it). */
   readonly reaches: boolean;
   /** Whether it is on as the levels under the one edited have it. */
@@ -829,7 +826,6 @@ export function litByOf(
   const addedBelow = new Map(
     [...(b.below?.added ?? []), ...(b.styleBelow?.added ?? [])].map((l) => [l.id, l] as const),
   );
-  const own = bodyLabel(b);
   const lights = [
     ...lightsOfBody(b).map((e) => ({
       light: e.light,
@@ -838,18 +834,16 @@ export function litByOf(
         ? undefined
         : (under[e.light.id]?.reach ?? addedBelow.get(e.light.id as `added-${string}`)?.reach),
       enabledBelow: e.enabledBelow,
-      from: e.addedIn ?? (e.overlay ? `the ${styleLabel(b)} overlay` : own),
       owner: undefined,
       overlay: !!e.overlay,
     })),
-    ...outer.map(({ light, from, owner, overlay }) => {
+    ...outer.map(({ light, owner, overlay }) => {
       const set = b.settings.lights?.[light.id];
       return {
         light: addedLight(light, set),
         reach: set?.reach ?? light.reach,
         reachBelow: light.reach,
         enabledBelow: true,
-        from,
         owner,
         overlay: !!overlay,
       };
@@ -861,7 +855,6 @@ export function litByOf(
       id: light.id,
       kind: light.kind,
       name: light.name,
-      from: l.from,
       reaches: receiver === null ? light.enabled : reachesReceiver(l.reach, receiver, parts),
       enabledBelow: l.enabledBelow,
       ...(l.reach ? { reach: l.reach } : {}),
