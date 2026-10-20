@@ -100,28 +100,45 @@ function turned(v: Vec3, axis: Vec3, degrees: number): Vec3 {
   ];
 }
 
-/** A band as its settings widen it: round the eye `width` times as far either way from its middle. */
-function widened(
+/**
+ * A band as its settings size it about its middle: round the eye `width` times as far either way,
+ * up and down `height` times as far (its height in the view: its top's and bottom's angles').
+ */
+function sized(
   band: Extract<SkyShape, { kind: 'band' }>,
-  width: number | undefined,
+  width = 1,
+  height = 1,
 ): Extract<SkyShape, { kind: 'band' }> {
-  if (width === undefined || width === 1) return band;
-  const middle = (band.from + band.to) / 2;
+  if (width === 1 && height === 1) return band;
+  const across = (band.from + band.to) / 2;
   const half = ((band.to - band.from) / 2) * width;
-  return { ...band, from: middle - half, to: middle + half };
+  const t = (degrees: number) => Math.tan((degrees * Math.PI) / 180);
+  const level = (t(band.low) + t(band.high)) / 2;
+  const tall = ((t(band.high) - t(band.low)) / 2) * height;
+  const angle = (tangent: number) => (Math.atan(tangent) * 180) / Math.PI;
+  return {
+    ...band,
+    from: across - half,
+    to: across + half,
+    low: angle(level - tall),
+    high: angle(level + tall),
+  };
 }
 
 /**
  * A sky part's mesh as its settings place it about the eye: its own (a mesh's, or a band's made,
- * `width` times as wide), `size` times as far from the eye, turned round it by `turn` degrees (to
- * the right) and tilted by `tilt` degrees (up).
+ * `width` times as wide and `height` times as high), `size` times as far from the eye, turned round
+ * it by `turn` degrees (to the right) and tilted by `tilt` degrees (up).
  */
 export function placedSkyMesh(
   shape: SkyShape,
   settings: PartSettings | undefined,
   camera: SceneCamera,
 ): Omit<SceneMesh, 'materials'> {
-  const own = shape.kind === 'band' ? bandMesh(widened(shape, settings?.width), camera) : shape;
+  const own =
+    shape.kind === 'band'
+      ? bandMesh(sized(shape, settings?.width, settings?.height), camera)
+      : shape;
   const { size = 1, turn = 0, tilt = 0 } = settings ?? {};
   if (size === 1 && !turn && !tilt) return own;
   const { right, up } = levelFrame(camera);

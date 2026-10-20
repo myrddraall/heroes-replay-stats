@@ -14,7 +14,8 @@ import {
   type GridField,
   MATERIAL_DEFAULTS,
   materialValues,
-  mergeMaterialSettings,
+  materialKey,
+  mergeSettings,
 } from './material-settings';
 import { rimTurn } from './scene-directions';
 import { overlayOfFile } from './overlays';
@@ -807,10 +808,10 @@ function sorted<T extends { readonly draw: MeshDraw; readonly blend: SceneBlend 
   const rank = new Map<T, number>();
   for (const [placed, list] of owners) {
     const names = drawOrder(
-      list.map((d) => ({ name: d.draw.name, blend: d.blend, priority: d.draw.material.priority })),
+      list.map((d) => ({ name: d.draw.key, blend: d.blend, priority: d.draw.material.priority })),
       orderOf(placed),
     );
-    for (const d of list) rank.set(d, names.indexOf(d.draw.name));
+    for (const d of list) rank.set(d, names.indexOf(d.draw.key));
   }
   return [...draws].sort(
     (a, b) =>
@@ -852,8 +853,12 @@ function program(gl: WebGL2RenderingContext, vertex: string, fragment: string): 
 interface MeshDraw {
   readonly vao: WebGLVertexArrayObject;
   readonly count: number;
-  /** The material's name, which its settings are kept by. */
+  /** The material's name. */
   readonly name: string;
+  /** What its settings are kept by (an overlay's material's: by the overlay too; see `materialKey`). */
+  readonly key: string;
+  /** The overlay it is of, where it is an overlay's (a body's, or the sky's). */
+  readonly overlay?: string;
   readonly material: SceneMaterial;
   readonly moving: boolean;
   /** The planet it is part of (a placed one), whose frame places it; none: in world space as it is. */
@@ -878,11 +883,16 @@ export interface PlanetPlacement {
   readonly overlays?: readonly LoadedPlanet[];
   /** Not drawn (nor picked), though where it is: switched off. */
   readonly hidden?: boolean;
-  /** Its materials' settings (its own and its overlays', by name), over the tunings' (the planet's for its materials, an overlay's for its own). */
+  /**
+   * Its materials' settings (its own by name, its overlays' by `materialKey`), over the tunings'
+   * (the planet's for its materials, an overlay's for its own).
+   */
   readonly materials?: MaterialSettingsMap;
+  /** The materials' base settings, by name, under its overlays' materials' own. */
+  readonly base?: MaterialSettingsMap;
   /** Its parts' shapes and mappings, by part, in place of their own. */
   readonly parts?: PartSettingsMap;
-  /** Its materials' draw order, by name (its own and its overlays'), where set (see `drawOrder`). */
+  /** Its materials' draw order, by `materialKey` (its own and its overlays'), where set (see `drawOrder`). */
   readonly order?: readonly string[];
   /** Its lights' settings, by light, over its rig's and its shade (see `scene-lights.ts`). */
   readonly lights?: LightSettingsMap;
@@ -1183,6 +1193,7 @@ export class SceneRenderer {
           vao,
           count: mesh.indices.length,
           name: m,
+          key: m,
           material,
           moving: moves(material),
         });
@@ -1236,10 +1247,13 @@ export class SceneRenderer {
         parts.forEach((part, i) => {
           for (const m of part.materials) {
             const material = this.material(m, `${loaded.id}/${i}`, loaded.planet.materials);
+            const overlay = own ? undefined : overlayOfFile(loaded.id);
             draws.push({
               vao: this.quad,
               count: 4,
               name: m,
+              key: materialKey(m, overlay),
+              ...(overlay ? { overlay } : {}),
               material,
               moving: moves(material),
               placed,
@@ -1642,10 +1656,13 @@ export class SceneRenderer {
       for (const m of part.materials) {
         if (!file.materials[m]) continue;
         const material = this.material(m, part.key, file.materials);
+        const overlay = overlayOfPartKey(part.key as PartKey);
         this.skyOverlayDraws.push({
           vao,
           count: part.mesh.indices.length,
           name: m,
+          key: materialKey(m, overlay),
+          ...(overlay ? { overlay } : {}),
           material,
           moving: moves(material),
         });
@@ -1808,17 +1825,23 @@ export class SceneRenderer {
   }
 
   /**
-   * A draw's material's settings: the placement's say over its owner's tuning (a planet's for its
-   * materials, an overlay's for the overlay's) and how the planet wears its overlays, or the sky's as set.
+   * A draw's material's settings: the placement's say (by its key) over its owner's tuning (a
+   * planet's for its materials, an overlay's for the overlay's) and, an overlay's, how the planet
+   * wears it and the material's base settings; or the sky's as set (an overlay's over its base).
    */
   private settingsOf(draw: MeshDraw): MaterialSettings | undefined {
     const placement = draw.placed?.placement;
-    if (!placement) return this.sky.materials?.[draw.name];
-    return mergeMaterialSettings(
-      draw.owner?.planet.tuning?.materials,
-      ...wearsIn(placement).map((w) => w?.materials),
-      placement.materials,
-    )[draw.name];
+    if (!placement)
+      return draw.overlay
+        ? mergeSettings(this.sky.base?.[draw.name], this.sky.materials?.[draw.key])
+        : this.sky.materials?.[draw.key];
+    const wear = draw.overlay ? wearOf(placement.planet.planet, draw.overlay) : undefined;
+    return mergeSettings(
+      draw.owner?.planet.tuning?.materials?.[draw.name],
+      wear?.materials?.[draw.name],
+      draw.overlay ? placement.base?.[draw.name] : undefined,
+      placement.materials?.[draw.key],
+    );
   }
 
   /**
@@ -1931,7 +1954,7 @@ export class SceneRenderer {
         // Its rig as set, and the lights added to it (its own, its overlay's, its scene's), each
         // only where it reaches this part and material (its linking).
         const added = this.addedTo(placement);
-        const linked = linkedSettings(placement.lights, added, draw.partKey, draw.name);
+        const linked = linkedSettings(placement.lights, added, draw.partKey, draw.key);
         const light = material.unshaded
           ? undefined
           : withAddedLights(

@@ -21,11 +21,16 @@ export interface SetPlanet {
   readonly overlaysEnabled?: Readonly<Record<string, boolean>>;
   /** Whether it is drawn at all (off: where it is, but not drawn; its place in the set kept). */
   readonly enabled?: boolean;
-  /** Its materials' settings (its own and its style's, by name), over its tuning's and its style's. */
+  /**
+   * Its materials' settings (its own by name, its overlays' by `materialKey`), over its tuning's
+   * and its overlays'.
+   */
   readonly materials?: MaterialSettingsMap;
+  /** The materials' base settings, by name, under its own (for its overlays' materials: see `materialKey`). */
+  readonly base?: MaterialSettingsMap;
   /** Its parts' settings (its own and its style's, by part). */
   readonly parts?: PartSettingsMap;
-  /** Its materials' draw order, by name (its own and its style's), where set. */
+  /** Its materials' draw order, by `materialKey` (its own and its overlays'), where set. */
   readonly order?: readonly string[];
   /** Its lights' settings, by light (its rig's and its shadow). */
   readonly lights?: LightSettingsMap;

@@ -34,9 +34,13 @@ import {
   type Vec3,
   without,
 } from '../../../scenes/play-background/background-scene';
-import { GRID_DEFAULTS, NO_MATERIAL_TINT } from '../../../scenes/play-background/material-settings';
+import {
+  GRID_DEFAULTS,
+  materialKey,
+  NO_MATERIAL_TINT,
+} from '../../../scenes/play-background/material-settings';
 import { playSet, type SetPlanet } from '../../../scenes/play-background/planet-sets';
-import { loadPlaySceneFile, PLAY_SCENE_URL } from '../../../scenes/play-background/play-scene';
+import { PLAY_SCENE_URL } from '../../../scenes/play-background/play-scene';
 import {
   addMoonAt,
   addPlanet,
@@ -82,12 +86,13 @@ import {
   type BodyInfo,
   bodyView,
   materialsOf,
+  movedInPart,
   filesLoaded,
   partsOfBody,
   moonLightsOf,
   bodyLabel,
   overlayChoices,
-  materialIn,
+  materialAt,
   skyOverlayChoices,
   skyOverlayInfos,
   skyOverlayLabel,
@@ -153,7 +158,7 @@ const overlayKey = (path: BodyPath, id: string) => `${bodyKey(path)}/overlay/${i
 /** An overlay's lights, a group of their own under the overlay. */
 const overlayLightsKey = (path: BodyPath, id: string) => `${bodyKey(path)}/overlay-lights/${id}`;
 /** A material of its own, or of an overlay it wears (by the overlay's id: two may share one). */
-const materialKey = (path: BodyPath, name: string, overlay?: string) =>
+const materialRowKey = (path: BodyPath, name: string, overlay?: string) =>
   overlay ? `${bodyKey(path)}/om/${overlay}/${name}` : `${bodyKey(path)}/m/${name}`;
 const partRowKey = (path: BodyPath, key: PartKey) => `${bodyKey(path)}/p/${key}`;
 /** Its lights (its rig's and its shadow), a group of their own. */
@@ -177,6 +182,8 @@ type Target =
   | { readonly kind: 'sky' }
   | {
       readonly kind: 'sky-material';
+      /** What its settings are kept by (see `materialKey`). */
+      readonly key: string;
       readonly name: string;
       /** The overlay the sky wears it is of, where it is one's (else the sky's own). */
       readonly overlay?: string;
@@ -195,6 +202,8 @@ type Target =
     }
   | {
       readonly kind: 'material';
+      /** What its settings are kept by (see `materialKey`). */
+      readonly key: string;
       readonly path: BodyPath;
       readonly name: string;
       /** The overlay it is of, where it is one's (else the body's own). */
@@ -213,7 +222,7 @@ type Target =
 function receiverOf(t: Target): Receiver | null | undefined {
   if (t.kind === 'body') return null;
   if (t.kind === 'part') return `part:${t.key}`;
-  if (t.kind === 'material') return `material:${t.name}`;
+  if (t.kind === 'material') return `material:${t.key}`;
   return undefined;
 }
 
@@ -226,10 +235,14 @@ function targetOf(key: string): Target {
     return t.kind === 'material' || t.kind === 'sky-material' ? { ...t, view: split.view } : t;
   }
   if (key === REFERENCE_KEY) return { kind: 'reference' };
-  if (key.startsWith(`${SKY}/m/`)) return { kind: 'sky-material', name: key.slice(SKY.length + 3) };
+  if (key.startsWith(`${SKY}/m/`)) {
+    const name = key.slice(SKY.length + 3);
+    return { kind: 'sky-material', name, key: name };
+  }
   if (key.startsWith(`${SKY}/om/`)) {
-    const [overlay, ...name] = key.slice(SKY.length + 4).split('/');
-    return { kind: 'sky-material', name: name.join('/'), overlay };
+    const [overlay = '', ...rest] = key.slice(SKY.length + 4).split('/');
+    const name = rest.join('/');
+    return { kind: 'sky-material', name, key: materialKey(name, overlay), overlay };
   }
   if (key.startsWith(`${SKY}/overlay/`))
     return { kind: 'group', path: [], skyOverlay: key.slice(SKY.length + 9) };
@@ -248,10 +261,14 @@ function targetOf(key: string): Target {
   if (tail.startsWith('/overlay/')) return { kind: 'group', path, overlay: tail.slice(9) };
   if (tail === '/lights' || tail.startsWith('/overlay-lights/')) return { kind: 'group', path };
   if (tail.startsWith('/l/')) return { kind: 'light', path, id: tail.slice(3) as LightId };
-  if (tail.startsWith('/m/')) return { kind: 'material', path, name: tail.slice(3) };
+  if (tail.startsWith('/m/')) {
+    const name = tail.slice(3);
+    return { kind: 'material', path, name, key: name };
+  }
   if (tail.startsWith('/om/')) {
-    const [overlay, ...name] = tail.slice(4).split('/');
-    return { kind: 'material', path, name: name.join('/'), overlay };
+    const [overlay = '', ...rest] = tail.slice(4).split('/');
+    const name = rest.join('/');
+    return { kind: 'material', path, name, key: materialKey(name, overlay), overlay };
   }
   if (tail.startsWith('/p/')) return { kind: 'part', path, key: tail.slice(3) as PartKey };
   return { kind: 'body', path };
@@ -292,349 +309,348 @@ export const SceneEditorStore = signalStore(
     _ui: inject(EditorUiStore),
     _background: inject(BackgroundStore),
     _index: resource({ loader: ({ abortSignal }) => loadPlanetIndex(PLAY_SCENE_URL, abortSignal) }),
-    _sceneFile: resource({
-      loader: ({ abortSignal }) => loadPlaySceneFile(PLAY_SCENE_URL, abortSignal),
-    }),
   })),
-  withComputed(({ scene: sceneId, files, focus, selected, _draft, _index, _sceneFile }) => {
-    const entry = computed(() => _draft.scenes().planets[sceneId()]);
-    const choices = computed(() => entry() ?? {});
-    const publishedEntry = computed(() => _draft.publishedScenes().planets[sceneId()]);
-    const published = computed(() => publishedEntry() ?? {});
-    /** Whether the scene is the random sets' (its planets drawn with each page, not its own). */
-    const random = computed(() => sceneId() === RANDOM_SCENE);
-    /** A preset's planets until it sets its own: the Play screen's, the game's three. */
-    const defaults = computed((): readonly SceneBody[] =>
-      sceneId() === PLAY_SCREEN_SCENE && _index.hasValue() && _sceneFile.hasValue()
-        ? playScreenBodies(playSet(_index.value()), _sceneFile.value().camera.eye)
-        : [],
-    );
-    /** The scene's planets, each with its moons. */
-    const sceneBodiesNow = computed(() =>
-      random() ? [] : sceneBodies(entry(), sceneId(), defaults()),
-    );
-    const publishedBodies = computed(() =>
-      random() ? [] : sceneBodies(publishedEntry(), sceneId(), defaults()),
-    );
-    const library = _draft.library;
-    /** The file each overlay is loaded from, by its id (one made in the editor: as it is now). */
-    const overlayFileOf = computed(() => {
-      const lib = library();
-      return (id: string) => overlayFileFor(lib, id);
-    });
-
-    /** The scene's bodies: each planet, then its moons after it (theirs after each). */
-    const bodies = computed((): BodyInfo[] => {
-      const all = files();
-      const lib = library();
-      const out: BodyInfo[] = [];
-      const file = overlayFileOf();
-      const info = (
-        path: BodyPath,
-        bodyId: string,
-        worn: readonly string[],
-        overlaysSet: boolean,
-        settings: BodySettings,
-        children: readonly MoonChoices[],
-        orbit?: Orbit,
-        place?: { readonly position: Vec3; readonly radius: number },
-      ): BodyInfo => ({
-        key: bodyKey(path),
-        id: bodyId,
-        overlays: worn.map((id) => ({
-          id,
-          ...(lib.created?.[id] ? { name: lib.created[id].label } : {}),
-          below: lib.styles[id],
-          file: all[file(id)],
-        })),
-        overlaysSet,
-        settings,
-        below: lib.planets[bodyId],
-        materialBase: lib.materials,
-        file: all[bodyId],
-        orbit,
-        place,
-        moons: children,
+  withComputed(
+    ({ scene: sceneId, files, madeLookup, focus, selected, _draft, _index, _sceneFile }) => {
+      const entry = computed(() => _draft.scenes().planets[sceneId()]);
+      const choices = computed(() => entry() ?? {});
+      const publishedEntry = computed(() => _draft.publishedScenes().planets[sceneId()]);
+      const published = computed(() => publishedEntry() ?? {});
+      /** Whether the scene is the random sets' (its planets drawn with each page, not its own). */
+      const random = computed(() => sceneId() === RANDOM_SCENE);
+      /** A preset's planets until it sets its own: the Play screen's, the game's three. */
+      const defaults = computed((): readonly SceneBody[] =>
+        sceneId() === PLAY_SCREEN_SCENE && _index.hasValue() && _sceneFile.hasValue()
+          ? playScreenBodies(playSet(_index.value()), _sceneFile.value().camera.eye)
+          : [],
+      );
+      /** The scene's planets, each with its moons. */
+      const sceneBodiesNow = computed(() =>
+        random() ? [] : sceneBodies(entry(), sceneId(), defaults()),
+      );
+      const publishedBodies = computed(() =>
+        random() ? [] : sceneBodies(publishedEntry(), sceneId(), defaults()),
+      );
+      const library = _draft.library;
+      /** The file each overlay is loaded from, by its id (one made in the editor: as it is now). */
+      const overlayFileOf = computed(() => {
+        const lib = library();
+        return (id: string) => overlayFileFor(lib, id);
       });
-      /** What a body wears: as chosen, else its own (its data's). */
-      const worn = (chosen: readonly string[] | undefined, id: string) =>
-        chosen ?? ownOverlays(all[id]?.tuning?.style);
-      const walk = (parent: BodyPath, list: readonly MoonChoices[]) =>
-        list.forEach((moon, i) => {
-          const path = [...parent, i];
-          const chosen = chosenOverlays(moon);
+
+      /** The scene's bodies: each planet, then its moons after it (theirs after each). */
+      const bodies = computed((): BodyInfo[] => {
+        const all = files();
+        const lib = library();
+        const out: BodyInfo[] = [];
+        const file = overlayFileOf();
+        const info = (
+          path: BodyPath,
+          bodyId: string,
+          worn: readonly string[],
+          overlaysSet: boolean,
+          settings: BodySettings,
+          children: readonly MoonChoices[],
+          orbit?: Orbit,
+          place?: { readonly position: Vec3; readonly radius: number },
+        ): BodyInfo => ({
+          key: bodyKey(path),
+          id: bodyId,
+          overlays: worn.map((id) => ({
+            id,
+            ...(lib.created?.[id] ? { name: lib.created[id].label } : {}),
+            below: lib.styles[id],
+            file: all[file(id)],
+          })),
+          overlaysSet,
+          settings,
+          below: lib.planets[bodyId],
+          materialBase: lib.materials,
+          file: all[bodyId],
+          orbit,
+          place,
+          moons: children,
+        });
+        /** What a body wears: as chosen, else its own (its data's). */
+        const worn = (chosen: readonly string[] | undefined, id: string) =>
+          chosen ?? ownOverlays(all[id]?.tuning?.style);
+        const walk = (parent: BodyPath, list: readonly MoonChoices[]) =>
+          list.forEach((moon, i) => {
+            const path = [...parent, i];
+            const chosen = chosenOverlays(moon);
+            out.push(
+              info(
+                path,
+                moon.id,
+                worn(chosen, moon.id),
+                chosen !== undefined,
+                moon.settings ?? {},
+                moon.moons ?? [],
+                moon.orbit,
+              ),
+            );
+            walk(path, moon.moons ?? []);
+          });
+        sceneBodiesNow().forEach((planet, b) => {
+          const chosen = chosenOverlays(planet);
+          const wears = worn(chosen, planet.id);
           out.push(
             info(
-              path,
-              moon.id,
-              worn(chosen, moon.id),
+              [b],
+              planet.id,
+              wears,
               chosen !== undefined,
-              moon.settings ?? {},
-              moon.moons ?? [],
-              moon.orbit,
+              planet.variants?.[wornKey(wears)] ?? {},
+              planet.moons ?? [],
+              undefined,
+              { position: planet.position, radius: planet.radius },
             ),
           );
-          walk(path, moon.moons ?? []);
+          walk([b], planet.moons ?? []);
         });
-      sceneBodiesNow().forEach((planet, b) => {
-        const chosen = chosenOverlays(planet);
-        const wears = worn(chosen, planet.id);
-        out.push(
-          info(
-            [b],
-            planet.id,
-            wears,
-            chosen !== undefined,
-            planet.variants?.[wornKey(wears)] ?? {},
-            planet.moons ?? [],
-            undefined,
-            { position: planet.position, radius: planet.radius },
-          ),
-        );
-        walk([b], planet.moons ?? []);
+        return out;
       });
-      return out;
-    });
-    const bodyByKey = computed(() => new Map(bodies().map((b) => [b.key, b] as const)));
-    const sky = computed(() => choices().sky ?? {});
-    const sceneFile = computed(() => (_sceneFile.hasValue() ? _sceneFile.value() : null));
-    /** The overlays the sky wears (switched on or off), in order. */
-    const skyWorn = computed(() => skyWornOf(sky(), library(), sceneFile()?.wears));
-    const skyOverlays = computed(() => skyOverlayInfos(sceneFile(), library(), skyWorn()));
-    const skyMaterials = computed(() => {
-      const scene = sceneFile();
-      return scene
-        ? skyMaterialsOf(scene, library().sky, sky(), library().materials, skyOverlays())
-        : [];
-    });
-    /** The parts of the overlays the sky wears, as shown. */
-    const skyParts = computed(() =>
-      skyOverlays().flatMap((o) => skyPartsOf(o, library().sky.parts, sky().parts)),
-    );
-    const target = computed(() => targetOf(selected()));
-    const body = computed(() => {
-      const t = target();
-      return 'path' in t ? bodyByKey().get(bodyKey(t.path)) : undefined;
-    });
-    /**
-     * The lights from beyond the selected body that light it too: the scene's (those on), and
-     * those of the planets it is a moon of that reach their moons.
-     */
-    const outerLights = computed((): OuterLight[] => {
-      const t = target();
-      if (!('path' in t)) return [];
-      return [
-        ...knownLights(choices().lights ?? [])
-          .filter((l) => l.enabled !== false)
-          .map((light) => ({ light, owner: 'scene' as const })),
-        ...t.path.slice(0, -1).flatMap((_, i) => {
-          const owner = t.path.slice(0, i + 1);
-          const parent = bodyByKey().get(bodyKey(owner));
-          if (!parent) return [];
-          const overlays = new Map(
-            lightsOfBody(parent).flatMap((l) => (l.overlay ? [[l.light.id, l.overlay]] : [])),
-          );
-          return moonLightsOf(parent).map((light) => ({
-            light,
-            owner,
-            overlay: overlays.get(light.id),
-          }));
+      const bodyByKey = computed(() => new Map(bodies().map((b) => [b.key, b] as const)));
+      const sky = computed(() => choices().sky ?? {});
+      const sceneFile = computed(() => (_sceneFile.hasValue() ? _sceneFile.value() : null));
+      /** The overlays the sky wears (switched on or off), in order. */
+      const skyWorn = computed(() => skyWornOf(sky(), library(), sceneFile()?.wears));
+      const skyOverlays = computed(() =>
+        skyOverlayInfos(sceneFile(), library(), skyWorn(), madeLookup()),
+      );
+      const skyMaterials = computed(() => {
+        const scene = sceneFile();
+        return scene
+          ? skyMaterialsOf(scene, library().sky, sky(), library().materials, skyOverlays())
+          : [];
+      });
+      /** The parts of the overlays the sky wears, as shown. */
+      const skyParts = computed(() =>
+        skyOverlays().flatMap((o) => skyPartsOf(o, library().sky.parts, sky().parts)),
+      );
+      const target = computed(() => targetOf(selected()));
+      const body = computed(() => {
+        const t = target();
+        return 'path' in t ? bodyByKey().get(bodyKey(t.path)) : undefined;
+      });
+      /**
+       * The lights from beyond the selected body that light it too: the scene's (those on), and
+       * those of the planets it is a moon of that reach their moons.
+       */
+      const outerLights = computed((): OuterLight[] => {
+        const t = target();
+        if (!('path' in t)) return [];
+        return [
+          ...knownLights(choices().lights ?? [])
+            .filter((l) => l.enabled !== false)
+            .map((light) => ({ light, owner: 'scene' as const })),
+          ...t.path.slice(0, -1).flatMap((_, i) => {
+            const owner = t.path.slice(0, i + 1);
+            const parent = bodyByKey().get(bodyKey(owner));
+            if (!parent) return [];
+            const overlays = new Map(
+              lightsOfBody(parent).flatMap((l) => (l.overlay ? [[l.light.id, l.overlay]] : [])),
+            );
+            return moonLightsOf(parent).map((light) => ({
+              light,
+              owner,
+              overlay: overlays.get(light.id),
+            }));
+          }),
+        ];
+      });
+      /** The moon the view is centred on (its planet's index and its own path), if any. */
+      const focusPath = computed((): BodyPath => {
+        const key = focus();
+        if (key === null) return [];
+        const path = pathOf(key);
+        return path.length > 1 && bodyAt(sceneBodiesNow(), path) ? path : [];
+      });
+      /** The bodies (by key) that differ from what is published. */
+      const unsavedBodies = computed(() => {
+        const out = new Set<string>();
+        for (const b of bodies()) {
+          const path = pathOf(b.key.slice(5));
+          if (
+            !same(ownPart(bodyAt(sceneBodiesNow(), path)), ownPart(bodyAt(publishedBodies(), path)))
+          )
+            out.add(b.key);
+        }
+        return out;
+      });
+      /** What the scene is called: its name; else its first planet's id; else its own. */
+      const label = computed(() => choices().name ?? sceneBodiesNow()[0]?.id ?? sceneId());
+      return {
+        resetAllLabel: computed(() => 'Reset scene'),
+        // A scene's: overlays are made and changed in the library.
+        partShapes: computed((): readonly CreatedShape[] => []),
+        partMaterials: computed(() => null),
+        deletable: computed(() => false),
+        skyOverlayOpen: computed(() => false),
+        opened: computed((): OpenTarget => ({ kind: 'scene', id: sceneId() })),
+        parent: computed(() => null),
+        sharedMaterial: computed((): AssetTarget | null => {
+          const t = target();
+          const b = body();
+          if (t.kind !== 'material' || !b) return null;
+          const m = materialAt(materialsOf(b), t.key);
+          if (!m) return null;
+          return {
+            kind: 'material',
+            id: t.name,
+            on: m.overlay ? { kind: 'style', id: m.overlay } : { kind: 'planet', id: b.id },
+          };
         }),
-      ];
-    });
-    /** The moon the view is centred on (its planet's index and its own path), if any. */
-    const focusPath = computed((): BodyPath => {
-      const key = focus();
-      if (key === null) return [];
-      const path = pathOf(key);
-      return path.length > 1 && bodyAt(sceneBodiesNow(), path) ? path : [];
-    });
-    /** The bodies (by key) that differ from what is published. */
-    const unsavedBodies = computed(() => {
-      const out = new Set<string>();
-      for (const b of bodies()) {
-        const path = pathOf(b.key.slice(5));
-        if (
-          !same(ownPart(bodyAt(sceneBodiesNow(), path)), ownPart(bodyAt(publishedBodies(), path)))
-        )
-          out.add(b.key);
-      }
-      return out;
-    });
-    /** What the scene is called: its name; else its first planet's id; else its own. */
-    const label = computed(() => choices().name ?? sceneBodiesNow()[0]?.id ?? sceneId());
-    return {
-      resetAllLabel: computed(() => 'Reset scene'),
-      // A scene's: overlays are made and changed in the library.
-      partShapes: computed((): readonly CreatedShape[] => []),
-      partMaterials: computed(() => null),
-      deletable: computed(() => false),
-      skyOverlayOpen: computed(() => false),
-      opened: computed((): OpenTarget => ({ kind: 'scene', id: sceneId() })),
-      parent: computed(() => null),
-      sharedMaterial: computed((): AssetTarget | null => {
-        const t = target();
-        const b = body();
-        if (t.kind !== 'material' || !b) return null;
-        const m = materialIn(materialsOf(b), t.name, t.overlay);
-        if (!m) return null;
-        return {
-          kind: 'material',
-          id: t.name,
-          on: m.overlay ? { kind: 'style', id: m.overlay } : { kind: 'planet', id: b.id },
-        };
-      }),
-      sceneName: computed(() => choices().name ?? ''),
-      /** The name a scene shows where it has none of its own. */
-      sceneLabel: label,
-      heading: computed(() => {
-        const id = sceneId();
-        if (id === RANDOM_SCENE) return 'Scene · Random sets';
-        if (id === PLAY_SCREEN_SCENE) return 'Scene · Play screen';
-        return `Scene · ${label()}`;
-      }),
-      /** Whether the scene is one of the user's own (named, deletable). */
-      own: computed(() => ownScene(sceneId())),
-      /** Whether planets can be put in it (any scene but the random sets'). */
-      hasPlanets: computed(() => !random()),
-      /** Whether it is one of the user's own that isn't there (deleted, or discarded unsaved). */
-      missing: computed(() => ownScene(sceneId()) && !entry()),
-      sceneBodies: sceneBodiesNow,
-      bodies,
-      bodyByKey,
-      skyMaterials,
-      target,
-      focusPath,
-      unsavedBodies,
-      /** The scene as it is to be shown: its sky (over the library's, by the background) and its colour. */
-      sceneSky: sky,
-      skyWorn,
-      skyOverlays,
-      skyParts,
-      skyOverlaysSet: computed(() => sky().overlays !== undefined),
-      /** The overlays a sky may wear: the game data's, and those made in the editor; by name. */
-      skyOverlayOptions: computed((): readonly PickChoice[] =>
-        skyOverlayChoices(sceneFile(), library()),
-      ),
-      /** The scene's own lights, lighting every planet in it. */
-      sceneLights: computed((): readonly AddedLight[] => choices().lights ?? []),
-      sceneTint: computed(() => _draft.scenes().settings),
-      neededFiles: computed(() => {
-        const file = overlayFileOf();
-        return [...new Set(bodies().flatMap((b) => [b.id, ...wornIds(b).map(file)]))];
-      }),
-      kind: computed((): TargetKind => {
-        const t = target();
-        if ('view' in t && t.view) return t.view.kind;
-        // The scene's lights shown as any light is; the sky's overlays' parts as any part.
-        return t.kind === 'scene-light' ? 'light' : t.kind === 'sky-part' ? 'part' : t.kind;
-      }),
-      materialView: computed((): MaterialView | null => {
-        const t = target();
-        return 'view' in t && t.view ? t.view : null;
-      }),
-      bodyView: computed(() => {
-        const b = body();
-        return b ? bodyView(b, focus() === b.key.slice(5), true) : null;
-      }),
-      material: computed(() => {
-        const t = target();
-        if (t.kind === 'sky-material') return materialIn(skyMaterials(), t.name, t.overlay);
-        const b = body();
-        // Its layers may read the sky's textures too (always loaded).
-        const sky = _sceneFile.hasValue() ? _sceneFile.value().textures : {};
-        return t.kind === 'material' && b
-          ? materialIn(materialsOf(b, sky), t.name, t.overlay)
-          : undefined;
-      }),
-      part: computed(() => {
-        const t = target();
-        if (t.kind === 'sky-part') return skyParts().find((p) => p.key === t.key);
-        const b = body();
-        return t.kind === 'part' && b ? partsOfBody(b).find((p) => p.key === t.key) : undefined;
-      }),
-      litBy: computed((): readonly LitByEntry[] | null => {
-        const t = target();
-        const b = body();
-        const receiver = receiverOf(t);
-        return b && filesLoaded(b) && receiver !== undefined
-          ? litByOf(b, receiver, outerLights())
-          : null;
-      }),
-      light: computed(() => {
-        const t = target();
-        if (t.kind === 'scene-light')
-          return sceneLightsOf(choices().lights).find((l) => l.light.id === t.id);
-        const b = body();
-        return t.kind === 'light' && b
-          ? lightsOfBody(b).find((l) => l.light.id === t.id)
-          : undefined;
-      }),
-      title: computed(() => {
-        const t = target();
-        if ('view' in t && t.view) {
-          const b = body();
-          const m =
-            t.kind === 'sky-material'
-              ? materialIn(skyMaterials(), t.name, t.overlay)
-              : b && t.kind === 'material'
-                ? materialIn(materialsOf(b), t.name, t.overlay)
-                : undefined;
-          return viewTitle(t.view, m ?? undefined);
-        }
-        if (t.kind === 'scene') return 'Scene';
-        if (t.kind === 'sky') return 'Sky';
-        if (t.kind === 'sky-material')
-          return materialIn(skyMaterials(), t.name, t.overlay)?.label ?? t.name;
-        if (t.kind === 'material') {
-          const b = body();
-          return (b && materialIn(materialsOf(b), t.name, t.overlay)?.label) ?? t.name;
-        }
-        if (t.kind === 'sky-part') return skyParts().find((x) => x.key === t.key)?.label ?? 'Part';
-        if (t.kind === 'part') {
-          const p = body() && partsOfBody(body()!).find((x) => x.key === t.key);
-          return p ? (p.overlayName ? `${p.label} · ${p.overlayName}` : p.label) : 'Part';
-        }
-        if (t.kind === 'light') {
-          const l = body() && lightsOfBody(body()!).find((x) => x.light.id === t.id);
-          return l?.light.name ?? 'Properties';
-        }
-        if (t.kind === 'scene-light')
-          return choices().lights?.find((l) => l.id === t.id)?.name ?? 'Properties';
-        if (t.kind === 'reference') return 'Reference';
-        const b = body();
-        return b ? bodyLabel(b) : 'Properties';
-      }),
-      skyChanged: computed(() => Object.keys(sky()).length > 0),
-      skyTint: computed((): MaterialTint => sky().tint ?? library().sky.tint ?? NO_MATERIAL_TINT),
-      skyTintSet: computed(() => sky().tint),
-      sets: random,
-      /** The overlays a body may wear: the game data's, and those made in the editor; by name. */
-      overlayOptions: computed((): readonly PickChoice[] =>
-        overlayChoices(_index.hasValue() ? _index.value() : null, library()),
-      ),
-      tintOptions: computed((): PropertyOption[] =>
-        grouped(
-          [
-            { value: PRESETS[0]!.id, label: PRESETS[0]!.label },
-            { value: CUSTOM_TINT, label: 'Custom' },
-          ],
-          PRESETS.slice(1).map((p) => ({ value: p.id, label: p.label })),
+        sceneName: computed(() => choices().name ?? ''),
+        /** The name a scene shows where it has none of its own. */
+        sceneLabel: label,
+        heading: computed(() => {
+          const id = sceneId();
+          if (id === RANDOM_SCENE) return 'Scene · Random sets';
+          if (id === PLAY_SCREEN_SCENE) return 'Scene · Play screen';
+          return `Scene · ${label()}`;
+        }),
+        /** Whether the scene is one of the user's own (named, deletable). */
+        own: computed(() => ownScene(sceneId())),
+        /** Whether planets can be put in it (any scene but the random sets'). */
+        hasPlanets: computed(() => !random()),
+        /** Whether it is one of the user's own that isn't there (deleted, or discarded unsaved). */
+        missing: computed(() => ownScene(sceneId()) && !entry()),
+        sceneBodies: sceneBodiesNow,
+        bodies,
+        bodyByKey,
+        skyMaterials,
+        target,
+        focusPath,
+        unsavedBodies,
+        /** The scene as it is to be shown: its sky (over the library's, by the background) and its colour. */
+        sceneSky: sky,
+        skyWorn,
+        skyOverlays,
+        skyParts,
+        skyOverlaysSet: computed(() => sky().overlays !== undefined),
+        /** The overlays a sky may wear: the game data's, and those made in the editor; by name. */
+        skyOverlayOptions: computed((): readonly PickChoice[] =>
+          skyOverlayChoices(sceneFile(), library()),
         ),
-      ),
-      tintChoice: computed(() => {
-        const settings = _draft.scenes().settings;
-        if (settings.choice) return settings.choice;
-        return settings.background.on ? CUSTOM_TINT : PRESETS[0]!.id;
-      }),
-      focusedName: computed(() => {
-        const path = focusPath();
-        return path.length ? (bodyByKey().get(bodyKey(path))?.id ?? null) : null;
-      }),
-      sceneUnsaved: computed(() => !same(choices(), published()) || _draft.unsavedColour()),
-      skyUnsaved: computed(() => !same(choices().sky, published().sky)),
-    };
-  }),
+        /** The scene's own lights, lighting every planet in it. */
+        sceneLights: computed((): readonly AddedLight[] => choices().lights ?? []),
+        sceneTint: computed(() => _draft.scenes().settings),
+        neededFiles: computed(() => {
+          const file = overlayFileOf();
+          return [...new Set(bodies().flatMap((b) => [b.id, ...wornIds(b).map(file)]))];
+        }),
+        kind: computed((): TargetKind => {
+          const t = target();
+          if ('view' in t && t.view) return t.view.kind;
+          // The scene's lights shown as any light is; the sky's overlays' parts as any part.
+          return t.kind === 'scene-light' ? 'light' : t.kind === 'sky-part' ? 'part' : t.kind;
+        }),
+        materialView: computed((): MaterialView | null => {
+          const t = target();
+          return 'view' in t && t.view ? t.view : null;
+        }),
+        bodyView: computed(() => {
+          const b = body();
+          return b ? bodyView(b, focus() === b.key.slice(5), true) : null;
+        }),
+        material: computed(() => {
+          const t = target();
+          if (t.kind === 'sky-material') return materialAt(skyMaterials(), t.key);
+          const b = body();
+          // Its layers may read the sky's textures too (always loaded).
+          const sky = _sceneFile.hasValue() ? _sceneFile.value().textures : {};
+          return t.kind === 'material' && b ? materialAt(materialsOf(b, sky), t.key) : undefined;
+        }),
+        part: computed(() => {
+          const t = target();
+          if (t.kind === 'sky-part') return skyParts().find((p) => p.key === t.key);
+          const b = body();
+          return t.kind === 'part' && b ? partsOfBody(b).find((p) => p.key === t.key) : undefined;
+        }),
+        litBy: computed((): readonly LitByEntry[] | null => {
+          const t = target();
+          const b = body();
+          const receiver = receiverOf(t);
+          return b && filesLoaded(b) && receiver !== undefined
+            ? litByOf(b, receiver, outerLights())
+            : null;
+        }),
+        light: computed(() => {
+          const t = target();
+          if (t.kind === 'scene-light')
+            return sceneLightsOf(choices().lights).find((l) => l.light.id === t.id);
+          const b = body();
+          return t.kind === 'light' && b
+            ? lightsOfBody(b).find((l) => l.light.id === t.id)
+            : undefined;
+        }),
+        title: computed(() => {
+          const t = target();
+          if ('view' in t && t.view) {
+            const b = body();
+            const m =
+              t.kind === 'sky-material'
+                ? materialAt(skyMaterials(), t.key)
+                : b && t.kind === 'material'
+                  ? materialAt(materialsOf(b), t.key)
+                  : undefined;
+            return viewTitle(t.view, m ?? undefined);
+          }
+          if (t.kind === 'scene') return 'Scene';
+          if (t.kind === 'sky') return 'Sky';
+          if (t.kind === 'sky-material') return materialAt(skyMaterials(), t.key)?.label ?? t.name;
+          if (t.kind === 'material') {
+            const b = body();
+            return (b && materialAt(materialsOf(b), t.key)?.label) ?? t.name;
+          }
+          if (t.kind === 'sky-part')
+            return skyParts().find((x) => x.key === t.key)?.label ?? 'Part';
+          if (t.kind === 'part') {
+            const p = body() && partsOfBody(body()!).find((x) => x.key === t.key);
+            return p ? (p.overlayName ? `${p.label} · ${p.overlayName}` : p.label) : 'Part';
+          }
+          if (t.kind === 'light') {
+            const l = body() && lightsOfBody(body()!).find((x) => x.light.id === t.id);
+            return l?.light.name ?? 'Properties';
+          }
+          if (t.kind === 'scene-light')
+            return choices().lights?.find((l) => l.id === t.id)?.name ?? 'Properties';
+          if (t.kind === 'reference') return 'Reference';
+          const b = body();
+          return b ? bodyLabel(b) : 'Properties';
+        }),
+        skyChanged: computed(() => Object.keys(sky()).length > 0),
+        skyTint: computed((): MaterialTint => sky().tint ?? library().sky.tint ?? NO_MATERIAL_TINT),
+        skyTintSet: computed(() => sky().tint),
+        sets: random,
+        /** The overlays a body may wear: the game data's, and those made in the editor; by name. */
+        overlayOptions: computed((): readonly PickChoice[] =>
+          overlayChoices(_index.hasValue() ? _index.value() : null, library()),
+        ),
+        tintOptions: computed((): PropertyOption[] =>
+          grouped(
+            [
+              { value: PRESETS[0]!.id, label: PRESETS[0]!.label },
+              { value: CUSTOM_TINT, label: 'Custom' },
+            ],
+            PRESETS.slice(1).map((p) => ({ value: p.id, label: p.label })),
+          ),
+        ),
+        tintChoice: computed(() => {
+          const settings = _draft.scenes().settings;
+          if (settings.choice) return settings.choice;
+          return settings.background.on ? CUSTOM_TINT : PRESETS[0]!.id;
+        }),
+        focusedName: computed(() => {
+          const path = focusPath();
+          return path.length ? (bodyByKey().get(bodyKey(path))?.id ?? null) : null;
+        }),
+        sceneUnsaved: computed(() => !same(choices(), published()) || _draft.unsavedColour()),
+        skyUnsaved: computed(() => !same(choices().sky, published().sky)),
+      };
+    },
+  ),
   withComputed((store) => ({
     rows: computed((): TreeRow[] => {
       const open = store.unfolded();
@@ -786,7 +802,7 @@ export const SceneEditorStore = signalStore(
                 materials,
                 at + 1,
                 open,
-                (name) => materialKey(path, name, overlay),
+                (name) => materialRowKey(path, name, overlay),
                 leaf,
                 (r) => rows.push(r),
               );
@@ -993,8 +1009,8 @@ export const SceneEditorStore = signalStore(
     };
     const materialChange = (key: string, change: Partial<MaterialSettings>) => {
       const t = targetOf(key);
-      if (t.kind === 'sky-material') d.setSkyMaterial(store.scene(), t.name, change);
-      else if (t.kind === 'material') settings(t.path, (s) => withMaterial(s, t.name, change));
+      if (t.kind === 'sky-material') d.setSkyMaterial(store.scene(), t.key, change);
+      else if (t.kind === 'material') settings(t.path, (s) => withMaterial(s, t.key, change));
     };
     return {
       /** The scene shown, as the URL says ('': the random sets'); its first planet selected. */
@@ -1065,20 +1081,20 @@ export const SceneEditorStore = signalStore(
           const id = t.overlay;
           settings(t.path, (s) => withOverlaySwitched(s, id, on, overlayEnabledBelow(b, id)));
         } else if (t.kind === 'sky-material') {
-          const below = materialIn(store.skyMaterials(), t.name, t.overlay)?.enabledBelow ?? true;
-          if (on === below) d.clearSkyMaterial(store.scene(), t.name, ['enabled']);
+          const below = materialAt(store.skyMaterials(), t.key)?.enabledBelow ?? true;
+          if (on === below) d.clearSkyMaterial(store.scene(), t.key, ['enabled']);
           else materialChange(change.key, { enabled: on });
         } else if (t.kind === 'material' && t.view?.kind === 'effect') {
           // A shield's effect switched: as it starts, nothing set.
           const field = t.view.effect === 'reveal' ? 'revealOn' : 'activationOn';
           settings(t.path, (s) =>
             on === GRID_DEFAULTS[field]
-              ? withoutMaterial(s, t.name, [field])
-              : withMaterial(s, t.name, { [field]: on }),
+              ? withoutMaterial(s, t.key, [field])
+              : withMaterial(s, t.key, { [field]: on }),
           );
         } else if (t.kind === 'material' && b) {
-          const below = materialIn(materialsOf(b), t.name, t.overlay)?.enabledBelow ?? true;
-          settings(t.path, (s) => withMaterialSwitched(s, t.name, on, below));
+          const below = materialAt(materialsOf(b), t.key)?.enabledBelow ?? true;
+          settings(t.path, (s) => withMaterialSwitched(s, t.key, on, below));
         }
       },
       setLight(change: Partial<LightSettings>): void {
@@ -1188,19 +1204,19 @@ export const SceneEditorStore = signalStore(
         }
         if (from.kind === 'sky-material' && to.kind === 'sky-material') {
           const all = store.skyMaterials();
-          const moving = all.find((m) => m.name === from.name);
-          const target = all.find((m) => m.name === to.name);
+          const moving = materialAt(all, from.key);
+          const target = materialAt(all, to.key);
           if (!moving || !target) return;
           const depth = target.values.depth;
-          const group = all.filter((m) => m.values.depth === depth).map((m) => m.name);
+          const group = all.filter((m) => m.values.depth === depth).map((m) => m.key);
           const order = reordered(
-            all.map((m) => m.name),
+            all.map((m) => m.key),
             group,
-            from.name,
-            to.name,
+            from.key,
+            to.key,
             move.after,
           );
-          if (moving.values.depth !== depth) d.setSkyMaterial(store.scene(), from.name, { depth });
+          if (moving.values.depth !== depth) d.setSkyMaterial(store.scene(), from.key, { depth });
           d.setSkyOrder(store.scene(), order);
         } else if (
           from.kind === 'material' &&
@@ -1209,18 +1225,8 @@ export const SceneEditorStore = signalStore(
         ) {
           const b = store.bodyByKey().get(bodyKey(from.path));
           if (!b) return;
-          const all = materialsOf(b);
-          // Within the part they are drawn on (a material isn't moved to another part).
-          const group = partsOfBody(b).find((p) => p.materials.includes(to.name))?.materials;
-          if (!group?.includes(from.name)) return;
-          const order = reordered(
-            all.map((m) => m.name),
-            group,
-            from.name,
-            to.name,
-            move.after,
-          );
-          settings(from.path, (s) => ({ ...s, order }));
+          const order = movedInPart(b, materialsOf(b), from.key, to.key, move.after);
+          if (order) settings(from.path, (s) => ({ ...s, order }));
         }
       },
       setMaterial(change: Partial<MaterialSettings>): void {
@@ -1228,8 +1234,8 @@ export const SceneEditorStore = signalStore(
       },
       clearMaterial(keys?: readonly (keyof MaterialSettings)[]): void {
         const t = store.target();
-        if (t.kind === 'sky-material') d.clearSkyMaterial(store.scene(), t.name, keys);
-        else if (t.kind === 'material') settings(t.path, (s) => withoutMaterial(s, t.name, keys));
+        if (t.kind === 'sky-material') d.clearSkyMaterial(store.scene(), t.key, keys);
+        else if (t.kind === 'material') settings(t.path, (s) => withoutMaterial(s, t.key, keys));
       },
       setPart(change: Partial<PartSettings>): void {
         const t = store.target();

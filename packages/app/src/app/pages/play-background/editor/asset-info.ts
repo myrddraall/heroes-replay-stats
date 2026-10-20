@@ -1,6 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
 import { PLAY_SCREEN_SCENE, RANDOM_SCENE } from '../../../scenes/play-background/background-design';
 import type { MoonChoices } from '../../../scenes/play-background/background-scene';
+import { overlayFileFor } from '../../../scenes/play-background/created-overlays';
 import { DraftDesignStore } from '../draft-design.store';
 import { AssetCatalogStore } from './asset-catalog.store';
 import { type AssetDetails, AssetDetailsView } from './asset-details';
@@ -85,7 +86,7 @@ export class AssetInfo {
       }
       case 'planet':
       case 'style': {
-        const file = c.files()[kind === 'planet' ? id : `style-${id}`];
+        const file = c.files()[kind === 'planet' ? id : overlayFileFor(library, id)];
         const entry = c.planets().find((p) => p.id === id);
         const settings = (kind === 'planet' ? library.planets : library.styles)[id];
         return {

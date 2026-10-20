@@ -64,6 +64,16 @@
         (resetRequested)="clear.emit(['width'])"
         (valueChange)="settingsChange.emit({ width: $event })"
       />
+      <hrs-property-number
+        label="Height"
+        [value]="v.height"
+        [min]="0.01"
+        [step]="0.01"
+        [changed]="isSet('height')"
+        [origin]="p.origins.height"
+        (resetRequested)="clear.emit(['height'])"
+        (valueChange)="settingsChange.emit({ height: $event })"
+      />
     }
   } @else {
     <hrs-property-number

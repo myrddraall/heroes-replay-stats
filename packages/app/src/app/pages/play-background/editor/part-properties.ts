@@ -12,6 +12,7 @@ const SHAPE_KEYS: readonly (keyof PartSettings)[] = [
   'turn',
   'tilt',
   'width',
+  'height',
   'depth',
   'mid',
   'keepToLimb',

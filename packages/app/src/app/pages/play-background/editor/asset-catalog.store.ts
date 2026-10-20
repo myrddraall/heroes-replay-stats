@@ -19,7 +19,6 @@ import type { SceneBody } from '../../../scenes/play-background/background-scene
 import { playSet, randomSet, seeded } from '../../../scenes/play-background/planet-sets';
 import { playScreenBodies, sceneBodies } from '../../../scenes/play-background/scene-bodies';
 import {
-  loadPlaySceneFile,
   PLAY_SCENE_URL,
   type SceneMaterial,
   type SceneTexture,
@@ -110,9 +109,6 @@ export const AssetCatalogStore = signalStore(
     _ui: inject(EditorUiStore),
     _background: inject(BackgroundStore),
     _index: resource({ loader: ({ abortSignal }) => loadPlanetIndex(PLAY_SCENE_URL, abortSignal) }),
-    _sceneFile: resource({
-      loader: ({ abortSignal }) => loadPlaySceneFile(PLAY_SCENE_URL, abortSignal),
-    }),
   })),
   withComputed(({ files, _draft, _index, _sceneFile }) => {
     const index = computed(() => (_index.hasValue() ? _index.value() : null));

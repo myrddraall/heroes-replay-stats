@@ -214,6 +214,22 @@ export function mergeMaterialSettings(
   return out;
 }
 
+/** One material's settings at levels, merged as `mergeMaterialSettings` merges them (the later over the earlier). */
+export function mergeSettings(
+  ...levels: readonly (MaterialSettings | undefined)[]
+): MaterialSettings | undefined {
+  return mergeMaterialSettings(...levels.map((s) => (s ? { m: s } : undefined)))['m'];
+}
+
+/**
+ * The key a material's settings are kept by where it is drawn: its owner's own by its name; an
+ * overlay's by the overlay and its name, wherever they are set (the overlay's own settings too),
+ * so a body's material and an overlay's (or two overlays') that share a name are set apart. A
+ * material's base settings (the library's for the material, wherever it is drawn) are by its name.
+ */
+export const materialKey = (name: string, overlay?: string) =>
+  overlay ? `style:${overlay}:${name}` : name;
+
 /**
  * The floor a material's fresnel layers have of their own: the highest of their minimums (a
  * layer without a fresnel has none).

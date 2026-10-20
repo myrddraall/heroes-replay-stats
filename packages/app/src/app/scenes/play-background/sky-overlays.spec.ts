@@ -73,4 +73,14 @@ describe('sky overlays', () => {
     const full = points(bandMesh(BAND, camera).positions).map((q) => q[0]!);
     expect(Math.max(...xs)).toBeLessThan(Math.max(...full));
   });
+
+  it('makes a band taller or shorter about its middle', () => {
+    const zs = (height: number) =>
+      points(placedSkyMesh(BAND, { height }, camera).positions).map((q) => q[2]!);
+    const span = (h: number) => Math.max(...zs(h)) - Math.min(...zs(h));
+    expect(span(2)).toBeCloseTo(span(1) * 2);
+    // About its middle: the middle stays where it is.
+    const middle = (h: number) => (Math.max(...zs(h)) + Math.min(...zs(h))) / 2;
+    expect(middle(2)).toBeCloseTo(middle(1));
+  });
 });

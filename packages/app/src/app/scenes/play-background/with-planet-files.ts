@@ -2,48 +2,77 @@ import {
   patchState,
   signalMethod,
   signalStoreFeature,
+  withComputed,
+  withHooks,
   withMethods,
   withProps,
   withState,
 } from '@ngrx/signals';
-import { inject } from '@angular/core';
+import { computed, inject, resource } from '@angular/core';
 import { BACKGROUND_DESIGN } from './background-design.tokens';
-import { createdOf, createdPlanetFile } from './created-overlays';
-import { PLAY_SCENE_URL } from './play-scene';
+import { createdFiles, lookupIn, sourceFiles } from './created-overlays';
+import { createdOverlay } from './overlays';
+import { loadPlaySceneFile, PLAY_SCENE_URL } from './play-scene';
 import { loadPlanetFile, type PlanetFile } from './scene-planets';
 
 export interface PlanetFilesState {
   /** The planets' and styles' files loaded so far, by id. */
-  readonly files: Readonly<Record<string, PlanetFile>>;
+  readonly _loaded: Readonly<Record<string, PlanetFile>>;
 }
 
 /**
  * Planets' files (and overlays', `style-<id>`) as a store needs them: `needFiles` follows a list of
- * ids and loads each not yet loaded, once; each lands in `files` when it has. One that can't be
- * loaded is left out (a warning says why), and is tried again when asked for again. An overlay
- * made in the editor (`@overlay-<n>#<revision>`) is built from the design in effect.
+ * ids and loads each not yet loaded, once; each is in `files` when it has. One that can't be
+ * loaded is left out (a warning says why), and is tried again when asked for again. The overlays
+ * made in the editor (`@overlay-<n>#<revision>`) are built from the design in effect, their
+ * materials found where they are in the game data (`madeLookup`): the files they are in are loaded
+ * for them, and the scene's (`_sceneFile`) is.
  */
 export function withPlanetFiles(base: string = PLAY_SCENE_URL) {
   return signalStoreFeature(
-    withState<PlanetFilesState>({ files: {} }),
-    withProps(() => ({ _loadingFiles: new Set<string>(), _design: inject(BACKGROUND_DESIGN) })),
+    withState<PlanetFilesState>({ _loaded: {} }),
+    withProps(() => ({
+      _loadingFiles: new Set<string>(),
+      _design: inject(BACKGROUND_DESIGN),
+      _sceneFile: resource({
+        loader: ({ abortSignal }) => loadPlaySceneFile(base, abortSignal),
+      }),
+    })),
+    withComputed(({ _loaded, _design, _sceneFile }) => {
+      /** Finds the materials of overlays made in the editor where they are (those loaded). */
+      const madeLookup = computed(() =>
+        lookupIn(_loaded(), _sceneFile.hasValue() ? _sceneFile.value() : null),
+      );
+      return {
+        madeLookup,
+        /** The files loaded, and the planets' overlays made in the editor (built from them). */
+        files: computed((): Readonly<Record<string, PlanetFile>> => ({
+          ..._loaded(),
+          ...createdFiles(_design.library(), madeLookup()),
+        })),
+        /** The files the overlays made in the editor read their materials from. */
+        _madeSources: computed(() =>
+          Object.values(_design.library().created ?? {}).flatMap(sourceFiles),
+        ),
+      };
+    }),
     withMethods((store) => ({
       needFiles: signalMethod<readonly string[]>((ids) => {
         for (const id of ids) {
-          if (store.files()[id] || store._loadingFiles.has(id)) continue;
-          const created = createdOf(store._design.library(), id);
-          if (created) {
-            if (created.kind === 'planet')
-              patchState(store, { files: { ...store.files(), [id]: createdPlanetFile(created) } });
-            continue;
-          }
+          // One made in the editor is built (its sources are always needed).
+          if (createdOverlay(id) || store._loaded()[id] || store._loadingFiles.has(id)) continue;
           store._loadingFiles.add(id);
           loadPlanetFile(base, id)
-            .then((file) => patchState(store, { files: { ...store.files(), [id]: file } }))
+            .then((file) => patchState(store, { _loaded: { ...store._loaded(), [id]: file } }))
             .catch((error: unknown) => console.warn(`the planet ${id} is not shown:`, error))
             .finally(() => store._loadingFiles.delete(id));
         }
       }),
     })),
+    withHooks({
+      onInit(store) {
+        store.needFiles(store._madeSources);
+      },
+    }),
   );
 }

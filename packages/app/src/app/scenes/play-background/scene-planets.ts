@@ -172,6 +172,8 @@ export interface PartSettings {
   readonly turn?: number;
   readonly tilt?: number;
   readonly width?: number;
+  /** A sky's band's height, times its own, about its middle (up and down). */
+  readonly height?: number;
   readonly depth?: number;
   readonly mid?: number;
   readonly keepToLimb?: boolean;
@@ -448,13 +450,16 @@ export type MaterialDrawAs = 'pattern' | 'texture';
 export type MaterialSettingsMap = Readonly<Record<string, MaterialSettings>>;
 
 /**
- * How the sky shows: its materials' settings by name (its overlays' too), a tint over all of it
+ * How the sky shows: its materials' settings by key (`materialKey`), a tint over all of it
  * (its stars too), and the overlays it wears.
  */
 export interface SkySettings {
+  /** Its materials' settings: its own by name (over their base settings), its overlays' by `materialKey`. */
   readonly materials?: MaterialSettingsMap;
+  /** The materials' base settings, by name (under its overlays' materials' own). */
+  readonly base?: MaterialSettingsMap;
   readonly tint?: MaterialTint;
-  /** Its materials' draw order, by name (the later over the earlier; see `drawOrder`), where set. */
+  /** Its materials' draw order, by `materialKey` (the later over the earlier; see `drawOrder`), where set. */
   readonly order?: readonly string[];
   /** The overlays it wears and draws, in order, by id (none given: its data's). */
   readonly overlays?: readonly string[];

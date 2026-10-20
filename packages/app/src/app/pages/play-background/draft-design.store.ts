@@ -243,7 +243,7 @@ export const DraftDesignStore = signalStore(
         const label = `${kind === 'sky' ? 'Sky overlay' : 'Overlay'} ${n}`;
         setLibrary((l) => ({
           ...l,
-          created: { ...l.created, [id]: { kind, label, parts: [], materials: {}, textures: {} } },
+          created: { ...l.created, [id]: { kind, label, parts: [], sources: {} } },
         }));
         return id;
       },

@@ -111,7 +111,7 @@ export function shadeOf(settings: BodySettings | undefined): Partial<BodyShade> 
 
 /**
  * A planet as the library has it, under what is set for it: its own defaults and its style's
- * (each set value where nothing above sets it), its materials' settings merged by name over the
+ * (each set value where nothing above sets it), its materials' settings merged by key over the
  * materials' base settings.
  */
 export function withLibrary(set: SetPlanet, library: LibraryState): SetPlanet {
@@ -130,12 +130,14 @@ export function withLibrary(set: SetPlanet, library: LibraryState): SetPlanet {
   const orders = styles.flatMap((s) => (s.order ? [s.order] : []));
   return {
     ...planet,
+    // (An overlay's materials kept by their `materialKey`, at every level: the base by name.)
     materials: mergeMaterialSettings(
       base,
       own?.materials,
       ...styles.map((s) => s.materials),
       planet.materials,
     ),
+    ...(base ? { base } : {}),
     parts: mergePartSettings(own?.parts, ...styles.map((s) => s.parts), planet.parts),
     order: planet.order ?? own?.order ?? (orders.length ? orders.flat() : undefined),
     lights: mergeLightSettings(own?.lights, ...styles.map((s) => s.lights), planet.lights),
@@ -201,6 +203,7 @@ export function skyWithLibrary(
       library.sky.materials,
       sky?.materials,
     ),
+    ...(library.materials ? { base: library.materials } : {}),
     tint: sky?.tint ?? library.sky.tint,
     order: sky?.order ?? library.sky.order,
     overlays,

@@ -9,10 +9,17 @@ import {
   untracked,
 } from '@angular/core';
 import { BACKGROUND_DESIGN, BACKGROUND_SCENE } from './background-design.tokens';
-import { BUILT_IN_PLANETS, type BuiltInPlanets } from './built-in-planets';
+import { BUILT_IN_PLANETS } from './built-in-planets';
 import { type LibraryState, skyOverlaysOf, skyWithLibrary, withLibrary } from './background-design';
 import { BackgroundStore } from './background.store';
-import { createdBuiltIns, createdOf, createdSkyFile, overlayFileFor } from './created-overlays';
+import {
+  type CreatedOverlay,
+  createdOf,
+  createdPlanetFile,
+  createdSkyFile,
+  loadSources,
+  overlayFileFor,
+} from './created-overlays';
 import { overlayOfFile } from './overlays';
 import type { SkyOverlayFile } from './play-scene';
 import { playSet, randomSet, seeded, type SetPlanet } from './planet-sets';
@@ -28,6 +35,12 @@ import {
 import type { PlanetPlacement } from './scene-renderer';
 import { browserColourParser, rendererTint } from './scene-tints';
 import { backgroundTints } from './tint-settings';
+
+/** The images of the textures a file has, from those loaded. */
+const imagesOf = (
+  textures: Readonly<Record<string, unknown>>,
+  images: Readonly<Record<string, ImageBitmap>>,
+) => Object.fromEntries(Object.keys(textures).flatMap((k) => (images[k] ? [[k, images[k]]] : [])));
 
 /** What a set needs loaded: its planets and the overlays they wear, by file id. */
 const neededBy = (set: readonly SetPlanet[], file: (overlay: string) => string) => [
@@ -105,33 +118,40 @@ export class PlayBackground {
   private readonly skyMade = resource({
     params: () => this.skyMadeNeeded() || undefined,
     loader: async ({ params, abortSignal }) => {
-      const loader = this.planets();
       const library = untracked(this.design.library);
       const out: Record<string, { file: SkyOverlayFile; images: Record<string, ImageBitmap> }> = {};
       for (const file of params.split(',')) {
         const o = createdOf(library, file);
         if (!o) continue;
-        const loaded = await loader.load(file, abortSignal);
-        out[overlayOfFile(file)] = { file: createdSkyFile(o), images: { ...loaded.images } };
+        const { lookup, images } = await this.sources(o, abortSignal);
+        const sky = createdSkyFile(o, lookup);
+        out[overlayOfFile(file)] = { file: sky, images: imagesOf(sky.textures, images) };
       }
       return out;
     },
   });
 
+  /** The scene loading (once for where it is served: what is made from it waits for the same). */
+  private readonly sceneLoading = computed(() => loadPlayScene(this.src()));
   protected readonly scene = resource({
-    params: () => this.src(),
-    loader: ({ params, abortSignal }) => loadPlayScene(params, abortSignal),
+    params: () => this.sceneLoading(),
+    loader: ({ params }) => params,
   });
   private readonly index = resource({
     params: () => this.src(),
     loader: ({ params, abortSignal }) => loadPlanetIndex(params, abortSignal),
   });
-  /** The planets the app makes: the overlays made in the editor (the library's), and any provided. */
-  private readonly made: BuiltInPlanets = (() => {
-    const created = createdBuiltIns(() => untracked(this.design.library));
-    return (id: string) => created(id) ?? this.builtIns?.(id);
-  })();
-  private readonly planets = computed(() => new PlanetLoader(this.src(), this.made));
+  private readonly planets = computed(
+    () => new PlanetLoader(this.src(), this.builtIns ?? undefined),
+  );
+  /**
+   * The planets' overlays made in the editor, built, by file id (its revision: as it is now): each
+   * once, from where its materials are in the game data.
+   */
+  private readonly madePlanets = computed(() => {
+    this.planets(); // (made again for another source)
+    return new Map<string, Promise<LoadedPlanet>>();
+  });
   /** The file each overlay is loaded from, by its id (one made in the editor: as it is now). */
   private readonly overlayFile = computed(() => {
     const library = this.design.library();
@@ -175,11 +195,41 @@ export class PlayBackground {
     params: () => this.needed() ?? undefined,
     loader: async ({ params, abortSignal }) => {
       const loader = this.planets();
+      const library = untracked(this.design.library);
+      const made = untracked(this.madePlanets);
+      const load = (id: string) => {
+        const o = createdOf(library, id);
+        if (!o) return loader.load(id, abortSignal);
+        let building = made.get(id);
+        if (!building) {
+          building = this.madePlanet(id, o);
+          building.catch(() => made.delete(id)); // not kept: asked for again, it is tried again
+          made.set(id, building);
+        }
+        return building;
+      };
       const ids = params ? params.split(',') : [];
-      const files = await Promise.all(ids.map((id) => loader.load(id, abortSignal)));
+      const files = await Promise.all(ids.map(load));
       return new Map<string, LoadedPlanet>(ids.map((id, i) => [id, files[i]!]));
     },
   });
+  /** A planet's overlay made in the editor, built from where its materials are (their files loaded). */
+  private async madePlanet(id: string, o: CreatedOverlay): Promise<LoadedPlanet> {
+    const { lookup, images } = await this.sources(o);
+    const planet = createdPlanetFile(o, lookup);
+    return { id, planet, images: imagesOf(planet.textures, images) };
+  }
+
+  /** What an overlay made in the editor is built from, loaded: the files its materials are in, the scene. */
+  private sources(o: CreatedOverlay, signal?: AbortSignal) {
+    const loader = untracked(this.planets);
+    return loadSources(
+      o,
+      (id) => loader.load(id, signal),
+      () => untracked(this.sceneLoading),
+    );
+  }
+
   /**
    * What is shown: the set placed, each planet as the library has it under what the set says, as
    * soon as all it needs has loaded; until then the last.
@@ -213,6 +263,7 @@ export class PlayBackground {
           position: p.position,
           radius: p.radius,
           materials: p.materials,
+          base: p.base,
           parts: p.parts,
           order: p.order,
           lights: p.lights,

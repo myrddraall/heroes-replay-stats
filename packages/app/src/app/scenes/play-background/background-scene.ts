@@ -53,7 +53,7 @@ export interface BodySettings {
   readonly lightFrom?: Vec3;
   readonly shadeTowards?: Vec3;
   readonly rim?: Vec3;
-  /** Its materials' settings, by name (its own and its style's). */
+  /** Its materials' settings: its own by name, its overlays' by `materialKey` (the overlay's and the name). */
   readonly materials?: MaterialSettingsMap;
   /** Its parts' settings, by part (its own and its style's). */
   readonly parts?: PartSettingsMap;
@@ -61,7 +61,7 @@ export interface BodySettings {
   readonly lights?: LightSettingsMap;
   /** Lights added to it (an overlay's: to the bodies wearing it). */
   readonly added?: readonly AddedLight[];
-  /** Its materials' draw order, by name (the later over the earlier; see `drawOrder`), where set. */
+  /** Its materials' draw order, by `materialKey` (the later over the earlier; see `drawOrder`), where set. */
   readonly order?: readonly string[];
 }
 
@@ -373,13 +373,13 @@ export function fitScene<T extends { readonly position: Vec3; readonly radius: n
 }
 
 /**
- * A sky as set on the Background page (a scene's, or the library's): its materials' settings by name
- * (its overlays' too), a tint over all of it, and the overlays it wears.
+ * A sky as set on the Background page (a scene's, or the library's): its materials' settings by key
+ * (`materialKey`: its overlays' too), a tint over all of it, and the overlays it wears.
  */
 export interface SkyChoices {
   readonly materials?: MaterialSettingsMap;
   readonly tint?: MaterialTint;
-  /** Its materials' draw order, by name (the later over the earlier; see `drawOrder`), where set. */
+  /** Its materials' draw order, by `materialKey` (the later over the earlier; see `drawOrder`), where set. */
   readonly order?: readonly string[];
   /** The overlays it wears, the later over the earlier (none given: what is under it; the data's). */
   readonly overlays?: readonly string[];

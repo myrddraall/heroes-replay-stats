@@ -283,16 +283,23 @@ planet's settings are kept per what it wears (`variants`, by `wornKey`: the ids 
 what it wears now. An overlay's parts are keyed `style:<overlay>:<part>` (a part's id, else its
 role), so two worn together keep theirs apart; designs kept before, with `style:<role>`, are read
 on load as the overlay they were set for (`migrateDesign`; the only overlay there was, `nexus`,
-where that isn't said). Materials stay keyed by name: an overlay's material is set as any material
-of that name is on that body. In the tree each overlay a body wears is a row of its own (its
+where that isn't said). An overlay's materials' settings are kept by the overlay too
+(`materialKey`: `style:<overlay>:<name>`, at every level, the overlay's own library settings
+included; a body's own by name), so a body's material and an overlay's, or two overlays', that
+share a name are set apart; the same keys name them in draw orders and in lights' reach
+(`material:<key>`). A material's base settings (the library's for the material on its own) stay by
+its name and are under every use of it. Designs kept before are read on load by these keys
+(`migrateDesign`: the data's overlays' materials then, `nexus`'s and the horizon energy's, moved;
+those of overlays made in the editor copied, as a body may have one of the same name). In the tree each overlay a body wears is a row of its own (its
 parts, materials and lights under it), switched by its checkbox and dragged among the others to
 wear them in another order (the materials' draw order following it, `overlayOrder`); a body's
 panel lists what it wears (Overlays: take one off, add another; `PickList`).
 
-The sky wears overlays too: parts about the eye, drawn as the sky's own materials are (by name, at
-their depth). Every sky shares the game's camera, so a sky overlay fits by the view: a part is
+The sky wears overlays too: parts about the eye, drawn as the sky's own materials are (at their
+depth; their settings by `materialKey`, as a body's overlays' are). Every sky shares the game's camera, so a sky overlay fits by the view: a part is
 placed about the eye, Size times as far (the same in view, nearer or further among the objects),
-Turned round the eye, Tilted up, and a band Width times as wide (`placedSkyMesh`). The game data's
+Turned round the eye, Tilted up, and a band Width times as wide and Height times as high about
+its middle (`placedSkyMesh`). The game data's
 horizon energy is one: heroes-capture sets the Play screen's energy funnel apart from the sky's
 meshes as the overlay `horizon-energy` (`overlays` and `wears` in `scene.json`), which the sky
 wears unless told otherwise, so it is drawn as it was (`skyWithLibrary` resolves what a sky wears:
@@ -303,10 +310,13 @@ what it wears.
 Overlays can be made in the editor (the library's Overlays list, grouped Planet and Sky: New
 planet overlay, New sky overlay; kept in the design as `library.created`, ids `@overlay-<n>`): an
 overlay starts empty, gets parts (Add part: a sphere or a ring about a planet, a band about the
-eye), and each part draws materials picked from those the game data has (the part's Materials:
-the material is copied in as it is, its settings by name as any material's). One made is built as
-the data's are (`createdPlanetFile`, `createdSkyFile`; loaded as a built-in planet with its
-revision in its id, so a change is loaded anew), and deleting it takes it off everything wearing
+eye), and each part draws materials picked from those the game data has (the part's Materials).
+A material picked is kept by where it is (`sources`: the planet, the data's overlay or the sky it
+is first used in), not copied: it is read from there as the overlay is built, so it is that
+material as the data has it, its settings set over it as any material's are. One made is built
+from the files its materials are in, loaded for it (`loadSources`, `createdPlanetFile`,
+`createdSkyFile`; the editor's stores by `withPlanetFiles`' `files` and `madeLookup`; its file id
+carries its revision, so a change is built anew), and deleting it takes it off everything wearing
 it.
 
 The Graphics settings (Settings page; `GraphicsStore`, `packages/app/src/app/data/settings/graphics.store.ts`,
