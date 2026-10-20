@@ -17,7 +17,8 @@ import {
 import {
   type MaterialSettings,
   mergePartSettings,
-  partKey,
+  ownPartKey,
+  overlayPartKey,
   type PartKey,
   type PartSettings,
   type PartSettingsMap,
@@ -25,6 +26,7 @@ import {
   withPart,
   wornParts,
 } from './scene-planets';
+import { wornKey } from './overlays';
 import { reach } from './scene-renderer';
 import type { AddedLight, LightId, LightSettings } from './scene-lights';
 import type { PlanetSet } from './planet-sets';
@@ -112,29 +114,62 @@ export function changeAt(
   return changed ? bodies.map((x, i) => (i === b ? changed : x)) : bodies.filter((_, i) => i !== b);
 }
 
-/** A body's style chosen ('': none, over its own). */
-export const setStyle = (bodies: readonly SceneBody[], path: BodyPath, style: string) =>
+/**
+ * A planet with the overlays it wears changed (none given: back to its own), its settings for what
+ * it wears now starting as those for what it wore (`from`: their key) where none are kept for it,
+ * so what was set on it stays.
+ */
+function wearing(p: SceneBody, overlays: readonly string[] | undefined, now: string): SceneBody {
+  const rest = without(p, ['style', 'overlays']) ?? p;
+  const kept = p.variants?.[now];
+  const key = overlays ? wornKey(overlays) : undefined;
+  const variants =
+    key !== undefined && kept && !p.variants?.[key] ? { ...p.variants, [key]: kept } : p.variants;
+  return { ...rest, ...(overlays ? { overlays } : {}), ...(variants ? { variants } : {}) };
+}
+
+/** A moon with the overlays it wears changed (none given: back to its own). */
+function moonWearing(m: MoonChoices, overlays: readonly string[] | undefined): MoonChoices {
+  const rest = without(m, ['style', 'overlays']) ?? m;
+  return { ...rest, ...(overlays ? { overlays } : {}) };
+}
+
+/**
+ * The overlays a body wears chosen (the later over the earlier; [] none), over its own; its
+ * settings for what it wore (by `from`, their key) kept for what it wears now.
+ */
+export const setOverlays = (
+  bodies: readonly SceneBody[],
+  path: BodyPath,
+  overlays: readonly string[],
+  from: string,
+) =>
   changeAt(
     bodies,
     path,
-    (p) => ({ ...p, style }),
-    (m) => ({ ...m, style }),
+    (p) => wearing(p, overlays, from),
+    (m) => moonWearing(m, overlays),
   );
 
-/** A body's style back as its own. */
-export const resetStyle = (bodies: readonly SceneBody[], path: BodyPath) =>
+/** What a body wears back as its own (its settings for it kept, as `setOverlays` keeps them). */
+export const resetOverlays = (
+  bodies: readonly SceneBody[],
+  path: BodyPath,
+  from: string,
+  own: readonly string[],
+) =>
   changeAt(
     bodies,
     path,
-    (p) => ({ ...p, style: undefined }),
-    (m) => ({ ...m, style: undefined }),
+    (p) => wearing(wearing(p, own, from), undefined, from),
+    (m) => moonWearing(m, undefined),
   );
 
-/** A body's settings changed: a planet's in the style it wears (`style`), a moon's its own (none left: none). */
+/** A body's settings changed: a planet's for what it wears (`worn`: its key), a moon's its own (none left: none). */
 export function changeSettings(
   bodies: readonly SceneBody[],
   path: BodyPath,
-  style: string,
+  worn: string,
   change: (settings: BodySettings) => BodySettings | undefined,
 ): readonly SceneBody[] {
   return changeAt(
@@ -142,9 +177,9 @@ export function changeSettings(
     path,
     (p) => {
       const variants = { ...p.variants };
-      const changed = change(variants[style] ?? {});
-      if (changed && Object.keys(changed).length) variants[style] = changed;
-      else delete variants[style];
+      const changed = change(variants[worn] ?? {});
+      if (changed && Object.keys(changed).length) variants[worn] = changed;
+      else delete variants[worn];
       return { ...p, variants: Object.keys(variants).length ? variants : undefined };
     },
     (m) => {
@@ -273,21 +308,22 @@ export function withoutPartSetting(
 
 /**
  * How much of the view a body takes, in its radii: its parts as set (`set`); its spheres (its
- * own, its atmosphere's shells, its style's as it wears them) and past them the bloom their glow spreads into; and its rings
- * (its style's, its own for them where it has any), sized as seen from afar (their biggest), a
+ * own, its atmosphere's shells, its overlays' as it wears them) and past them the bloom their glow spreads into; and its rings
+ * (its overlays', its own for them where it has any), sized as seen from afar (their biggest), a
  * glow at the limb of their own (the bloom isn't added past them again).
  */
 export const HALO_MARGIN = 1.12;
 export function visualExtent(
   file?: PlanetFile,
-  styleFile?: PlanetFile,
-  style?: string,
+  overlays: readonly { readonly id: string; readonly file?: PlanetFile }[] = [],
   set?: PartSettingsMap,
 ): number {
   const parts = [
-    ...(file?.parts ?? []).map((p) => withPart(p, set?.[partKey('own', p.role)])),
-    ...(styleFile ? wornParts(file, style, styleFile.parts) : []).map((p) =>
-      withPart(p, set?.[partKey('style', p.role)]),
+    ...(file?.parts ?? []).map((p) => withPart(p, set?.[ownPartKey(p)])),
+    ...overlays.flatMap((o) =>
+      (o.file ? wornParts(file, o.id, o.file.parts) : []).map((p) =>
+        withPart(p, set?.[overlayPartKey(o.id, p)]),
+      ),
     ),
   ];
   const spheres = parts.filter((p) => p.shape.kind === 'sphere');
@@ -295,12 +331,13 @@ export function visualExtent(
   return Math.max(HALO_MARGIN * reach(spheres), reach(rings, Infinity));
 }
 
-/** A body's parts' settings in effect: under the level edited (its own defaults, its style's), then that level's. */
+/** A body's parts' settings in effect: under the level edited (its own defaults, its overlays'), then that level's. */
 export const bodyParts = (b: {
   readonly below?: { readonly parts?: PartSettingsMap };
-  readonly styleBelow?: { readonly parts?: PartSettingsMap };
+  readonly overlays: readonly { readonly below?: { readonly parts?: PartSettingsMap } }[];
   readonly settings: { readonly parts?: PartSettingsMap };
-}): PartSettingsMap => mergePartSettings(b.below?.parts, b.styleBelow?.parts, b.settings.parts);
+}): PartSettingsMap =>
+  mergePartSettings(b.below?.parts, ...b.overlays.map((o) => o.below?.parts), b.settings.parts);
 
 /**
  * A body's shadow as set before its lights were objects (`shade`, `shadeTowards`), as its shadow
@@ -392,6 +429,25 @@ export function withMaterialSwitched(
   return on === below
     ? withoutMaterial(s, name, ['enabled'])
     : withMaterial(s, name, { enabled: on });
+}
+
+/**
+ * Settings with an overlay the body wears switched on or off: back to what is under this level
+ * (`below`) where that is the same (not set here), else set here.
+ */
+export function withOverlaySwitched(
+  s: BodySettings,
+  id: string,
+  on: boolean,
+  below: boolean,
+): BodySettings | undefined {
+  const enabled = { ...s.overlaysEnabled };
+  if (on === below && s.overlayEnabled === undefined) delete enabled[id];
+  else enabled[id] = on;
+  return without(
+    { ...s, overlaysEnabled: enabled },
+    Object.keys(enabled).length ? [] : ['overlaysEnabled'],
+  );
 }
 
 /** Settings with an added light taken out, and what was set for it; none left: none at all. */

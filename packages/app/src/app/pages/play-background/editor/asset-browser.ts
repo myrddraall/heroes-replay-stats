@@ -1,4 +1,5 @@
 import { Component, computed, inject } from '@angular/core';
+import { overlayName } from '../../../scenes/play-background/created-overlays';
 import { DraftDesignStore } from '../draft-design.store';
 import { AssetCatalogStore } from './asset-catalog.store';
 import { AssetList, type BrowserItem } from './asset-list';
@@ -70,11 +71,13 @@ export class AssetBrowser {
             unsaved: d.unsavedLibraryPlanets().has(p.id),
           }));
         case 'style':
-          return c.styles().map((id) => ({
-            key: key(id),
-            label: d.library().styles[id]?.label ?? id,
-            caption: d.library().styles[id]?.label ? id : undefined,
-            unsaved: d.unsavedLibraryStyles().has(id),
+          // Grouped by what they are worn on: planets', then the sky's.
+          return c.overlays().map((o) => ({
+            key: key(o.id),
+            label: d.library().styles[o.id]?.label ?? o.label ?? overlayName(d.library(), o.id),
+            caption: o.made ? 'Made here' : d.library().styles[o.id]?.label ? o.id : undefined,
+            unsaved: d.unsavedLibraryStyles().has(o.id),
+            group: o.kind === 'sky' ? 'Sky' : 'Planet',
           }));
         case 'material':
           return c.materials().map((m) => ({

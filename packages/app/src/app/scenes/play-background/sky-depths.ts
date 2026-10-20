@@ -54,6 +54,12 @@ function depthsOf(scene: PlayScene): Readonly<Record<string, MaterialDepth>> {
     const emitter = scene.meshes[system.emitter];
     if (emitter) out[system.material] = depthOf(emitter);
   }
+  // The sky's overlays' meshes in the game data (the energy round the view), as the sky's own.
+  for (const overlay of Object.values(scene.overlays ?? {}))
+    for (const part of overlay.parts)
+      if (part.shape.kind === 'mesh')
+        for (const name of part.materials)
+          out[name] = depthOf({ ...part.shape, materials: part.materials });
   return out;
 }
 

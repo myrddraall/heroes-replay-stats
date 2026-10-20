@@ -34,6 +34,8 @@ import {
 } from '../../../scenes/play-background/scene-planets';
 import { materialLabel } from '../../../scenes/play-background/material-names';
 import { withPlanetFiles } from '../../../scenes/play-background/with-planet-files';
+import { type OverlayKind, overlayFileFor } from '../../../scenes/play-background/created-overlays';
+import { createdOverlay } from '../../../scenes/play-background/overlays';
 import { DraftDesignStore } from '../draft-design.store';
 import { partMaterials } from './editor-model';
 import { EditorUiStore } from './editor-ui.store';
@@ -66,6 +68,15 @@ export interface CatalogMaterial {
   /** Its name as people read it (from how its first use shows it). */
   readonly label: string;
   readonly uses: readonly MaterialUse[];
+}
+
+/** An overlay of the library: which, what it is worn on, and whether it was made in the editor. */
+export interface CatalogOverlay {
+  readonly id: string;
+  readonly kind: OverlayKind;
+  readonly made: boolean;
+  /** Its name as the game data has it, where it has one. */
+  readonly label?: string;
 }
 
 export interface CatalogScene {
@@ -114,7 +125,13 @@ export const AssetCatalogStore = signalStore(
           a.id.localeCompare(b.id, undefined, { numeric: true }),
       );
     });
-    const styles = computed(() => index()?.styles.map((s) => s.id) ?? []);
+    /** The planets' overlays: the game data's, then those made in the editor. */
+    const styles = computed(() => [
+      ...(index()?.styles.map((s) => s.id) ?? []),
+      ...Object.entries(_draft.library().created ?? {})
+        .filter(([, o]) => o.kind === 'planet')
+        .map(([id]) => id),
+    ]);
     const materials = computed((): CatalogMaterial[] => {
       const uses = new Map<string, MaterialUse[]>();
       const use = (name: string, u: MaterialUse) => {
@@ -138,7 +155,7 @@ export const AssetCatalogStore = signalStore(
           });
       }
       for (const id of styles()) {
-        const file = all[`style-${id}`];
+        const file = all[overlayFileFor(_draft.library(), id)];
         if (!file) continue;
         for (const m of partMaterials(file))
           use(m.name, {
@@ -170,6 +187,21 @@ export const AssetCatalogStore = signalStore(
         for (const mesh of Object.values(scene.meshes))
           if (!mesh.planet) for (const name of mesh.materials) sky(name, false);
         for (const p of scene.particles) sky(p.material, true);
+        // The sky's overlays in the game data (the energy round the view): the sky's, as it wears them.
+        for (const overlay of Object.values(scene.overlays ?? {}))
+          for (const part of overlay.parts)
+            for (const name of part.materials) {
+              const material = overlay.materials[name];
+              if (material)
+                use(name, {
+                  kind: 'sky',
+                  id: PLAY_SKY,
+                  material,
+                  textures: { ...scene.textures, ...overlay.textures },
+                  pattern: false,
+                  depth: depths[name],
+                });
+            }
       }
       return [...uses]
         .map(([name, u]) => ({
@@ -185,6 +217,19 @@ export const AssetCatalogStore = signalStore(
     return {
       planets,
       styles,
+      /** The overlays, by what they are worn on (planets', then the sky's), and whether made here. */
+      overlays: computed((): CatalogOverlay[] => [
+        ...styles().map((id) => ({ id, kind: 'planet' as const, made: createdOverlay(id) })),
+        ...Object.entries(sceneFile()?.overlays ?? {}).map(([id, file]) => ({
+          id,
+          kind: 'sky' as const,
+          made: false,
+          ...(file.label ? { label: file.label } : {}),
+        })),
+        ...Object.entries(_draft.library().created ?? {})
+          .filter(([, o]) => o.kind === 'sky')
+          .map(([id]) => ({ id, kind: 'sky' as const, made: true })),
+      ]),
       materials,
       materialByName: computed(() => new Map(materials().map((m) => [m.name, m] as const))),
       particles: computed(
@@ -231,7 +276,7 @@ export const AssetCatalogStore = signalStore(
       ];
     }),
   })),
-  withComputed(({ _sceneFile, planets, styles }) => {
+  withComputed(({ _sceneFile, _draft, planets, styles }) => {
     const sceneFile = computed(() => (_sceneFile.hasValue() ? _sceneFile.value() : null));
     return {
       /** The sky's own materials (not its planets'), in its meshes' order, then its particles'. */
@@ -246,11 +291,16 @@ export const AssetCatalogStore = signalStore(
       }),
       neededFiles: computed(() => [
         ...planets().map((p) => p.id),
-        ...styles().map((id) => `style-${id}`),
+        ...styles().map((id) => overlayFileFor(_draft.library(), id)),
       ]),
     };
   }),
   withMethods((store) => ({
+    /** A new overlay (to wear on a planet, or the sky), opened. */
+    createOverlay(kind: OverlayKind): void {
+      const id = store._draft.createOverlay(kind);
+      store._ui.open({ kind: 'style', id });
+    },
     setQuery(query: string): void {
       patchState(store, { query });
     },

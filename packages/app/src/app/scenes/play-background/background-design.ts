@@ -2,6 +2,8 @@ import type { Signal } from '@angular/core';
 import type { BodySettings, PlanetChoices, SkyChoices } from './background-scene';
 import { mergeMaterialSettings } from './material-settings';
 import { type AddedLight, mergeLightSettings } from './scene-lights';
+import type { CreatedOverlay } from './created-overlays';
+import { createdOverlay, overlayOn } from './overlays';
 import type { SetPlanet } from './planet-sets';
 import {
   type BodyShade,
@@ -33,6 +35,8 @@ export interface LibraryState {
   readonly styles: Readonly<Record<string, BodySettings>>;
   /** The sky's materials and a tint over all of it. */
   readonly sky: SkyChoices;
+  /** The overlays made in the editor, by id (`@overlay-<n>`); their names and settings are in `styles`. */
+  readonly created?: Readonly<Record<string, CreatedOverlay>>;
 }
 
 /** The scenes: each a planet with its moons and a sky of its own (the random sets' under ''), and the colour over the whole picture. */
@@ -83,7 +87,8 @@ export interface BackgroundSceneSource {
   readonly planets: Signal<readonly SetPlanet[] | null>;
   /** Whether it shows the random sets (its planets are none of its own). */
   readonly random?: Signal<boolean>;
-  readonly sky: Signal<SkySettings>;
+  /** Its sky as set (over the library's): its materials, tint, order, and the overlays it wears. */
+  readonly sky: Signal<SkyChoices>;
   /** The scene's lights, lighting every planet (none: none). */
   readonly lights?: Signal<readonly AddedLight[]>;
   readonly tint: Signal<TintSettings | null>;
@@ -111,32 +116,94 @@ export function shadeOf(settings: BodySettings | undefined): Partial<BodyShade> 
  */
 export function withLibrary(set: SetPlanet, library: LibraryState): SetPlanet {
   const own = library.planets[set.id];
-  // Its overlay switched off (by the scene, else the library): drawn as if it wore none.
-  const worn = (set.overlayEnabled ?? own?.overlayEnabled) !== false;
-  const planet = worn ? set : { ...set, style: undefined };
-  const style = planet.style ? library.styles[planet.style] : undefined;
+  // Each overlay switched off (by the scene, else the library): drawn as if it didn't wear it;
+  // one made in the editor that is no longer there, as if it never was.
+  const on = (id: string) =>
+    (!createdOverlay(id) || !!library.created?.[id]) &&
+    (set.overlaysEnabled?.[id] ?? set.overlayEnabled ?? overlayOn(id, own)) !== false;
+  const overlays = (set.overlays ?? []).filter(on);
+  const planet: SetPlanet =
+    overlays.length === (set.overlays ?? []).length ? set : { ...set, overlays };
+  const styles = overlays.map((id) => library.styles[id]).filter((s) => !!s);
   const base = library.materials;
-  if (!own && !style && !Object.keys(base ?? {}).length) return planet;
+  if (!own && !styles.length && !Object.keys(base ?? {}).length) return planet;
+  const orders = styles.flatMap((s) => (s.order ? [s.order] : []));
   return {
     ...planet,
-    materials: mergeMaterialSettings(base, own?.materials, style?.materials, planet.materials),
-    parts: mergePartSettings(own?.parts, style?.parts, planet.parts),
-    order: planet.order ?? own?.order ?? style?.order,
-    lights: mergeLightSettings(own?.lights, style?.lights, planet.lights),
-    added: [...(own?.added ?? []), ...(style?.added ?? []), ...(planet.added ?? [])],
+    materials: mergeMaterialSettings(
+      base,
+      own?.materials,
+      ...styles.map((s) => s.materials),
+      planet.materials,
+    ),
+    parts: mergePartSettings(own?.parts, ...styles.map((s) => s.parts), planet.parts),
+    order: planet.order ?? own?.order ?? (orders.length ? orders.flat() : undefined),
+    lights: mergeLightSettings(own?.lights, ...styles.map((s) => s.lights), planet.lights),
+    added: [
+      ...(own?.added ?? []),
+      ...styles.flatMap((s) => s.added ?? []),
+      ...(planet.added ?? []),
+    ],
     lighting: planet.lighting ?? own?.lighting,
     tint: planet.tint ?? own?.tint,
     lightFrom: planet.lightFrom ?? own?.lightFrom,
     rim: planet.rim ?? own?.rim,
-    shade: { ...shadeOf(own), ...shadeOf(style), ...planet.shade },
+    shade: {
+      ...shadeOf(own),
+      ...styles.reduce((a: Partial<BodyShade>, s) => ({ ...a, ...shadeOf(s) }), {}),
+      ...planet.shade,
+    },
   };
 }
 
-/** A sky as the library has it, under what a scene sets for it. */
-export function skyWithLibrary(sky: SkyChoices | undefined, library: LibraryState): SkySettings {
+/**
+ * The overlays a sky wears, as a scene sets them over the library (each over its data's, `wears`),
+ * switched on or off; one made in the editor that is no longer there, as if it never was.
+ */
+export function skyWornOf(
+  sky: SkyChoices | undefined,
+  library: LibraryState,
+  wears: readonly string[] = [],
+): string[] {
+  const worn = sky?.overlays ?? library.sky.overlays ?? wears;
+  return worn.filter((id) => !createdOverlay(id) || !!library.created?.[id]);
+}
+
+/** Whether an overlay a sky wears is drawn, as a scene sets it over the library (unset: drawn). */
+export const skyOverlayOn = (sky: SkyChoices | undefined, library: LibraryState, id: string) =>
+  (sky?.overlaysEnabled?.[id] ?? library.sky.overlaysEnabled?.[id]) !== false;
+
+/** The overlays a sky wears and draws (see `skyWornOf`), those switched off left out. */
+export function skyOverlaysOf(
+  sky: SkyChoices | undefined,
+  library: LibraryState,
+  wears: readonly string[] = [],
+): string[] {
+  return skyWornOf(sky, library, wears).filter((id) => skyOverlayOn(sky, library, id));
+}
+
+/**
+ * A sky as the library has it, under what a scene sets for it: its overlays (`wears`: its data's,
+ * where neither sets them), their settings as the library has each (its materials' and parts'),
+ * under the sky's own.
+ */
+export function skyWithLibrary(
+  sky: SkyChoices | undefined,
+  library: LibraryState,
+  wears: readonly string[] = [],
+): SkySettings {
+  const overlays = skyOverlaysOf(sky, library, wears);
+  const styles = overlays.map((id) => library.styles[id]);
   return {
-    materials: mergeMaterialSettings(library.materials, library.sky.materials, sky?.materials),
+    materials: mergeMaterialSettings(
+      library.materials,
+      ...styles.map((s) => s?.materials),
+      library.sky.materials,
+      sky?.materials,
+    ),
     tint: sky?.tint ?? library.sky.tint,
     order: sky?.order ?? library.sky.order,
+    overlays,
+    parts: mergePartSettings(...styles.map((s) => s?.parts), library.sky.parts, sky?.parts),
   };
 }

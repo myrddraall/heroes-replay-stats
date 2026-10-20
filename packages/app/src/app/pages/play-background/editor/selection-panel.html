@@ -30,6 +30,17 @@
       (clear)="editor.clearSkyTint()"
     />
     <p class="hint">Over the whole sky, its stars too. Its materials are under it in the tree.</p>
+    <hrs-pick-list
+      title="Overlays"
+      placeholder="Overlay…"
+      removeLabel="Take off"
+      [picked]="editor.skyWorn()"
+      [choices]="editor.skyOverlayOptions()"
+      [changed]="editor.skyOverlaysSet()"
+      (added)="editor.addSkyOverlay($event)"
+      (removed)="editor.removeSkyOverlay($event)"
+      (resetRequested)="editor.resetSkyOverlays()"
+    />
     <div class="buttons">
       <button
         type="button"
@@ -46,21 +57,22 @@
       <hrs-body-properties
         [values]="b.values"
         [origins]="b.origins"
-        [styleOptions]="editor.styleOptions()"
+        [overlayOptions]="editor.overlayOptions()"
         [orbit]="b.info.orbit ?? null"
         [place]="b.info.place ?? null"
         [changed]="b.changed"
         [focused]="b.focused"
         [set]="b.info.settings"
         [baseTint]="b.baseTint"
-        [styleSet]="b.info.styleSet"
+        [overlaysSet]="b.info.overlaysSet"
         [overlay]="b.info.file?.kind === 'style'"
         [label]="b.label"
         [labelBelow]="b.labelBelow"
         [styled]="b.canHaveMoons"
         [moons]="b.canHaveMoons"
-        (styleChange)="editor.setStyle($event)"
-        (styleReset)="editor.resetStyle()"
+        (overlayAdd)="editor.addOverlay($event)"
+        (overlayRemove)="editor.removeOverlay($event)"
+        (overlaysReset)="editor.resetOverlays()"
         (settingsChange)="editor.setBody($event)"
         (clear)="editor.clearBody($event)"
         (orbitChange)="editor.setOrbit($event)"
@@ -68,10 +80,16 @@
         (removeRequested)="editor.removeMoon()"
         (focusToggle)="editor.toggleFocus()"
         (resetRequested)="editor.resetBody()"
+        [deletable]="editor.deletable()"
+        [lit]="!editor.skyOverlayOpen()"
+        (deleteRequested)="editor.deleteAsset()"
       >
         <hrs-add-light lightAdd (added)="editor.addLight($event)" />
         <hrs-add-planet moonAdd label="Add moon" (picked)="editor.addMoon($event)" />
       </hrs-body-properties>
+      @if (editor.partShapes().length) {
+        <hrs-add-part [shapes]="editor.partShapes()" (added)="editor.addPart($event)" />
+      }
     }
     @if (editor.litBy(); as lit) {
       <hrs-lit-by
@@ -95,8 +113,20 @@
     @if (editor.part(); as p) {
       <hrs-part-properties
         [part]="p"
+        [removable]="editor.partMaterials() !== null"
         (settingsChange)="editor.setPart($event)"
         (clear)="editor.clearPart($event)"
+        (removeRequested)="editor.removePart()"
+      />
+    }
+    @if (editor.partMaterials(); as pm) {
+      <hrs-pick-list
+        title="Materials"
+        placeholder="Material…"
+        [picked]="pm.picked"
+        [choices]="pm.choices"
+        (added)="editor.addPartMaterial($event)"
+        (removed)="editor.removePartMaterial($event)"
       />
     }
     @if (editor.litBy(); as lit) {

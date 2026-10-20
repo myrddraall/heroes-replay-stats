@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { EMPTY_LIBRARY, type LibraryState, skyWithLibrary, withLibrary } from './background-design';
+import {
+  EMPTY_LIBRARY,
+  type LibraryState,
+  skyWithLibrary,
+  skyWornOf,
+  withLibrary,
+} from './background-design';
 import type { SetPlanet } from './planet-sets';
 
 const korhal: SetPlanet = { id: 'korhal', position: [0, 0, 0], radius: 1 };
@@ -25,7 +31,7 @@ describe('withLibrary', () => {
       sky: {},
     };
     const shown = withLibrary(
-      { ...korhal, style: 'nexus', tint: blue, materials: { rock: { strength: 0.9 } } },
+      { ...korhal, overlays: ['nexus'], tint: blue, materials: { rock: { strength: 0.9 } } },
       library,
     );
     expect(shown.lighting).toBe(0.5);
@@ -40,12 +46,12 @@ describe('withLibrary', () => {
       styles: { nexus: { shade: 0.8, added: [{ id: 'added-x', kind: 'ambient', name: 'Glow' }] } },
       sky: {},
     };
-    const off = withLibrary({ ...korhal, style: 'nexus' }, library);
-    expect(off.style).toBeUndefined();
+    const off = withLibrary({ ...korhal, overlays: ['nexus'] }, library);
+    expect(off.overlays).toEqual([]);
     expect(off.added).toEqual([]);
     expect(off.shade).toEqual({});
-    const on = withLibrary({ ...korhal, style: 'nexus', overlayEnabled: true }, library);
-    expect(on.style).toBe('nexus');
+    const on = withLibrary({ ...korhal, overlays: ['nexus'], overlayEnabled: true }, library);
+    expect(on.overlays).toEqual(['nexus']);
     expect(on.added).toHaveLength(1);
   });
 
@@ -55,7 +61,32 @@ describe('withLibrary', () => {
       styles: { nexus: { shade: 0.8 } },
       sky: {},
     };
-    expect(withLibrary({ ...korhal, style: 'nexus' }, library).shade).toEqual({ strength: 0.8 });
+    expect(withLibrary({ ...korhal, overlays: ['nexus'] }, library).shade).toEqual({
+      strength: 0.8,
+    });
+  });
+
+  it('stacks the overlays a planet wears, the later over the earlier, each switched on its own', () => {
+    const library: LibraryState = {
+      planets: { korhal: { overlaysEnabled: { clouds: false } } },
+      styles: {
+        nexus: { shade: 0.8, materials: { grid: { glow: 2 } }, order: ['grid'] },
+        clouds: { shade: 0.2, materials: { grid: { glow: 5 } }, order: ['puff'] },
+        rings: { materials: { band: { strength: 0.5 } }, order: ['band'] },
+      },
+      sky: {},
+    };
+    const worn = withLibrary({ ...korhal, overlays: ['nexus', 'clouds', 'rings'] }, library);
+    expect(worn.overlays).toEqual(['nexus', 'rings']); // clouds switched off in the library
+    expect(worn.materials).toEqual({ grid: { glow: 2 }, band: { strength: 0.5 } });
+    expect(worn.order).toEqual(['grid', 'band']);
+    const scene = withLibrary(
+      { ...korhal, overlays: ['nexus', 'clouds'], overlaysEnabled: { clouds: true } },
+      library,
+    );
+    expect(scene.overlays).toEqual(['nexus', 'clouds']); // the scene over the library
+    expect(scene.materials?.['grid']).toEqual({ glow: 5 });
+    expect(scene.shade).toEqual({ strength: 0.2 });
   });
 });
 
@@ -85,11 +116,43 @@ describe('skyWithLibrary', () => {
       ...EMPTY_LIBRARY,
       sky: { materials: { stars: { strength: 0.4, glow: 1 } }, tint: red },
     };
-    expect(skyWithLibrary({ materials: { stars: { strength: 1 } } }, library)).toEqual({
+    expect(skyWithLibrary({ materials: { stars: { strength: 1 } } }, library)).toMatchObject({
       materials: { stars: { strength: 1, glow: 1 } },
       tint: red,
     });
     expect(skyWithLibrary({ tint: blue }, library).tint).toEqual(blue);
     expect(skyWithLibrary(undefined, library).tint).toEqual(red);
+  });
+
+  it("wears its data's overlays unless set, each switched on its own, their settings the library's", () => {
+    const library: LibraryState = {
+      ...EMPTY_LIBRARY,
+      styles: {
+        horizon: {
+          materials: { energy: { strength: 0.5 } },
+          parts: { 'style:horizon:band': { size: 2 } },
+        },
+      },
+      sky: { overlaysEnabled: { aurora: false } },
+    };
+    const wears = ['horizon', 'aurora'];
+    const shown = skyWithLibrary(undefined, library, wears);
+    expect(shown.overlays).toEqual(['horizon']); // aurora switched off in the library
+    expect(shown.materials).toEqual({ energy: { strength: 0.5 } });
+    expect(shown.parts).toEqual({ 'style:horizon:band': { size: 2 } });
+    // A scene's own choice, over the data's and the library's.
+    const scene = skyWithLibrary(
+      {
+        overlays: ['aurora'],
+        overlaysEnabled: { aurora: true },
+        materials: { energy: { glow: 2 } },
+      },
+      library,
+      wears,
+    );
+    expect(scene.overlays).toEqual(['aurora']);
+    expect(scene.materials).toEqual({ energy: { glow: 2 } }); // horizon's settings only where worn
+    // One made in the editor that is no longer there: as if it never was.
+    expect(skyWornOf({ overlays: ['@overlay-9', 'horizon'] }, library)).toEqual(['horizon']);
   });
 });

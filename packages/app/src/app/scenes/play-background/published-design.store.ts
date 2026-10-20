@@ -2,6 +2,7 @@ import { patchState, signalStore, withHooks, withMethods, withState } from '@ngr
 import { withLocalStorage } from '../../data/store-features/with-local-storage';
 import { type Design, EMPTY_LIBRARY, EMPTY_SCENES, type ScenesState } from './background-design';
 import type { PlanetChoices } from './background-scene';
+import { migrateDesign } from './overlays';
 
 /** Where the published design is kept. */
 export const PUBLISHED_DESIGN_KEY = 'hrs.background-design';
@@ -60,6 +61,8 @@ export const PublishedDesignStore = signalStore(
       }
       const old = kept ? null : oldScenes();
       if (old) patchState(store, { scenes: old });
+      // What was kept before bodies wore several overlays, read as it is now.
+      patchState(store, migrateDesign({ library: store.library(), scenes: store.scenes() }));
     },
   }),
 );

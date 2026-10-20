@@ -1,0 +1,12 @@
+<hrs-property-section title="Add part">
+  <div class="buttons">
+    @for (s of shapes(); track s) {
+      <button type="button" class="button" (click)="added.emit(s)">
+        <mat-icon class="material-symbols-outlined" aria-hidden="true">{{
+          named[s].icon
+        }}</mat-icon>
+        {{ named[s].label }}
+      </button>
+    }
+  </div>
+</hrs-property-section>

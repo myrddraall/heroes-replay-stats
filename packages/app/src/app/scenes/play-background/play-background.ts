@@ -1,8 +1,20 @@
-import { Component, computed, inject, input, linkedSignal, output, resource } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  input,
+  linkedSignal,
+  output,
+  resource,
+  untracked,
+} from '@angular/core';
 import { BACKGROUND_DESIGN, BACKGROUND_SCENE } from './background-design.tokens';
-import { BUILT_IN_PLANETS } from './built-in-planets';
-import { type LibraryState, skyWithLibrary, withLibrary } from './background-design';
+import { BUILT_IN_PLANETS, type BuiltInPlanets } from './built-in-planets';
+import { type LibraryState, skyOverlaysOf, skyWithLibrary, withLibrary } from './background-design';
 import { BackgroundStore } from './background.store';
+import { createdBuiltIns, createdOf, createdSkyFile, overlayFileFor } from './created-overlays';
+import { overlayOfFile } from './overlays';
+import type { SkyOverlayFile } from './play-scene';
 import { playSet, randomSet, seeded, type SetPlanet } from './planet-sets';
 import { loadPlayScene, PLAY_SCENE_URL } from './play-scene';
 import { SceneCanvas } from './scene-canvas';
@@ -11,14 +23,15 @@ import {
   loadPlanetIndex,
   PlanetLoader,
   type PlanetIndex,
+  type SkySettings,
 } from './scene-planets';
 import type { PlanetPlacement } from './scene-renderer';
 import { browserColourParser, rendererTint } from './scene-tints';
 import { backgroundTints } from './tint-settings';
 
-/** What a set needs loaded: its planets and their styles, by id. */
-const neededBy = (set: readonly SetPlanet[]) => [
-  ...new Set(set.flatMap((p) => (p.style ? [p.id, `style-${p.style}`] : [p.id]))),
+/** What a set needs loaded: its planets and the overlays they wear, by file id. */
+const neededBy = (set: readonly SetPlanet[], file: (overlay: string) => string) => [
+  ...new Set(set.flatMap((p) => [p.id, ...(p.overlays ?? []).map(file)])),
 ];
 
 /**
@@ -69,10 +82,41 @@ export class PlayBackground {
   });
   /** The scene's lights, where there is a scene that has any. */
   protected readonly sceneLights = computed(() => this.source?.lights?.() ?? []);
-  /** The sky: the scene's, where there is one, over the library's. */
-  protected readonly sky = computed(() =>
-    skyWithLibrary(this.source?.sky(), this.design.library()),
-  );
+  /**
+   * The sky: the scene's, where there is one, over the library's, wearing the overlays they say
+   * (else its data's); those made in the editor with their files and images, once loaded.
+   */
+  protected readonly sky = computed((): SkySettings => {
+    const wears = this.scene.hasValue() ? this.scene.value().scene.wears : undefined;
+    const sky = skyWithLibrary(this.source?.sky(), this.design.library(), wears);
+    const made = this.skyMade.hasValue() ? this.skyMade.value() : {};
+    return { ...sky, made };
+  });
+  /** The sky's overlays made in the editor that it wears, as files to load (with their revisions). */
+  private readonly skyMadeNeeded = computed(() => {
+    const library = this.design.library();
+    const wears = this.scene.hasValue() ? this.scene.value().scene.wears : undefined;
+    return skyOverlaysOf(this.source?.sky(), library, wears)
+      .filter((id) => library.created?.[id]?.kind === 'sky')
+      .map((id) => overlayFileFor(library, id))
+      .join(',');
+  });
+  /** Those overlays loaded: each one's file as the sky draws it, and its textures' images. */
+  private readonly skyMade = resource({
+    params: () => this.skyMadeNeeded() || undefined,
+    loader: async ({ params, abortSignal }) => {
+      const loader = this.planets();
+      const library = untracked(this.design.library);
+      const out: Record<string, { file: SkyOverlayFile; images: Record<string, ImageBitmap> }> = {};
+      for (const file of params.split(',')) {
+        const o = createdOf(library, file);
+        if (!o) continue;
+        const loaded = await loader.load(file, abortSignal);
+        out[overlayOfFile(file)] = { file: createdSkyFile(o), images: { ...loaded.images } };
+      }
+      return out;
+    },
+  });
 
   protected readonly scene = resource({
     params: () => this.src(),
@@ -82,9 +126,17 @@ export class PlayBackground {
     params: () => this.src(),
     loader: ({ params, abortSignal }) => loadPlanetIndex(params, abortSignal),
   });
-  private readonly planets = computed(
-    () => new PlanetLoader(this.src(), this.builtIns ?? undefined),
-  );
+  /** The planets the app makes: the overlays made in the editor (the library's), and any provided. */
+  private readonly made: BuiltInPlanets = (() => {
+    const created = createdBuiltIns(() => untracked(this.design.library));
+    return (id: string) => created(id) ?? this.builtIns?.(id);
+  })();
+  private readonly planets = computed(() => new PlanetLoader(this.src(), this.made));
+  /** The file each overlay is loaded from, by its id (one made in the editor: as it is now). */
+  private readonly overlayFile = computed(() => {
+    const library = this.design.library();
+    return (id: string) => overlayFileFor(library, id);
+  });
   /** The set up: the scene's, where there is one; else the game's own for 0, else one drawn from the number. */
   /** Whether the random sets are shown: the site's, or a scene that is the random sets'. */
   private readonly random = computed(() => !this.source || (this.source.random?.() ?? false));
@@ -116,7 +168,7 @@ export class PlayBackground {
   /** What the set needs loaded, as a key: loading follows it alone (not every change of a setting). */
   private readonly needed = computed(() => {
     const set = this.set();
-    return set ? neededBy(set).join(',') : null;
+    return set ? neededBy(set, this.overlayFile()).join(',') : null;
   });
   /** The planets and styles the set needs, loaded. */
   private readonly loaded = resource({
@@ -148,14 +200,15 @@ export class PlayBackground {
     computation: ({ set, loaded, library }, previous) => {
       if (set?.length === 0) return []; // no planets: nothing to wait for
       if (!set || !loaded) return previous?.value ?? null;
+      const file = this.overlayFile();
       const out: PlanetPlacement[] = [];
       for (const p of set.map((s) => withLibrary(s, library))) {
         const planet = loaded.get(p.id);
-        const style = p.style ? loaded.get(`style-${p.style}`) : undefined;
-        if (!planet || (p.style && !style)) return previous?.value ?? null;
+        const overlays = (p.overlays ?? []).map((id) => loaded.get(file(id)));
+        if (!planet || overlays.some((o) => !o)) return previous?.value ?? null;
         out.push({
           planet,
-          style,
+          overlays: overlays.filter((o) => !!o),
           ...(p.enabled === false ? { hidden: true } : {}),
           position: p.position,
           radius: p.radius,

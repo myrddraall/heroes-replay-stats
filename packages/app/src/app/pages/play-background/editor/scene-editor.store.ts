@@ -16,6 +16,8 @@ import {
   ownScene,
   PLAY_SCREEN_SCENE,
   RANDOM_SCENE,
+  skyOverlayOn,
+  skyWornOf,
 } from '../../../scenes/play-background/background-design';
 import {
   type BodyPath,
@@ -41,13 +43,14 @@ import {
   bodyAt,
   changeSettings,
   removeAt,
-  resetStyle,
+  resetOverlays,
   SCENE_CENTRE,
   playScreenBodies,
   sceneBodies,
   setOrbit,
   setPlace,
-  setStyle,
+  setOverlays,
+  withOverlaySwitched,
   withMaterial,
   withPartSetting,
   withoutPartSetting,
@@ -69,7 +72,6 @@ import {
   type PartKey,
   type PartSettings,
   reordered,
-  type SkySettings,
 } from '../../../scenes/play-background/scene-planets';
 import { PRESETS } from '../../../scenes/play-background/tint-settings';
 import { withPlanetFiles } from '../../../scenes/play-background/with-planet-files';
@@ -84,7 +86,16 @@ import {
   partsOfBody,
   moonLightsOf,
   bodyLabel,
-  styleLabel,
+  overlayChoices,
+  materialIn,
+  skyOverlayChoices,
+  skyOverlayInfos,
+  skyOverlayLabel,
+  skyPartsOf,
+  overlayLabel,
+  overlayOrder,
+  wornIds,
+  wornKeyOf,
   wornLabel,
   bodyEnabled,
   overlayEnabled,
@@ -110,7 +121,13 @@ import {
   partMaterialRows,
   viewTitle,
 } from './editor-model';
+import { chosenOverlays, ownOverlays, wornKey } from '../../../scenes/play-background/overlays';
+import {
+  type CreatedShape,
+  overlayFileFor,
+} from '../../../scenes/play-background/created-overlays';
 import { REFERENCE_KEY } from './editing-aids.store';
+import type { PickChoice } from './pick-list';
 import { EditorUiStore } from './editor-ui.store';
 import { type AssetTarget, type OpenTarget, RANDOM_SETS } from './open-target';
 import type { TreeMove, TreeRow } from './scene-tree';
@@ -131,16 +148,23 @@ const SCENE_LIGHTS = 'scene-lights';
 const sceneLightKey = (id: LightId) => `scene-light/${id}`;
 const SKY = 'sky';
 const bodyKey = (path: BodyPath) => `body:${pathKey(path)}`;
-/** The overlay it wears: its parts (with their materials) and its lights, under it. */
-const overlayKey = (path: BodyPath) => `${bodyKey(path)}/overlay`;
-/** Its overlay's lights, a group of their own under the overlay. */
-const overlayLightsKey = (path: BodyPath) => `${bodyKey(path)}/overlay-lights`;
-const materialKey = (path: BodyPath, name: string) => `${bodyKey(path)}/m/${name}`;
+/** An overlay it wears, by id: its parts (with their materials) and its lights, under it. */
+const overlayKey = (path: BodyPath, id: string) => `${bodyKey(path)}/overlay/${id}`;
+/** An overlay's lights, a group of their own under the overlay. */
+const overlayLightsKey = (path: BodyPath, id: string) => `${bodyKey(path)}/overlay-lights/${id}`;
+/** A material of its own, or of an overlay it wears (by the overlay's id: two may share one). */
+const materialKey = (path: BodyPath, name: string, overlay?: string) =>
+  overlay ? `${bodyKey(path)}/om/${overlay}/${name}` : `${bodyKey(path)}/m/${name}`;
 const partRowKey = (path: BodyPath, key: PartKey) => `${bodyKey(path)}/p/${key}`;
 /** Its lights (its rig's and its shadow), a group of their own. */
 const lightsKey = (path: BodyPath) => `${bodyKey(path)}/lights`;
 const lightRowKey = (path: BodyPath, id: LightId) => `${bodyKey(path)}/l/${id}`;
 const skyMaterialKey = (name: string) => `${SKY}/m/${name}`;
+/** An overlay the sky wears, by id: its parts (with their materials) under it. */
+const skyOverlayKey = (id: string) => `${SKY}/overlay/${id}`;
+const skyPartKey = (key: PartKey) => `${SKY}/p/${key}`;
+/** A material of an overlay the sky wears (two may share one). */
+const skyOverlayMaterialKey = (overlay: string, name: string) => `${SKY}/om/${overlay}/${name}`;
 /**
  * The sky's materials at a depth (background, midground, foreground), a group of their own: open
  * unless folded (its key among those kept unfolded means folded, so it starts open).
@@ -151,13 +175,30 @@ const skyDepthKey = (depth: string) => `${SKY}/depth/${depth}`;
 type Target =
   | { readonly kind: 'scene' }
   | { readonly kind: 'sky' }
-  | { readonly kind: 'sky-material'; readonly name: string; readonly view?: MaterialView }
+  | {
+      readonly kind: 'sky-material';
+      readonly name: string;
+      /** The overlay the sky wears it is of, where it is one's (else the sky's own). */
+      readonly overlay?: string;
+      readonly view?: MaterialView;
+    }
+  /** A part of an overlay the sky wears. */
+  | { readonly kind: 'sky-part'; readonly key: PartKey }
   | { readonly kind: 'body'; readonly path: BodyPath }
-  | { readonly kind: 'group'; readonly path: BodyPath }
+  /** A group of rows: an overlay a body wears (`overlay`: which), its lights, the sky's depths. */
+  | {
+      readonly kind: 'group';
+      readonly path: BodyPath;
+      readonly overlay?: string;
+      /** An overlay the sky wears (its id). */
+      readonly skyOverlay?: string;
+    }
   | {
       readonly kind: 'material';
       readonly path: BodyPath;
       readonly name: string;
+      /** The overlay it is of, where it is one's (else the body's own). */
+      readonly overlay?: string;
       /** What of it the row shows, where not the material itself. */
       readonly view?: MaterialView;
     }
@@ -186,6 +227,14 @@ function targetOf(key: string): Target {
   }
   if (key === REFERENCE_KEY) return { kind: 'reference' };
   if (key.startsWith(`${SKY}/m/`)) return { kind: 'sky-material', name: key.slice(SKY.length + 3) };
+  if (key.startsWith(`${SKY}/om/`)) {
+    const [overlay, ...name] = key.slice(SKY.length + 4).split('/');
+    return { kind: 'sky-material', name: name.join('/'), overlay };
+  }
+  if (key.startsWith(`${SKY}/overlay/`))
+    return { kind: 'group', path: [], skyOverlay: key.slice(SKY.length + 9) };
+  if (key.startsWith(`${SKY}/p/`))
+    return { kind: 'sky-part', key: key.slice(SKY.length + 3) as PartKey };
   if (key.startsWith(`${SKY}/depth/`)) return { kind: 'group', path: [] };
   if (key === SKY) return { kind: 'sky' };
   if (key === SCENE_LIGHTS) return { kind: 'group', path: [] };
@@ -196,10 +245,14 @@ function targetOf(key: string): Target {
   const slash = rest.indexOf('/');
   const path = pathOf(slash < 0 ? rest : rest.slice(0, slash));
   const tail = slash < 0 ? '' : rest.slice(slash);
-  if (tail === '/overlay' || tail === '/lights' || tail === '/overlay-lights')
-    return { kind: 'group', path };
+  if (tail.startsWith('/overlay/')) return { kind: 'group', path, overlay: tail.slice(9) };
+  if (tail === '/lights' || tail.startsWith('/overlay-lights/')) return { kind: 'group', path };
   if (tail.startsWith('/l/')) return { kind: 'light', path, id: tail.slice(3) as LightId };
   if (tail.startsWith('/m/')) return { kind: 'material', path, name: tail.slice(3) };
+  if (tail.startsWith('/om/')) {
+    const [overlay, ...name] = tail.slice(4).split('/');
+    return { kind: 'material', path, name: name.join('/'), overlay };
+  }
   if (tail.startsWith('/p/')) return { kind: 'part', path, key: tail.slice(3) as PartKey };
   return { kind: 'body', path };
 }
@@ -264,17 +317,23 @@ export const SceneEditorStore = signalStore(
       random() ? [] : sceneBodies(publishedEntry(), sceneId(), defaults()),
     );
     const library = _draft.library;
+    /** The file each overlay is loaded from, by its id (one made in the editor: as it is now). */
+    const overlayFileOf = computed(() => {
+      const lib = library();
+      return (id: string) => overlayFileFor(lib, id);
+    });
 
     /** The scene's bodies: each planet, then its moons after it (theirs after each). */
     const bodies = computed((): BodyInfo[] => {
       const all = files();
       const lib = library();
       const out: BodyInfo[] = [];
+      const file = overlayFileOf();
       const info = (
         path: BodyPath,
         bodyId: string,
-        bodyStyle: string,
-        styleSet: boolean,
+        worn: readonly string[],
+        overlaysSet: boolean,
         settings: BodySettings,
         children: readonly MoonChoices[],
         orbit?: Orbit,
@@ -282,27 +341,34 @@ export const SceneEditorStore = signalStore(
       ): BodyInfo => ({
         key: bodyKey(path),
         id: bodyId,
-        style: bodyStyle,
-        styleSet,
+        overlays: worn.map((id) => ({
+          id,
+          ...(lib.created?.[id] ? { name: lib.created[id].label } : {}),
+          below: lib.styles[id],
+          file: all[file(id)],
+        })),
+        overlaysSet,
         settings,
         below: lib.planets[bodyId],
-        styleBelow: bodyStyle ? lib.styles[bodyStyle] : undefined,
         materialBase: lib.materials,
         file: all[bodyId],
-        styleFile: bodyStyle ? all[`style-${bodyStyle}`] : undefined,
         orbit,
         place,
         moons: children,
       });
+      /** What a body wears: as chosen, else its own (its data's). */
+      const worn = (chosen: readonly string[] | undefined, id: string) =>
+        chosen ?? ownOverlays(all[id]?.tuning?.style);
       const walk = (parent: BodyPath, list: readonly MoonChoices[]) =>
         list.forEach((moon, i) => {
           const path = [...parent, i];
+          const chosen = chosenOverlays(moon);
           out.push(
             info(
               path,
               moon.id,
-              moon.style ?? all[moon.id]?.tuning?.style ?? '',
-              moon.style !== undefined,
+              worn(chosen, moon.id),
+              chosen !== undefined,
               moon.settings ?? {},
               moon.moons ?? [],
               moon.orbit,
@@ -311,14 +377,15 @@ export const SceneEditorStore = signalStore(
           walk(path, moon.moons ?? []);
         });
       sceneBodiesNow().forEach((planet, b) => {
-        const style = planet.style ?? all[planet.id]?.tuning?.style ?? '';
+        const chosen = chosenOverlays(planet);
+        const wears = worn(chosen, planet.id);
         out.push(
           info(
             [b],
             planet.id,
-            style,
-            planet.style !== undefined,
-            planet.variants?.[style] ?? {},
+            wears,
+            chosen !== undefined,
+            planet.variants?.[wornKey(wears)] ?? {},
             planet.moons ?? [],
             undefined,
             { position: planet.position, radius: planet.radius },
@@ -330,10 +397,20 @@ export const SceneEditorStore = signalStore(
     });
     const bodyByKey = computed(() => new Map(bodies().map((b) => [b.key, b] as const)));
     const sky = computed(() => choices().sky ?? {});
+    const sceneFile = computed(() => (_sceneFile.hasValue() ? _sceneFile.value() : null));
+    /** The overlays the sky wears (switched on or off), in order. */
+    const skyWorn = computed(() => skyWornOf(sky(), library(), sceneFile()?.wears));
+    const skyOverlays = computed(() => skyOverlayInfos(sceneFile(), library(), skyWorn()));
     const skyMaterials = computed(() => {
-      const scene = _sceneFile.hasValue() ? _sceneFile.value() : null;
-      return scene ? skyMaterialsOf(scene, library().sky, sky(), library().materials) : [];
+      const scene = sceneFile();
+      return scene
+        ? skyMaterialsOf(scene, library().sky, sky(), library().materials, skyOverlays())
+        : [];
     });
+    /** The parts of the overlays the sky wears, as shown. */
+    const skyParts = computed(() =>
+      skyOverlays().flatMap((o) => skyPartsOf(o, library().sky.parts, sky().parts)),
+    );
     const target = computed(() => targetOf(selected()));
     const body = computed(() => {
       const t = target();
@@ -354,15 +431,13 @@ export const SceneEditorStore = signalStore(
           const owner = t.path.slice(0, i + 1);
           const parent = bodyByKey().get(bodyKey(owner));
           if (!parent) return [];
-          const overlays = new Set(
-            lightsOfBody(parent)
-              .filter((l) => l.overlay)
-              .map((l) => l.light.id),
+          const overlays = new Map(
+            lightsOfBody(parent).flatMap((l) => (l.overlay ? [[l.light.id, l.overlay]] : [])),
           );
           return moonLightsOf(parent).map((light) => ({
             light,
             owner,
-            overlay: overlays.has(light.id),
+            overlay: overlays.get(light.id),
           }));
         }),
       ];
@@ -390,18 +465,23 @@ export const SceneEditorStore = signalStore(
     const label = computed(() => choices().name ?? sceneBodiesNow()[0]?.id ?? sceneId());
     return {
       resetAllLabel: computed(() => 'Reset scene'),
+      // A scene's: overlays are made and changed in the library.
+      partShapes: computed((): readonly CreatedShape[] => []),
+      partMaterials: computed(() => null),
+      deletable: computed(() => false),
+      skyOverlayOpen: computed(() => false),
       opened: computed((): OpenTarget => ({ kind: 'scene', id: sceneId() })),
       parent: computed(() => null),
       sharedMaterial: computed((): AssetTarget | null => {
         const t = target();
         const b = body();
         if (t.kind !== 'material' || !b) return null;
-        const m = materialsOf(b).find((x) => x.name === t.name);
+        const m = materialIn(materialsOf(b), t.name, t.overlay);
         if (!m) return null;
         return {
           kind: 'material',
           id: t.name,
-          on: m.from === 'style' ? { kind: 'style', id: b.style } : { kind: 'planet', id: b.id },
+          on: m.overlay ? { kind: 'style', id: m.overlay } : { kind: 'planet', id: b.id },
         };
       }),
       sceneName: computed(() => choices().name ?? ''),
@@ -427,17 +507,27 @@ export const SceneEditorStore = signalStore(
       focusPath,
       unsavedBodies,
       /** The scene as it is to be shown: its sky (over the library's, by the background) and its colour. */
-      sceneSky: computed((): SkySettings => ({ materials: sky().materials, tint: sky().tint })),
+      sceneSky: sky,
+      skyWorn,
+      skyOverlays,
+      skyParts,
+      skyOverlaysSet: computed(() => sky().overlays !== undefined),
+      /** The overlays a sky may wear: the game data's, and those made in the editor; by name. */
+      skyOverlayOptions: computed((): readonly PickChoice[] =>
+        skyOverlayChoices(sceneFile(), library()),
+      ),
       /** The scene's own lights, lighting every planet in it. */
       sceneLights: computed((): readonly AddedLight[] => choices().lights ?? []),
       sceneTint: computed(() => _draft.scenes().settings),
-      neededFiles: computed(() => [
-        ...new Set(bodies().flatMap((b) => (b.style ? [b.id, `style-${b.style}`] : [b.id]))),
-      ]),
+      neededFiles: computed(() => {
+        const file = overlayFileOf();
+        return [...new Set(bodies().flatMap((b) => [b.id, ...wornIds(b).map(file)]))];
+      }),
       kind: computed((): TargetKind => {
         const t = target();
         if ('view' in t && t.view) return t.view.kind;
-        return t.kind === 'scene-light' ? 'light' : t.kind; // the scene's lights shown as any light is
+        // The scene's lights shown as any light is; the sky's overlays' parts as any part.
+        return t.kind === 'scene-light' ? 'light' : t.kind === 'sky-part' ? 'part' : t.kind;
       }),
       materialView: computed((): MaterialView | null => {
         const t = target();
@@ -449,16 +539,17 @@ export const SceneEditorStore = signalStore(
       }),
       material: computed(() => {
         const t = target();
-        if (t.kind === 'sky-material') return skyMaterials().find((m) => m.name === t.name);
+        if (t.kind === 'sky-material') return materialIn(skyMaterials(), t.name, t.overlay);
         const b = body();
         // Its layers may read the sky's textures too (always loaded).
         const sky = _sceneFile.hasValue() ? _sceneFile.value().textures : {};
         return t.kind === 'material' && b
-          ? materialsOf(b, sky).find((m) => m.name === t.name)
+          ? materialIn(materialsOf(b, sky), t.name, t.overlay)
           : undefined;
       }),
       part: computed(() => {
         const t = target();
+        if (t.kind === 'sky-part') return skyParts().find((p) => p.key === t.key);
         const b = body();
         return t.kind === 'part' && b ? partsOfBody(b).find((p) => p.key === t.key) : undefined;
       }),
@@ -485,21 +576,24 @@ export const SceneEditorStore = signalStore(
           const b = body();
           const m =
             t.kind === 'sky-material'
-              ? skyMaterials().find((x) => x.name === t.name)
-              : b && materialsOf(b).find((x) => x.name === t.name);
+              ? materialIn(skyMaterials(), t.name, t.overlay)
+              : b && t.kind === 'material'
+                ? materialIn(materialsOf(b), t.name, t.overlay)
+                : undefined;
           return viewTitle(t.view, m ?? undefined);
         }
         if (t.kind === 'scene') return 'Scene';
         if (t.kind === 'sky') return 'Sky';
         if (t.kind === 'sky-material')
-          return skyMaterials().find((m) => m.name === t.name)?.label ?? t.name;
+          return materialIn(skyMaterials(), t.name, t.overlay)?.label ?? t.name;
         if (t.kind === 'material') {
           const b = body();
-          return (b && materialsOf(b).find((m) => m.name === t.name)?.label) ?? t.name;
+          return (b && materialIn(materialsOf(b), t.name, t.overlay)?.label) ?? t.name;
         }
+        if (t.kind === 'sky-part') return skyParts().find((x) => x.key === t.key)?.label ?? 'Part';
         if (t.kind === 'part') {
           const p = body() && partsOfBody(body()!).find((x) => x.key === t.key);
-          return p ? (p.style ? `${p.label} · ${p.style}` : p.label) : 'Part';
+          return p ? (p.overlayName ? `${p.label} · ${p.overlayName}` : p.label) : 'Part';
         }
         if (t.kind === 'light') {
           const l = body() && lightsOfBody(body()!).find((x) => x.light.id === t.id);
@@ -511,15 +605,13 @@ export const SceneEditorStore = signalStore(
         const b = body();
         return b ? bodyLabel(b) : 'Properties';
       }),
-      skyChanged: computed(() => !!sky().materials || !!sky().tint),
+      skyChanged: computed(() => Object.keys(sky()).length > 0),
       skyTint: computed((): MaterialTint => sky().tint ?? library().sky.tint ?? NO_MATERIAL_TINT),
       skyTintSet: computed(() => sky().tint),
       sets: random,
-      styleOptions: computed((): PropertyOption[] =>
-        grouped(
-          [{ value: '', label: 'None' }],
-          _index.hasValue() ? _index.value().styles.map((s) => s.id) : [],
-        ),
+      /** The overlays a body may wear: the game data's, and those made in the editor; by name. */
+      overlayOptions: computed((): readonly PickChoice[] =>
+        overlayChoices(_index.hasValue() ? _index.value() : null, library()),
       ),
       tintOptions: computed((): PropertyOption[] =>
         grouped(
@@ -610,9 +702,10 @@ export const SceneEditorStore = signalStore(
             });
       }
       row(SKY, 'Sky', 'blur_on', 1, store.skyUnsaved());
-      // Its materials by where they are drawn among the scene's objects: behind, among, in front.
+      // Its materials by where they are drawn among the scene's objects: behind, among, in front;
+      // then each overlay it wears, its parts with their materials under it.
       if (open.has(SKY))
-        for (const g of byDepth(store.skyMaterials())) {
+        for (const g of byDepth(store.skyMaterials().filter((m) => !m.overlay))) {
           const group = skyDepthKey(g.depth);
           rows.push({
             key: group,
@@ -624,6 +717,40 @@ export const SceneEditorStore = signalStore(
             group: true,
           });
           if (!open.has(group)) for (const m of g.materials) leaf(skyMaterialKey(m.name), m, 3);
+        }
+      if (open.has(SKY))
+        for (const o of store.skyOverlays()) {
+          const group = skyOverlayKey(o.id);
+          rows.push({
+            key: group,
+            label: skyOverlayLabel(o),
+            detail: 'overlay',
+            icon: 'style',
+            depth: 2,
+            expandable: true,
+            expanded: !open.has(group),
+            group: true,
+            enabled: skyOverlayOn(store.sceneSky(), store._draft.library(), o.id),
+            movable: store.skyOverlays().length > 1,
+          });
+          if (open.has(group)) continue;
+          for (const part of store.skyParts().filter((p) => p.overlay === o.id)) {
+            const key = skyPartKey(part.key);
+            const materials = store
+              .skyMaterials()
+              .filter((m) => m.overlay === o.id && part.materials.includes(m.name));
+            rows.push({
+              key,
+              label: part.label,
+              icon: 'panorama_horizontal',
+              depth: 3,
+              expandable: materials.length > 0,
+              expanded: !open.has(key),
+              enabled: part.enabled,
+            });
+            if (!open.has(key))
+              for (const m of materials) leaf(skyOverlayMaterialKey(o.id, m.name), m, 4);
+          }
         }
       const body = (b: BodyInfo, depth: number) => {
         const path = pathOf(b.key.slice(5));
@@ -642,7 +769,7 @@ export const SceneEditorStore = signalStore(
         // its lights under it.
         const nodes = partNodes(b, materialsOf(b));
         const lights = lightsOfBody(b);
-        const parts = (list: readonly PartNode[], at: number) => {
+        const parts = (list: readonly PartNode[], at: number, overlay?: string) => {
           for (const { part, materials } of list) {
             const key = partRowKey(path, part.key);
             rows.push({
@@ -659,7 +786,7 @@ export const SceneEditorStore = signalStore(
                 materials,
                 at + 1,
                 open,
-                (name) => materialKey(path, name),
+                (name) => materialKey(path, name, overlay),
                 leaf,
                 (r) => rows.push(r),
               );
@@ -694,24 +821,27 @@ export const SceneEditorStore = signalStore(
           lights.filter((l) => !l.overlay),
           depth + 1,
         );
-        if (nodes.overlay.length) {
-          const group = overlayKey(path);
+        // Each overlay it wears, in the order worn (the later drawn over the earlier): moved
+        // among them to wear them in another order.
+        for (const { overlay, nodes: list } of nodes.overlays) {
+          const group = overlayKey(path, overlay.id);
           rows.push({
             key: group,
-            label: styleLabel(b),
+            label: overlayLabel(overlay),
             detail: 'overlay',
             icon: 'style',
             depth: depth + 1,
             expandable: true,
             expanded: !open.has(group),
             group: true,
-            enabled: overlayEnabled(b),
+            enabled: overlayEnabled(b, overlay.id),
+            movable: b.overlays.length > 1,
           });
           if (!open.has(group)) {
-            parts(nodes.overlay, depth + 2);
+            parts(list, depth + 2, overlay.id);
             lightGroup(
-              overlayLightsKey(path),
-              lights.filter((l) => l.overlay),
+              overlayLightsKey(path, overlay.id),
+              lights.filter((l) => l.overlay === overlay.id),
               depth + 2,
             );
           }
@@ -774,14 +904,14 @@ export const SceneEditorStore = signalStore(
         // What must stay in view of each body: as far as its parts and its halo reach.
         const extent = (path: BodyPath) => {
           const b = store.bodyByKey().get(bodyKey([...under, ...path]));
-          return visualExtent(b?.file, b?.styleFile, b?.style, b && bodyParts(b));
+          return b ? visualExtent(b.file, b.overlays, bodyParts(b)) : visualExtent();
         };
         const base = fit
           ? { ...root, radius: fitRadius(root, moons, eye, reach, overrides, extent) }
           : root;
         for (const p of placeBodies(base, moons, eye, overrides)) {
           const b = store.bodyByKey().get(bodyKey([...under, ...p.path]));
-          if (!b?.file || (b.style && !b.styleFile)) return null;
+          if (!b || !filesLoaded(b)) return null;
           const s = b.settings;
           // Drawn where it and every body it is a moon of are switched on.
           const at = [...under, ...p.path];
@@ -794,15 +924,16 @@ export const SceneEditorStore = signalStore(
             const parent = store.bodyByKey().get(bodyKey(at.slice(0, i + 1)));
             return parent ? moonLightsOf(parent) : [];
           });
-          extents.push(visualExtent(b.file, b.styleFile, b.style, bodyParts(b)));
+          extents.push(visualExtent(b.file, b.overlays, bodyParts(b)));
           paths.push([...under, ...p.path]);
           out.push({
             id: b.id,
             position: p.position,
             radius: p.radius,
-            style: b.style || undefined,
+            overlays: wornIds(b),
             ...(drawn ? {} : { enabled: false }),
             ...(s.overlayEnabled !== undefined ? { overlayEnabled: s.overlayEnabled } : {}),
+            ...(s.overlaysEnabled ? { overlaysEnabled: s.overlaysEnabled } : {}),
             lighting: s.lighting,
             shade: {
               ...(s.shade !== undefined ? { strength: s.shade } : {}),
@@ -841,10 +972,19 @@ export const SceneEditorStore = signalStore(
       const t = store.target();
       return 'path' in t ? t.path : null;
     };
-    /** The style a body wears (a planet's settings are kept by it). */
-    const styleAt = (path: BodyPath) => store.bodyByKey().get(bodyKey(path))?.style ?? '';
+    /** The key of what a body wears (a planet's settings are kept by it). */
+    const wornAt = (path: BodyPath) => {
+      const b = store.bodyByKey().get(bodyKey(path));
+      return b ? wornKeyOf(b) : '';
+    };
     const settings = (path: BodyPath, change: (s: BodySettings) => BodySettings | undefined) =>
-      edit((b) => changeSettings(b, path, styleAt(path), change));
+      edit((b) => changeSettings(b, path, wornAt(path), change));
+    /** What the selected body wears changed (the later over the earlier). */
+    const wear = (change: (worn: readonly string[]) => readonly string[]) => {
+      const path = selectedPath();
+      const b = path && store.bodyByKey().get(bodyKey(path));
+      if (path && b) edit((bodies) => setOverlays(bodies, path, change(wornIds(b)), wornKeyOf(b)));
+    };
     /** A light changed: the scene's own, or a body's (one added there itself, else what is set for it). */
     const lightChange = (t: Target, change: Partial<LightSettings>) => {
       if (t.kind === 'scene-light')
@@ -914,14 +1054,18 @@ export const SceneEditorStore = signalStore(
               ? withoutPartSetting(s, t.key, ['enabled'])
               : withPartSetting(s, t.key, { enabled: on }),
           );
-        } else if (t.kind === 'group' && b && change.key === overlayKey(t.path))
-          settings(t.path, (s) =>
-            on === overlayEnabledBelow(b)
-              ? without(s, ['overlayEnabled'])
-              : { ...s, overlayEnabled: on },
-          );
-        else if (t.kind === 'sky-material') {
-          const below = store.skyMaterials().find((m) => m.name === t.name)?.enabledBelow ?? true;
+        } else if (t.kind === 'group' && t.skyOverlay) {
+          const below = skyOverlayOn(undefined, d.library(), t.skyOverlay);
+          d.setSkyOverlayEnabled(store.scene(), t.skyOverlay, on, below);
+        } else if (t.kind === 'sky-part') {
+          const below = store.skyParts().find((p) => p.key === t.key)?.enabledBelow ?? true;
+          if (on === below) d.clearSkyPart(store.scene(), t.key, ['enabled']);
+          else d.setSkyPart(store.scene(), t.key, { enabled: on });
+        } else if (t.kind === 'group' && b && t.overlay) {
+          const id = t.overlay;
+          settings(t.path, (s) => withOverlaySwitched(s, id, on, overlayEnabledBelow(b, id)));
+        } else if (t.kind === 'sky-material') {
+          const below = materialIn(store.skyMaterials(), t.name, t.overlay)?.enabledBelow ?? true;
           if (on === below) d.clearSkyMaterial(store.scene(), t.name, ['enabled']);
           else materialChange(change.key, { enabled: on });
         } else if (t.kind === 'material' && t.view?.kind === 'effect') {
@@ -933,7 +1077,7 @@ export const SceneEditorStore = signalStore(
               : withMaterial(s, t.name, { [field]: on }),
           );
         } else if (t.kind === 'material' && b) {
-          const below = materialsOf(b).find((m) => m.name === t.name)?.enabledBelow ?? true;
+          const below = materialIn(materialsOf(b), t.name, t.overlay)?.enabledBelow ?? true;
           settings(t.path, (s) => withMaterialSwitched(s, t.name, on, below));
         }
       },
@@ -954,8 +1098,8 @@ export const SceneEditorStore = signalStore(
         const path = light.owner ?? t.path;
         store.expand(SCENE, ...path.map((_, i) => bodyKey(path.slice(0, i + 1))));
         if (light.overlay) {
-          store.reopen(overlayKey(path));
-          store.expand(overlayLightsKey(path));
+          store.reopen(overlayKey(path, light.overlay));
+          store.expand(overlayLightsKey(path, light.overlay));
         } else store.expand(lightsKey(path));
         patchState(store, { selected: lightRowKey(path, id) });
       },
@@ -1010,6 +1154,38 @@ export const SceneEditorStore = signalStore(
       moveMaterial(move: TreeMove): void {
         const from = targetOf(move.key);
         const to = targetOf(move.target);
+        // An overlay moved among those the sky wears: worn in that order.
+        if (from.kind === 'group' && to.kind === 'group' && from.skyOverlay && to.skyOverlay) {
+          const worn = store.skyWorn();
+          d.setSkyOverlays(
+            store.scene(),
+            reordered(worn, worn, from.skyOverlay, to.skyOverlay, move.after),
+          );
+          return;
+        }
+        // An overlay moved among those its body wears: worn in that order, drawn so.
+        if (
+          from.kind === 'group' &&
+          to.kind === 'group' &&
+          from.overlay &&
+          to.overlay &&
+          pathKey(from.path) === pathKey(to.path)
+        ) {
+          const b = store.bodyByKey().get(bodyKey(from.path));
+          if (!b) return;
+          const worn = wornIds(b);
+          const next = reordered(worn, worn, from.overlay, to.overlay, move.after);
+          const order = overlayOrder(materialsOf(b), next);
+          edit((bodies) =>
+            changeSettings(
+              setOverlays(bodies, from.path, next, wornKeyOf(b)),
+              from.path,
+              wornKey(next),
+              (s) => ({ ...s, order }),
+            ),
+          );
+          return;
+        }
         if (from.kind === 'sky-material' && to.kind === 'sky-material') {
           const all = store.skyMaterials();
           const moving = all.find((m) => m.name === from.name);
@@ -1057,11 +1233,29 @@ export const SceneEditorStore = signalStore(
       },
       setPart(change: Partial<PartSettings>): void {
         const t = store.target();
-        if (t.kind === 'part') settings(t.path, (s) => withPartSetting(s, t.key, change));
+        if (t.kind === 'sky-part') d.setSkyPart(store.scene(), t.key, change);
+        else if (t.kind === 'part') settings(t.path, (s) => withPartSetting(s, t.key, change));
       },
       clearPart(keys?: readonly (keyof PartSettings)[]): void {
         const t = store.target();
-        if (t.kind === 'part') settings(t.path, (s) => withoutPartSetting(s, t.key, keys));
+        if (t.kind === 'sky-part') d.clearSkyPart(store.scene(), t.key, keys);
+        else if (t.kind === 'part') settings(t.path, (s) => withoutPartSetting(s, t.key, keys));
+      },
+      /** An overlay put on the scene's sky, over what it wears. */
+      addSkyOverlay(id: string): void {
+        const worn = store.skyWorn();
+        if (!worn.includes(id)) d.setSkyOverlays(store.scene(), [...worn, id]);
+      },
+      /** An overlay taken off the scene's sky. */
+      removeSkyOverlay(id: string): void {
+        d.setSkyOverlays(
+          store.scene(),
+          store.skyWorn().filter((w) => w !== id),
+        );
+      },
+      /** What the scene's sky wears back as the library has it. */
+      resetSkyOverlays(): void {
+        d.setSkyOverlays(store.scene(), undefined);
       },
       setBody(change: Partial<BodySettings>): void {
         const path = selectedPath();
@@ -1075,13 +1269,22 @@ export const SceneEditorStore = signalStore(
         const path = selectedPath();
         if (path) settings(path, () => undefined);
       },
-      setStyle(style: string): void {
-        const path = selectedPath();
-        if (path) edit((b) => setStyle(b, path, style));
+      /** An overlay put on the selected body, over what it wears. */
+      addOverlay(id: string): void {
+        wear((worn) => (worn.includes(id) ? worn : [...worn, id]));
       },
-      resetStyle(): void {
+      /** An overlay taken off the selected body. */
+      removeOverlay(id: string): void {
+        wear((worn) => worn.filter((w) => w !== id));
+      },
+      /** What the selected body wears back as its own (its data's). */
+      resetOverlays(): void {
         const path = selectedPath();
-        if (path) edit((b) => resetStyle(b, path));
+        const b = path && store.bodyByKey().get(bodyKey(path));
+        if (path && b)
+          edit((bodies) =>
+            resetOverlays(bodies, path, wornKeyOf(b), ownOverlays(b.file?.tuning?.style)),
+          );
       },
       setOrbit(change: Partial<Orbit>): void {
         const path = selectedPath();
@@ -1115,6 +1318,21 @@ export const SceneEditorStore = signalStore(
           selected: path.length > 1 ? bodyKey(path.slice(0, -1)) : SCENE,
           focus: gone ? null : focus,
         });
+      },
+      addPart(): void {
+        // overlays are made and changed in the library
+      },
+      removePart(): void {
+        // as above
+      },
+      addPartMaterial(): void {
+        // as above
+      },
+      removePartMaterial(): void {
+        // as above
+      },
+      deleteAsset(): void {
+        // a scene is deleted from its own panel
       },
       /** The view centred on the selected moon and its moons, or back on the whole scene. */
       toggleFocus(): void {

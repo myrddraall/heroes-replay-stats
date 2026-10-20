@@ -64,17 +64,22 @@ interface Fly {
 
 const easeIn = (u: number) => u * u;
 
+/** Whether two planets wear the same overlays, in the same order. */
+const sameOverlays = (a: PlanetPlacement, b: PlanetPlacement) =>
+  (a.overlays ?? []).length === (b.overlays ?? []).length &&
+  (a.overlays ?? []).every((o, i) => o === b.overlays?.[i]);
+
 /**
- * Whether two sets are the same planets in the same styles, in the same order: the same scene, its
- * bodies perhaps moved or resized (a moon round its orbit), drawn again where they are now rather
- * than flown to.
+ * Whether two sets are the same planets wearing the same overlays, in the same order: the same
+ * scene, its bodies perhaps moved or resized (a moon round its orbit), drawn again where they are
+ * now rather than flown to.
  */
 function sameBodies(a: readonly PlanetPlacement[], b: readonly PlanetPlacement[]): boolean {
   return (
-    a.length === b.length && a.every((p, i) => p.planet === b[i]!.planet && p.style === b[i]!.style)
+    a.length === b.length && a.every((p, i) => p.planet === b[i]!.planet && sameOverlays(p, b[i]!))
   );
 }
-/** Whether two sets are the same planets in the same order, whatever styles they wear. */
+/** Whether two sets are the same planets in the same order, whatever overlays they wear. */
 function samePlanets(a: readonly PlanetPlacement[], b: readonly PlanetPlacement[]): boolean {
   return a.length === b.length && a.every((p, i) => p.planet.id === b[i]!.planet.id);
 }

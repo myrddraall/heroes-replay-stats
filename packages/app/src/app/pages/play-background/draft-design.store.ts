@@ -5,6 +5,7 @@ import {
   patchState,
   signalStore,
   withComputed,
+  withHooks,
   withMethods,
   withProps,
   withState,
@@ -31,8 +32,19 @@ import {
   withMaterial,
   withoutMaterial,
 } from '../../scenes/play-background/scene-bodies';
+import { migrateDesign, sceneWithout } from '../../scenes/play-background/overlays';
+import {
+  type CreatedOverlay,
+  nextOverlayId,
+  type OverlayKind,
+} from '../../scenes/play-background/created-overlays';
 import { PublishedDesignStore } from '../../scenes/play-background/published-design.store';
-import type { MaterialSettings, MaterialTint } from '../../scenes/play-background/scene-planets';
+import type {
+  MaterialSettings,
+  MaterialTint,
+  PartKey,
+  PartSettings,
+} from '../../scenes/play-background/scene-planets';
 import { type PartTint, PRESETS, UNTINTED } from '../../scenes/play-background/tint-settings';
 
 /** Where the draft is kept between visits (until it is saved or discarded). */
@@ -61,6 +73,12 @@ function skyMaterial(
   return { ...sky, materials: Object.keys(materials).length ? materials : undefined };
 }
 
+/** A sky with what isn't set taken out (nothing set: none). */
+function tidySky(sky: SkyChoices): SkyChoices | undefined {
+  const kept = Object.fromEntries(Object.entries(sky).filter(([, v]) => v !== undefined));
+  return Object.keys(kept).length ? (kept as SkyChoices) : undefined;
+}
+
 /** Records equal as kept (as JSON): for what is unsaved. */
 const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 
@@ -85,6 +103,12 @@ export const DraftDesignStore = signalStore(
     return { library: published.library(), scenes: published.scenes() };
   }),
   withLocalStorage<Design>(DRAFT_KEY, ['library', 'scenes']),
+  withHooks({
+    onInit(store) {
+      // A draft kept before bodies wore several overlays, read as it is now.
+      patchState(store, migrateDesign({ library: store.library(), scenes: store.scenes() }));
+    },
+  }),
   withProps(() => ({
     _published: inject(PublishedDesignStore),
     _root: inject(DOCUMENT).documentElement,
@@ -93,7 +117,12 @@ export const DraftDesignStore = signalStore(
     const changedPlanets = computed(() =>
       differing(library().planets, _published.library().planets),
     );
-    const changedStyles = computed(() => differing(library().styles, _published.library().styles));
+    const changedStyles = computed(() => [
+      ...new Set([
+        ...differing(library().styles, _published.library().styles),
+        ...differing(library().created ?? {}, _published.library().created ?? {}),
+      ]),
+    ]);
     const changedMaterials = computed(() =>
       differing(library().materials ?? {}, _published.library().materials ?? {}),
     );
@@ -143,10 +172,7 @@ export const DraftDesignStore = signalStore(
         return { ...s, planets };
       });
     const setSceneSky = (id: string, change: (sky: SkyChoices) => SkyChoices) =>
-      setScene(id, (p) => {
-        const sky = change(p.sky ?? {});
-        return { ...p, sky: sky.materials || sky.tint || sky.order ? sky : undefined };
-      });
+      setScene(id, (p) => ({ ...p, sky: tidySky(change(p.sky ?? {})) }));
     /** A library body's defaults changed (none left: none kept). */
     const updateLibraryBody = (
       kind: LibraryKind,
@@ -161,10 +187,10 @@ export const DraftDesignStore = signalStore(
         return { ...l, [kind]: bodies };
       });
     const setLibrarySky = (change: (sky: SkyChoices) => SkyChoices) =>
-      setLibrary((l) => {
-        const sky = change(l.sky);
-        return { ...l, sky: { materials: sky.materials, tint: sky.tint, order: sky.order } };
-      });
+      setLibrary((l) => ({ ...l, sky: tidySky(change(l.sky)) ?? {} }));
+    /** A sky changed: a scene's (by its id), or the library's (null). */
+    const changeSky = (scene: string | null, change: (sky: SkyChoices) => SkyChoices) =>
+      scene === null ? setLibrarySky(change) : setSceneSky(scene, change);
 
     return {
       /** The draft published: the site shows it from now on. */
@@ -211,6 +237,41 @@ export const DraftDesignStore = signalStore(
         updateLibraryBody(kind, id, (s) => withoutMaterial(s, name, keys));
       },
       /** A material's base settings, wherever it is used. */
+      /** A new overlay (to wear on a planet, or the sky), empty, named; its id. */
+      createOverlay(kind: OverlayKind): string {
+        const { id, n } = nextOverlayId(store.library());
+        const label = `${kind === 'sky' ? 'Sky overlay' : 'Overlay'} ${n}`;
+        setLibrary((l) => ({
+          ...l,
+          created: { ...l.created, [id]: { kind, label, parts: [], materials: {}, textures: {} } },
+        }));
+        return id;
+      },
+      /** An overlay made in the editor changed (its parts, the materials they draw). */
+      changeOverlay(id: string, change: (o: CreatedOverlay) => CreatedOverlay): void {
+        setLibrary((l) => {
+          const o = l.created?.[id];
+          return o ? { ...l, created: { ...l.created, [id]: change(o) } } : l;
+        });
+      },
+      /** An overlay made in the editor deleted: its settings too, and off whatever wears it. */
+      deleteOverlay(id: string): void {
+        setLibrary((l) => {
+          const created = { ...l.created };
+          const styles = { ...l.styles };
+          delete created[id];
+          delete styles[id];
+          const worn = l.sky.overlays;
+          const sky = worn ? { ...l.sky, overlays: worn.filter((o) => o !== id) } : l.sky;
+          return { ...l, created, styles, sky };
+        });
+        setScenes((s) => ({
+          ...s,
+          planets: Object.fromEntries(
+            Object.entries(s.planets).map(([k, p]) => [k, sceneWithout(p, id)]),
+          ),
+        }));
+      },
       setLibraryBaseMaterial(name: string, change: Partial<MaterialSettings>): void {
         setLibrary((l) => ({
           ...l,
@@ -244,6 +305,40 @@ export const DraftDesignStore = signalStore(
       },
       resetLibrarySky(): void {
         setLibrarySky(() => ({}));
+      },
+      /** The overlays a sky wears (a scene's, or the library's: null), in order; none: back to what is under it. */
+      setSkyOverlays(scene: string | null, overlays: readonly string[] | undefined): void {
+        changeSky(scene, (sky) => ({ ...sky, overlays }));
+      },
+      /** An overlay a sky wears switched on or off: back to what is under it where the same. */
+      setSkyOverlayEnabled(scene: string | null, id: string, on: boolean, below: boolean): void {
+        changeSky(scene, (sky) => {
+          const enabled = { ...sky.overlaysEnabled };
+          if (on === below) delete enabled[id];
+          else enabled[id] = on;
+          return { ...sky, overlaysEnabled: Object.keys(enabled).length ? enabled : undefined };
+        });
+      },
+      /** One of a sky's overlays' parts' settings changed (a scene's sky, or the library's: null). */
+      setSkyPart(scene: string | null, key: PartKey, change: Partial<PartSettings>): void {
+        changeSky(scene, (sky) => ({
+          ...sky,
+          parts: { ...sky.parts, [key]: { ...sky.parts?.[key], ...change } },
+        }));
+      },
+      /** One of a sky's overlays' parts' settings taken back (all of it: `keys` left out). */
+      clearSkyPart(
+        scene: string | null,
+        key: PartKey,
+        keys?: readonly (keyof PartSettings)[],
+      ): void {
+        changeSky(scene, (sky) => {
+          const parts: Partial<Record<PartKey, PartSettings>> = { ...sky.parts };
+          const left = keys ? without(parts[key], keys) : undefined;
+          if (left) parts[key] = left;
+          else delete parts[key];
+          return { ...sky, parts: Object.keys(parts).length ? parts : undefined };
+        });
       },
 
       // The scenes: each listed, named, with its planets.

@@ -5,7 +5,8 @@ import type {
   MaterialTint,
   PartSettings,
 } from '../../../scenes/play-background/scene-planets';
-import type { PropertyOption } from '../properties/property-select';
+import type { CreatedShape } from '../../../scenes/play-background/created-overlays';
+import type { PickChoice } from './pick-list';
 import type {
   BodyView,
   LightEntry,
@@ -62,12 +63,15 @@ export abstract class Editor {
 
   /** The selected body, as its properties show it. */
   abstract readonly bodyView: Signal<BodyView | null>;
-  abstract readonly styleOptions: Signal<PropertyOption[]>;
+  /** The overlays a body may wear, by id and name. */
+  abstract readonly overlayOptions: Signal<readonly PickChoice[]>;
   abstract setBody(change: Partial<BodySettings>): void;
   abstract clearBody(keys: readonly (keyof BodySettings)[]): void;
   abstract resetBody(): void;
-  abstract setStyle(style: string): void;
-  abstract resetStyle(): void;
+  /** An overlay put on the selected body (over what it wears), or taken off; what it wears back as its own. */
+  abstract addOverlay(id: string): void;
+  abstract removeOverlay(id: string): void;
+  abstract resetOverlays(): void;
 
   /** What of the selected material its row shows (a layer, its shield shader, an effect); none: the material itself. */
   abstract readonly materialView: Signal<MaterialView | null>;
@@ -100,11 +104,40 @@ export abstract class Editor {
   abstract readonly skyTint: Signal<MaterialTint>;
   abstract readonly skyTintSet: Signal<MaterialTint | undefined>;
   abstract readonly skyChanged: Signal<boolean>;
+  /** The overlays the sky selected wears (by id, in order), those it may, and whether chosen here. */
+  abstract readonly skyWorn: Signal<readonly string[]>;
+  abstract readonly skyOverlayOptions: Signal<readonly PickChoice[]>;
+  abstract readonly skyOverlaysSet: Signal<boolean>;
+  /** An overlay put on the sky selected (over what it wears), or taken off; what it wears back as under it. */
+  abstract addSkyOverlay(id: string): void;
+  abstract removeSkyOverlay(id: string): void;
+  abstract resetSkyOverlays(): void;
   abstract setSkyTint(tint: MaterialTint): void;
   abstract clearSkyTint(): void;
   abstract resetSky(): void;
 
   /** Everything in the layer edited back as what is under it (a scene; the whole library). */
+  /** The shapes of part the overlay open may have added (one made in the editor; none: none). */
+  abstract readonly partShapes: Signal<readonly CreatedShape[]>;
+  /** A part of a shape added to the overlay open (selected), or the selected one taken out. */
+  abstract addPart(shape: CreatedShape): void;
+  abstract removePart(): void;
+  /**
+   * The materials the selected part draws (one of an overlay made in the editor's), in order, and
+   * those it may draw; null where its materials are its data's.
+   */
+  abstract readonly partMaterials: Signal<{
+    readonly picked: readonly string[];
+    readonly choices: readonly PickChoice[];
+  } | null>;
+  abstract addPartMaterial(name: string): void;
+  abstract removePartMaterial(name: string): void;
+  /** Whether the asset open can be deleted (an overlay made in the editor), and deleting it. */
+  abstract readonly deletable: Signal<boolean>;
+  /** Whether the asset open is a sky's overlay (drawn as the sky is: nothing lights it). */
+  abstract readonly skyOverlayOpen: Signal<boolean>;
+  abstract deleteAsset(): void;
+
   abstract readonly resetAllLabel: Signal<string>;
   abstract resetAll(): void;
 

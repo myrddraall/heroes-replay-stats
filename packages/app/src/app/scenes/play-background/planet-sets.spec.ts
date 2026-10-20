@@ -27,10 +27,10 @@ describe('planet sets', () => {
   });
 
   it('put each planet in the style it wears of its own', () => {
-    expect(playSet(index).every((p) => p.style === 'nexus')).toBe(true);
+    expect(playSet(index).every((p) => p.overlays?.join() === 'nexus')).toBe(true);
     for (let n = 1; n < 20; n++)
       for (const p of randomSet(index, seeded(n)))
-        expect(p.style).toBe(p.id.startsWith('play-') ? 'nexus' : undefined);
+        expect(p.overlays).toEqual(p.id.startsWith('play-') ? ['nexus'] : undefined);
   });
 
   it('come out the same from the same seed, and different from another', () => {

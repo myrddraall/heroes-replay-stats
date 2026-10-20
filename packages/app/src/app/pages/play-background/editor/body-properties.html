@@ -30,20 +30,24 @@
     <button type="button" class="button" (click)="resetRequested.emit()" [disabled]="!changed()">
       {{ overlay() ? 'Reset overlay' : orbit() ? 'Reset moon' : 'Reset planet' }}
     </button>
+    @if (deletable()) {
+      <button type="button" class="button" (click)="deleteRequested.emit()">Delete overlay</button>
+    }
   </div>
 </hrs-property-section>
 @let v = values();
 @if (styled()) {
-  <hrs-property-section title="Overlay" [changed]="styleSet()" (resetRequested)="styleReset.emit()">
-    <hrs-property-select
-      label="Wears"
-      [value]="v.style"
-      [options]="styleOptions()"
-      [changed]="styleSet()"
-      (resetRequested)="styleReset.emit()"
-      (valueChange)="styleChange.emit($event)"
-    />
-  </hrs-property-section>
+  <hrs-pick-list
+    title="Overlays"
+    placeholder="Overlay…"
+    removeLabel="Take off"
+    [picked]="v.overlays"
+    [choices]="overlayOptions()"
+    [changed]="overlaysSet()"
+    (added)="overlayAdd.emit($event)"
+    (removed)="overlayRemove.emit($event)"
+    (resetRequested)="overlaysReset.emit()"
+  />
 }
 @if (orbit(); as o) {
   <hrs-property-section title="Orbit" [changed]="orbitSet()" (resetRequested)="resetOrbit()">
@@ -155,4 +159,6 @@
     />
   </hrs-property-section>
 }
-<ng-content select="[lightAdd]" />
+@if (lit()) {
+  <ng-content select="[lightAdd]" />
+}

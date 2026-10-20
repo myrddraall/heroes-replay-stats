@@ -28,6 +28,8 @@ import { PatternProperties } from './pattern-properties';
 import { PartProperties } from './part-properties';
 import { LightProperties } from './light-properties';
 import { AddLight } from './add-light';
+import { AddPart } from './add-part';
+import { PickList } from './pick-list';
 import { LitBy } from './lit-by';
 import { ReferenceProperties, type ReferenceValues } from './reference-properties';
 import { SceneEditorStore } from './scene-editor.store';
@@ -54,6 +56,8 @@ import { TintSection } from './tint-section';
     PartProperties,
     LightProperties,
     AddLight,
+    AddPart,
+    PickList,
     LitBy,
     EditingAidProperties,
     ReferenceProperties,

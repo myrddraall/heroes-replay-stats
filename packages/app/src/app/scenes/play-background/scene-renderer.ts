@@ -17,6 +17,8 @@ import {
   mergeMaterialSettings,
 } from './material-settings';
 import { rimTurn } from './scene-directions';
+import { overlayOfFile } from './overlays';
+import { skyOverlayParts } from './sky-overlays';
 import { skyDepths } from './sky-depths';
 import {
   type AddedLight,
@@ -43,7 +45,9 @@ import {
   type PlanetLight,
   type PartMapping,
   wearOf,
-  partKey,
+  ownPartKey,
+  overlayOfPartKey,
+  overlayPartKey,
   type PartKey,
   type PartSettingsMap,
   withLayers,
@@ -72,7 +76,7 @@ const CHANNELS: Record<LayerChannel, number> = { rgb: 0, rgba: 1, a: 2, r: 3, g:
 /** A material's layer slots, in the shader's order, and their samplers. */
 const SLOTS = ['uDiffuse', 'uEmissive', 'uMask0', 'uMask1'] as const;
 /** How many values a uv sphere's v table has, from the pole to the opposite one (as exported). */
-const V_SAMPLES = 32;
+export const V_SAMPLES = 32;
 /** How many hexes a drawn hex pattern has round a body at scale 1, where it doesn't say how many its texture has. */
 const HEX_ROUND = 24;
 
@@ -854,7 +858,7 @@ interface MeshDraw {
   readonly moving: boolean;
   /** The planet it is part of (a placed one), whose frame places it; none: in world space as it is. */
   readonly placed?: Placed;
-  /** The planet or style the material is of, whose tuning is its settings' default; none: the sky's. */
+  /** The planet or overlay the material is of, whose tuning is its settings' default; none: the sky's. */
   readonly owner?: LoadedPlanet;
   /** The part of the planet's body it is, drawn on the square instead of a mesh. */
   readonly part?: BodyPart;
@@ -867,21 +871,24 @@ interface MeshDraw {
 /** A planet put up in the scene: where, how big, and which tint channel is its. */
 export interface PlanetPlacement {
   readonly planet: LoadedPlanet;
-  /** A style it wears: its parts about the body, its light on the body's lit materials. */
-  readonly style?: LoadedPlanet;
+  /**
+   * The overlays it wears, the later over the earlier: their parts about the body, the first's
+   * light (of those that have one) on the body's lit materials.
+   */
+  readonly overlays?: readonly LoadedPlanet[];
   /** Not drawn (nor picked), though where it is: switched off. */
   readonly hidden?: boolean;
-  /** Its materials' settings (its own and its style's, by name), over the tunings' (the planet's for its materials, the style's for its own). */
+  /** Its materials' settings (its own and its overlays', by name), over the tunings' (the planet's for its materials, an overlay's for its own). */
   readonly materials?: MaterialSettingsMap;
   /** Its parts' shapes and mappings, by part, in place of their own. */
   readonly parts?: PartSettingsMap;
-  /** Its materials' draw order, by name (its own and its style's), where set (see `drawOrder`). */
+  /** Its materials' draw order, by name (its own and its overlays'), where set (see `drawOrder`). */
   readonly order?: readonly string[];
   /** Its lights' settings, by light, over its rig's and its shade (see `scene-lights.ts`). */
   readonly lights?: LightSettingsMap;
   /** Lights added to it (its own and its overlay's), after its rig's. */
   readonly added?: readonly AddedLight[];
-  /** A tint over all its materials (its style's too), over its tuning's. */
+  /** A tint over all its materials (its overlays' too), over its tuning's. */
   readonly tint?: MaterialTint;
   /**
    * Its rig turned and made stronger together (`tunedRig`), over its tuning's: kept from before
@@ -892,7 +899,7 @@ export interface PlanetPlacement {
   readonly rim?: Vec3;
   /** (See `lightFrom`.) */
   readonly lighting?: number;
-  /** A shade from a side, over its style's. */
+  /** A shade from a side, over its overlays'. */
   readonly shade?: Partial<BodyShade>;
   readonly position: Vec3;
   /** Its body's radius in the scene's units. */
@@ -955,6 +962,15 @@ const ringFit = (distance: number, depth: number) =>
 const ringScale = (shape: { readonly depth: number; readonly seen?: number }, distance: number) =>
   shape.seen ? ringFit(distance, shape.depth) / ringFit(shape.seen, shape.depth) : 1;
 
+/** A number for each sky overlay's file, to tell a changed one (one made in the editor) apart. */
+const fileIds = new WeakMap<object, number>();
+let nextFileId = 0;
+const fileId = (file: object) => {
+  let id = fileIds.get(file);
+  if (id === undefined) fileIds.set(file, (id = nextFileId++));
+  return id;
+};
+
 /** Whether a draw is shown: its body and its part switched on (the sky's always are). */
 function shown(draw: MeshDraw): boolean {
   const placement = draw.placed?.placement;
@@ -962,26 +978,26 @@ function shown(draw: MeshDraw): boolean {
   return !placement.hidden && !(draw.partKey && placement.parts?.[draw.partKey]?.enabled === false);
 }
 
-/** The id of the style a placed planet wears, if any. */
-const styleIdOf = (placement: PlanetPlacement) => placement.style?.id.replace(/^style-/, '');
+/** The overlays a placed planet wears (none: none). */
+const overlaysOf = (placement: PlanetPlacement) => placement.overlays ?? [];
 
-/** How a placed planet wears its style (its tuning's say), if it wears one. */
-const wearIn = (placement: PlanetPlacement) =>
-  wearOf(placement.planet.planet, styleIdOf(placement));
+/** How a placed planet wears its overlays (its tuning's say for each), merged, the later over the earlier. */
+const wearsIn = (placement: PlanetPlacement) =>
+  overlaysOf(placement).map((o) => wearOf(placement.planet.planet, overlayOfFile(o.id)));
 
-/** A placed planet's style's parts, as it wears them. */
-const styleParts = (placement: PlanetPlacement): readonly BodyPart[] =>
-  placement.style
-    ? wornParts(placement.planet.planet, styleIdOf(placement), placement.style.planet.parts)
-    : [];
+/** A placed planet's overlay's parts, as it wears them. */
+const overlayParts = (placement: PlanetPlacement, overlay: LoadedPlanet): readonly BodyPart[] =>
+  wornParts(placement.planet.planet, overlayOfFile(overlay.id), overlay.planet.parts);
 
-/** A placed planet's parts: its body's, and its style's as it wears them; each as set. */
+/** A placed planet's parts: its body's, and its overlays' as it wears them; each as set. */
 function partsOf(placement: PlanetPlacement): readonly BodyPart[] {
-  const set = (from: 'own' | 'style') => (p: BodyPart) =>
-    withPart(p, placement.parts?.[partKey(from, p.role)]);
   return [
-    ...placement.planet.planet.parts.map(set('own')),
-    ...styleParts(placement).map(set('style')),
+    ...placement.planet.planet.parts.map((p) => withPart(p, placement.parts?.[ownPartKey(p)])),
+    ...overlaysOf(placement).flatMap((o) =>
+      overlayParts(placement, o).map((p) =>
+        withPart(p, placement.parts?.[overlayPartKey(overlayOfFile(o.id), p)]),
+      ),
+    ),
   ];
 }
 
@@ -1082,9 +1098,14 @@ export class SceneRenderer {
   /** How layers sample their textures, by whether they repeat across u (1) and across v (2). */
   private readonly samplers: WebGLSampler[];
   private readonly vaos: WebGLVertexArrayObject[] = [];
-  /** The scene's own draws (its sky), then the placed planets'. */
+  /** The scene's own draws (its sky), then its sky's overlays', then the placed planets'. */
   private readonly sceneDraws: MeshDraw[] = [];
+  private skyOverlayDraws: MeshDraw[] = [];
+  private planetDraws: MeshDraw[] = [];
   private draws: MeshDraw[] = [];
+  /** The sky's overlays' meshes on the GPU, and what they were made for (rebuilt when it changes). */
+  private skyOverlayVaos: WebGLVertexArrayObject[] = [];
+  private skyOverlayKey = '';
   /** The placed planets whose textures are on the GPU; kept while the renderer lives. */
   private readonly planetsOnGpu = new Set<string>();
   private placed: Placed[] = [];
@@ -1181,6 +1202,7 @@ export class SceneRenderer {
       });
     }
     this.draws = [...this.sceneDraws];
+    this.placeSkyOverlays(); // the overlays its data says it wears, until told otherwise
     gl.enable(gl.CULL_FACE);
     gl.depthFunc(gl.LEQUAL);
   }
@@ -1198,17 +1220,19 @@ export class SceneRenderer {
     }));
     const draws: MeshDraw[] = [];
     for (const placed of this.placed) {
-      const { planet, style } = placed.placement;
-      for (const loaded of style ? [planet, style] : [planet]) {
+      const { planet } = placed.placement;
+      const overlays = overlaysOf(placed.placement);
+      for (const loaded of [planet, ...overlays]) {
         if (this.planetsOnGpu.has(loaded.id)) continue;
         for (const [textureKey, image] of Object.entries(loaded.images))
           if (!this.textures.has(textureKey)) this.textures.set(textureKey, this.texture(image));
         this.planetsOnGpu.add(loaded.id);
       }
-      // The body's own parts lit by the style's light where it has one, then the style's parts.
-      const light = style?.planet.light ?? planet.planet.light;
-      for (const loaded of style ? [planet, style] : [planet]) {
-        const parts = loaded === style ? styleParts(placed.placement) : loaded.planet.parts;
+      // The body's own parts lit by its overlays' light where one has one, then the overlays' parts.
+      const light = overlays.find((o) => o.planet.light)?.planet.light ?? planet.planet.light;
+      for (const loaded of [planet, ...overlays]) {
+        const own = loaded === planet;
+        const parts = own ? loaded.planet.parts : overlayParts(placed.placement, loaded);
         parts.forEach((part, i) => {
           for (const m of part.materials) {
             const material = this.material(m, `${loaded.id}/${i}`, loaded.planet.materials);
@@ -1221,14 +1245,15 @@ export class SceneRenderer {
               placed,
               owner: loaded,
               part,
-              partKey: partKey(loaded === style ? 'style' : 'own', part.role),
+              partKey: own ? ownPartKey(part) : overlayPartKey(overlayOfFile(loaded.id), part),
               light,
             });
           }
         });
       }
     }
-    this.draws = [...this.sceneDraws, ...draws];
+    this.planetDraws = draws;
+    this.draws = [...this.sceneDraws, ...this.skyOverlayDraws, ...this.planetDraws];
     this.stillDirty = true;
   }
 
@@ -1573,10 +1598,60 @@ export class SceneRenderer {
     return placement.added?.length ? [...placement.added, ...this.sceneLights] : this.sceneLights;
   }
 
-  /** The sky shown as these settings say (materials not named, as the data has them). */
+  /**
+   * The sky shown as these settings say (materials not named, as the data has them), wearing the
+   * overlays they say (none given: its data's), each part placed as its settings say.
+   */
   setSky(settings: SkySettings): void {
     this.sky = settings;
+    this.placeSkyOverlays();
     this.stillDirty = true;
+  }
+
+  /**
+   * The sky's overlays' draws as its settings say: each worn overlay's parts (the data's, or one
+   * made in the editor's, its textures to the GPU the first time), placed about the eye; made
+   * again only when what they are made of changes.
+   */
+  private placeSkyOverlays(): void {
+    const scene = this.loaded.scene;
+    const worn = (this.sky.overlays ?? scene.wears ?? []).flatMap((id) => {
+      const made = this.sky.made?.[id];
+      const file = made?.file ?? scene.overlays?.[id];
+      return file ? [{ id, file, images: made?.images }] : [];
+    });
+    const key = JSON.stringify([
+      worn.map(({ id, file }) => [id, fileId(file)]),
+      this.sky.parts ?? null,
+    ]);
+    if (key === this.skyOverlayKey) return;
+    this.skyOverlayKey = key;
+    const gl = this.gl;
+    for (const vao of this.skyOverlayVaos) gl.deleteVertexArray(vao);
+    this.skyOverlayVaos = [];
+    this.skyOverlayDraws = [];
+    for (const { images } of worn)
+      for (const [textureKey, image] of Object.entries(images ?? {}))
+        if (!this.textures.has(textureKey)) this.textures.set(textureKey, this.texture(image));
+    const files = new Map(worn.map((w) => [w.id, w.file]));
+    for (const part of skyOverlayParts(worn, this.sky.parts, scene.camera)) {
+      const file = files.get(overlayOfPartKey(part.key as PartKey) ?? '');
+      if (!file) continue;
+      const vao = this.meshVao({ ...part.mesh, materials: part.materials });
+      this.skyOverlayVaos.push(vao);
+      for (const m of part.materials) {
+        if (!file.materials[m]) continue;
+        const material = this.material(m, part.key, file.materials);
+        this.skyOverlayDraws.push({
+          vao,
+          count: part.mesh.indices.length,
+          name: m,
+          material,
+          moving: moves(material),
+        });
+      }
+    }
+    this.draws = [...this.sceneDraws, ...this.skyOverlayDraws, ...this.planetDraws];
   }
 
   /** The scene at `seconds` on its clock. */
@@ -1649,7 +1724,7 @@ export class SceneRenderer {
     const gl = this.gl;
     for (const t of this.textures.values()) gl.deleteTexture(t);
     for (const s of this.samplers) gl.deleteSampler(s);
-    for (const vao of this.vaos) gl.deleteVertexArray(vao);
+    for (const vao of [...this.vaos, ...this.skyOverlayVaos]) gl.deleteVertexArray(vao);
     gl.deleteVertexArray(this.quad);
     for (const p of this.particles) {
       gl.deleteVertexArray(p.vao);
@@ -1734,14 +1809,14 @@ export class SceneRenderer {
 
   /**
    * A draw's material's settings: the placement's say over its owner's tuning (a planet's for its
-   * materials, its style's for the style's) and how the planet wears its style, or the sky's as set.
+   * materials, an overlay's for the overlay's) and how the planet wears its overlays, or the sky's as set.
    */
   private settingsOf(draw: MeshDraw): MaterialSettings | undefined {
     const placement = draw.placed?.placement;
     if (!placement) return this.sky.materials?.[draw.name];
     return mergeMaterialSettings(
       draw.owner?.planet.tuning?.materials,
-      wearIn(placement)?.materials,
+      ...wearsIn(placement).map((w) => w?.materials),
       placement.materials,
     )[draw.name];
   }
@@ -1882,7 +1957,10 @@ export class SceneRenderer {
           );
         }
         // The body glows under its own light's bloom threshold, lit or not (its city lights aren't lit).
-        const own = (placement.style ?? placement.planet).planet.light;
+        const worn = overlaysOf(placement);
+        const own = worn.length
+          ? worn.find((o) => o.planet.light)?.planet.light
+          : placement.planet.planet.light;
         gl.uniform1f(this.uniform(p, 'uGlowThreshold'), own?.bloomThreshold ?? threshold);
         // A drawn pattern (unless shown as its texture, as the game does): as many cells round
         // the part as its texture has (or HEX_ROUND), over its scale; its lines' width and glow.
@@ -1967,18 +2045,22 @@ export class SceneRenderer {
     }
   }
 
-  /** A placed planet's shade, for the body shader: its own over its style's over the default (none). */
+  /** A placed planet's shade, for the body shader: its own over its overlays' over the default (none). */
   private bindShade(placement: PlanetPlacement, lights: LightSettingsMap | undefined): void {
     const gl = this.gl;
     const p = this.bodyProgram;
-    // The planet's own tuning shades it as it is; a style it wears shades it its way instead,
-    // as the planet wears it.
+    // The planet's own tuning shades it as it is; an overlay it wears shades it its way instead,
+    // as the planet wears it (the later over the earlier).
+    const worn = overlaysOf(placement);
+    const wears = wearsIn(placement);
     const shade = withShadowSettings(
       {
         ...DEFAULT_SHADE,
         ...placement.planet.planet.tuning?.shade,
-        ...placement.style?.planet.shade,
-        ...wearIn(placement)?.shade,
+        ...worn.reduce(
+          (a: Partial<BodyShade>, o, i) => ({ ...a, ...o.planet.shade, ...wears[i]?.shade }),
+          {},
+        ),
         ...placement.shade,
       },
       lights?.shadow,

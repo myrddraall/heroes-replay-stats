@@ -17,6 +17,18 @@
   [value]="catalog.query()"
   (input)="search($event)"
 />
+@if (catalog.type() === 'style') {
+  <div class="row">
+    <button type="button" class="button new" (click)="catalog.createOverlay('planet')">
+      <mat-icon class="material-symbols-outlined" aria-hidden="true">add</mat-icon>
+      <span>New planet overlay</span>
+    </button>
+    <button type="button" class="button new" (click)="catalog.createOverlay('sky')">
+      <mat-icon class="material-symbols-outlined" aria-hidden="true">add</mat-icon>
+      <span>New sky overlay</span>
+    </button>
+  </div>
+}
 @if (catalog.type() === 'scene') {
   <div class="row">
     <button

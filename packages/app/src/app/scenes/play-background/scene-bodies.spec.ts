@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { placeBodies, type SceneBody } from './background-scene';
 import {
+  withOverlaySwitched,
   addMoonAt,
   addPlanet,
   bodyAt,
@@ -10,7 +11,8 @@ import {
   SCENE_CENTRE,
   sceneBodies,
   setPlace,
-  setStyle,
+  setOverlays,
+  resetOverlays,
   withLightSwitched,
   withMaterialSwitched,
 } from './scene-bodies';
@@ -44,14 +46,14 @@ describe('scene bodies', () => {
     expect(bodyAt(moonOfMoon.bodies, [1, 0, 0])?.id).toBe('planet-2');
   });
 
-  it('sets a planet in the style it wears, a moon its own, and moves and removes bodies', () => {
+  it('sets a planet for what it wears, a moon its own, and moves and removes bodies', () => {
     let bodies = addMoonAt([korhal], [0], 'planet-1').bodies;
-    bodies = setStyle(bodies, [0], 'nexus');
+    bodies = setOverlays(bodies, [0], ['nexus'], '');
     bodies = changeSettings(bodies, [0], 'nexus', (s) => ({ ...s, lighting: 2 }));
     bodies = changeSettings(bodies, [0, 0], '', (s) => ({ ...s, shade: 0.5 }));
     bodies = setPlace(bodies, [0], { radius: 10 });
     expect(bodies[0]).toMatchObject({
-      style: 'nexus',
+      overlays: ['nexus'],
       radius: 10,
       variants: { nexus: { lighting: 2 } },
     });
@@ -116,5 +118,34 @@ describe('switching a light or a material on or off', () => {
     expect(withMaterialSwitched({}, 'haze', true, false)).toEqual({
       materials: { haze: { enabled: true } },
     });
+  });
+});
+
+describe('the overlays a body wears', () => {
+  const korhal = { id: 'korhal', position: [0, 0, 0], radius: 1 } as const;
+
+  it('keeps what was set on a planet when another overlay is put on, and takes the old style off', () => {
+    let bodies: readonly SceneBody[] = [
+      { ...korhal, style: 'nexus', variants: { nexus: { lighting: 2 } } },
+    ];
+    bodies = setOverlays(bodies, [0], ['nexus', 'clouds'], 'nexus');
+    expect(bodies[0]).toEqual({
+      ...korhal,
+      overlays: ['nexus', 'clouds'],
+      variants: { nexus: { lighting: 2 }, 'nexus+clouds': { lighting: 2 } },
+    });
+    // What it wears back as its own: its settings for that kept too, nothing chosen.
+    bodies = resetOverlays(bodies, [0], 'nexus+clouds', []);
+    expect(bodies[0]?.overlays).toBeUndefined();
+    expect(bodies[0]?.variants?.['']).toEqual({ lighting: 2 });
+  });
+
+  it('switches an overlay on or off at the level edited, nothing set where that is as under it', () => {
+    expect(withOverlaySwitched({}, 'nexus', false, true)).toEqual({
+      overlaysEnabled: { nexus: false },
+    });
+    expect(
+      withOverlaySwitched({ overlaysEnabled: { nexus: false } }, 'nexus', true, true),
+    ).toBeUndefined();
   });
 });

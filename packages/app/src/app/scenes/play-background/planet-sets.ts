@@ -13,10 +13,12 @@ export interface SetPlanet {
   readonly id: string;
   readonly position: readonly [number, number, number];
   readonly radius: number;
-  /** A style it wears, by id (the index's), if any. */
-  readonly style?: string;
-  /** Whether the style it wears is drawn (off: drawn as if it wore none). */
+  /** The overlays it wears, by id, the later over the earlier (none: none). */
+  readonly overlays?: readonly string[];
+  /** Whether the overlays it wears are drawn (off: drawn as if it wore none); kept before each had its own. */
   readonly overlayEnabled?: boolean;
+  /** Whether each overlay it wears is drawn, by id (off: drawn as if it didn't wear it). */
+  readonly overlaysEnabled?: Readonly<Record<string, boolean>>;
   /** Whether it is drawn at all (off: where it is, but not drawn; its place in the set kept). */
   readonly enabled?: boolean;
   /** Its materials' settings (its own and its style's, by name), over its tuning's and its style's. */
@@ -85,10 +87,10 @@ const ONLY_PLACES: Readonly<Record<string, readonly number[]>> = {
 const EYE: readonly [number, number, number] = [0, -41.2, 5.6];
 const TRIES = 40;
 
-/** The style a planet wears unless told otherwise (the index's), as a set's planet takes it. */
-function ownStyle(index: PlanetIndex, id: string): { style?: string } {
+/** What a planet wears unless told otherwise (the index's style), as a set's planet takes it. */
+function ownStyle(index: PlanetIndex, id: string): { overlays?: readonly string[] } {
   const style = index.planets.find((p) => p.id === id)?.style;
-  return style ? { style } : {};
+  return style ? { overlays: [style] } : {};
 }
 
 /** The game's own set, each in its own style (the Play screen's: their shields). */

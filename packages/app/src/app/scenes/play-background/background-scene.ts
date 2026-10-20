@@ -34,8 +34,13 @@ export interface BodySettings {
   readonly label?: string;
   /** Whether it is drawn, its moons with it (a scene's). */
   readonly enabled?: boolean;
-  /** Whether the overlay it wears is drawn: off, it is drawn as if it wore none (its style kept). */
+  /**
+   * Whether the overlays it wears are drawn: off, it is drawn as if it wore none of them (what it
+   * wears kept). Kept before bodies wore several; each one's own switch is `overlaysEnabled`.
+   */
   readonly overlayEnabled?: boolean;
+  /** Whether each overlay it wears is drawn, by the overlay's id (off: as if it didn't wear it, kept). */
+  readonly overlaysEnabled?: Readonly<Record<string, boolean>>;
   /**
    * Its rig made stronger and turned together (`lighting`, `lightFrom`): kept from before lights
    * were objects, folded into its lights as they start (`tunedRig`), no longer set.
@@ -60,10 +65,13 @@ export interface BodySettings {
   readonly order?: readonly string[];
 }
 
-/** A moon of a body: which planet it is, its orbit, its style and settings, and its own moons. */
+/** A moon of a body: which planet it is, its orbit, what it wears and its settings, and its own moons. */
 export interface MoonChoices {
   readonly id: string;
   readonly orbit: Orbit;
+  /** The overlays it wears, the later over the earlier (none given: its own; see `chosenOverlays`). */
+  readonly overlays?: readonly string[];
+  /** The one overlay it wore, kept before bodies wore several ('' none). */
   readonly style?: string;
   readonly settings?: BodySettings;
   readonly moons?: readonly MoonChoices[];
@@ -264,7 +272,7 @@ export function reveal(
 
 /** A body's own settings as shown: its own, over its style's, over its file's tuning, over the defaults. */
 export interface BodyValues {
-  readonly style: string;
+  readonly overlays: readonly string[];
   readonly lighting: number;
   readonly shade: number;
   readonly tint: MaterialTint;
@@ -364,12 +372,21 @@ export function fitScene<T extends { readonly position: Vec3; readonly radius: n
   });
 }
 
-/** A scene's sky as set on the Background page: its materials' settings by name, and a tint over all of it. */
+/**
+ * A sky as set on the Background page (a scene's, or the library's): its materials' settings by name
+ * (its overlays' too), a tint over all of it, and the overlays it wears.
+ */
 export interface SkyChoices {
   readonly materials?: MaterialSettingsMap;
   readonly tint?: MaterialTint;
   /** Its materials' draw order, by name (the later over the earlier; see `drawOrder`), where set. */
   readonly order?: readonly string[];
+  /** The overlays it wears, the later over the earlier (none given: what is under it; the data's). */
+  readonly overlays?: readonly string[];
+  /** Whether each overlay it wears is drawn, by id (off: as if it didn't wear it, kept). */
+  readonly overlaysEnabled?: Readonly<Record<string, boolean>>;
+  /** Its overlays' parts' settings, by part (`style:<overlay>:<part>`). */
+  readonly parts?: PartSettingsMap;
 }
 
 /**
@@ -377,13 +394,17 @@ export interface SkyChoices {
  * style, its settings in each style, its moons, and the scene's sky.
  */
 /**
- * A planet of a scene: which planet it is, where it is (in the scene's space) and how big, its
- * style, its settings in each style (by the style's id, '' for none), and its moons.
+ * A planet of a scene: which planet it is, where it is (in the scene's space) and how big, the
+ * overlays it wears, its settings for what it wears (by `wornKey`: the overlays' ids joined, '' for
+ * none), and its moons.
  */
 export interface SceneBody {
   readonly id: string;
   readonly position: Vec3;
   readonly radius: number;
+  /** The overlays it wears, the later over the earlier (none given: its own; see `chosenOverlays`). */
+  readonly overlays?: readonly string[];
+  /** The one overlay it wore, kept before bodies wore several ('' none). */
   readonly style?: string;
   readonly variants?: Readonly<Record<string, BodySettings>>;
   readonly moons?: readonly MoonChoices[];

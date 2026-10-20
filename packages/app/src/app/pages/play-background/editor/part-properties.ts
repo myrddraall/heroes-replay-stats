@@ -21,7 +21,8 @@ const SHAPE_KEYS: readonly (keyof PartSettings)[] = [
  * A body's part's properties (presentational), relative to its body (so a style's part fits any
  * planet wearing it): a sphere's size and how its textures are turned on it (about its pole, and
  * its top tilted towards the eye); a ring's size, width, depth along the line of sight, the circle
- * its texture is brightest on, and whether it keeps to its body's limb.
+ * its texture is brightest on, and whether it keeps to its body's limb. A sky overlay's part, about
+ * the eye: how far (size), turned round the eye and tilted up, and a band how wide.
  */
 @Component({
   selector: 'hrs-part-properties',
@@ -31,6 +32,9 @@ const SHAPE_KEYS: readonly (keyof PartSettings)[] = [
 })
 export class PartProperties {
   readonly part = input.required<PartEntry>();
+  /** Whether it can be taken out (a part of an overlay made in the editor). */
+  readonly removable = input(false);
+  readonly removeRequested = output<void>();
   readonly settingsChange = output<Partial<PartSettings>>();
   /** Settings set here to take back (none given: all of them). */
   readonly clear = output<readonly (keyof PartSettings)[] | undefined>();

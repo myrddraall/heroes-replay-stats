@@ -14,6 +14,7 @@ import {
   type PlayScene,
   type SceneMaterial,
   type SceneTexture,
+  type SkyOverlayFile,
 } from '../../../scenes/play-background/play-scene';
 import { skyDepths } from '../../../scenes/play-background/sky-depths';
 import {
@@ -53,6 +54,11 @@ import {
   withoutLightSetting,
 } from '../../../scenes/play-background/scene-bodies';
 import { materialLabel, textureLabel } from '../../../scenes/play-background/material-names';
+import { overlayOn, wornKey } from '../../../scenes/play-background/overlays';
+import type { LibraryState } from '../../../scenes/play-background/background-design';
+import { createdSkyFile, overlayName } from '../../../scenes/play-background/created-overlays';
+import type { PlanetIndex } from '../../../scenes/play-background/scene-planets';
+import type { PickChoice } from './pick-list';
 import { REFERENCE_KEY } from './editing-aids.store';
 import type { TreeRow } from './scene-tree';
 import {
@@ -71,7 +77,8 @@ import {
   wornParts,
   type BodyPart,
   mergePartSettings,
-  partKey,
+  ownPartKey,
+  overlayPartKey,
   type PartKey,
   type PartSettings,
   type PartSettingsMap,
@@ -105,25 +112,38 @@ export type TargetKind =
   | 'effect';
 
 /**
- * A body as an editor has it: which planet (or style), its style, its settings in the layer
- * edited and those under it, its files once loaded.
+ * An overlay a body wears, as an editor has it: which, its settings under the layer edited (the
+ * library's: the overlay's own, as it is wherever it is worn), its file once loaded.
+ */
+export interface WornOverlay {
+  readonly id: string;
+  /** Its name as made, where it was made in the editor (else its id is its name). */
+  readonly name?: string;
+  readonly below?: BodySettings;
+  readonly file?: PlanetFile;
+}
+
+/**
+ * A body as an editor has it: which planet (or overlay), the overlays it wears, its settings in
+ * the layer edited and those under it, its files once loaded.
  */
 export interface BodyInfo {
   /** How the editor names it (its row's key). */
   readonly key: string;
   readonly id: string;
-  readonly style: string;
-  /** Whether its style is chosen in the layer edited (else what is under it). */
-  readonly styleSet: boolean;
+  /** Its name as made, where it is an overlay made in the editor (else its id is its name). */
+  readonly name?: string;
+  /** The overlays it wears, the later over the earlier. */
+  readonly overlays: readonly WornOverlay[];
+  /** Whether what it wears is chosen in the layer edited (else what is under it). */
+  readonly overlaysSet: boolean;
   /** Its settings in the layer edited. */
   readonly settings: BodySettings;
-  /** Its own defaults and its style's, under the layer edited (the library's, under a scene). */
+  /** Its own defaults, under the layer edited (the library's, under a scene). */
   readonly below?: BodySettings;
-  readonly styleBelow?: BodySettings;
   /** The materials' base settings (the library's), under its own. */
   readonly materialBase?: MaterialSettingsMap;
   readonly file?: PlanetFile;
-  readonly styleFile?: PlanetFile;
   /** Its orbit, where it is a moon in a scene. */
   readonly orbit?: Orbit;
   /** Where it is and how big, where it is one of a scene's planets. */
@@ -169,9 +189,10 @@ export interface MaterialEntry {
   readonly label: string;
   /** Its name as the levels under the one edited have it (what clearing a rename here gives). */
   readonly labelBelow: string;
-  /** Whose it is: the body's own, or the style it wears. */
+  /** Whose it is: the body's own, or an overlay's it wears (`overlay`: which). */
   readonly from: 'own' | 'style';
-  /** Where it comes from, in words, where it isn't the body's own (a style's: which, and for whom). */
+  readonly overlay?: string;
+  /** Where it comes from, in words, where it isn't the body's own (an overlay's: which, and for whom). */
   readonly origin?: string;
   /** Which level under the one edited sets each of its settings, where one does. */
   readonly origins: SettingOrigins<keyof MaterialSettings>;
@@ -328,12 +349,15 @@ export function texturesOf(
   return out;
 }
 
-/** A material of a planet's (or style's) parts: whether a pattern is drawn for it, and its part's role. */
+/**
+ * A material of a planet's (or overlay's) parts: whether a pattern is drawn for it, and its part's
+ * role, where it says what the material is (not a part made in the editor's: it draws any).
+ */
 export interface PartMaterial {
   readonly name: string;
   readonly material: SceneMaterial;
   readonly pattern: boolean;
-  readonly role: PartRole;
+  readonly role?: PartRole;
 }
 
 /** A planet's (or style's) materials, in its parts' order, each once (with its first part's role). */
@@ -343,34 +367,64 @@ export function partMaterials(file: PlanetFile): PartMaterial[] {
     for (const name of part.materials) {
       const material = file.materials[name];
       if (material && !out.some((m) => m.name === name))
-        out.push({ name, material, pattern: part.pattern !== undefined, role: part.role });
+        out.push({
+          name,
+          material,
+          pattern: part.pattern !== undefined,
+          ...(part.id ? {} : { role: part.role }),
+        });
     }
   return out;
 }
 
+/** A body's material a row names: the one of its own, or of the overlay it says (two may share a name). */
+export const materialIn = (list: readonly MaterialEntry[], name: string, overlay?: string) =>
+  list.find((m) => m.name === name && m.overlay === overlay);
+
+/** The ids of the overlays a body wears. */
+export const wornIds = (b: BodyInfo) => b.overlays.map((o) => o.id);
+/** The key a body's settings are kept by for what it wears (see `wornKey`). */
+export const wornKeyOf = (b: BodyInfo) => wornKey(wornIds(b));
+/** An overlay's name: as renamed in the library, else its id. */
+export const overlayLabel = (o: WornOverlay) => o.below?.label ?? o.name ?? o.id;
+/** The last of some values that is set (the later over the earlier). */
+const latest = <T>(values: readonly (T | undefined)[]): T | undefined =>
+  values.filter((v) => v !== undefined).at(-1);
+
 /**
- * A body's materials, its own then its style's, as shown: each through its file's tuning (and how
- * the body wears its style), the defaults under the layer edited, and the layer edited.
+ * A body's materials, its own then each overlay's, as shown: each through its file's tuning (and
+ * how the body wears its overlays), the defaults under the layer edited, and the layer edited.
  */
 export function materialsOf(
   b: BodyInfo,
   sky: Readonly<Record<string, SceneTexture>> = {},
 ): MaterialEntry[] {
   const chosen = b.settings.materials;
-  const worn = wearOf(b.file, b.style)?.materials;
-  const owners: [PlanetFile | undefined, BodySettings | undefined, 'own' | 'style'][] = [
-    [b.file, b.below, 'own'],
-    [b.styleFile, b.styleBelow, 'style'],
+  // How the body wears its overlays: each one's for its own materials; all of them for its own.
+  const wearOfOverlay = (o: WornOverlay) => wearOf(b.file, o.id)?.materials;
+  const ownWear = mergeMaterialSettings(...b.overlays.map(wearOfOverlay));
+  const owners: [PlanetFile | undefined, BodySettings | undefined, WornOverlay | undefined][] = [
+    [b.file, b.below, undefined],
+    ...b.overlays.map((o): [PlanetFile | undefined, BodySettings | undefined, WornOverlay] => [
+      o.file,
+      o.below,
+      o,
+    ]),
   ];
-  const entries = owners.flatMap(([owner, below, from]) =>
+  const textures = Object.assign({}, ...b.overlays.map((o) => o.file?.textures)) as Readonly<
+    Record<string, SceneTexture>
+  >;
+  const entries = owners.flatMap(([owner, below, overlay]) =>
     owner
       ? partMaterials(owner).map(({ name, material, pattern, role }) => {
+          const from = overlay ? ('style' as const) : ('own' as const);
+          const worn = overlay ? wearOfOverlay(overlay) : ownWear;
           const layers = [owner.tuning?.materials, worn, b.materialBase, below?.materials] as const;
           const names = [
-            from === 'style' ? `the ${b.style} overlay` : 'its tuning',
-            `${b.id}'s tuning for ${b.style}`,
+            overlay ? `the ${overlay.id} overlay` : 'its tuning',
+            `${b.id}'s tuning for ${overlay ? overlay.id : wornIds(b).join(' + ')}`,
             'the library (material)',
-            from === 'style' ? `the library (${b.style})` : 'the library (planet)',
+            overlay ? `the library (${overlay.id})` : 'the library (planet)',
           ];
           const under = mergeMaterialSettings(...layers)[name];
           const settings = mergeMaterialSettings(...layers, chosen)[name];
@@ -381,65 +435,85 @@ export function materialsOf(
             label: settings?.label ?? named,
             labelBelow: named,
             from,
-            origin: from === 'style' ? `From the ${b.style} overlay, set for ${b.id}` : undefined,
+            ...(overlay ? { overlay: overlay.id } : {}),
+            origin: overlay ? `From the ${overlay.id} overlay, set for ${b.id}` : undefined,
             origins: originsOf(layers.map((l, i) => [names[i]!, l?.[name]] as const)),
             values,
             enabledBelow: under?.enabled ?? MATERIAL_DEFAULTS.enabled,
             controls: materialControls(material, { pattern, drawAs: values.drawAs }),
             set: chosen?.[name],
             baseTint: under?.tint ?? NO_MATERIAL_TINT,
-            // Its layers as worn here (a body's own masks on a style's material); any texture of
-            // the body's, its style's or the sky's to read instead.
+            // Its layers as worn here (a body's own masks on an overlay's material); any texture
+            // of the body's, its overlays' or the sky's to read instead.
             layers: layersOf(
               withMasks(material, settings?.masks),
               settings,
               chosen?.[name],
               layers.map((l, i) => [names[i]!, l?.[name]] as const),
-              { ...sky, ...b.styleFile?.textures, ...owner.textures, ...b.file?.textures },
+              { ...sky, ...textures, ...owner.textures, ...b.file?.textures },
             ),
           };
         })
       : [],
   );
   // In the order they are drawn (the tree's order): the level edited's, else what is under it.
-  const order = b.settings.order ?? b.below?.order ?? b.styleBelow?.order;
+  const orders = b.overlays.flatMap((o) => (o.below?.order ? [o.below.order] : []));
+  const order = b.settings.order ?? b.below?.order ?? (orders.length ? orders.flat() : undefined);
   const priority = (name: string) =>
-    (b.file?.materials[name] ?? b.styleFile?.materials[name])?.priority;
+    (
+      b.file?.materials[name] ??
+      b.overlays.find((o) => o.file?.materials[name])?.file?.materials[name]
+    )?.priority;
   return inDrawOrder(entries, order, priority);
 }
 
-/** A body's own settings as shown: the layer edited, over those under it (its style's shade over its own), over its files' tuning, over the defaults. */
+/** The light a body is lit by: its overlays' (the first of them that has one), else its own. */
+export const rigOf = (b: BodyInfo) =>
+  b.overlays.find((o) => o.file?.light)?.file?.light ?? b.file?.light;
+
+/** How a body's overlays shade it, each setting the later's over the earlier's. */
+function overlayShades(b: BodyInfo) {
+  const wear = (o: WornOverlay) => wearOf(b.file, o.id)?.shade;
+  return {
+    strength: {
+      styled: latest(b.overlays.map((o) => o.below?.shade)),
+      wear: latest(b.overlays.map((o) => wear(o)?.strength)),
+      style: latest(b.overlays.map((o) => o.file?.shade?.strength)),
+    },
+    direction: {
+      styled: latest(b.overlays.map((o) => o.below?.shadeTowards)),
+      wear: latest(b.overlays.map((o) => wear(o)?.direction)),
+      style: latest(b.overlays.map((o) => o.file?.shade?.direction)),
+    },
+  };
+}
+
+/** A body's own settings as shown: the layer edited, over those under it (its overlays' shade over its own), over its files' tuning, over the defaults. */
 export function valuesOf(b: BodyInfo): BodyValues {
   const tuning = b.file?.tuning;
-  const style = b.styleFile;
   const s = b.settings;
   const own = b.below;
-  const styled = b.styleBelow;
-  const wear = wearOf(b.file, b.style)?.shade;
+  const { strength, direction } = overlayShades(b);
   return {
-    style: b.style,
+    overlays: wornIds(b),
     lighting: s.lighting ?? own?.lighting ?? tuning?.lighting ?? 1,
-    // A style it wears shades it its way (as it wears it); else its own.
+    // An overlay it wears shades it its way (as it wears it); else its own.
     shade:
       s.shade ??
-      styled?.shade ??
+      strength.styled ??
       own?.shade ??
-      wear?.strength ??
-      style?.shade?.strength ??
+      strength.wear ??
+      strength.style ??
       tuning?.shade?.strength ??
       DEFAULT_SHADE.strength,
     tint: s.tint ?? own?.tint ?? tuning?.tint ?? NO_MATERIAL_TINT,
-    lightFrom:
-      s.lightFrom ??
-      own?.lightFrom ??
-      tuning?.lightFrom ??
-      keyLightFrom(style?.light ?? b.file?.light),
+    lightFrom: s.lightFrom ?? own?.lightFrom ?? tuning?.lightFrom ?? keyLightFrom(rigOf(b)),
     shadeTowards:
       s.shadeTowards ??
-      styled?.shadeTowards ??
+      direction.styled ??
       own?.shadeTowards ??
-      wear?.direction ??
-      style?.shade?.direction ??
+      direction.wear ??
+      direction.style ??
       tuning?.shade?.direction ??
       DEFAULT_SHADE.direction,
     rim: s.rim ?? own?.rim ?? tuning?.rim ?? TOWARDS_EYE,
@@ -464,10 +538,12 @@ export interface PartEntry {
   readonly label: string;
   /** Its name as the levels under the one edited have it. */
   readonly labelBelow: string;
-  /** Whose it is: the body's own, or its style's (which one). */
+  /** Whose it is: the body's own, or an overlay's (an overlay opened on its own: its own, kept as an overlay's). */
   readonly from: 'own' | 'style';
-  readonly style?: string;
-  readonly kind: 'sphere' | 'ring';
+  /** Its shape: a body's sphere or ring, or a sky overlay's part about the eye. */
+  readonly kind: 'sphere' | 'ring' | 'sky';
+  /** Whether it is a band (a sky overlay's part made in the editor: it has a width). */
+  readonly band?: boolean;
   readonly values: PartValues;
   /** What of it is set in the layer edited. */
   readonly set: PartSettings | undefined;
@@ -480,8 +556,10 @@ export interface PartEntry {
   /** Whether it is drawn (its materials with it), and whether it is under the level edited. */
   readonly enabled: boolean;
   readonly enabledBelow: boolean;
-  /** Whether it comes with the overlay the body wears (else it is the body's own). */
-  readonly overlay: boolean;
+  /** The overlay the body wears it comes with, by id (none: the body's own). */
+  readonly overlay?: string;
+  /** That overlay's name, where it is one worn (not the overlay open itself). */
+  readonly overlayName?: string;
 }
 
 /** A part as the tree shows it: with the materials drawn on it, in the order they are drawn. */
@@ -490,27 +568,33 @@ export interface PartNode {
   readonly materials: readonly MaterialEntry[];
 }
 
-/** A body's parts with their materials: its own, and those of the overlay it wears. */
+/** A body's parts with their materials: its own, and each overlay's it wears. */
 export function partNodes(
   b: BodyInfo,
   materials: readonly MaterialEntry[],
-): { own: PartNode[]; overlay: PartNode[] } {
+): { own: PartNode[]; overlays: { overlay: WornOverlay; nodes: PartNode[] }[] } {
   const nodes = partsOfBody(b).map((part) => ({
     part,
-    materials: materials.filter((m) => part.materials.includes(m.name)),
+    materials: materials.filter(
+      (m) => part.materials.includes(m.name) && (m.overlay ?? null) === (part.overlay ?? null),
+    ),
   }));
   return {
     own: nodes.filter((n) => !n.part.overlay),
-    overlay: nodes.filter((n) => n.part.overlay),
+    overlays: b.overlays.map((overlay) => ({
+      overlay,
+      nodes: nodes.filter((n) => n.part.overlay === overlay.id),
+    })),
   };
 }
 
 /** Whether a body is drawn (a scene's; its moons with it). */
 export const bodyEnabled = (b: BodyInfo) => b.settings.enabled ?? true;
 
-/** Whether the overlay a body wears is drawn, as set and under the level edited. */
-export const overlayEnabled = (b: BodyInfo) => b.settings.overlayEnabled ?? overlayEnabledBelow(b);
-export const overlayEnabledBelow = (b: BodyInfo) => b.below?.overlayEnabled ?? true;
+/** Whether an overlay a body wears is drawn, as set and under the level edited. */
+export const overlayEnabled = (b: BodyInfo, id: string) =>
+  overlayOn(id, b.settings) ?? overlayEnabledBelow(b, id);
+export const overlayEnabledBelow = (b: BodyInfo, id: string) => overlayOn(id, b.below) ?? true;
 
 /** Each part's icon in the tree: a sphere, or a ring. */
 export const partIcon = (p: PartEntry) => (p.kind === 'ring' ? 'radio_button_unchecked' : 'circle');
@@ -521,36 +605,59 @@ const PART_NAMES: Record<PartRole, string> = {
   shell: 'Shell',
   ring: 'Ring',
   shield: 'Shield',
+  sphere: 'Sphere',
+  band: 'Band',
+};
+
+/** A part's name made from its id, where it has one (an overlay's made in the editor: `ring-2`, Ring 2). */
+const idLabel = (id: string) => {
+  const [shape, n] = id.split('-');
+  return `${(shape ?? id).charAt(0).toUpperCase()}${(shape ?? id).slice(1)}${n ? ` ${n}` : ''}`;
 };
 
 /**
- * A body's parts as shown, its own then its style's as it wears them: each one's settings in
+ * A body's parts as shown, its own then each overlay's as it wears them: each one's settings in
  * effect (those under the layer edited, then the layer edited's) over its own shape and mapping.
  */
 export function partsOfBody(b: BodyInfo): PartEntry[] {
-  // A style opened on its own: its parts are a style's (as kept for every planet wearing it).
-  const owners: ['own' | 'style', readonly BodyPart[], boolean][] = [
-    [b.file?.kind === 'style' ? 'style' : 'own', b.file?.parts ?? [], false],
-    ['style', b.styleFile ? wornParts(b.file, b.style, b.styleFile.parts) : [], true],
+  const overlayNamed = (id: string) => {
+    const o = b.overlays.find((x) => x.id === id);
+    return o ? overlayLabel(o) : id;
+  };
+  // An overlay opened on its own: its parts are an overlay's (as kept for every planet wearing it).
+  const opened = b.file?.kind === 'style';
+  const owners: [readonly BodyPart[], string | undefined][] = [
+    [b.file?.parts ?? [], undefined],
+    ...b.overlays.map((o): [readonly BodyPart[], string] => [
+      o.file ? wornParts(b.file, o.id, o.file.parts) : [],
+      o.id,
+    ]),
   ];
   const levels: [string, PartSettingsMap | undefined][] = [
     ['the library (planet)', b.below?.parts],
-    [`the library (${b.style})`, b.styleBelow?.parts],
+    ...b.overlays.map((o): [string, PartSettingsMap | undefined] => [
+      `the library (${o.id})`,
+      o.below?.parts,
+    ]),
   ];
-  return owners.flatMap(([from, parts, overlay]) =>
+  return owners.flatMap(([parts, overlay]) =>
     parts.map((part): PartEntry => {
-      const key = partKey(from, part.role);
+      const from = overlay || opened ? 'style' : 'own';
+      const key = overlay
+        ? overlayPartKey(overlay, part)
+        : opened
+          ? overlayPartKey(b.id, part)
+          : ownPartKey(part);
       const set = b.settings.parts?.[key];
       const settings = mergePartSettings(...levels.map(([, l]) => l), b.settings.parts)[key];
       const { shape, mapping } = part;
       const below = mergePartSettings(...levels.map(([, l]) => l))[key];
-      const named = below?.label ?? PART_NAMES[part.role];
+      const named = below?.label ?? (part.id ? idLabel(part.id) : PART_NAMES[part.role]);
       return {
         key,
         label: settings?.label ?? named,
         labelBelow: named,
         from,
-        style: from === 'style' ? b.style || b.id : undefined,
         kind: shape.kind,
         values: {
           size: settings?.size ?? 1,
@@ -567,7 +674,7 @@ export function partsOfBody(b: BodyInfo): PartEntry[] {
         materials: part.materials,
         enabled: settings?.enabled ?? true,
         enabledBelow: below?.enabled ?? true,
-        overlay,
+        ...(overlay ? { overlay, overlayName: overlayNamed(overlay) } : {}),
       };
     }),
   );
@@ -598,8 +705,8 @@ export interface LightEntry {
   readonly removable: boolean;
   /** Where it was added, where that is a level under the one edited (an overlay's, the library's). */
   readonly addedIn?: string;
-  /** Whether it is the overlay's the body wears (shown under the overlay). */
-  readonly overlay?: boolean;
+  /** The overlay the body wears it is of, by id (shown under the overlay); none: the body's. */
+  readonly overlay?: string;
   /** What of its body it may reach (none: a scene's, reaching every body), and what it reaches. */
   readonly receivers: readonly ReceiverEntry[];
   readonly reach?: LightReach;
@@ -615,21 +722,27 @@ export interface ReceiverEntry {
   readonly material: boolean;
 }
 
-/** What a body's lights may reach: its parts, each with the materials drawn on it (its overlay's named so). */
+/** What a body's lights may reach: its parts, each with the materials drawn on it (its overlays' named so). */
 function receiversOf(b: BodyInfo): ReceiverEntry[] {
   const nodes = partNodes(b, materialsOf(b));
-  return [...nodes.own, ...nodes.overlay].flatMap(({ part, materials }) => [
-    {
-      receiver: `part:${part.key}` as const,
-      label: part.overlay ? `${part.label} (${styleLabel(b)})` : part.label,
-      material: false,
-    },
-    ...materials.map((m) => ({
-      receiver: `material:${m.name}` as const,
-      label: m.label,
-      material: true,
-    })),
-  ]);
+  const named = (id: string | undefined) => {
+    const o = b.overlays.find((x) => x.id === id);
+    return o ? ` (${overlayLabel(o)})` : '';
+  };
+  return [...nodes.own, ...nodes.overlays.flatMap((o) => o.nodes)].flatMap(
+    ({ part, materials }) => [
+      {
+        receiver: `part:${part.key}` as const,
+        label: part.label + named(part.overlay),
+        material: false,
+      },
+      ...materials.map((m) => ({
+        receiver: `material:${m.name}` as const,
+        label: m.label,
+        material: true,
+      })),
+    ],
+  );
 }
 
 /**
@@ -639,19 +752,20 @@ function receiversOf(b: BodyInfo): ReceiverEntry[] {
  */
 export function lightsOfBody(b: BodyInfo): LightEntry[] {
   const values = valuesOf(b);
-  const rig = b.styleFile?.light ?? b.file?.light;
+  const rig = rigOf(b);
   // Its lights as they start: its rig as tuned (turned and made stronger together).
   const turned = rig && tunedRig(rig, values.lighting, values.lightFrom ?? undefined);
-  const softness = {
-    ...DEFAULT_SHADE,
-    ...b.file?.tuning?.shade,
-    ...b.styleFile?.shade,
-    ...wearOf(b.file, b.style)?.shade,
-  }.softness;
+  const softness = b.overlays.reduce(
+    (a, o) => ({ ...a, ...o.file?.shade, ...wearOf(b.file, o.id)?.shade }),
+    { ...DEFAULT_SHADE, ...b.file?.tuning?.shade },
+  ).softness;
   const shade = { strength: values.shade, direction: values.shadeTowards, softness };
   const levels: [string, LightSettingsMap | undefined][] = [
     ['the library (planet)', b.below?.lights],
-    [`the library (${b.style})`, b.styleBelow?.lights],
+    ...b.overlays.map((o): [string, LightSettingsMap | undefined] => [
+      `the library (${o.id})`,
+      o.below?.lights,
+    ]),
   ];
   const settings = mergeLightSettings(...levels.map(([, l]) => l), b.settings.lights);
   const under = mergeLightSettings(...levels.map(([, l]) => l));
@@ -659,14 +773,18 @@ export function lightsOfBody(b: BodyInfo): LightEntry[] {
   const body = bodyOrigins(b);
   // The lights added to it: under the level edited (the library's for the planet, its overlay's),
   // then the level edited's own (its settings are its own: nothing over them here).
-  const below: [string, readonly AddedLight[] | undefined, boolean][] = [
-    ['the library (planet)', b.below?.added, false],
-    [b.style ? `the ${b.style} overlay` : 'the library', b.styleBelow?.added, true],
+  const below: [string, readonly AddedLight[] | undefined, string | undefined][] = [
+    ['the library (planet)', b.below?.added, undefined],
+    ...b.overlays.map((o): [string, readonly AddedLight[] | undefined, string] => [
+      `the ${o.id} overlay`,
+      o.below?.added,
+      o.id,
+    ]),
   ];
   const added: Omit<LightEntry, 'receivers' | 'moons' | 'canReachMoons'>[] = [
     ...below.flatMap(([name, list, overlay]) =>
       knownLights(list ?? []).map((l) => ({
-        overlay,
+        ...(overlay ? { overlay } : {}),
         light: addedLight(l, settings[l.id]),
         nameBelow: addedLight(l, under[l.id]).name,
         enabledBelow: addedLight(l, under[l.id]).enabled,
@@ -688,9 +806,7 @@ export function lightsOfBody(b: BodyInfo): LightEntry[] {
   // What each reaches (as set over an added light's own), and whether it reaches the moons.
   const receivers = receiversOf(b);
   const addedById = new Map(
-    [...(b.below?.added ?? []), ...(b.styleBelow?.added ?? []), ...(b.settings.added ?? [])].map(
-      (l) => [l.id, l] as const,
-    ),
+    [...addedBelowOf(b), ...(b.settings.added ?? [])].map((l) => [l.id, l] as const),
   );
   return [...rigEntries(), ...added].map((e) => {
     const own = addedById.get(e.light.id as `added-${string}`);
@@ -728,10 +844,19 @@ export function lightsOfBody(b: BodyInfo): LightEntry[] {
  */
 export function moonLightsOf(b: BodyInfo): AddedLight[] {
   return lightsForMoons(
-    [...(b.below?.added ?? []), ...(b.styleBelow?.added ?? []), ...(b.settings.added ?? [])],
-    mergeLightSettings(b.below?.lights, b.styleBelow?.lights, b.settings.lights),
+    [...addedBelowOf(b), ...(b.settings.added ?? [])],
+    mergeLightSettings(lightsBelowOf(b), b.settings.lights),
   );
 }
+
+/** The lights added to a body under the level edited: the library's for it, then its overlays'. */
+const addedBelowOf = (b: BodyInfo): AddedLight[] => [
+  ...(b.below?.added ?? []),
+  ...b.overlays.flatMap((o) => o.below?.added ?? []),
+];
+/** What is set for a body's lights under the level edited: the library's for it, then its overlays'. */
+const lightsBelowOf = (b: BodyInfo) =>
+  mergeLightSettings(b.below?.lights, ...b.overlays.map((o) => o.below?.lights));
 
 /** A scene's own lights as shown: each added to the scene (its settings its own). */
 export function sceneLightsOf(lights: readonly AddedLight[] | undefined): LightEntry[] {
@@ -755,7 +880,8 @@ export function sceneLightsOf(lights: readonly AddedLight[] | undefined): LightE
 export interface OuterLight {
   readonly light: AddedLight;
   readonly owner: BodyPath | 'scene';
-  readonly overlay?: boolean;
+  /** The overlay of the planet it is of, by id, where it is an overlay's. */
+  readonly overlay?: string;
 }
 
 /** A light that may light what is selected (a body, a part, a material), as its Lit by list shows it. */
@@ -772,14 +898,14 @@ export interface LitByEntry {
   readonly reachBelow?: LightReach;
   /**
    * Whose it is, to find it in the tree: the body's own (none), the scene's, or a planet's it is a
-   * moon of (its path); and whether it is the overlay's (shown under the overlay).
+   * moon of (its path); and the overlay it is of, where it is one's (shown under the overlay).
    */
   readonly owner?: BodyPath | 'scene';
-  readonly overlay: boolean;
+  readonly overlay?: string;
 }
 
-/** Whether a body's files are loaded (its overlay's too, where it wears one). */
-export const filesLoaded = (b: BodyInfo) => !!b.file && (!b.style || !!b.styleFile);
+/** Whether a body's files are loaded (its overlays' too). */
+export const filesLoaded = (b: BodyInfo) => !!b.file && b.overlays.every((o) => !!o.file);
 
 /** A body's parts' materials, by part (its overlay's too). */
 function partMaterialsOf(b: BodyInfo): PartMaterials {
@@ -809,10 +935,8 @@ export function litByOf(
   );
   // Lights light a lit material; an antilight darkens any of a body's.
   const acts = (kind: LightKind) => shown.some((m) => kind === 'shadow' || m.values.lit);
-  const under = mergeLightSettings(b.below?.lights, b.styleBelow?.lights);
-  const addedBelow = new Map(
-    [...(b.below?.added ?? []), ...(b.styleBelow?.added ?? [])].map((l) => [l.id, l] as const),
-  );
+  const under = lightsBelowOf(b);
+  const addedBelow = new Map(addedBelowOf(b).map((l) => [l.id, l] as const));
   const lights = [
     ...lightsOfBody(b).map((e) => ({
       light: e.light,
@@ -822,7 +946,7 @@ export function litByOf(
         : (under[e.light.id]?.reach ?? addedBelow.get(e.light.id as `added-${string}`)?.reach),
       enabledBelow: e.enabledBelow,
       owner: undefined,
-      overlay: !!e.overlay,
+      overlay: e.overlay,
     })),
     ...outer.map(({ light, owner, overlay }) => {
       const set = b.settings.lights?.[light.id];
@@ -832,7 +956,7 @@ export function litByOf(
         reachBelow: light.reach,
         enabledBelow: true,
         owner,
-        overlay: !!overlay,
+        overlay,
       };
     }),
   ];
@@ -847,7 +971,7 @@ export function litByOf(
       ...(l.reach ? { reach: l.reach } : {}),
       ...(l.reachBelow ? { reachBelow: l.reachBelow } : {}),
       ...(l.owner !== undefined ? { owner: l.owner } : {}),
-      overlay: l.overlay,
+      ...(l.overlay ? { overlay: l.overlay } : {}),
     }));
 }
 
@@ -892,31 +1016,36 @@ const sameReach = (a: LightReach | undefined, b: LightReach | undefined) => {
  */
 export function bodyOrigins(b: BodyInfo): SettingOrigins<keyof BodySettings> {
   const tuning = b.file?.tuning;
-  const style = b.styleFile;
   const own = b.below;
-  const styled = b.styleBelow;
-  const wear = wearOf(b.file, b.style)?.shade;
   const first = (...levels: [string, unknown][]) => levels.find(([, v]) => v !== undefined)?.[0];
   const library = 'the library (planet)';
-  const libraryStyle = `the library (${b.style})`;
-  const worn = `its tuning for ${b.style}`;
-  const styleOwn = `the ${b.style} overlay`;
+  // Each overlay's say, the later's first (as it shades over the earlier's).
+  const latestFirst = [...b.overlays].reverse();
+  const libraryStyle = (k: 'shade' | 'shadeTowards') =>
+    latestFirst.map((o): [string, unknown] => [`the library (${o.id})`, o.below?.[k]]);
+  const worn = (k: 'strength' | 'direction') =>
+    latestFirst.map((o): [string, unknown] => [
+      `its tuning for ${o.id}`,
+      wearOf(b.file, o.id)?.shade?.[k],
+    ]);
+  const styleOwn = (k: 'strength' | 'direction') =>
+    latestFirst.map((o): [string, unknown] => [`the ${o.id} overlay`, o.file?.shade?.[k]]);
   const out: SettingOrigins<keyof BodySettings> = {
     lighting: first([library, own?.lighting], ['its tuning', tuning?.lighting]),
     shade: first(
-      [libraryStyle, styled?.shade],
+      ...libraryStyle('shade'),
       [library, own?.shade],
-      [worn, wear?.strength],
-      [styleOwn, style?.shade?.strength],
+      ...worn('strength'),
+      ...styleOwn('strength'),
       ['its tuning', tuning?.shade?.strength],
     ),
     tint: first([library, own?.tint], ['its tuning', tuning?.tint]),
     lightFrom: first([library, own?.lightFrom], ['its tuning', tuning?.lightFrom]),
     shadeTowards: first(
-      [libraryStyle, styled?.shadeTowards],
+      ...libraryStyle('shadeTowards'),
       [library, own?.shadeTowards],
-      [worn, wear?.direction],
-      [styleOwn, style?.shade?.direction],
+      ...worn('direction'),
+      ...styleOwn('direction'),
       ['its tuning', tuning?.shade?.direction],
     ),
     rim: first([library, own?.rim], ['its tuning', tuning?.rim]),
@@ -946,12 +1075,40 @@ export function bodyView(b: BodyInfo, focused: boolean, canHaveMoons: boolean): 
 
 /** A body's name as shown: as renamed (the level edited's, else the library's), else its id. */
 export const bodyLabel = (b: BodyInfo) => b.settings.label ?? bodyLabelBelow(b);
-export const bodyLabelBelow = (b: BodyInfo) => b.below?.label ?? b.id;
-/** The name of the overlay a body wears: as renamed in the library, else its style's id. */
-export const styleLabel = (b: BodyInfo) => b.styleBelow?.label ?? b.style;
-/** A body's name with the overlay it wears. */
+export const bodyLabelBelow = (b: BodyInfo) => b.below?.label ?? b.name ?? b.id;
+/**
+ * The overlays a body may wear, by name: the game data's (the index's styles), and those made in
+ * the editor (the library's), each as renamed in the library.
+ */
+export function overlayChoices(index: PlanetIndex | null, library: LibraryState): PickChoice[] {
+  const ids = [
+    ...(index?.styles.map((s) => s.id) ?? []),
+    ...Object.entries(library.created ?? {})
+      .filter(([, o]) => o.kind === 'planet')
+      .map(([id]) => id),
+  ];
+  return ids.map((id) => ({ value: id, label: overlayName(library, id) }));
+}
+
+/**
+ * A body's materials' draw order with its overlays' in the order it wears them (`worn`): its own
+ * first, then each overlay's, each keeping the order they are drawn in now.
+ */
+export function overlayOrder(
+  materials: readonly MaterialEntry[],
+  worn: readonly string[],
+): string[] {
+  return [
+    ...materials.filter((m) => !m.overlay).map((m) => m.name),
+    ...worn.flatMap((id) => materials.filter((m) => m.overlay === id).map((m) => m.name)),
+  ];
+}
+
+/** A body's name with the overlays it wears. */
 export const wornLabel = (b: BodyInfo) =>
-  b.style ? `${bodyLabel(b)} · ${styleLabel(b)}` : bodyLabel(b);
+  b.overlays.length
+    ? `${bodyLabel(b)} · ${b.overlays.map(overlayLabel).join(' + ')}`
+    : bodyLabel(b);
 
 /** The sky's materials as shown: the scene file's, through what is under the layer edited and the layer edited. */
 export function skyMaterialsOf(
@@ -959,6 +1116,7 @@ export function skyMaterialsOf(
   below: SkyChoices | undefined,
   edited: SkyChoices | undefined,
   base?: MaterialSettingsMap,
+  overlays: readonly SkyOverlayInfo[] = [],
 ): MaterialEntry[] {
   const out: MaterialEntry[] = [];
   const meshes = Object.values(scene.meshes)
@@ -1000,7 +1158,143 @@ export function skyMaterialsOf(
       ),
     });
   }
-  return inDrawOrder(out, edited?.order ?? below?.order, (n) => scene.materials[n]?.priority);
+  // The overlays' it wears: each drawn as the sky's are, its settings the overlay's (the library's
+  // for it) under the sky's.
+  for (const o of overlays)
+    for (const part of o.file?.parts ?? [])
+      for (const name of part.materials) {
+        const material = o.file?.materials[name];
+        if (!material || out.some((m) => m.name === name && m.overlay === o.id)) continue;
+        const levels = [
+          ['the library (material)', base?.[name]],
+          [`the library (${o.id})`, o.below?.materials?.[name]],
+          ['the library (sky)', below?.materials?.[name]],
+        ] as const;
+        const under = mergeMaterialSettings(base, o.below?.materials, below?.materials)[name];
+        const settings = mergeMaterialSettings(
+          base,
+          o.below?.materials,
+          below?.materials,
+          edited?.materials,
+        )[name];
+        const textures = { ...scene.textures, ...o.file?.textures };
+        const named = under?.label ?? materialLabel(name, material, textures);
+        out.push({
+          name,
+          label: edited?.materials?.[name]?.label ?? named,
+          labelBelow: named,
+          from: 'style',
+          overlay: o.id,
+          origins: originsOf(levels),
+          values: materialValues(material, settings, skyDepths(scene)[name]),
+          enabledBelow: under?.enabled ?? MATERIAL_DEFAULTS.enabled,
+          controls: materialControls(material, { particles: false, sky: true }),
+          set: edited?.materials?.[name],
+          baseTint: under?.tint ?? NO_MATERIAL_TINT,
+          layers: layersOf(material, settings, edited?.materials?.[name], levels, textures),
+        });
+      }
+  const priority = (n: string) =>
+    (scene.materials[n] ?? overlays.find((o) => o.file?.materials[n])?.file?.materials[n])
+      ?.priority;
+  return inDrawOrder(out, edited?.order ?? below?.order, priority);
+}
+
+/**
+ * An overlay a sky wears, as an editor has it: which, its name (as made, or as the data names it),
+ * its settings under the level edited (the library's for it), and its file.
+ */
+export interface SkyOverlayInfo {
+  readonly id: string;
+  readonly name?: string;
+  readonly below?: BodySettings;
+  readonly file?: SkyOverlayFile;
+}
+
+/** The overlays a sky wears (by id, in order) as an editor has them: each one's file, the data's or made. */
+export function skyOverlayInfos(
+  scene: PlayScene | null,
+  library: LibraryState,
+  worn: readonly string[],
+): SkyOverlayInfo[] {
+  return worn.map((id) => {
+    const made = library.created?.[id];
+    const file = made?.kind === 'sky' ? createdSkyFile(made) : scene?.overlays?.[id];
+    const name = made?.label ?? file?.label;
+    return {
+      id,
+      ...(name ? { name } : {}),
+      below: library.styles[id],
+      ...(file ? { file } : {}),
+    };
+  });
+}
+
+/** The overlays a sky may wear, by name: the game data's (the scene's), and those made in the editor for skies. */
+export function skyOverlayChoices(scene: PlayScene | null, library: LibraryState): PickChoice[] {
+  return [
+    ...Object.entries(scene?.overlays ?? {}).map(([id, file]) => ({
+      value: id,
+      label: library.styles[id]?.label ?? file.label ?? id,
+    })),
+    ...Object.entries(library.created ?? {})
+      .filter(([, o]) => o.kind === 'sky')
+      .map(([id]) => ({ value: id, label: overlayName(library, id) })),
+  ];
+}
+
+/** A sky overlay's name: as renamed in the library, else as made or as its data names it, else its id. */
+export const skyOverlayLabel = (o: SkyOverlayInfo) => o.below?.label ?? o.name ?? o.id;
+
+/**
+ * A sky overlay's parts as shown: each one's settings in effect (the overlay's own, the library
+ * sky's for it, `below`; then the level edited's) about the eye. One made in the editor is a band
+ * named by its id; the data's, by the overlay's name.
+ */
+export function skyPartsOf(
+  o: SkyOverlayInfo,
+  below: PartSettingsMap | undefined,
+  edited: PartSettingsMap | undefined,
+  /** Whether the overlay is the one open (its parts are its own, not another's it wears). */
+  own = false,
+): PartEntry[] {
+  const levels: [string, PartSettingsMap | undefined][] = [
+    [`the library (${o.id})`, o.below?.parts],
+    ['the library (sky)', below],
+  ];
+  const parts = o.file?.parts ?? [];
+  return parts.map((part): PartEntry => {
+    const key = overlayPartKey(o.id, { id: part.id, role: 'band' });
+    const under = mergePartSettings(...levels.map(([, l]) => l))[key];
+    const settings = mergePartSettings(...levels.map(([, l]) => l), edited)[key];
+    const band = part.shape.kind === 'band';
+    const named = under?.label ?? (band ? idLabel(part.id) : skyOverlayLabel(o));
+    return {
+      key,
+      label: settings?.label ?? named,
+      labelBelow: named,
+      from: 'style',
+      kind: 'sky',
+      band,
+      values: {
+        size: settings?.size ?? 1,
+        turn: settings?.turn ?? 0,
+        tilt: settings?.tilt ?? 0,
+        width: settings?.width ?? 1,
+        depth: 0,
+        mid: 0.5,
+        keepToLimb: false,
+      },
+      set: edited?.[key],
+      origins: originsOf(levels.map(([name, l]) => [name, l?.[key]] as const)),
+      canKeepToLimb: false,
+      materials: part.materials,
+      enabled: settings?.enabled ?? true,
+      enabledBelow: under?.enabled ?? true,
+      overlay: o.id,
+      ...(own ? {} : { overlayName: skyOverlayLabel(o) }),
+    };
+  });
 }
 
 /** Materials as shown, in the order they are drawn (see `drawOrder`). */

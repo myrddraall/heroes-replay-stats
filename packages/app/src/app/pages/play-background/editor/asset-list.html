@@ -1,5 +1,8 @@
 <ul class="items">
   @for (item of items(); track item.key) {
+    @if (item.group && item.group !== items()[$index - 1]?.group) {
+      <li class="group" role="presentation">{{ item.group }}</li>
+    }
     <li>
       <button
         type="button"

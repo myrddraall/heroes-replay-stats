@@ -8,10 +8,13 @@ export interface BrowserItem {
   /** A second, quieter line (where it is used, what it is of). */
   readonly caption?: string;
   readonly unsaved?: boolean;
+  /** The group it is listed under (a heading where the groups change), where the list has groups. */
+  readonly group?: string;
 }
 
 /**
- * The library's list (presentational): one kind of thing, flat; an item is selected by a click or
+ * The library's list (presentational): one kind of thing, flat (under a heading for each group,
+ * where its items have groups); an item is selected by a click or
  * the up and down arrows (shown, its information beside) and opened by a double-click (or Enter),
  * by its key; the one selected marked.
  */

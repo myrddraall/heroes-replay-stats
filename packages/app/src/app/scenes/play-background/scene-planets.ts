@@ -1,4 +1,11 @@
-import type { SceneBlend, SceneColor, SceneLayer, SceneMaterial, SceneTexture } from './play-scene';
+import type {
+  SceneBlend,
+  SceneColor,
+  SceneLayer,
+  SceneMaterial,
+  SceneTexture,
+  SkyOverlayFile,
+} from './play-scene';
 import type { TintBlend } from './scene-tints';
 import { BUILT_IN_PREFIX, type BuiltInPlanets } from './built-in-planets';
 
@@ -119,12 +126,32 @@ export type PartMapping =
       readonly mid?: number;
     };
 
-/** What a part is to its body: its surface, a layer on it, its atmosphere shell, a ring, a style's shield. */
-export type PartRole = 'surface' | 'layer' | 'shell' | 'ring' | 'shield';
+/**
+ * What a part is to its body: its surface, a layer on it, its atmosphere shell, a ring, a style's
+ * shield; or a part of an overlay made in the editor (a sphere, a ring, the sky's band).
+ */
+export type PartRole = 'surface' | 'layer' | 'shell' | 'ring' | 'shield' | 'sphere' | 'band';
 
-/** A part of a placed body by whose it is (the body's own, or its style's) and its role: `own:surface`, `style:ring`. */
-export type PartKey = `${'own' | 'style'}:${PartRole}`;
-export const partKey = (from: 'own' | 'style', role: PartRole): PartKey => `${from}:${role}`;
+/**
+ * A part of a placed body by whose it is and which part of it it is: the body's own by its part
+ * (`own:surface`), or an overlay's it wears by the overlay and its part (`style:nexus:shield`),
+ * so overlays worn together keep their parts apart.
+ */
+export type PartKey = `own:${string}` | `style:${string}:${string}`;
+/** Which of its owner's parts a part is: its id, where it has one (an overlay made in the editor), else its role. */
+export const partId = (part: { readonly id?: string; readonly role: PartRole }) =>
+  part.id ?? part.role;
+/** A body's own part's key. */
+export const ownPartKey = (part: { readonly id?: string; readonly role: PartRole }): PartKey =>
+  `own:${partId(part)}`;
+/** An overlay's part's key, the overlay worn by its id. */
+export const overlayPartKey = (
+  overlay: string,
+  part: { readonly id?: string; readonly role: PartRole },
+): PartKey => `style:${overlay}:${partId(part)}`;
+/** The overlay a part's key is of (none: the body's own). */
+export const overlayOfPartKey = (key: PartKey): string | undefined =>
+  key.startsWith('style:') ? key.split(':')[1] : undefined;
 
 /**
  * A part's shape and how its textures lie on it, in place of its own (each where set), relative to
@@ -420,12 +447,26 @@ export type MaterialDrawAs = 'pattern' | 'texture';
 /** Materials' settings by the materials' names. */
 export type MaterialSettingsMap = Readonly<Record<string, MaterialSettings>>;
 
-/** How the sky shows: its materials' settings by name, and a tint over all of it (its stars too). */
+/**
+ * How the sky shows: its materials' settings by name (its overlays' too), a tint over all of it
+ * (its stars too), and the overlays it wears.
+ */
 export interface SkySettings {
   readonly materials?: MaterialSettingsMap;
   readonly tint?: MaterialTint;
   /** Its materials' draw order, by name (the later over the earlier; see `drawOrder`), where set. */
   readonly order?: readonly string[];
+  /** The overlays it wears and draws, in order, by id (none given: its data's). */
+  readonly overlays?: readonly string[];
+  /** Its overlays' parts' settings, by part (`style:<overlay>:<part>`). */
+  readonly parts?: PartSettingsMap;
+  /** Overlays made in the editor it wears, by id: their files, and the images their textures are. */
+  readonly made?: Readonly<
+    Record<
+      string,
+      { readonly file: SkyOverlayFile; readonly images: Readonly<Record<string, ImageBitmap>> }
+    >
+  >;
 }
 
 /**
@@ -444,6 +485,8 @@ export interface PartPattern {
 }
 
 export interface BodyPart {
+  /** Which of its owner's parts it is, where its role doesn't say (an overlay's made in the editor). */
+  readonly id?: string;
   readonly role: PartRole;
   readonly shape: PartShape;
   /** A pattern drawn in place of its materials' emissive texture. */

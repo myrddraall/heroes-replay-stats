@@ -147,6 +147,42 @@ export interface SceneTone {
   readonly bloomThreshold?: number;
 }
 
+/**
+ * A sky overlay's part's shape: a mesh as the sky's are (the game data's, in world space, about the
+ * game's camera), or a band about the eye (one made in the editor): part of an upright cylinder
+ * `distance` from the eye, from `low` to `high` degrees up from level, `from` to `to` degrees round
+ * from the view's middle (to the right positive).
+ */
+export type SkyShape =
+  | ({ readonly kind: 'mesh' } & Omit<SceneMesh, 'materials' | 'planet'>)
+  | {
+      readonly kind: 'band';
+      readonly distance: number;
+      readonly low: number;
+      readonly high: number;
+      readonly from: number;
+      readonly to: number;
+    };
+
+/** A part of a sky overlay: which part it is, its shape, the materials drawn on it in order. */
+export interface SkyPart {
+  readonly id: string;
+  readonly shape: SkyShape;
+  readonly materials: readonly string[];
+}
+
+/**
+ * An overlay a sky wears (the game data's, set apart from the Play screen's sky; or one made in
+ * the editor): its name, its parts about the eye, and the materials they draw and the textures
+ * those read (the game data's: the scene's own files).
+ */
+export interface SkyOverlayFile {
+  readonly label?: string;
+  readonly parts: readonly SkyPart[];
+  readonly materials: Readonly<Record<string, SceneMaterial>>;
+  readonly textures: Readonly<Record<string, SceneTexture>>;
+}
+
 export interface PlayScene {
   readonly camera: SceneCamera;
   readonly tone: SceneTone;
@@ -154,6 +190,10 @@ export interface PlayScene {
   readonly materials: Readonly<Record<string, SceneMaterial>>;
   readonly particles: readonly SceneParticles[];
   readonly textures: Readonly<Record<string, SceneTexture>>;
+  /** The sky's overlays in the game data, by id (the energy round the view, set apart as one). */
+  readonly overlays?: Readonly<Record<string, SkyOverlayFile>>;
+  /** The overlays the sky wears unless told otherwise, in order (the game's: all of them). */
+  readonly wears?: readonly string[];
 }
 
 /** The scene with its textures decoded, ready to draw. */
