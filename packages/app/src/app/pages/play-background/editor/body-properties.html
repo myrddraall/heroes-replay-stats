@@ -28,15 +28,15 @@
     <button type="button" class="button" (click)="removeRequested.emit()">Remove planet</button>
   }
     <button type="button" class="button" (click)="resetRequested.emit()" [disabled]="!changed()">
-      Reset look
+      {{ overlay() ? 'Reset overlay' : orbit() ? 'Reset moon' : 'Reset planet' }}
     </button>
   </div>
 </hrs-property-section>
 @let v = values();
 @if (styled()) {
-  <hrs-property-section title="Body" [changed]="styleSet()" (resetRequested)="styleReset.emit()">
+  <hrs-property-section title="Overlay" [changed]="styleSet()" (resetRequested)="styleReset.emit()">
     <hrs-property-select
-      label="Style"
+      label="Wears"
       [value]="v.style"
       [options]="styleOptions()"
       [changed]="styleSet()"

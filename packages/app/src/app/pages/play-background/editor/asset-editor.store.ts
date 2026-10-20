@@ -113,7 +113,7 @@ const assetLightKey = (id: LightId) => `${ASSET}/l/${id}`;
 
 const KIND_TITLES: Readonly<Record<AssetKind, string>> = {
   planet: 'Planet',
-  style: 'Style',
+  style: 'Overlay',
   material: 'Material',
   particle: 'Particles',
   sky: 'Sky',

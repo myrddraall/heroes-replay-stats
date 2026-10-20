@@ -4,7 +4,7 @@ import type { OpenKind } from './open-target';
 export const LIBRARY_TYPES: readonly { readonly value: OpenKind; readonly label: string }[] = [
   { value: 'scene', label: 'Scenes' },
   { value: 'planet', label: 'Planets' },
-  { value: 'style', label: 'Styles' },
+  { value: 'style', label: 'Overlays' },
   { value: 'material', label: 'Materials' },
   { value: 'particle', label: 'Particles' },
   { value: 'sky', label: 'Skies' },

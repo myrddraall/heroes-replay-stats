@@ -30,7 +30,7 @@
 >
   @if (c.strength) {
     <hrs-property-number
-      label="Strength"
+      label="Opacity"
       [value]="v.strength"
       [min]="0"
       [max]="1"
@@ -43,7 +43,7 @@
   }
   @if (!c.particles) {
     <hrs-property-select
-      label="Blend"
+      label="Draw mode"
       [value]="v.blend"
       [options]="blends"
       [changed]="isSet('blend')"

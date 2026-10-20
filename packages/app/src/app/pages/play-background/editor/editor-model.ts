@@ -363,7 +363,7 @@ export function materialsOf(
       ? partMaterials(owner).map(({ name, material, pattern, role }) => {
           const layers = [owner.tuning?.materials, worn, b.materialBase, below?.materials] as const;
           const names = [
-            from === 'style' ? `the ${b.style} style` : 'its tuning',
+            from === 'style' ? `the ${b.style} overlay` : 'its tuning',
             `${b.id}'s tuning for ${b.style}`,
             'the library (material)',
             from === 'style' ? `the library (${b.style})` : 'the library (planet)',
@@ -377,7 +377,7 @@ export function materialsOf(
             label: settings?.label ?? named,
             labelBelow: named,
             from,
-            origin: from === 'style' ? `From the ${b.style} style, set for ${b.id}` : undefined,
+            origin: from === 'style' ? `From the ${b.style} overlay, set for ${b.id}` : undefined,
             origins: originsOf(layers.map((l, i) => [names[i]!, l?.[name]] as const)),
             values,
             enabledBelow: under?.enabled ?? MATERIAL_DEFAULTS.enabled,
@@ -920,7 +920,7 @@ export function bodyOrigins(b: BodyInfo): SettingOrigins<keyof BodySettings> {
   const library = 'the library (planet)';
   const libraryStyle = `the library (${b.style})`;
   const worn = `its tuning for ${b.style}`;
-  const styleOwn = `the ${b.style} style`;
+  const styleOwn = `the ${b.style} overlay`;
   const out: SettingOrigins<keyof BodySettings> = {
     lighting: first([library, own?.lighting], ['its tuning', tuning?.lighting]),
     shade: first(

@@ -90,7 +90,7 @@ export class AssetInfo {
         const settings = (kind === 'planet' ? library.planets : library.styles)[id];
         return {
           ...none,
-          kind: kind === 'planet' ? (PLANET_KINDS[entry?.kind ?? ''] ?? 'Planet') : 'Style',
+          kind: kind === 'planet' ? (PLANET_KINDS[entry?.kind ?? ''] ?? 'Planet') : 'Overlay',
           facts: [
             { label: 'Library', value: setOf(settings) },
             ...(kind === 'planet' && file?.tuning?.style
