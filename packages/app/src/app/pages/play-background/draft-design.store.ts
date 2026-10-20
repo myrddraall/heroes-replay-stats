@@ -21,6 +21,8 @@ import {
 } from '../../scenes/play-background/background-design';
 import {
   type BodySettings,
+  type AddedCamera,
+  GAME_CAMERA,
   type GroupPlacement,
   type PlanetChoices,
   type SceneBody,
@@ -43,6 +45,8 @@ import {
   type AddedPart,
 } from '../../scenes/play-background/created-overlays';
 import { withOverlayParts } from './editor/part-hosts';
+import type { SceneCameraSet } from '../../scenes/play-background/play-scene';
+import { withDesignHistory } from './with-design-history';
 import { PublishedDesignStore } from '../../scenes/play-background/published-design.store';
 import type {
   MaterialSettings,
@@ -114,6 +118,7 @@ export const DraftDesignStore = signalStore(
       patchState(store, migrateDesign({ library: store.library(), scenes: store.scenes() }));
     },
   }),
+  withDesignHistory(),
   withProps(() => ({
     _published: inject(PublishedDesignStore),
     _root: inject(DOCUMENT).documentElement,
@@ -393,6 +398,9 @@ export const DraftDesignStore = signalStore(
           lights: p.lights,
           group: p.group,
           groups: p.groups,
+          camera: p.camera,
+          cameras: p.cameras,
+          primaryCamera: p.primaryCamera,
         }));
       },
       /** A scene taken out (a preset's or the stage's is only reset). */
@@ -407,8 +415,10 @@ export const DraftDesignStore = signalStore(
           // A group deleted: taken out of every scene (and group) it was put in.
           if (isGroup(id))
             for (const [key, p] of Object.entries(planets))
-              if (p.groups?.some((g) => g.group === id))
-                planets[key] = { ...p, groups: p.groups.filter((g) => g.group !== id) };
+              if (p.groups?.some((g) => g.group === id)) {
+                const groups = p.groups.filter((g) => g.group !== id);
+                planets[key] = groups.length ? { ...p, groups } : (without(p, ['groups']) ?? {});
+              }
           return { ...s, planets };
         });
       },
@@ -422,6 +432,30 @@ export const DraftDesignStore = signalStore(
         setScenes((s) => ({ ...s, planets: { ...s.planets, [id]: group } }));
         store._published.publishScene(id, group);
         return id;
+      },
+      /** Where a scene puts the camera, over the game's (none: the game's). */
+      setSceneCamera(id: string, camera: SceneCameraSet | undefined): void {
+        setScene(id, (p) => ({ ...p, camera }));
+      },
+      /** The cameras added to a scene (none: none); its primary kept where it is still one of them. */
+      setSceneCameras(id: string, cameras: readonly AddedCamera[]): void {
+        setScene(id, (p) => {
+          const primary = cameras.some((c) => c.id === p.primaryCamera)
+            ? p.primaryCamera
+            : undefined;
+          return {
+            ...p,
+            cameras: cameras.length ? cameras : undefined,
+            primaryCamera: primary,
+          };
+        });
+      },
+      /** The camera a scene is shown through, by id (none, or the game's: the game's). */
+      setPrimaryCamera(id: string, camera: string | undefined): void {
+        setScene(id, (p) => ({
+          ...p,
+          primaryCamera: camera === GAME_CAMERA ? undefined : camera,
+        }));
       },
       /** The groups put in a scene (or a group), as they are to be; none: none. */
       setSceneGroups(id: string, groups: readonly GroupPlacement[]): void {
@@ -440,6 +474,9 @@ export const DraftDesignStore = signalStore(
                 // What it is, and the groups put in it where they are (as its planets are).
                 group: p.group,
                 groups: p.groups,
+                camera: p.camera,
+                cameras: p.cameras,
+                primaryCamera: p.primaryCamera,
               }
             : null,
         );

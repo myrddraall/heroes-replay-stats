@@ -1,0 +1,63 @@
+@let c = values();
+@if (!game() || !primary() || !lookingThrough()) {
+  <hrs-property-section title="General">
+    @if (!game()) {
+      <hrs-property-text label="Name" [value]="name()" (valueChange)="nameChange.emit($event)" />
+    }
+    <div class="buttons">
+      @if (!primary()) {
+        <button type="button" class="button" (click)="primaryRequested.emit()">Make primary</button>
+      }
+      @if (!lookingThrough()) {
+        <button type="button" class="button" (click)="lookRequested.emit()">Look through</button>
+      }
+      @if (!game()) {
+        <button type="button" class="button" (click)="removeRequested.emit()">Remove camera</button>
+      }
+    </div>
+  </hrs-property-section>
+}
+<hrs-property-section
+  title="Camera"
+  [changed]="game() && changed()"
+  (resetRequested)="cameraReset.emit()"
+>
+  <hrs-property-number
+    label="Across"
+    [value]="c.eye[0]"
+    [step]="0.5"
+    (valueChange)="move(0, $event)"
+  />
+  <hrs-property-number label="Up" [value]="c.eye[2]" [step]="0.5" (valueChange)="move(2, $event)" />
+  <hrs-property-number
+    label="Distance"
+    [value]="c.eye[1]"
+    [step]="0.5"
+    (valueChange)="move(1, $event)"
+  />
+  <hrs-property-number
+    label="Turn"
+    [value]="c.turn"
+    [step]="0.5"
+    (valueChange)="cameraChange.emit({ turn: $event })"
+  />
+  <hrs-property-number
+    label="Tilt"
+    [value]="c.tilt"
+    [min]="-89"
+    [max]="89"
+    [step]="0.5"
+    (valueChange)="cameraChange.emit({ tilt: $event })"
+  />
+  <hrs-property-number
+    label="Field of view"
+    [value]="c.fovY"
+    [min]="5"
+    [max]="120"
+    [step]="0.5"
+    (valueChange)="cameraChange.emit({ fovY: $event })"
+  />
+  @if (lookingThrough()) {
+    <p class="hint">Drag the view to move round, Shift-drag to move across, scroll to move in.</p>
+  }
+</hrs-property-section>

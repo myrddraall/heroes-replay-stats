@@ -7,6 +7,7 @@ import type {
 } from '../../../scenes/play-background/scene-planets';
 import type { CreatedShape } from '../../../scenes/play-background/created-overlays';
 import type { PickChoice } from './pick-list';
+import type { SceneCamera, SceneCameraSet } from '../../../scenes/play-background/play-scene';
 import type {
   BodyView,
   LightEntry,
@@ -23,6 +24,7 @@ import type {
 } from '../../../scenes/play-background/scene-lights';
 import type { AssetTarget, OpenTarget } from './open-target';
 import type { TreeMove, TreeRow } from './scene-tree';
+import type { SceneMarker } from './scene-markers';
 
 /**
  * An editor of the background's design, as the panels under it use one: provided by the scene
@@ -143,6 +145,21 @@ export abstract class Editor {
   } | null>;
   abstract addPartMaterial(name: string): void;
   abstract removePartMaterial(name: string): void;
+  /** The camera the view shows the scene through, where it can be moved (a scene's; none: none). */
+  abstract readonly camera: Signal<SceneCamera | null>;
+  /** The camera the view looks through moved (dragged in the view). */
+  abstract moveCamera(set: SceneCameraSet): void;
+  /** What the view may look through (the editor's camera, a scene's cameras), by id; none: no choice. */
+  abstract readonly lookOptions: Signal<readonly { readonly id: string; readonly label: string }[]>;
+  abstract readonly look: Signal<string>;
+  abstract lookThrough(id: string): void;
+  /** Whether the editor's camera is moved from the scene's primary, and putting it back. */
+  abstract readonly editorCameraMoved: Signal<boolean>;
+  abstract resetEditorCamera(): void;
+  /** What the view marks where it is (cameras, groups put in it, the selected's lights). */
+  abstract readonly markers: Signal<readonly SceneMarker[]>;
+  /** What a marker stands for selected, its rows unfolded to it. */
+  abstract showMarker(key: string): void;
   /** Whether the asset open can be deleted (an overlay made in the editor), and deleting it. */
   abstract readonly deletable: Signal<boolean>;
   /** Whether the asset open is a sky's overlay (drawn as the sky is: nothing lights it). */

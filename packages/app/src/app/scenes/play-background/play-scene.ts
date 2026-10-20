@@ -14,6 +14,12 @@ export interface SceneCamera {
   readonly far: number;
 }
 
+/**
+ * Where a scene puts the camera, over the game's (each where set): where it is, the way it looks,
+ * and its field of view (vertical, degrees). Its up stays the world's.
+ */
+export type SceneCameraSet = Partial<Pick<SceneCamera, 'eye' | 'forward' | 'fovY'>>;
+
 /** The Play screen's own planets, by their size, as the game's atmosphere materials name them. */
 export type PlanetSize = 'large' | 'medium' | 'small';
 

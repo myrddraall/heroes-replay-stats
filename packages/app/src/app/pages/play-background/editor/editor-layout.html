@@ -85,8 +85,22 @@
       class="layout__scene"
       [names]="ui.names() && !ui.screenshot()"
       [pickable]="!ui.screenshot()"
+      [hrsCameraDrag]="ui.screenshot() ? null : editor.camera()"
+      (cameraMove)="editor.moveCamera($event)"
+      (cameraMoveStart)="draft.holdHistory()"
+      (cameraMoveEnd)="draft.releaseHistory()"
       (planetPick)="pick($event)"
     />
+    @if (ui.markers() && !ui.screenshot()) {
+      @if (editor.camera(); as camera) {
+        <hrs-scene-markers
+          [markers]="editor.markers()"
+          [camera]="camera"
+          [aspect]="ui.aspect()"
+          (picked)="editor.showMarker($event)"
+        />
+      }
+    }
     @if (aids.referenceUrl(); as url) {
       @if (aids.referenceShown() && !ui.screenshot()) {
         <hrs-reference-overlay
@@ -125,6 +139,14 @@
           {{ ui.left() ? 'left_panel_close' : 'left_panel_open' }}
         </mat-icon>
       </button>
+      <hrs-look-through
+        class="layout__look"
+        [options]="editor.lookOptions()"
+        [look]="editor.look()"
+        [moved]="editor.editorCameraMoved()"
+        (lookChange)="editor.lookThrough($event)"
+        (resetRequested)="editor.resetEditorCamera()"
+      />
       <button
         mat-icon-button
         type="button"

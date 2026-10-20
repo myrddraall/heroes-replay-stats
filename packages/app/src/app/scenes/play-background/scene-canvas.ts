@@ -13,7 +13,7 @@ import {
 } from '@angular/core';
 import { DEFAULT_DRAWING } from './background.store';
 import { beyondEdge } from './planet-sets';
-import type { LoadedPlayScene } from './play-scene';
+import type { LoadedPlayScene, SceneCameraSet } from './play-scene';
 import type { SkySettings } from './scene-planets';
 import { type Backdrop, type PlanetPlacement, SceneRenderer } from './scene-renderer';
 import { NO_TINT, sameTint, type Tint } from './scene-tints';
@@ -51,6 +51,7 @@ interface Running {
   resky(sky: SkySettings): void;
   relight(lights: readonly AddedLight[]): void;
   rebackdrop(backdrop: Backdrop | null): void;
+  recamera(camera: SceneCameraSet | undefined): void;
 }
 
 /** A fly from one set of planets to the next, part way through. */
@@ -119,6 +120,8 @@ export class SceneCanvas {
   readonly lights = input<readonly AddedLight[]>([]);
   /** An editing backdrop in place of the sky (none: the sky). */
   readonly backdrop = input<Backdrop | null>(null);
+  /** Where a scene puts the camera, over the game's (none: the game's). */
+  readonly camera = input<SceneCameraSet | undefined>(undefined);
   /**
    * Which scene the planets are of: new planets under the same key are faded to in place (a
    * scene edited), under another flown to (another scene, another set). None: always flown to.
@@ -174,6 +177,10 @@ export class SceneCanvas {
     effect(() => {
       const backdrop = this.backdrop();
       untracked(() => this.running?.rebackdrop(backdrop));
+    });
+    effect(() => {
+      const camera = this.camera();
+      untracked(() => this.running?.recamera(camera));
     });
     effect(() => {
       this.animate();
@@ -395,6 +402,11 @@ export class SceneCanvas {
         renderer.setBackdrop(backdrop);
         if (!frame) draw();
       },
+      // The camera moved (a scene's): drawn again from there.
+      recamera: (camera) => {
+        renderer.setCamera(camera);
+        if (!frame) draw();
+      },
       play,
       resize,
       newPicture: () => {
@@ -441,6 +453,7 @@ export class SceneCanvas {
     renderer.setSky(this.sky());
     renderer.setSceneLights(this.lights());
     renderer.setBackdrop(this.backdrop());
+    renderer.setCamera(this.camera());
     resize();
     play();
     const placements = this.placements(); // may have loaded before the scene did

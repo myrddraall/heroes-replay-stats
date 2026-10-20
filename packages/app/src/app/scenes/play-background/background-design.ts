@@ -12,6 +12,7 @@ import {
   type SkySettings,
 } from './scene-planets';
 import type { Backdrop } from './scene-renderer';
+import type { SceneCameraSet } from './play-scene';
 import { type TintSettings, UNTINTED } from './tint-settings';
 
 /**
@@ -94,6 +95,8 @@ export interface BackgroundSceneSource {
   readonly tint: Signal<TintSettings | null>;
   /** An editing aid shown in place of the sky (none: the sky); never part of the design. */
   readonly backdrop?: Signal<Backdrop | null>;
+  /** Where it puts the camera, over the game's (none: the game's). */
+  readonly camera?: Signal<SceneCameraSet | undefined>;
   /**
    * Which scene this is (an editor's open scene or asset): its planets changing under the same
    * one are drawn again in place (faded), not flown to; another one is flown to.

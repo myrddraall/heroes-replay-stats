@@ -114,6 +114,9 @@ export type TargetKind =
   | 'group'
   /** A group put in a scene. */
   | 'placement'
+  /** A scene's cameras (their group), and one of them. */
+  | 'cameras'
+  | 'camera'
   | 'part'
   | 'light'
   /** What of a material a row shows: one of its layers, its shield shader, one of that's effects. */

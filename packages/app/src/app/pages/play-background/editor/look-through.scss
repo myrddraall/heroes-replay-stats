@@ -1,0 +1,55 @@
+:host {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+// Dark and firm behind them, as the view's other controls, so they read over the brightest sky.
+.look,
+.reset {
+  background: rgb(var(--hrs-glass-tint) / 0.85);
+  backdrop-filter: var(--hrs-glass-backdrop-frame);
+}
+
+.look {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding-inline: 12px 8px;
+  border-radius: 20px;
+  color: var(--mat-sys-on-surface);
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  select {
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: var(--mat-sys-label-large);
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--mat-sys-primary);
+      outline-offset: 2px;
+    }
+
+    option {
+      background: var(--mat-sys-surface-container);
+      color: var(--mat-sys-on-surface);
+    }
+  }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

@@ -21,6 +21,9 @@
         <hrs-add-planet planetAdd (picked)="s.addPlanet($event)" />
         <hrs-add-group planetAdd [groups]="s.groupOptions()" (picked)="s.addGroup($event)" />
       </hrs-scene-properties>
+      @if (s.cameraList().length) {
+        <hrs-add-camera (added)="s.addCamera()" />
+      }
       <hrs-add-light (added)="editor.addLight($event)" />
     }
   }
@@ -129,6 +132,33 @@
           (editRequested)="s.editPlacedGroup()"
           (removeRequested)="s.removePlacement()"
         />
+      }
+    }
+  }
+  @case ('cameras') {
+    @if (scene; as s) {
+      <hrs-add-camera (added)="s.addCamera()" />
+    }
+  }
+  @case ('camera') {
+    @if (scene; as s) {
+      @if (s.selectedCamera(); as c) {
+        @if (s.cameraValues(); as v) {
+          <hrs-camera-properties
+            [name]="c.name"
+            [values]="v"
+            [game]="c.game"
+            [changed]="c.game && !!draft.scenes().planets[s.scene()]?.camera"
+            [primary]="c.id === s.primaryCamera()"
+            [lookingThrough]="c.id === s.look()"
+            (nameChange)="s.renameCamera($event)"
+            (cameraChange)="s.setCamera($event)"
+            (cameraReset)="s.resetCamera()"
+            (primaryRequested)="s.makePrimary()"
+            (lookRequested)="s.lookThrough(c.id)"
+            (removeRequested)="s.removeCamera()"
+          />
+        }
       }
     }
   }

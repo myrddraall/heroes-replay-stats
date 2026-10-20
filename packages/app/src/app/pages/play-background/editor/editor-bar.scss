@@ -8,11 +8,22 @@
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .button {
   @include property-row.button;
+  white-space: nowrap;
+
+  &--icon {
+    padding-inline: 4px;
+
+    mat-icon {
+      width: 18px;
+      height: 18px;
+      font-size: 18px;
+    }
+  }
 
   &--primary:not(:disabled) {
     border-color: var(--mat-sys-primary);

@@ -351,6 +351,33 @@ Parts' mappings can be set too: a sphere's textures Mirrored (`flip`), a ring's 
 (`from`, degrees) and Repeats (`repeat`); and a body's Glow margin (`glowMargin`, the room its glow
 is given where the view is fitted to it, `HALO_MARGIN` unless set).
 
+A scene has cameras (a group's has none): the game's, set over the data's (`camera` on its
+choices, a `SceneCameraSet`: where it is, the way it looks, its field of view), and cameras added
+to it (`cameras`: each an `AddedCamera` with its name), one of them its primary, which it is shown
+through (`primaryCamera`; none: the game's; `primaryCameraOf`). They are rows in the tree's
+Cameras group, each with a panel (Name, Make primary, Look through, Remove camera; Across, Up,
+Distance, Turn, Tilt, Field of view, the game's reset to the data's). Add camera (From the view)
+adds one where the view looks from. The editor's view looks through the editor's own camera (where
+the primary is when a scene opens; not saved, not undone), or through one of the scene's (the Look
+through picker in the view, `look`), and moving the view moves the camera looked through
+(`CameraDrag`, `scene-camera.ts`): a drag orbits round the scene's middle, Shift, the right or the
+middle button pans across, the wheel moves in and out, Alt with the wheel widens or narrows the
+field of view; a drag is not a click, so it picks nothing. The editor's camera moved, a button puts
+it back where the primary is. Where the editor's view draws a scene smaller to keep it in view, it
+fits it to the game's camera, so every camera moves round the same layout.
+
+Markers in the view (`SceneMarkers`, switched in the view options: Markers) show where things are
+that the picture doesn't: the scene's cameras (but the one looked through), each with an outline
+of what it sees as far as the scene's middle; the groups put in it; and the lights of what is
+selected (a body's round it, a scene light's round each of its planets), each on the side it
+comes from with a line to its body (`viewPoint`, `viewLine`, `cameraOutline`). Clicking one selects
+it in the tree (`showMarker`).
+
+Edits can be undone and redone (`withDesignHistory` on the draft: Undo and Redo in the editor's bar,
+Ctrl+Z, Ctrl+Shift+Z or Ctrl+Y outside a text field). Changes coming within `HISTORY_COALESCE` of
+each other are one step, and so is all of a drag (`holdHistory`/`releaseHistory`). The history is
+kept while the page is open, not saved.
+
 The Graphics settings (Settings page; `GraphicsStore`, `packages/app/src/app/data/settings/graphics.store.ts`,
 kept in `localStorage`: `hrs.graphics.quality` holds the preset's id, or all the quality settings as
 JSON when they are Custom; `hrs.graphics.custom` the last custom settings, as JSON; `hrs.graphics`

@@ -1,4 +1,24 @@
 <div class="row">
+  <button
+    type="button"
+    class="button button--icon"
+    aria-label="Undo"
+    title="Undo (Ctrl+Z)"
+    (click)="draft.undo()"
+    [disabled]="!draft.canUndo()"
+  >
+    <mat-icon class="material-symbols-outlined" aria-hidden="true">undo</mat-icon>
+  </button>
+  <button
+    type="button"
+    class="button button--icon"
+    aria-label="Redo"
+    title="Redo (Ctrl+Shift+Z)"
+    (click)="draft.redo()"
+    [disabled]="!draft.canRedo()"
+  >
+    <mat-icon class="material-symbols-outlined" aria-hidden="true">redo</mat-icon>
+  </button>
   <button type="button" class="button" (click)="draft.discard()" [disabled]="!draft.unsaved()">
     Discard
   </button>

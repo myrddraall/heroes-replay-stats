@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { PublishedDesignStore } from '../../scenes/play-background/published-design.store';
+import { GAME_CAMERA, primaryCameraOf } from '../../scenes/play-background/background-scene';
 import { DraftDesignStore } from './draft-design.store';
 
 const red = { colour: '#ff0000', blend: 'color', strength: 1 } as const;
@@ -128,6 +129,35 @@ describe('DraftDesignStore', () => {
     // A group deleted: taken out of the scene it was put in.
     draft.deleteScene(group);
     expect(draft.scenes().planets[scene]?.groups).toBeUndefined();
+  });
+
+  it("keeps a scene's cameras and its primary, and drops a primary that is taken out", () => {
+    const draft = TestBed.inject(DraftDesignStore);
+    const scene = draft.createScene();
+    const close = {
+      id: 'camera-close',
+      name: 'Close',
+      eye: [0, -10, 0],
+      forward: [0, 1, 0],
+      fovY: 30,
+    } as const;
+    draft.setSceneCameras(scene, [close]);
+    draft.setPrimaryCamera(scene, close.id);
+    draft.setSceneBodies(scene, [{ id: 'korhal', position: [0, 0, 0], radius: 1 }]);
+    draft.resetScene(scene);
+    expect(draft.scenes().planets[scene]?.cameras).toEqual([close]);
+    expect(primaryCameraOf(draft.scenes().planets[scene])).toEqual({
+      eye: close.eye,
+      forward: close.forward,
+      fovY: close.fovY,
+    });
+    // Back to the game's camera, as named or as its camera is taken out.
+    draft.setPrimaryCamera(scene, GAME_CAMERA);
+    expect(draft.scenes().planets[scene]?.primaryCamera).toBeUndefined();
+    draft.setPrimaryCamera(scene, close.id);
+    draft.setSceneCameras(scene, []);
+    expect(draft.scenes().planets[scene]?.cameras).toBeUndefined();
+    expect(draft.scenes().planets[scene]?.primaryCamera).toBeUndefined();
   });
 
   it("resets a preset to its own (the Play screen to the game's three)", () => {

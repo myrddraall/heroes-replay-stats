@@ -44,6 +44,12 @@ interface Scrub {
  * never dragged away); clicked, it is typed; the arrow keys, and the wheel over it, step it (`stepsFor`: Shift ten steps, Alt a
  * hundred; the wheel with Ctrl is left to the browser, which zooms, as it does just off the field).
  */
+/** A number to so many places, as shown (one that rounds to nothing: no minus sign). */
+const fixed = (value: number, places: number) => {
+  const text = value.toFixed(places);
+  return /^-0(\.0*)?$/.test(text) ? text.slice(1) : text;
+};
+
 @Component({
   selector: 'hrs-property-number',
   imports: [MatIcon],
@@ -69,7 +75,7 @@ export class PropertyNumber {
   /** The user scrubbed, stepped or typed it. */
   readonly valueChange = output<number>();
   protected readonly id = `property-number-${next++}`;
-  protected readonly shown = computed(() => this.value().toFixed(decimalsOf(this.step())));
+  protected readonly shown = computed(() => fixed(this.value(), decimalsOf(this.step())));
   protected readonly limits = computed(() => limitsText(this.min(), this.max()));
   protected readonly scrubbing = signal(false);
   private scrub: Scrub | null = null;
@@ -186,7 +192,7 @@ export class PropertyNumber {
       return null;
     }
     const given = clamped(value, this.min(), this.max());
-    field.value = given.toFixed(decimalsOf(this.step()));
+    field.value = fixed(given, decimalsOf(this.step()));
     this.emit(given);
     return given;
   }

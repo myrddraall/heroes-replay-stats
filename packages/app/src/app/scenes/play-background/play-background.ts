@@ -107,6 +107,8 @@ export class PlayBackground {
     const own = this.source?.tint();
     return rendererTint(own ? backgroundTints(own) : this.store.tints(), this.parse);
   });
+  /** Where the scene shown puts the camera, over the game's. */
+  protected readonly camera = computed(() => this.source?.camera?.());
   /** The scene's lights, where there is a scene that has any. */
   protected readonly sceneLights = computed(() => this.source?.lights?.() ?? []);
   /**

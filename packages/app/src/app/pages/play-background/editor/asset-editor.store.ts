@@ -41,7 +41,11 @@ import {
   type Receiver,
 } from '../../../scenes/play-background/scene-lights';
 import type { SetPlanet } from '../../../scenes/play-background/planet-sets';
-import { loadPlaySceneFile, PLAY_SCENE_URL } from '../../../scenes/play-background/play-scene';
+import {
+  loadPlaySceneFile,
+  PLAY_SCENE_URL,
+  type SceneCamera,
+} from '../../../scenes/play-background/play-scene';
 import {
   type MaterialSettings,
   type MaterialTint,
@@ -119,6 +123,7 @@ import type { PickChoice } from './pick-list';
 import { EditorUiStore } from './editor-ui.store';
 import type { AssetKind, AssetTarget, OpenTarget } from './open-target';
 import type { TreeMove, TreeRow } from './scene-tree';
+import type { SceneMarker } from './scene-markers';
 import {
   STAND_IN_MATERIAL,
   standInId,
@@ -575,6 +580,12 @@ export const AssetEditorStore = signalStore(
           return { target: { kind: on.kind, id: on.id }, label };
         }),
         deletable: computed(() => _created() !== undefined),
+        // An asset is shown on the stage, through the game's camera.
+        camera: computed((): SceneCamera | null => null),
+        lookOptions: computed((): readonly { readonly id: string; readonly label: string }[] => []),
+        look: computed(() => ''),
+        editorCameraMoved: computed(() => false),
+        markers: computed((): readonly SceneMarker[] => []),
         skyOverlayOpen: computed(() => _skyOverlay() !== null),
         resetAllLabel: computed(() => {
           const a = asset();
@@ -1662,6 +1673,18 @@ export const AssetEditorStore = signalStore(
           if (settings) d.setLibraryBody('styles', id, settings);
         }
         store._ui.open({ kind: 'style', id });
+      },
+      moveCamera(): void {
+        // the stage keeps the game's camera
+      },
+      lookThrough(): void {
+        // the stage has one camera
+      },
+      resetEditorCamera(): void {
+        // the stage keeps the game's camera
+      },
+      showMarker(): void {
+        // nothing on the stage is marked
       },
       /** The overlay open (made in the editor) deleted, and off whatever wore it: the library shown. */
       deleteAsset(): void {

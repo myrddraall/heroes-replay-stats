@@ -8,7 +8,7 @@ import { EditorUiStore } from './editor-ui.store';
 
 /**
  * The view's options behind a gear (container, on the page's UI store and the `Editor` in
- * effect): the names over the bodies, the screenshot mode, everything in what is open reset
+ * effect): the names over the bodies, the markers in the view, the screenshot mode, everything in what is open reset
  * (asked for here, confirmed by the reset confirmation), all the saved design cleared (confirmed
  * likewise).
  */

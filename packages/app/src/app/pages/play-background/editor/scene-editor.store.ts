@@ -20,9 +20,12 @@ import {
   skyWornOf,
 } from '../../../scenes/play-background/background-design';
 import {
+  type AddedCamera,
   type BodyPath,
   type BodySettings,
+  cameraSetOf,
   fitRadius,
+  GAME_CAMERA,
   fitScene,
   type MoonChoices,
   type Orbit,
@@ -41,7 +44,20 @@ import {
   NO_MATERIAL_TINT,
 } from '../../../scenes/play-background/material-settings';
 import { playSet, type SetPlanet } from '../../../scenes/play-background/planet-sets';
-import { PLAY_SCENE_URL } from '../../../scenes/play-background/play-scene';
+import {
+  PLAY_SCENE_URL,
+  type SceneCamera,
+  type SceneCameraSet,
+} from '../../../scenes/play-background/play-scene';
+import {
+  cameraAngles,
+  distanceAhead,
+  fieldOfView,
+  forwardOf,
+} from '../../../scenes/play-background/scene-camera';
+import { bodyFrame } from '../../../scenes/play-background/scene-renderer';
+import type { CameraValues } from './camera-properties';
+import type { SceneMarker } from './scene-markers';
 import {
   canPutGroup,
   groupBodies,
@@ -188,6 +204,11 @@ const partRowKey = (path: BodyPath, key: PartKey) => `${bodyKey(path)}/p/${key}`
 const glowMarginOf = (b: BodyInfo) => b.settings.glowMargin ?? b.below?.glowMargin;
 /** A group put in the scene, by its index there. */
 const placementKey = (index: number) => `place/${index}`;
+/** The scene's cameras, a group of their own; each by its id (the game's: `GAME_CAMERA`). */
+const CAMERAS = 'cameras';
+const cameraKey = (id: string) => `camera/${id}`;
+/** The editor's own camera, as what the view looks through (not one of the scene's). */
+export const EDITOR_CAMERA = 'editor';
 /** A body of a group put in the scene (by the index of its planet among them all, and its moon path): not a row. */
 const groupBodyKey = (planet: number, moon: BodyPath) => `gbody:${planet}/${pathKey(moon)}`;
 /** Planets in words: their ids, or that there are none. */
@@ -250,7 +271,10 @@ type Target =
   /** The reference image laid over the view (an editing aid). */
   | { readonly kind: 'reference' }
   /** A group put in the scene, by its index there. */
-  | { readonly kind: 'placement'; readonly index: number };
+  | { readonly kind: 'placement'; readonly index: number }
+  /** The scene's cameras (their group), and one of them by id. */
+  | { readonly kind: 'cameras' }
+  | { readonly kind: 'camera'; readonly id: string };
 
 /** What of a body a target is, as a light reaches it: the body (none), a part or a material; not one (undefined). */
 function receiverOf(t: Target): Receiver | null | undefined {
@@ -288,6 +312,8 @@ function targetOf(key: string): Target {
   if (key.startsWith('scene-light/'))
     return { kind: 'scene-light', id: key.slice('scene-light/'.length) as LightId };
   if (key.startsWith('place/')) return { kind: 'placement', index: Number(key.slice(6)) };
+  if (key === CAMERAS) return { kind: 'cameras' };
+  if (key.startsWith('camera/')) return { kind: 'camera', id: key.slice('camera/'.length) };
   if (!key.startsWith('body:')) return { kind: 'scene' };
   const rest = key.slice(5);
   const slash = rest.indexOf('/');
@@ -320,6 +346,18 @@ interface SceneEditorState {
   readonly selected: string;
   /** The moon the view is centred on, by its path's key; none: the whole scene. */
   readonly focus: string | null;
+  /** What the view looks through: the editor's own camera (`EDITOR_CAMERA`), or one of the scene's by id. */
+  readonly look: string;
+  /** Where the editor's own camera is, over the scene's primary (none: there); not kept. */
+  readonly editorCamera: SceneCameraSet | null;
+}
+
+/** One of a scene's cameras: its id, its name, where it puts the view (over the game's), whether it is the game's. */
+export interface CameraEntry {
+  readonly id: string;
+  readonly name: string;
+  readonly set: SceneCameraSet;
+  readonly game: boolean;
 }
 
 /**
@@ -332,7 +370,13 @@ interface SceneEditorState {
  * the view. The Play screen's planets are the game's three until the scene sets its own.
  */
 export const SceneEditorStore = signalStore(
-  withState<SceneEditorState>({ scene: RANDOM_SCENE, selected: SCENE, focus: null }),
+  withState<SceneEditorState>({
+    scene: RANDOM_SCENE,
+    selected: SCENE,
+    focus: null,
+    look: EDITOR_CAMERA,
+    editorCamera: null,
+  }),
   withFolding([SCENE, bodyKey([0])]),
   withLocalStorage<SceneEditorState & { expanded: readonly string[] }>(
     'hrs.background-scene-editor',
@@ -347,7 +391,18 @@ export const SceneEditorStore = signalStore(
     _index: resource({ loader: ({ abortSignal }) => loadPlanetIndex(PLAY_SCENE_URL, abortSignal) }),
   })),
   withComputed(
-    ({ scene: sceneId, files, madeLookup, focus, selected, _draft, _index, _sceneFile }) => {
+    ({
+      scene: sceneId,
+      files,
+      madeLookup,
+      focus,
+      selected,
+      look,
+      editorCamera,
+      _draft,
+      _index,
+      _sceneFile,
+    }) => {
       const entry = computed(() => _draft.scenes().planets[sceneId()]);
       const choices = computed(() => entry() ?? {});
       const publishedEntry = computed(() => _draft.publishedScenes().planets[sceneId()]);
@@ -481,6 +536,38 @@ export const SceneEditorStore = signalStore(
       );
       const sky = computed(() => choices().sky ?? {});
       const sceneFile = computed(() => (_sceneFile.hasValue() ? _sceneFile.value() : null));
+      /** Its cameras, the game's first (none: the random sets'; a group has none of its own). */
+      const cameraList = computed((): readonly CameraEntry[] => {
+        if (random() || groupOpen()) return [];
+        const c = choices();
+        return [
+          { id: GAME_CAMERA, name: 'Game camera', set: c.camera ?? {}, game: true },
+          ...(c.cameras ?? []).map((a) => ({
+            id: a.id,
+            name: a.name,
+            set: cameraSetOf(a),
+            game: false,
+          })),
+        ];
+      });
+      /** The camera it is shown through, by id (the game's unless one added is). */
+      const primaryCamera = computed(() => {
+        const id = choices().primaryCamera;
+        return id && cameraList().some((c) => c.id === id) ? id : GAME_CAMERA;
+      });
+      const cameraSetById = (id: string) => cameraList().find((c) => c.id === id)?.set;
+      /**
+       * The camera the view looks through (none: the random sets', or loading): one of its own,
+       * or the editor's, where it has been moved to from its primary.
+       */
+      const camera = computed((): SceneCamera | null => {
+        const scene = sceneFile();
+        if (!scene || random()) return null;
+        const own = look() === EDITOR_CAMERA ? undefined : cameraSetById(look());
+        return own
+          ? { ...scene.camera, ...own }
+          : { ...scene.camera, ...cameraSetById(primaryCamera()), ...editorCamera() };
+      });
       /** The overlays the sky wears (switched on or off), in order. */
       const skyWorn = computed(() => skyWornOf(sky(), library(), sceneFile()?.wears));
       const skyOverlays = computed(() =>
@@ -606,6 +693,48 @@ export const SceneEditorStore = signalStore(
         sceneBodies: sceneBodiesNow,
         bodies,
         bodyByKey,
+        cameraList,
+        /** The cameras added to it, as kept. */
+        addedCameras: computed((): readonly AddedCamera[] => choices().cameras ?? []),
+        primaryCamera,
+        camera,
+        /** Where the view puts the camera, for the background (none: the random sets' own). */
+        viewCamera: computed((): SceneCameraSet | undefined => {
+          const c = camera();
+          return c ? { eye: c.eye, forward: c.forward, fovY: c.fovY } : undefined;
+        }),
+        /** The selected camera of the scene's. */
+        selectedCamera: computed((): CameraEntry | null => {
+          const t = targetOf(selected());
+          return t.kind === 'camera' ? (cameraList().find((c) => c.id === t.id) ?? null) : null;
+        }),
+        /** The selected camera as its panel shows it: where it is, its turn and tilt, its field of view. */
+        cameraValues: computed((): CameraValues | null => {
+          const t = targetOf(selected());
+          const set = t.kind === 'camera' ? cameraSetById(t.id) : undefined;
+          const scene = sceneFile();
+          if (!set || !scene) return null;
+          const c = { ...scene.camera, ...set };
+          // (Its place as kept, to a thousandth: no -0 from the data's.)
+          const eye = c.eye.map((v) => Math.round(v * 1000) / 1000 || 0) as unknown as Vec3;
+          return { eye, ...cameraAngles(c.forward), fovY: c.fovY };
+        }),
+        /** What the view may look through: the editor's camera, then the scene's (none: no choice). */
+        lookOptions: computed((): readonly { readonly id: string; readonly label: string }[] =>
+          cameraList().length
+            ? [
+                { id: EDITOR_CAMERA, label: 'Editor camera' },
+                ...cameraList().map((c) => ({
+                  id: c.id,
+                  label: c.id === primaryCamera() ? `${c.name} (primary)` : c.name,
+                })),
+              ]
+            : [],
+        ),
+        /** Whether the view looks through the editor's camera, moved from the scene's primary. */
+        editorCameraMoved: computed(
+          () => !random() && look() === EDITOR_CAMERA && editorCamera() !== null,
+        ),
         groupOpen,
         placements,
         placedGroups,
@@ -750,6 +879,8 @@ export const SceneEditorStore = signalStore(
             const p = placements()[t.index];
             return p ? `Group · ${p.label ?? groupOf(p.group)?.name ?? p.group}` : 'Group';
           }
+          if (t.kind === 'cameras') return 'Cameras';
+          if (t.kind === 'camera') return cameraList().find((c) => c.id === t.id)?.name ?? 'Camera';
           const b = body();
           return b ? bodyLabel(b) : 'Properties';
         }),
@@ -912,6 +1043,30 @@ export const SceneEditorStore = signalStore(
               expandable: false,
               expanded: false,
               enabled: light.enabled,
+            });
+      }
+      // Its cameras, the game's first (the one it is shown through marked).
+      const cameras = store.cameraList();
+      if (cameras.length) {
+        rows.push({
+          key: CAMERAS,
+          label: 'Cameras',
+          icon: 'videocam',
+          depth: 1,
+          expandable: true,
+          expanded: !open.has(CAMERAS),
+          group: true,
+        });
+        if (!open.has(CAMERAS))
+          for (const c of cameras)
+            rows.push({
+              key: cameraKey(c.id),
+              label: c.name,
+              ...(c.id === store.primaryCamera() ? { detail: 'primary' } : {}),
+              icon: 'videocam',
+              depth: 2,
+              expandable: false,
+              expanded: false,
             });
       }
       // A group has no sky of its own (it is drawn under the scene's it is put in).
@@ -1116,8 +1271,12 @@ export const SceneEditorStore = signalStore(
       if (!planets.length && !grouped.length) return { planets: [], picks: [] };
       const scene = store._sceneFile.hasValue() ? store._sceneFile.value() : null;
       if (!scene) return null;
-      const eye = scene.camera.eye;
-      const up = Math.tan((scene.camera.fovY * Math.PI) / 360);
+      // Seen through its camera (the game's, where it sets none). What is drawn smaller to keep
+      // in view is fitted to the game's camera, so the scene's own moves round the same layout.
+      const camera = store.camera() ?? scene.camera;
+      const eye = camera.eye;
+      const fitCamera = scene.camera;
+      const up = Math.tan((fitCamera.fovY * Math.PI) / 360);
       const reach = { up, across: up * store._ui.aspect() };
       const t = store.target();
       const selected = 'path' in t ? t.path : null;
@@ -1198,7 +1357,7 @@ export const SceneEditorStore = signalStore(
             : visualExtent();
         };
         const base = fit
-          ? { ...root, radius: fitRadius(root, moons, eye, reach, overrides, extent) }
+          ? { ...root, radius: fitRadius(root, moons, fitCamera.eye, reach, overrides, extent) }
           : root;
         for (const p of placeBodies(base, moons, eye, overrides)) {
           const bodies = chain(p.path);
@@ -1241,14 +1400,98 @@ export const SceneEditorStore = signalStore(
       }
       // Several planets where they are put: the whole drawn smaller where any would leave the view.
       return {
-        planets: roots.length > 1 ? fitScene(out, extents, scene.camera, reach) : out,
+        planets: roots.length > 1 ? fitScene(out, extents, fitCamera, reach) : out,
         picks,
       };
     }),
   })),
-  withComputed(({ _placed }) => ({
+  withComputed((store) => ({
     /** The scene's bodies placed for the background (null: the random sets', or loading). */
-    scenePlanets: computed(() => _placed()?.planets ?? null),
+    scenePlanets: computed(() => store._placed()?.planets ?? null),
+    /**
+     * What the view marks where it is: the scene's cameras (not the one looked through), each
+     * with what it sees outlined; the groups put in it; the lights of what is selected (a body's
+     * round it, the scene's round each of its planets), each on the side it comes from.
+     */
+    markers: computed((): readonly SceneMarker[] => {
+      const view = store.camera();
+      const scene = store._sceneFile.hasValue() ? store._sceneFile.value() : null;
+      if (!view || !scene) return [];
+      const t = store.target();
+      const out: SceneMarker[] = [];
+      for (const c of store.cameraList()) {
+        if (c.id === store.look()) continue;
+        const camera = { ...scene.camera, ...c.set };
+        out.push({
+          id: cameraKey(c.id),
+          key: cameraKey(c.id),
+          kind: 'camera',
+          label: c.name,
+          icon: 'videocam',
+          at: camera.eye,
+          camera,
+          // What it sees outlined as far as the scene's middle.
+          outline: distanceAhead(camera, SCENE_CENTRE.position, 5),
+          selected: t.kind === 'camera' && t.id === c.id,
+        });
+      }
+      store.placements().forEach((p, i) =>
+        out.push({
+          id: placementKey(i),
+          key: placementKey(i),
+          kind: 'group',
+          label: store.placementLabel()(p),
+          icon: 'workspaces',
+          at: p.position,
+          selected: t.kind === 'placement' && t.index === i,
+          off: p.enabled === false,
+        }),
+      );
+      const placed = store._placed();
+      if (!placed) return out;
+      /** A light's marker out from a body it lights, on the side it comes from (in the body's frame). */
+      const lit = (key: string, light: LightEntry['light'], body: SetPlanet, i: number) => {
+        if (!light.from) return;
+        const { axes } = bodyFrame(body.position, body.radius, view.eye);
+        const f = light.from;
+        const way = [0, 1, 2].map(
+          (k) => f[0] * axes[k]! + f[1] * axes[3 + k]! + f[2] * axes[6 + k]!,
+        );
+        const length = Math.hypot(...way) || 1;
+        const along = (radii: number) =>
+          body.position.map(
+            (v, k) => v + (way[k]! / length) * body.radius * radii,
+          ) as unknown as Vec3;
+        out.push({
+          id: `${key}@${i}`,
+          key,
+          kind: 'light',
+          label: light.name,
+          icon: LIGHT_ICONS[light.kind],
+          at: along(1.8),
+          from: along(1.05),
+          selected: store.selected() === key,
+          off: !light.enabled,
+        });
+      };
+      if (t.kind === 'scene-light') {
+        placed.picks.forEach((pick, i) => {
+          const body = placed.planets[i];
+          if (!body || !pick.startsWith('body:') || pathOf(pick.slice(5)).length !== 1) return;
+          for (const { light } of sceneLightsOf(store.sceneLights()))
+            lit(sceneLightKey(light.id), light, body, i);
+        });
+      } else if ('path' in t && t.path.length) {
+        const key = bodyKey(t.path);
+        const b = store.bodyByKey().get(key);
+        const i = placed.picks.indexOf(key);
+        const body = placed.planets[i];
+        if (b && body)
+          for (const { light } of lightsOfBody(b))
+            lit(lightRowKey(t.path, light.id), light, body, i);
+      }
+      return out;
+    }),
   })),
   withMethods((store) => {
     const d = store._draft;
@@ -1292,6 +1535,17 @@ export const SceneEditorStore = signalStore(
         placements.map((x, i) => (i === index ? (next as unknown as GroupPlacement) : x)),
       );
     };
+    /** One of the scene's cameras moved or set: the game's over the data's, one added as it is. */
+    const changeCamera = (id: string, set: SceneCameraSet) => {
+      if (id === GAME_CAMERA) {
+        const game = store.cameraList().find((c) => c.id === GAME_CAMERA)?.set;
+        d.setSceneCamera(store.scene(), { ...game, ...set });
+      } else
+        d.setSceneCameras(
+          store.scene(),
+          store.addedCameras().map((a) => (a.id === id ? { ...a, ...set } : a)),
+        );
+    };
     /** A part just added onto the body or sky selected selected, its row shown. */
     const selectAdded = (id: string) => {
       const t = store.target();
@@ -1312,7 +1566,8 @@ export const SceneEditorStore = signalStore(
       /** The scene shown, as the URL says ('': the random sets'); its first planet selected. */
       showScene: signalMethod<string>((id) => {
         if (id === store.scene()) return;
-        patchState(store, { scene: id, focus: null });
+        // Seen through the editor's camera, where the scene's primary is.
+        patchState(store, { scene: id, focus: null, look: EDITOR_CAMERA, editorCamera: null });
         // Its first planet selected, where it has one (else the scene itself).
         patchState(store, { selected: id && store.sceneBodies().length ? bodyKey([0]) : SCENE });
         store._ui.confirmReset(false);
@@ -1326,6 +1581,111 @@ export const SceneEditorStore = signalStore(
         if (!ownScene(store.scene())) return;
         d.deleteScene(store.scene());
         store._ui.open(RANDOM_SETS);
+      },
+      /**
+       * The camera the view looks through moved (dragged in the view): the editor's, kept while
+       * the scene is open; one of the scene's, kept with it.
+       */
+      moveCamera(set: SceneCameraSet): void {
+        if (store.sets()) return;
+        if (
+          store.look() === EDITOR_CAMERA ||
+          !store.cameraList().some((c) => c.id === store.look())
+        )
+          patchState(store, { editorCamera: { ...store.editorCamera(), ...set } });
+        else changeCamera(store.look(), set);
+      },
+      /** The selected camera set in its panel: where it is, its turn and tilt, its field of view. */
+      setCamera(change: Partial<CameraValues>): void {
+        const now = store.cameraValues();
+        const c = store.selectedCamera();
+        if (!now || !c) return;
+        const { turn = now.turn, tilt = now.tilt } = change;
+        changeCamera(c.id, {
+          ...(change.eye ? { eye: change.eye } : {}),
+          ...(change.turn !== undefined || change.tilt !== undefined
+            ? { forward: forwardOf(turn, tilt) }
+            : {}),
+          ...(change.fovY !== undefined ? { fovY: fieldOfView(change.fovY) } : {}),
+        });
+      },
+      /** The game's camera, selected, back where the game puts it. */
+      resetCamera(): void {
+        if (store.selectedCamera()?.game) d.setSceneCamera(store.scene(), undefined);
+      },
+      /** A camera added where the view looks from (named after those there are): selected. */
+      addCamera(): void {
+        const view = store.camera();
+        if (!view || !store.cameraList().length) return;
+        const cameras = store.addedCameras();
+        const taken = new Set(store.cameraList().map((c) => c.name));
+        let n = cameras.length + 1;
+        while (taken.has(`Camera ${n}`)) n++;
+        const camera: AddedCamera = {
+          id: `camera-${Math.random().toString(36).slice(2, 10)}`,
+          name: `Camera ${n}`,
+          eye: view.eye,
+          forward: view.forward,
+          fovY: view.fovY,
+        };
+        d.setSceneCameras(store.scene(), [...cameras, camera]);
+        store.expand(SCENE);
+        store.reopen(CAMERAS);
+        patchState(store, { selected: cameraKey(camera.id) });
+      },
+      /** The selected camera (one added) named ('': as it was). */
+      renameCamera(name: string): void {
+        const c = store.selectedCamera();
+        const named = name.trim();
+        if (!c || c.game || !named) return;
+        d.setSceneCameras(
+          store.scene(),
+          store.addedCameras().map((a) => (a.id === c.id ? { ...a, name: named } : a)),
+        );
+      },
+      /** The selected camera (one added) taken out; the view through it back to the editor's. */
+      removeCamera(): void {
+        const c = store.selectedCamera();
+        if (!c || c.game) return;
+        d.setSceneCameras(
+          store.scene(),
+          store.addedCameras().filter((a) => a.id !== c.id),
+        );
+        if (store.look() === c.id) patchState(store, { look: EDITOR_CAMERA });
+        patchState(store, { selected: CAMERAS });
+      },
+      /** The scene shown through the selected camera. */
+      makePrimary(): void {
+        const c = store.selectedCamera();
+        if (c) d.setPrimaryCamera(store.scene(), c.id);
+      },
+      /** The view seen through one of the scene's cameras, or the editor's (`EDITOR_CAMERA`). */
+      lookThrough(id: string): void {
+        patchState(store, {
+          look: store.cameraList().some((c) => c.id === id) ? id : EDITOR_CAMERA,
+        });
+      },
+      /** The editor's camera back where the scene's primary is. */
+      resetEditorCamera(): void {
+        patchState(store, { editorCamera: null });
+      },
+      /** What a marker in the view stands for selected, its rows unfolded to it. */
+      showMarker(key: string): void {
+        const t = targetOf(key);
+        store.expand(SCENE);
+        if (t.kind === 'camera') store.reopen(CAMERAS);
+        if (t.kind === 'scene-light') store.reopen(SCENE_LIGHTS);
+        if (t.kind === 'light') {
+          const path = t.path;
+          store.expand(...path.map((_, i) => bodyKey(path.slice(0, i + 1))));
+          const b = store.bodyByKey().get(bodyKey(path));
+          const overlay = b && lightsOfBody(b).find((l) => l.light.id === t.id)?.overlay;
+          if (overlay) {
+            store.reopen(overlayKey(path, overlay));
+            store.expand(overlayLightsKey(path, overlay));
+          } else store.expand(lightsKey(path));
+        }
+        patchState(store, { selected: key });
       },
       /** A group put in the scene, its middle where a first planet goes: selected. */
       addGroup(id: string): void {

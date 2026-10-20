@@ -1,6 +1,7 @@
 import type { MaterialSettingsMap, MaterialTint, PartSettingsMap } from './scene-planets';
 import type { AddedLight, LightSettingsMap } from './scene-lights';
 import type { AddedPart } from './created-overlays';
+import type { SceneCameraSet } from './play-scene';
 import { bodyFrame } from './scene-renderer';
 
 /**
@@ -439,6 +440,35 @@ export interface GroupPlacement {
   readonly label?: string;
 }
 
+/** The game's camera, by the id a scene's cameras know it by (first among them, always there). */
+export const GAME_CAMERA = 'game';
+
+/** A camera added to a scene: its name, where it is, the way it looks, its field of view. */
+export interface AddedCamera {
+  readonly id: `camera-${string}`;
+  readonly name: string;
+  readonly eye: Vec3;
+  readonly forward: Vec3;
+  readonly fovY: number;
+}
+
+/** Where a camera added to a scene puts the view (its place, its way of looking, its field of view). */
+export const cameraSetOf = (c: AddedCamera): SceneCameraSet => ({
+  eye: c.eye,
+  forward: c.forward,
+  fovY: c.fovY,
+});
+
+/**
+ * The camera a scene is shown through, over the game's: its primary (one added to it), else the
+ * game's as it puts it.
+ */
+export function primaryCameraOf(choices: PlanetChoices | undefined): SceneCameraSet | undefined {
+  const id = choices?.primaryCamera;
+  const added = id ? choices.cameras?.find((c) => c.id === id) : undefined;
+  return added ? cameraSetOf(added) : choices?.camera;
+}
+
 /**
  * A scene as set on the Background page: its planets (each with its moons), its name, its sky.
  * Scenes kept before scenes had several planets have one (`planet`, `style`, `variants`, `moons`),
@@ -455,6 +485,12 @@ export interface PlanetChoices {
   readonly group?: boolean;
   /** The groups put in it, in order. */
   readonly groups?: readonly GroupPlacement[];
+  /** Where it puts the game's camera, over the data's (each where set): where it is, where it looks, its field of view. */
+  readonly camera?: SceneCameraSet;
+  /** Cameras added to it (a scene's; not a group's), in order. */
+  readonly cameras?: readonly AddedCamera[];
+  /** The camera it is shown through, by id: one added (none: the game's). */
+  readonly primaryCamera?: string;
   /** What the scene is called, where it is named (else its first planet's id, or its own). */
   readonly name?: string;
   readonly sky?: SkyChoices;

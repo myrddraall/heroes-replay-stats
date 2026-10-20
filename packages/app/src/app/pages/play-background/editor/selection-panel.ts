@@ -34,6 +34,8 @@ import { LitBy } from './lit-by';
 import { ReferenceProperties, type ReferenceValues } from './reference-properties';
 import { AddGroup } from './add-group';
 import { GroupPlacementProperties } from './group-placement-properties';
+import { AddCamera } from './add-camera';
+import { CameraProperties } from './camera-properties';
 import { SceneEditorStore } from './scene-editor.store';
 import { SceneProperties } from './scene-properties';
 import { TintSection } from './tint-section';
@@ -66,6 +68,8 @@ import { TintSection } from './tint-section';
     AddPlanet,
     AddGroup,
     GroupPlacementProperties,
+    AddCamera,
+    CameraProperties,
   ],
   templateUrl: './selection-panel.html',
   styleUrl: './selection-panel.scss',

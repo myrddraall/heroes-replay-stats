@@ -48,6 +48,7 @@ import { buildStandIn, parseStandIn } from './editor/stand-in';
       },
     },
   ],
+  host: { '(document:keydown)': 'keydown($event)' },
   templateUrl: './play-background-page.html',
   styleUrl: './play-background-page.scss',
 })
@@ -67,7 +68,29 @@ export class PlayBackgroundPage {
     this.kind() !== undefined ? openKey(this.opened()) : undefined,
   );
 
+  private readonly draft = inject(DraftDesignStore);
+
   constructor() {
     inject(EditorUiStore).followOpen(this.openedKey);
+  }
+
+  /**
+   * Ctrl (⌘) + Z undoes the draft's last change, with Shift (or Ctrl + Y) redoes it; a text being
+   * typed keeps its own.
+   */
+  protected keydown(event: KeyboardEvent): void {
+    if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
+    const target = event.target;
+    if (
+      target instanceof Element &&
+      target.closest('input, textarea, select, [contenteditable="true"]')
+    )
+      return;
+    const key = event.key.toLowerCase();
+    const redo = (key === 'z' && event.shiftKey) || key === 'y';
+    if (key !== 'z' && !redo) return;
+    event.preventDefault();
+    if (redo) this.draft.redo();
+    else this.draft.undo();
   }
 }

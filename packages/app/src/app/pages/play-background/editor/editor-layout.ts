@@ -1,3 +1,5 @@
+import { CameraDrag } from './camera-drag';
+import { DraftDesignStore } from '../draft-design.store';
 import { DOCUMENT, Location } from '@angular/common';
 import {
   afterNextRender,
@@ -31,6 +33,8 @@ import { SceneTree } from './scene-tree';
 import { SelectionPanel } from './selection-panel';
 import { EditingAidsStore } from './editing-aids.store';
 import { ReferenceOverlay } from './reference-overlay';
+import { LookThrough } from './look-through';
+import { SceneMarkers } from './scene-markers';
 
 /**
  * An editor's layout (container, on the `Editor` in effect and the page's UI store): on the left
@@ -47,6 +51,7 @@ import { ReferenceOverlay } from './reference-overlay';
   selector: 'hrs-editor-layout',
   imports: [
     PlayBackground,
+    CameraDrag,
     MatIconButton,
     MatIcon,
     MatTooltip,
@@ -63,6 +68,8 @@ import { ReferenceOverlay } from './reference-overlay';
     ResetConfirm,
     ClearConfirm,
     ReferenceOverlay,
+    LookThrough,
+    SceneMarkers,
   ],
   templateUrl: './editor-layout.html',
   styleUrl: './editor-layout.scss',
@@ -76,6 +83,8 @@ export class EditorLayout {
   protected readonly ui = inject(EditorUiStore);
   protected readonly graphics = inject(GraphicsStore);
   protected readonly aids = inject(EditingAidsStore);
+  /** The draft, for a drag of the camera taken as one change. */
+  protected readonly draft = inject(DraftDesignStore);
   private readonly catalog = inject(AssetCatalogStore);
   /** The left panel's title while the library shows: the kind of thing listed. */
   protected readonly libraryTitle = computed(() => typeLabel(this.catalog.type()));

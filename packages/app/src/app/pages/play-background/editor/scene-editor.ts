@@ -26,6 +26,7 @@ import { SceneHeader } from './scene-header';
           tint: store.sceneTint,
           key: store.scene,
           random: store.sets,
+          camera: store.viewCamera,
         };
       },
     },

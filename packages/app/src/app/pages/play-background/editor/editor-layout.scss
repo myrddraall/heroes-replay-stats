@@ -75,6 +75,14 @@
   }
 }
 
+// What the view looks through, beside the tree's toggle.
+.layout__look {
+  position: absolute;
+  top: 8px;
+  inset-inline-start: 104px;
+  z-index: 10001;
+}
+
 // The screenshot mode's hint: shown a moment, then gone, so it isn't in the picture.
 .layout__hint {
   position: absolute;

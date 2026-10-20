@@ -16,6 +16,8 @@ interface EditorUiState {
   readonly browsing: boolean;
   /** Whether the bodies' names float over them. */
   readonly names: boolean;
+  /** Whether the view marks a scene's cameras, the groups put in it and the selected's lights. */
+  readonly markers: boolean;
   /** Whether the tree's panel and the properties' panel are open. */
   readonly left: boolean;
   readonly right: boolean;
@@ -39,6 +41,7 @@ export const EditorUiStore = signalStore(
   withState<EditorUiState>({
     browsing: true,
     names: true,
+    markers: true,
     left: true,
     right: true,
     aspect: 16 / 9,
@@ -46,7 +49,7 @@ export const EditorUiStore = signalStore(
     confirmingClear: false,
     screenshot: false,
   }),
-  withLocalStorage<EditorUiState>('hrs.background-editor', ['names', 'left', 'right']),
+  withLocalStorage<EditorUiState>('hrs.background-editor', ['names', 'markers', 'left', 'right']),
   withProps(() => ({ _router: inject(Router), _followed: { first: true } })),
   withMethods((store) => {
     const navigate = (target: OpenTarget, replaceUrl = false) =>
@@ -79,6 +82,9 @@ export const EditorUiStore = signalStore(
       },
       setNames(names: boolean): void {
         patchState(store, { names });
+      },
+      setMarkers(markers: boolean): void {
+        patchState(store, { markers });
       },
       setPanel(panel: 'left' | 'right', open: boolean): void {
         patchState(store, { [panel]: open });

@@ -5,6 +5,8 @@ import {
   type SceneBlend,
   type SceneLayer,
   type SceneMaterial,
+  type SceneCamera,
+  type SceneCameraSet,
   type SceneMesh,
   type SkyOverlayFile,
 } from './play-scene';
@@ -1224,7 +1226,7 @@ export class SceneRenderer {
    * first time each planet is placed. What doesn't move is drawn again at the next frame.
    */
   setPlanets(placements: readonly PlanetPlacement[]): void {
-    const { eye } = this.loaded.scene.camera;
+    const { eye } = this.camera;
     this.placed = placements.map((placement) => ({
       placement,
       frame: bodyFrame(placement.position, placement.radius, eye),
@@ -1334,7 +1336,7 @@ export class SceneRenderer {
 
   /** The placed planets moved: their positions and radii, in the order they were placed. */
   placePlanets(positions: readonly Vec3[], radii?: readonly number[]): void {
-    const { eye } = this.loaded.scene.camera;
+    const { eye } = this.camera;
     this.placed.forEach((placed, i) => {
       const position = positions[i] ?? placed.placement.position;
       const radius = radii?.[i] ?? placed.placement.radius;
@@ -1342,6 +1344,29 @@ export class SceneRenderer {
       placed.frame = bodyFrame(position, radius, eye);
       placed.extent = partsExtent(radius, partsOf(placed.placement), distance(position, eye));
     });
+    this.stillDirty = true;
+  }
+
+  /** Where a scene puts the camera, over the game's (what it sets of it). */
+  private cameraSet: SceneCameraSet = {};
+
+  /** The camera: the game's, as a scene puts it (where it is, where it looks, its field of view). */
+  private get camera(): SceneCamera {
+    return { ...this.loaded.scene.camera, ...this.cameraSet };
+  }
+
+  /**
+   * The camera put where a scene says (none set: the game's): everything seen from there (the
+   * planets' faces turned to it, the sky's overlays placed about it), drawn again.
+   */
+  setCamera(set: SceneCameraSet | undefined): void {
+    const next = set ?? {};
+    if (JSON.stringify(next) === JSON.stringify(this.cameraSet)) return;
+    this.cameraSet = next;
+    this.view = this.viewNow();
+    this.projection = this.projectionNow();
+    this.placePlanets(this.placed.map((p) => p.placement.position));
+    this.placeSkyOverlays();
     this.stillDirty = true;
   }
 
@@ -1353,8 +1378,18 @@ export class SceneRenderer {
     this.stillDirty = true;
   }
 
+  private projectionNow(): Float32Array {
+    const camera = this.camera;
+    return projectionMatrix(
+      camera.fovY,
+      this.canvas.width / this.canvas.height,
+      camera.near,
+      Infinity, // the scene's objects however far they are set (the sky is drawn behind them anyway)
+    );
+  }
+
   private viewNow(): Float32Array {
-    const { camera } = this.loaded.scene;
+    const camera = this.camera;
     const forward = turnAbout(camera.forward, camera.up, this.yaw);
     return viewMatrix(camera.eye, forward, camera.up);
   }
@@ -1366,14 +1401,8 @@ export class SceneRenderer {
   resize(width: number, height: number): void {
     this.canvas.width = Math.max(1, Math.round(width));
     this.canvas.height = Math.max(1, Math.round(height));
-    const { camera } = this.loaded.scene;
     this.view = this.viewNow();
-    this.projection = projectionMatrix(
-      camera.fovY,
-      this.canvas.width / this.canvas.height,
-      camera.near,
-      Infinity, // the scene's objects however far they are set (the sky is drawn behind them anyway)
-    );
+    this.projection = this.projectionNow();
     this.allocate(this.stillBackground);
     this.allocate(this.stillScene);
     this.allocate(this.frame);
@@ -1646,6 +1675,8 @@ export class SceneRenderer {
     const key = JSON.stringify([
       worn.map(({ id, file }) => [id, fileId(file)]),
       this.sky.parts ?? null,
+      // Placed about the eye: placed again where it moves.
+      this.cameraSet,
     ]);
     if (key === this.skyOverlayKey) return;
     this.skyOverlayKey = key;
@@ -1657,7 +1688,7 @@ export class SceneRenderer {
       for (const [textureKey, image] of Object.entries(images ?? {}))
         if (!this.textures.has(textureKey)) this.textures.set(textureKey, this.texture(image));
     const files = new Map(worn.map((w) => [w.id, w.file]));
-    for (const part of skyOverlayParts(worn, this.sky.parts, scene.camera)) {
+    for (const part of skyOverlayParts(worn, this.sky.parts, this.camera)) {
       const file = files.get(overlayOfPartKey(part.key) ?? '');
       if (!file) continue;
       const vao = this.meshVao({ ...part.mesh, materials: part.materials });
@@ -1877,7 +1908,7 @@ export class SceneRenderer {
     gl.uniform1i(this.uniform(this.meshProgram, 'uShadeCount'), 0);
     this.bindTint(this.meshProgram, 'uBodyTint', this.sky.tint); // the sky's over all of it
     gl.uniform2f(this.uniform(this.meshProgram, 'uRimTurn'), 0, 0);
-    gl.uniform3fv(this.uniform(this.meshProgram, 'uEye'), this.loaded.scene.camera.eye);
+    gl.uniform3fv(this.uniform(this.meshProgram, 'uEye'), this.camera.eye);
     gl.uniform3fv(this.uniform(this.meshProgram, 'uRight'), right);
     gl.uniform3fv(this.uniform(this.meshProgram, 'uUp'), up);
     gl.uniform1f(this.uniform(this.meshProgram, 'uSmear'), this.smear);
