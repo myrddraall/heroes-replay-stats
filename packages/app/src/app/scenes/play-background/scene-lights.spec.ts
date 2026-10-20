@@ -18,6 +18,7 @@ import {
   withShadowSettings,
   reachesReceiver,
   withReceiver,
+  tunedRig,
 } from './scene-lights';
 import { DEFAULT_SHADE, type PlanetLight } from './scene-planets';
 
@@ -284,5 +285,37 @@ describe('what a light reaches, from what it lights', () => {
       mode: 'except',
       receivers: ['material:haze'],
     });
+  });
+});
+
+describe("a body's rig as tuned", () => {
+  const rig: PlanetLight = {
+    ambient: [0.2, 0.2, 0.4],
+    directional: [
+      { direction: [0, 1, 0], color: [2, 2, 2] },
+      { direction: [1, 0, 0], color: [0.5, 0.5, 0.5] },
+    ],
+    exposure: 1,
+  };
+
+  it('is the data where nothing is tuned', () => {
+    expect(tunedRig(rig)).toBe(rig);
+  });
+
+  it('makes every light stronger together', () => {
+    const half = tunedRig(rig, 0.5);
+    expect(half.ambient).toEqual([0.1, 0.1, 0.2]);
+    expect(half.directional.map((l) => l.color)).toEqual([
+      [1, 1, 1],
+      [0.25, 0.25, 0.25],
+    ]);
+    // As a light shows it: half as strong, the same colour.
+    expect(bodyLights(half, DEFAULT_SHADE).find((l) => l.id === 'directional-0')!.strength).toBe(1);
+  });
+
+  it('turns its lights together, its key light to come from where it is turned', () => {
+    const turned = tunedRig(rig, 1, [1, 0, 0]);
+    // The key light (the brightest) shone along +y, so came from -y: now it comes from +x.
+    turned.directional[0]!.direction.forEach((v, i) => expect(v).toBeCloseTo([-1, 0, 0][i]!, 6));
   });
 });

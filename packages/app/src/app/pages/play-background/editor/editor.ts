@@ -84,6 +84,8 @@ export abstract class Editor {
   abstract setRevealFrom(from: Vec3): void;
   /** What lights the selected body, part or material (none: something else is selected). */
   abstract readonly litBy: Signal<readonly LitByEntry[] | null>;
+  /** One of the lights in the selected body's Lit by selected in the tree, its rows unfolded to it. */
+  abstract showLight(id: LightId): void;
   /** A light taken in or left out by the selected body, part or material. */
   abstract setLitBy(change: { readonly id: LightId; readonly on: boolean }): void;
 

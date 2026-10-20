@@ -1,0 +1,30 @@
+@use '../properties/property-row';
+
+// A light: its checkbox and name from the left, the button to go to it at the right.
+.light {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) property-row.$reset-column;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+}
+
+.check {
+  @include property-row.check;
+}
+
+.name {
+  overflow: hidden;
+  font: var(--mat-sys-body-small);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.from {
+  opacity: 0.6;
+}
+
+.show {
+  @include property-row.reset;
+}

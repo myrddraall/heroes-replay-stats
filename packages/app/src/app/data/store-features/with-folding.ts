@@ -14,7 +14,8 @@ export interface FoldingState {
 
 /**
  * Which rows of a tree are unfolded (`expanded`, by key, as kept; `isExpanded` to ask), starting
- * with `initial`; rows folded and unfolded one at a time, or unfolded together.
+ * with `initial`; rows folded and unfolded one at a time, or unfolded together. (A tree may keep
+ * some rows the other way about, open unless kept: `reopen` opens those.)
  */
 export function withFolding(initial: readonly string[] = []) {
   return signalStoreFeature(
@@ -36,6 +37,11 @@ export function withFolding(initial: readonly string[] = []) {
         const open = store.unfolded();
         const more = keys.filter((k) => !open.has(k));
         if (more.length) patchState(store, { expanded: [...open, ...more] });
+      },
+      /** Keys taken out of those kept: rows a tree keeps open unless kept, opened. */
+      reopen(...keys: string[]): void {
+        if (keys.some((k) => store.unfolded().has(k)))
+          patchState(store, { expanded: store.expanded().filter((k) => !keys.includes(k)) });
       },
     })),
   );

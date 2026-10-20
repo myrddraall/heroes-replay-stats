@@ -17,6 +17,7 @@ import {
 } from '../../../scenes/play-background/play-scene';
 import { skyDepths } from '../../../scenes/play-background/sky-depths';
 import {
+  type BodyPath,
   type BodySettings,
   type BodyValues,
   type MoonChoices,
@@ -760,10 +761,15 @@ export function sceneLightsOf(lights: readonly AddedLight[] | undefined): LightE
   }));
 }
 
-/** A light from beyond a body that lights it too (its scene's, a planet's it is a moon of), and where it comes from. */
+/**
+ * A light from beyond a body that lights it too (its scene's, a planet's it is a moon of), where it
+ * comes from, and whose it is (the scene, or the planet: its path, and whether its overlay's).
+ */
 export interface OuterLight {
   readonly light: AddedLight;
   readonly from: string;
+  readonly owner: BodyPath | 'scene';
+  readonly overlay?: boolean;
 }
 
 /** A light that may light what is selected (a body, a part, a material), as its Lit by list shows it. */
@@ -780,6 +786,12 @@ export interface LitByEntry {
   /** What of the body it reaches, as in effect and as under the level edited. */
   readonly reach?: LightReach;
   readonly reachBelow?: LightReach;
+  /**
+   * Whose it is, to find it in the tree: the body's own (none), the scene's, or a planet's it is a
+   * moon of (its path); and whether it is the overlay's (shown under the overlay).
+   */
+  readonly owner?: BodyPath | 'scene';
+  readonly overlay: boolean;
 }
 
 /** Whether a body's files are loaded (its overlay's too, where it wears one). */
@@ -827,8 +839,10 @@ export function litByOf(
         : (under[e.light.id]?.reach ?? addedBelow.get(e.light.id as `added-${string}`)?.reach),
       enabledBelow: e.enabledBelow,
       from: e.addedIn ?? (e.overlay ? `the ${styleLabel(b)} overlay` : own),
+      owner: undefined,
+      overlay: !!e.overlay,
     })),
-    ...outer.map(({ light, from }) => {
+    ...outer.map(({ light, from, owner, overlay }) => {
       const set = b.settings.lights?.[light.id];
       return {
         light: addedLight(light, set),
@@ -836,6 +850,8 @@ export function litByOf(
         reachBelow: light.reach,
         enabledBelow: true,
         from,
+        owner,
+        overlay: !!overlay,
       };
     }),
   ];
@@ -850,6 +866,8 @@ export function litByOf(
       enabledBelow: l.enabledBelow,
       ...(l.reach ? { reach: l.reach } : {}),
       ...(l.reachBelow ? { reachBelow: l.reachBelow } : {}),
+      ...(l.owner !== undefined ? { owner: l.owner } : {}),
+      overlay: l.overlay,
     }));
 }
 

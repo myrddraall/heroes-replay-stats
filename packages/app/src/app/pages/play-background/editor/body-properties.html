@@ -1,7 +1,7 @@
 <hrs-property-section
   title="General"
-  [changed]="set().label !== undefined || (!overlay() && isSet('rim'))"
-  (resetRequested)="clear.emit(['label', 'rim'])"
+  [changed]="set().label !== undefined"
+  (resetRequested)="clear.emit(['label'])"
 >
   <hrs-property-text
     label="Name"
@@ -12,18 +12,21 @@
     (resetRequested)="clear.emit(['label'])"
     (valueChange)="rename($event)"
   />
-  @if (!overlay()) {
-    <hrs-property-direction
-      label="Rim from"
-      [sided]="false"
-      [value]="rimFrom()"
-      [changed]="isSet('rim')"
-      [origin]="origins()?.rim"
-      (resetRequested)="clear.emit(['rim'])"
-      (valueChange)="settingsChange.emit({ rim: mirrored($event) })"
-    />
-  }
   <div class="buttons">
+  @if (orbit()) {
+    <button
+      type="button"
+      class="button"
+      (click)="focusToggle.emit()"
+      [attr.aria-pressed]="focused()"
+    >
+      {{ focused() ? 'Unfocus' : 'Focus' }}
+    </button>
+    <button type="button" class="button" (click)="removeRequested.emit()">Remove moon</button>
+  }
+  @if (place()) {
+    <button type="button" class="button" (click)="removeRequested.emit()">Remove planet</button>
+  }
     <button type="button" class="button" (click)="resetRequested.emit()" [disabled]="!changed()">
       Reset look
     </button>
@@ -123,7 +126,13 @@
     />
   </hrs-property-section>
 }
-<ng-content select="[lightAdd]" />
+@if (moons()) {
+  <hrs-property-section title="Moons">
+    <div class="buttons">
+      <ng-content select="[moonAdd]" />
+    </div>
+  </hrs-property-section>
+}
 @if (!overlay()) {
   <hrs-tint-section
     [tint]="v.tint"
@@ -133,28 +142,17 @@
     (clear)="clear.emit(['tint'])"
   />
 }
-@if (moons()) {
-  <hrs-property-section title="Moons">
-    <div class="buttons">
-      <ng-content select="[moonAdd]" />
-    </div>
+@if (!overlay()) {
+  <hrs-property-section title="Rim" [changed]="isSet('rim')" (resetRequested)="clear.emit(['rim'])">
+    <hrs-property-direction
+      label="Direction"
+      [sided]="false"
+      [value]="rimFrom()"
+      [changed]="isSet('rim')"
+      [origin]="origins()?.rim"
+      (resetRequested)="clear.emit(['rim'])"
+      (valueChange)="settingsChange.emit({ rim: mirrored($event) })"
+    />
   </hrs-property-section>
 }
-@if (orbit() || place()) {
-  <div class="buttons">
-    @if (orbit()) {
-      <button
-        type="button"
-        class="button"
-        (click)="focusToggle.emit()"
-        [attr.aria-pressed]="focused()"
-      >
-        {{ focused() ? 'Unfocus' : 'Focus' }}
-      </button>
-      <button type="button" class="button" (click)="removeRequested.emit()">Remove moon</button>
-    }
-    @if (place()) {
-      <button type="button" class="button" (click)="removeRequested.emit()">Remove planet</button>
-    }
-  </div>
-}
+<ng-content select="[lightAdd]" />

@@ -330,12 +330,22 @@ export const SceneEditorStore = signalStore(
       return [
         ...(choices().lights ?? [])
           .filter((l) => l.enabled !== false)
-          .map((light) => ({ light, from: 'the scene' })),
+          .map((light) => ({ light, from: 'the scene', owner: 'scene' as const })),
         ...t.path.slice(0, -1).flatMap((_, i) => {
-          const parent = bodyByKey().get(bodyKey(t.path.slice(0, i + 1)));
-          return parent
-            ? moonLightsOf(parent).map((light) => ({ light, from: bodyLabel(parent) }))
-            : [];
+          const owner = t.path.slice(0, i + 1);
+          const parent = bodyByKey().get(bodyKey(owner));
+          if (!parent) return [];
+          const overlays = new Set(
+            lightsOfBody(parent)
+              .filter((l) => l.overlay)
+              .map((l) => l.light.id),
+          );
+          return moonLightsOf(parent).map((light) => ({
+            light,
+            from: bodyLabel(parent),
+            owner,
+            overlay: overlays.has(light.id),
+          }));
         }),
       ];
     });
@@ -867,6 +877,25 @@ export const SceneEditorStore = signalStore(
       },
       setLight(change: Partial<LightSettings>): void {
         lightChange(store.target(), change);
+      },
+      /** One of the lights in the selected body's Lit by selected in the tree, its rows unfolded to it. */
+      showLight(id: LightId): void {
+        const t = store.target();
+        const light = store.litBy()?.find((l) => l.id === id);
+        if (!light || !('path' in t)) return;
+        if (light.owner === 'scene') {
+          store.expand(SCENE);
+          store.reopen(SCENE_LIGHTS);
+          patchState(store, { selected: sceneLightKey(id) });
+          return;
+        }
+        const path = light.owner ?? t.path;
+        store.expand(SCENE, ...path.map((_, i) => bodyKey(path.slice(0, i + 1))));
+        if (light.overlay) {
+          store.reopen(overlayKey(path));
+          store.expand(overlayLightsKey(path));
+        } else store.expand(lightsKey(path));
+        patchState(store, { selected: lightRowKey(path, id) });
       },
       setLitBy(change: { readonly id: LightId; readonly on: boolean }): void {
         const t = store.target();

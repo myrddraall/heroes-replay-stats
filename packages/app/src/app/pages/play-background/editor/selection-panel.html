@@ -74,7 +74,11 @@
       </hrs-body-properties>
     }
     @if (editor.litBy(); as lit) {
-      <hrs-lit-by [lights]="lit" (litChange)="editor.setLitBy($event)" />
+      <hrs-lit-by
+        [lights]="lit"
+        (litChange)="editor.setLitBy($event)"
+        (lightShow)="editor.showLight($event)"
+      />
     }
   }
   @case ('light') {
@@ -97,7 +101,11 @@
       />
     }
     @if (editor.litBy(); as lit) {
-      <hrs-lit-by [lights]="lit" (litChange)="editor.setLitBy($event)" />
+      <hrs-lit-by
+        [lights]="lit"
+        (litChange)="editor.setLitBy($event)"
+        (lightShow)="editor.showLight($event)"
+      />
     }
   }
   @case ('material') {
@@ -119,7 +127,11 @@
       />
     }
     @if (editor.litBy(); as lit) {
-      <hrs-lit-by [lights]="lit" (litChange)="editor.setLitBy($event)" />
+      <hrs-lit-by
+        [lights]="lit"
+        (litChange)="editor.setLitBy($event)"
+        (lightShow)="editor.showLight($event)"
+      />
     }
   }
   @case ('sky-material') {

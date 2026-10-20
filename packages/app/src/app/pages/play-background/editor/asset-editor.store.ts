@@ -889,6 +889,17 @@ export const AssetEditorStore = signalStore(
         store.expand(ASSET, ASSET_LIGHTS);
         patchState(store, { selected: assetLightKey(light.id) });
       },
+      /** One of the lights in the selected body's Lit by selected in the tree, its rows unfolded to it. */
+      showLight(id: LightId): void {
+        const light = store.litBy()?.find((l) => l.id === id);
+        if (!light) return;
+        store.expand(ASSET);
+        if (light.overlay) {
+          store.reopen(ASSET_OVERLAY);
+          store.expand(ASSET_OVERLAY_LIGHTS);
+        } else store.expand(ASSET_LIGHTS);
+        patchState(store, { selected: assetLightKey(id) });
+      },
       setLitBy(change: { readonly id: LightId; readonly on: boolean }): void {
         const b = store._body();
         const receiver = receiverOf(store.target());

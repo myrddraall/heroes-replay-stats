@@ -74,8 +74,8 @@
   />
   <hrs-property-section
     title="Light"
-    [changed]="anySet(['lit', 'glow', 'spread', 'spreadFrom', 'falloff'])"
-    (resetRequested)="clear.emit(['lit', 'glow', 'spread', 'spreadFrom', 'falloff'])"
+    [changed]="anySet(['lit', 'glow'])"
+    (resetRequested)="clear.emit(['lit', 'glow'])"
   >
     @if (c.lit) {
       <hrs-property-check
@@ -97,7 +97,13 @@
       (resetRequested)="clear.emit(['glow'])"
       (valueChange)="settingsChange.emit({ glow: $event })"
     />
-    @if (c.spread) {
+  </hrs-property-section>
+  @if (c.spread) {
+    <hrs-property-section
+      title="Rim"
+      [changed]="anySet(['spread', 'spreadFrom', 'falloff'])"
+      (resetRequested)="clear.emit(['spread', 'spreadFrom', 'falloff'])"
+    >
       <hrs-property-number
         label="Spread"
         [value]="v.spread"
@@ -110,7 +116,8 @@
         (valueChange)="settingsChange.emit({ spread: $event })"
       />
       <hrs-property-direction
-        label="Spread from"
+        label="Direction"
+        [sided]="false"
         [value]="v.spreadFrom"
         [changed]="isSet('spreadFrom')"
         [origin]="origins()?.spreadFrom"
@@ -127,8 +134,8 @@
         (resetRequested)="clear.emit(['falloff'])"
         (valueChange)="settingsChange.emit({ falloff: $event })"
       />
-    }
-  </hrs-property-section>
+    </hrs-property-section>
+  }
 }
 @if (c.scale) {
   <hrs-property-section
