@@ -22,6 +22,7 @@ import { MaterialProperties } from './material-properties';
 import { PartProperties } from './part-properties';
 import { LightProperties } from './light-properties';
 import { AddLight } from './add-light';
+import { LitBy } from './lit-by';
 import { ReferenceProperties, type ReferenceValues } from './reference-properties';
 import { SceneEditorStore } from './scene-editor.store';
 import { SceneProperties } from './scene-properties';
@@ -44,6 +45,7 @@ import { TintSection } from './tint-section';
     PartProperties,
     LightProperties,
     AddLight,
+    LitBy,
     EditingAidProperties,
     ReferenceProperties,
     AddPlanet,
@@ -86,10 +88,6 @@ export class SelectionPanel {
       colour: 'standInColour',
       gridSize: 'gridSize',
       onPlanet: 'materialOnPlanet',
-      ambient: 'standInAmbient',
-      directional: 'standInDirectional',
-      key: 'standInDirectionalStrength',
-      lightFrom: 'standInDirectionalFrom',
     },
   } as const satisfies Record<
     string,
@@ -107,10 +105,6 @@ export class SelectionPanel {
     colour: this.aids.standInColour(),
     gridSize: this.aids.gridSize(),
     onPlanet: this.aids.materialOnPlanet(),
-    ambient: this.aids.standInAmbient(),
-    directional: this.aids.standInDirectional(),
-    key: this.aids.standInDirectionalStrength(),
-    lightFrom: this.aids.standInDirectionalFrom(),
   }));
   /** The reference image's settings, each by the aids store's name for it. */
   private readonly referenceKeys = {
@@ -157,10 +151,6 @@ export class SelectionPanel {
       colour: differs('colour'),
       gridSize: differs('gridSize'),
       onPlanet: differs('onPlanet'),
-      ambient: differs('ambient'),
-      directional: differs('directional'),
-      key: differs('key'),
-      lightFrom: differs('lightFrom'),
     };
   }
 
@@ -178,10 +168,6 @@ export class SelectionPanel {
       ...(change.sky !== undefined ? { backdropSky: change.sky } : {}),
       ...(change.gridSize !== undefined ? { gridSize: change.gridSize as GridSize } : {}),
       ...(change.onPlanet !== undefined ? { materialOnPlanet: change.onPlanet } : {}),
-      ...(change.ambient !== undefined ? { standInAmbient: change.ambient } : {}),
-      ...(change.directional !== undefined ? { standInDirectional: change.directional } : {}),
-      ...(change.key !== undefined ? { standInDirectionalStrength: change.key } : {}),
-      ...(change.lightFrom !== undefined ? { standInDirectionalFrom: change.lightFrom } : {}),
     });
   }
 

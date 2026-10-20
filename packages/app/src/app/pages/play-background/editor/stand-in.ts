@@ -1,23 +1,34 @@
 import type { BuiltInPlanet } from '../../../scenes/play-background/built-in-planets';
 import type { SceneLayer, SceneMaterial } from '../../../scenes/play-background/play-scene';
-import type {
-  BodyPart,
-  PartMapping,
-  PlanetFile,
-  PlanetLight,
+import {
+  bodyLights,
+  type LightId,
+  type LightSettings,
+  type LightSettingsMap,
+  mergeLightSettings,
+} from '../../../scenes/play-background/scene-lights';
+import {
+  type BodyPart,
+  DEFAULT_SHADE,
+  type PartMapping,
+  type PlanetFile,
+  type PlanetLight,
 } from '../../../scenes/play-background/scene-planets';
-import { GRID_COLOURS, STAND_IN_LIGHT_FROM, type StandInFill } from './editing-aids.store';
+import type { LightEntry } from './editor-model';
+import { GRID_COLOURS, type StandInFill } from './editing-aids.store';
 
 /**
  * The stand-in planet: a plain sphere an asset is shown on while it is edited (a material opened
- * on its own), a plain colour (its material tinted) or a transparency grid, lit by a plain key
- * light (turned, and with light from all round added, by the stage). Made by the app (an editing
- * aid), never exported or published.
+ * on its own), a plain colour (its material tinted) or a transparency grid, lit by lights of its
+ * own (an ambient light, and a directional light switched on where asked: see `standInLights`).
+ * Made by the app (an editing aid), never exported or published.
  */
 export const STAND_IN = '@stand-in';
 /** Its own material: tinted to the colour chosen. */
 export const STAND_IN_MATERIAL = 'stand-in';
 const GRID_TEXTURE = 'stand-in-grid';
+/** Where its directional light comes from unless turned: upper left, in front (its frame: x right, y away, z up). */
+const LIGHT_FROM: readonly [number, number, number] = [-0.55, -0.45, 0.7];
 
 /** A stand-in: its fill, its grid's squares round its equator, and a material over it from where it is used. */
 export interface StandInSpec {
@@ -53,15 +64,14 @@ const MAPPING: PartMapping = {
 };
 
 /**
- * A plain directional light from the upper left, in front, and no ambient: the stage adds light
- * from all round, and switches the directional light on (turned, as strong as asked) or off, as the editing aids say (by
- * default all round only: even).
+ * Its light rig: white light from all round (at 1, as the scene's exposure is, a surface as bright
+ * as its textures), and a white directional light from the upper left, in front.
  */
 const LIGHT: PlanetLight = {
-  ambient: [0, 0, 0],
+  ambient: [1, 1, 1],
   directional: [
     {
-      direction: [-STAND_IN_LIGHT_FROM[0], -STAND_IN_LIGHT_FROM[1], -STAND_IN_LIGHT_FROM[2]],
+      direction: [-LIGHT_FROM[0], -LIGHT_FROM[1], -LIGHT_FROM[2]],
       color: [1, 1, 1],
     },
   ],
@@ -163,4 +173,57 @@ export function buildStandIn(
     planet: { kind: 'painted', parts, materials, textures, light: LIGHT, tuning },
     images: grid ? { [GRID_TEXTURE]: gridImage } : undefined,
   };
+}
+
+/** Its lights as they start: lit evenly, as a material preview is (its directional light switched off). */
+const LIGHTS_AT_START: LightSettingsMap = { 'directional-0': { enabled: false } };
+const LIGHT_NAMES: Partial<Record<LightId, string>> = {
+  ambient: 'Ambient light',
+  'directional-0': 'Directional light',
+};
+
+/** Its lights' settings in effect: those set (by the editing aids) over how they start. */
+export const standInLightSettings = (set: LightSettingsMap): LightSettingsMap =>
+  mergeLightSettings(LIGHTS_AT_START, set);
+
+/**
+ * What is set for its lights with one of them changed: settings put back as they start (`clear`,
+ * or all of them) no longer set, nor its being switched on or off where that is as it starts.
+ */
+export function withStandInLight(
+  set: LightSettingsMap,
+  id: LightId,
+  change: Partial<LightSettings>,
+  clear: readonly (keyof LightSettings)[] | 'all' = [],
+): LightSettingsMap {
+  const next: Record<string, unknown> = clear === 'all' ? {} : { ...set[id] };
+  if (clear !== 'all') for (const k of clear) delete next[k];
+  Object.assign(next, change);
+  if (next['enabled'] === (LIGHTS_AT_START[id]?.enabled ?? true)) delete next['enabled'];
+  const rest = Object.fromEntries(Object.entries(set).filter(([k]) => k !== id));
+  return Object.keys(next).length ? { ...rest, [id]: next } : rest;
+}
+
+/**
+ * Its lights as the editor shows them (an editing aid's: nothing under them, reaching all of it,
+ * none added or taken away): its ambient light and its directional light, as set over how they
+ * start.
+ */
+export function standInLights(set: LightSettingsMap): LightEntry[] {
+  return bodyLights(LIGHT, DEFAULT_SHADE, standInLightSettings(set))
+    .filter((l) => l.kind === 'ambient' || l.kind === 'directional')
+    .map((l) => {
+      const name = LIGHT_NAMES[l.id] ?? l.name;
+      return {
+        light: { ...l, name: set[l.id]?.name ?? name },
+        nameBelow: name,
+        enabledBelow: LIGHTS_AT_START[l.id]?.enabled ?? true,
+        set: set[l.id],
+        origins: {},
+        removable: false,
+        receivers: [],
+        moons: false,
+        canReachMoons: false,
+      };
+    });
 }

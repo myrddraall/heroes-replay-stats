@@ -1,7 +1,7 @@
 <hrs-property-section
-  title="Name"
-  [changed]="set().label !== undefined"
-  (resetRequested)="clear.emit(['label'])"
+  title="General"
+  [changed]="set().label !== undefined || (!overlay() && isSet('rim'))"
+  (resetRequested)="clear.emit(['label', 'rim'])"
 >
   <hrs-property-text
     label="Name"
@@ -12,6 +12,22 @@
     (resetRequested)="clear.emit(['label'])"
     (valueChange)="rename($event)"
   />
+  @if (!overlay()) {
+    <hrs-property-direction
+      label="Rim from"
+      [sided]="false"
+      [value]="rimFrom()"
+      [changed]="isSet('rim')"
+      [origin]="origins()?.rim"
+      (resetRequested)="clear.emit(['rim'])"
+      (valueChange)="settingsChange.emit({ rim: mirrored($event) })"
+    />
+  }
+  <div class="buttons">
+    <button type="button" class="button" (click)="resetRequested.emit()" [disabled]="!changed()">
+      Reset look
+    </button>
+  </div>
 </hrs-property-section>
 @let v = values();
 @if (styled()) {
@@ -107,44 +123,6 @@
     />
   </hrs-property-section>
 }
-@if (!overlay()) {
-  <hrs-property-section
-    title="Light"
-    [changed]="anySet(lightKeys)"
-    (resetRequested)="clear.emit(lightKeys)"
-  >
-    @if (canLight()) {
-      <hrs-property-number
-        label="Light"
-        [value]="v.lighting"
-        [min]="0"
-        [step]="0.05"
-        [changed]="isSet('lighting')"
-        [origin]="origins()?.lighting"
-        (resetRequested)="clear.emit(['lighting'])"
-        (valueChange)="settingsChange.emit({ lighting: $event })"
-      />
-      @if (v.lightFrom; as from) {
-        <hrs-property-direction
-          label="Lights from"
-          [value]="from"
-          [changed]="isSet('lightFrom')"
-          [origin]="origins()?.lightFrom"
-          (resetRequested)="clear.emit(['lightFrom'])"
-          (valueChange)="settingsChange.emit({ lightFrom: $event })"
-        />
-      }
-    }
-    <hrs-property-direction
-      label="Rim from"
-      [value]="rimFrom()"
-      [changed]="isSet('rim')"
-      [origin]="origins()?.rim"
-      (resetRequested)="clear.emit(['rim'])"
-      (valueChange)="settingsChange.emit({ rim: mirrored($event) })"
-    />
-  </hrs-property-section>
-}
 <ng-content select="[lightAdd]" />
 @if (!overlay()) {
   <hrs-tint-section
@@ -162,22 +140,21 @@
     </div>
   </hrs-property-section>
 }
-<div class="buttons">
-  @if (orbit()) {
-    <button
-      type="button"
-      class="button"
-      (click)="focusToggle.emit()"
-      [attr.aria-pressed]="focused()"
-    >
-      {{ focused() ? 'Unfocus' : 'Focus' }}
-    </button>
-    <button type="button" class="button" (click)="removeRequested.emit()">Remove moon</button>
-  }
-  @if (place()) {
-    <button type="button" class="button" (click)="removeRequested.emit()">Remove planet</button>
-  }
-  <button type="button" class="button" (click)="resetRequested.emit()" [disabled]="!changed()">
-    Reset look
-  </button>
-</div>
+@if (orbit() || place()) {
+  <div class="buttons">
+    @if (orbit()) {
+      <button
+        type="button"
+        class="button"
+        (click)="focusToggle.emit()"
+        [attr.aria-pressed]="focused()"
+      >
+        {{ focused() ? 'Unfocus' : 'Focus' }}
+      </button>
+      <button type="button" class="button" (click)="removeRequested.emit()">Remove moon</button>
+    }
+    @if (place()) {
+      <button type="button" class="button" (click)="removeRequested.emit()">Remove planet</button>
+    }
+  </div>
+}

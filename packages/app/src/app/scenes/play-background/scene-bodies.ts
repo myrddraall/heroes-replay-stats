@@ -362,6 +362,38 @@ export function withLightChange(
   return withLightSetting(s, id, change);
 }
 
+/**
+ * Settings with a light switched on or off: one added at this level, itself (on: as it starts, so
+ * not kept); any other, back to what is under this level (`below`) where that is the same (not set
+ * here), else set here.
+ */
+export function withLightSwitched(
+  s: BodySettings,
+  id: LightId,
+  on: boolean,
+  below: boolean,
+): BodySettings | undefined {
+  if (s.added?.some((l) => l.id === id)) return withLightChange(s, id, { enabled: on });
+  return on === below
+    ? withoutLightSetting(s, id, ['enabled'])
+    : withLightSetting(s, id, { enabled: on });
+}
+
+/**
+ * Settings with a material switched on or off: back to what is under this level (`below`) where
+ * that is the same (not set here), else set here.
+ */
+export function withMaterialSwitched(
+  s: BodySettings,
+  name: string,
+  on: boolean,
+  below: boolean,
+): BodySettings | undefined {
+  return on === below
+    ? withoutMaterial(s, name, ['enabled'])
+    : withMaterial(s, name, { enabled: on });
+}
+
 /** Settings with an added light taken out, and what was set for it; none left: none at all. */
 export function withoutAddedLight(s: BodySettings, id: LightId): BodySettings | undefined {
   const added = (s.added ?? []).filter((l) => l.id !== id);
@@ -373,11 +405,15 @@ export function withoutAddedLight(s: BodySettings, id: LightId): BodySettings | 
   ]);
 }
 
-/** Lights with one of them changed. */
+/** Lights with one of them changed (switched on: as an added light starts, so not kept). */
 export function changedLight(
   lights: readonly AddedLight[],
   id: LightId,
   change: Partial<LightSettings>,
 ): AddedLight[] {
-  return lights.map((l) => (l.id === id ? { ...l, ...change } : l));
+  return lights.map((l) => {
+    if (l.id !== id) return l;
+    const next = { ...l, ...change };
+    return next.enabled === true ? (without(next, ['enabled']) ?? next) : next;
+  });
 }

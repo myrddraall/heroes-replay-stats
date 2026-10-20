@@ -48,8 +48,6 @@ export class BodyProperties {
    */
   protected readonly rimFrom = computed(() => this.mirrored(this.values().rim));
   readonly styleOptions = input.required<readonly PropertyOption[]>();
-  /** Whether it is lit (its light's strength and direction apply). */
-  readonly canLight = input(false);
   /** Its orbit, where it is a moon. */
   readonly orbit = input<Orbit | null>(null);
   /** Where it is and how big, where it is one of a scene's planets (x across, y away, z up). */
@@ -87,15 +85,9 @@ export class BodyProperties {
   readonly clear = output<readonly (keyof BodySettings)[]>();
   /** Its style back to its own. */
   readonly styleReset = output<void>();
-  /** The light section's settings. */
-  protected readonly lightKeys: readonly (keyof BodySettings)[] = ['lighting', 'lightFrom', 'rim'];
 
   protected isSet(key: keyof BodySettings): boolean {
     return this.set()[key] !== undefined;
-  }
-
-  protected anySet(keys: readonly (keyof BodySettings)[]): boolean {
-    return keys.some((k) => this.isSet(k));
   }
 
   /** Whether its orbit (or one part of it) is other than a new moon's. */

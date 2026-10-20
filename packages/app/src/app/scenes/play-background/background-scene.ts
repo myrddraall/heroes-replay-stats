@@ -36,11 +36,15 @@ export interface BodySettings {
   readonly enabled?: boolean;
   /** Whether the overlay it wears is drawn: off, it is drawn as if it wore none (its style kept). */
   readonly overlayEnabled?: boolean;
+  /**
+   * Its rig made stronger and turned together (`lighting`, `lightFrom`): kept from before lights
+   * were objects, folded into its lights as they start (`tunedRig`), no longer set.
+   */
   readonly lighting?: number;
   readonly shade?: number;
   /** A tint over all its materials. */
   readonly tint?: MaterialTint;
-  /** Where its key light comes from, its shade darkens it, and its rims and glows lean (its frame). */
+  /** (See `lighting`.) Where its shade darkens it and its rims and glows lean (its frame). */
   readonly lightFrom?: Vec3;
   readonly shadeTowards?: Vec3;
   readonly rim?: Vec3;

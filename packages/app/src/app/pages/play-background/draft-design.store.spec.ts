@@ -102,6 +102,14 @@ describe('DraftDesignStore', () => {
     expect(draft.scenes().planets[copy]?.name).toBe('Home copy');
   });
 
+  it("keeps a scene's own lights when its planets change", () => {
+    const draft = TestBed.inject(DraftDesignStore);
+    const lamp = { id: 'added-lamp', kind: 'ambient', name: 'Lamp' } as const;
+    draft.setSceneLights('play-screen', [lamp]);
+    draft.setSceneBodies('play-screen', [{ id: 'korhal', position: [0, 0, 0], radius: 1 }]);
+    expect(draft.scenes().planets['play-screen']?.lights).toEqual([lamp]);
+  });
+
   it("resets a preset to its own (the Play screen to the game's three)", () => {
     const draft = TestBed.inject(DraftDesignStore);
     draft.setSceneBodies('play-screen', [{ id: 'korhal', position: [0, 0, 0], radius: 1 }]);

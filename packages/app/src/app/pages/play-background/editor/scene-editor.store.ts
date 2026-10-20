@@ -59,6 +59,8 @@ import {
   visualExtent,
   bodyParts,
   withoutMaterial,
+  withLightSwitched,
+  withMaterialSwitched,
 } from '../../../scenes/play-background/scene-bodies';
 import {
   loadPlanetIndex,
@@ -78,6 +80,7 @@ import {
   type BodyInfo,
   bodyView,
   materialsOf,
+  filesLoaded,
   partsOfBody,
   moonLightsOf,
   bodyLabel,
@@ -97,6 +100,10 @@ import {
   referenceRow,
   skyMaterialsOf,
   type TargetKind,
+  type LitByEntry,
+  litByOf,
+  type OuterLight,
+  withLitBy,
 } from './editor-model';
 import { REFERENCE_KEY } from './editing-aids.store';
 import { EditorUiStore } from './editor-ui.store';
@@ -108,6 +115,7 @@ import {
   type LightKind,
   type LightSettings,
   newLight,
+  type Receiver,
 } from '../../../scenes/play-background/scene-lights';
 
 /** The scene tree's rows by what they are. */
@@ -147,6 +155,14 @@ type Target =
   | { readonly kind: 'scene-light'; readonly id: LightId }
   /** The reference image laid over the view (an editing aid). */
   | { readonly kind: 'reference' };
+
+/** What of a body a target is, as a light reaches it: the body (none), a part or a material; not one (undefined). */
+function receiverOf(t: Target): Receiver | null | undefined {
+  if (t.kind === 'body') return null;
+  if (t.kind === 'part') return `part:${t.key}`;
+  if (t.kind === 'material') return `material:${t.name}`;
+  return undefined;
+}
 
 function targetOf(key: string): Target {
   if (key === REFERENCE_KEY) return { kind: 'reference' };
@@ -304,6 +320,25 @@ export const SceneEditorStore = signalStore(
       const t = target();
       return 'path' in t ? bodyByKey().get(bodyKey(t.path)) : undefined;
     });
+    /**
+     * The lights from beyond the selected body that light it too: the scene's (those on), and
+     * those of the planets it is a moon of that reach their moons.
+     */
+    const outerLights = computed((): OuterLight[] => {
+      const t = target();
+      if (!('path' in t)) return [];
+      return [
+        ...(choices().lights ?? [])
+          .filter((l) => l.enabled !== false)
+          .map((light) => ({ light, from: 'the scene' })),
+        ...t.path.slice(0, -1).flatMap((_, i) => {
+          const parent = bodyByKey().get(bodyKey(t.path.slice(0, i + 1)));
+          return parent
+            ? moonLightsOf(parent).map((light) => ({ light, from: bodyLabel(parent) }))
+            : [];
+        }),
+      ];
+    });
     /** The moon the view is centred on (its planet's index and its own path), if any. */
     const focusPath = computed((): BodyPath => {
       const key = focus();
@@ -380,6 +415,14 @@ export const SceneEditorStore = signalStore(
         const t = target();
         const b = body();
         return t.kind === 'part' && b ? partsOfBody(b).find((p) => p.key === t.key) : undefined;
+      }),
+      litBy: computed((): readonly LitByEntry[] | null => {
+        const t = target();
+        const b = body();
+        const receiver = receiverOf(t);
+        return b && filesLoaded(b) && receiver !== undefined
+          ? litByOf(b, receiver, outerLights())
+          : null;
       }),
       light: computed(() => {
         const t = target();
@@ -791,12 +834,16 @@ export const SceneEditorStore = signalStore(
         const t = targetOf(change.key);
         const on = change.enabled;
         const b = 'path' in t ? store.bodyByKey().get(bodyKey(t.path)) : undefined;
-        if (t.kind === 'light' || t.kind === 'scene-light') lightChange(t, { enabled: on });
+        // Each back to what is under it where that is the same, else set here (a scene's own
+        // light: switched on is as it starts).
+        if (t.kind === 'light' && b) {
+          const below = lightsOfBody(b).find((l) => l.light.id === t.id)?.enabledBelow ?? true;
+          settings(t.path, (s) => withLightSwitched(s, t.id, on, below));
+        } else if (t.kind === 'scene-light') lightChange(t, { enabled: on });
         else if (t.kind === 'body')
           // Only a scene switches a body off: on is as it is unless set.
           settings(t.path, (s) => (on ? without(s, ['enabled']) : { ...s, enabled: false }));
         else if (t.kind === 'part' && b) {
-          // Back to what is under it where that is the same, else set here.
           const below = partsOfBody(b).find((p) => p.key === t.key)?.enabledBelow ?? true;
           settings(t.path, (s) =>
             on === below
@@ -809,10 +856,26 @@ export const SceneEditorStore = signalStore(
               ? without(s, ['overlayEnabled'])
               : { ...s, overlayEnabled: on },
           );
-        else materialChange(change.key, { enabled: on });
+        else if (t.kind === 'sky-material') {
+          const below = store.skyMaterials().find((m) => m.name === t.name)?.enabledBelow ?? true;
+          if (on === below) d.clearSkyMaterial(store.scene(), t.name, ['enabled']);
+          else materialChange(change.key, { enabled: on });
+        } else if (t.kind === 'material' && b) {
+          const below = materialsOf(b).find((m) => m.name === t.name)?.enabledBelow ?? true;
+          settings(t.path, (s) => withMaterialSwitched(s, t.name, on, below));
+        }
       },
       setLight(change: Partial<LightSettings>): void {
         lightChange(store.target(), change);
+      },
+      setLitBy(change: { readonly id: LightId; readonly on: boolean }): void {
+        const t = store.target();
+        const receiver = receiverOf(t);
+        const light = store.litBy()?.find((l) => l.id === change.id);
+        if (!light || receiver === undefined || !('path' in t)) return;
+        const b = store.bodyByKey().get(bodyKey(t.path));
+        if (!b) return;
+        settings(t.path, (s) => withLitBy(s, b, light, receiver, change.on));
       },
       addLight(kind: LightKind): void {
         const t = store.target();

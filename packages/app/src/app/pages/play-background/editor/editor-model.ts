@@ -1,4 +1,5 @@
 import {
+  MATERIAL_DEFAULTS,
   type MaterialControls,
   materialControls,
   type MaterialValues,
@@ -15,33 +16,41 @@ import {
   type SceneTexture,
 } from '../../../scenes/play-background/play-scene';
 import { skyDepths } from '../../../scenes/play-background/sky-depths';
-import type {
-  BodySettings,
-  BodyValues,
-  MoonChoices,
-  Orbit,
-  SkyChoices,
-  Vec3,
-} from '../../../scenes/play-background/background-scene';
 import {
-  keyLightFrom,
-  lightFrom as turnRig,
-  TOWARDS_EYE,
-} from '../../../scenes/play-background/scene-directions';
+  type BodySettings,
+  type BodyValues,
+  type MoonChoices,
+  type Orbit,
+  type SkyChoices,
+  type Vec3,
+  without,
+} from '../../../scenes/play-background/background-scene';
+import { keyLightFrom, TOWARDS_EYE } from '../../../scenes/play-background/scene-directions';
 import {
   type AddedLight,
   addedLight,
   type BodyLight,
   bodyLights,
+  GRID_LIGHTS,
+  type LightId,
   type LightKind,
   type LightSettings,
   type LightReach,
   type LightSettingsMap,
   lightsForMoons,
+  type PartMaterials,
   type Receiver,
   mergeLightSettings,
+  reachesReceiver,
+  tunedRig,
+  withReceiver,
 } from '../../../scenes/play-background/scene-lights';
-import { legacyShadow } from '../../../scenes/play-background/scene-bodies';
+import {
+  legacyShadow,
+  withLightSetting,
+  withLightSwitched,
+  withoutLightSetting,
+} from '../../../scenes/play-background/scene-bodies';
 import { materialLabel, textureLabel } from '../../../scenes/play-background/material-names';
 import { REFERENCE_KEY } from './editing-aids.store';
 import type { TreeRow } from './scene-tree';
@@ -121,7 +130,6 @@ export interface BodyInfo {
 export interface BodyView {
   readonly info: BodyInfo;
   readonly values: BodyValues;
-  readonly canLight: boolean;
   /** Whether anything of it is set in the layer edited. */
   readonly changed: boolean;
   /** Its tint under the layer edited. */
@@ -163,6 +171,8 @@ export interface MaterialEntry {
   /** Which level under the one edited sets each of its settings, where one does. */
   readonly origins: SettingOrigins<keyof MaterialSettings>;
   readonly values: MaterialValues;
+  /** Whether it is drawn as the levels under the one edited have it (switched so here: nothing set). */
+  readonly enabledBelow: boolean;
   readonly controls: MaterialControls;
   readonly set: MaterialSettings | undefined;
   readonly baseTint: MaterialTint;
@@ -369,6 +379,7 @@ export function materialsOf(
             origin: from === 'style' ? `From the ${b.style} style, set for ${b.id}` : undefined,
             origins: originsOf(layers.map((l, i) => [names[i]!, l?.[name]] as const)),
             values,
+            enabledBelow: under?.enabled ?? MATERIAL_DEFAULTS.enabled,
             controls: materialControls(material, { pattern, drawAs: values.drawAs }),
             set: chosen?.[name],
             baseTint: under?.tint ?? NO_MATERIAL_TINT,
@@ -571,6 +582,11 @@ export interface LightEntry {
   readonly light: BodyLight;
   /** Its name as the levels under the one edited have it (one added here: its own). */
   readonly nameBelow: string;
+  /**
+   * Whether it is on as the levels under the one edited have it (one added here: on), so switched
+   * so here is nothing set.
+   */
+  readonly enabledBelow: boolean;
   /** What of it is set in the layer edited (the shadow's, as set before lights were objects too). */
   readonly set: LightSettings | undefined;
   /** Which level under the one edited sets each of its settings, where one does. */
@@ -627,7 +643,8 @@ function receiversOf(b: BodyInfo): ReceiverEntry[] {
 export function lightsOfBody(b: BodyInfo): LightEntry[] {
   const values = valuesOf(b);
   const rig = b.styleFile?.light ?? b.file?.light;
-  const turned = rig && values.lightFrom ? turnRig(rig, values.lightFrom) : rig;
+  // Its lights as they start: its rig as tuned (turned and made stronger together).
+  const turned = rig && tunedRig(rig, values.lighting, values.lightFrom ?? undefined);
   const softness = {
     ...DEFAULT_SHADE,
     ...b.file?.tuning?.shade,
@@ -644,7 +661,7 @@ export function lightsOfBody(b: BodyInfo): LightEntry[] {
   // A grid it has (its own, or its overlay's): its reveal and activation lights are the body's
   // (the overlay's, where the grid is the overlay's).
   const grid = materialsOf(b).find((m) => m.controls.colours);
-  const namesBelow = new Map(bodyLights(turned, shade, under, !!grid).map((l) => [l.id, l.name]));
+  const lightsBelow = new Map(bodyLights(turned, shade, under, !!grid).map((l) => [l.id, l]));
   const body = bodyOrigins(b);
   // The lights added to it: under the level edited (the library's for the planet, its overlay's),
   // then the level edited's own (its settings are its own: nothing over them here).
@@ -658,6 +675,7 @@ export function lightsOfBody(b: BodyInfo): LightEntry[] {
         overlay,
         light: addedLight(l, settings[l.id]),
         nameBelow: addedLight(l, under[l.id]).name,
+        enabledBelow: addedLight(l, under[l.id]).enabled,
         set: b.settings.lights?.[l.id],
         origins: originsOf(levels.map(([level, s]) => [level, s?.[l.id]] as const)),
         removable: false,
@@ -667,6 +685,7 @@ export function lightsOfBody(b: BodyInfo): LightEntry[] {
     ...(b.settings.added ?? []).map((l) => ({
       light: addedLight(l),
       nameBelow: l.name,
+      enabledBelow: true,
       set: undefined,
       origins: {},
       removable: true,
@@ -705,7 +724,8 @@ export function lightsOfBody(b: BodyInfo): LightEntry[] {
       const origins = originsOf(levels.map(([name, l]) => [name, l?.[light.id]] as const));
       return {
         light,
-        nameBelow: namesBelow.get(light.id) ?? light.name,
+        nameBelow: lightsBelow.get(light.id)?.name ?? light.name,
+        enabledBelow: lightsBelow.get(light.id)?.enabled ?? true,
         set: set && Object.keys(set).length ? set : undefined,
         origins: shadow ? { strength: body.shade, from: body.shadeTowards, ...origins } : origins,
         removable: false,
@@ -730,6 +750,7 @@ export function sceneLightsOf(lights: readonly AddedLight[] | undefined): LightE
   return (lights ?? []).map((l) => ({
     light: addedLight(l),
     nameBelow: l.name,
+    enabledBelow: true,
     set: undefined,
     origins: {},
     receivers: [],
@@ -738,6 +759,134 @@ export function sceneLightsOf(lights: readonly AddedLight[] | undefined): LightE
     removable: true,
   }));
 }
+
+/** A light from beyond a body that lights it too (its scene's, a planet's it is a moon of), and where it comes from. */
+export interface OuterLight {
+  readonly light: AddedLight;
+  readonly from: string;
+}
+
+/** A light that may light what is selected (a body, a part, a material), as its Lit by list shows it. */
+export interface LitByEntry {
+  readonly id: LightId;
+  readonly kind: LightKind;
+  readonly name: string;
+  /** Where it comes from, in words (a body's, its overlay's, the library's, the scene's). */
+  readonly from: string;
+  /** Whether it lights it (a body: whether it is on for it). */
+  readonly reaches: boolean;
+  /** Whether it is on as the levels under the one edited have it. */
+  readonly enabledBelow: boolean;
+  /** What of the body it reaches, as in effect and as under the level edited. */
+  readonly reach?: LightReach;
+  readonly reachBelow?: LightReach;
+}
+
+/** Whether a body's files are loaded (its overlay's too, where it wears one). */
+export const filesLoaded = (b: BodyInfo) => !!b.file && (!b.style || !!b.styleFile);
+
+/** A body's parts' materials, by part (its overlay's too). */
+function partMaterialsOf(b: BodyInfo): PartMaterials {
+  return new Map(partsOfBody(b).map((p) => [p.key as string, p.materials]));
+}
+
+/**
+ * What lights a body (`receiver` none), one of its parts or one of its materials: each of its
+ * lights (its own, its overlay's, the library's) and those from beyond it (`outer`) of a kind that
+ * acts on what of it is selected (ambient, directional and shadow lights on a lit material; reveal
+ * and activation lights on a grid). A body's list has each whether on or off for it; a part's or
+ * material's, each on, and whether it reaches it.
+ */
+export function litByOf(
+  b: BodyInfo,
+  receiver: Receiver | null,
+  outer: readonly OuterLight[] = [],
+): LitByEntry[] {
+  const materials = materialsOf(b);
+  const parts = partMaterialsOf(b);
+  const shown = materials.filter((m) =>
+    receiver === null
+      ? true
+      : receiver.startsWith('part:')
+        ? (parts.get(receiver.slice(5)) ?? []).includes(m.name)
+        : receiver === `material:${m.name}`,
+  );
+  const acts = (kind: LightKind) =>
+    shown.some((m) => (GRID_LIGHTS.includes(kind) ? !!m.controls.colours : m.values.lit));
+  const under = mergeLightSettings(b.below?.lights, b.styleBelow?.lights);
+  const addedBelow = new Map(
+    [...(b.below?.added ?? []), ...(b.styleBelow?.added ?? [])].map((l) => [l.id, l] as const),
+  );
+  const own = bodyLabel(b);
+  const lights = [
+    ...lightsOfBody(b).map((e) => ({
+      light: e.light,
+      reach: e.reach,
+      reachBelow: e.removable
+        ? undefined
+        : (under[e.light.id]?.reach ?? addedBelow.get(e.light.id as `added-${string}`)?.reach),
+      enabledBelow: e.enabledBelow,
+      from: e.addedIn ?? (e.overlay ? `the ${styleLabel(b)} overlay` : own),
+    })),
+    ...outer.map(({ light, from }) => {
+      const set = b.settings.lights?.[light.id];
+      return {
+        light: addedLight(light, set),
+        reach: set?.reach ?? light.reach,
+        reachBelow: light.reach,
+        enabledBelow: true,
+        from,
+      };
+    }),
+  ];
+  return lights
+    .filter(({ light }) => acts(light.kind) && (receiver === null || light.enabled))
+    .map(({ light, ...l }) => ({
+      id: light.id,
+      kind: light.kind,
+      name: light.name,
+      from: l.from,
+      reaches: receiver === null ? light.enabled : reachesReceiver(l.reach, receiver, parts),
+      enabledBelow: l.enabledBelow,
+      ...(l.reach ? { reach: l.reach } : {}),
+      ...(l.reachBelow ? { reachBelow: l.reachBelow } : {}),
+    }));
+}
+
+/**
+ * A body's settings at the level edited with a light taken in or left out by what is selected: a
+ * body, switched on or off for it; a part or material, in or out of what it reaches (the reach
+ * set here, unless it comes to what is under this level; a light added here, its own).
+ */
+export function withLitBy(
+  s: BodySettings,
+  b: BodyInfo,
+  light: LitByEntry,
+  receiver: Receiver | null,
+  on: boolean,
+): BodySettings | undefined {
+  const id = light.id;
+  if (receiver === null) return withLightSwitched(s, id, on, light.enabledBelow);
+  const reach = withReceiver(light.reach, receiver, on, partMaterialsOf(b));
+  if (s.added?.some((l) => l.id === id))
+    return {
+      ...s,
+      added: s.added.map((l) =>
+        l.id !== id ? l : reach ? { ...l, reach } : (without(l, ['reach']) ?? l),
+      ),
+    };
+  if (sameReach(reach, light.reachBelow)) return withoutLightSetting(s, id, ['reach']);
+  // Reaching everything over a reach under it: said so.
+  return withLightSetting(s, id, { reach: reach ?? { mode: 'except', receivers: [] } });
+}
+
+const sameReach = (a: LightReach | undefined, b: LightReach | undefined) => {
+  const key = (r: LightReach | undefined) =>
+    r && (r.mode === 'only' || r.receivers.length)
+      ? `${r.mode}:${[...r.receivers].sort().join(',')}`
+      : 'all';
+  return key(a) === key(b);
+};
 
 /**
  * Which level under the one edited sets each of a body's settings, as `valuesOf` resolves them:
@@ -784,7 +933,6 @@ export function bodyView(b: BodyInfo, focused: boolean, canHaveMoons: boolean): 
   return {
     info: b,
     values: valuesOf(b),
-    canLight: !!b.file && (!!b.file.light || b.style !== ''),
     changed: Object.keys(b.settings).length > 0,
     baseTint: b.below?.tint ?? b.file?.tuning?.tint ?? NO_MATERIAL_TINT,
     focused,
@@ -838,6 +986,7 @@ export function skyMaterialsOf(
         mergeMaterialSettings(base, below?.materials, edited?.materials)[name],
         skyDepths(scene)[name],
       ),
+      enabledBelow: under?.enabled ?? MATERIAL_DEFAULTS.enabled,
       controls: materialControls(material, { particles: drawn, sky: true }),
       set: edited?.materials?.[name],
       baseTint: under?.tint ?? NO_MATERIAL_TINT,
@@ -894,6 +1043,7 @@ export function baseMaterialOf(
     from: 'own',
     origins: originsOf([['its tuning', tuning?.[name]]]),
     values,
+    enabledBelow: tuning?.[name]?.enabled ?? MATERIAL_DEFAULTS.enabled,
     controls: materialControls(material, { pattern, particles, drawAs: values.drawAs, sky }),
     set: base?.[name],
     baseTint: tuning?.[name]?.tint ?? NO_MATERIAL_TINT,

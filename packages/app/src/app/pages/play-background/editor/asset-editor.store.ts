@@ -19,6 +19,7 @@ import {
   visualExtent,
   withAddedLight,
   withLightChange,
+  withLightSwitched,
   withoutAddedLight,
   withoutLightSetting,
   withoutPartSetting,
@@ -29,6 +30,7 @@ import {
   type LightKind,
   type LightSettings,
   newLight,
+  type Receiver,
 } from '../../../scenes/play-background/scene-lights';
 import type { SetPlanet } from '../../../scenes/play-background/planet-sets';
 import { loadPlaySceneFile, PLAY_SCENE_URL } from '../../../scenes/play-background/play-scene';
@@ -62,6 +64,10 @@ import {
   type PartNode,
   type PartEntry,
   materialsOf,
+  filesLoaded,
+  type LitByEntry,
+  litByOf,
+  withLitBy,
   referenceRow,
   skyMaterialsOf,
   type TargetKind,
@@ -70,7 +76,13 @@ import { EditingAidsStore, GRID_CELLS, REFERENCE_KEY } from './editing-aids.stor
 import { EditorUiStore } from './editor-ui.store';
 import type { AssetKind, AssetTarget, OpenTarget } from './open-target';
 import type { TreeMove, TreeRow } from './scene-tree';
-import { STAND_IN_MATERIAL, standInId } from './stand-in';
+import {
+  STAND_IN_MATERIAL,
+  standInId,
+  standInLightSettings,
+  standInLights,
+  withStandInLight,
+} from './stand-in';
 
 /** The planet a style, a material or the sky is shown on, until a planet has been opened. */
 const DEFAULT_PREVIEW_PLANET = 'korhal';
@@ -83,6 +95,8 @@ const STAGE = 'stage';
 const STAGE_SKY = 'stage/sky';
 const STAGE_BACKDROP = 'stage/backdrop';
 const STAGE_STAND_IN = 'stage/stand-in';
+/** The stand-in's own lights, under it. */
+const standInLightKey = (id: LightId) => `${STAGE_STAND_IN}/l/${id}`;
 const ASSET = 'asset';
 /** The overlay a planet wears: its parts and its lights, under it. */
 const ASSET_OVERLAY = 'asset/overlay';
@@ -125,12 +139,24 @@ type Target =
   /** The editing aids: the stage's backdrop, the stand-in planet. */
   | { readonly kind: 'backdrop' }
   | { readonly kind: 'stand-in' }
+  /** One of the stand-in's lights (an editing aid's: kept with the aids, never in the design). */
+  | { readonly kind: 'stand-in-light'; readonly id: LightId }
   | { readonly kind: 'reference' };
+
+/** What of the body open a target is, as a light reaches it: the body (none), a part or a material; not one (undefined). */
+function receiverOf(t: Target): Receiver | null | undefined {
+  if (t.kind === 'body') return null;
+  if (t.kind === 'part') return `part:${t.key}`;
+  if (t.kind === 'material') return `material:${t.name}`;
+  return undefined;
+}
 
 function targetOf(key: string, asset: AssetTarget): Target {
   if (key === STAGE_BACKDROP) return { kind: 'backdrop' };
   if (key === REFERENCE_KEY) return { kind: 'reference' };
   if (key === STAGE_STAND_IN) return { kind: 'stand-in' };
+  if (key.startsWith(`${STAGE_STAND_IN}/l/`))
+    return { kind: 'stand-in-light', id: key.slice(STAGE_STAND_IN.length + 3) as LightId };
   if (key.startsWith(`${STAGE_SKY}/m/`))
     return { kind: 'sky-material', stage: true, name: key.slice(STAGE_SKY.length + 3) };
   if (key === ASSET)
@@ -285,7 +311,7 @@ export const AssetEditorStore = signalStore(
         }),
         kind: computed((): TargetKind => {
           const k = target().kind;
-          return k === 'base-material' ? 'material' : k;
+          return k === 'base-material' ? 'material' : k === 'stand-in-light' ? 'light' : k;
         }),
         bodyView: computed(() => {
           const b = _body();
@@ -313,6 +339,11 @@ export const AssetEditorStore = signalStore(
           if (t.kind === 'sky') return t.stage ? 'Stage sky' : 'Sky';
           if (t.kind === 'backdrop') return 'Backdrop';
           if (t.kind === 'stand-in') return 'Stand-in planet';
+          if (t.kind === 'stand-in-light')
+            return (
+              standInLights(_aids.standInLights()).find((x) => x.light.id === t.id)?.light.name ??
+              'Properties'
+            );
           if (t.kind === 'reference') return 'Reference';
           if (t.kind === 'sky-material')
             return _skyMaterials(t.stage).find((m) => m.name === t.name)?.label ?? t.name;
@@ -393,10 +424,8 @@ export const AssetEditorStore = signalStore(
               id,
               ...fitted(owner),
               materials: fill === 'colour' ? { [STAND_IN_MATERIAL]: { tint } } : undefined,
-              // Lit as a material preview is: evenly all round, a directional light from a side where switched on.
-              lightFrom: _aids.standInDirectionalFrom(),
-              key: _aids.standInDirectional() ? _aids.standInDirectionalStrength() : 0,
-              surround: _aids.standInAmbient(),
+              // Lit by its own lights, as set (a material preview's: evenly, unless asked).
+              lights: standInLightSettings(_aids.standInLights()),
             };
           };
           if (a.kind === 'material' && !_aids.materialOnPlanet()) {
@@ -468,8 +497,15 @@ export const AssetEditorStore = signalStore(
     },
   ),
   withComputed((store) => ({
+    litBy: computed((): readonly LitByEntry[] | null => {
+      const b = store._body();
+      const receiver = receiverOf(store.target());
+      return b && filesLoaded(b) && receiver !== undefined ? litByOf(b, receiver) : null;
+    }),
     light: computed((): LightEntry | undefined => {
       const t = store.target();
+      if (t.kind === 'stand-in-light')
+        return standInLights(store._aids.standInLights()).find((l) => l.light.id === t.id);
       const b = store._body();
       return t.kind === 'light' && b ? lightsOfBody(b).find((l) => l.light.id === t.id) : undefined;
     }),
@@ -691,16 +727,30 @@ export const AssetEditorStore = signalStore(
               expandable: false,
               expanded: false,
             });
-          // The stand-in only where it is shown: a material or a style opened on its own.
-          if (a.kind === 'material' || a.kind === 'style')
+          // The stand-in only where it is shown: a material or a style opened on its own; its
+          // lights under it (open unless folded: its key among those kept means folded).
+          if (a.kind === 'material' || a.kind === 'style') {
+            const unfolded = !open.has(STAGE_STAND_IN);
             rows.push({
               key: STAGE_STAND_IN,
               label: 'Stand-in planet',
               icon: 'circle',
               depth: 1,
-              expandable: false,
-              expanded: false,
+              expandable: true,
+              expanded: unfolded,
             });
+            if (unfolded)
+              for (const { light } of standInLights(store._aids.standInLights()))
+                rows.push({
+                  key: standInLightKey(light.id),
+                  label: light.name,
+                  icon: LIGHT_ICONS[light.kind],
+                  depth: 2,
+                  expandable: false,
+                  expanded: false,
+                  enabled: light.enabled,
+                });
+          }
         }
       }
       rows.push(referenceRow());
@@ -721,12 +771,40 @@ export const AssetEditorStore = signalStore(
         d.setLibraryMaterial(kind, asset().id, t.name, change);
       else if (t.kind === 'base-material') d.setLibraryBaseMaterial(asset().id, change);
     };
+    /** Settings of a material put back as the levels under it have them (all: none named). */
+    const materialClear = (t: Target, keys?: readonly (keyof MaterialSettings)[]) => {
+      const kind = libraryKind(asset().kind);
+      if (t.kind === 'sky-material') {
+        if (t.stage) d.clearSkyMaterial(PREVIEW_SCENE, t.name, keys);
+        else d.clearLibrarySkyMaterial(t.name, keys);
+      } else if (t.kind === 'material' && kind)
+        d.clearLibraryMaterial(kind, asset().id, t.name, keys);
+      else if (t.kind === 'base-material') d.clearLibraryBaseMaterial(asset().id, keys);
+    };
+    /** Whether a material is drawn as the levels under the one edited have it. */
+    const materialBelow = (t: Target): boolean => {
+      if (t.kind === 'base-material') return store.baseMaterial()?.enabledBelow ?? true;
+      if (t.kind === 'sky-material')
+        return store._skyMaterials(t.stage).find((m) => m.name === t.name)?.enabledBelow ?? true;
+      const b = store._body();
+      const m = t.kind === 'material' && b && materialsOf(b).find((x) => x.name === t.name);
+      return m ? m.enabledBelow : true;
+    };
     const selectedSky = () => {
       const t = store.target();
       if (t.kind === 'backdrop') return { stage: true };
       return t.kind === 'sky' || t.kind === 'sky-material' ? t : null;
     };
     const body = () => libraryKind(asset().kind);
+    /** One of the stand-in's lights changed (an editing aid's: kept with the aids). */
+    const standInLightChange = (
+      id: LightId,
+      change: Partial<LightSettings>,
+      clear: readonly (keyof LightSettings)[] | 'all' = [],
+    ) =>
+      store._aids.set({
+        standInLights: withStandInLight(store._aids.standInLights(), id, change, clear),
+      });
     /**
      * The library body's lights changed: what is left of them written back (none: taken back), and
      * its shadow as set before lights were objects taken back once it is its shadow light's.
@@ -773,9 +851,14 @@ export const AssetEditorStore = signalStore(
         const t = targetOf(change.key, asset());
         const on = change.enabled;
         const kind = body();
-        // The library's is the lowest level: on is as it is unless set.
-        if (t.kind === 'light') lightChange((s) => withLightChange(s, t.id, { enabled: on }));
-        else if (t.kind === 'part' && kind) {
+        if (t.kind === 'stand-in-light') standInLightChange(t.id, { enabled: on });
+        // Each back to what is under it where that is the same, else set here.
+        else if (t.kind === 'light') {
+          const b = store._body();
+          const below =
+            (b && lightsOfBody(b).find((l) => l.light.id === t.id)?.enabledBelow) ?? true;
+          lightChange((s) => withLightSwitched(s, t.id, on, below) ?? {});
+        } else if (t.kind === 'part' && kind) {
           const now = d.library()[kind][asset().id] ?? {};
           const next = on
             ? withoutPartSetting(now, t.key, ['enabled'])
@@ -785,11 +868,13 @@ export const AssetEditorStore = signalStore(
         } else if (change.key === ASSET_OVERLAY && kind) {
           if (on) d.clearLibraryBody(kind, asset().id, ['overlayEnabled']);
           else d.setLibraryBody(kind, asset().id, { overlayEnabled: false });
-        } else materialChange(change.key, { enabled: on });
+        } else if (on === materialBelow(t)) materialClear(t, ['enabled']);
+        else materialChange(change.key, { enabled: on });
       },
       setLight(change: Partial<LightSettings>): void {
         const t = store.target();
-        if (t.kind === 'light') lightChange((s) => withLightChange(s, t.id, change));
+        if (t.kind === 'stand-in-light') standInLightChange(t.id, change);
+        else if (t.kind === 'light') lightChange((s) => withLightChange(s, t.id, change));
       },
       addLight(kind: LightKind): void {
         const b = store._body();
@@ -804,6 +889,13 @@ export const AssetEditorStore = signalStore(
         store.expand(ASSET, ASSET_LIGHTS);
         patchState(store, { selected: assetLightKey(light.id) });
       },
+      setLitBy(change: { readonly id: LightId; readonly on: boolean }): void {
+        const b = store._body();
+        const receiver = receiverOf(store.target());
+        const light = store.litBy()?.find((l) => l.id === change.id);
+        if (b && light && receiver !== undefined)
+          lightChange((s) => withLitBy(s, b, light, receiver, change.on) ?? {});
+      },
       setRevealFrom(from: Vec3): void {
         lightChange((s) => withLightChange(s, 'reveal', { from }));
       },
@@ -815,7 +907,8 @@ export const AssetEditorStore = signalStore(
       },
       clearLight(keys?: readonly (keyof LightSettings)[]): void {
         const t = store.target();
-        if (t.kind === 'light') lightChange((s) => withoutLightSetting(s, t.id, keys) ?? {});
+        if (t.kind === 'stand-in-light') standInLightChange(t.id, {}, keys ?? 'all');
+        else if (t.kind === 'light') lightChange((s) => withoutLightSetting(s, t.id, keys) ?? {});
       },
       moveMaterial(move: TreeMove): void {
         const from = targetOf(move.key, asset());
@@ -859,14 +952,7 @@ export const AssetEditorStore = signalStore(
         materialChange(store.selected(), change);
       },
       clearMaterial(keys?: readonly (keyof MaterialSettings)[]): void {
-        const t = store.target();
-        const kind = body();
-        if (t.kind === 'sky-material') {
-          if (t.stage) d.clearSkyMaterial(PREVIEW_SCENE, t.name, keys);
-          else d.clearLibrarySkyMaterial(t.name, keys);
-        } else if (t.kind === 'material' && kind)
-          d.clearLibraryMaterial(kind, asset().id, t.name, keys);
-        else if (t.kind === 'base-material') d.clearLibraryBaseMaterial(asset().id, keys);
+        materialClear(store.target(), keys);
       },
       setBody(change: Partial<BodySettings>): void {
         const kind = body();

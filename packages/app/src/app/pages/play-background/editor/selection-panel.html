@@ -47,7 +47,6 @@
         [values]="b.values"
         [origins]="b.origins"
         [styleOptions]="editor.styleOptions()"
-        [canLight]="b.canLight"
         [orbit]="b.info.orbit ?? null"
         [place]="b.info.place ?? null"
         [changed]="b.changed"
@@ -74,6 +73,9 @@
         <hrs-add-planet moonAdd label="Add moon" (picked)="editor.addMoon($event)" />
       </hrs-body-properties>
     }
+    @if (editor.litBy(); as lit) {
+      <hrs-lit-by [lights]="lit" (litChange)="editor.setLitBy($event)" />
+    }
   }
   @case ('light') {
     @if (editor.light(); as l) {
@@ -94,6 +96,9 @@
         (clear)="editor.clearPart($event)"
       />
     }
+    @if (editor.litBy(); as lit) {
+      <hrs-lit-by [lights]="lit" (litChange)="editor.setLitBy($event)" />
+    }
   }
   @case ('material') {
     @if (editor.material(); as m) {
@@ -112,6 +117,9 @@
         (clear)="editor.clearMaterial($event)"
         (resetRequested)="editor.clearMaterial()"
       />
+    }
+    @if (editor.litBy(); as lit) {
+      <hrs-lit-by [lights]="lit" (litChange)="editor.setLitBy($event)" />
     }
   }
   @case ('sky-material') {

@@ -14,9 +14,8 @@ import { PropertySection } from '../properties/property-section';
 import { PropertyText } from '../properties/property-text';
 import type { LightEntry } from './editor-model';
 
-/** A light's own settings (its name is apart). */
+/** A light's own settings (its name is apart, and its switch: the tree row's). */
 const LIGHT_KEYS: readonly (keyof LightSettings)[] = [
-  'enabled',
   'colour',
   'strength',
   'from',
@@ -24,6 +23,7 @@ const LIGHT_KEYS: readonly (keyof LightSettings)[] = [
   'spread',
   'falloff',
   'energizes',
+  'glow',
   'tied',
 ];
 

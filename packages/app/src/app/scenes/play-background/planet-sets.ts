@@ -31,16 +31,11 @@ export interface SetPlanet {
   readonly added?: readonly AddedLight[];
   /** A tint over all its materials (its style's too), over its tuning's. */
   readonly tint?: MaterialTint;
-  /** Where its key light comes from (its lights turned together; body frame), over its tuning's. */
+  /** Its rig turned and made stronger together, over its tuning's (kept from before lights were objects; see `tunedRig`). */
   readonly lightFrom?: readonly [number, number, number];
   /** Where its rims and glows lean: a point on its face (body frame), over its tuning's. */
   readonly rim?: readonly [number, number, number];
-  /** How strongly its light lights it, times this (1, as the data has it). */
   readonly lighting?: number;
-  /** Its key light's strength, times this (1, as the data has it; 0: off). */
-  readonly key?: number;
-  /** White light from all round added to its light's own (1: a lit surface as bright as its textures; 0, as the data has it). */
-  readonly surround?: number;
   /** A shade from a side, over its style's (what is given here; the rest the style's or DEFAULT_SHADE). */
   readonly shade?: Partial<BodyShade>;
 }

@@ -1,4 +1,4 @@
-import { normalized, TOWARDS_EYE, type Vec3 } from './scene-directions';
+import { lightFrom, normalized, TOWARDS_EYE, type Vec3 } from './scene-directions';
 import type { BodyShade, PlanetLight } from './scene-planets';
 
 /**
@@ -56,6 +56,8 @@ export interface LightSettings {
   readonly falloff?: number;
   /** An activation's: how much it reveals too, of what it activates (0: none, only its colour). */
   readonly energizes?: number;
+  /** An activation's: how much brighter what it activates shines, and blooms (0: none, only its colour). */
+  readonly glow?: number;
   /** An activation's: whether its side is its body's reveal light's (moving with it). */
   readonly tied?: boolean;
   readonly reach?: LightReach;
@@ -86,8 +88,9 @@ const NEW_ACTIVATION = NEW_REVEAL;
  */
 const REVEAL_STRENGTH = 2;
 const ACTIVATION_STRENGTH = 1;
-/** How much a grid's own activation light reveals too: a little (a new one: none). */
+/** How much a grid's own activation light reveals too, and glows: a little (a new one: none). */
 const GRID_ENERGIZES = 0.25;
+const GRID_GLOW = 0.5;
 
 /** A new light of a kind, named after the lights of that kind already added beside it. */
 export function newLight(
@@ -99,7 +102,7 @@ export function newLight(
   const base = {
     ambient: 'Ambient light',
     directional: 'Directional light',
-    shadow: 'Shadow',
+    shadow: 'Antilight',
     reveal: 'Reveal light',
     activation: 'Activation light',
   }[kind];
@@ -136,7 +139,9 @@ export function addedLight(light: AddedLight, settings?: LightSettings): BodyLig
           falloff: s.falloff ?? ownOf(light.kind).falloff,
         }
       : {}),
-    ...(light.kind === 'activation' ? { energizes: s.energizes ?? 0, tied: s.tied ?? false } : {}),
+    ...(light.kind === 'activation'
+      ? { energizes: s.energizes ?? 0, glow: s.glow ?? 0, tied: s.tied ?? false }
+      : {}),
   };
 }
 
@@ -161,6 +166,7 @@ export interface BodyLight {
   readonly spread?: number;
   readonly falloff?: number;
   readonly energizes?: number;
+  readonly glow?: number;
   readonly tied?: boolean;
 }
 
@@ -176,6 +182,22 @@ export function colourAndStrength(rgb: readonly number[]): { colour: string; str
     .map((c) => c.toString(16).padStart(2, '0'))
     .join('');
   return { colour: `#${hex}`, strength };
+}
+
+/**
+ * A body's light rig as its tuning has it (and its settings from before lights were objects, over
+ * that): turned as a whole so its key light comes from `from`, and each of its lights `lighting`
+ * times as strong. Its lights as they start, each one's own settings over them.
+ */
+export function tunedRig(light: PlanetLight, lighting = 1, from?: Vec3): PlanetLight {
+  const turned = from ? lightFrom(light, from) : light;
+  if (lighting === 1) return turned;
+  const times = (c: readonly number[]) => c.map((v) => v * lighting) as unknown as Vec3;
+  return {
+    ...turned,
+    ambient: times(turned.ambient),
+    directional: turned.directional.map((l) => ({ ...l, color: times(l.color) })),
+  };
 }
 
 /** A colour (`#rrggbb`) at a strength, as the rig's colours are: each channel 0 to 1 times the strength. */
@@ -215,6 +237,7 @@ export function bodyLights(
       ...(s?.spread !== undefined ? { spread: s.spread } : {}),
       ...(s?.falloff !== undefined ? { falloff: s.falloff } : {}),
       ...(s?.energizes !== undefined ? { energizes: s.energizes } : {}),
+      ...(s?.glow !== undefined ? { glow: s.glow } : {}),
       ...(s?.tied !== undefined ? { tied: s.tied } : {}),
     };
   };
@@ -248,7 +271,7 @@ export function bodyLights(
     set('shadow', {
       id: 'shadow',
       kind: 'shadow',
-      name: 'Shadow',
+      name: 'Antilight',
       colour: '#000000',
       strength: shade.strength,
       from: shade.direction,
@@ -276,6 +299,7 @@ export function bodyLights(
           colour: '#ffffff',
           strength: ACTIVATION_STRENGTH,
           energizes: GRID_ENERGIZES,
+          glow: GRID_GLOW,
           tied: true,
           ...NEW_ACTIVATION,
         },
@@ -288,8 +312,8 @@ export function bodyLights(
 /**
  * A reveal or activation light as a grid is drawn with it: the side it comes from (body frame),
  * how far round it reaches (0: the half facing it; 1: all of it evenly), how sharply it falls off,
- * its strength; an activation's, how much it reveals too, and whether its side is its body's
- * reveal light's.
+ * its strength; an activation's, how much it reveals too, how much it glows, and whether its side
+ * is its body's reveal light's.
  */
 export interface FieldLight {
   readonly from: Vec3;
@@ -297,6 +321,7 @@ export interface FieldLight {
   readonly falloff: number;
   readonly strength: number;
   readonly energizes?: number;
+  readonly glow?: number;
   readonly tied?: boolean;
 }
 
@@ -327,6 +352,7 @@ export function dataActivation(settings: LightSettings | undefined): FieldLight 
     falloff: settings.falloff ?? NEW_ACTIVATION.falloff,
     strength: settings.strength ?? ACTIVATION_STRENGTH,
     energizes: settings.energizes ?? GRID_ENERGIZES,
+    glow: settings.glow ?? GRID_GLOW,
     tied: settings.tied ?? true,
   };
 }
@@ -344,7 +370,9 @@ export function fieldLights(
       spread: l.spread ?? ownOf(kind).spread,
       falloff: l.falloff ?? ownOf(kind).falloff,
       strength: l.strength,
-      ...(kind === 'activation' ? { energizes: l.energizes ?? 0, tied: l.tied ?? false } : {}),
+      ...(kind === 'activation'
+        ? { energizes: l.energizes ?? 0, glow: l.glow ?? 0, tied: l.tied ?? false }
+        : {}),
     }));
 }
 
@@ -395,6 +423,67 @@ export function reaches(
   );
   return reach.mode === 'only' ? named : !named;
 }
+
+/** A body's parts' materials (by `PartKey`), to tell what a light reaching a part reaches. */
+export type PartMaterials = ReadonlyMap<string, readonly string[]>;
+
+/**
+ * Whether a light that reaches `reach` reaches a part (any material on it) or a material (on any
+ * part it is drawn on).
+ */
+export function reachesReceiver(
+  reach: LightReach | undefined,
+  receiver: Receiver,
+  parts: PartMaterials,
+): boolean {
+  const [kind, name] = splitReceiver(receiver);
+  return [...parts].some(([part, materials]) =>
+    kind === 'part'
+      ? part === name && materials.some((m) => reaches(reach, part, m))
+      : materials.includes(name) && reaches(reach, part, name),
+  );
+}
+
+/**
+ * A light's reach with a part or material (`receiver`) taken in or left out, the rest as it was:
+ * a part named for it standing for a material taken in or left out is named by its other
+ * materials instead (a material is named for every part it is on). None: it reaches everything.
+ */
+export function withReceiver(
+  reach: LightReach | undefined,
+  receiver: Receiver,
+  on: boolean,
+  parts: PartMaterials,
+): LightReach | undefined {
+  const [kind, name] = splitReceiver(receiver);
+  const mode = reach?.mode ?? 'except';
+  let list = [...(reach?.receivers ?? [])];
+  // Named in the list as it is to be (an `only` reach's when taken in; an `except`'s when left out).
+  const named = (mode === 'only') === on;
+  if (kind === 'part') {
+    const own = (parts.get(name) ?? []).map((m) => `material:${m}` as const);
+    list = list.filter((r) => r !== receiver && !own.includes(r as `material:${string}`));
+    if (named) list.push(receiver);
+  } else {
+    // A part named that has it on, where it is to be apart from the part: named by its other
+    // materials instead.
+    for (const [part, materials] of parts)
+      if (!named && materials.includes(name) && list.includes(`part:${part}`))
+        list = [
+          ...list.filter((r) => r !== `part:${part}`),
+          ...materials.filter((m) => m !== name).map((m) => `material:${m}` as const),
+        ];
+    list = list.filter((r) => r !== receiver);
+    if (named) list.push(receiver);
+  }
+  const receivers = [...new Set(list)];
+  return mode === 'except' && !receivers.length ? undefined : { mode, receivers };
+}
+
+const splitReceiver = (r: Receiver): ['part' | 'material', string] => {
+  const at = r.indexOf(':');
+  return [r.slice(0, at) as 'part' | 'material', r.slice(at + 1)];
+};
 
 /**
  * Lights' settings for one part and material of a body (`settings`, with the lights added to it):

@@ -6,8 +6,19 @@ import type {
   PartSettings,
 } from '../../../scenes/play-background/scene-planets';
 import type { PropertyOption } from '../properties/property-select';
-import type { BodyView, LightEntry, MaterialEntry, PartEntry, TargetKind } from './editor-model';
-import type { LightKind, LightSettings } from '../../../scenes/play-background/scene-lights';
+import type {
+  BodyView,
+  LightEntry,
+  LitByEntry,
+  MaterialEntry,
+  PartEntry,
+  TargetKind,
+} from './editor-model';
+import type {
+  LightId,
+  LightKind,
+  LightSettings,
+} from '../../../scenes/play-background/scene-lights';
 import type { Vec3 } from '../../../scenes/play-background/scene-directions';
 import type { OpenTarget } from './open-target';
 import type { TreeMove, TreeRow } from './scene-tree';
@@ -71,6 +82,10 @@ export abstract class Editor {
   abstract removeLight(): void;
   /** The selected light's body's reveal light turned to a side (an activation light tied to it moving with it). */
   abstract setRevealFrom(from: Vec3): void;
+  /** What lights the selected body, part or material (none: something else is selected). */
+  abstract readonly litBy: Signal<readonly LitByEntry[] | null>;
+  /** A light taken in or left out by the selected body, part or material. */
+  abstract setLitBy(change: { readonly id: LightId; readonly on: boolean }): void;
 
   /** The sky's tint, as shown and as set in the layer edited; whether anything of the sky is set. */
   abstract readonly skyTint: Signal<MaterialTint>;

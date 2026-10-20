@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { PlanetFile } from '../../../scenes/play-background/scene-planets';
-import { buildStandIn, parseStandIn, STAND_IN_MATERIAL, standInId } from './stand-in';
+import {
+  buildStandIn,
+  parseStandIn,
+  STAND_IN_MATERIAL,
+  standInId,
+  standInLightSettings,
+  standInLights,
+  withStandInLight,
+} from './stand-in';
 
 const owner = {
   kind: 'world',
@@ -95,5 +103,37 @@ describe('the stand-in planet', () => {
     expect(
       buildStandIn({ fill: 'grid', cells: 32, owner: 'korhal', material: 'haze' }, {}),
     ).toBeUndefined();
+  });
+
+  it('is lit by its own lights: evenly from all round, its directional light switched off', () => {
+    const lights = standInLights({});
+    expect(lights.map((l) => [l.light.id, l.light.name, l.light.enabled])).toEqual([
+      ['ambient', 'Ambient light', true],
+      ['directional-0', 'Directional light', false],
+    ]);
+    const ambient = lights[0]!.light;
+    expect([ambient.colour, ambient.strength]).toEqual(['#ffffff', 1]);
+    // An editing aid's: nothing to link, nothing to take away.
+    expect(lights.every((l) => !l.removable && !l.receivers.length)).toBe(true);
+    expect(standInLightSettings({})).toEqual({ 'directional-0': { enabled: false } });
+    // Switched on (as set) over how it starts; renamed.
+    const set = { 'directional-0': { enabled: true, name: 'Relief' } } as const;
+    expect(standInLightSettings(set)['directional-0']).toEqual(set['directional-0']);
+    expect(standInLights(set)[1]!.light).toMatchObject({ enabled: true, name: 'Relief' });
+    expect(standInLights(set)[1]!.nameBelow).toBe('Directional light');
+  });
+
+  it('keeps only what differs from how its lights start', () => {
+    const on = withStandInLight({}, 'directional-0', { enabled: true });
+    expect(on).toEqual({ 'directional-0': { enabled: true } });
+    // Switched off again: as it starts, so nothing set.
+    expect(withStandInLight(on, 'directional-0', { enabled: false })).toEqual({});
+    // The ambient light starts on: switched on is nothing set; switched off is.
+    expect(withStandInLight({}, 'ambient', { enabled: true })).toEqual({});
+    const dim = withStandInLight({}, 'ambient', { strength: 0.5, colour: '#ff0000' });
+    expect(withStandInLight(dim, 'ambient', {}, ['colour'])).toEqual({
+      ambient: { strength: 0.5 },
+    });
+    expect(withStandInLight({ ...dim, ...on }, 'ambient', {}, 'all')).toEqual(on);
   });
 });

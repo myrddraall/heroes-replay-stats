@@ -16,6 +16,8 @@ import {
   rgbOf,
   withLightSettings,
   withShadowSettings,
+  reachesReceiver,
+  withReceiver,
 } from './scene-lights';
 import { DEFAULT_SHADE, type PlanetLight } from './scene-planets';
 
@@ -38,7 +40,7 @@ describe('a body’s lights', () => {
       ['directional-0', 'directional', 'Fill light'],
       ['directional-1', 'directional', 'Back light'],
       ['directional-2', 'directional', 'Key light'],
-      ['shadow', 'shadow', 'Shadow'],
+      ['shadow', 'shadow', 'Antilight'],
     ]);
     // A light comes from where it shines from: against the way it travels.
     const key = lights[3]!;
@@ -182,8 +184,12 @@ describe('a body’s lights', () => {
     ]);
     expect(fieldLights('activation', [reveal, activation], undefined)[0]!.strength).toBe(0.5);
     expect(newLight('activation', []).strength).toBe(1);
-    // A new activation light only colours: it energizes nothing until set to.
+    // A new activation light only colours: it energizes nothing, nor glows, until set to.
     expect(fieldLights('activation', [activation], undefined)[0]!.energizes).toBe(0);
+    expect(fieldLights('activation', [activation], undefined)[0]!.glow).toBe(0);
+    expect(fieldLights('activation', [activation], { [activation.id]: { glow: 1 } })[0]!.glow).toBe(
+      1,
+    );
     expect(
       fieldLights('activation', [activation], { [activation.id]: { energizes: 1.5 } })[0]!
         .energizes,
@@ -205,7 +211,7 @@ describe('a body’s lights', () => {
     expect(dataReveal({ enabled: false })).toBeNull();
     const lights = bodyLights(undefined, DEFAULT_SHADE, {}, true);
     expect(lights.map((l) => [l.id, l.kind, l.name])).toEqual([
-      ['shadow', 'shadow', 'Shadow'],
+      ['shadow', 'shadow', 'Antilight'],
       ['reveal', 'reveal', 'Reveal light'],
       ['activation', 'activation', 'Activation light'],
     ]);
@@ -219,12 +225,64 @@ describe('a body’s lights', () => {
       ...front,
       strength: 1,
       energizes: 0.25,
+      glow: 0.5,
       tied: true,
     });
+    expect(dataActivation({ enabled: true, glow: 2 })!.glow).toBe(2);
     expect(dataActivation({ enabled: true, energizes: 0 })!.energizes).toBe(0);
     expect(dataActivation({ enabled: true, tied: false })!.tied).toBe(false);
     // The side a tied activation takes: the reveal light's as set.
     expect(revealFrom(undefined)).toEqual([0, -1, 0]);
     expect(revealFrom({ reveal: { from: [1, 0, 0] } })).toEqual([1, 0, 0]);
+  });
+});
+
+describe('what a light reaches, from what it lights', () => {
+  // A surface of ground and haze, a shell of haze.
+  const parts = new Map([
+    ['own:surface', ['ground', 'haze']],
+    ['own:shell', ['haze']],
+  ]);
+
+  it('tells whether it reaches a part (any of its materials) or a material (on any part)', () => {
+    expect(reachesReceiver(undefined, 'part:own:shell', parts)).toBe(true);
+    const noHaze = { mode: 'except', receivers: ['material:haze'] } as const;
+    expect(reachesReceiver(noHaze, 'part:own:shell', parts)).toBe(false);
+    expect(reachesReceiver(noHaze, 'part:own:surface', parts)).toBe(true);
+    const shellOnly = { mode: 'only', receivers: ['part:own:shell'] } as const;
+    // The haze on the shell is reached; the ground isn't.
+    expect(reachesReceiver(shellOnly, 'material:haze', parts)).toBe(true);
+    expect(reachesReceiver(shellOnly, 'material:ground', parts)).toBe(false);
+  });
+
+  it('leaves a part or material out, and takes it back in', () => {
+    const out = withReceiver(undefined, 'part:own:shell', false, parts);
+    expect(out).toEqual({ mode: 'except', receivers: ['part:own:shell'] });
+    // Back in: reaching everything again.
+    expect(withReceiver(out, 'part:own:shell', true, parts)).toBeUndefined();
+    // An only reach: taken out of its list.
+    const only = { mode: 'only', receivers: ['part:own:shell', 'material:ground'] } as const;
+    expect(withReceiver(only, 'material:ground', false, parts)).toEqual({
+      mode: 'only',
+      receivers: ['part:own:shell'],
+    });
+    expect(withReceiver(only, 'part:own:surface', true, parts)!.receivers).toContain(
+      'part:own:surface',
+    );
+  });
+
+  it('names a part by its other materials where one of them is taken apart from it', () => {
+    // Only the surface: the haze on it left out leaves the ground.
+    const surface = { mode: 'only', receivers: ['part:own:surface'] } as const;
+    expect(withReceiver(surface, 'material:haze', false, parts)).toEqual({
+      mode: 'only',
+      receivers: ['material:ground'],
+    });
+    // All but the surface: the ground taken back in leaves the haze out.
+    const notSurface = { mode: 'except', receivers: ['part:own:surface'] } as const;
+    expect(withReceiver(notSurface, 'material:ground', true, parts)).toEqual({
+      mode: 'except',
+      receivers: ['material:haze'],
+    });
   });
 });

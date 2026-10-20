@@ -1,0 +1,11 @@
+<hrs-property-section title="Lit by">
+  @for (l of lights(); track l.id) {
+    <hrs-property-check
+      [label]="l.name + ' · ' + l.from"
+      [checked]="l.reaches"
+      (checkedChange)="litChange.emit({ id: l.id, on: $event })"
+    />
+  } @empty {
+    <p class="hint">Nothing lights it.</p>
+  }
+</hrs-property-section>

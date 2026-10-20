@@ -8,7 +8,7 @@ import { LIGHT_ICONS } from './editor-model';
 const KINDS: readonly { readonly kind: LightKind; readonly label: string }[] = [
   { kind: 'ambient', label: 'Ambient' },
   { kind: 'directional', label: 'Directional' },
-  { kind: 'shadow', label: 'Shadow' },
+  { kind: 'shadow', label: 'Antilight' },
   { kind: 'reveal', label: 'Reveal' },
   { kind: 'activation', label: 'Activation' },
 ];

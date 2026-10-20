@@ -275,9 +275,9 @@ export const DraftDesignStore = signalStore(
       renameScene(id: string, name: string): void {
         setScene(id, (p) => ({ ...p, name: name.trim() || undefined }));
       },
-      /** A scene's planets as they are now (what kept them before scenes had several goes). */
+      /** A scene's planets as they are now (what kept them before scenes had several goes); its lights kept. */
       setSceneBodies(id: string, bodies: readonly SceneBody[]): void {
-        setScene(id, (p) => ({ bodies, name: p.name, sky: p.sky }));
+        setScene(id, (p) => ({ bodies, name: p.name, sky: p.sky, lights: p.lights }));
       },
       /** A scene taken out (a preset's or the stage's is only reset). */
       deleteScene(id: string): void {

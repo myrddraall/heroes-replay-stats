@@ -9,7 +9,7 @@ import {
 } from './play-scene';
 import { INSTANCE_FLOATS, ParticleSystem } from './scene-particles';
 import { DEFAULT_ACTIVE, MATERIAL_DEFAULTS, mergeMaterialSettings } from './material-settings';
-import { keyLight, lightFrom, rimTurn } from './scene-directions';
+import { rimTurn } from './scene-directions';
 import { skyDepths } from './sky-depths';
 import {
   type AddedLight,
@@ -24,6 +24,7 @@ import {
   rgbOf,
   withAddedLights,
   withLightSettings,
+  tunedRig,
   withShadowSettings,
 } from './scene-lights';
 import {
@@ -174,7 +175,7 @@ uniform vec3 uRevealFrom[MAX_FIELDS];
 uniform float uRevealSpread[MAX_FIELDS], uRevealFalloff[MAX_FIELDS], uRevealStrength[MAX_FIELDS];
 uniform vec3 uActivationFrom[MAX_FIELDS];
 uniform float uActivationSpread[MAX_FIELDS], uActivationFalloff[MAX_FIELDS], uActivationStrength[MAX_FIELDS];
-uniform float uActivationEnergy[MAX_FIELDS];
+uniform float uActivationEnergy[MAX_FIELDS], uActivationGlow[MAX_FIELDS];
 uniform vec3 uActiveColor;
 uniform vec2 uRimTurn;
 uniform vec3 uTintColor, uBodyTintColor;
@@ -254,6 +255,16 @@ float activation() {
     a += uActivationStrength[i] * activationAt(i);
   }
   return min(a, 1.0);
+}
+// How much brighter a grid shines here, and blooms: what its glowing activation lights activate,
+// times how much each glows.
+float activeGlow() {
+  float g = 0.0;
+  for (int i = 0; i < MAX_FIELDS; i++) {
+    if (i >= uActivationCount) break;
+    g += uActivationGlow[i] * min(uActivationStrength[i] * activationAt(i), 1.0);
+  }
+  return g;
 }
 // How much of a grid shows here, 0 to 1: its reveal lights added up, and what its energizing
 // activation lights reveal too (as much as they activate, times how much each energizes).
@@ -355,6 +366,9 @@ void shade() {
   vec3 glow = emissive.rgb * uEmissiveMult;
   // The emissive pattern cut: what is below the cut goes black, the rest keeps its range.
   if (uCut > 0.0) glow = max(glow - uCut, 0.0) / (1.0 - uCut);
+  // A grid shines brighter, and blooms more, where its glowing activation lights activate it.
+  float shining = uActivationCount > 0 ? activeGlow() : 0.0;
+  glow *= 1.0 + shining;
   vec3 rgb = tinted(uEmissiveBlend == 2 ? base + glow : base * glow * (uEmissiveBlend == 1 ? 2.0 : 1.0));
   float alpha = maskLayer(uMask0, uLayers[2]) * maskLayer(uMask1, uLayers[3]) * diffuse.a;
   if (uVertexAlpha) alpha *= vColor.a;
@@ -375,7 +389,7 @@ void shade() {
   vec3 shine = uEmissiveBlend == 2 ? tinted(glow) : rgb;
   float up = min(uGlowBoost, 1.0);
   outGlow = vec4(up * max(outColor.rgb - uGlowThreshold, 0.0) - max(outColor.rgb - uSceneThreshold, 0.0)
-    + max(uGlowBoost - 1.0, 0.0) * shine * (uOpaque ? coverage : alpha), outColor.a);
+    + (max(uGlowBoost - 1.0, 0.0) + shining) * shine * (uOpaque ? coverage : alpha), outColor.a);
 }
 `;
 
@@ -867,16 +881,15 @@ export interface PlanetPlacement {
   readonly added?: readonly AddedLight[];
   /** A tint over all its materials (its style's too), over its tuning's. */
   readonly tint?: MaterialTint;
-  /** Where its key light comes from (its lights turned together), over its tuning's; none: as the data has it. */
+  /**
+   * Its rig turned and made stronger together (`tunedRig`), over its tuning's: kept from before
+   * lights were objects (each light's own settings now), no longer set.
+   */
   readonly lightFrom?: Vec3;
   /** Where its rims and glows lean (a point on its face), over its tuning's; none: as the data has them. */
   readonly rim?: Vec3;
-  /** How strongly its light lights it, times this. */
+  /** (See `lightFrom`.) */
   readonly lighting?: number;
-  /** Its key light's strength, times this (none: as the data has it; 0: off). */
-  readonly key?: number;
-  /** White light from all round added to its light's own (1: a lit surface as bright as its textures; none: as the data has it). */
-  readonly surround?: number;
   /** A shade from a side, over its style's. */
   readonly shade?: Partial<BodyShade>;
   readonly position: Vec3;
@@ -1830,9 +1843,14 @@ export class SceneRenderer {
         const part = withPart(draw.part, draw.partKey && placement.parts?.[draw.partKey]);
         this.bindPart(part, draw.placed, right, up);
         const tuning = placement.planet.planet.tuning;
-        const from = placement.lightFrom ?? tuning?.lightFrom;
         const rig = material.unshaded ? undefined : draw.light;
-        const turned = rig && from ? lightFrom(rig, from) : rig;
+        const turned =
+          rig &&
+          tunedRig(
+            rig,
+            placement.lighting ?? tuning?.lighting,
+            placement.lightFrom ?? tuning?.lightFrom,
+          );
         // Its rig as set, and the lights added to it (its own, its overlay's, its scene's), each
         // only where it reaches this part and material (its linking).
         const added = this.addedTo(placement);
@@ -1845,12 +1863,7 @@ export class SceneRenderer {
               linked,
               this.loaded.scene.tone.exposure,
             );
-        this.bindLight(
-          light,
-          placement.lighting ?? tuning?.lighting ?? 1,
-          placement.key ?? 1,
-          placement.surround ?? 0,
-        );
+        this.bindLight(light);
         this.bindTint(p, 'uBodyTint', placement.tint ?? tuning?.tint);
         const rim = placement.rim ?? tuning?.rim;
         gl.uniform2fv(this.uniform(p, 'uRimTurn'), rim ? rimTurn(rim) : [0, 0]);
@@ -1985,27 +1998,17 @@ export class SceneRenderer {
     gl.uniform1fv(this.uniform(p, 'uShadeSoftness'), [...shades.map((s) => s.softness), ...pad(1)]);
   }
 
-  /** How a body's part is lit, for the body shader: not at all, or by its planet's light, times `lighting`. */
-  /**
-   * A light rig into the body shader (none: unlit), times `lighting`: its key light times `key`,
-   * and white light from all round added (`surround`: 1 lights a surface as bright as its textures).
-   */
-  private bindLight(light: PlanetLight | undefined, lighting: number, key = 1, surround = 0): void {
+  /** How a body's part is lit, for the body shader: not at all (no rig), or by its rig. */
+  private bindLight(light: PlanetLight | undefined): void {
     const gl = this.gl;
     const p = this.bodyProgram;
     gl.uniform1i(this.uniform(p, 'uLit'), light ? 1 : 0);
     if (!light) return;
-    const strongest = keyLight(light);
-    const lights = light.directional
-      .slice(0, MAX_LIGHTS)
-      .map((l) => (l === strongest ? { ...l, color: l.color.map((c) => c * key) } : l));
+    const lights = light.directional.slice(0, MAX_LIGHTS);
     const pad = Array<number>((MAX_LIGHTS - lights.length) * 3).fill(0);
     // The light's exposure over the scene's: the planet as bright as the tutorial shows it.
-    const scale = (light.exposure / this.loaded.scene.tone.exposure) * lighting;
-    gl.uniform3fv(
-      this.uniform(p, 'uAmbient'),
-      light.ambient.map((a) => a + (scale > 0 ? surround / scale : 0)),
-    );
+    const scale = light.exposure / this.loaded.scene.tone.exposure;
+    gl.uniform3fv(this.uniform(p, 'uAmbient'), light.ambient);
     gl.uniform1i(this.uniform(p, 'uLightCount'), lights.length);
     gl.uniform3fv(this.uniform(p, 'uLightDir'), [
       ...lights.flatMap((l) => [...l.direction]),
@@ -2173,6 +2176,13 @@ export class SceneRenderer {
       this.uniform(p, 'uActivationEnergy'),
       pad(
         a.map((l) => l.energizes ?? 0),
+        0,
+      ),
+    );
+    gl.uniform1fv(
+      this.uniform(p, 'uActivationGlow'),
+      pad(
+        a.map((l) => l.glow ?? 0),
         0,
       ),
     );

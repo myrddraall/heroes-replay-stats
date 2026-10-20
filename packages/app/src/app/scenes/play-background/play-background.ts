@@ -168,8 +168,6 @@ export class PlayBackground {
           lightFrom: p.lightFrom,
           rim: p.rim,
           lighting: p.lighting,
-          key: p.key,
-          surround: p.surround,
           shade: p.shade,
         });
       }

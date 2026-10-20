@@ -11,6 +11,8 @@ import {
   sceneBodies,
   setPlace,
   setStyle,
+  withLightSwitched,
+  withMaterialSwitched,
 } from './scene-bodies';
 
 const korhal: SceneBody = { id: 'korhal', position: [0, 65, 4], radius: 18 };
@@ -76,5 +78,43 @@ describe('the Play screen’s planets', () => {
     const [, small] = placeBodies(medium, medium.moons!, eye);
     small!.position.forEach((v, k) => expect(v).toBeCloseTo(set[2].position[k]!, 4));
     expect(small!.radius).toBeCloseTo(set[2].radius, 6);
+  });
+});
+
+describe('switching a light or a material on or off', () => {
+  it('sets it only where it differs from the levels under it', () => {
+    // On under it: switched off is set here; back on is nothing set.
+    const off = withLightSwitched({}, 'ambient', false, true)!;
+    expect(off).toEqual({ lights: { ambient: { enabled: false } } });
+    expect(withLightSwitched(off, 'ambient', true, true)).toBeUndefined();
+    // Off under it (a grid's activation light): switched on is set; what else is set is kept.
+    const set = { lights: { activation: { strength: 2 } } };
+    expect(withLightSwitched(set, 'activation', true, false)).toEqual({
+      lights: { activation: { strength: 2, enabled: true } },
+    });
+    expect(
+      withLightSwitched(
+        { lights: { activation: { strength: 2, enabled: true } } },
+        'activation',
+        false,
+        false,
+      ),
+    ).toEqual(set);
+  });
+
+  it('switches a light added at the level edited itself, on as it starts', () => {
+    const lamp = { id: 'added-lamp', kind: 'ambient', name: 'Lamp' } as const;
+    const off = withLightSwitched({ added: [lamp] }, lamp.id, false, true)!;
+    expect(off.added).toEqual([{ ...lamp, enabled: false }]);
+    expect(withLightSwitched(off, lamp.id, true, true)!.added).toEqual([lamp]);
+  });
+
+  it('switches a material the same way', () => {
+    const off = withMaterialSwitched({}, 'haze', false, true)!;
+    expect(off).toEqual({ materials: { haze: { enabled: false } } });
+    expect(withMaterialSwitched(off, 'haze', true, true)).toBeUndefined();
+    expect(withMaterialSwitched({}, 'haze', true, false)).toEqual({
+      materials: { haze: { enabled: true } },
+    });
   });
 });

@@ -9,6 +9,7 @@ import {
 } from '@ngrx/signals';
 import { withLocalStorage } from '../../../data/store-features/with-local-storage';
 import type { Backdrop } from '../../../scenes/play-background/scene-renderer';
+import type { LightSettingsMap } from '../../../scenes/play-background/scene-lights';
 import { forgetReference, keepReference, loadReference } from './reference-image';
 
 /** What is behind an asset on the preview stage: a sky, a plain colour, or a grid. */
@@ -26,8 +27,6 @@ export const REFERENCE_KEY = 'aid/reference';
 export const GRID_COLOURS = ['#ffffff', '#cccccc'] as const;
 /** The backdrop grid's squares, in CSS pixels, by size. */
 export const GRID_SQUARE: Readonly<Record<GridSize, number>> = { small: 8, medium: 16, large: 32 };
-/** Where the stand-in's directional light comes from unless turned: upper left, in front (its frame: x right, y away, z up). */
-export const STAND_IN_LIGHT_FROM: readonly [number, number, number] = [-0.55, -0.45, 0.7];
 
 /** The stand-in's grid: how many squares round its equator, by size. */
 export const GRID_CELLS: Readonly<Record<GridSize, number>> = { small: 48, medium: 32, large: 16 };
@@ -39,15 +38,8 @@ export interface EditingAidsState {
   readonly backdropColour: string;
   readonly standIn: StandInFill;
   readonly standInColour: string;
-  /**
-   * The stand-in's light, as a material preview lights what it shows: evenly, by light from all
-   * round (`standInAmbient`, 1: as bright as its textures); and, where switched on (off by default),
-   * a directional light from a side (`standInDirectionalFrom`), as strong as asked (`standInDirectionalStrength`).
-   */
-  readonly standInAmbient: number;
-  readonly standInDirectional: boolean;
-  readonly standInDirectionalStrength: number;
-  readonly standInDirectionalFrom: readonly [number, number, number];
+  /** What is set for the stand-in's own lights (its ambient light, its directional light), by light. */
+  readonly standInLights: LightSettingsMap;
   readonly gridSize: GridSize;
   /** Whether a material opened on its own is shown on its planet rather than on the stand-in. */
   readonly materialOnPlanet: boolean;
@@ -70,10 +62,7 @@ export const EDITING_AIDS_DEFAULTS: EditingAidsState = {
   backdropColour: '#2e2e2e',
   standIn: 'grid',
   standInColour: '#9a9a9a',
-  standInAmbient: 1,
-  standInDirectional: false,
-  standInDirectionalStrength: 1,
-  standInDirectionalFrom: STAND_IN_LIGHT_FROM,
+  standInLights: {},
   gridSize: 'medium',
   materialOnPlanet: false,
   referenceUrl: null,
@@ -108,10 +97,7 @@ export const EditingAidsStore = signalStore(
     'backdropColour',
     'standIn',
     'standInColour',
-    'standInAmbient',
-    'standInDirectional',
-    'standInDirectionalStrength',
-    'standInDirectionalFrom',
+    'standInLights',
     'gridSize',
     'materialOnPlanet',
     'referenceShown',
