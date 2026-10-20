@@ -114,6 +114,12 @@ export class AssetBrowser {
       : all;
   });
 
+  /** Clicked: selected; clicked again soon after (a double-click), opened. */
+  protected clicked(key: string): void {
+    if (this.ui.clickedAgain(key)) this.open(key);
+    else this.select(key);
+  }
+
   /** Selected: shown in the background, its information beside, the list kept. */
   protected select(key: string): void {
     this.ui.show(parseOpen(key));

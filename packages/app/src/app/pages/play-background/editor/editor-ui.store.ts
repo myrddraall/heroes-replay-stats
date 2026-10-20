@@ -11,6 +11,9 @@ import {
 import { withLocalStorage } from '../../../data/store-features/with-local-storage';
 import { type OpenTarget, openPath } from './open-target';
 
+/** How soon a second click on the same thing makes a double-click, in milliseconds. */
+export const DOUBLE_CLICK = 500;
+
 interface EditorUiState {
   /** Whether the left panel shows the library's lists (else the tree of what is open). */
   readonly browsing: boolean;
@@ -50,7 +53,12 @@ export const EditorUiStore = signalStore(
     screenshot: false,
   }),
   withLocalStorage<EditorUiState>('hrs.background-editor', ['names', 'markers', 'left', 'right']),
-  withProps(() => ({ _router: inject(Router), _followed: { first: true } })),
+  withProps(() => ({
+    _router: inject(Router),
+    _followed: { first: true },
+    /** The last click on something in the lists: what (its key), and when. */
+    _lastClick: { key: '', at: -Infinity },
+  })),
   withMethods((store) => {
     const navigate = (target: OpenTarget, replaceUrl = false) =>
       void store._router.navigate(openPath(target), { replaceUrl });
@@ -77,6 +85,17 @@ export const EditorUiStore = signalStore(
         if (key === undefined) patchState(store, { browsing: true, confirmingReset: false });
         else if (first) patchState(store, { browsing: false });
       }),
+      /**
+       * A click on something in the lists: whether it is the second on it soon after the first (a
+       * double-click). Kept here, as the list clicked may not be the one clicked first: showing
+       * another kind of thing (a planet after a scene) builds the editor, its list too, afresh.
+       */
+      clickedAgain(key: string, at = performance.now()): boolean {
+        const last = store._lastClick;
+        const again = last.key === key && at - last.at <= DOUBLE_CLICK;
+        store._lastClick = again ? { key: '', at: -Infinity } : { key, at };
+        return again;
+      },
       setBrowsing(browsing: boolean): void {
         patchState(store, { browsing });
       },

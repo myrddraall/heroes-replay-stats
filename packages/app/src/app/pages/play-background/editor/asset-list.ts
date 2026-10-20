@@ -14,9 +14,9 @@ export interface BrowserItem {
 
 /**
  * The library's list (presentational): one kind of thing, flat (under a heading for each group,
- * where its items have groups); an item is selected by a click or
- * the up and down arrows (shown, its information beside) and opened by a double-click (or Enter),
- * by its key; the one selected marked.
+ * where its items have groups); an item clicked (`itemClick`: a double-click is two, told apart by
+ * what holds the list, as the list may be new between them), selected by the up and down arrows
+ * (shown, its information beside), opened by Enter, by its key; the one selected marked.
  */
 @Component({
   selector: 'hrs-asset-list',
@@ -30,6 +30,7 @@ export class AssetList {
   readonly icon = input('');
   /** The key of what is selected (shown). */
   readonly selected = input('');
+  readonly itemClick = output<string>();
   readonly itemSelect = output<string>();
   readonly itemOpen = output<string>();
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
