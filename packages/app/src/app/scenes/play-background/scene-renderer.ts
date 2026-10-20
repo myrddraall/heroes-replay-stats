@@ -8,17 +8,19 @@ import {
   type SceneMesh,
 } from './play-scene';
 import { INSTANCE_FLOATS, ParticleSystem } from './scene-particles';
-import { DEFAULT_ACTIVE, MATERIAL_DEFAULTS, mergeMaterialSettings } from './material-settings';
+import {
+  DEFAULT_ACTIVE,
+  gridFields,
+  type GridField,
+  MATERIAL_DEFAULTS,
+  materialValues,
+  mergeMaterialSettings,
+} from './material-settings';
 import { rimTurn } from './scene-directions';
 import { skyDepths } from './sky-depths';
 import {
   type AddedLight,
   addedShades,
-  dataActivation,
-  dataReveal,
-  revealFrom,
-  type FieldLight,
-  fieldLights,
   type LightSettingsMap,
   linkedSettings,
   rgbOf,
@@ -61,7 +63,7 @@ import {
 /** How many directional lights, and how many shades (shadows), a body is drawn with at most. */
 const MAX_LIGHTS = 8;
 const MAX_SHADES = 4;
-/** How many reveal lights, and how many activation lights, a grid is drawn with at most. */
+/** How many reveals, and how many activations, a grid is drawn with at most (its material's own: one of each). */
 const MAX_FIELDS = 4;
 /** A target's outputs: the colour and the glow (COLOR_ATTACHMENT0 and 1). */
 const DRAW_BUFFERS = [0x8ce0, 0x8ce1];
@@ -166,8 +168,8 @@ uniform vec3 uPatternParams;
 uniform vec3 uShadeDir[MAX_SHADES];
 uniform float uShadeStrength[MAX_SHADES], uShadeSoftness[MAX_SHADES];
 uniform int uShadeCount;
-// A grid's: shown where its reveal lights reach (its emissive times how much), coloured from
-// inactive (its diffuse) to uActiveColor where its activation lights reach; each light its side
+// A grid's: shown where its reveal reaches (its emissive times how much), coloured from
+// inactive (its diffuse) to uActiveColor where its activation reaches; each its side
 // (body frame), spread, falloff and strength, an activation's how much it energizes (reveals too).
 uniform bool uRevealed;
 uniform int uRevealCount, uActivationCount;
@@ -218,7 +220,7 @@ vec3 turn(vec3 v, vec3 axis, float angle) {
 // 1), or the other way about (type 2: the facing itself to the exponent, so a low exponent keeps
 // it up nearly to the limb, as the flyby's city lights stay in view in the tutorial's shots).
 float fresnelWith(Layer l, vec2 lean, float spread) {
-  // The turn (the layer's own, or a reveal light's), and its planet's lean of its rims and glows.
+  // The turn (the layer's own), and its planet's lean of its rims and glows.
   vec2 t = lean + uRimTurn;
   vec3 view = turn(turn(normalize(uEye - vWorld), uUp, t.x), uRight, t.y);
   float facing = clamp(dot(normalize(vNormal), view), 0.0, 1.0);
@@ -235,7 +237,7 @@ float fresnelTo(Layer l, vec2 lean, float spread, float falloff) {
   float f = fresnelWith(l, lean, spread);
   return l.fresnel == 2 ? f * f : pow(f, falloff) * FRESNEL_GAIN;
 }
-// How much a grid's light reaches here, 0 to 1: as a light does, the more the face turns to its
+// How much a grid's reveal or activation reaches here, 0 to 1: as a light does, the more the face turns to its
 // side (any side, the far one too), wrapped round by its spread (0: the half facing it; 1: on round
 // to the point facing away, fading all the way) and sharpened by its falloff. Times its strength
 // (more than 1 reaches further fully), what it reaches never comes out even: its side and its
@@ -247,7 +249,7 @@ float fieldAt(vec3 from, float spread, float falloff) {
 float activationAt(int i) {
   return fieldAt(uActivationFrom[i], uActivationSpread[i], uActivationFalloff[i]);
 }
-// How active a grid is here: its activation lights added up (up to 1), each times its strength.
+// How active a grid is here: its activations added up (up to 1), each times its strength.
 float activation() {
   float a = 0.0;
   for (int i = 0; i < MAX_FIELDS; i++) {
@@ -256,7 +258,7 @@ float activation() {
   }
   return min(a, 1.0);
 }
-// How much brighter a grid shines here, and blooms: what its glowing activation lights activate,
+// How much brighter a grid shines here, and blooms: what its glowing activations activate,
 // times how much each glows.
 float activeGlow() {
   float g = 0.0;
@@ -266,8 +268,8 @@ float activeGlow() {
   }
   return g;
 }
-// How much of a grid shows here, 0 to 1: its reveal lights added up, and what its energizing
-// activation lights reveal too (as much as they activate, times how much each energizes).
+// How much of a grid shows here, 0 to 1: its reveals added up, and what its energizing
+// activations reveal too (as much as they activate, times how much each energizes).
 float revealed() {
   float sum = 0.0;
   for (int i = 0; i < MAX_FIELDS; i++)
@@ -351,10 +353,10 @@ vec3 lit(vec3 albedo) {
 void shade() {
   vec4 diffuse = colorLayer(uDiffuse, uLayers[0]);
   if (uVertexColor) diffuse.rgb *= vColor.rgb;
-  // A grid's colour, from inactive (its own) towards active where its activation lights reach.
+  // A grid's colour, from inactive (its own) towards active where its activation reaches.
   if (uActivationCount > 0) diffuse.rgb = mix(diffuse.rgb, uActiveColor * uLayers[0].bright, activation());
   vec4 emissive = uPattern == 1 ? patternLayer(uLayers[1]) : colorLayer(uEmissive, uLayers[1]);
-  // A grid shows where its reveal lights reach it (with its own fade, the game's look).
+  // A grid shows where its reveal reaches it (with its own fade, the game's look).
   if (uRevealed) emissive.rgb *= revealed();
   vec3 base = uUnshaded ? diffuse.rgb : uLit ? lit(diffuse.rgb) : vec3(0.0);
   // The shades (its shadows): the body's colour cut where it faces each one's direction; what it
@@ -366,7 +368,7 @@ void shade() {
   vec3 glow = emissive.rgb * uEmissiveMult;
   // The emissive pattern cut: what is below the cut goes black, the rest keeps its range.
   if (uCut > 0.0) glow = max(glow - uCut, 0.0) / (1.0 - uCut);
-  // A grid shines brighter, and blooms more, where its glowing activation lights activate it.
+  // A grid shines brighter, and blooms more, where its glowing activation activates it.
   float shining = uActivationCount > 0 ? activeGlow() : 0.0;
   glow *= 1.0 + shining;
   vec3 rgb = tinted(uEmissiveBlend == 2 ? base + glow : base * glow * (uEmissiveBlend == 1 ? 2.0 : 1.0));
@@ -1868,18 +1870,13 @@ export class SceneRenderer {
         const rim = placement.rim ?? tuning?.rim;
         gl.uniform2fv(this.uniform(p, 'uRimTurn'), rim ? rimTurn(rim) : [0, 0]);
         this.bindShade(placement, linked);
-        // A grid: shown where its reveal lights reach (its own, then those added) and coloured
-        // by its activation lights (those tied to its own reveal light from its side).
+        // A grid: shown where its reveal reaches, and coloured by its activation (its material's).
         if (draw.part.pattern?.kind === 'hex') {
-          const data = dataReveal(linked?.reveal);
-          const activation = dataActivation(linked?.activation);
-          const tiedTo = revealFrom(placement.lights);
+          const { reveal, activation } = gridFields(materialValues(material, settings));
           this.bindGrid(
             p,
-            [...(data ? [data] : []), ...fieldLights('reveal', added, linked)],
-            [...(activation ? [activation] : []), ...fieldLights('activation', added, linked)].map(
-              (l) => (l.tied ? { ...l, from: tiedTo } : l),
-            ),
+            reveal,
+            activation,
             settings?.inactive,
             settings?.active ?? DEFAULT_ACTIVE,
           );
@@ -2096,13 +2093,13 @@ export class SceneRenderer {
   }
 
   /**
-   * A grid's reveal and activation lights (each at most MAX_FIELDS) and its colours: inactive in
+   * A grid's reveals and activations (each at most MAX_FIELDS) and its colours: inactive in
    * place of its diffuse's own where set, and active.
    */
   private bindGrid(
     p: WebGLProgram,
-    reveals: readonly FieldLight[],
-    activations: readonly FieldLight[],
+    reveals: readonly GridField[],
+    activations: readonly GridField[],
     inactive: string | undefined,
     active: string,
   ): void {
@@ -2124,7 +2121,7 @@ export class SceneRenderer {
     gl.uniform1fv(
       this.uniform(p, 'uRevealSpread'),
       pad(
-        r.map((l) => l.spread),
+        r.map((l) => l.reach),
         0,
       ),
     );
@@ -2154,7 +2151,7 @@ export class SceneRenderer {
     gl.uniform1fv(
       this.uniform(p, 'uActivationSpread'),
       pad(
-        a.map((l) => l.spread),
+        a.map((l) => l.reach),
         0,
       ),
     );

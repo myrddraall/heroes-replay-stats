@@ -1,3 +1,4 @@
+import { MatIcon } from '@angular/material/icon';
 import { Component, input, output } from '@angular/core';
 import {
   MATERIAL_BLENDS,
@@ -34,6 +35,7 @@ import { PropertyDirection } from '../properties/property-direction';
 @Component({
   selector: 'hrs-material-properties',
   imports: [
+    MatIcon,
     TintSection,
     PropertySection,
     PropertyNumber,
@@ -66,6 +68,10 @@ export class MaterialProperties {
   readonly layers = input<readonly LayerEntry[]>([]);
   /** Its name as the levels under the one edited have it (shown while it isn't renamed here). */
   readonly labelBelow = input('');
+  /** Whether it is a planet's or overlay's material, the library's own (shared) to open from here. */
+  readonly shared = input(false);
+  /** The library's own material (shared by all that use it) asked for: opened from here. */
+  readonly sharedOpen = output<void>();
   readonly settingsChange = output<Partial<MaterialSettings>>();
   /** Settings set here to take back, so they are its own again. */
   readonly clear = output<readonly (keyof MaterialSettings)[]>();
@@ -119,6 +125,26 @@ export class MaterialProperties {
     if (label) this.settingsChange.emit({ label });
     else this.clear.emit(['label']);
   }
+
+  /** A grid's reveal's settings, and its activation's (its active colour among them). */
+  protected readonly revealKeys: readonly (keyof MaterialSettings)[] = [
+    'revealOn',
+    'revealStrength',
+    'revealFrom',
+    'revealReach',
+    'revealFalloff',
+  ];
+  protected readonly activationKeys: readonly (keyof MaterialSettings)[] = [
+    'activationOn',
+    'active',
+    'activationStrength',
+    'activationTied',
+    'activationFrom',
+    'activationReach',
+    'activationFalloff',
+    'activationEnergizes',
+    'activationGlow',
+  ];
 
   protected isSet(key: keyof MaterialSettings): boolean {
     return this.set()?.[key] !== undefined;

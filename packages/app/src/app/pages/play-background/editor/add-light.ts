@@ -9,14 +9,11 @@ const KINDS: readonly { readonly kind: LightKind; readonly label: string }[] = [
   { kind: 'ambient', label: 'Ambient' },
   { kind: 'directional', label: 'Directional' },
   { kind: 'shadow', label: 'Antilight' },
-  { kind: 'reveal', label: 'Reveal' },
-  { kind: 'activation', label: 'Activation' },
 ];
 
 /**
  * A section to add a light (presentational): one button for each kind of light (from all round,
- * from a side, or darkening from a side; for grids, revealing them or activating them), to what is
- * selected (a body, the scene).
+ * from a side, or darkening from a side), to what is selected (a body, the scene).
  */
 @Component({
   selector: 'hrs-add-light',

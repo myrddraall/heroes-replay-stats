@@ -35,10 +35,10 @@ describe('EditingAidsStore', () => {
 
   it('puts aids back as they start', () => {
     const aids = TestBed.inject(EditingAidsStore);
-    aids.set({ standIn: 'colour', standInColour: '#123456', materialOnPlanet: true });
+    aids.set({ standIn: 'colour', standInColour: '#123456', gridSize: 'large' });
     aids.reset(['standIn', 'standInColour']);
     expect(aids.standIn()).toBe(EDITING_AIDS_DEFAULTS.standIn);
     expect(aids.standInColour()).toBe(EDITING_AIDS_DEFAULTS.standInColour);
-    expect(aids.materialOnPlanet()).toBe(true);
+    expect(aids.gridSize()).toBe('large');
   });
 });

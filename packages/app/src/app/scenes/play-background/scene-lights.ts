@@ -1,4 +1,4 @@
-import { lightFrom, normalized, TOWARDS_EYE, type Vec3 } from './scene-directions';
+import { lightFrom, normalized, type Vec3 } from './scene-directions';
 import type { BodyShade, PlanetLight } from './scene-planets';
 
 /**
@@ -9,22 +9,24 @@ import type { BodyShade, PlanetLight } from './scene-planets';
  * for is lit exactly as its data lights it.
  */
 
-/**
- * What a light does: lights from all round, lights from a side, or darkens from a side; or, for a
- * grid (a drawn pattern) only, reveals it (how much of it shows at all, from a side) or activates
- * it (its colour from inactive to active, the more of it the more active).
- */
-export type LightKind = 'ambient' | 'directional' | 'shadow' | 'reveal' | 'activation';
+/** What a light does: lights from all round, lights from a side, or darkens from a side (an antilight). */
+export type LightKind = 'ambient' | 'directional' | 'shadow';
 
-/** The kinds that act on a grid (`FieldLight`s) rather than light or shade a body. */
-export const GRID_LIGHTS: readonly LightKind[] = ['reveal', 'activation'];
+/**
+ * The kinds there are: lights of others kept from before (a grid's reveal and activation, its
+ * material's own settings now) are left out wherever lights are read.
+ */
+const KINDS: readonly string[] = ['ambient', 'directional', 'shadow'];
+
+/** Added lights of the kinds there are (those kept from before left out). */
+export const knownLights = <T extends { readonly kind: string }>(added: readonly T[]): T[] =>
+  added.filter((l) => KINDS.includes(l.kind));
 
 /**
  * A light by what it is: a body's rig's ambient, its directional lights by index, its shadow; or
  * one added (to a scene, a body, an overlay), by the id it was given.
  */
-export type LightId =
-  'ambient' | `directional-${number}` | 'shadow' | 'reveal' | 'activation' | `added-${string}`;
+export type LightId = 'ambient' | `directional-${number}` | 'shadow' | `added-${string}`;
 
 /** What of its body a light may light: one of its parts (by `PartKey`), or one of its materials (by name). */
 export type Receiver = `part:${string}` | `material:${string}`;
@@ -51,15 +53,6 @@ export interface LightSettings {
   readonly strength?: number;
   readonly from?: Vec3;
   readonly softness?: number;
-  /** A reveal's or activation's: how far across the face it reaches (0 to 1), and how sharply it falls off. */
-  readonly spread?: number;
-  readonly falloff?: number;
-  /** An activation's: how much it reveals too, of what it activates (0: none, only its colour). */
-  readonly energizes?: number;
-  /** An activation's: how much brighter what it activates shines, and blooms (0: none, only its colour). */
-  readonly glow?: number;
-  /** An activation's: whether its side is its body's reveal light's (moving with it). */
-  readonly tied?: boolean;
   readonly reach?: LightReach;
   readonly moons?: boolean;
 }
@@ -78,20 +71,6 @@ export interface AddedLight extends LightSettings {
 const NEW_FROM: Vec3 = normalized([-0.55, -0.45, 0.7]);
 const NEW_SHADOW_FROM: Vec3 = normalized([0.6, -0.3, -0.75]);
 
-/** A new reveal's and activation's own (a reveal straight at the eye, as a grid with no turn has it). */
-const NEW_REVEAL = { from: TOWARDS_EYE, spread: 1, falloff: 1 } as const;
-const NEW_ACTIVATION = NEW_REVEAL;
-/**
- * How strongly a new reveal light (and a grid's own) acts: enough, from the front with the most
- * spread, to show all of a sphere's face fully (as the game shows a grid), its side and falloff
- * telling once it is turned or narrowed. An activation light: half that.
- */
-const REVEAL_STRENGTH = 2;
-const ACTIVATION_STRENGTH = 1;
-/** How much a grid's own activation light reveals too, and glows: a little (a new one: none). */
-const GRID_ENERGIZES = 0.25;
-const GRID_GLOW = 0.5;
-
 /** A new light of a kind, named after the lights of that kind already added beside it. */
 export function newLight(
   kind: LightKind,
@@ -103,8 +82,6 @@ export function newLight(
     ambient: 'Ambient light',
     directional: 'Directional light',
     shadow: 'Antilight',
-    reveal: 'Reveal light',
-    activation: 'Activation light',
   }[kind];
   const name = count ? `${base} ${count + 1}` : base;
   switch (kind) {
@@ -114,10 +91,6 @@ export function newLight(
       return { id, kind, name, colour: '#ffffff', strength: 1, from: NEW_FROM };
     case 'shadow':
       return { id, kind, name, strength: 0.5, from: NEW_SHADOW_FROM, softness: 1 };
-    case 'reveal':
-      return { id, kind, name, strength: REVEAL_STRENGTH, ...NEW_REVEAL };
-    case 'activation':
-      return { id, kind, name, strength: ACTIVATION_STRENGTH, ...NEW_ACTIVATION };
   }
 }
 
@@ -131,27 +104,12 @@ export function addedLight(light: AddedLight, settings?: LightSettings): BodyLig
     enabled: s.enabled ?? true,
     colour: s.colour ?? (light.kind === 'shadow' ? '#000000' : '#ffffff'),
     strength: s.strength ?? 1,
-    ...(light.kind !== 'ambient' ? { from: s.from ?? ownOf(light.kind).from } : {}),
+    ...(light.kind !== 'ambient'
+      ? { from: s.from ?? (light.kind === 'shadow' ? NEW_SHADOW_FROM : NEW_FROM) }
+      : {}),
     ...(light.kind === 'shadow' ? { softness: s.softness ?? 1 } : {}),
-    ...(GRID_LIGHTS.includes(light.kind)
-      ? {
-          spread: s.spread ?? ownOf(light.kind).spread,
-          falloff: s.falloff ?? ownOf(light.kind).falloff,
-        }
-      : {}),
-    ...(light.kind === 'activation'
-      ? { energizes: s.energizes ?? 0, glow: s.glow ?? 0, tied: s.tied ?? false }
-      : {}),
   };
 }
-
-/** A kind's own side (and a grid light's spread and falloff), where none is set. */
-const ownOf = (kind: LightKind) =>
-  kind === 'reveal'
-    ? NEW_REVEAL
-    : kind === 'activation'
-      ? NEW_ACTIVATION
-      : { ...NEW_ACTIVATION, from: NEW_FROM };
 
 /** A light as shown: what it is, its name, and its settings in effect. */
 export interface BodyLight {
@@ -163,11 +121,6 @@ export interface BodyLight {
   readonly strength: number;
   readonly from?: Vec3;
   readonly softness?: number;
-  readonly spread?: number;
-  readonly falloff?: number;
-  readonly energizes?: number;
-  readonly glow?: number;
-  readonly tied?: boolean;
 }
 
 /** The directional lights' names by how bright they are, brightest first. */
@@ -221,24 +174,18 @@ export function bodyLights(
   light: PlanetLight | undefined,
   shade: BodyShade,
   settings: LightSettingsMap = {},
-  grid = false,
 ): BodyLight[] {
   const out: BodyLight[] = [];
-  const set = (id: LightId, own: Omit<BodyLight, 'enabled'>, on = true): BodyLight => {
+  const set = (id: LightId, own: Omit<BodyLight, 'enabled'>): BodyLight => {
     const s = settings[id];
     return {
       ...own,
-      enabled: s?.enabled ?? on,
+      enabled: s?.enabled ?? true,
       ...(s?.name !== undefined ? { name: s.name } : {}),
       ...(s?.colour !== undefined ? { colour: s.colour } : {}),
       ...(s?.strength !== undefined ? { strength: s.strength } : {}),
       ...(s?.from !== undefined ? { from: s.from } : {}),
       ...(s?.softness !== undefined ? { softness: s.softness } : {}),
-      ...(s?.spread !== undefined ? { spread: s.spread } : {}),
-      ...(s?.falloff !== undefined ? { falloff: s.falloff } : {}),
-      ...(s?.energizes !== undefined ? { energizes: s.energizes } : {}),
-      ...(s?.glow !== undefined ? { glow: s.glow } : {}),
-      ...(s?.tied !== undefined ? { tied: s.tied } : {}),
     };
   };
   if (light) {
@@ -278,102 +225,7 @@ export function bodyLights(
       softness: shade.softness,
     }),
   );
-  // A grid's reveal light (revealing all of its face as the game shows it) and its activation
-  // light (switched off unless switched on; its side the reveal's while tied to it).
-  if (grid)
-    out.push(
-      set('reveal', {
-        id: 'reveal',
-        kind: 'reveal',
-        name: 'Reveal light',
-        colour: '#ffffff',
-        strength: REVEAL_STRENGTH,
-        ...NEW_REVEAL,
-      }),
-      set(
-        'activation',
-        {
-          id: 'activation',
-          kind: 'activation',
-          name: 'Activation light',
-          colour: '#ffffff',
-          strength: ACTIVATION_STRENGTH,
-          energizes: GRID_ENERGIZES,
-          glow: GRID_GLOW,
-          tied: true,
-          ...NEW_ACTIVATION,
-        },
-        false,
-      ),
-    );
   return out;
-}
-
-/**
- * A reveal or activation light as a grid is drawn with it: the side it comes from (body frame),
- * how far round it reaches (0: the half facing it; 1: all of it evenly), how sharply it falls off,
- * its strength; an activation's, how much it reveals too, how much it glows, and whether its side
- * is its body's reveal light's.
- */
-export interface FieldLight {
-  readonly from: Vec3;
-  readonly spread: number;
-  readonly falloff: number;
-  readonly strength: number;
-  readonly energizes?: number;
-  readonly glow?: number;
-  readonly tied?: boolean;
-}
-
-/** A grid's own reveal light as set (none where it is switched off, or doesn't reach). */
-export function dataReveal(settings: LightSettings | undefined): FieldLight | null {
-  if (settings?.enabled === false) return null;
-  return {
-    from: settings?.from ?? NEW_REVEAL.from,
-    spread: settings?.spread ?? NEW_REVEAL.spread,
-    falloff: settings?.falloff ?? NEW_REVEAL.falloff,
-    strength: settings?.strength ?? REVEAL_STRENGTH,
-  };
-}
-
-/** The side a grid's own reveal light comes from, as set (what an activation tied to it takes). */
-export const revealFrom = (settings: LightSettingsMap | undefined): Vec3 =>
-  settings?.reveal?.from ?? NEW_REVEAL.from;
-
-/**
- * A grid's own activation light as set: none unless switched on; as its reveal light is unless set,
- * not as strongly, energizing a little, its side tied to the reveal's.
- */
-export function dataActivation(settings: LightSettings | undefined): FieldLight | null {
-  if (settings?.enabled !== true) return null;
-  return {
-    from: settings.from ?? NEW_ACTIVATION.from,
-    spread: settings.spread ?? NEW_ACTIVATION.spread,
-    falloff: settings.falloff ?? NEW_ACTIVATION.falloff,
-    strength: settings.strength ?? ACTIVATION_STRENGTH,
-    energizes: settings.energizes ?? GRID_ENERGIZES,
-    glow: settings.glow ?? GRID_GLOW,
-    tied: settings.tied ?? true,
-  };
-}
-
-/** The reveal or activation lights added to a body (its own, its overlay's, its scene's), as set, on ones only. */
-export function fieldLights(
-  kind: 'reveal' | 'activation',
-  added: readonly AddedLight[],
-  settings: LightSettingsMap | undefined,
-): FieldLight[] {
-  return onLights(added, settings)
-    .filter((l) => l.kind === kind)
-    .map((l) => ({
-      from: l.from ?? ownOf(kind).from,
-      spread: l.spread ?? ownOf(kind).spread,
-      falloff: l.falloff ?? ownOf(kind).falloff,
-      strength: l.strength,
-      ...(kind === 'activation'
-        ? { energizes: l.energizes ?? 0, glow: l.glow ?? 0, tied: l.tied ?? false }
-        : {}),
-    }));
 }
 
 /** A light rig with its lights' settings applied (each where set; one switched off gives no light). */
@@ -515,7 +367,7 @@ export function lightsForMoons(
   added: readonly AddedLight[],
   settings: LightSettingsMap | undefined,
 ): AddedLight[] {
-  return added
+  return knownLights(added)
     .map((l) => ({ ...l, ...settings?.[l.id] }))
     .filter((l) => l.moons === true && l.enabled !== false)
     .map((l) => ({ ...l, reach: undefined, moons: undefined }));
@@ -534,7 +386,9 @@ export function mergeLightSettings(
 
 /** The lights added to a body (its own, its overlay's, its scene's), as set over their own settings, on ones only. */
 function onLights(added: readonly AddedLight[], settings?: LightSettingsMap): BodyLight[] {
-  return added.map((l) => addedLight(l, settings?.[l.id])).filter((l) => l.enabled);
+  return knownLights(added)
+    .map((l) => addedLight(l, settings?.[l.id]))
+    .filter((l) => l.enabled);
 }
 
 /**

@@ -37,9 +37,86 @@ export interface MaterialValues {
   readonly depth: MaterialDepth;
   /** Whether its body's light lights it (else flat, as its textures have it). */
   readonly lit: boolean;
-  /** A grid's colours: inactive (its own), and active (where activation lights reach it). */
+  /** A grid's colours: inactive (its own), and active (where it is activated). */
   readonly inactive: string;
   readonly active: string;
+  /** A grid's reveal and activation (see `MaterialSettings`). */
+  readonly revealOn: boolean;
+  readonly revealStrength: number;
+  readonly revealFrom: Vec3;
+  readonly revealReach: number;
+  readonly revealFalloff: number;
+  readonly activationOn: boolean;
+  readonly activationStrength: number;
+  readonly activationTied: boolean;
+  readonly activationFrom: Vec3;
+  readonly activationReach: number;
+  readonly activationFalloff: number;
+  readonly activationEnergizes: number;
+  readonly activationGlow: number;
+}
+
+/**
+ * A grid's reveal and activation where nothing is set: revealed from the front, enough to show
+ * all of its face (as the game shows a grid), its side and falloff telling once turned or
+ * narrowed; activated (once switched on) the same way at half the strength, its side the
+ * reveal's, energizing and glowing a little.
+ */
+export const GRID_DEFAULTS = {
+  revealOn: true,
+  revealStrength: 2,
+  revealFrom: TOWARDS_EYE,
+  revealReach: 1,
+  revealFalloff: 1,
+  activationOn: false,
+  activationStrength: 1,
+  activationTied: true,
+  activationFrom: TOWARDS_EYE,
+  activationReach: 1,
+  activationFalloff: 1,
+  activationEnergizes: 0.25,
+  activationGlow: 0.5,
+} as const;
+
+/** A grid's reveal or activation as it is drawn: its side, reach, falloff and strength; an activation's energizing and glow. */
+export interface GridField {
+  readonly from: Vec3;
+  readonly reach: number;
+  readonly falloff: number;
+  readonly strength: number;
+  readonly energizes?: number;
+  readonly glow?: number;
+}
+
+/** A grid's reveal and activation as drawn (none of either where switched off): an activation tied to the reveal from its side. */
+export function gridFields(v: MaterialValues): {
+  readonly reveal: readonly GridField[];
+  readonly activation: readonly GridField[];
+} {
+  return {
+    reveal: v.revealOn
+      ? [
+          {
+            from: v.revealFrom,
+            reach: v.revealReach,
+            falloff: v.revealFalloff,
+            strength: v.revealStrength,
+          },
+        ]
+      : [],
+    activation: v.activationOn
+      ? [
+          {
+            from: v.activationTied ? v.revealFrom : v.activationFrom,
+            reach: v.activationReach,
+            falloff: v.activationFalloff,
+            strength: v.activationStrength,
+            energizes: v.activationEnergizes,
+            glow: v.activationGlow,
+          },
+        ]
+      : [],
+  };
 }
 
 /** No tint: white, not at all. */
@@ -192,6 +269,19 @@ export function materialValues(
     lit: settings?.lit ?? !material.unshaded,
     inactive: settings?.inactive ?? ownInactive(material),
     active: settings?.active ?? DEFAULT_ACTIVE,
+    revealOn: settings?.revealOn ?? GRID_DEFAULTS.revealOn,
+    revealStrength: settings?.revealStrength ?? GRID_DEFAULTS.revealStrength,
+    revealFrom: settings?.revealFrom ?? GRID_DEFAULTS.revealFrom,
+    revealReach: settings?.revealReach ?? GRID_DEFAULTS.revealReach,
+    revealFalloff: settings?.revealFalloff ?? GRID_DEFAULTS.revealFalloff,
+    activationOn: settings?.activationOn ?? GRID_DEFAULTS.activationOn,
+    activationStrength: settings?.activationStrength ?? GRID_DEFAULTS.activationStrength,
+    activationTied: settings?.activationTied ?? GRID_DEFAULTS.activationTied,
+    activationFrom: settings?.activationFrom ?? GRID_DEFAULTS.activationFrom,
+    activationReach: settings?.activationReach ?? GRID_DEFAULTS.activationReach,
+    activationFalloff: settings?.activationFalloff ?? GRID_DEFAULTS.activationFalloff,
+    activationEnergizes: settings?.activationEnergizes ?? GRID_DEFAULTS.activationEnergizes,
+    activationGlow: settings?.activationGlow ?? GRID_DEFAULTS.activationGlow,
   };
 }
 

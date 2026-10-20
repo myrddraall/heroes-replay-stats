@@ -2,14 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
   addedShades,
   bodyLights,
-  dataActivation,
-  dataReveal,
-  fieldLights,
   linkedSettings,
   lightsForMoons,
   newLight,
   reaches,
-  revealFrom,
   withAddedLights,
   colourAndStrength,
   mergeLightSettings,
@@ -19,6 +15,7 @@ import {
   reachesReceiver,
   withReceiver,
   tunedRig,
+  knownLights,
 } from './scene-lights';
 import { DEFAULT_SHADE, type PlanetLight } from './scene-planets';
 
@@ -175,66 +172,15 @@ describe('a body’s lights', () => {
     expect(lightsForMoons([{ ...lamp, moons: true, enabled: false }], undefined)).toEqual([]);
   });
 
-  it('reveal and activate grids only: not lights that light a body', () => {
-    const reveal = newLight('reveal', []);
-    const activation = { ...newLight('activation', []), strength: 0.5 };
-    // A body without a rig stays unlit with only grid lights added.
-    expect(withAddedLights(undefined, [reveal, activation], undefined, 1.5)).toBeUndefined();
-    expect(fieldLights('reveal', [reveal, activation], undefined)).toEqual([
-      { from: reveal.from, spread: 1, falloff: 1, strength: 2 },
-    ]);
-    expect(fieldLights('activation', [reveal, activation], undefined)[0]!.strength).toBe(0.5);
-    expect(newLight('activation', []).strength).toBe(1);
-    // A new activation light only colours: it energizes nothing, nor glows, until set to.
-    expect(fieldLights('activation', [activation], undefined)[0]!.energizes).toBe(0);
-    expect(fieldLights('activation', [activation], undefined)[0]!.glow).toBe(0);
-    expect(fieldLights('activation', [activation], { [activation.id]: { glow: 1 } })[0]!.glow).toBe(
-      1,
+  it("leave out lights of kinds kept from before (a grid's reveal and activation, its material's now)", () => {
+    const lamp = { ...newLight('ambient', []), id: 'added-lamp' as const };
+    const old = { id: 'added-old', kind: 'reveal', name: 'Reveal light' };
+    expect(knownLights([lamp, old])).toEqual([lamp]);
+    // Not lighting a body either.
+    const added = [lamp, old] as unknown as Parameters<typeof withAddedLights>[1];
+    expect(withAddedLights(undefined, added, undefined, 1)!.ambient).toEqual(
+      withAddedLights(undefined, [lamp], undefined, 1)!.ambient,
     );
-    expect(
-      fieldLights('activation', [activation], { [activation.id]: { energizes: 1.5 } })[0]!
-        .energizes,
-    ).toBe(1.5);
-    // Switched off where added: none.
-    expect(
-      fieldLights('activation', [activation], { [activation.id]: { enabled: false } }),
-    ).toEqual([]);
-  });
-
-  it('give a grid its own reveal light, revealing all its face from the front, and its activation light', () => {
-    const front = { from: [0, -1, 0] as const, spread: 1, falloff: 1 };
-    expect(dataReveal(undefined)).toEqual({ ...front, strength: 2 });
-    expect(dataReveal({ spread: 0.2, strength: 3 })).toEqual({
-      ...front,
-      spread: 0.2,
-      strength: 3,
-    });
-    expect(dataReveal({ enabled: false })).toBeNull();
-    const lights = bodyLights(undefined, DEFAULT_SHADE, {}, true);
-    expect(lights.map((l) => [l.id, l.kind, l.name])).toEqual([
-      ['shadow', 'shadow', 'Antilight'],
-      ['reveal', 'reveal', 'Reveal light'],
-      ['activation', 'activation', 'Activation light'],
-    ]);
-    // Its activation light switched off until switched on, its side tied to the reveal's.
-    const activation = lights.find((l) => l.id === 'activation')!;
-    expect(activation.enabled).toBe(false);
-    expect(activation.tied).toBe(true);
-    // As the reveal is, not as strongly, energizing a little (a quarter of what it activates).
-    expect(dataActivation(undefined)).toBeNull();
-    expect(dataActivation({ enabled: true })).toEqual({
-      ...front,
-      strength: 1,
-      energizes: 0.25,
-      glow: 0.5,
-      tied: true,
-    });
-    expect(dataActivation({ enabled: true, glow: 2 })!.glow).toBe(2);
-    expect(dataActivation({ enabled: true, energizes: 0 })!.energizes).toBe(0);
-    expect(dataActivation({ enabled: true, tied: false })!.tied).toBe(false);
-    // The side a tied activation takes: the reveal light's as set.
-    expect(revealFrom(undefined)).toEqual([0, -1, 0]);
-    expect(revealFrom({ reveal: { from: [1, 0, 0] } })).toEqual([1, 0, 0]);
   });
 });
 

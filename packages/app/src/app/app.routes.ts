@@ -44,15 +44,27 @@ const pages: Routes = [
 ];
 
 /**
- * The Background page: `/edit-background` (the library), or `/edit-background/<kind>/<id>` (what
- * is open in its editor: `kind` and `id` for the page). One route for both, so moving between
- * them keeps the page (its draft, its panels) as it is.
+ * The Background page: `/edit-background` (the library), `/edit-background/<kind>/<id>` (what is
+ * open in its editor: `kind` and `id` for the page), or
+ * `/edit-background/<kind>/<id>/material/<material>` (a material opened from that planet or
+ * overlay: `onKind` and `onId` too). One route for all, so moving between them keeps the page
+ * (its draft, its panels, its view) as it is.
  */
 export function editBackgroundMatcher(segments: UrlSegment[]): UrlMatchResult | null {
   if (segments[0]?.path !== 'edit-background') return null;
   if (segments.length === 1) return { consumed: segments };
   if (segments.length === 3)
     return { consumed: segments, posParams: { kind: segments[1]!, id: segments[2]! } };
+  if (segments.length === 5 && segments[3]!.path === 'material')
+    return {
+      consumed: segments,
+      posParams: {
+        onKind: segments[1]!,
+        onId: segments[2]!,
+        kind: segments[3]!,
+        id: segments[4]!,
+      },
+    };
   return null;
 }
 

@@ -18,6 +18,7 @@ import {
   type StandInFill,
 } from './editing-aids.store';
 import { Editor } from './editor';
+import { EditorUiStore } from './editor-ui.store';
 import { MaterialProperties } from './material-properties';
 import { PartProperties } from './part-properties';
 import { LightProperties } from './light-properties';
@@ -59,6 +60,7 @@ export class SelectionPanel {
   protected readonly scene = inject(SceneEditorStore, { optional: true });
   protected readonly draft = inject(DraftDesignStore);
   protected readonly aids = inject(EditingAidsStore);
+  private readonly ui = inject(EditorUiStore);
   private readonly catalog = inject(AssetCatalogStore);
 
   /** The skies there are, for the backdrop. */
@@ -87,7 +89,6 @@ export class SelectionPanel {
       fill: 'standIn',
       colour: 'standInColour',
       gridSize: 'gridSize',
-      onPlanet: 'materialOnPlanet',
     },
   } as const satisfies Record<
     string,
@@ -104,7 +105,6 @@ export class SelectionPanel {
     fill: this.aids.standIn(),
     colour: this.aids.standInColour(),
     gridSize: this.aids.gridSize(),
-    onPlanet: this.aids.materialOnPlanet(),
   }));
   /** The reference image's settings, each by the aids store's name for it. */
   private readonly referenceKeys = {
@@ -150,7 +150,6 @@ export class SelectionPanel {
       sky: differs('sky'),
       colour: differs('colour'),
       gridSize: differs('gridSize'),
-      onPlanet: differs('onPlanet'),
     };
   }
 
@@ -167,8 +166,13 @@ export class SelectionPanel {
         : {}),
       ...(change.sky !== undefined ? { backdropSky: change.sky } : {}),
       ...(change.gridSize !== undefined ? { gridSize: change.gridSize as GridSize } : {}),
-      ...(change.onPlanet !== undefined ? { materialOnPlanet: change.onPlanet } : {}),
     });
+  }
+
+  /** The selected material as the library has it (shared), opened from what it is selected in. */
+  protected openShared(): void {
+    const shared = this.editor.sharedMaterial();
+    if (shared) this.ui.open(shared);
   }
 
   protected setReference(change: Partial<ReferenceValues>): void {

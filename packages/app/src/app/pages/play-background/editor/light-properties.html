@@ -41,79 +41,13 @@
     (valueChange)="settingsChange.emit({ strength: $event })"
   />
   @if (l.from; as from) {
-    @if (entry.canTie) {
-      <hrs-property-check
-        label="Same direction as the reveal"
-        [checked]="l.tied ?? false"
-        [changed]="isSet('tied')"
-        [origin]="entry.origins.tied"
-        (resetRequested)="unset(['tied'])"
-        (checkedChange)="settingsChange.emit({ tied: $event })"
-      />
-    }
-    @if (l.tied && entry.tiedFrom; as tiedFrom) {
-      <!-- Tied: the reveal light's side, moved with it. -->
-      <hrs-property-direction
-        label="Light from"
-        [value]="tiedFrom"
-        (valueChange)="tiedFromChange.emit($event)"
-      />
-    } @else {
-      <hrs-property-direction
-        label="Light from"
-        [value]="from"
-        [changed]="isSet('from')"
-        [origin]="entry.origins.from"
-        (resetRequested)="clear.emit(['from'])"
-        (valueChange)="settingsChange.emit({ from: $event })"
-      />
-    }
-  }
-  @if (l.spread !== undefined) {
-    <hrs-property-number
-      label="Reach"
-      [value]="l.spread"
-      [min]="0"
-      [max]="1"
-      [step]="0.01"
-      [changed]="isSet('spread')"
-      [origin]="entry.origins.spread"
-      (resetRequested)="clear.emit(['spread'])"
-      (valueChange)="settingsChange.emit({ spread: $event })"
-    />
-    <hrs-property-number
-      label="Falloff"
-      [value]="l.falloff ?? 1"
-      [min]="0.1"
-      [step]="0.05"
-      [changed]="isSet('falloff')"
-      [origin]="entry.origins.falloff"
-      (resetRequested)="clear.emit(['falloff'])"
-      (valueChange)="settingsChange.emit({ falloff: $event })"
-    />
-  }
-  @if (l.energizes !== undefined) {
-    <hrs-property-number
-      label="Energizes"
-      [value]="l.energizes"
-      [min]="0"
-      [step]="0.05"
-      [changed]="isSet('energizes')"
-      [origin]="entry.origins.energizes"
-      (resetRequested)="clear.emit(['energizes'])"
-      (valueChange)="settingsChange.emit({ energizes: $event })"
-    />
-  }
-  @if (l.glow !== undefined) {
-    <hrs-property-number
-      label="Glow"
-      [value]="l.glow"
-      [min]="0"
-      [step]="0.05"
-      [changed]="isSet('glow')"
-      [origin]="entry.origins.glow"
-      (resetRequested)="clear.emit(['glow'])"
-      (valueChange)="settingsChange.emit({ glow: $event })"
+    <hrs-property-direction
+      label="Light from"
+      [value]="from"
+      [changed]="isSet('from')"
+      [origin]="entry.origins.from"
+      (resetRequested)="clear.emit(['from'])"
+      (valueChange)="settingsChange.emit({ from: $event })"
     />
   }
   @if (l.kind === 'shadow') {

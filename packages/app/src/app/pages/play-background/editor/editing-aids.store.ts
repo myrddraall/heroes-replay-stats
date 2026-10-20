@@ -41,8 +41,6 @@ export interface EditingAidsState {
   /** What is set for the stand-in's own lights (its ambient light, its directional light), by light. */
   readonly standInLights: LightSettingsMap;
   readonly gridSize: GridSize;
-  /** Whether a material opened on its own is shown on its planet rather than on the stand-in. */
-  readonly materialOnPlanet: boolean;
   /** The reference image (a picture of the game's own screen) laid over the view, if one is chosen. */
   readonly referenceUrl: string | null;
   readonly referenceName: string;
@@ -64,7 +62,6 @@ export const EDITING_AIDS_DEFAULTS: EditingAidsState = {
   standInColour: '#9a9a9a',
   standInLights: {},
   gridSize: 'medium',
-  materialOnPlanet: false,
   referenceUrl: null,
   referenceName: '',
   referenceShown: true,
@@ -99,7 +96,6 @@ export const EditingAidsStore = signalStore(
     'standInColour',
     'standInLights',
     'gridSize',
-    'materialOnPlanet',
     'referenceShown',
     'referenceMode',
     'referenceAmount',

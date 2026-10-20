@@ -22,6 +22,14 @@
     (resetRequested)="clear.emit(['label'])"
     (valueChange)="rename($event)"
   />
+  @if (shared()) {
+    <div class="buttons">
+      <button type="button" class="button" (click)="sharedOpen.emit()">
+        Edit shared material
+        <mat-icon class="material-symbols-outlined" aria-hidden="true">arrow_outward</mat-icon>
+      </button>
+    </div>
+  }
 </hrs-property-section>
 <hrs-property-section
   title="Surface"
@@ -79,12 +87,12 @@
   >
     @if (c.lit) {
       <hrs-property-check
-        label="Lit by its light"
-        [checked]="v.lit"
+        label="Ignore lights"
+        [checked]="!v.lit"
         [changed]="isSet('lit')"
         [origin]="origins()?.lit"
         (resetRequested)="clear.emit(['lit'])"
-        (checkedChange)="settingsChange.emit({ lit: $event })"
+        (checkedChange)="settingsChange.emit({ lit: !$event })"
       />
     }
     <hrs-property-number
@@ -140,8 +148,8 @@
 @if (c.scale) {
   <hrs-property-section
     title="Pattern"
-    [changed]="anySet(['inactive', 'active', 'drawAs', 'scale', 'width', 'soft', 'cut'])"
-    (resetRequested)="clear.emit(['inactive', 'active', 'drawAs', 'scale', 'width', 'soft', 'cut'])"
+    [changed]="anySet(['inactive', 'drawAs', 'scale', 'width', 'soft', 'cut'])"
+    (resetRequested)="clear.emit(['inactive', 'drawAs', 'scale', 'width', 'soft', 'cut'])"
   >
     @if (c.colours) {
       <hrs-property-colour
@@ -151,14 +159,6 @@
         [origin]="origins()?.inactive"
         (resetRequested)="clear.emit(['inactive'])"
         (valueChange)="settingsChange.emit({ inactive: $event })"
-      />
-      <hrs-property-colour
-        label="Active"
-        [value]="v.active"
-        [changed]="isSet('active')"
-        [origin]="origins()?.active"
-        (resetRequested)="clear.emit(['active'])"
-        (valueChange)="settingsChange.emit({ active: $event })"
       />
     }
     @if (c.drawAs) {
@@ -216,6 +216,156 @@
         [origin]="origins()?.cut"
         (resetRequested)="clear.emit(['cut'])"
         (valueChange)="settingsChange.emit({ cut: $event })"
+      />
+    }
+  </hrs-property-section>
+}
+@if (c.colours) {
+  <hrs-property-section
+    title="Reveal"
+    [changed]="anySet(revealKeys)"
+    (resetRequested)="clear.emit(revealKeys)"
+  >
+    <hrs-property-check
+      label="On"
+      [checked]="v.revealOn"
+      [changed]="isSet('revealOn')"
+      [origin]="origins()?.revealOn"
+      (resetRequested)="clear.emit(['revealOn'])"
+      (checkedChange)="settingsChange.emit({ revealOn: $event })"
+    />
+    @if (v.revealOn) {
+      <hrs-property-number
+        label="Strength"
+        [value]="v.revealStrength"
+        [min]="0"
+        [step]="0.05"
+        [changed]="isSet('revealStrength')"
+        [origin]="origins()?.revealStrength"
+        (resetRequested)="clear.emit(['revealStrength'])"
+        (valueChange)="settingsChange.emit({ revealStrength: $event })"
+      />
+      <hrs-property-direction
+        label="Direction"
+        [value]="v.revealFrom"
+        [changed]="isSet('revealFrom')"
+        [origin]="origins()?.revealFrom"
+        (resetRequested)="clear.emit(['revealFrom'])"
+        (valueChange)="settingsChange.emit({ revealFrom: $event })"
+      />
+      <hrs-property-number
+        label="Reach"
+        [value]="v.revealReach"
+        [min]="0"
+        [max]="1"
+        [step]="0.01"
+        [changed]="isSet('revealReach')"
+        [origin]="origins()?.revealReach"
+        (resetRequested)="clear.emit(['revealReach'])"
+        (valueChange)="settingsChange.emit({ revealReach: $event })"
+      />
+      <hrs-property-number
+        label="Falloff"
+        [value]="v.revealFalloff"
+        [min]="0.1"
+        [step]="0.05"
+        [changed]="isSet('revealFalloff')"
+        [origin]="origins()?.revealFalloff"
+        (resetRequested)="clear.emit(['revealFalloff'])"
+        (valueChange)="settingsChange.emit({ revealFalloff: $event })"
+      />
+    }
+  </hrs-property-section>
+  <hrs-property-section
+    title="Activation"
+    [changed]="anySet(activationKeys)"
+    (resetRequested)="clear.emit(activationKeys)"
+  >
+    <hrs-property-check
+      label="On"
+      [checked]="v.activationOn"
+      [changed]="isSet('activationOn')"
+      [origin]="origins()?.activationOn"
+      (resetRequested)="clear.emit(['activationOn'])"
+      (checkedChange)="settingsChange.emit({ activationOn: $event })"
+    />
+    @if (v.activationOn) {
+      <hrs-property-colour
+        label="Active"
+        [value]="v.active"
+        [changed]="isSet('active')"
+        [origin]="origins()?.active"
+        (resetRequested)="clear.emit(['active'])"
+        (valueChange)="settingsChange.emit({ active: $event })"
+      />
+      <hrs-property-number
+        label="Strength"
+        [value]="v.activationStrength"
+        [min]="0"
+        [step]="0.05"
+        [changed]="isSet('activationStrength')"
+        [origin]="origins()?.activationStrength"
+        (resetRequested)="clear.emit(['activationStrength'])"
+        (valueChange)="settingsChange.emit({ activationStrength: $event })"
+      />
+      <hrs-property-check
+        label="Same direction as the reveal"
+        [checked]="v.activationTied"
+        [changed]="isSet('activationTied')"
+        [origin]="origins()?.activationTied"
+        (resetRequested)="clear.emit(['activationTied'])"
+        (checkedChange)="settingsChange.emit({ activationTied: $event })"
+      />
+      @if (!v.activationTied) {
+        <hrs-property-direction
+          label="Direction"
+          [value]="v.activationFrom"
+          [changed]="isSet('activationFrom')"
+          [origin]="origins()?.activationFrom"
+          (resetRequested)="clear.emit(['activationFrom'])"
+          (valueChange)="settingsChange.emit({ activationFrom: $event })"
+        />
+      }
+      <hrs-property-number
+        label="Reach"
+        [value]="v.activationReach"
+        [min]="0"
+        [max]="1"
+        [step]="0.01"
+        [changed]="isSet('activationReach')"
+        [origin]="origins()?.activationReach"
+        (resetRequested)="clear.emit(['activationReach'])"
+        (valueChange)="settingsChange.emit({ activationReach: $event })"
+      />
+      <hrs-property-number
+        label="Falloff"
+        [value]="v.activationFalloff"
+        [min]="0.1"
+        [step]="0.05"
+        [changed]="isSet('activationFalloff')"
+        [origin]="origins()?.activationFalloff"
+        (resetRequested)="clear.emit(['activationFalloff'])"
+        (valueChange)="settingsChange.emit({ activationFalloff: $event })"
+      />
+      <hrs-property-number
+        label="Energizes"
+        [value]="v.activationEnergizes"
+        [min]="0"
+        [step]="0.05"
+        [changed]="isSet('activationEnergizes')"
+        [origin]="origins()?.activationEnergizes"
+        (resetRequested)="clear.emit(['activationEnergizes'])"
+        (valueChange)="settingsChange.emit({ activationEnergizes: $event })"
+      />
+      <hrs-property-number
+        label="Glow"
+        [value]="v.activationGlow"
+        [min]="0"
+        [step]="0.05"
+        [changed]="isSet('activationGlow')"
+        [origin]="origins()?.activationGlow"
+        (resetRequested)="clear.emit(['activationGlow'])"
+        (valueChange)="settingsChange.emit({ activationGlow: $event })"
       />
     }
   </hrs-property-section>

@@ -2,8 +2,8 @@
 @let c = changed();
 <hrs-property-section
   [title]="title()"
-  [changed]="c.fill || c.sky || c.colour || c.gridSize || c.onPlanet"
-  (resetRequested)="clear.emit(['fill', 'sky', 'colour', 'gridSize', 'onPlanet'])"
+  [changed]="c.fill || c.sky || c.colour || c.gridSize"
+  (resetRequested)="clear.emit(['fill', 'sky', 'colour', 'gridSize'])"
 >
   <hrs-property-select
     label="Fill"
@@ -40,15 +40,6 @@
       [changed]="c.gridSize"
       (resetRequested)="clear.emit(['gridSize'])"
       (valueChange)="valuesChange.emit({ gridSize: $event })"
-    />
-  }
-  @if (v.onPlanet !== undefined) {
-    <hrs-property-check
-      label="Materials on their planet"
-      [checked]="v.onPlanet"
-      [changed]="c.onPlanet"
-      (resetRequested)="clear.emit(['onPlanet'])"
-      (checkedChange)="valuesChange.emit({ onPlanet: $event })"
     />
   }
 </hrs-property-section>

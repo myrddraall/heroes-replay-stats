@@ -19,8 +19,7 @@ import type {
   LightKind,
   LightSettings,
 } from '../../../scenes/play-background/scene-lights';
-import type { Vec3 } from '../../../scenes/play-background/scene-directions';
-import type { OpenTarget } from './open-target';
+import type { AssetTarget, OpenTarget } from './open-target';
 import type { TreeMove, TreeRow } from './scene-tree';
 
 /**
@@ -34,6 +33,13 @@ export abstract class Editor {
   /** What it has open; what the left panel calls it. */
   abstract readonly opened: Signal<OpenTarget>;
   abstract readonly heading: Signal<string>;
+  /** What is open was opened from (a material's planet or overlay), to go back to; none: the library. */
+  abstract readonly parent: Signal<{ readonly target: OpenTarget; readonly label: string } | null>;
+  /**
+   * The selected material of a planet or overlay as the library has it (one material, shared by
+   * all that use it), to open from there; none where a material of one isn't selected.
+   */
+  abstract readonly sharedMaterial: Signal<AssetTarget | null>;
   /** What the tree shows: as many rows as are unfolded. */
   abstract readonly rows: Signal<TreeRow[]>;
   abstract readonly selected: Signal<string>;
@@ -80,8 +86,6 @@ export abstract class Editor {
   abstract addLight(kind: LightKind): void;
   /** The selected light taken out, where it was added at the level edited. */
   abstract removeLight(): void;
-  /** The selected light's body's reveal light turned to a side (an activation light tied to it moving with it). */
-  abstract setRevealFrom(from: Vec3): void;
   /** What lights the selected body, part or material (none: something else is selected). */
   abstract readonly litBy: Signal<readonly LitByEntry[] | null>;
   /** One of the lights in the selected body's Lit by selected in the tree, its rows unfolded to it. */

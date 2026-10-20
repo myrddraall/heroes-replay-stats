@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  GRID_DEFAULTS,
+  gridFields,
   materialControls,
   materialValues,
   mergeMaterialSettings,
@@ -151,5 +153,33 @@ describe('materials’ settings', () => {
         ['the library (planet)', { glow: 1, scale: undefined }],
       ]),
     ).toEqual({ strength: 'its tuning', glow: 'the library (planet)' });
+  });
+
+  it('reveal a grid from the front, its whole face, and activate it only once switched on', () => {
+    const v = materialValues(material(), undefined);
+    const { reveal, activation } = gridFields(v);
+    expect(reveal).toEqual([{ from: TOWARDS_EYE, reach: 1, falloff: 1, strength: 2 }]);
+    expect(activation).toEqual([]);
+    // Switched off: shown nowhere.
+    expect(gridFields(materialValues(material(), { revealOn: false })).reveal).toEqual([]);
+  });
+
+  it("activate a grid as set, from its reveal's side while tied, else its own", () => {
+    const right = [1, 0, 0] as const;
+    const left = [-1, 0, 0] as const;
+    const on = { activationOn: true, revealFrom: right, activationFrom: left };
+    expect(gridFields(materialValues(material(), on)).activation).toEqual([
+      {
+        from: right,
+        reach: GRID_DEFAULTS.activationReach,
+        falloff: GRID_DEFAULTS.activationFalloff,
+        strength: GRID_DEFAULTS.activationStrength,
+        energizes: GRID_DEFAULTS.activationEnergizes,
+        glow: GRID_DEFAULTS.activationGlow,
+      },
+    ]);
+    expect(
+      gridFields(materialValues(material(), { ...on, activationTied: false })).activation[0]!.from,
+    ).toEqual(left);
   });
 });

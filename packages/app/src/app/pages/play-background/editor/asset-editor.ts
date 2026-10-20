@@ -1,6 +1,7 @@
 import { Component, inject, input } from '@angular/core';
 import { BACKGROUND_SCENE } from '../../../scenes/play-background/background-design.tokens';
 import { AssetEditorStore } from './asset-editor.store';
+import { AssetHeader } from './asset-header';
 import { Editor } from './editor';
 import { EditorLayout } from './editor-layout';
 import type { AssetTarget } from './open-target';
@@ -12,7 +13,7 @@ import type { AssetTarget } from './open-target';
  */
 @Component({
   selector: 'hrs-asset-editor',
-  imports: [EditorLayout],
+  imports: [EditorLayout, AssetHeader],
   providers: [
     AssetEditorStore,
     { provide: Editor, useExisting: AssetEditorStore },

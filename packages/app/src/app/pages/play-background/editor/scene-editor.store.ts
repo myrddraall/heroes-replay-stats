@@ -107,13 +107,14 @@ import {
 } from './editor-model';
 import { REFERENCE_KEY } from './editing-aids.store';
 import { EditorUiStore } from './editor-ui.store';
-import { type OpenTarget, RANDOM_SETS } from './open-target';
+import { type AssetTarget, type OpenTarget, RANDOM_SETS } from './open-target';
 import type { TreeMove, TreeRow } from './scene-tree';
 import {
   type AddedLight,
   type LightId,
   type LightKind,
   type LightSettings,
+  knownLights,
   newLight,
   type Receiver,
 } from '../../../scenes/play-background/scene-lights';
@@ -328,7 +329,7 @@ export const SceneEditorStore = signalStore(
       const t = target();
       if (!('path' in t)) return [];
       return [
-        ...(choices().lights ?? [])
+        ...knownLights(choices().lights ?? [])
           .filter((l) => l.enabled !== false)
           .map((light) => ({ light, owner: 'scene' as const })),
         ...t.path.slice(0, -1).flatMap((_, i) => {
@@ -372,6 +373,19 @@ export const SceneEditorStore = signalStore(
     return {
       resetAllLabel: computed(() => 'Reset scene'),
       opened: computed((): OpenTarget => ({ kind: 'scene', id: sceneId() })),
+      parent: computed(() => null),
+      sharedMaterial: computed((): AssetTarget | null => {
+        const t = target();
+        const b = body();
+        if (t.kind !== 'material' || !b) return null;
+        const m = materialsOf(b).find((x) => x.name === t.name);
+        if (!m) return null;
+        return {
+          kind: 'material',
+          id: t.name,
+          on: m.from === 'style' ? { kind: 'style', id: b.style } : { kind: 'planet', id: b.id },
+        };
+      }),
       sceneName: computed(() => choices().name ?? ''),
       /** The name a scene shows where it has none of its own. */
       sceneLabel: label,
@@ -926,10 +940,6 @@ export const SceneEditorStore = signalStore(
           d.setSceneLights(store.scene(), [...store.sceneLights(), light]);
           patchState(store, { selected: sceneLightKey(light.id) });
         }
-      },
-      setRevealFrom(from: Vec3): void {
-        const t = store.target();
-        if (t.kind === 'light') lightChange({ ...t, id: 'reveal' }, { from });
       },
       removeLight(): void {
         const t = store.target();

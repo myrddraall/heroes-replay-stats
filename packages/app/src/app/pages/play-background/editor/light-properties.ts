@@ -1,5 +1,4 @@
 import { Component, computed, input, output } from '@angular/core';
-import type { Vec3 } from '../../../scenes/play-background/scene-directions';
 import type {
   LightReach,
   LightSettings,
@@ -15,17 +14,7 @@ import { PropertyText } from '../properties/property-text';
 import type { LightEntry } from './editor-model';
 
 /** A light's own settings (its name is apart, and its switch: the tree row's). */
-const LIGHT_KEYS: readonly (keyof LightSettings)[] = [
-  'colour',
-  'strength',
-  'from',
-  'softness',
-  'spread',
-  'falloff',
-  'energizes',
-  'glow',
-  'tied',
-];
+const LIGHT_KEYS: readonly (keyof LightSettings)[] = ['colour', 'strength', 'from', 'softness'];
 
 /** What a light reaches of its body, as its Reaches list offers it. */
 type ReachMode = 'all' | LightReach['mode'];
@@ -63,8 +52,6 @@ export class LightProperties {
   readonly clear = output<readonly (keyof LightSettings)[] | undefined>();
   /** It was taken out (one added at the level edited). */
   readonly removed = output<void>();
-  /** An activation light tied to its body's reveal light turned: the reveal light turned (both move). */
-  readonly tiedFromChange = output<Vec3>();
   /** Its light's settings (its name is apart). */
   protected readonly lightKeys = LIGHT_KEYS;
   protected readonly changed = computed(() => LIGHT_KEYS.some((k) => this.isSet(k)));

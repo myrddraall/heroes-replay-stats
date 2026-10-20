@@ -21,10 +21,17 @@
           <hrs-library-head />
         } @else {
           <div class="layout__back">
-            <button type="button" class="layout__library" (click)="ui.setBrowsing(true)">
-              <mat-icon class="material-symbols-outlined" aria-hidden="true">arrow_back</mat-icon>
-              <span>Library</span>
-            </button>
+            @if (editor.parent(); as parent) {
+              <button type="button" class="layout__library" (click)="ui.open(parent.target)">
+                <mat-icon class="material-symbols-outlined" aria-hidden="true">arrow_back</mat-icon>
+                <span>{{ parent.label }}</span>
+              </button>
+            } @else {
+              <button type="button" class="layout__library" (click)="ui.setBrowsing(true)">
+                <mat-icon class="material-symbols-outlined" aria-hidden="true">arrow_back</mat-icon>
+                <span>Library</span>
+              </button>
+            }
             <hrs-editor-bar class="layout__bar" />
           </div>
         }

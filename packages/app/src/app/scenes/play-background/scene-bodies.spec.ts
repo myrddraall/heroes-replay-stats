@@ -87,15 +87,15 @@ describe('switching a light or a material on or off', () => {
     const off = withLightSwitched({}, 'ambient', false, true)!;
     expect(off).toEqual({ lights: { ambient: { enabled: false } } });
     expect(withLightSwitched(off, 'ambient', true, true)).toBeUndefined();
-    // Off under it (a grid's activation light): switched on is set; what else is set is kept.
-    const set = { lights: { activation: { strength: 2 } } };
-    expect(withLightSwitched(set, 'activation', true, false)).toEqual({
-      lights: { activation: { strength: 2, enabled: true } },
+    // Off under it (switched off in the library): switched on is set; what else is set is kept.
+    const set = { lights: { shadow: { strength: 2 } } };
+    expect(withLightSwitched(set, 'shadow', true, false)).toEqual({
+      lights: { shadow: { strength: 2, enabled: true } },
     });
     expect(
       withLightSwitched(
-        { lights: { activation: { strength: 2, enabled: true } } },
-        'activation',
+        { lights: { shadow: { strength: 2, enabled: true } } },
+        'shadow',
         false,
         false,
       ),

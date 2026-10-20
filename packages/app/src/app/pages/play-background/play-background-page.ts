@@ -17,7 +17,8 @@ import { buildStandIn, parseStandIn } from './editor/stand-in';
  * site shows what is published, until Save; its own UI state; the library's lists; and the
  * editing aids (the stage's backdrop, the stand-in planet), never part of the design. It edits
  * what the URL's path says (`/edit-background/<kind>/<id>`: a scene, else one of the library's
- * assets; nothing: the random sets' scene, under the library's list), each editor providing its
+ * assets, a material perhaps under the planet or overlay it was opened from; nothing: the random
+ * sets' scene, under the library's list), each editor providing its
  * own store to the tree, properties and background under it.
  */
 @Component({
@@ -54,8 +55,13 @@ export class PlayBackgroundPage {
   /** What is open, from the URL's path; none: the random sets' scene. */
   readonly kind = input<string>();
   readonly id = input<string>();
+  /** A material's: the planet or overlay it was opened from. */
+  readonly onKind = input<string>();
+  readonly onId = input<string>();
 
-  protected readonly opened = computed(() => openOf(this.kind(), this.id()));
+  protected readonly opened = computed(() =>
+    openOf(this.kind(), this.id(), this.onKind(), this.onId()),
+  );
   protected readonly isAsset = isAsset;
   private readonly openedKey = computed(() =>
     this.kind() !== undefined ? openKey(this.opened()) : undefined,

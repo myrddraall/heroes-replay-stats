@@ -8,7 +8,6 @@ import {
   withProps,
   withState,
 } from '@ngrx/signals';
-import type { Vec3 } from '../../../scenes/play-background/scene-directions';
 import { withFolding } from '../../../data/store-features/with-folding';
 import { withLocalStorage } from '../../../data/store-features/with-local-storage';
 import type { BodySettings, SkyChoices } from '../../../scenes/play-background/background-scene';
@@ -194,6 +193,8 @@ interface AssetEditorState {
   readonly selected: string;
   /** The planet on the stage: the last opened (a style, a material, the sky are shown on it). */
   readonly previewPlanet: string;
+  /** A material opened from a planet or overlay: shown on the stand-in instead of on that. */
+  readonly onStandIn: boolean;
 }
 
 /**
@@ -209,6 +210,7 @@ export const AssetEditorStore = signalStore(
     asset: { kind: 'planet', id: DEFAULT_PREVIEW_PLANET },
     selected: ASSET,
     previewPlanet: DEFAULT_PREVIEW_PLANET,
+    onStandIn: false,
   }),
   withFolding([STAGE, ASSET]),
   withLocalStorage<AssetEditorState & { expanded: readonly string[] }>(
@@ -232,12 +234,20 @@ export const AssetEditorStore = signalStore(
       stage
         ? { below: library().sky, edited: stageScene().sky ?? {} }
         : { below: undefined, edited: library().sky };
-    /** Where the material open is shown from: on the planet on the stage where it is that planet's, else its first use. */
+    /**
+     * Where the material open is shown from: the planet or overlay it was opened from, else the
+     * planet on the stage where it is that planet's, else its first use.
+     */
     const materialUse = computed((): MaterialUse | undefined => {
       const a = asset();
       if (a.kind !== 'material') return undefined;
       const uses = _catalog.materialByName().get(a.id)?.uses ?? [];
-      return uses.find((u) => u.kind === 'planet' && u.id === previewPlanet()) ?? uses[0];
+      const on = a.on;
+      return (
+        (on && uses.find((u) => u.kind === on.kind && u.id === on.id)) ||
+        uses.find((u) => u.kind === 'planet' && u.id === previewPlanet()) ||
+        uses[0]
+      );
     });
     return {
       _stageScene: stageScene,
@@ -280,6 +290,7 @@ export const AssetEditorStore = signalStore(
       asset,
       selected,
       previewPlanet,
+      onStandIn,
       _draft,
       _skyOf,
       _skyMaterials,
@@ -303,7 +314,36 @@ export const AssetEditorStore = signalStore(
         opened: computed((): OpenTarget => asset()),
         heading: computed(() => {
           const a = asset();
+          if (a.on) {
+            const on = a.on.kind === 'planet' ? library().planets : library().styles;
+            const material = _catalog.materialByName().get(a.id)?.label ?? a.id;
+            return `${on[a.on.id]?.label ?? a.on.id} › ${material}`;
+          }
           return `${KIND_TITLES[a.kind]} · ${a.kind === 'sky' ? 'Play screen' : a.id}`;
+        }),
+        sharedMaterial: computed((): AssetTarget | null => {
+          const t = target();
+          const a = asset();
+          const b = _body();
+          if (t.kind !== 'material' || !b || (a.kind !== 'planet' && a.kind !== 'style'))
+            return null;
+          const m = materialsOf(b).find((x) => x.name === t.name);
+          if (!m) return null;
+          return {
+            kind: 'material',
+            id: t.name,
+            on:
+              m.from === 'style' && b.style
+                ? { kind: 'style', id: b.style }
+                : { kind: a.kind, id: a.id },
+          };
+        }),
+        /** What the asset open was opened from (a material's planet or overlay): its way back. */
+        parent: computed((): { target: OpenTarget; label: string } | null => {
+          const on = asset().on;
+          if (!on) return null;
+          const set = on.kind === 'planet' ? library().planets : library().styles;
+          return { target: { kind: on.kind, id: on.id }, label: set[on.id]?.label ?? on.id };
         }),
         resetAllLabel: computed(() => {
           const a = asset();
@@ -428,7 +468,20 @@ export const AssetEditorStore = signalStore(
               lights: standInLightSettings(_aids.standInLights()),
             };
           };
-          if (a.kind === 'material' && !_aids.materialOnPlanet()) {
+          // A material opened from a planet or overlay: on that (unless asked for the stand-in).
+          if (a.kind === 'material' && a.on && !onStandIn()) {
+            const on = a.on;
+            if (on.kind === 'planet') {
+              const style = files[on.id]?.tuning?.style;
+              return style
+                ? [{ id: on.id, style, ...fitted(on.id, `style-${style}`) }]
+                : [{ id: on.id, ...fitted(on.id) }];
+            }
+            return [
+              { id: previewPlanet(), style: on.id, ...fitted(previewPlanet(), `style-${on.id}`) },
+            ];
+          }
+          if (a.kind === 'material') {
             const owner =
               use?.kind === 'planet'
                 ? use.id
@@ -727,9 +780,10 @@ export const AssetEditorStore = signalStore(
               expandable: false,
               expanded: false,
             });
-          // The stand-in only where it is shown: a material or a style opened on its own; its
+          // The stand-in only where it is shown: a material or a style opened on its own (a
+          // material opened from a planet or overlay: where switched to the stand-in); its
           // lights under it (open unless folded: its key among those kept means folded).
-          if (a.kind === 'material' || a.kind === 'style') {
+          if ((a.kind === 'material' && !(a.on && !store.onStandIn())) || a.kind === 'style') {
             const unfolded = !open.has(STAGE_STAND_IN);
             rows.push({
               key: STAGE_STAND_IN,
@@ -827,15 +881,26 @@ export const AssetEditorStore = signalStore(
       /** The asset the URL opens: its own row selected; a planet opened goes on the stage. */
       showAsset: signalMethod<AssetTarget>((a) => {
         const now = store.asset();
-        if (a.kind === now.kind && a.id === now.id) return;
+        if (
+          a.kind === now.kind &&
+          a.id === now.id &&
+          a.on?.kind === now.on?.kind &&
+          a.on?.id === now.on?.id
+        )
+          return;
         patchState(store, {
           asset: a,
           selected: ASSET,
+          onStandIn: false,
           ...(a.kind === 'planet' ? { previewPlanet: a.id } : {}),
         });
         store._ui.confirmReset(false);
         store.expand(ASSET);
       }),
+      /** A material opened from a planet or overlay: shown on the stand-in, or on that again. */
+      showOnStandIn(onStandIn: boolean): void {
+        patchState(store, { onStandIn });
+      },
       /** The asset on the stage clicked: its own row selected. */
       selectPlaced(): boolean {
         if (store.asset().kind === 'sky') return false;
@@ -906,9 +971,6 @@ export const AssetEditorStore = signalStore(
         const light = store.litBy()?.find((l) => l.id === change.id);
         if (b && light && receiver !== undefined)
           lightChange((s) => withLitBy(s, b, light, receiver, change.on) ?? {});
-      },
-      setRevealFrom(from: Vec3): void {
-        lightChange((s) => withLightChange(s, 'reveal', { from }));
       },
       removeLight(): void {
         const t = store.target();

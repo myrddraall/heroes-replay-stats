@@ -32,7 +32,7 @@ import {
   addedLight,
   type BodyLight,
   bodyLights,
-  GRID_LIGHTS,
+  knownLights,
   type LightId,
   type LightKind,
   type LightSettings,
@@ -574,8 +574,6 @@ export const LIGHT_ICONS: Record<LightKind, string> = {
   ambient: 'brightness_low',
   directional: 'wb_sunny',
   shadow: 'contrast',
-  reveal: 'visibility',
-  activation: 'flare',
 };
 
 /** A body's light as its properties show it. */
@@ -604,12 +602,6 @@ export interface LightEntry {
   /** Whether it reaches its body's moons too, and whether it can (one added to a body). */
   readonly moons: boolean;
   readonly canReachMoons: boolean;
-  /**
-   * An activation light's tie to its body's reveal light (its grid's): whether it can be tied, and
-   * the reveal's side it takes while it is.
-   */
-  readonly canTie?: boolean;
-  readonly tiedFrom?: Vec3;
 }
 
 /** A part or material a body's light may reach, as its Reaches list shows it (a part, its materials under it). */
@@ -659,10 +651,7 @@ export function lightsOfBody(b: BodyInfo): LightEntry[] {
   ];
   const settings = mergeLightSettings(...levels.map(([, l]) => l), b.settings.lights);
   const under = mergeLightSettings(...levels.map(([, l]) => l));
-  // A grid it has (its own, or its overlay's): its reveal and activation lights are the body's
-  // (the overlay's, where the grid is the overlay's).
-  const grid = materialsOf(b).find((m) => m.controls.colours);
-  const lightsBelow = new Map(bodyLights(turned, shade, under, !!grid).map((l) => [l.id, l]));
+  const lightsBelow = new Map(bodyLights(turned, shade, under).map((l) => [l.id, l]));
   const body = bodyOrigins(b);
   // The lights added to it: under the level edited (the library's for the planet, its overlay's),
   // then the level edited's own (its settings are its own: nothing over them here).
@@ -672,7 +661,7 @@ export function lightsOfBody(b: BodyInfo): LightEntry[] {
   ];
   const added: Omit<LightEntry, 'receivers' | 'moons' | 'canReachMoons'>[] = [
     ...below.flatMap(([name, list, overlay]) =>
-      (list ?? []).map((l) => ({
+      knownLights(list ?? []).map((l) => ({
         overlay,
         light: addedLight(l, settings[l.id]),
         nameBelow: addedLight(l, under[l.id]).name,
@@ -683,7 +672,7 @@ export function lightsOfBody(b: BodyInfo): LightEntry[] {
         addedIn: name,
       })),
     ),
-    ...(b.settings.added ?? []).map((l) => ({
+    ...knownLights(b.settings.added ?? []).map((l) => ({
       light: addedLight(l),
       nameBelow: l.name,
       enabledBelow: true,
@@ -699,17 +688,11 @@ export function lightsOfBody(b: BodyInfo): LightEntry[] {
       (l) => [l.id, l] as const,
     ),
   );
-  const entries = [...rigEntries(), ...added];
-  const reveal = entries.find((e) => e.light.id === 'reveal')?.light.from;
-  return entries.map((e) => {
+  return [...rigEntries(), ...added].map((e) => {
     const own = addedById.get(e.light.id as `added-${string}`);
     const merged = { ...own, ...settings[e.light.id] };
     return {
       ...e,
-      ...(e.light.kind === 'activation' && reveal ? { canTie: true, tiedFrom: reveal } : {}),
-      ...(e.light.id === 'reveal' || e.light.id === 'activation'
-        ? { overlay: grid?.from === 'style' }
-        : {}),
       receivers,
       reach: merged.reach,
       moons: merged.moons ?? false,
@@ -718,7 +701,7 @@ export function lightsOfBody(b: BodyInfo): LightEntry[] {
   });
 
   function rigEntries(): Omit<LightEntry, 'receivers' | 'moons' | 'canReachMoons'>[] {
-    return bodyLights(turned, shade, settings, !!grid).map((light) => {
+    return bodyLights(turned, shade, settings).map((light) => {
       const shadow = light.id === 'shadow';
       const own = b.settings.lights?.[light.id];
       const set = shadow ? { ...legacyShadow(b.settings), ...own } : own;
@@ -748,7 +731,7 @@ export function moonLightsOf(b: BodyInfo): AddedLight[] {
 
 /** A scene's own lights as shown: each added to the scene (its settings its own). */
 export function sceneLightsOf(lights: readonly AddedLight[] | undefined): LightEntry[] {
-  return (lights ?? []).map((l) => ({
+  return knownLights(lights ?? []).map((l) => ({
     light: addedLight(l),
     nameBelow: l.name,
     enabledBelow: true,
@@ -820,8 +803,8 @@ export function litByOf(
         ? (parts.get(receiver.slice(5)) ?? []).includes(m.name)
         : receiver === `material:${m.name}`,
   );
-  const acts = (kind: LightKind) =>
-    shown.some((m) => (GRID_LIGHTS.includes(kind) ? !!m.controls.colours : m.values.lit));
+  // Lights light a lit material; an antilight darkens any of a body's.
+  const acts = (kind: LightKind) => shown.some((m) => kind === 'shadow' || m.values.lit);
   const under = mergeLightSettings(b.below?.lights, b.styleBelow?.lights);
   const addedBelow = new Map(
     [...(b.below?.added ?? []), ...(b.styleBelow?.added ?? [])].map((l) => [l.id, l] as const),

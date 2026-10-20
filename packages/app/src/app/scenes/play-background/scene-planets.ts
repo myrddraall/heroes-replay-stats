@@ -246,11 +246,37 @@ export interface MaterialSettings {
   /** Its glow: 0 none, 1 its own light's bloom as the data has it, past 1 its emissive light boosted into the bloom. */
   readonly glow?: number;
   /**
-   * A grid's colours (`#rrggbb`): inactive (its own, the data's) where no activation light
-   * reaches, active where one does fully, blended between.
+   * A grid's colours (`#rrggbb`): inactive (its own, the data's) where it isn't activated, active
+   * where it is fully, blended between.
    */
   readonly inactive?: string;
   readonly active?: string;
+  /**
+   * A grid's (the shield's) reveal: where it shows at all, the more the face turns to its side
+   * (`revealFrom`, any side, the far one too), reaching round the face (`revealReach`: 0 the half
+   * facing it, 1 on round to the point facing away), falling off (`revealFalloff`), as strong as
+   * `revealStrength` (past 1, further round fully); shown unless `revealOn` is false (then not at
+   * all).
+   */
+  readonly revealOn?: boolean;
+  readonly revealStrength?: number;
+  readonly revealFrom?: Vec3;
+  readonly revealReach?: number;
+  readonly revealFalloff?: number;
+  /**
+   * A grid's activation: its colour from inactive to active, shaped as its reveal is (off unless
+   * `activationOn`); its side the reveal's while `activationTied` (unless false); revealing what
+   * it activates too (`activationEnergizes` times as much), and shining brighter and blooming
+   * more there (`activationGlow`).
+   */
+  readonly activationOn?: boolean;
+  readonly activationStrength?: number;
+  readonly activationTied?: boolean;
+  readonly activationFrom?: Vec3;
+  readonly activationReach?: number;
+  readonly activationFalloff?: number;
+  readonly activationEnergizes?: number;
+  readonly activationGlow?: number;
   /** How far it shows away from the limb, 0 to 1: a floor under its layers' fresnel (unset: each layer's own). */
   readonly spread?: number;
   /**

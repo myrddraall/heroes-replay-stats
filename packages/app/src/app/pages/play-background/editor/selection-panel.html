@@ -88,7 +88,6 @@
         (settingsChange)="editor.setLight($event)"
         (clear)="editor.clearLight($event)"
         (removed)="editor.removeLight()"
-        (tiedFromChange)="editor.setRevealFrom($event)"
       />
     }
   }
@@ -111,6 +110,8 @@
   @case ('material') {
     @if (editor.material(); as m) {
       <hrs-material-properties
+        [shared]="editor.sharedMaterial() !== null"
+        (sharedOpen)="openShared()"
         [name]="m.name"
         [origin]="m.origin"
         [origins]="m.origins"

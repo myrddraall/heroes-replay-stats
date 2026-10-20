@@ -1,17 +1,15 @@
 import { Component, input, output } from '@angular/core';
-import { PropertyCheck } from '../properties/property-check';
 import { PropertyColour } from '../properties/property-colour';
 import { PropertySection } from '../properties/property-section';
 import { type PropertyOption, PropertySelect } from '../properties/property-select';
 
-/** An aid's properties as shown: its fill, its colour, its grid's size, and (the stand-in's) where a material is shown. */
+/** An aid's properties as shown: its fill, its colour, its grid's size. */
 export interface EditingAidValues {
   readonly fill: string;
   /** The sky, where the fill is one (the backdrop's). */
   readonly sky?: string;
   readonly colour: string;
   readonly gridSize: string;
-  readonly onPlanet?: boolean;
 }
 
 /** Which of an aid's properties differ from how it starts. */
@@ -25,12 +23,12 @@ const SIZES: readonly PropertyOption[] = [
 
 /**
  * An editing aid's properties (presentational): the preview stage's backdrop (a sky, chosen here;
- * a colour; or a transparency grid) or the stand-in planet (a colour or the grid; whether a material
- * opened on its own is shown on its planet instead; its lights are tree rows of their own).
+ * a colour; or a transparency grid) or the stand-in planet (a colour or the grid; its lights are
+ * tree rows of their own).
  */
 @Component({
   selector: 'hrs-editing-aid-properties',
-  imports: [PropertySection, PropertySelect, PropertyColour, PropertyCheck],
+  imports: [PropertySection, PropertySelect, PropertyColour],
   templateUrl: './editing-aid-properties.html',
   styleUrl: './properties-panel.scss',
 })
