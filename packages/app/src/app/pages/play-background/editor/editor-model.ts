@@ -32,11 +32,7 @@ import {
   without,
   DEFAULT_ORBIT,
 } from '../../../scenes/play-background/background-scene';
-import {
-  keyLightFrom,
-  normalized,
-  TOWARDS_EYE,
-} from '../../../scenes/play-background/scene-directions';
+import { keyLightFrom, TOWARDS_EYE } from '../../../scenes/play-background/scene-directions';
 import {
   alongToSphere,
   coneEdges,
@@ -44,9 +40,9 @@ import {
   type LightOutline,
 } from '../../../scenes/play-background/scene-beams';
 import { LIGHT_KINDS } from '../../../scenes/play-background/draw-uniforms';
+import { aimOf, type LookAt } from '../../../scenes/play-background/look-at';
 import {
   addedLight,
-  aimAtMiddle,
   bodyLights,
   knownLights,
   lightsForMoons,
@@ -1291,6 +1287,7 @@ export function lightMarkerAt(
     readonly kind?: LightKind;
     readonly from?: Vec3;
     readonly position?: Vec3;
+    readonly lookAt?: LookAt;
     readonly aim?: Vec3;
   },
   body: SetPlanet,
@@ -1302,7 +1299,7 @@ export function lightMarkerAt(
     const at = placeOut(light.position, body, eye);
     if (light.kind === 'spot') {
       const p = light.position;
-      const aim = normalized(light.aim ?? aimAtMiddle(p));
+      const aim = aimOf(p, light.lookAt, light.aim);
       const t = alongToSphere(p, aim);
       return {
         at,

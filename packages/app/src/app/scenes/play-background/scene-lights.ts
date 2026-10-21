@@ -1,4 +1,7 @@
+import { aimOf, type LookAt } from './look-at';
 import { lightFrom, normalized, type Vec3 } from './scene-directions';
+
+export { aimAtMiddle } from './look-at';
 import type { BodyShade, PlanetDirectionalLight, PlanetLight } from './scene-planets';
 
 /**
@@ -93,7 +96,9 @@ export interface LightSettings {
    * strong. An environment light's: how far out from the body's edge the sky is read, in its radii.
    */
   readonly fade?: number;
-  /** The way a spot light points (none: at its body's middle). */
+  /** What a spot light looks at: a spot on its body's face, or a direction (none: `aim`, else its body's middle). */
+  readonly lookAt?: LookAt;
+  /** The way a spot light points, kept from before there was `lookAt` (none: at its body's middle). */
   readonly aim?: Vec3;
   /** A spot light's cone: its half-angle, in degrees. */
   readonly cone?: number;
@@ -133,10 +138,6 @@ const NEW_UP: Vec3 = [0, 0, 1];
 const NEW_GROUND = '#000000';
 /** How far out from the body's edge an environment light reads the sky unless set, in its radii. */
 const NEW_SPREAD = 1.5;
-
-/** The way a spot light points unless aimed: at its body's middle. */
-export const aimAtMiddle = (position: Vec3): Vec3 =>
-  normalized([-position[0], -position[1], -position[2]]).map((v) => v || 0) as unknown as Vec3;
 
 /**
  * A new light of a kind, named after the lights of that kind already added beside it (an
@@ -243,7 +244,12 @@ export function addedLight(light: AddedLight, settings?: LightSettings): BodyLig
         }
       : {}),
     ...(light.kind === 'spot'
-      ? { ...(s.aim ? { aim: s.aim } : {}), cone: s.cone ?? NEW_CONE, edge: s.edge ?? NEW_EDGE }
+      ? {
+          ...(s.lookAt ? { lookAt: s.lookAt } : {}),
+          ...(s.aim ? { aim: s.aim } : {}),
+          cone: s.cone ?? NEW_CONE,
+          edge: s.edge ?? NEW_EDGE,
+        }
       : {}),
     ...(light.kind === 'hemisphere'
       ? { from: s.from ?? NEW_UP, ground: s.ground ?? NEW_GROUND }
@@ -272,7 +278,8 @@ export interface BodyLight {
   /** A point or spot light's (see `LightSettings`); `fade` an environment light's too. */
   readonly position?: Vec3;
   readonly fade?: number;
-  /** A spot light's. */
+  /** A spot light's (see `LightSettings`). */
+  readonly lookAt?: LookAt;
   readonly aim?: Vec3;
   readonly cone?: number;
   readonly edge?: number;
@@ -295,7 +302,7 @@ export function placedLight(l: BodyLight): PlanetDirectionalLight | undefined {
       ...shine,
     };
   if ((l.kind === 'point' || l.kind === 'spot') && l.position) {
-    const aim = l.aim ?? aimAtMiddle(l.position);
+    const aim = aimOf(l.position, l.lookAt, l.aim);
     return {
       kind: l.kind,
       direction: aim,

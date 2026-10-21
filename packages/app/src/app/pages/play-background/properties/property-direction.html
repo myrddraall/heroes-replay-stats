@@ -9,6 +9,7 @@
 <span class="control">
   <span
     class="disc"
+    [class.disc--dragging]="dragging()"
     role="slider"
     tabindex="0"
     [attr.aria-labelledby]="id"
@@ -52,12 +53,19 @@
       }
     </span>
   }
-  <span class="readout" aria-hidden="true">
-    @for (part of offsets(); track $index) {
-      <span class="readout__line">{{ part }}</span>
+  <span class="readout">
+    @for (line of angles(); track $index) {
+      <span class="readout__line" aria-hidden="true">{{ line }}</span>
     }
-    @if (sided() && far()) {
-      <span class="readout__line">far side</span>
+    @if (sided()) {
+      <button
+        type="button"
+        class="flip"
+        [title]="far() ? 'To this side' : 'To the far side'"
+        (click)="flip()"
+      >
+        Flip side
+      </button>
     }
   </span>
 </span>

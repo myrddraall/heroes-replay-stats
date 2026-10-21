@@ -109,14 +109,34 @@
     />
   }
   @if (l.kind === 'spot') {
-    <hrs-property-direction
+    <hrs-property-select
       label="Aim"
-      [value]="aim()"
-      [changed]="isSet('aim')"
-      [origin]="entry.origins.aim"
-      (resetRequested)="clear.emit(['aim'])"
-      (valueChange)="settingsChange.emit({ aim: $event })"
+      [value]="aimKind()"
+      [options]="aims"
+      [changed]="isSet('lookAt') || isSet('aim')"
+      [origin]="entry.origins.lookAt"
+      (resetRequested)="clear.emit(['lookAt', 'aim'])"
+      (valueChange)="chooseAim($event)"
     />
+    @if (aimKind() === 'body') {
+      <hrs-property-direction
+        label="Aim at"
+        [value]="aimedPoint()"
+        [changed]="isSet('lookAt')"
+        [origin]="entry.origins.lookAt"
+        (resetRequested)="clear.emit(['lookAt', 'aim'])"
+        (valueChange)="aimAt($event)"
+      />
+    } @else {
+      <hrs-property-direction
+        label="Aim along"
+        [value]="aimDirection()"
+        [changed]="isSet('lookAt') || isSet('aim')"
+        [origin]="entry.origins.lookAt"
+        (resetRequested)="clear.emit(['lookAt', 'aim'])"
+        (valueChange)="aimAlong($event)"
+      />
+    }
     <hrs-property-number
       label="Cone"
       [value]="l.cone ?? 15"

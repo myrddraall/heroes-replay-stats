@@ -32,16 +32,6 @@ export const VIEWS: Readonly<Record<DiscView, ViewFrame>> = {
   bottom: { right: [-1, 0, 0], up: [0, 1, 0], out: [0, 0, -1], glyph: '▼', label: 'Bottom' },
 };
 
-/** Each way along the planet's axes, in a word. */
-const WORDS: readonly (readonly [Direction, string])[] = [
-  [[1, 0, 0], 'right'],
-  [[-1, 0, 0], 'left'],
-  [[0, 1, 0], 'away'],
-  [[0, -1, 0], 'towards'],
-  [[0, 0, 1], 'up'],
-  [[0, 0, -1], 'down'],
-];
-
 let next = 0;
 /** How far an arrow key moves the point, as a share of the disc's radius. */
 const KEY_STEP = 0.05;
@@ -106,8 +96,10 @@ export function snapped(x: number, down: number): { readonly x: number; readonly
  * A direction on one short row of a properties panel (presentational), as a point on a disc that
  * is the planet seen from one of six sides (the eye's, the opposite, or across or over it;
  * chosen beside the disc): dragged (or moved with the arrow keys) to where the direction points
- * across that view; on the viewer's side or the far side of the planet (a hollow point), the same
- * for every direction. Dragged with Shift the point doesn't follow the cursor but closes on it,
+ * across that view, on the viewer's side (the disc's middle: straight from that side); one on the
+ * far side shows hollow where it projects, and jumps to the viewer's side as it is moved (the
+ * views change nothing: the point is put where the direction is seen from each); Flip side swaps
+ * it to the other side, the point staying put. Dragged with Shift the point doesn't follow the cursor but closes on it,
  * faster the further away the cursor is (a fine drag); with Ctrl (or ⌘) it snaps to the disc's
  * cuts (eight, like a pizza) and to its middle.
  */
@@ -136,7 +128,8 @@ export class PropertyDirection {
   /** The side the disc shows the planet from. */
   protected readonly view = signal<DiscView>('front');
   protected readonly views = Object.entries(VIEWS) as readonly [DiscView, ViewFrame][];
-  /** Whether a drag is snapping to the cuts (shown on the disc). */
+  /** Whether a drag is going on (the cursor hidden: the point is what moves), and whether it snaps to the cuts (shown on the disc). */
+  protected readonly dragging = signal(false);
   protected readonly snapping = signal(false);
 
   /** Where the point is on the disc, as shares of its radius from its centre (right, down). */
@@ -148,24 +141,26 @@ export class PropertyDirection {
   });
   /** Whether it points away from the viewer (to the far side). */
   protected readonly far = computed(() => this.point().far);
-  /** Where it points across the view, in words: how far each way (or the centre). */
-  protected readonly offsets = computed(() => {
-    const d = this.unit();
-    const v = VIEWS[this.view()];
-    const side = (axis: Direction) => {
-      const along = dot(d, axis);
-      if (Math.abs(along) < 0.15) return '';
-      const way = along > 0 ? axis : ([-axis[0], -axis[1], -axis[2]] as const);
-      const word = WORDS.find(([w]) => dot(w, way) > 0.5)?.[1] ?? '';
-      return `${Math.round(Math.abs(along) * 100)}% ${word}`;
-    };
-    const parts = [side(v.right), side(v.up)].filter(Boolean);
-    return parts.length ? parts : ['centre'];
+  /**
+   * Where it points, as two angles that don't depend on the view: its turn round the planet
+   * (0° the eye's side, 90° the right, 180° behind, 270° the left) and its tilt (up or down from
+   * level, to 90°); straight up or down, the turn means nothing.
+   */
+  protected readonly angles = computed(() => {
+    const [x, y, z] = this.unit();
+    const tilt = Math.round((Math.asin(Math.max(-1, Math.min(1, z))) * 180) / Math.PI);
+    if (tilt >= 90) return ['From straight above'];
+    if (tilt <= -90) return ['From straight below'];
+    const turn = Math.round(((Math.atan2(x, -y) * 180) / Math.PI + 360) % 360) % 360;
+    return [
+      `Turn ${turn}°`,
+      tilt === 0 ? 'Level' : `Tilt ${Math.abs(tilt)}° ${tilt > 0 ? 'up' : 'down'}`,
+    ];
   });
-  /** Where it points, in words, the side too (for assistive technology; the point shows the side). */
+  /** Where it points, in words (for assistive technology): its angles, and which side of the view it is on. */
   protected readonly text = computed(
     () =>
-      `${this.offsets().join(', ')}, ${this.far() ? 'far side' : 'near side'}, seen from the ${VIEWS[this.view()].label.toLowerCase()}`,
+      `${this.angles().join(', ')}, ${this.far() ? 'far side' : 'near side'} seen from the ${VIEWS[this.view()].label.toLowerCase()}`,
   );
 
   /** The drag going on: the cursor's last place on the disc, its modifiers, and the fine drag's frame. */
@@ -184,9 +179,12 @@ export class PropertyDirection {
     return [x / l, y / l, z / l];
   }
 
-  /** The direction for a point on the disc, on the side it is on now. */
-  private at(x: number, down: number, far = this.far()): Direction {
-    return directionAt(this.view(), x, down, far);
+  /**
+   * The direction for a point on the disc: on the side the view faces (one on the far side, hollow,
+   * jumps across as it is moved: the disc's middle is the light straight from the viewer's side).
+   */
+  private at(x: number, down: number): Direction {
+    return directionAt(this.view(), x, down, false);
   }
 
   protected pointerDown(event: PointerEvent): void {
@@ -200,6 +198,7 @@ export class PropertyDirection {
       // a pointer no longer down: the drag goes on while it moves over the disc
     }
     this.drag = { x: 0, down: 0, fine: false, snap: false, frame: 0, at: performance.now() };
+    this.dragging.set(true);
     this.pointerMove(event);
   }
 
@@ -262,6 +261,7 @@ export class PropertyDirection {
   private endDrag(): void {
     if (this.drag) cancelAnimationFrame(this.drag.frame);
     this.drag = undefined;
+    this.dragging.set(false);
     this.snapping.set(false);
   }
 
@@ -298,5 +298,11 @@ export class PropertyDirection {
 
   protected look(view: DiscView): void {
     this.view.set(view);
+  }
+
+  /** The direction swapped to the other side of the view: the point stays where it is, solid or hollow. */
+  protected flip(): void {
+    const { x, y, far } = this.point();
+    this.valueChange.emit(directionAt(this.view(), x, y, !far));
   }
 }

@@ -1,5 +1,5 @@
-import { aimAtMiddle } from '../../../scenes/play-background/scene-lights';
 import type { Vec3 } from '../../../scenes/play-background/background-scene';
+import { aimedPoint, aimOf, type LookAt } from '../../../scenes/play-background/look-at';
 import { Component, computed, input, output } from '@angular/core';
 import type {
   LightReach,
@@ -26,6 +26,7 @@ const LIGHT_KEYS: readonly (keyof LightSettings)[] = [
   'specularStrength',
   'position',
   'fade',
+  'lookAt',
   'aim',
   'cone',
   'edge',
@@ -36,6 +37,12 @@ const LIGHT_KEYS: readonly (keyof LightSettings)[] = [
 const EFFECTS: readonly PropertyOption[] = [
   { value: 'lights', label: 'Lights' },
   { value: 'darkens', label: 'Darkens' },
+];
+
+/** What a spot light looks at, as its Aim list offers it. */
+const AIMS: readonly PropertyOption[] = [
+  { value: 'body', label: 'A spot on the planet' },
+  { value: 'free', label: 'A direction' },
 ];
 
 /** What a light reaches of its body, as its Reaches list offers it. */
@@ -137,11 +144,39 @@ export class LightProperties {
     () => this.shiny() || this.light().light.kind === 'environment',
   );
 
-  /** The way a spot light points: as aimed, else at its body's middle. */
-  protected readonly aim = computed((): Vec3 => {
+  protected readonly aims = AIMS;
+  /** What a spot light looks at: a spot on its planet (unless aimed along a direction, as set or kept from before). */
+  protected readonly aimKind = computed((): LookAt['kind'] => {
     const l = this.light().light;
-    return l.aim ?? aimAtMiddle(l.position ?? [0, -2.5, 1.5]);
+    return (l.lookAt?.kind ?? (l.aim ? 'free' : 'body')) as LookAt['kind'];
   });
+  /** The spot on its planet's face a spot light is aimed at (aimed at the middle: the face nearest it). */
+  protected readonly aimedPoint = computed((): Vec3 => {
+    const l = this.light().light;
+    return aimedPoint(l.position ?? [0, -2.5, 1.5], l.lookAt);
+  });
+  /** The way a spot light points. */
+  protected readonly aimDirection = computed((): Vec3 => {
+    const l = this.light().light;
+    return aimOf(l.position ?? [0, -2.5, 1.5], l.lookAt, l.aim);
+  });
+
+  /** A spot light's aim switched between a spot on its planet and a direction (the one it points along now). */
+  protected chooseAim(kind: string): void {
+    const lookAt: LookAt =
+      kind === 'free'
+        ? { kind: 'free', direction: this.aimDirection() }
+        : { kind: 'body', at: this.aimedPoint() };
+    this.settingsChange.emit({ lookAt });
+  }
+
+  protected aimAt(at: Vec3): void {
+    this.settingsChange.emit({ lookAt: { kind: 'body', at } });
+  }
+
+  protected aimAlong(direction: Vec3): void {
+    this.settingsChange.emit({ lookAt: { kind: 'free', direction } });
+  }
 
   /** A point or spot light moved along one axis of its body's frame (0 across, 1 towards the eye, 2 up). */
   protected move(axis: 0 | 1 | 2, value: number): void {

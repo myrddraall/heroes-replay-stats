@@ -356,6 +356,14 @@ describe('lights from a point, a spot, and above and below', () => {
     expect(aimAtMiddle([3, 0, 4])).toEqual([-0.6, 0, -0.8]);
     // One aimed keeps its aim; one from a side with no side is no light.
     expect(placedLight(addedLight(spot, { aim: [1, 0, 0] }))?.aim).toEqual([1, 0, 0]);
+    // One looking at a spot on its planet points from where it is to that spot on the face.
+    const at = placedLight(addedLight(spot, { lookAt: { kind: 'body', at: [0, -1, 0] } }))!;
+    expect(at.aim!.map((v) => Math.round(v * 1000) / 1000)).toEqual([0, 1, 0]);
+    const up = placedLight(addedLight(spot, { lookAt: { kind: 'body', at: [0, 0, 1] } }))!;
+    expect(up.aim!.map((v) => Math.round(v * 1000) / 1000)).toEqual([0, 0.894, 0.447]);
+    expect(
+      placedLight(addedLight(spot, { lookAt: { kind: 'free', direction: [2, 0, 0] } }))?.aim,
+    ).toEqual([1, 0, 0]);
     const nowhere = { ...addedLight(newLight('directional', [])), from: undefined };
     expect(placedLight(nowhere)).toBeUndefined();
   });

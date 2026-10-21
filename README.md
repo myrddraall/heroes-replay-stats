@@ -122,7 +122,9 @@ an antilight of before (`kind: 'shadow'`) is read as a directional light that da
 (`knownLights`), and Add light's Antilight adds one. Add light also adds a Point light (at a
 place in the body's frame, in its radii: Across, Towards the eye, Up; fading with distance, half
 as strong at Reach), a Spot light (a point light that points, Aim, at the body's middle unless
-aimed, within a Cone of so many degrees, fading in over Edge of it) and a Hemisphere light (one
+aimed: Aim, a spot on the planet's face chosen on the direction disc, Aim at, kept as the
+light moves, or a direction of its own, Aim along; `LookAt` in `look-at.ts`, `aimOf`, shared with
+whatever looks at something later; within a Cone of so many degrees, fading in over Edge of it) and a Hemisphere light (one
 colour from the side Sky from, its Ground colour from the other, mixed by how far the surface
 faces each: the nebula lighting a planet's upper edge) and an Environment light (the sky itself:
 each side of the body lit by the sky's colour beyond its edge that way, read Reach radii out from
@@ -314,7 +316,11 @@ glow's boost have none above). The properties use one vocabulary: a
 direction is always the side something comes from ("Light from", "Shade from", "Rim from",
 "Spread from": the rim's is the bright side, mirrored from the lean the design keeps), on the same
 disc (`PropertyDirection`: the planet seen from one of six sides, chosen on a small cross beside
-it, Front, Behind, Left, Right, Top, Bottom, `VIEWS`; the point hollow on the far side; dragged
+it, Front, Behind, Left, Right, Top, Bottom, `VIEWS`; the disc's middle is the light straight from
+that side, a direction on the far side shows hollow and jumps to the viewer's side as it is moved,
+Flip side swaps it to the other side with the point staying put; beside
+it the direction as two angles whatever the view, its Turn round the planet, 0° the eye's side,
+90° the right, 180° behind, and its Tilt up or down from level; dragged
 with Shift it closes on the cursor instead of following it, faster the further the cursor is, a
 fine drag; with Ctrl or ⌘ it snaps to the disc's eight cuts and its middle, shown while it does);
 colour sections are "Colour", a material's compositing "Surface",
