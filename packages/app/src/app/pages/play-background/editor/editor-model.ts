@@ -971,6 +971,8 @@ export interface LitByEntry {
    */
   readonly owner?: BodyPath | 'scene';
   readonly overlay?: string;
+  /** Whether it was added at the level edited, to the body (it can be taken out here). */
+  readonly removable?: boolean;
 }
 
 /** Whether a body's files are loaded (its overlays' too). */
@@ -1022,6 +1024,7 @@ export function litByOf(
       enabledBelow: e.enabledBelow,
       owner: undefined,
       overlay: e.overlay,
+      removable: e.removable,
     })),
     ...outer.map(({ light, owner, overlay }) => {
       const set = b.settings.lights?.[light.id];
@@ -1032,11 +1035,17 @@ export function litByOf(
         enabledBelow: true,
         owner,
         overlay,
+        removable: false,
       };
     }),
   ];
+  // (A body's list keeps the lights added to it here, acting or not: they can be taken out there.)
   return lights
-    .filter(({ light }) => acts(light.kind) && (receiver === null || light.enabled))
+    .filter(
+      ({ light, removable }) =>
+        (acts(light.kind) || (receiver === null && removable)) &&
+        (receiver === null || light.enabled),
+    )
     .map(({ light, ...l }) => ({
       id: light.id,
       kind: light.kind,
@@ -1047,6 +1056,7 @@ export function litByOf(
       ...(l.reachBelow ? { reachBelow: l.reachBelow } : {}),
       ...(l.owner !== undefined ? { owner: l.owner } : {}),
       ...(l.overlay ? { overlay: l.overlay } : {}),
+      ...(l.removable ? { removable: true } : {}),
     }));
 }
 

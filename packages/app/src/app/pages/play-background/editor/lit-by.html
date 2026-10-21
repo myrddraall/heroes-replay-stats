@@ -18,6 +18,19 @@
       >
         <mat-icon class="material-symbols-outlined" aria-hidden="true">arrow_outward</mat-icon>
       </button>
+      @if (l.removable) {
+        <button
+          type="button"
+          class="show"
+          [attr.aria-label]="'Remove ' + l.name"
+          title="Remove"
+          (click)="lightRemove.emit(l.id)"
+        >
+          <mat-icon class="material-symbols-outlined" aria-hidden="true">delete</mat-icon>
+        </button>
+      } @else {
+        <span></span>
+      }
     </div>
   } @empty {
     <p class="hint">Nothing lights it.</p>

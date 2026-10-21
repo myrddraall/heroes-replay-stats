@@ -8,7 +8,7 @@ import { type PartTint, PRESETS } from '../../../scenes/play-background/tint-set
 
 /**
  * The scene's own properties (presentational): its name and a way to delete it (a scene of its
- * own: not the random sets'), what may be put in it (its buttons given as `[planetAdd]`), the tint
+ * own: not the random sets'), what may be put in it (its Planets section given as `[planetsPod]`), the tint
  * over the whole picture, chosen from one list (none, a preset, or a custom one whose colour and
  * blend are then set here), and, while the sets are up, another set. A group's: as a scene's, but
  * the tint (the picture's, not a group's).
@@ -28,7 +28,7 @@ export class SceneProperties {
   readonly custom = input(false);
   /** Whether the random sets are up (another can be drawn). */
   readonly sets = input(false);
-  /** Whether planets can be put in it (a Planets section, its button given as `[planetAdd]`). */
+  /** Whether planets can be put in it (its Planets section given as `[planetsPod]`). */
   readonly planets = input(false);
   /** Whether it is a scene of its own (named, deletable), not the random sets'. */
   readonly own = input(false);

@@ -1,7 +1,6 @@
 import { Component, output } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import type { LightKind } from '../../../scenes/play-background/scene-lights';
-import { PropertySection } from '../properties/property-section';
 import { LIGHT_ICONS } from './editor-model';
 
 /** A light of each kind there is, as offered to add. */
@@ -12,12 +11,13 @@ const KINDS: readonly { readonly kind: LightKind; readonly label: string }[] = [
 ];
 
 /**
- * A section to add a light (presentational): one button for each kind of light (from all round,
- * from a side, or darkening from a side), to what is selected (a body, the scene).
+ * The buttons to add a light (presentational): one for each kind of light (from all round, from a
+ * side, or darkening from a side), to what is selected (a body, the scene); in the section of its
+ * lights.
  */
 @Component({
   selector: 'hrs-add-light',
-  imports: [MatIcon, PropertySection],
+  imports: [MatIcon],
   templateUrl: './add-light.html',
   styleUrl: './properties-panel.scss',
 })

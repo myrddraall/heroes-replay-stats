@@ -1,28 +1,24 @@
-<hrs-property-section title="Add part">
-  <div class="buttons">
-    @for (s of shapes(); track s) {
-      <button type="button" class="button" (click)="added.emit(s)">
-        <mat-icon class="material-symbols-outlined" aria-hidden="true">{{
-          named[s].icon
-        }}</mat-icon>
-        {{ named[s].label }}
-      </button>
-    }
+<div class="buttons">
+  @for (s of shapes(); track s) {
+    <button type="button" class="button" (click)="added.emit(s)">
+      <mat-icon class="material-symbols-outlined" aria-hidden="true">{{ named[s].icon }}</mat-icon>
+      {{ named[s].label }}
+    </button>
+  }
+</div>
+@if (existing().length) {
+  <div class="row">
+    <label class="label" [for]="id">Existing</label>
+    <select class="select" [id]="id" (change)="reuse($event)">
+      <option value="" selected>Part…</option>
+      @for (o of existing(); track o.value) {
+        <option [value]="o.value">{{ o.label }}</option>
+      }
+    </select>
   </div>
-  @if (existing().length) {
-    <div class="row">
-      <label class="label" [for]="id">Existing</label>
-      <select class="select" [id]="id" (change)="reuse($event)">
-        <option value="" selected>Part…</option>
-        @for (o of existing(); track o.value) {
-          <option [value]="o.value">{{ o.label }}</option>
-        }
-      </select>
-    </div>
-  }
-  @if (savable()) {
-    <div class="buttons">
-      <button type="button" class="button" (click)="saved.emit()">Save as overlay</button>
-    </div>
-  }
-</hrs-property-section>
+}
+@if (savable()) {
+  <div class="buttons">
+    <button type="button" class="button" (click)="saved.emit()">Save as overlay</button>
+  </div>
+}

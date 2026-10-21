@@ -44,8 +44,13 @@
     [picked]="v.overlays"
     [choices]="overlayOptions()"
     [changed]="overlaysSet()"
+    icon="style"
+    [linkable]="true"
+    newLabel="New overlay"
     (added)="overlayAdd.emit($event)"
     (removed)="overlayRemove.emit($event)"
+    (itemShow)="overlayShow.emit($event)"
+    (created)="overlayNew.emit()"
     (resetRequested)="overlaysReset.emit()"
   />
 }
@@ -131,11 +136,7 @@
   </hrs-property-section>
 }
 @if (moons()) {
-  <hrs-property-section title="Moons">
-    <div class="buttons">
-      <ng-content select="[moonAdd]" />
-    </div>
-  </hrs-property-section>
+  <ng-content select="[moonsPod]" />
 }
 @if (!overlay()) {
   <hrs-tint-section

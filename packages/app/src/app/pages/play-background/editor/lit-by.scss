@@ -1,9 +1,9 @@
 @use '../properties/property-row';
 
-// A light: its checkbox and name from the left, the button to go to it at the right.
+// A light: its checkbox and name from the left, the buttons to go to it and take it out at the right.
 .light {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) property-row.$reset-column;
+  grid-template-columns: auto minmax(0, 1fr) property-row.$reset-column property-row.$reset-column;
   align-items: center;
   gap: 6px;
   min-height: 26px;

@@ -19,6 +19,6 @@ export class ClearConfirm {
   protected clear(): void {
     this.draft.clearAll();
     this.ui.confirmClear(false);
-    this.ui.open(RANDOM_SETS);
+    this.ui.show(RANDOM_SETS);
   }
 }

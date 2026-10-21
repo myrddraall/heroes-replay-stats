@@ -43,10 +43,6 @@ export class AssetBrowser {
   protected readonly current = computed(() => openKey(this.editor.opened()));
   protected readonly icon = computed(() => ICONS[this.catalog.type()]);
 
-  constructor() {
-    this.catalog.setType(this.editor.opened().kind);
-  }
-
   protected readonly items = computed((): BrowserItem[] => {
     const c = this.catalog;
     const d = this.draft;

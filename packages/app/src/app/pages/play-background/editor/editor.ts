@@ -25,6 +25,7 @@ import type {
 import type { AssetTarget, OpenTarget } from './open-target';
 import type { TreeMove, TreeRow } from './scene-tree';
 import type { SceneMarker } from './scene-markers';
+import type { AddedLists } from './added-list';
 
 /**
  * An editor of the background's design, as the panels under it use one: provided by the scene
@@ -72,6 +73,8 @@ export abstract class Editor {
   abstract resetBody(): void;
   /** An overlay put on the selected body (over what it wears), or taken off; what it wears back as its own. */
   abstract addOverlay(id: string): void;
+  /** An overlay the selected body wears shown in the tree, its rows unfolded. */
+  abstract showOverlay(id: string): void;
   abstract removeOverlay(id: string): void;
   abstract resetOverlays(): void;
 
@@ -93,8 +96,8 @@ export abstract class Editor {
   abstract clearLight(keys?: readonly (keyof LightSettings)[]): void;
   /** A light added: to the scene where it is selected, else to the body selected; selected. */
   abstract addLight(kind: LightKind): void;
-  /** The selected light taken out, where it was added at the level edited. */
-  abstract removeLight(): void;
+  /** A light taken out, where it was added at the level edited: one of the selected body's (by id), else the one selected. */
+  abstract removeLight(id?: LightId): void;
   /** What lights the selected body, part or material (none: something else is selected). */
   abstract readonly litBy: Signal<readonly LitByEntry[] | null>;
   /** One of the lights in the selected body's Lit by selected in the tree, its rows unfolded to it. */
@@ -112,6 +115,8 @@ export abstract class Editor {
   abstract readonly skyOverlaysSet: Signal<boolean>;
   /** An overlay put on the sky selected (over what it wears), or taken off; what it wears back as under it. */
   abstract addSkyOverlay(id: string): void;
+  /** An overlay the sky selected wears shown in the tree, its rows unfolded. */
+  abstract showSkyOverlay(id: string): void;
   abstract removeSkyOverlay(id: string): void;
   abstract resetSkyOverlays(): void;
   abstract setSkyTint(tint: MaterialTint): void;
@@ -156,6 +161,14 @@ export abstract class Editor {
   /** Whether the editor's camera is moved from the scene's primary, and putting it back. */
   abstract readonly editorCameraMoved: Signal<boolean>;
   abstract resetEditorCamera(): void;
+  /**
+   * What has been added to what is selected, listed under where it is added (a scene's planets
+   * and groups, cameras and lights; a body's moons and parts; a sky's parts), each by its row.
+   */
+  abstract readonly added: Signal<AddedLists>;
+  /** One of them selected in the tree, its rows unfolded to it; or taken out. */
+  abstract showAdded(key: string): void;
+  abstract removeAdded(key: string): void;
   /** What the view marks where it is (cameras, groups put in it, the selected's lights). */
   abstract readonly markers: Signal<readonly SceneMarker[]>;
   /** What a marker stands for selected, its rows unfolded to it. */

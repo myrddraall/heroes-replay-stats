@@ -124,6 +124,7 @@ import { EditorUiStore } from './editor-ui.store';
 import type { AssetKind, AssetTarget, OpenTarget } from './open-target';
 import type { TreeMove, TreeRow } from './scene-tree';
 import type { SceneMarker } from './scene-markers';
+import type { AddedLists } from './added-list';
 import {
   STAND_IN_MATERIAL,
   standInId,
@@ -861,6 +862,44 @@ export const AssetEditorStore = signalStore(
     return {
       _addHost: addHost,
       _partHost: partHost,
+      /** What has been added to what is selected: the parts made here, on the body or sky open. */
+      added: computed((): AddedLists => {
+        const t = store.target();
+        const host = addHost();
+        if (!host?.parts.length) return {};
+        const o = store._created();
+        const listed = (
+          entries: readonly PartEntry[],
+          keyOf: (id: string) => PartKey,
+          rowKey: (key: PartKey) => string,
+        ): AddedLists => ({
+          parts: host.parts.map((p) => {
+            const key = keyOf(p.id);
+            const entry = entries.find((e) => e.key === key);
+            return {
+              key: rowKey(key),
+              label: entry?.label ?? p.id,
+              icon: entry ? partIcon(entry) : 'circle',
+              removable: true,
+            };
+          }),
+        });
+        if (t.kind === 'body') {
+          const b = store._body();
+          return listed(
+            b ? partsOfBody(b) : [],
+            (id) => (o ? `style:${asset().id}:${id}` : `own:${id}`) as PartKey,
+            assetPartKey,
+          );
+        }
+        if (t.kind === 'sky')
+          return listed(
+            store._skyParts(t.stage),
+            (id) => `own:${id}` as PartKey,
+            (key) => `${t.stage ? STAGE_SKY : `${ASSET}/sky`}/p/${key}`,
+          );
+        return {};
+      }),
       partShapes: computed((): readonly CreatedShape[] => {
         const host = addHost();
         return host ? PART_SHAPES[host.kind] : [];
@@ -1506,7 +1545,11 @@ export const AssetEditorStore = signalStore(
         if (b && light && receiver !== undefined)
           lightChange((s) => withLitBy(s, b, light, receiver, change.on) ?? {});
       },
-      removeLight(): void {
+      removeLight(id?: LightId): void {
+        if (id) {
+          lightChange((s) => withoutAddedLight(s, id) ?? {});
+          return;
+        }
         const t = store.target();
         if (t.kind !== 'light') return;
         lightChange((s) => withoutAddedLight(s, t.id) ?? {});
@@ -1686,12 +1729,32 @@ export const AssetEditorStore = signalStore(
       showMarker(): void {
         // nothing on the stage is marked
       },
+      /** A part made here selected in the tree. */
+      showAdded(key: string): void {
+        store.expand(ASSET);
+        patchState(store, { selected: key });
+      },
+      /** A part made here taken out (by the id its row's key ends with). */
+      removeAdded(key: string): void {
+        const host = store._addHost();
+        if (host) removePart(host, key.slice(key.lastIndexOf(':') + 1));
+      },
       /** The overlay open (made in the editor) deleted, and off whatever wore it: the library shown. */
       deleteAsset(): void {
         if (!store._created()) return;
         d.deleteOverlay(asset().id);
         store._ui.show({ kind: 'planet', id: store.previewPlanet() });
-        store._ui.setBrowsing(true);
+      },
+      showOverlay(): void {
+        // what is open wears no overlays of the library's own (its own are its tree)
+      },
+      /** An overlay the sky selected wears shown in the tree, its rows unfolded. */
+      showSkyOverlay(id: string): void {
+        const sky = selectedSky();
+        if (!sky) return;
+        const at = sky.stage ? STAGE_SKY : `${ASSET}/sky`;
+        store.expand(sky.stage ? STAGE : ASSET, at);
+        store.reopen(`${at}/overlay/${id}`);
       },
       /** An overlay put on the sky selected (the stage's, or the library's), over what it wears. */
       addSkyOverlay(id: string): void {

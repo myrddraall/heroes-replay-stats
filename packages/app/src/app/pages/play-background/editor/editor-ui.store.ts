@@ -9,13 +9,13 @@ import {
   withState,
 } from '@ngrx/signals';
 import { withLocalStorage } from '../../../data/store-features/with-local-storage';
-import { type OpenTarget, openPath } from './open-target';
+import { libraryPath, type OpenKind, type OpenTarget, openPath } from './open-target';
 
 /** How soon a second click on the same thing makes a double-click, in milliseconds. */
 export const DOUBLE_CLICK = 500;
 
 interface EditorUiState {
-  /** Whether the left panel shows the library's lists (else the tree of what is open). */
+  /** Whether the library shows (its lists on the left), as the URL says; else the editor (its tree). */
   readonly browsing: boolean;
   /** Whether the bodies' names float over them. */
   readonly names: boolean;
@@ -35,10 +35,11 @@ interface EditorUiState {
 }
 
 /**
- * The Background page's own state (component store, provided by the page): whether the lists or
- * the tree of what is open show on the left, the names over the bodies, its panels, the view's
- * shape, the screenshot mode; and what is opened (put in the URL, which the page follows). Kept
- * in `localStorage`, but for what only lasts while it is open.
+ * The Background page's own state (component store, provided by the page): whether the library or
+ * the editor shows (as the URL says), the names over the bodies, its panels, the view's shape, the
+ * screenshot mode; and where it goes (the library showing something, the editor opening it: put
+ * in the URL, which the page follows). Kept in `localStorage`, but for what only lasts while it is
+ * open.
  */
 export const EditorUiStore = signalStore(
   withState<EditorUiState>({
@@ -55,35 +56,49 @@ export const EditorUiStore = signalStore(
   withLocalStorage<EditorUiState>('hrs.background-editor', ['names', 'markers', 'left', 'right']),
   withProps(() => ({
     _router: inject(Router),
-    _followed: { first: true },
     /** The last click on something in the lists: what (its key), and when. */
     _lastClick: { key: '', at: -Infinity },
   })),
   withMethods((store) => {
-    const navigate = (target: OpenTarget, replaceUrl = false) =>
-      void store._router.navigate(openPath(target), { replaceUrl });
+    const go = (path: string[], replaceUrl = false) => {
+      patchState(store, { confirmingReset: false });
+      void store._router.navigate(path, { replaceUrl });
+    };
+    const inLibrary = (target: OpenTarget) => libraryPath(target.kind, target.id || undefined);
     return {
-      /** Something selected in the lists: put in the URL, so the background shows it; the lists stay. */
+      /**
+       * Something shown in the library, its kind listed (the random sets: the scenes): a step of
+       * the history's own changed, not one added (arrowing through a list).
+       */
       show(target: OpenTarget): void {
-        patchState(store, { confirmingReset: false });
-        // A selection changes the history's last step, not adds one (arrowing through a list).
-        navigate(target, true);
+        go(inLibrary(target), true);
       },
-      /** Something opened in the editor: put in the URL; its tree shown. */
-      open(target: OpenTarget): void {
-        patchState(store, { browsing: false, confirmingReset: false });
-        navigate(target);
+      /** The library listing a kind of thing (nothing of it shown yet: the random sets behind). */
+      showKind(kind: OpenKind): void {
+        go(libraryPath(kind), true);
+      },
+      /** Back to the library from the editor: what was open shown, its kind listed. */
+      toLibrary(target: OpenTarget): void {
+        go(inLibrary(target));
       },
       /**
-       * What the URL has open (as a key, `<kind>:<id>`): nothing, the library's list (the random sets' scene behind it); as
-       * the page starts, something: its tree. Later, what is selected in the list is in the URL
-       * too, so a key alone changes nothing.
+       * Something opened in the editor (a step of the history of its own). From the library, the
+       * library shows it first, so going back finds it there (a double-click's first click may
+       * not have shown it yet: the second's navigation takes over the first's).
        */
-      followOpen: signalMethod<string | undefined>((key) => {
-        const first = store._followed.first;
-        store._followed.first = false;
-        if (key === undefined) patchState(store, { browsing: true, confirmingReset: false });
-        else if (first) patchState(store, { browsing: false });
+      open(target: OpenTarget): void {
+        if (!store.browsing()) {
+          go(openPath(target));
+          return;
+        }
+        patchState(store, { confirmingReset: false });
+        void store._router
+          .navigate(inLibrary(target), { replaceUrl: true })
+          .then(() => store._router.navigate(openPath(target)));
+      },
+      /** Whether the library shows, as the URL says (else the editor). */
+      followBrowsing: signalMethod<boolean>((browsing) => {
+        patchState(store, { browsing, confirmingReset: false });
       }),
       /**
        * A click on something in the lists: whether it is the second on it soon after the first (a
@@ -95,9 +110,6 @@ export const EditorUiStore = signalStore(
         const again = last.key === key && at - last.at <= DOUBLE_CLICK;
         store._lastClick = again ? { key: '', at: -Infinity } : { key, at };
         return again;
-      },
-      setBrowsing(browsing: boolean): void {
-        patchState(store, { browsing });
       },
       setNames(names: boolean): void {
         patchState(store, { names });

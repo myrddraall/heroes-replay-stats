@@ -58,6 +58,7 @@ import {
 import { bodyFrame } from '../../../scenes/play-background/scene-renderer';
 import type { CameraValues } from './camera-properties';
 import type { SceneMarker } from './scene-markers';
+import type { AddedItem, AddedLists } from './added-list';
 import {
   canPutGroup,
   groupBodies,
@@ -105,6 +106,7 @@ import { grouped, type PropertyOption } from '../properties/property-select';
 import {
   type MaterialEntry,
   type BodyInfo,
+  type PartEntry,
   bodyView,
   materialsOf,
   movedInPart,
@@ -960,6 +962,73 @@ export const SceneEditorStore = signalStore(
     return {
       _addHost: addHost,
       _partHost: partHost,
+      /**
+       * What has been added to what is selected: the scene's planets and the groups put in it, its
+       * cameras (its cameras' group's too) and lights; a body's moons and the parts added onto it
+       * here; the sky's parts.
+       */
+      added: computed((): AddedLists => {
+        const t = store.target();
+        const byKey = store.bodyByKey();
+        const body = (path: BodyPath, icon: string): AddedItem[] => {
+          const b = byKey.get(bodyKey(path));
+          return b ? [{ key: bodyKey(path), label: bodyLabel(b), icon, removable: true }] : [];
+        };
+        /** The parts added here, as the tree has them (by `own:<id>`). */
+        const parts = (
+          entries: readonly PartEntry[],
+          rowKey: (key: PartKey) => string,
+        ): AddedItem[] =>
+          (addHost()?.parts ?? []).map((p) => {
+            const key = `own:${p.id}` as PartKey;
+            const entry = entries.find((e) => e.key === key);
+            return {
+              key: rowKey(key),
+              label: entry?.label ?? p.id,
+              icon: entry ? partIcon(entry) : 'circle',
+              removable: true,
+            };
+          });
+        const cameras = (): AddedItem[] =>
+          store.cameraList().map((c) => ({
+            key: cameraKey(c.id),
+            label: c.name,
+            icon: 'videocam',
+            ...(c.id === store.primaryCamera() ? { detail: 'primary' } : {}),
+            removable: !c.game,
+          }));
+        if (t.kind === 'cameras') return { cameras: cameras() };
+        if (t.kind === 'scene')
+          return {
+            planets: [
+              ...store.sceneBodies().flatMap((_, i) => body([i], 'public')),
+              ...store.placements().map((p, i) => ({
+                key: placementKey(i),
+                label: store.placementLabel()(p),
+                icon: 'workspaces',
+                detail: 'group',
+                removable: true,
+              })),
+            ],
+            cameras: cameras(),
+            lights: sceneLightsOf(store.sceneLights()).map(({ light }) => ({
+              key: sceneLightKey(light.id),
+              label: light.name,
+              icon: LIGHT_ICONS[light.kind],
+              removable: true,
+            })),
+          };
+        if (t.kind === 'body') {
+          const b = byKey.get(bodyKey(t.path));
+          if (!b) return {};
+          return {
+            moons: b.moons.flatMap((_, i) => body([...t.path, i], 'brightness_1')),
+            parts: parts(partsOfBody(b), (key) => partRowKey(t.path, key)),
+          };
+        }
+        if (t.kind === 'sky') return { parts: parts(store.skyParts(), skyPartKey) };
+        return {};
+      }),
       partShapes: computed((): readonly CreatedShape[] => {
         const host = addHost();
         return host ? PART_SHAPES[host.kind] : [];
@@ -1535,6 +1604,54 @@ export const SceneEditorStore = signalStore(
         placements.map((x, i) => (i === index ? (next as unknown as GroupPlacement) : x)),
       );
     };
+    /** Something selected by its row's key, the rows above it unfolded to it. */
+    const reveal = (key: string) => {
+      const t = targetOf(key);
+      store.expand(SCENE);
+      if (t.kind === 'camera') store.reopen(CAMERAS);
+      if (t.kind === 'scene-light') store.reopen(SCENE_LIGHTS);
+      if (t.kind === 'body' || t.kind === 'part') {
+        // (A body's own rows: under each it is a moon of; a part's, under its body too.)
+        const upTo = t.kind === 'body' ? t.path.length - 1 : t.path.length;
+        store.expand(...t.path.slice(0, upTo).map((_, i) => bodyKey(t.path.slice(0, i + 1))));
+      }
+      if (t.kind === 'sky-part') store.expand(SKY);
+      if (t.kind === 'light') {
+        const path = t.path;
+        store.expand(...path.map((_, i) => bodyKey(path.slice(0, i + 1))));
+        const b = store.bodyByKey().get(bodyKey(path));
+        const overlay = b && lightsOfBody(b).find((l) => l.light.id === t.id)?.overlay;
+        if (overlay) {
+          store.reopen(overlayKey(path, overlay));
+          store.expand(overlayLightsKey(path, overlay));
+        } else store.expand(lightsKey(path));
+      }
+      patchState(store, { selected: key });
+    };
+    /** A camera added to the scene taken out; the view through it back to the editor's. */
+    const dropCamera = (id: string) => {
+      d.setSceneCameras(
+        store.scene(),
+        store.addedCameras().filter((a) => a.id !== id),
+      );
+      if (store.look() === id) patchState(store, { look: EDITOR_CAMERA });
+    };
+    /**
+     * A body taken out (a planet with its moons, a moon with its own): what was selected of it, its
+     * parent selected (the scene, for a planet); the view off it.
+     */
+    const removeBody = (path: BodyPath) => {
+      edit((b) => removeAt(b, path));
+      const inside = (key: string | null) =>
+        key !== null && path.every((v, i) => pathOf(key)[i] === v);
+      const t = store.target();
+      const selected = 'path' in t && t.path.length >= path.length && inside(pathKey(t.path));
+      const focus = store.focus();
+      patchState(store, {
+        ...(selected ? { selected: path.length > 1 ? bodyKey(path.slice(0, -1)) : SCENE } : {}),
+        focus: inside(focus) ? null : focus,
+      });
+    };
     /** One of the scene's cameras moved or set: the game's over the data's, one added as it is. */
     const changeCamera = (id: string, set: SceneCameraSet) => {
       if (id === GAME_CAMERA) {
@@ -1576,11 +1693,11 @@ export const SceneEditorStore = signalStore(
       rename(name: string): void {
         if (ownScene(store.scene())) d.renameScene(store.scene(), name);
       },
-      /** The scene taken out of the draft; the random sets' opened. */
+      /** The scene taken out of the draft; the library shown (the random sets behind it). */
       deleteScene(): void {
         if (!ownScene(store.scene())) return;
         d.deleteScene(store.scene());
-        store._ui.open(RANDOM_SETS);
+        store._ui.show(RANDOM_SETS);
       },
       /**
        * The camera the view looks through moved (dragged in the view): the editor's, kept while
@@ -1647,12 +1764,34 @@ export const SceneEditorStore = signalStore(
       removeCamera(): void {
         const c = store.selectedCamera();
         if (!c || c.game) return;
-        d.setSceneCameras(
-          store.scene(),
-          store.addedCameras().filter((a) => a.id !== c.id),
-        );
-        if (store.look() === c.id) patchState(store, { look: EDITOR_CAMERA });
+        dropCamera(c.id);
         patchState(store, { selected: CAMERAS });
+      },
+      /** One of what has been added to what is selected selected in the tree, its rows unfolded to it. */
+      showAdded(key: string): void {
+        reveal(key);
+      },
+      /** One of what has been added to what is selected taken out (where it can be). */
+      removeAdded(key: string): void {
+        const t = targetOf(key);
+        if (t.kind === 'body') removeBody(t.path);
+        else if (t.kind === 'placement') {
+          d.setSceneGroups(
+            store.scene(),
+            store.placements().filter((_, i) => i !== t.index),
+          );
+          if (store.selected() === key) patchState(store, { selected: SCENE });
+        } else if (t.kind === 'camera') {
+          if (store.cameraList().some((c) => c.id === t.id && !c.game)) dropCamera(t.id);
+        } else if (t.kind === 'scene-light')
+          d.setSceneLights(
+            store.scene(),
+            store.sceneLights().filter((l) => l.id !== t.id),
+          );
+        else if ((t.kind === 'part' || t.kind === 'sky-part') && t.key.startsWith('own:')) {
+          const host = store._addHost();
+          if (host) removePart(host, t.key.slice(4));
+        }
       },
       /** The scene shown through the selected camera. */
       makePrimary(): void {
@@ -1671,21 +1810,7 @@ export const SceneEditorStore = signalStore(
       },
       /** What a marker in the view stands for selected, its rows unfolded to it. */
       showMarker(key: string): void {
-        const t = targetOf(key);
-        store.expand(SCENE);
-        if (t.kind === 'camera') store.reopen(CAMERAS);
-        if (t.kind === 'scene-light') store.reopen(SCENE_LIGHTS);
-        if (t.kind === 'light') {
-          const path = t.path;
-          store.expand(...path.map((_, i) => bodyKey(path.slice(0, i + 1))));
-          const b = store.bodyByKey().get(bodyKey(path));
-          const overlay = b && lightsOfBody(b).find((l) => l.light.id === t.id)?.overlay;
-          if (overlay) {
-            store.reopen(overlayKey(path, overlay));
-            store.expand(overlayLightsKey(path, overlay));
-          } else store.expand(lightsKey(path));
-        }
-        patchState(store, { selected: key });
+        reveal(key);
       },
       /** A group put in the scene, its middle where a first planet goes: selected. */
       addGroup(id: string): void {
@@ -1847,8 +1972,13 @@ export const SceneEditorStore = signalStore(
           patchState(store, { selected: sceneLightKey(light.id) });
         }
       },
-      removeLight(): void {
+      removeLight(id?: LightId): void {
         const t = store.target();
+        const path = selectedPath();
+        if (id) {
+          if (path) settings(path, (s) => withoutAddedLight(s, id));
+          return;
+        }
         if (t.kind === 'scene-light') {
           d.setSceneLights(
             store.scene(),
@@ -1973,6 +2103,18 @@ export const SceneEditorStore = signalStore(
         if (path) settings(path, () => undefined);
       },
       /** An overlay put on the selected body, over what it wears. */
+      /** An overlay the selected body wears shown in the tree, its rows unfolded. */
+      showOverlay(id: string): void {
+        const path = selectedPath();
+        if (!path) return;
+        store.expand(SCENE, ...path.map((_, i) => bodyKey(path.slice(0, i + 1))));
+        store.reopen(overlayKey(path, id));
+      },
+      /** An overlay the sky wears shown in the tree, its rows unfolded. */
+      showSkyOverlay(id: string): void {
+        store.expand(SCENE, SKY);
+        store.reopen(skyOverlayKey(id));
+      },
       addOverlay(id: string): void {
         wear((worn) => (worn.includes(id) ? worn : [...worn, id]));
       },
@@ -2013,14 +2155,7 @@ export const SceneEditorStore = signalStore(
        */
       removeMoon(): void {
         const path = selectedPath();
-        if (!path?.length) return;
-        edit((b) => removeAt(b, path));
-        const focus = store.focus();
-        const gone = focus !== null && path.every((v, i) => pathOf(focus)[i] === v);
-        patchState(store, {
-          selected: path.length > 1 ? bodyKey(path.slice(0, -1)) : SCENE,
-          focus: gone ? null : focus,
-        });
+        if (path?.length) removeBody(path);
       },
       /** A new part of a shape added onto the body or sky selected: selected. */
       addPart(shape: CreatedShape): void {
@@ -2114,7 +2249,6 @@ export const SceneEditorStore = signalStore(
         if (!store.missing()) return;
         untracked(() => {
           store._ui.show(RANDOM_SETS);
-          store._ui.setBrowsing(true);
         });
       });
     },

@@ -112,9 +112,9 @@ export class EditorLayout {
     });
   }
 
-  /** A planet clicked in the view: selected in the editor, its tree shown (from the lists too). */
+  /** A planet clicked in the view: selected in the editor (from the library: what it shows, opened). */
   protected pick(index: number): void {
-    if (this.editor.selectPlaced(index)) this.ui.setBrowsing(false);
+    if (this.editor.selectPlaced(index) && this.ui.browsing()) this.ui.open(this.editor.opened());
   }
 
   /** The browser left full screen (Esc, or its own control): the screenshot mode ends with it. */

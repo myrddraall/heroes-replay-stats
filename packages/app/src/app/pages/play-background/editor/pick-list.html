@@ -3,22 +3,6 @@
   [changed]="changed()"
   (resetRequested)="resetRequested.emit()"
 >
-  @for (p of shown(); track p.value) {
-    <div class="picked">
-      <span class="name">{{ p.label }}</span>
-      <button
-        type="button"
-        class="remove"
-        [attr.aria-label]="removeLabel() + ' ' + p.label"
-        [title]="removeLabel()"
-        (click)="removed.emit(p.value)"
-      >
-        <mat-icon class="material-symbols-outlined" aria-hidden="true">close</mat-icon>
-      </button>
-    </div>
-  } @empty {
-    <p class="hint">None</p>
-  }
   @if (others().length) {
     <div class="add">
       <label class="label" [for]="id">Add</label>
@@ -30,4 +14,21 @@
       </select>
     </div>
   }
+  @if (newLabel()) {
+    <div class="buttons">
+      <button type="button" class="button" (click)="created.emit()">
+        <mat-icon class="material-symbols-outlined" aria-hidden="true">add</mat-icon>
+        {{ newLabel() }}
+      </button>
+    </div>
+  }
+  <hrs-added-list
+    [title]="title()"
+    [items]="items()"
+    [linkable]="linkable()"
+    [linkLabel]="linkLabel()"
+    [removeLabel]="removeLabel()"
+    (itemShow)="itemShow.emit($event)"
+    (itemRemove)="removed.emit($event)"
+  />
 </hrs-property-section>

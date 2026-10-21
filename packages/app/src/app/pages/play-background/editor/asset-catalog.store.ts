@@ -1,6 +1,7 @@
 import { computed, inject, resource } from '@angular/core';
 import {
   patchState,
+  signalMethod,
   signalStore,
   withComputed,
   withHooks,
@@ -404,10 +405,10 @@ export const AssetCatalogStore = signalStore(
     setQuery(query: string): void {
       patchState(store, { query });
     },
-    /** The kind of thing listed. */
-    setType(type: OpenKind): void {
-      patchState(store, { type });
-    },
+    /** The kind of thing listed, as the library's URL says (none: as it was). */
+    followKind: signalMethod<OpenKind | undefined>((type) => {
+      if (type) patchState(store, { type });
+    }),
     /**
      * A new scene, empty or a copy of another (by id) with its planets as they are shown (the
      * random sets': the set up now), named (none: a copy's '<name> copy'), opened.

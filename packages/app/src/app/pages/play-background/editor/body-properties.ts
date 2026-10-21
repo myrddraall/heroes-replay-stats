@@ -22,8 +22,8 @@ import { PropertyText } from '../properties/property-text';
  * A body's properties (presentational): the overlays the planet or moon wears, its lights as a whole
  * (how strongly they light it, and all of them turned together; each light, its shadow too, is a
  * row of its own in the tree), the lean of its rims, a tint over all its materials; a moon's orbit about its
- * parent, or a scene's planet's place and size; and its Moons section, whose button to add one
- * is given (`[moonAdd]`).
+ * parent, or a scene's planet's place and size; its Moons section given (`[moonsPod]`: adding
+ * one, those it has), and its Lights section (`[lightAdd]`: adding one, what lights it).
  */
 @Component({
   selector: 'hrs-body-properties',
@@ -80,6 +80,10 @@ export class BodyProperties {
   /** An overlay put on it (over what it wears), or taken off. */
   readonly overlayAdd = output<string>();
   readonly overlayRemove = output<string>();
+  /** An overlay it wears shown in the tree, its rows unfolded. */
+  readonly overlayShow = output<string>();
+  /** A new overlay made, and worn. */
+  readonly overlayNew = output<void>();
   readonly settingsChange = output<Partial<BodySettings>>();
   readonly orbitChange = output<Partial<Orbit>>();
   readonly placeChange = output<{ readonly position?: Vec3; readonly radius?: number }>();

@@ -35,6 +35,8 @@ import { ReferenceProperties, type ReferenceValues } from './reference-propertie
 import { AddGroup } from './add-group';
 import { GroupPlacementProperties } from './group-placement-properties';
 import { AddCamera } from './add-camera';
+import { AddedList } from './added-list';
+import { PropertySection } from '../properties/property-section';
 import { CameraProperties } from './camera-properties';
 import { SceneEditorStore } from './scene-editor.store';
 import { SceneProperties } from './scene-properties';
@@ -69,6 +71,8 @@ import { TintSection } from './tint-section';
     AddGroup,
     GroupPlacementProperties,
     AddCamera,
+    AddedList,
+    PropertySection,
     CameraProperties,
   ],
   templateUrl: './selection-panel.html',
@@ -218,6 +222,13 @@ export class SelectionPanel {
   }
 
   /** The selected material as the library has it (shared), opened from what it is selected in. */
+  /** A new overlay made (empty, named as it starts) and worn by what is selected: a body, or the sky. */
+  protected newOverlay(kind: 'planet' | 'sky'): void {
+    const id = this.draft.createOverlay(kind);
+    if (kind === 'planet') this.editor.addOverlay(id);
+    else this.editor.addSkyOverlay(id);
+  }
+
   protected openShared(): void {
     const shared = this.editor.sharedMaterial();
     if (shared) this.ui.open(shared);

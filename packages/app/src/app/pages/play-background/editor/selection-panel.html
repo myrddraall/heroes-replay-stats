@@ -1,3 +1,4 @@
+@let added = editor.added();
 @switch (editor.kind()) {
   @case ('scene') {
     @if (scene; as s) {
@@ -18,13 +19,39 @@
         (presetChange)="draft.chooseTint($event)"
         (anotherSet)="s.anotherSet()"
       >
-        <hrs-add-planet planetAdd (picked)="s.addPlanet($event)" />
-        <hrs-add-group planetAdd [groups]="s.groupOptions()" (picked)="s.addGroup($event)" />
+        <hrs-property-section planetsPod title="Planets">
+          <div class="buttons">
+            <hrs-add-planet (picked)="s.addPlanet($event)" />
+            <hrs-add-group [groups]="s.groupOptions()" (picked)="s.addGroup($event)" />
+          </div>
+          <hrs-added-list
+            title="Planets"
+            [items]="added.planets ?? []"
+            (itemShow)="editor.showAdded($event)"
+            (itemRemove)="editor.removeAdded($event)"
+          />
+        </hrs-property-section>
       </hrs-scene-properties>
       @if (s.cameraList().length) {
-        <hrs-add-camera (added)="s.addCamera()" />
+        <hrs-property-section title="Cameras">
+          <hrs-add-camera (added)="s.addCamera()" />
+          <hrs-added-list
+            title="Cameras"
+            [items]="added.cameras ?? []"
+            (itemShow)="editor.showAdded($event)"
+            (itemRemove)="editor.removeAdded($event)"
+          />
+        </hrs-property-section>
       }
-      <hrs-add-light (added)="editor.addLight($event)" />
+      <hrs-property-section title="Lights">
+        <hrs-add-light (added)="editor.addLight($event)" />
+        <hrs-added-list
+          title="Lights"
+          [items]="added.lights ?? []"
+          (itemShow)="editor.showAdded($event)"
+          (itemRemove)="editor.removeAdded($event)"
+        />
+      </hrs-property-section>
     }
   }
   @case ('sky') {
@@ -42,19 +69,32 @@
       [picked]="editor.skyWorn()"
       [choices]="editor.skyOverlayOptions()"
       [changed]="editor.skyOverlaysSet()"
+      icon="style"
+      [linkable]="true"
+      newLabel="New overlay"
+      (itemShow)="editor.showSkyOverlay($event)"
+      (created)="newOverlay('sky')"
       (added)="editor.addSkyOverlay($event)"
       (removed)="editor.removeSkyOverlay($event)"
       (resetRequested)="editor.resetSkyOverlays()"
     />
     @if (editor.partShapes().length) {
-      <hrs-add-part
-        [shapes]="editor.partShapes()"
-        [existing]="editor.reusableParts()"
-        [savable]="editor.canSaveAsOverlay()"
-        (added)="editor.addPart($event)"
-        (reused)="editor.reusePart($event)"
-        (saved)="editor.saveAsOverlay()"
-      />
+      <hrs-property-section title="Parts">
+        <hrs-add-part
+          [shapes]="editor.partShapes()"
+          [existing]="editor.reusableParts()"
+          [savable]="editor.canSaveAsOverlay()"
+          (added)="editor.addPart($event)"
+          (reused)="editor.reusePart($event)"
+          (saved)="editor.saveAsOverlay()"
+        />
+        <hrs-added-list
+          title="Parts"
+          [items]="added.parts ?? []"
+          (itemShow)="editor.showAdded($event)"
+          (itemRemove)="editor.removeAdded($event)"
+        />
+      </hrs-property-section>
     }
     <div class="buttons">
       <button
@@ -86,6 +126,8 @@
         [styled]="b.canHaveMoons"
         [moons]="b.canHaveMoons"
         (overlayAdd)="editor.addOverlay($event)"
+        (overlayShow)="editor.showOverlay($event)"
+        (overlayNew)="newOverlay('planet')"
         (overlayRemove)="editor.removeOverlay($event)"
         (overlaysReset)="editor.resetOverlays()"
         (settingsChange)="editor.setBody($event)"
@@ -99,26 +141,47 @@
         [lit]="!editor.skyOverlayOpen()"
         (deleteRequested)="editor.deleteAsset()"
       >
-        <hrs-add-light lightAdd (added)="editor.addLight($event)" />
-        <hrs-add-planet moonAdd label="Add moon" (picked)="editor.addMoon($event)" />
+        <hrs-property-section moonsPod title="Moons">
+          <div class="buttons">
+            <hrs-add-planet label="Add moon" (picked)="editor.addMoon($event)" />
+          </div>
+          <hrs-added-list
+            title="Moons"
+            [items]="added.moons ?? []"
+            (itemShow)="editor.showAdded($event)"
+            (itemRemove)="editor.removeAdded($event)"
+          />
+        </hrs-property-section>
+        <hrs-property-section lightAdd title="Lights">
+          <hrs-add-light (added)="editor.addLight($event)" />
+          @if (editor.litBy(); as lit) {
+            <hrs-lit-by
+              [lights]="lit"
+              (litChange)="editor.setLitBy($event)"
+              (lightShow)="editor.showLight($event)"
+              (lightRemove)="editor.removeLight($event)"
+            />
+          }
+        </hrs-property-section>
       </hrs-body-properties>
       @if (editor.partShapes().length) {
-        <hrs-add-part
-          [shapes]="editor.partShapes()"
-          [existing]="editor.reusableParts()"
-          [savable]="editor.canSaveAsOverlay()"
-          (added)="editor.addPart($event)"
-          (reused)="editor.reusePart($event)"
-          (saved)="editor.saveAsOverlay()"
-        />
+        <hrs-property-section title="Parts">
+          <hrs-add-part
+            [shapes]="editor.partShapes()"
+            [existing]="editor.reusableParts()"
+            [savable]="editor.canSaveAsOverlay()"
+            (added)="editor.addPart($event)"
+            (reused)="editor.reusePart($event)"
+            (saved)="editor.saveAsOverlay()"
+          />
+          <hrs-added-list
+            title="Parts"
+            [items]="added.parts ?? []"
+            (itemShow)="editor.showAdded($event)"
+            (itemRemove)="editor.removeAdded($event)"
+          />
+        </hrs-property-section>
       }
-    }
-    @if (editor.litBy(); as lit) {
-      <hrs-lit-by
-        [lights]="lit"
-        (litChange)="editor.setLitBy($event)"
-        (lightShow)="editor.showLight($event)"
-      />
     }
   }
   @case ('placement') {
@@ -137,7 +200,15 @@
   }
   @case ('cameras') {
     @if (scene; as s) {
-      <hrs-add-camera (added)="s.addCamera()" />
+      <hrs-property-section title="Cameras">
+        <hrs-add-camera (added)="s.addCamera()" />
+        <hrs-added-list
+          title="Cameras"
+          [items]="added.cameras ?? []"
+          (itemShow)="editor.showAdded($event)"
+          (itemRemove)="editor.removeAdded($event)"
+        />
+      </hrs-property-section>
     }
   }
   @case ('camera') {
@@ -186,6 +257,7 @@
       <hrs-pick-list
         title="Materials"
         placeholder="Material…"
+        icon="texture"
         [picked]="pm.picked"
         [choices]="pm.choices"
         (added)="editor.addPartMaterial($event)"

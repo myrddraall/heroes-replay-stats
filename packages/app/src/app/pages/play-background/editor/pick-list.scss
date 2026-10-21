@@ -1,26 +1,6 @@
 @use '../properties/property-row';
 
-// One picked: its name from the left, the button to take it out at the right.
-.picked {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) property-row.$reset-column;
-  align-items: center;
-  gap: 6px;
-  min-height: 26px;
-}
-
-.name {
-  overflow: hidden;
-  font: var(--mat-sys-body-small);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.remove {
-  @include property-row.reset;
-}
-
-// Another picked: a short row, as a property's.
+// Another to pick: a short row, as a property's.
 .add {
   @include property-row.row;
   grid-template-columns: 84px minmax(0, 1fr) property-row.$reset-column;

@@ -1,8 +1,11 @@
 /**
- * What the Background page has open in its editor, as its URL says
- * (`/edit-background/<kind>/<id>`): a scene (the random sets' when nothing is open), or one of
- * the library's assets; a material opened from a planet or an overlay that uses it, under that
- * one (`/edit-background/<kind>/<id>/material/<material>`). Styles are overlays in the URL.
+ * The Background page's URLs. Its editor has open what its URL says
+ * (`/edit-background/<kind>/<id>`): a scene (the random sets': `scene/random-sets`), or one of the
+ * library's assets; a material opened from a planet or an overlay that uses it, under that one
+ * (`/edit-background/<kind>/<id>/material/<material>`). Styles are overlays in the URL. Its
+ * library lists one kind of thing (`/edit-background/library/<kind>`, the kind plural: `planets`),
+ * one of them shown behind it where its URL names it (`/edit-background/library/<kind>/<id>`; none:
+ * the random sets); `/edit-background` alone is the library on the kind it listed last.
  */
 
 /** The library's kinds of asset, each a list in the browser. */
@@ -48,9 +51,12 @@ const urlKind = (kind: OpenKind) => (kind === 'style' ? 'overlay' : kind);
 /** A kind the URL says (an overlay, or a style as it was called: a style). */
 const kindOf = (kind: string) => (kind === 'overlay' ? 'style' : kind);
 
-/** The page's URL for what is open (the random sets' scene: the page itself). */
+/** The random sets' scene in the editor's URL (its id being none). */
+const RANDOM_SETS_URL = 'random-sets';
+
+/** The editor's URL for what is open. */
 export function openPath(target: OpenTarget): string[] {
-  if (target.kind === 'scene' && !target.id) return ['/edit-background'];
+  if (target.kind === 'scene' && !target.id) return ['/edit-background', 'scene', RANDOM_SETS_URL];
   const on = (target as AssetTarget).on;
   return on
     ? ['/edit-background', urlKind(on.kind), on.id, urlKind(target.kind), target.id]
@@ -68,6 +74,7 @@ export function openOf(
   onId?: string,
 ): OpenTarget {
   if (kind === undefined || id === undefined) return RANDOM_SETS;
+  if (kind === 'scene' && id === RANDOM_SETS_URL) return RANDOM_SETS;
   const target = parseOpen(`${kindOf(kind)}:${id}`);
   const on = onKind !== undefined ? kindOf(onKind) : undefined;
   if (target.kind !== 'material' || onId === undefined || (on !== 'planet' && on !== 'style'))
@@ -87,3 +94,28 @@ export function parseOpen(key: string | undefined): OpenTarget {
 /** Whether what is open is one of the library's assets (else a scene or a group: the scene editor's). */
 export const isAsset = (target: OpenTarget): target is AssetTarget =>
   target.kind !== 'scene' && target.kind !== 'group';
+
+/** Each kind's list in the library's URL. */
+const LIBRARY_URL: Readonly<Record<OpenKind, string>> = {
+  scene: 'scenes',
+  group: 'groups',
+  planet: 'planets',
+  style: 'overlays',
+  material: 'materials',
+  particle: 'particles',
+  sky: 'skies',
+};
+
+/** The library's URL listing a kind of thing, one of them (by id) shown behind it where given. */
+export function libraryPath(kind: OpenKind, id?: string): string[] {
+  return ['/edit-background', 'library', LIBRARY_URL[kind], ...(id ? [id] : [])];
+}
+
+/** The kind of thing a library URL lists (none: no list the library has). */
+export function libraryKindOf(list: string | undefined): OpenKind | undefined {
+  return KINDS.find((kind) => LIBRARY_URL[kind] === list);
+}
+
+/** What the library shows behind its list: the thing its URL names, of the kind listed (none: the random sets). */
+export const libraryShown = (kind: OpenKind, id: string | undefined): OpenTarget =>
+  id ? { kind, id } : RANDOM_SETS;

@@ -27,7 +27,7 @@
                 <span>{{ parent.label }}</span>
               </button>
             } @else {
-              <button type="button" class="layout__library" (click)="ui.setBrowsing(true)">
+              <button type="button" class="layout__library" (click)="ui.toLibrary(editor.opened())">
                 <mat-icon class="material-symbols-outlined" aria-hidden="true">arrow_back</mat-icon>
                 <span>Library</span>
               </button>

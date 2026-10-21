@@ -7,6 +7,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { GraphicsStore } from '../../../data/settings/graphics.store';
 import { AssetCatalogStore } from './asset-catalog.store';
+import { EditorUiStore } from './editor-ui.store';
 import { LIBRARY_TYPES } from './library-types';
 import { NewSceneFlyout, type SceneTemplate } from './new-scene-flyout';
 import { ViewMenu } from './view-menu';
@@ -25,6 +26,7 @@ import type { OpenKind } from './open-target';
 })
 export class LibraryHead {
   protected readonly catalog = inject(AssetCatalogStore);
+  private readonly ui = inject(EditorUiStore);
   protected readonly types = LIBRARY_TYPES;
   protected readonly graphics = inject(GraphicsStore);
   /** Whether the new scene's flyout is open. */
@@ -49,7 +51,7 @@ export class LibraryHead {
   }
 
   private setType(type: string): void {
-    if (LIBRARY_TYPES.some((t) => t.value === type)) this.catalog.setType(type as OpenKind);
+    if (LIBRARY_TYPES.some((t) => t.value === type)) this.ui.showKind(type as OpenKind);
   }
 
   protected search(event: Event): void {

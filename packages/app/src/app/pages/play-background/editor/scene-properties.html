@@ -21,11 +21,7 @@
   </hrs-property-section>
 }
 @if (planets()) {
-  <hrs-property-section title="Planets">
-    <div class="buttons">
-      <ng-content select="[planetAdd]" />
-    </div>
-  </hrs-property-section>
+  <ng-content select="[planetsPod]" />
 }
 @if (!group()) {
   <hrs-property-section

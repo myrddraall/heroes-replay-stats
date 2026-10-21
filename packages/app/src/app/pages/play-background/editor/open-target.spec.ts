@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { isAsset, openKey, openOf, openPath, parseOpen, RANDOM_SETS } from './open-target';
+import {
+  isAsset,
+  libraryKindOf,
+  libraryPath,
+  libraryShown,
+  openKey,
+  openOf,
+  openPath,
+  parseOpen,
+  RANDOM_SETS,
+} from './open-target';
 
 describe('open-target', () => {
   it('reads what the URL opens, and writes it back the same', () => {
@@ -16,6 +26,27 @@ describe('open-target', () => {
     expect(parseOpen('korhal')).toBe(RANDOM_SETS);
     expect(parseOpen('moon:x')).toBe(RANDOM_SETS);
     expect(isAsset(RANDOM_SETS)).toBe(false);
+  });
+
+  it('opens the random sets in the editor by a name of their own', () => {
+    expect(openPath(RANDOM_SETS)).toEqual(['/edit-background', 'scene', 'random-sets']);
+    expect(openOf('scene', 'random-sets')).toBe(RANDOM_SETS);
+    expect(openOf(undefined, undefined)).toBe(RANDOM_SETS);
+  });
+
+  it('lists a kind in the library, by its plural, one of them shown behind', () => {
+    expect(libraryPath('planet', 'korhal')).toEqual([
+      '/edit-background',
+      'library',
+      'planets',
+      'korhal',
+    ]);
+    expect(libraryPath('style')).toEqual(['/edit-background', 'library', 'overlays']);
+    expect(libraryKindOf('overlays')).toBe('style');
+    expect(libraryKindOf('moons')).toBeUndefined();
+    expect(libraryShown('planet', 'korhal')).toEqual({ kind: 'planet', id: 'korhal' });
+    // Nothing of the kind named: the random sets behind the list.
+    expect(libraryShown('scene', undefined)).toBe(RANDOM_SETS);
   });
 
   it('calls styles overlays in the URL, and still reads them as styles', () => {

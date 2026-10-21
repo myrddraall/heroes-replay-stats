@@ -100,6 +100,10 @@ describe('App shell', () => {
     const open = at('edit-background/material/edgeLight222-korhal')?.posParams;
     expect([open?.['kind']?.path, open?.['id']?.path]).toEqual(['material', 'edgeLight222-korhal']);
     expect(at('edit-background/planet')).toBeNull();
+    const library = at('edit-background/library/planets/korhal')?.posParams;
+    expect([library?.['library']?.path, library?.['item']?.path]).toEqual(['planets', 'korhal']);
+    expect(at('edit-background/library/planets')?.posParams?.['kind']).toBeUndefined();
+    expect(at('edit-background/library/planets/korhal/x')).toBeNull();
     expect(at('play-background')).toBeNull();
     expect(at('replays')).toBeNull();
   });

@@ -1,12 +1,8 @@
-<hrs-property-section title="Add light">
-  <div class="buttons">
-    @for (k of kinds; track k.kind) {
-      <button type="button" class="button" (click)="added.emit(k.kind)">
-        <mat-icon class="material-symbols-outlined" aria-hidden="true">{{
-          icons[k.kind]
-        }}</mat-icon>
-        {{ k.label }}
-      </button>
-    }
-  </div>
-</hrs-property-section>
+<div class="buttons">
+  @for (k of kinds; track k.kind) {
+    <button type="button" class="button" (click)="added.emit(k.kind)">
+      <mat-icon class="material-symbols-outlined" aria-hidden="true">{{ icons[k.kind] }}</mat-icon>
+      {{ k.label }}
+    </button>
+  }
+</div>

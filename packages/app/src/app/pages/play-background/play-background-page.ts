@@ -6,7 +6,7 @@ import { AssetCatalogStore } from './editor/asset-catalog.store';
 import { AssetEditor } from './editor/asset-editor';
 import { EditingAidsStore } from './editor/editing-aids.store';
 import { EditorUiStore } from './editor/editor-ui.store';
-import { isAsset, openKey, openOf } from './editor/open-target';
+import { isAsset, libraryKindOf, libraryShown, openOf, RANDOM_SETS } from './editor/open-target';
 import { SceneEditor } from './editor/scene-editor';
 import { buildStandIn, parseStandIn } from './editor/stand-in';
 
@@ -15,11 +15,13 @@ import { buildStandIn, parseStandIn } from './editor/stand-in';
  * (container). It provides a draft of the design ({@link DraftDesignStore}) as the design in
  * effect for everything under it, so what it shows and edits is the draft while the rest of the
  * site shows what is published, until Save; its own UI state; the library's lists; and the
- * editing aids (the stage's backdrop, the stand-in planet), never part of the design. It edits
- * what the URL's path says (`/edit-background/<kind>/<id>`: a scene, else one of the library's
- * assets, a material perhaps under the planet or overlay it was opened from; nothing: the random
- * sets' scene, under the library's list), each editor providing its
- * own store to the tree, properties and background under it.
+ * editing aids (the stage's backdrop, the stand-in planet), never part of the design. Its URL
+ * says whether its library shows (`/edit-background/library/<list>/<id>`: a kind listed, one of
+ * them shown behind; `/edit-background`: the kind listed last, the random sets behind) or its
+ * editor (`/edit-background/<kind>/<id>`: a scene, else one of the library's assets, a material
+ * perhaps under the planet or overlay it was opened from), and what is shown: each editor
+ * providing its own store to the tree, properties and background under it (the library's lists
+ * too, what they show behind them by the editor of its kind).
  */
 @Component({
   selector: 'hrs-play-background-page',
@@ -59,19 +61,27 @@ export class PlayBackgroundPage {
   /** A material's: the planet or overlay it was opened from. */
   readonly onKind = input<string>();
   readonly onId = input<string>();
+  /** The library's: the kind it lists (its list's name in the URL), and what it shows behind. */
+  readonly library = input<string>();
+  readonly item = input<string>();
 
-  protected readonly opened = computed(() =>
-    openOf(this.kind(), this.id(), this.onKind(), this.onId()),
-  );
+  /** Whether the library shows (else the editor, on what the URL opens). */
+  private readonly browsing = computed(() => this.kind() === undefined);
+  /** The kind the library's URL lists (none: the kind it listed last). */
+  private readonly libraryKind = computed(() => libraryKindOf(this.library()));
+  /** What is shown: the library's (behind its list), or what is open in the editor. */
+  protected readonly opened = computed(() => {
+    if (!this.browsing()) return openOf(this.kind(), this.id(), this.onKind(), this.onId());
+    const kind = this.libraryKind();
+    return kind ? libraryShown(kind, this.item()) : RANDOM_SETS;
+  });
   protected readonly isAsset = isAsset;
-  private readonly openedKey = computed(() =>
-    this.kind() !== undefined ? openKey(this.opened()) : undefined,
-  );
 
   private readonly draft = inject(DraftDesignStore);
 
   constructor() {
-    inject(EditorUiStore).followOpen(this.openedKey);
+    inject(EditorUiStore).followBrowsing(this.browsing);
+    inject(AssetCatalogStore).followKind(this.libraryKind);
   }
 
   /**
