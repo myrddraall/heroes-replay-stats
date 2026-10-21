@@ -108,8 +108,9 @@ export { V_SAMPLES } from './scene-shaders';
 const OUTPUTS = ['colour', 'glow'] as const;
 type Output = (typeof OUTPUTS)[number];
 
-/** The key the bodies' program is kept under. */
+/** The keys the bodies' and the meshes' programs are kept under. */
 const BODY = 'body';
+const MESH = 'mesh';
 
 /** How many hexes a drawn hex pattern has round a body at scale 1, where it doesn't say how many its texture has. */
 const HEX_ROUND = 24;
@@ -589,9 +590,7 @@ interface Bake {
  */
 export class SceneRenderer {
   private readonly gl: WebGL2RenderingContext;
-  /** The meshes' program (the sky's). */
-  private readonly meshProgram: WebGLProgram;
-  /** The bodies' program (compiled in the background where the browser can: none until done). */
+  /** The bodies' and the meshes' programs (compiled in the background where the browser can: none until done). */
   private readonly programs: Programs;
   /** The square a body's parts are drawn on. */
   private readonly quad: WebGLVertexArrayObject;
@@ -674,7 +673,7 @@ export class SceneRenderer {
     this.gl = gl;
     this.programs = programsOf(gl);
     this.programs.request(BODY, BODY_VERTEX, bodyFragment());
-    this.meshProgram = program(gl, MESH_VERTEX, meshFragment(true));
+    this.programs.request(MESH, MESH_VERTEX, meshFragment(true));
     this.quad = this.quadVao();
     this.particleProgram = program(gl, PARTICLE_VERTEX, PARTICLE_FRAGMENT);
     this.toneProgram = program(gl, TONE_VERTEX, TONE_FRAGMENT);
@@ -1463,7 +1462,7 @@ export class SceneRenderer {
    * body's scrolling layers have moved far enough to bake it again.
    */
   needsFrame(seconds: number): boolean {
-    if (this.changed || this.stillDirty) return true;
+    if (this.changed || this.stillDirty || !this.programs.get(MESH)) return true;
     if (!this.backdrop && (this.skyMoves || this.particlesShown)) return true;
     return this.placed.some((b) => this.bakeDue(b, seconds));
   }
@@ -1473,10 +1472,11 @@ export class SceneRenderer {
     return this.timer.poll();
   }
 
-  /** The scene at `seconds` on its clock. */
-  draw(seconds: number): void {
+  /** The scene at `seconds` on its clock; nothing while the meshes' program is still compiling (false). */
+  draw(seconds: number): boolean {
     const gl = this.gl;
     const { width, height } = this.canvas;
+    if (!this.programs.get(MESH)) return false;
     if (this.timing) this.timer.begin();
     if (this.stillDirty) this.drawStill();
     const viewProjection = multiply(this.projection, this.view);
@@ -1550,6 +1550,7 @@ export class SceneRenderer {
     this.drawBeams();
     if (this.timing) this.timer.end();
     this.changed = false;
+    return true;
   }
 
   /** What a body's bake is for: the view, the body as it is, the surfaces its shapes are hidden behind. */
@@ -1999,7 +2000,7 @@ export class SceneRenderer {
     const v = this.view;
     const threshold = this.sceneThreshold();
     // What every mesh drawn shares.
-    const p = this.meshProgram;
+    const p = this.programs.get(MESH)!;
     gl.useProgram(p);
     gl.uniformMatrix4fv(this.uniform(p, 'uViewProjection'), false, viewProjection);
     gl.uniform1f(this.uniform(p, 'uSceneThreshold'), threshold);

@@ -276,7 +276,7 @@ export class SceneCanvas {
       const timed = this.frameStats.watching();
       renderer.timing = timed;
       const start = timed ? performance.now() : 0;
-      renderer.draw(clock);
+      if (!renderer.draw(clock)) return; // its programs still compiling: nothing yet
       if (timed) {
         this.frameStats.frame(performance.now() - start);
         for (const ms of renderer.gpuTimes()) this.frameStats.gpu(ms);
