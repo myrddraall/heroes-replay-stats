@@ -1,6 +1,20 @@
+@use '../properties/property-row';
+
 :host {
   display: grid;
   padding: 4px 0;
+}
+
+// One thing's row: the thing, and a button for its action where it has one; the selected
+// (shown) one marked along its whole width, action and all.
+.row {
+  display: flex;
+  align-items: center;
+
+  &--selected {
+    background: rgb(var(--hrs-glass-edge) / 0.18);
+    box-shadow: inset 2px 0 0 var(--mat-sys-primary);
+  }
 }
 
 .items {
@@ -14,7 +28,8 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   min-height: 24px;
   padding: 2px 6px;
   border: none;
@@ -23,12 +38,6 @@
   font: var(--mat-sys-body-small);
   text-align: start;
   cursor: pointer;
-
-  // Selected (shown): marked along its whole width.
-  &--selected {
-    background: rgb(var(--hrs-glass-edge) / 0.18);
-    box-shadow: inset 2px 0 0 var(--mat-sys-primary);
-  }
 
   &:focus-visible {
     outline: 2px solid var(--mat-sys-primary);
@@ -66,6 +75,13 @@
   padding: 2px 6px;
   font: var(--mat-sys-body-small);
   opacity: 0.7;
+}
+
+// An item's action (the random sets' next set): a plain icon button after it.
+.action {
+  @include property-row.reset;
+  flex: none;
+  margin-inline-end: 4px;
 }
 
 // Not saved yet: a small dot after the name.

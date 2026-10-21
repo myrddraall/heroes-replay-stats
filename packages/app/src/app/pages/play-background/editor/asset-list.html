@@ -3,11 +3,10 @@
     @if (item.group && item.group !== items()[$index - 1]?.group) {
       <li class="group" role="presentation">{{ item.group }}</li>
     }
-    <li>
+    <li class="row" [class.row--selected]="item.key === selected()">
       <button
         type="button"
         class="item"
-        [class.item--selected]="item.key === selected()"
         [attr.aria-pressed]="item.key === selected()"
         aria-description="Double-click or press Enter to open"
         title="Double-click to open"
@@ -29,6 +28,19 @@
           <span class="unsaved" title="Not saved yet" aria-label="not saved yet"></span>
         }
       </button>
+      @if (item.action; as action) {
+        <button
+          type="button"
+          class="action"
+          [attr.aria-label]="action.label + ': ' + item.label"
+          [title]="action.label"
+          (click)="itemAction.emit(item.key)"
+        >
+          <mat-icon class="material-symbols-outlined" aria-hidden="true">{{
+            action.icon
+          }}</mat-icon>
+        </button>
+      }
     </li>
   } @empty {
     <li class="empty">Nothing found</li>

@@ -10,13 +10,16 @@ export interface BrowserItem {
   readonly unsaved?: boolean;
   /** The group it is listed under (a heading where the groups change), where the list has groups. */
   readonly group?: string;
+  /** A button after it that does one thing to it (`itemAction`): its icon, and what it does. */
+  readonly action?: { readonly icon: string; readonly label: string };
 }
 
 /**
  * The library's list (presentational): one kind of thing, flat (under a heading for each group,
  * where its items have groups); an item clicked (`itemClick`: a double-click is two, told apart by
  * what holds the list, as the list may be new between them), selected by the up and down arrows
- * (shown, its information beside), opened by Enter, by its key; the one selected marked.
+ * (shown, its information beside), opened by Enter, by its key; the one selected marked. An item
+ * with an action has a button for it after its name (`itemAction`).
  */
 @Component({
   selector: 'hrs-asset-list',
@@ -33,6 +36,7 @@ export class AssetList {
   readonly itemClick = output<string>();
   readonly itemSelect = output<string>();
   readonly itemOpen = output<string>();
+  readonly itemAction = output<string>();
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   /** The item above or below selected, and focused. */

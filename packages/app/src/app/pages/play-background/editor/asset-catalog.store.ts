@@ -409,6 +409,10 @@ export const AssetCatalogStore = signalStore(
     followKind: signalMethod<OpenKind | undefined>((type) => {
       if (type) patchState(store, { type });
     }),
+    /** The random sets' next set, drawn (what the background shows while they are shown). */
+    nextRandomSet(): void {
+      store._background.nextPlanetSet();
+    },
     /**
      * A new scene, empty or a copy of another (by id) with its planets as they are shown (the
      * random sets': the set up now), named (none: a copy's '<name> copy'), opened.

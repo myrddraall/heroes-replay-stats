@@ -1,4 +1,5 @@
 import { Component, computed, inject } from '@angular/core';
+import { RANDOM_SCENE } from '../../../scenes/play-background/background-design';
 import { overlayName } from '../../../scenes/play-background/created-overlays';
 import { DraftDesignStore } from '../draft-design.store';
 import { AssetCatalogStore } from './asset-catalog.store';
@@ -56,6 +57,8 @@ export class AssetBrowser {
             label: s.label,
             caption: s.shows !== s.label ? s.shows : undefined,
             unsaved: d.unsavedScenes().has(s.id),
+            // The random sets': the next set drawn, without leaving and coming back.
+            ...(s.id === RANDOM_SCENE ? { action: { icon: 'casino', label: 'New set' } } : {}),
           }));
         case 'group':
           return c.groups().map((g) => ({
@@ -124,5 +127,13 @@ export class AssetBrowser {
   /** Opened: its tree in place of the list, its controls beside. */
   protected open(key: string): void {
     this.ui.open(parseOpen(key));
+  }
+
+  /** An item's action: the random sets' draws the next set, shown. */
+  protected act(key: string): void {
+    const target = parseOpen(key);
+    if (target.kind !== 'scene' || target.id !== RANDOM_SCENE) return;
+    this.catalog.nextRandomSet();
+    this.ui.show(target);
   }
 }
