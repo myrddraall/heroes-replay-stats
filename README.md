@@ -119,7 +119,21 @@ that darkens). Any light lights or darkens (Effect: Lights or Darkens, `darkens`
 takes its colour away where it reaches (all over, one from all round; from its side, as softly as
 its Softness, one from a side), so it darkens the painted, unlit materials too (`bodyDarkenings`);
 an antilight of before (`kind: 'shadow'`) is read as a directional light that darkens
-(`knownLights`), and Add light's Antilight adds one. Each is switched on and off by its row's
+(`knownLights`), and Add light's Antilight adds one. Add light also adds a Point light (at a
+place in the body's frame, in its radii: Across, Towards the eye, Up; fading with distance, half
+as strong at Reach), a Spot light (a point light that points, Aim, at the body's middle unless
+aimed, within a Cone of so many degrees, fading in over Edge of it) and a Hemisphere light (one
+colour from the side Sky from, its Ground colour from the other, mixed by how far the surface
+faces each: the nebula lighting a planet's upper edge) and an Environment light (the sky itself:
+each side of the body lit by the sky's colour beyond its edge that way, read Reach radii out from
+the edge, falling off from the edge in as softly as its Softness, so a planet in front of the
+nebula picks up its colours on that side, whatever sky the scene wears; the renderer keeps what
+doesn't move of the sky small and blurred, `skyLight` in `scene-renderer.ts`, drawn again with the
+still sky and read by the body shader where the body sits in the frame, `frameSpot`; in front of
+an editing backdrop there is no sky, so none of its light), each lighting or darkening like any
+other (`placedLight`, `reachOf` in the shader); a shield's own lights stay from all round or a
+side. Point and spot lights are marked where they are, a spot's line along its aim to the middle
+of its light circle. Each is switched on and off by its row's
 checkbox and has a colour and strength (one that darkens, how dark: up to 1), and a directional
 light the side it comes from, its Softness (how gradually it falls off round the body: the power
 of how squarely the face turns to it) and its Specular colour and strength (its shine on a
@@ -246,7 +260,16 @@ parts, lights and overlay (as above) and its moons, moons of moons; its own prop
 colour, and an Add planet button (a flyout of the planets, filtered). A planet's properties have
 its place (across, up, distance) and size; a body's, an Add moon button (the same flyout). A moon
 is any planet on an orbit about its parent: radius, tilt, turn, a progress round it and its size;
-one hidden behind a body is shown round its orbit while selected. What is drawn is kept in the
+one hidden behind a body is shown round its orbit while selected. A planet has moons of its own
+too, the library's (`LibraryState.moons`, by planet, each keyed `moon-<n>`): a planet's editor has
+the same Moons pod (add, take out, switch off; a moon's orbit, name, colour, rim, fit and the
+overlays it wears are set there, under the planet; its look and lights are its own planet's), its
+moons drawn about it on the stage. Every scene the planet is put in reads them first among its
+moons (`withLibraryMoons`, marked `inherited` by key; the scene's own after), the random sets too
+(`setWithMoons`). In a scene such a moon is switched off, never taken out, and anything of it set
+there (its orbit's values, what it wears, its settings) is kept by its key on the scene's body
+(`moonsSet`), nothing where it is as the planet has it (`storedBodies`); Reset moon takes it all
+back (`resetMoon`). What is drawn is kept in the
 view with room for each body's shells and halo (`visualExtent`): a scene of one planet, and the
 preview stage's asset, drawn smaller where they would not fit; a scene of several drawn smaller
 about the middle of the view (`fitScene`), its layout kept. Another scene or asset opened (or
@@ -254,8 +277,12 @@ another random set) is flown to; the one open edited (a planet or moon added or 
 style changed) fades to where it is (`BackgroundSceneSource.key`). A body clicked in the view (the
 nearest under the pointer) is selected in the tree, its rows unfolded to it. An asset is shown on a
 preview stage (a scene of its own, `@preview`, there only to see the asset in): a planet itself, a
-style worn by the planet last opened, a material on the stand-in planet, the sky alone. A
-planet's or overlay's material can be opened as the library has it (Edit shared material: one
+style worn by the planet last opened, a material on the stand-in planet, the sky alone. The stage
+is seen through the game's camera, moved where the editor's own is (dragged and scrolled in the
+view as a scene's; put back by the button beside the view; not kept, reset as another asset
+opens), the asset fitted against the game's camera as before; with the markers on, the lights of
+the body selected or looked at (the asset's, or the stand-in's) are marked on it and the light
+selected has its outline and beam, as in a scene. A planet's or overlay's material can be opened as the library has it (Edit shared material: one
 material, shared by all that use it) under what it was opened from, in the URL
 (`/edit-background/planet/korhal/material/skyLights`; overlays are `overlay` in URLs, `style` in
 the code), one route for every editor URL so the page is kept as it moves: it is then shown on
@@ -286,7 +313,11 @@ limits show beside it ("0 – 1", "≥ 0", "Any"): only those it really has (a d
 glow's boost have none above). The properties use one vocabulary: a
 direction is always the side something comes from ("Light from", "Shade from", "Rim from",
 "Spread from": the rim's is the bright side, mirrored from the lean the design keeps), on the same
-disc with a Front/Behind switch; colour sections are "Colour", a material's compositing "Surface",
+disc (`PropertyDirection`: the planet seen from one of six sides, chosen on a small cross beside
+it, Front, Behind, Left, Right, Top, Bottom, `VIEWS`; the point hollow on the far side; dragged
+with Shift it closes on the cursor instead of following it, faster the further the cursor is, a
+fine drag; with Ctrl or ⌘ it snaps to the disc's eight cuts and its middle, shown while it does);
+colour sections are "Colour", a material's compositing "Surface",
 its pattern's size "Scale". Materials show by readable names (`material-names.ts`: their part's
 role, a shield's grid or a ring; else their own name where it says something; else their main
 texture's), the game data's name beside them; a body's are grouped by whose they are, its own and
@@ -426,13 +457,25 @@ Markers in the view (`SceneMarkers`, switched in the view options: Markers) show
 that the picture doesn't: the scene's cameras (but the one looked through), each with an outline
 of what it sees as far as the scene's middle; the groups put in it; and the lights of what is
 selected (a body's round it, a scene light's round each of its planets), each on the side it
-comes from with a line to its body (one from all round on the body's middle, several side by side;
-`viewPoint`, `viewLine`, `cameraOutline`). Clicking one selects it in the tree (`showMarker`). The
-light selected from a side shows its beam too (`LightBeam`, `scene-beams.ts`; the scene source's
-`beams`, with the markers, none in a screenshot): a see-through tube as wide as its body, out of it
-the way the light comes from, fading as it goes, drawn by the renderer over the picture as shown
-(after its exposure and bloom) and hidden where the frame's depth is nearer (its depth a texture);
-one that lights adds its colour, one that darkens takes it away, its edges lit faintly. The view
+comes from (one from all round on the body's middle, several side by side; `viewPoint`,
+`viewLine`, `cameraOutline`). A light's marker not selected is a small dot (its icon on hover),
+not to get in the light's way; the selected one shows its icon and name, its line to its body
+(a spot's along its aim to the middle of its light circle) and, a spot's, the edges of its cone
+as seen (`coneEdges`), and the outline of where the light falls on the body's sphere
+(`LightOutline`, `scene-beams.ts`, `lightAids`; drawn by the renderer's outline program on a
+square about the body, the sphere found under each pixel): the line where it stops reaching (a
+directional or point light's terminator, a hemisphere's divide), a spot's cone edge and, fainter,
+where its fade starts, a point's Reach ring (fainter), the ring where the sky round the body
+starts to take; in the light's colour (one that darkens: white), hidden where the frame's depth
+or another body's sphere is nearer. Clicking a marker selects it in the tree (`showMarker`). A
+directional light selected shows its beam too (`LightBeam`; the scene source's `beams` carries
+beams and outlines, with the markers, none in a screenshot): a see-through tube as wide as its
+body, out of it the way the light comes from, fading as it goes, drawn by the renderer over the
+picture as shown (after its exposure and bloom) and hidden where the frame's depth is nearer (its
+depth a texture); one that lights adds its colour, one that darkens takes it away, its edges lit
+faintly. The view options' Markers chooses All (the lights' small), Selected (only the selected
+thing's: a light's own, else the lights of the body selected; cameras and groups only when
+selected) or None (`MarkerMode`). The view
 options' Frame stats shows the background's frames a second and the time one takes to draw (its
 CPU side, and its GPU side where the browser can time it: `GpuTimer`), small in the bottom left
 (`FrameStats`: the canvas times its frames only while it shows; a still scene draws only when

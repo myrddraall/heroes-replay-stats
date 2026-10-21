@@ -49,7 +49,7 @@
   />
   @if (l.from; as from) {
     <hrs-property-direction
-      label="Light from"
+      [label]="l.kind === 'hemisphere' ? 'Sky from' : 'Light from'"
       [value]="from"
       [changed]="isSet('from')"
       [origin]="entry.origins.from"
@@ -57,7 +57,90 @@
       (valueChange)="settingsChange.emit({ from: $event })"
     />
   }
-  @if (l.kind === 'directional') {
+  @if (l.kind === 'hemisphere') {
+    <hrs-property-colour
+      label="Ground colour"
+      [value]="l.ground ?? '#000000'"
+      [changed]="isSet('ground')"
+      [origin]="entry.origins.ground"
+      (resetRequested)="clear.emit(['ground'])"
+      (valueChange)="settingsChange.emit({ ground: $event })"
+    />
+  }
+  @if (l.position; as at) {
+    <hrs-property-number
+      label="Across"
+      [value]="at[0]"
+      [step]="0.1"
+      [changed]="isSet('position')"
+      [origin]="entry.origins.position"
+      (resetRequested)="clear.emit(['position'])"
+      (valueChange)="move(0, $event)"
+    />
+    <hrs-property-number
+      label="Towards"
+      [value]="-at[1]"
+      [step]="0.1"
+      [changed]="isSet('position')"
+      [origin]="entry.origins.position"
+      (resetRequested)="clear.emit(['position'])"
+      (valueChange)="move(1, $event)"
+    />
+    <hrs-property-number
+      label="Up"
+      [value]="at[2]"
+      [step]="0.1"
+      [changed]="isSet('position')"
+      [origin]="entry.origins.position"
+      (resetRequested)="clear.emit(['position'])"
+      (valueChange)="move(2, $event)"
+    />
+  }
+  @if (l.position || l.kind === 'environment') {
+    <hrs-property-number
+      label="Reach"
+      [value]="l.fade ?? (l.kind === 'environment' ? 1.5 : 3)"
+      [min]="l.kind === 'environment' ? 0 : 0.1"
+      [step]="0.1"
+      [changed]="isSet('fade')"
+      [origin]="entry.origins.fade"
+      (resetRequested)="clear.emit(['fade'])"
+      (valueChange)="settingsChange.emit({ fade: $event })"
+    />
+  }
+  @if (l.kind === 'spot') {
+    <hrs-property-direction
+      label="Aim"
+      [value]="aim()"
+      [changed]="isSet('aim')"
+      [origin]="entry.origins.aim"
+      (resetRequested)="clear.emit(['aim'])"
+      (valueChange)="settingsChange.emit({ aim: $event })"
+    />
+    <hrs-property-number
+      label="Cone"
+      [value]="l.cone ?? 15"
+      [min]="1"
+      [max]="90"
+      [step]="1"
+      [changed]="isSet('cone')"
+      [origin]="entry.origins.cone"
+      (resetRequested)="clear.emit(['cone'])"
+      (valueChange)="settingsChange.emit({ cone: $event })"
+    />
+    <hrs-property-number
+      label="Edge"
+      [value]="l.edge ?? 0.5"
+      [min]="0"
+      [max]="1"
+      [step]="0.05"
+      [changed]="isSet('edge')"
+      [origin]="entry.origins.edge"
+      (resetRequested)="clear.emit(['edge'])"
+      (valueChange)="settingsChange.emit({ edge: $event })"
+    />
+  }
+  @if (sided()) {
     <hrs-property-number
       label="Softness"
       [value]="l.softness ?? 1"
@@ -69,7 +152,7 @@
       (valueChange)="settingsChange.emit({ softness: $event })"
     />
   }
-  @if (l.kind === 'directional' && !l.darkens) {
+  @if (shiny() && !l.darkens) {
     <hrs-property-colour
       label="Specular colour"
       [value]="l.specular ?? '#ffffff'"

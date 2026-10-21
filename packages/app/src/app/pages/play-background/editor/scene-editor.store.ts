@@ -56,8 +56,7 @@ import {
   fieldOfView,
   forwardOf,
 } from '../../../scenes/play-background/scene-camera';
-import { bodyFrame } from '../../../scenes/play-background/scene-renderer';
-import type { LightBeam } from '../../../scenes/play-background/scene-beams';
+import type { LightAid } from '../../../scenes/play-background/scene-beams';
 import type { CameraValues } from './camera-properties';
 import type { SceneMarker } from './scene-markers';
 import type { AddedItem, AddedLists } from './added-list';
@@ -91,6 +90,10 @@ import {
   withoutMaterial,
   withLightSwitched,
   withMaterialSwitched,
+  libraryMoonAt,
+  resetMoon,
+  storedBodies,
+  withLibraryMoons,
 } from '../../../scenes/play-background/scene-bodies';
 import {
   loadPlanetIndex,
@@ -107,55 +110,58 @@ import { withPlanetFiles } from '../../../scenes/play-background/with-planet-fil
 import { CUSTOM_TINT, DraftDesignStore } from '../draft-design.store';
 import { grouped, type PropertyOption } from '../properties/property-select';
 import {
-  type MaterialEntry,
+  bodyEnabled,
   type BodyInfo,
-  type PartEntry,
-  bodyView,
-  materialsOf,
-  movedInPart,
-  filesLoaded,
-  partsOfBody,
-  moonLightsOf,
   bodyLabel,
-  overlayChoices,
+  bodyView,
+  byDepth,
+  filesLoaded,
+  layerRows,
+  lightAids,
+  type LightEntry,
+  lightIcon,
+  lightMarkerAt,
+  lightsOfBody,
+  type LitByEntry,
+  litByOf,
   materialAt,
+  type MaterialEntry,
+  materialsOf,
+  type MaterialView,
+  moonLightsOf,
+  movedInPart,
+  offPart,
+  onPart,
+  type OuterLight,
+  overlayChoices,
+  overlayEnabled,
+  overlayEnabledBelow,
+  overlayLabel,
+  overlayOrder,
+  ownSkyInfo,
+  type PartEntry,
+  partIcon,
+  partMaterialRows,
+  type PartNode,
+  partNodes,
+  partsOfBody,
+  referenceRow,
+  sceneLightsOf,
+  sharedMaterials,
+  skyMaterialsOf,
   skyOverlayChoices,
   skyOverlayInfos,
   skyOverlayLabel,
   skyPartsOf,
-  overlayLabel,
-  overlayOrder,
+  splitViewKey,
+  spotEdges,
+  type TargetKind,
+  viewKey,
+  viewTitle,
+  withLitBy,
   wornIds,
   wornKeyOf,
   wornLabel,
-  bodyEnabled,
-  overlayEnabled,
-  overlayEnabledBelow,
-  partNodes,
-  type PartNode,
-  partIcon,
-  lightsOfBody,
-  type LightEntry,
-  sceneLightsOf,
-  lightIcon,
-  byDepth,
-  referenceRow,
-  skyMaterialsOf,
-  ownSkyInfo,
-  type TargetKind,
-  type LitByEntry,
-  litByOf,
-  type OuterLight,
-  withLitBy,
-  type MaterialView,
-  splitViewKey,
-  offPart,
-  onPart,
-  sharedMaterials,
-  viewKey,
-  layerRows,
-  partMaterialRows,
-  viewTitle,
 } from './editor-model';
 import { chosenOverlays, ownOverlays, wornKey } from '../../../scenes/play-background/overlays';
 import {
@@ -190,7 +196,6 @@ import {
   type NewLightKind,
   type LightSettings,
   knownLights,
-  rgbOf,
   newLight,
   type Receiver,
 } from '../../../scenes/play-background/scene-lights';
@@ -397,19 +402,6 @@ function shieldLightsOf(
 }
 
 /**
- * The way a light comes from (`from`, in its body's frame), out of the body as the eye at `eye`
- * sees it, in the scene: a unit vector.
- */
-function wayOut(from: Vec3, body: SetPlanet, eye: Vec3): Vec3 {
-  const { axes } = bodyFrame(body.position, body.radius, eye);
-  const way = [0, 1, 2].map(
-    (k) => from[0] * axes[k]! + from[1] * axes[3 + k]! + from[2] * axes[6 + k]!,
-  );
-  const length = Math.hypot(...way) || 1;
-  return way.map((v) => v / length) as unknown as Vec3;
-}
-
-/**
  * The scene editor's store (component store, provided by the scene editor as its `Editor` and its
  * background's scene): one scene of the draft ({@link DraftDesignStore}), by the URL (or the
  * random sets'), as a tree (the scene, its sky and the sky's materials, its planets, each with its
@@ -469,10 +461,10 @@ export const SceneEditorStore = signalStore(
       );
       /** The scene's planets, each with its moons. */
       const sceneBodiesNow = computed(() =>
-        random() ? [] : sceneBodies(entry(), sceneId(), defaults()),
+        random() ? [] : sceneBodies(entry(), sceneId(), defaults(), _draft.library()),
       );
       const publishedBodies = computed(() =>
-        random() ? [] : sceneBodies(publishedEntry(), sceneId(), defaults()),
+        random() ? [] : sceneBodies(publishedEntry(), sceneId(), defaults(), _draft.library()),
       );
       const library = _draft.library;
       /** The file each overlay is loaded from, by its id (one made in the editor: as it is now). */
@@ -502,9 +494,11 @@ export const SceneEditorStore = signalStore(
           children: readonly MoonChoices[],
           orbit?: Orbit,
           place?: { readonly position: Vec3; readonly radius: number },
+          inherited?: MoonChoices,
         ): BodyInfo => ({
           key: keyOf(path),
           id: bodyId,
+          ...(inherited ? { inherited } : {}),
           overlays: worn.map((id) => ({
             id,
             ...(lib.created?.[id] ? { name: lib.created[id].label } : {}),
@@ -513,7 +507,10 @@ export const SceneEditorStore = signalStore(
           })),
           overlaysSet,
           settings,
-          below: lib.planets[bodyId],
+          // (One of its planet's own moons: as the planet sets it, over its own planet's look.)
+          below: inherited?.settings
+            ? { ...lib.planets[bodyId], ...inherited.settings }
+            : lib.planets[bodyId],
           materialBase: lib.materials,
           // Its own parts as its data has them, with those added onto it (the library's, the scene's).
           file:
@@ -530,7 +527,8 @@ export const SceneEditorStore = signalStore(
         /** What a body wears: as chosen, else its own (its data's). */
         const worn = (chosen: readonly string[] | undefined, id: string) =>
           chosen ?? ownOverlays(all[id]?.tuning?.style);
-        const walk = (parent: BodyPath, list: readonly MoonChoices[]) =>
+        /** `planet`: the one the moons are about (its own moons, the library's, are among them). */
+        const walk = (parent: BodyPath, list: readonly MoonChoices[], planet: string) =>
           list.forEach((moon, i) => {
             const path = [...parent, i];
             const chosen = chosenOverlays(moon);
@@ -543,9 +541,13 @@ export const SceneEditorStore = signalStore(
                 moon.settings ?? {},
                 moon.moons ?? [],
                 moon.orbit,
+                undefined,
+                moon.inherited === undefined
+                  ? undefined
+                  : libraryMoonAt(lib.moons?.[planet], moon.inherited),
               ),
             );
-            walk(path, moon.moons ?? []);
+            walk(path, moon.moons ?? [], planet);
           });
         planets.forEach((planet, b) => {
           const chosen = chosenOverlays(planet);
@@ -562,7 +564,7 @@ export const SceneEditorStore = signalStore(
               { position: planet.position, radius: planet.radius },
             ),
           );
-          walk([b], planet.moons ?? []);
+          walk([b], planet.moons ?? [], planet.id);
         });
         return out;
       };
@@ -576,7 +578,12 @@ export const SceneEditorStore = signalStore(
       /** A group (kept with the scenes), by its id. */
       const groupOf = (id: string) => _draft.scenes().planets[id];
       /** The planets of the groups put in it, where they are put (theirs in turn). */
-      const placedGroups = computed(() => groupBodies(placements(), groupOf));
+      const placedGroups = computed(() =>
+        groupBodies(placements(), groupOf).map((g) => ({
+          ...g,
+          body: withLibraryMoons([g.body], _draft.library())[0]!,
+        })),
+      );
       /** Those planets' bodies (their moons too), by `groupBodyKey`. */
       const groupInfos = computed(
         () =>
@@ -867,7 +874,8 @@ export const SceneEditorStore = signalStore(
         }),
         bodyView: computed(() => {
           const b = body();
-          return b ? bodyView(b, focus() === b.key.slice(5), true) : null;
+          // (Moons can be put about any body but one of its planet's own.)
+          return b ? bodyView(b, focus() === b.key.slice(5), !b.inherited) : null;
         }),
         material: computed(() => {
           const t = target();
@@ -985,8 +993,11 @@ export const SceneEditorStore = signalStore(
         set: (parts) =>
           d.setSceneBodies(
             store.scene(),
-            changeSettings(store.sceneBodies(), path, wornKeyOf(b), (s) =>
-              without({ ...s, addedParts: parts }, parts.length ? [] : ['addedParts']),
+            storedBodies(
+              changeSettings(store.sceneBodies(), path, wornKeyOf(b), (s) =>
+                without({ ...s, addedParts: parts }, parts.length ? [] : ['addedParts']),
+              ),
+              d.library(),
             ),
           ),
       };
@@ -1027,7 +1038,9 @@ export const SceneEditorStore = signalStore(
         const byKey = store.bodyByKey();
         const body = (path: BodyPath, icon: string): AddedItem[] => {
           const b = byKey.get(bodyKey(path));
-          return b ? [{ key: bodyKey(path), label: bodyLabel(b), icon, removable: true }] : [];
+          return b
+            ? [{ key: bodyKey(path), label: bodyLabel(b), icon, removable: !b.inherited }]
+            : [];
         };
         /** The parts added here, as the tree has them (by `own:<id>`). */
         const parts = (
@@ -1494,7 +1507,7 @@ export const SceneEditorStore = signalStore(
           if (!b || !filesLoaded(b)) return null;
           const s = b.settings;
           // Drawn where it and every body it is a moon of are switched on.
-          const drawn = bodies.every((x) => x?.settings.enabled !== false);
+          const drawn = bodies.every((x) => (x?.settings.enabled ?? x?.below?.enabled) !== false);
           // The lights of the bodies it is a moon of that reach their moons, and its groups'.
           const inherited = [
             ...bodies.slice(0, -1).flatMap((parent) => (parent ? moonLightsOf(parent) : [])),
@@ -1588,7 +1601,9 @@ export const SceneEditorStore = signalStore(
         body: SetPlanet,
         i: number,
       ) => {
-        const round = lights.filter(({ light }) => light.kind === 'ambient');
+        const round = lights.filter(
+          ({ light }) => light.kind === 'ambient' || light.kind === 'environment',
+        );
         const marker = (key: string, light: LightEntry['light'], at: Vec3) => ({
           id: `${key}@${i}`,
           key,
@@ -1603,11 +1618,13 @@ export const SceneEditorStore = signalStore(
           out.push({ ...marker(key, light, body.position), nudge: n - (round.length - 1) / 2 }),
         );
         for (const { key, light } of lights) {
-          if (!light.from) continue;
-          const way = wayOut(light.from, body, view.eye);
-          const along = (radii: number) =>
-            body.position.map((v, k) => v + way[k]! * body.radius * radii) as unknown as Vec3;
-          out.push({ ...marker(key, light, along(1.8)), from: along(1.05) });
+          const at = lightMarkerAt(light, body, view.eye);
+          if (at)
+            out.push({
+              ...marker(key, light, at.at),
+              from: at.from,
+              lines: spotEdges(light, body, view.eye),
+            });
         }
       };
       if (t.kind === 'scene-light') {
@@ -1647,26 +1664,16 @@ export const SceneEditorStore = signalStore(
       return out;
     }),
     /**
-     * The beam of the light selected, from a side: out of each body it lights (the scene's: each
-     * of its planets), the way it comes from.
+     * What the view shows of the light selected, on each body it lights (the scene's: each of
+     * its planets): the outline of where it falls, a directional light's beam.
      */
-    beams: computed((): readonly LightBeam[] => {
+    beams: computed((): readonly LightAid[] => {
       const view = store.camera();
       const placed = store._placed();
       const t = store.target();
       if (!view || !placed) return [];
-      const beam = (light: LightEntry['light'], body: SetPlanet): LightBeam[] =>
-        light.from && light.enabled
-          ? [
-              {
-                centre: body.position,
-                radius: body.radius,
-                from: wayOut(light.from, body, view.eye),
-                colour: rgbOf(light.colour, 1),
-                darkens: light.darkens,
-              },
-            ]
-          : [];
+      const beam = (light: LightEntry['light'], body: SetPlanet): LightAid[] =>
+        lightAids(light, body, view.eye);
       if (t.kind === 'scene-light') {
         const light = sceneLightsOf(store.sceneLights()).find((l) => l.light.id === t.id)?.light;
         if (!light) return [];
@@ -1699,7 +1706,8 @@ export const SceneEditorStore = signalStore(
     const d = store._draft;
     /** The scene's planets changed (the random sets' have none of their own). */
     const edit = (change: (bodies: readonly SceneBody[]) => readonly SceneBody[]) => {
-      if (store.hasPlanets()) d.setSceneBodies(store.scene(), change(store.sceneBodies()));
+      if (store.hasPlanets())
+        d.setSceneBodies(store.scene(), storedBodies(change(store.sceneBodies()), d.library()));
     };
     /** The selected body's path, if a body (or one of its materials) is selected. */
     const selectedPath = (): BodyPath | null => {
@@ -1982,7 +1990,7 @@ export const SceneEditorStore = signalStore(
       addPlanet(id: string): void {
         if (!store.hasPlanets()) return;
         const { bodies, path } = addPlanet(store.sceneBodies(), id);
-        d.setSceneBodies(store.scene(), bodies);
+        d.setSceneBodies(store.scene(), storedBodies(bodies, d.library()));
         store.expand(SCENE);
         patchState(store, { selected: bodyKey(path) });
       },
@@ -2015,10 +2023,12 @@ export const SceneEditorStore = signalStore(
           const below = lightsOfBody(b).find((l) => l.light.id === t.id)?.enabledBelow ?? true;
           settings(t.path, (s) => withLightSwitched(s, t.id, on, below));
         } else if (t.kind === 'scene-light') lightChange(t, { enabled: on });
-        else if (t.kind === 'body')
-          // Only a scene switches a body off: on is as it is unless set.
-          settings(t.path, (s) => (on ? without(s, ['enabled']) : { ...s, enabled: false }));
-        else if (t.kind === 'part' && b) {
+        else if (t.kind === 'body') {
+          // Back to what is under it where that is the same (a planet's own moon may be off
+          // there), else set here.
+          const below = b?.below?.enabled !== false;
+          settings(t.path, (s) => (on === below ? without(s, ['enabled']) : { ...s, enabled: on }));
+        } else if (t.kind === 'part' && b) {
           const below = partsOfBody(b).find((p) => p.key === t.key)?.enabledBelow ?? true;
           settings(t.path, (s) =>
             on === below
@@ -2232,7 +2242,11 @@ export const SceneEditorStore = signalStore(
       },
       resetBody(): void {
         const path = selectedPath();
-        if (path) settings(path, () => undefined);
+        if (!path) return;
+        // One of its planet's own moons: back as the planet has it, orbit and overlays too.
+        if (store.bodyByKey().get(bodyKey(path))?.inherited)
+          edit((b) => resetMoon(b, path, d.library()));
+        else settings(path, () => undefined);
       },
       /** An overlay put on the selected body, over what it wears. */
       /** An overlay the selected body wears shown in the tree, its rows unfolded. */
@@ -2275,9 +2289,11 @@ export const SceneEditorStore = signalStore(
       /** A moon added about the selected body: shown in the tree and selected. */
       addMoon(moon: string): void {
         const parent = selectedPath();
-        if (!parent || !store.hasPlanets()) return;
+        // (None about one of its planet's own moons: they are the planet's.)
+        if (!parent || !store.hasPlanets() || store.bodyByKey().get(bodyKey(parent))?.inherited)
+          return;
         const { bodies, path } = addMoonAt(store.sceneBodies(), parent, moon);
-        d.setSceneBodies(store.scene(), bodies);
+        d.setSceneBodies(store.scene(), storedBodies(bodies, d.library()));
         store.expand(bodyKey(parent));
         patchState(store, { selected: bodyKey(path) });
       },
@@ -2287,7 +2303,8 @@ export const SceneEditorStore = signalStore(
        */
       removeMoon(): void {
         const path = selectedPath();
-        if (path?.length) removeBody(path);
+        // (One of its planet's own moons stays: switched off, not taken out.)
+        if (path?.length && !store.bodyByKey().get(bodyKey(path))?.inherited) removeBody(path);
       },
       /** A new part of a shape added onto the body or sky selected: selected. */
       addPart(shape: CreatedShape): void {

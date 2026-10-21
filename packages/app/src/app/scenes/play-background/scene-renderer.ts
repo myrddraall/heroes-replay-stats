@@ -19,7 +19,14 @@ import {
   mergeSettings,
 } from './material-settings';
 import { rimTurn } from './scene-directions';
-import { BEAM_LENGTH, beamAcross, type LightBeam, beamTube } from './scene-beams';
+import {
+  BEAM_LENGTH,
+  beamAcross,
+  beamTube,
+  type LightAid,
+  type LightOutline,
+  OUTLINE_EXTENT,
+} from './scene-beams';
 import { fitTube, type Tube, tubeCover } from './scene-tubes';
 import { overlayOfFile } from './overlays';
 import { skyOverlayParts } from './sky-overlays';
@@ -62,6 +69,8 @@ import { BLEND_MODES, NO_TINT, type Tint } from './scene-tints';
 import {
   BEAM_FRAGMENT,
   BEAM_VERTEX,
+  OUTLINE_FRAGMENT,
+  OUTLINE_VERTEX,
   BLOOM_FRAGMENT,
   BODY_VERTEX,
   bodyFragment,
@@ -91,7 +100,14 @@ import {
   shadeUniforms,
   tintUniforms,
 } from './draw-uniforms';
-import { bakeRect, bakeSize, type PixelRect, REBAKE_PIXELS, scrollPixels } from './body-bakes';
+import {
+  bakeRect,
+  bakeSize,
+  frameSpot,
+  type PixelRect,
+  REBAKE_PIXELS,
+  scrollPixels,
+} from './body-bakes';
 import { GpuTimer } from './gpu-timer';
 
 export { layerBrightness } from './draw-uniforms';
@@ -121,6 +137,10 @@ const HEX_ROUND = 24;
  * far it spreads (about a tenth of the view's height).
  */
 const BLOOM_STRENGTH = 1.5;
+/** The sky light's texture: its size (square), its mipmap levels (down to one texel), and the texture unit the bodies read it on (past their materials' five). */
+const SKY_LIGHT_SIZE = 64;
+const SKY_LIGHT_LEVELS = 7;
+const SKY_LIGHT_UNIT = 5;
 const BLOOM_PASSES = 3;
 const BLOOM_SPACING = 1.5;
 const BLOOM_SCALE = 8;
@@ -132,6 +152,8 @@ const BEAM_ALPHA = 0.35;
 const DARK_BEAM_ALPHA = 0.7;
 /** How strongly a dark beam's edges show. */
 const BEAM_EDGE_ALPHA = 0.5;
+/** How strongly a light's outline on its body shows. */
+const OUTLINE_ALPHA = 0.85;
 
 /**
  * An editing aid in place of the sky (none of the sky, its stars or particles drawn): a plain
@@ -600,11 +622,12 @@ export class SceneRenderer {
   private readonly compositeProgram: WebGLProgram;
   private readonly impostorProgram: WebGLProgram;
   private readonly beamProgram: WebGLProgram;
+  private readonly outlineProgram: WebGLProgram;
   /** A beam's tube, put where each beam is when drawn. */
   private readonly beamVao: WebGLVertexArrayObject;
   private readonly beamCount: number;
-  /** The beams shown over the picture (an editor's: the light selected). */
-  private beams: readonly LightBeam[] = [];
+  /** The beams and outlines shown over the picture (an editor's: the light selected). */
+  private beams: readonly LightAid[] = [];
   /** The bloom's two small targets, blurred from one into the other and back. */
   private readonly bloom: { framebuffer: WebGLFramebuffer; texture: WebGLTexture | null }[];
   private bloomSize: [number, number] = [1, 1];
@@ -640,6 +663,13 @@ export class SceneRenderer {
   private readonly stillScene: Target;
   /** The frame before tone mapping. */
   private readonly frame: Target;
+  /**
+   * What doesn't move of the sky, small (SKY_LIGHT_SIZE square, with its mipmaps: blurred as
+   * read), for the environment lights: drawn again with the still sky; bodies are baked again
+   * when it is (`skyVersion`).
+   */
+  private readonly skyLight: { framebuffer: WebGLFramebuffer; texture: WebGLTexture };
+  private skyVersion = 0;
   private view: Float32Array = new Float32Array(16);
   private projection: Float32Array = new Float32Array(16);
   /** The camera turned from where the scene puts it, about its up, in radians. */
@@ -681,6 +711,7 @@ export class SceneRenderer {
     this.compositeProgram = program(gl, TONE_VERTEX, COMPOSITE_FRAGMENT);
     this.impostorProgram = program(gl, IMPOSTOR_VERTEX, IMPOSTOR_FRAGMENT);
     this.beamProgram = program(gl, BEAM_VERTEX, BEAM_FRAGMENT);
+    this.outlineProgram = program(gl, OUTLINE_VERTEX, OUTLINE_FRAGMENT);
     this.timer = new GpuTimer(gl);
     const tube = beamTube();
     this.beamCount = tube.length / 3;
@@ -706,6 +737,7 @@ export class SceneRenderer {
     this.stillBackground = target();
     this.stillScene = target();
     this.frame = target();
+    this.skyLight = this.skyLightTarget();
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
     gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
     for (const [key, image] of Object.entries(loaded.images))
@@ -1244,8 +1276,41 @@ export class SceneRenderer {
       this.bind(this.stillScene, output);
       this.drawMeshes(0, 'scene', output, false);
     }
+    this.drawSkyLight();
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
     this.stillDirty = false;
+  }
+
+  /** The sky light's small target and texture, with room for its mipmaps. */
+  private skyLightTarget(): { framebuffer: WebGLFramebuffer; texture: WebGLTexture } {
+    const gl = this.gl;
+    const texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texStorage2D(gl.TEXTURE_2D, SKY_LIGHT_LEVELS, gl.RGBA8, SKY_LIGHT_SIZE, SKY_LIGHT_SIZE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    const framebuffer = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    return { framebuffer, texture };
+  }
+
+  /** The still sky (its background, its scene over it) into the sky light's texture, and its mipmaps. */
+  private drawSkyLight(): void {
+    const gl = this.gl;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.skyLight.framebuffer);
+    gl.viewport(0, 0, SKY_LIGHT_SIZE, SKY_LIGHT_SIZE);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    this.composite(this.stillBackground, 'colour');
+    this.composite(this.stillScene, 'colour');
+    gl.bindTexture(gl.TEXTURE_2D, this.skyLight.texture);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+    this.skyVersion++;
   }
 
   /** A target's colour (or its glow) over the bound one, as far as its alpha covers. */
@@ -1553,9 +1618,9 @@ export class SceneRenderer {
     return true;
   }
 
-  /** What a body's bake is for: the view, the body as it is, the surfaces its shapes are hidden behind. */
+  /** What a body's bake is for: the view, the sky round it, the body as it is, the surfaces its shapes are hidden behind. */
   private bakeKey(body: Placed): string {
-    return `${this.viewVersion}:${body.version}:${body.hasShapes ? this.surfacesKey : ''}`;
+    return `${this.viewVersion}:${this.skyVersion}:${body.version}:${body.hasShapes ? this.surfacesKey : ''}`;
   }
 
   /** Whether a body has to be baked (again) for a frame at `seconds`. */
@@ -1621,6 +1686,15 @@ export class SceneRenderer {
     gl.uniform3fv(this.uniform(p, 'uEye'), body.frame.eye);
     gl.uniform3fv(this.uniform(p, 'uRight'), right);
     gl.uniform3fv(this.uniform(p, 'uUp'), up);
+    // The sky round it, for its environment lights (past its materials' textures).
+    gl.uniform4fv(
+      this.uniform(p, 'uSkyAt'),
+      frameSpot(position, radius, [v[0]!, v[4]!, v[8]!], viewProjection, width, height),
+    );
+    gl.activeTexture(gl.TEXTURE0 + SKY_LIGHT_UNIT);
+    gl.bindTexture(gl.TEXTURE_2D, this.skyLight.texture);
+    gl.bindSampler(SKY_LIGHT_UNIT, null);
+    gl.uniform1i(this.uniform(p, 'uSkyLight'), SKY_LIGHT_UNIT);
     gl.uniform1i(this.uniform(p, 'uSurfaceCount'), this.surfaces.length);
     if (this.surfaces.length) gl.uniform4fv(this.uniform(p, 'uSurfaces'), this.surfaces.flat());
     for (const output of OUTPUTS) {
@@ -1810,7 +1884,7 @@ export class SceneRenderer {
   }
 
   /** Beams to show over the picture (none: none); drawn at the next frame. */
-  setBeams(beams: readonly LightBeam[]): void {
+  setBeams(beams: readonly LightAid[]): void {
     if (beams === this.beams) return;
     this.beams = beams;
     this.changed = true;
@@ -1824,31 +1898,45 @@ export class SceneRenderer {
   private drawBeams(): void {
     if (!this.beams.length) return;
     const gl = this.gl;
-    const p = this.beamProgram;
-    gl.useProgram(p);
-    gl.bindVertexArray(this.beamVao);
-    gl.disable(gl.CULL_FACE); // its far side as well as its near: as deep as it is seen through
+    gl.disable(gl.CULL_FACE); // a beam's far side as well as its near: as deep as it is seen through
     gl.disable(gl.DEPTH_TEST);
     gl.depthMask(false);
     gl.enable(gl.BLEND);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindSampler(0, null);
     gl.bindTexture(gl.TEXTURE_2D, this.frame.depth);
-    gl.uniform1i(this.uniform(p, 'uDepth'), 0);
-    gl.uniformMatrix4fv(
-      this.uniform(p, 'uViewProjection'),
-      false,
-      multiply(this.projection, this.view),
-    );
-    gl.uniform3fv(this.uniform(p, 'uEye'), this.camera.eye);
+    const viewProjection = multiply(this.projection, this.view);
     const eye = this.camera.eye;
+    // The bodies' spheres (the nearest first) that hide what is behind them.
     const spheres = this.placed
       .map(({ placement: { position, radius } }) => [...position, radius] as const)
       .sort((a, b) => distance([a[0], a[1], a[2]], eye) - distance([b[0], b[1], b[2]], eye))
       .slice(0, MAX_BEAM_SPHERES);
-    gl.uniform1i(this.uniform(p, 'uSphereCount'), spheres.length);
-    if (spheres.length) gl.uniform4fv(this.uniform(p, 'uSpheres'), spheres.flat());
-    for (const beam of this.beams) {
+    const shared = (p: WebGLProgram) => {
+      gl.useProgram(p);
+      gl.uniform1i(this.uniform(p, 'uDepth'), 0);
+      gl.uniformMatrix4fv(this.uniform(p, 'uViewProjection'), false, viewProjection);
+      gl.uniform3fv(this.uniform(p, 'uEye'), eye);
+      gl.uniform1i(this.uniform(p, 'uSphereCount'), spheres.length);
+      if (spheres.length) gl.uniform4fv(this.uniform(p, 'uSpheres'), spheres.flat());
+    };
+    const outlines = this.beams.filter((b): b is LightOutline => b.shape === 'outline');
+    if (outlines.length) {
+      shared(this.outlineProgram);
+      gl.bindVertexArray(this.quad);
+      for (const o of outlines) this.drawOutline(o);
+    }
+    const beams = this.beams.filter((b) => b.shape === 'beam');
+    if (!beams.length) {
+      gl.bindVertexArray(null);
+      gl.enable(gl.CULL_FACE);
+      gl.disable(gl.BLEND);
+      return;
+    }
+    const p = this.beamProgram;
+    shared(p);
+    gl.bindVertexArray(this.beamVao);
+    for (const beam of beams) {
       const way = normalize(beam.from);
       const [across, up] = beamAcross(way);
       gl.uniform3fv(this.uniform(p, 'uCentre'), beam.centre);
@@ -1878,6 +1966,31 @@ export class SceneRenderer {
     gl.bindVertexArray(null);
     gl.enable(gl.CULL_FACE);
     gl.disable(gl.BLEND);
+  }
+
+  /**
+   * An outline drawn on its body's sphere (the outline program in use, the square bound): its
+   * body's other spheres hide it, not its own; its colour added (a darkening light's: white).
+   */
+  private drawOutline(o: LightOutline): void {
+    const gl = this.gl;
+    const p = this.outlineProgram;
+    const rad = Math.PI / 180;
+    gl.uniform3fv(this.uniform(p, 'uCentre'), o.centre);
+    gl.uniformMatrix3fv(this.uniform(p, 'uAxes'), false, o.axes);
+    gl.uniform1f(this.uniform(p, 'uRadius'), o.radius);
+    gl.uniform1f(this.uniform(p, 'uExtent'), o.radius * OUTLINE_EXTENT);
+    gl.uniform1i(this.uniform(p, 'uKind'), o.kind);
+    gl.uniform3fv(this.uniform(p, 'uDir'), o.direction);
+    gl.uniform3fv(this.uniform(p, 'uPos'), o.position);
+    gl.uniform3fv(this.uniform(p, 'uAim'), o.aim);
+    gl.uniform1f(this.uniform(p, 'uFade'), o.fade);
+    gl.uniform1f(this.uniform(p, 'uCosCone'), Math.cos(o.cone * rad));
+    gl.uniform1f(this.uniform(p, 'uCosFade'), Math.cos(o.cone * (1 - o.edge) * rad));
+    gl.uniform3fv(this.uniform(p, 'uColor'), o.darkens ? [1, 1, 1] : o.colour);
+    gl.uniform1f(this.uniform(p, 'uAlpha'), OUTLINE_ALPHA);
+    gl.blendFuncSeparate(gl.ONE, gl.ONE, gl.ZERO, gl.ONE);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }
 
   /** Free what the GPU holds; the context goes with the canvas anyway. */

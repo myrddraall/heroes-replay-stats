@@ -109,14 +109,11 @@ export function gridLightValues(l: GridLight): Required<Omit<GridLight, 'from'>>
 export function newGridLight(kind: NewLightKind, existing: readonly GridLight[]): GridLight {
   const id = `grid-${Math.random().toString(36).slice(2, 10)}` as const;
   const darkens = kind === 'antilight';
-  const base = {
-    ambient: 'Ambient light',
-    directional: 'Directional light',
-    antilight: 'Antilight',
-  }[kind];
-  const count = existing.filter(
-    (l) => l.kind === (darkens ? 'directional' : kind) && !!l.darkens === darkens,
-  ).length;
+  // (A shield's lights are from all round or a side: any other kind asked for is one from a side.)
+  const base =
+    { ambient: 'Ambient light', antilight: 'Antilight' }[kind as string] ?? 'Directional light';
+  const own: GridLight['kind'] = kind === 'ambient' ? 'ambient' : 'directional';
+  const count = existing.filter((l) => l.kind === own && !!l.darkens === darkens).length;
   const name = count ? `${base} ${count + 1}` : base;
   return kind === 'ambient'
     ? { id, name, kind }

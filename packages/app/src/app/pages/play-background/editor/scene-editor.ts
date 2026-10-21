@@ -31,7 +31,7 @@ import { SceneHeader } from './scene-header';
           random: store.sets,
           camera: store.viewCamera,
           // The light selected's beams, with the markers (none in a screenshot).
-          beams: computed(() => (ui.markers() && !ui.screenshot() ? store.beams() : [])),
+          beams: computed(() => (ui.markers() !== 'none' && !ui.screenshot() ? store.beams() : [])),
         };
       },
     },

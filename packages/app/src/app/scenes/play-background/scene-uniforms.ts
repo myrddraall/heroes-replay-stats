@@ -24,6 +24,10 @@ export class UniformSet {
   i1(name: string, x: number): this {
     return this.put(name, '1i', Int32Array.of(x));
   }
+  /** An array of ints. */
+  iv(name: string, values: ArrayLike<number>): this {
+    return this.put(name, '1iv', Int32Array.from(values));
+  }
   f1(name: string, x: number): this {
     return this.put(name, '1f', Float32Array.of(x));
   }

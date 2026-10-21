@@ -226,6 +226,12 @@ export class SelectionPanel {
   });
 
   /** A light added to the shield shader (its lights set at the level edited), and selected. */
+  /** A shield's lights are from all round or a side (an antilight too): no points, spots or hemispheres. */
+  protected readonly gridLightKinds: readonly NewLightKind[] = [
+    'ambient',
+    'directional',
+    'antilight',
+  ];
   protected addGridLight(kind: NewLightKind): void {
     const base = splitViewKey(this.editor.selected())?.base;
     const lights = this.editor.material()?.values.gridLights ?? [];

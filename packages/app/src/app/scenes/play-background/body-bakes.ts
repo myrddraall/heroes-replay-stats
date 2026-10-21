@@ -45,6 +45,39 @@ export function bakeRect(
   return { x: left, y: bottom, w: right - left, h: top - bottom };
 }
 
+/**
+ * Where a body is in the frame, for reading the sky round it: its centre as shares of the frame's
+ * width and height from the bottom left, and how far one radius reaches across and up, as shares
+ * too (`right`: the view's right, in the world). Behind the eye: the frame's middle, no reach.
+ */
+export function frameSpot(
+  centre: Vec3,
+  radius: number,
+  right: Vec3,
+  viewProjection: Float32Array,
+  width: number,
+  height: number,
+): [number, number, number, number] {
+  const m = viewProjection;
+  const share = ([x, y, z]: Vec3): [number, number] | null => {
+    const w = m[3]! * x + m[7]! * y + m[11]! * z + m[15]!;
+    if (w <= 1e-6) return null;
+    return [
+      ((m[0]! * x + m[4]! * y + m[8]! * z + m[12]!) / w + 1) / 2,
+      ((m[1]! * x + m[5]! * y + m[9]! * z + m[13]!) / w + 1) / 2,
+    ];
+  };
+  const c = share(centre);
+  const r = share([
+    centre[0] + right[0] * radius,
+    centre[1] + right[1] * radius,
+    centre[2] + right[2] * radius,
+  ]);
+  if (!c || !r) return [0.5, 0.5, 0, 0];
+  const across = Math.abs(r[0] - c[0]);
+  return [c[0], c[1], across, (across * width) / height];
+}
+
 /** A bake target's size for a rectangle: rounded up, so a body that grows a little keeps its target. */
 export const bakeSize = (n: number) => Math.max(64, Math.ceil(n / 64) * 64);
 

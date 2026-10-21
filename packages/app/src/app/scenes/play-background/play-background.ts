@@ -28,6 +28,7 @@ import {
 import { overlayOfFile } from './overlays';
 import type { LoadedPlayScene, SkyOverlayFile } from './play-scene';
 import { playSet, randomSet, seeded, type SetPlanet } from './planet-sets';
+import { libraryMoonsOf, setWithMoons } from './scene-bodies';
 import { loadPlayScene, PLAY_SCENE_URL } from './play-scene';
 import { SceneCanvas } from './scene-canvas';
 import {
@@ -224,12 +225,20 @@ export class PlayBackground {
   private readonly needed = computed(() => {
     const set = this.set();
     const library = this.design.library();
-    return set
-      ? neededBy(
-          set.map((s) => withLibrary(s, library)),
-          this.overlayFile(),
-        ).join(',')
-      : null;
+    if (!set) return null;
+    // The random sets' planets bring their own moons (the library's) along.
+    const moons = this.random()
+      ? libraryMoonsOf(set, library).map((m): SetPlanet => ({
+          id: m.id,
+          position: [0, 0, 0],
+          radius: 1,
+          overlays: m.overlays,
+        }))
+      : [];
+    return neededBy(
+      [...set, ...moons].map((s) => withLibrary(s, library)),
+      this.overlayFile(),
+    ).join(',');
   });
   /** The planets and styles the set needs, loaded. */
   private readonly loaded = resource({
@@ -309,6 +318,7 @@ export class PlayBackground {
   protected readonly shown = linkedSignal<
     {
       set: readonly SetPlanet[] | null;
+      random: boolean;
       loaded: Map<string, LoadedPlanet> | undefined;
       library: LibraryState;
       scene: LoadedPlayScene | undefined;
@@ -317,16 +327,21 @@ export class PlayBackground {
   >({
     source: () => ({
       set: this.set(),
+      random: this.random(),
       loaded: this.loaded.hasValue() ? this.loaded.value() : undefined,
       library: this.design.library(),
       scene: this.scene.hasValue() ? this.scene.value() : undefined,
     }),
-    computation: ({ set, loaded, library, scene }, previous) => {
+    computation: ({ set, random, loaded, library, scene }, previous) => {
       if (set?.length === 0) return []; // no planets: nothing to wait for
       if (!set || !loaded) return previous?.value ?? null;
+      // The random sets' planets with their own moons about them (placed once the scene's
+      // camera is in; an editor's scene places its own).
+      if (random && !scene && libraryMoonsOf(set, library).length) return previous?.value ?? null;
+      const placed = random && scene ? setWithMoons(set, library, scene.scene.camera.eye) : set;
       const file = this.overlayFile();
       const out: PlanetPlacement[] = [];
-      for (const p of set.map((s) => withLibrary(s, library))) {
+      for (const p of placed.map((s) => withLibrary(s, library))) {
         const own = loaded.get(p.id);
         const overlays = (p.overlays ?? []).map((id) => loaded.get(file(id)));
         if (!own || overlays.some((o) => !o)) return previous?.value ?? null;

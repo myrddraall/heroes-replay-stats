@@ -1,3 +1,5 @@
+import { bodyFrame } from '../../../scenes/play-background/scene-renderer';
+import type { SetPlanet } from '../../../scenes/play-background/planet-sets';
 import {
   MATERIAL_DEFAULTS,
   type MaterialControls,
@@ -28,26 +30,41 @@ import {
   type SkyChoices,
   type Vec3,
   without,
+  DEFAULT_ORBIT,
 } from '../../../scenes/play-background/background-scene';
-import { keyLightFrom, TOWARDS_EYE } from '../../../scenes/play-background/scene-directions';
 import {
-  type AddedLight,
+  keyLightFrom,
+  normalized,
+  TOWARDS_EYE,
+} from '../../../scenes/play-background/scene-directions';
+import {
+  alongToSphere,
+  coneEdges,
+  type LightAid,
+  type LightOutline,
+} from '../../../scenes/play-background/scene-beams';
+import { LIGHT_KINDS } from '../../../scenes/play-background/draw-uniforms';
+import {
   addedLight,
-  type BodyLight,
+  aimAtMiddle,
   bodyLights,
   knownLights,
+  lightsForMoons,
+  mergeLightSettings,
+  placedLight,
+  reachesReceiver,
+  rgbOf,
+  tunedRig,
+  type AddedLight,
+  type BodyLight,
   type LightId,
   type LightKind,
-  type NewLightKind,
-  type LightSettings,
   type LightReach,
+  type LightSettings,
   type LightSettingsMap,
-  lightsForMoons,
+  type NewLightKind,
   type PartMaterials,
   type Receiver,
-  mergeLightSettings,
-  reachesReceiver,
-  tunedRig,
   withReceiver,
 } from '../../../scenes/play-background/scene-lights';
 import {
@@ -164,6 +181,8 @@ export interface BodyInfo {
   /** Where it is and how big, where it is one of a scene's planets. */
   readonly place?: { readonly position: Vec3; readonly radius: number };
   readonly moons: readonly MoonChoices[];
+  /** One of its planet's own moons (the library's): as the planet has it, under what the scene sets. */
+  readonly inherited?: MoonChoices;
 }
 
 /** A body as its properties show it. */
@@ -175,8 +194,18 @@ export interface BodyView {
   /** Its tint under the layer edited. */
   readonly baseTint: MaterialTint;
   readonly focused: boolean;
-  /** Whether moons can be put about it (a scene's bodies). */
+  /** Whether moons can be put about it (a scene's bodies, but for its planets' own moons). */
   readonly canHaveMoons: boolean;
+  /** Whether it is one of its planet's own moons (switched off in a scene, never taken out). */
+  readonly inherited: boolean;
+  /** Its orbit under the level edited: its planet's for its own moon, else a new moon's. */
+  readonly orbitBase: Orbit;
+  /** Whether its lights are set here (a library planet's own moon's are its own planet's: not here). */
+  readonly lights: boolean;
+  /** Whether the overlays it wears are chosen here (a scene's bodies, a library planet's own moons). */
+  readonly styled: boolean;
+  /** Whether the view can be centred on it (a scene's moons). */
+  readonly focusable: boolean;
   /** Which level under the one edited sets each of its settings, where one does. */
   readonly origins: SettingOrigins<keyof BodySettings>;
   /** Its name as shown, and as the levels under the one edited have it. */
@@ -650,7 +679,8 @@ export function partNodes(
 }
 
 /** Whether a body is drawn (a scene's; its moons with it). */
-export const bodyEnabled = (b: BodyInfo) => b.settings.enabled ?? true;
+/** Whether a body is drawn: as set at the level edited, else under it (a planet's own moon may be off there). */
+export const bodyEnabled = (b: BodyInfo) => b.settings.enabled ?? b.below?.enabled ?? true;
 
 /** Whether an overlay a body wears is drawn, as set and under the level edited. */
 export const overlayEnabled = (b: BodyInfo, id: string) =>
@@ -784,6 +814,10 @@ export const LIGHT_ICONS: Record<NewLightKind, string> = {
   ambient: 'brightness_low',
   directional: 'wb_sunny',
   antilight: 'contrast',
+  point: 'flare',
+  spot: 'highlight',
+  hemisphere: 'wb_twilight',
+  environment: 'lens_blur',
 };
 
 /** A light's icon in the tree: by its kind, or an antilight's where it darkens. */
@@ -1179,11 +1213,22 @@ export function bodyOrigins(b: BodyInfo): SettingOrigins<keyof BodySettings> {
 }
 
 /** A body as its properties show it, for an editor. */
-export function bodyView(b: BodyInfo, focused: boolean, canHaveMoons: boolean): BodyView {
+export function bodyView(
+  b: BodyInfo,
+  focused: boolean,
+  canHaveMoons: boolean,
+  /** One of a library planet's own moons, edited there: its orbit and what it wears; its lights its own planet's. */
+  libraryMoon = false,
+): BodyView {
   return {
     info: b,
     values: valuesOf(b),
-    changed: Object.keys(b.settings).length > 0,
+    changed: Object.keys(b.settings).length > 0 || inheritedChanged(b),
+    inherited: !!b.inherited,
+    orbitBase: b.inherited?.orbit ?? DEFAULT_ORBIT,
+    lights: !libraryMoon,
+    styled: canHaveMoons || libraryMoon,
+    focusable: !libraryMoon,
     baseTint: b.below?.tint ?? b.file?.tuning?.tint ?? NO_MATERIAL_TINT,
     focused,
     canHaveMoons,
@@ -1194,6 +1239,154 @@ export function bodyView(b: BodyInfo, focused: boolean, canHaveMoons: boolean): 
     label: bodyLabel(b),
     labelBelow: bodyLabelBelow(b),
   };
+}
+
+/** Whether a scene sets one of its planet's own moons otherwise than the planet has it: its orbit, what it wears. */
+function inheritedChanged(b: BodyInfo): boolean {
+  const base = b.inherited;
+  if (!base || !b.orbit) return false;
+  const worn = b.overlaysSet ? b.overlays.map((o) => o.id) : undefined;
+  const base_ = base.overlays;
+  const wears =
+    worn !== undefined &&
+    (worn.length !== (base_?.length ?? -1) || worn.some((id, i) => id !== base_?.[i]));
+  return (
+    wears ||
+    (Object.keys(DEFAULT_ORBIT) as (keyof Orbit)[]).some((k) => b.orbit![k] !== base.orbit[k])
+  );
+}
+
+/**
+ * The way a light comes from (`from`, in its body's frame), out of the body as the eye at `eye`
+ * sees it, in the scene: a unit vector.
+ */
+export function wayOut(from: Vec3, body: SetPlanet, eye: Vec3): Vec3 {
+  const { axes } = bodyFrame(body.position, body.radius, eye);
+  const way = [0, 1, 2].map(
+    (k) => from[0] * axes[k]! + from[1] * axes[3 + k]! + from[2] * axes[6 + k]!,
+  );
+  const length = Math.hypot(...way) || 1;
+  return way.map((v) => v / length) as unknown as Vec3;
+}
+
+/** A place near a body (in its frame, in its radii) as the eye at `eye` sees it, in the scene. */
+export function placeOut(at: Vec3, body: SetPlanet, eye: Vec3): Vec3 {
+  const { axes } = bodyFrame(body.position, body.radius, eye);
+  return [0, 1, 2].map(
+    (k) =>
+      body.position[k]! +
+      (at[0] * axes[k]! + at[1] * axes[3 + k]! + at[2] * axes[6 + k]!) * body.radius,
+  ) as unknown as Vec3;
+}
+
+/**
+ * A light's marker about its body: one from all round on the body's middle; one from a side out
+ * from the body on that side, a line to it from the surface; one from a point where it is, a
+ * line to the nearest of the surface (the middle of what it lights); a spot where it is, a line
+ * along its aim to where it meets the body (the middle of its light circle; past the body, to
+ * its nearest point). `at` and, where a line is drawn, where it starts.
+ */
+export function lightMarkerAt(
+  light: {
+    readonly kind?: LightKind;
+    readonly from?: Vec3;
+    readonly position?: Vec3;
+    readonly aim?: Vec3;
+  },
+  body: SetPlanet,
+  eye: Vec3,
+): { readonly at: Vec3; readonly from?: Vec3 } | null {
+  const along = (way: Vec3, radii: number) =>
+    body.position.map((v, k) => v + way[k]! * body.radius * radii) as unknown as Vec3;
+  if (light.position) {
+    const at = placeOut(light.position, body, eye);
+    if (light.kind === 'spot') {
+      const p = light.position;
+      const aim = normalized(light.aim ?? aimAtMiddle(p));
+      const t = alongToSphere(p, aim);
+      return {
+        at,
+        from: placeOut([p[0] + aim[0] * t, p[1] + aim[1] * t, p[2] + aim[2] * t], body, eye),
+      };
+    }
+    const way = wayOut(light.position, body, eye);
+    return { at, from: along(way, 1.05) };
+  }
+  if (light.from) {
+    const way = wayOut(light.from, body, eye);
+    return { at: along(way, 1.8), from: along(way, 1.05) };
+  }
+  return null;
+}
+
+/**
+ * The edges of a spot light's cone as seen from `eye`, from the spot to the body (none for any
+ * other light, or with the eye inside the cone), in the scene: drawn with its marker when it is
+ * selected.
+ */
+export function spotEdges(
+  light: BodyLight,
+  body: SetPlanet,
+  eye: Vec3,
+): readonly (readonly [Vec3, Vec3])[] {
+  const placed = placedLight(light);
+  if (placed?.kind !== 'spot' || !placed.position || !placed.aim) return [];
+  const frame = bodyFrame(body.position, body.radius, eye);
+  return coneEdges(placed.position, placed.aim, placed.cone ?? 90, frame.eye).map(
+    ([a, b]) => [placeOut(a, body, eye), placeOut(b, body, eye)] as const,
+  );
+}
+
+/**
+ * What the view shows of a light selected, about a body it lights, seen from `eye`: the outline
+ * of where it falls on the body's sphere (any light but one from all round), and a directional
+ * light's beam out of the body the way it comes from. None of a light switched off.
+ */
+export function lightAids(light: BodyLight, body: SetPlanet, eye: Vec3): LightAid[] {
+  if (!light.enabled) return [];
+  const placed = placedLight(light);
+  if (!placed) return [];
+  const colour = rgbOf(light.colour, 1);
+  const { axes } = bodyFrame(body.position, body.radius, eye);
+  const outline: LightOutline = {
+    shape: 'outline',
+    centre: body.position,
+    radius: body.radius,
+    axes,
+    kind: placed.kind ? LIGHT_KINDS[placed.kind] : 0,
+    direction: placed.direction,
+    position: placed.position ?? [0, 0, 0],
+    aim: placed.aim ?? [0, 0, 1],
+    fade: placed.fade ?? 1,
+    cone: placed.cone ?? 90,
+    edge: placed.edge ?? 0,
+    colour,
+    darkens: light.darkens,
+  };
+  const from = placed.kind ? null : lightWay(light, body, eye);
+  return from
+    ? [
+        {
+          shape: 'beam',
+          centre: body.position,
+          radius: body.radius,
+          from,
+          colour,
+          darkens: light.darkens,
+        },
+        outline,
+      ]
+    : [outline];
+}
+
+/** The way a light comes from, out of its body as seen from `eye`: a side's, or a point's or spot's place. */
+export function lightWay(
+  light: { readonly from?: Vec3; readonly position?: Vec3 },
+  body: SetPlanet,
+  eye: Vec3,
+): Vec3 | null {
+  const way = light.position ?? light.from;
+  return way ? wayOut(way, body, eye) : null;
 }
 
 /** A body's name as shown: as renamed (the level edited's, else the library's), else its id. */

@@ -14,15 +14,19 @@
   />
   <div class="buttons">
     @if (orbit()) {
-      <button
-        type="button"
-        class="button"
-        (click)="focusToggle.emit()"
-        [attr.aria-pressed]="focused()"
-      >
-        {{ focused() ? 'Unfocus' : 'Focus' }}
-      </button>
-      <button type="button" class="button" (click)="removeRequested.emit()">Remove moon</button>
+      @if (focusable()) {
+        <button
+          type="button"
+          class="button"
+          (click)="focusToggle.emit()"
+          [attr.aria-pressed]="focused()"
+        >
+          {{ focused() ? 'Unfocus' : 'Focus' }}
+        </button>
+      }
+      @if (!inherited()) {
+        <button type="button" class="button" (click)="removeRequested.emit()">Remove moon</button>
+      }
     }
     @if (place()) {
       <button type="button" class="button" (click)="removeRequested.emit()">Remove planet</button>

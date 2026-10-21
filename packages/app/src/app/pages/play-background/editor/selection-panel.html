@@ -117,6 +117,8 @@
         [origins]="b.origins"
         [overlayOptions]="editor.overlayOptions()"
         [orbit]="b.info.orbit ?? null"
+        [orbitBase]="b.orbitBase"
+        [inherited]="b.inherited"
         [place]="b.info.place ?? null"
         [changed]="b.changed"
         [focused]="b.focused"
@@ -126,7 +128,8 @@
         [overlay]="b.info.file?.kind === 'style'"
         [label]="b.label"
         [labelBelow]="b.labelBelow"
-        [styled]="b.canHaveMoons"
+        [styled]="b.styled"
+        [focusable]="b.focusable"
         [moons]="b.canHaveMoons"
         (overlayAdd)="editor.addOverlay($event)"
         (overlayShow)="editor.showOverlay($event)"
@@ -141,7 +144,7 @@
         (focusToggle)="editor.toggleFocus()"
         (resetRequested)="editor.resetBody()"
         [deletable]="editor.deletable()"
-        [lit]="!editor.skyOverlayOpen()"
+        [lit]="!editor.skyOverlayOpen() && b.lights"
         (deleteRequested)="editor.deleteAsset()"
       >
         <hrs-property-section moonsPod title="Moons">
@@ -317,7 +320,7 @@
         [changed]="m.set?.gridLights !== undefined"
         (resetRequested)="editor.clearMaterial(['gridLights'])"
       >
-        <hrs-add-light (added)="addGridLight($event)" />
+        <hrs-add-light [only]="gridLightKinds" (added)="addGridLight($event)" />
         <hrs-added-list
           title="Lights"
           [items]="shieldLights()"

@@ -51,7 +51,15 @@ export interface PlanetIndex {
   readonly styles: readonly { readonly id: string }[];
 }
 
-/** A directional light: the way it travels, and its colour (times its multiplier). */
+/**
+ * A directional light: the way it travels, and its colour (times its multiplier). Or, by `kind`,
+ * a light from a point near the body (where it is, in the body's frame and radii; `fade`: the
+ * distance it is half as strong at), a spot (that, pointing `aim`, within a cone of `cone`
+ * degrees fading over `edge` of it), a hemisphere (its colour from the side `direction` comes
+ * from, `ground` from the other), or the sky round the body (an environment light: the sky's
+ * colours read `fade` radii out from the body's edge, each side lit by the sky beyond it, its
+ * colour over them; `direction` is unused).
+ */
 export interface PlanetDirectionalLight {
   readonly direction: readonly [number, number, number];
   readonly color: readonly [number, number, number];
@@ -59,6 +67,13 @@ export interface PlanetDirectionalLight {
   readonly softness?: number;
   /** Its shine on a material that has a specular layer: its specular colour times its multiplier (none: none). */
   readonly specular?: readonly [number, number, number];
+  readonly kind?: 'point' | 'spot' | 'hemisphere' | 'environment';
+  readonly position?: readonly [number, number, number];
+  readonly fade?: number;
+  readonly aim?: readonly [number, number, number];
+  readonly cone?: number;
+  readonly edge?: number;
+  readonly ground?: readonly [number, number, number];
 }
 
 /**

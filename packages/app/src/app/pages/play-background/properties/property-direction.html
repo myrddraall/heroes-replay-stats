@@ -18,25 +18,46 @@
     [attr.aria-valuetext]="text()"
     (pointerdown)="pointerDown($event)"
     (pointermove)="pointerMove($event)"
+    (pointerup)="pointerUp($event)"
+    (pointercancel)="pointerUp($event)"
     (keydown)="key($event)"
+    (keyup)="keyUp($event)"
   >
     <span class="cross" aria-hidden="true"></span>
+    @if (snapping()) {
+      <span class="cuts" aria-hidden="true"></span>
+    }
     <span
       class="point"
-      [class.point--behind]="behind()"
+      [class.point--far]="far()"
       [style.left.%]="50 + point().x * 50"
       [style.top.%]="50 + point().y * 50"
       aria-hidden="true"
     ></span>
   </span>
   @if (sided()) {
-    <button type="button" class="side" (click)="flip()" [attr.aria-pressed]="behind()">
-      {{ behind() ? 'Behind' : 'Front' }}
-    </button>
+    <span class="views" role="group" [attr.aria-label]="'Seen from, for ' + label()">
+      @for (v of views; track v[0]) {
+        <button
+          type="button"
+          class="view"
+          [class]="'view view--' + v[0]"
+          [attr.aria-label]="v[1].label"
+          [title]="v[1].label"
+          [attr.aria-pressed]="view() === v[0]"
+          (click)="look(v[0])"
+        >
+          {{ v[1].glyph }}
+        </button>
+      }
+    </span>
   }
   <span class="readout" aria-hidden="true">
     @for (part of offsets(); track $index) {
       <span class="readout__line">{{ part }}</span>
+    }
+    @if (sided() && far()) {
+      <span class="readout__line">far side</span>
     }
   </span>
 </span>

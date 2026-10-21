@@ -77,10 +77,28 @@ export interface BodySettings {
   readonly addedParts?: readonly AddedPart[];
 }
 
+/**
+ * What a scene sets for one of its planet's own moons (the library's), over the planet's: its
+ * orbit's values, the overlays it wears, its settings (switched off among them: `enabled`).
+ */
+export interface MoonOverride {
+  readonly orbit?: Partial<Orbit>;
+  readonly overlays?: readonly string[];
+  readonly settings?: BodySettings;
+}
+
 /** A moon of a body: which planet it is, its orbit, what it wears and its settings, and its own moons. */
 export interface MoonChoices {
   readonly id: string;
   readonly orbit: Orbit;
+  /** Its key among its planet's own moons (the library's): what a scene sets for it is kept by it. */
+  readonly key?: string;
+  /**
+   * Of a scene's body as read (`withLibraryMoons`): that it is one of its planet's own, by its
+   * key (nested: the keys joined by `/`). Never kept: a scene keeps what it sets for it
+   * (`moonsSet`), the planet keeps the moon.
+   */
+  readonly inherited?: string;
   /** The overlays it wears, the later over the earlier (none given: its own; see `chosenOverlays`). */
   readonly overlays?: readonly string[];
   /** The one overlay it wore, kept before bodies wore several ('' none). */
@@ -422,7 +440,10 @@ export interface SceneBody {
   /** The one overlay it wore, kept before bodies wore several ('' none). */
   readonly style?: string;
   readonly variants?: Readonly<Record<string, BodySettings>>;
+  /** Its own moons (the scene's), after its planet's own (the library's). */
   readonly moons?: readonly MoonChoices[];
+  /** What it sets for its planet's own moons, by each moon's key (nested: the keys joined by `/`). */
+  readonly moonsSet?: Readonly<Record<string, MoonOverride>>;
 }
 
 /**

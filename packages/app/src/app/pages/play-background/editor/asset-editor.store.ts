@@ -10,13 +10,29 @@ import {
 } from '@ngrx/signals';
 import { withFolding } from '../../../data/store-features/with-folding';
 import { withLocalStorage } from '../../../data/store-features/with-local-storage';
-import type { BodySettings, SkyChoices } from '../../../scenes/play-background/background-scene';
+import type {
+  BodyPath,
+  BodySettings,
+  MoonChoices,
+  Orbit,
+  SkyChoices,
+  Vec3,
+} from '../../../scenes/play-background/background-scene';
 import {
   PREVIEW_SCENE,
   skyOverlayOn,
   skyWornOf,
 } from '../../../scenes/play-background/background-design';
-import { fitRadius, without } from '../../../scenes/play-background/background-scene';
+import {
+  addMoon as addMoonTo,
+  changeMoon,
+  DEFAULT_ORBIT,
+  fitRadius,
+  moonAt,
+  pathKey,
+  pathOf,
+  without,
+} from '../../../scenes/play-background/background-scene';
 import {
   withGridLight,
   materialKey,
@@ -32,6 +48,7 @@ import {
   withoutPartSetting,
   withOverlaySwitched,
   withPartSetting,
+  setWithMoons,
 } from '../../../scenes/play-background/scene-bodies';
 import {
   type LightId,
@@ -45,7 +62,9 @@ import {
   loadPlaySceneFile,
   PLAY_SCENE_URL,
   type SceneCamera,
+  type SceneCameraSet,
 } from '../../../scenes/play-background/play-scene';
+import type { LightAid } from '../../../scenes/play-background/scene-beams';
 import {
   type MaterialSettings,
   type MaterialTint,
@@ -60,43 +79,46 @@ import { AssetCatalogStore, type MaterialUse } from './asset-catalog.store';
 import {
   baseMaterialOf,
   type BodyInfo,
+  bodyLabel,
   bodyView,
-  type MaterialEntry,
+  byDepth,
+  filesLoaded,
+  layerRows,
+  lightAids,
   type LightEntry,
   lightIcon,
+  lightMarkerAt,
   lightsOfBody,
-  byDepth,
-  partsOfBody,
-  bodyLabel,
+  type LitByEntry,
+  litByOf,
   materialAt,
-  type SkyOverlayInfo,
+  type MaterialEntry,
+  materialsOf,
+  type MaterialView,
+  offPart,
+  onPart,
+  overlayEnabled,
+  overlayLabel,
+  ownSkyInfo,
+  type PartEntry,
+  partIcon,
+  partMaterialRows,
+  type PartNode,
+  partNodes,
+  partsOfBody,
+  referenceRow,
+  sharedMaterials,
+  skyMaterialsOf,
   skyOverlayChoices,
+  type SkyOverlayInfo,
   skyOverlayInfos,
   skyOverlayLabel,
   skyPartsOf,
-  overlayLabel,
-  overlayEnabled,
-  partNodes,
-  partIcon,
-  type PartNode,
-  type PartEntry,
-  materialsOf,
-  type MaterialView,
   splitViewKey,
-  offPart,
-  onPart,
-  sharedMaterials,
-  layerRows,
-  partMaterialRows,
-  viewTitle,
-  filesLoaded,
-  type LitByEntry,
-  litByOf,
-  withLitBy,
-  referenceRow,
-  skyMaterialsOf,
-  ownSkyInfo,
+  spotEdges,
   type TargetKind,
+  viewTitle,
+  withLitBy,
 } from './editor-model';
 import {
   addedSourced,
@@ -150,6 +172,19 @@ const STAGE_STAND_IN = 'stage/stand-in';
 /** The stand-in's own lights, under it. */
 const standInLightKey = (id: LightId) => `${STAGE_STAND_IN}/l/${id}`;
 const ASSET = 'asset';
+/** One of the planet open's own moons, by its path among them. */
+const moonKey = (path: BodyPath) => `${ASSET}/moon/${pathKey(path)}`;
+/** The paths of moons (theirs after each), in the order they are placed. */
+const moonPaths = (moons: readonly MoonChoices[], under: BodyPath = []): BodyPath[] =>
+  moons.flatMap((m, i) => [[...under, i], ...moonPaths(m.moons ?? [], [...under, i])]);
+/** A key for a new moon among a planet's own: `moon-<n>`, past those there are. */
+function nextMoonKey(moons: readonly MoonChoices[]): string {
+  const n = moonPaths(moons)
+    .map((p) => moonAt(moons, p)?.key ?? '')
+    .map((k) => Number(/^moon-(\d+)$/.exec(k)?.[1] ?? 0))
+    .reduce((a, b) => Math.max(a, b), 0);
+  return `moon-${n + 1}`;
+}
 /** An overlay the planet open wears, by id: its parts and its lights, under it. */
 const assetOverlayKey = (id: string) => `asset/overlay/${id}`;
 const assetOverlayLightsKey = (id: string) => `asset/overlay-lights/${id}`;
@@ -213,6 +248,8 @@ type Target =
   | { readonly kind: 'sky-part'; readonly stage: boolean; readonly key: PartKey }
   /** The planet or style open. */
   | { readonly kind: 'body' }
+  /** One of the planet open's own moons, by its path among them. */
+  | { readonly kind: 'moon'; readonly path: BodyPath }
   /** A material as the planet or overlay open sets it for itself (`overlay`: of one it wears). */
   | {
       readonly kind: 'material';
@@ -277,6 +314,8 @@ function targetOf(key: string, asset: AssetTarget): Target {
     const name = key.slice(STAGE_SKY.length + 3);
     return { kind: 'sky-material', stage: true, name, key: name };
   }
+  if (key.startsWith(`${ASSET}/moon/`))
+    return { kind: 'moon', path: pathOf(key.slice(ASSET.length + 6)) };
   if (key === ASSET)
     switch (asset.kind) {
       case 'planet':
@@ -323,6 +362,8 @@ interface AssetEditorState {
   readonly previewPlanet: string;
   /** A material opened from a planet or overlay: shown on the stand-in instead of on that. */
   readonly onStandIn: boolean;
+  /** Where the editor's own camera is, over the game's (none: there): the stage seen from any side; not kept. */
+  readonly editorCamera: SceneCameraSet | null;
 }
 
 /**
@@ -339,6 +380,7 @@ export const AssetEditorStore = signalStore(
     selected: ASSET,
     previewPlanet: DEFAULT_PREVIEW_PLANET,
     onStandIn: false,
+    editorCamera: null,
   }),
   withFolding([STAGE, ASSET]),
   withLocalStorage<AssetEditorState & { expanded: readonly string[] }>(
@@ -402,6 +444,11 @@ export const AssetEditorStore = signalStore(
       skyAdded(stage).length
         ? [ownSkyInfo(createdSkyFile(addedSourced(skyAdded(stage)), _catalog.madeLookup()))]
         : [];
+    /** The planet open's own moons (the library's; none for anything else). */
+    const moons = computed((): readonly MoonChoices[] => {
+      const a = asset();
+      return a.kind === 'planet' ? (library().moons?.[a.id] ?? []) : [];
+    });
     return {
       /** The overlay open, where it is one made in the editor. */
       _created: computed(() => {
@@ -488,6 +535,39 @@ export const AssetEditorStore = signalStore(
           moons: [],
         };
       }),
+      /** The planet open's own moons (the library's; none for anything else). */
+      _moons: moons,
+      /** Those moons as the editor has them (theirs after each), by `moonKey`. */
+      _moonInfos: computed((): ReadonlyMap<string, BodyInfo> => {
+        const files = _catalog.files();
+        const lib = library();
+        const list = moons();
+        const out = new Map<string, BodyInfo>();
+        for (const path of moonPaths(list)) {
+          const m = moonAt(list, path)!;
+          const file = files[m.id];
+          const worn = m.overlays ?? ownOverlays(file?.tuning?.style);
+          out.set(moonKey(path), {
+            key: moonKey(path),
+            id: m.id,
+            overlays: worn.map((id) => ({
+              id,
+              ...(lib.created?.[id] ? { name: lib.created[id].label } : {}),
+              below: lib.styles[id],
+              file: files[overlayFileFor(lib, id)],
+            })),
+            overlaysSet: m.overlays !== undefined,
+            settings: m.settings ?? {},
+            below: lib.planets[m.id],
+            materialBase: lib.materials,
+            file:
+              file && withAddedParts(file, lib.planets[m.id]?.addedParts, _catalog.madeLookup()),
+            orbit: m.orbit,
+            moons: m.moons ?? [],
+          });
+        }
+        return out;
+      }),
     };
   }),
   withProps(({ _body, _skyOverlay, _skyOverlayMaterials, _skyOverlayParts, _sceneFile }) => ({
@@ -512,10 +592,12 @@ export const AssetEditorStore = signalStore(
       selected,
       previewPlanet,
       onStandIn,
+      editorCamera,
       _draft,
       _skyOf,
       _skyMaterials,
       _body,
+      _moonInfos,
       _ownMaterials,
       _ownParts,
       _skyOverlay,
@@ -584,13 +666,15 @@ export const AssetEditorStore = signalStore(
           return { target: { kind: on.kind, id: on.id }, label };
         }),
         deletable: computed(() => _created() !== undefined),
-        // An asset is shown on the stage, through the game's camera.
-        camera: computed((): SceneCamera | null => null),
+        // The stage is seen through the game's camera, moved where the editor's is (dragged).
+        camera: computed((): SceneCamera | null => {
+          const scene = _sceneFile.hasValue() ? _sceneFile.value() : null;
+          return scene ? { ...scene.camera, ...editorCamera() } : null;
+        }),
         lookOptions: computed((): readonly { readonly id: string; readonly label: string }[] => []),
         look: computed(() => ''),
         lookShown: computed(() => ''),
-        editorCameraMoved: computed(() => false),
-        markers: computed((): readonly SceneMarker[] => []),
+        editorCameraMoved: computed(() => editorCamera() !== null),
         skyOverlayOpen: computed(() => _skyOverlay() !== null),
         resetAllLabel: computed(() => {
           const a = asset();
@@ -601,6 +685,7 @@ export const AssetEditorStore = signalStore(
           if ('view' in t && t.view) return t.view.kind;
           const k = t.kind;
           if (k === 'sky-part') return 'part';
+          if (k === 'moon') return 'body';
           return k === 'base-material' ? 'material' : k === 'stand-in-light' ? 'light' : k;
         }),
         materialView: computed((): MaterialView | null => {
@@ -608,8 +693,16 @@ export const AssetEditorStore = signalStore(
           return 'view' in t && t.view ? t.view : null;
         }),
         bodyView: computed(() => {
+          const t = target();
+          // One of the planet's own moons: its orbit and what it wears here; its look is its own
+          // planet's (its lights too), no moons of its own.
+          if (t.kind === 'moon') {
+            const m = _moonInfos().get(moonKey(t.path));
+            return m ? bodyView(m, false, false, true) : null;
+          }
           const b = _body();
-          return target().kind === 'body' && b ? bodyView(b, false, false) : null;
+          // A planet can have moons of its own; an overlay none.
+          return t.kind === 'body' && b ? bodyView(b, false, asset().kind === 'planet') : null;
         }),
         baseMaterial: computed((): MaterialEntry | undefined => {
           const use = _materialUse();
@@ -708,9 +801,11 @@ export const AssetEditorStore = signalStore(
               planet ? lib.planets[planet]?.glowMargin : undefined,
             );
             const view = { up, across: up * _ui.aspect() };
+            // (The planet open with its own moons about it: all kept in view.)
+            const moons = planet === a.id ? (lib.moons?.[planet] ?? []) : [];
             return {
               ...root,
-              radius: fitRadius(root, [], scene.camera.eye, view, new Map(), () => extent),
+              radius: fitRadius(root, moons, scene.camera.eye, view, new Map(), () => extent),
             };
           };
           if (a.kind === 'sky' || _skyOverlay()) return []; // the sky alone (with its overlay)
@@ -755,7 +850,10 @@ export const AssetEditorStore = signalStore(
                   : undefined;
             return [standIn(owner)];
           }
-          if (a.kind === 'planet') return [own(a.id)];
+          if (a.kind === 'planet')
+            return scene
+              ? setWithMoons([own(a.id)], _draft.library(), scene.camera.eye)
+              : [own(a.id)];
           // An overlay on the stand-in: what it adds, on a plain body.
           // A planet's overlay on the stand-in: what it adds, on a plain body (one not yet known to
           // be a planet's, nothing until it is: a sky's is the sky's).
@@ -811,6 +909,87 @@ export const AssetEditorStore = signalStore(
       };
     },
   ),
+  withComputed((store) => {
+    /** The stage's body (the asset, or the stand-in) and its lights, as the selection shows them. */
+    const litBody = computed(
+      (): {
+        readonly body: SetPlanet;
+        readonly lights: readonly { readonly key: string; readonly light: LightEntry['light'] }[];
+      } | null => {
+        const body = store.stagePlanets()[0];
+        const t = store.target();
+        if (!body) return null;
+        if (t.kind === 'stand-in' || t.kind === 'stand-in-light')
+          return {
+            body,
+            lights: standInLights(store._aids.standInLights()).map(({ light }) => ({
+              key: standInLightKey(light.id),
+              light,
+            })),
+          };
+        const b = store._body();
+        if (!b || t.kind === 'backdrop' || t.kind === 'reference' || t.kind === 'sky') return null;
+        return {
+          body,
+          lights: lightsOfBody(b).map(({ light }) => ({ key: assetLightKey(light.id), light })),
+        };
+      },
+    );
+    return {
+      /** Where the view puts the camera, for the background (none: the game's). */
+      viewCamera: computed((): SceneCameraSet | undefined => {
+        const c = store.camera();
+        return c ? { eye: c.eye, forward: c.forward, fovY: c.fovY } : undefined;
+      }),
+      /**
+       * The lights' markers on the stage: the selected's owner's (the asset's, or the stand-in's),
+       * each one from a side out from the body on the side it comes from, each one from all round
+       * on its middle.
+       */
+      markers: computed((): readonly SceneMarker[] => {
+        const view = store.camera();
+        const lit = litBody();
+        if (!view || !lit) return [];
+        const { body, lights } = lit;
+        const out: SceneMarker[] = [];
+        const marker = (key: string, light: LightEntry['light'], at: Vec3) => ({
+          id: key,
+          key,
+          kind: 'light' as const,
+          label: light.name,
+          icon: lightIcon(light),
+          at,
+          selected: store.selected() === key,
+          off: !light.enabled,
+        });
+        const round = lights.filter(
+          ({ light }) => light.kind === 'ambient' || light.kind === 'environment',
+        );
+        round.forEach(({ key, light }, n) =>
+          out.push({ ...marker(key, light, body.position), nudge: n - (round.length - 1) / 2 }),
+        );
+        for (const { key, light } of lights) {
+          const at = lightMarkerAt(light, body, view.eye);
+          if (at)
+            out.push({
+              ...marker(key, light, at.at),
+              from: at.from,
+              lines: spotEdges(light, body, view.eye),
+            });
+        }
+        return out;
+      }),
+      /** What the view shows of the light selected on the stage's body: the outline of where it falls, a directional light's beam. */
+      beams: computed((): readonly LightAid[] => {
+        const view = store.camera();
+        const lit = litBody();
+        const t = store.target();
+        if (!view || !lit || (t.kind !== 'light' && t.kind !== 'stand-in-light')) return [];
+        const light = lit.lights.find(({ light }) => light.id === t.id)?.light;
+        return light ? lightAids(light, lit.body, view.eye) : [];
+      }),
+    };
+  }),
   withComputed((store) => {
     const d = store._draft;
     const asset = store.asset;
@@ -870,14 +1049,14 @@ export const AssetEditorStore = signalStore(
       added: computed((): AddedLists => {
         const t = store.target();
         const host = addHost();
-        if (!host?.parts.length) return {};
+        if (!host?.parts.length && t.kind !== 'body') return {};
         const o = store._created();
         const listed = (
           entries: readonly PartEntry[],
           keyOf: (id: string) => PartKey,
           rowKey: (key: PartKey) => string,
         ): AddedLists => ({
-          parts: host.parts.map((p) => {
+          parts: (host?.parts ?? []).map((p) => {
             const key = keyOf(p.id);
             const entry = entries.find((e) => e.key === key);
             return {
@@ -890,11 +1069,25 @@ export const AssetEditorStore = signalStore(
         });
         if (t.kind === 'body') {
           const b = store._body();
-          return listed(
-            b ? partsOfBody(b) : [],
-            (id) => (o ? `style:${asset().id}:${id}` : `own:${id}`) as PartKey,
-            assetPartKey,
-          );
+          const infos = store._moonInfos();
+          return {
+            ...listed(
+              b ? partsOfBody(b) : [],
+              (id) => (o ? `style:${asset().id}:${id}` : `own:${id}`) as PartKey,
+              assetPartKey,
+            ),
+            // Its own moons, each taken out here where it was put.
+            ...(infos.size
+              ? {
+                  moons: [...infos.values()].map((m) => ({
+                    key: m.key,
+                    label: bodyLabel(m),
+                    icon: 'brightness_1',
+                    removable: true,
+                  })),
+                }
+              : {}),
+          };
         }
         if (t.kind === 'sky')
           return listed(
@@ -1285,6 +1478,19 @@ export const AssetEditorStore = signalStore(
                 );
               }
             }
+            // Its own moons (a planet's), each switched by its checkbox.
+            if (a.kind === 'planet')
+              for (const [key, m] of store._moonInfos())
+                rows.push({
+                  key,
+                  label: bodyLabel(m),
+                  detail: 'moon',
+                  icon: 'brightness_1',
+                  depth: 1 + (m.key.split('.').length - 1),
+                  expandable: false,
+                  expanded: false,
+                  enabled: m.settings.enabled !== false,
+                });
             break;
           }
           case 'material': {
@@ -1420,6 +1626,37 @@ export const AssetEditorStore = signalStore(
       store._aids.set({
         standInLights: withStandInLight(store._aids.standInLights(), id, change, clear),
       });
+    /** The planet open's own moons changed. */
+    const changeMoons = (change: (moons: readonly MoonChoices[]) => readonly MoonChoices[]) => {
+      const a = asset();
+      if (a.kind === 'planet') d.setLibraryMoons(a.id, change(store._moons()));
+    };
+    /** One of them's settings changed (none left: none). */
+    const moonSettings = (path: BodyPath, change: (s: BodySettings) => BodySettings | undefined) =>
+      changeMoons((moons) =>
+        changeMoon(moons, path, (m) => {
+          const settings = change(m.settings ?? {});
+          return {
+            ...m,
+            settings: settings && Object.keys(settings).length ? settings : undefined,
+          };
+        }),
+      );
+    /** What the selected moon wears changed (the later over the earlier), over its own. */
+    const moonWears = (change: (worn: readonly string[]) => readonly string[]) => {
+      const t = store.target();
+      const m = t.kind === 'moon' ? store._moonInfos().get(moonKey(t.path)) : undefined;
+      if (t.kind !== 'moon' || !m) return;
+      const worn = change(m.overlays.map((o) => o.id));
+      changeMoons((moons) => changeMoon(moons, t.path, (x) => ({ ...x, overlays: worn })));
+    };
+    /** One of them taken out (with its own): the planet selected where it was. */
+    const removeMoonAt = (path: BodyPath) => {
+      changeMoons((moons) => changeMoon(moons, path, () => null));
+      const t = store.target();
+      if (t.kind === 'moon' && pathKey(t.path).startsWith(pathKey(path)))
+        patchState(store, { selected: ASSET });
+    };
     /**
      * The library body's lights changed: what is left of them written back (none: taken back), and
      * its shadow as set before lights were objects taken back once it is its shadow light's.
@@ -1453,6 +1690,7 @@ export const AssetEditorStore = signalStore(
           asset: a,
           selected: ASSET,
           onStandIn: false,
+          editorCamera: null,
           ...(a.kind === 'planet' ? { previewPlanet: a.id } : {}),
         });
         store._ui.confirmReset(false);
@@ -1462,10 +1700,12 @@ export const AssetEditorStore = signalStore(
       showOnStandIn(onStandIn: boolean): void {
         patchState(store, { onStandIn });
       },
-      /** The asset on the stage clicked: its own row selected. */
-      selectPlaced(): boolean {
+      /** The asset on the stage clicked: its own row selected (a planet's moon: its row). */
+      selectPlaced(index: number): boolean {
         if (store.asset().kind === 'sky') return false;
-        patchState(store, { selected: ASSET });
+        const path = index > 0 ? moonPaths(store._moons())[index - 1] : undefined;
+        patchState(store, { selected: path ? moonKey(path) : ASSET });
+        if (path) store.expand(ASSET);
         return true;
       },
       /** A row selected; a group only folds. */
@@ -1478,6 +1718,9 @@ export const AssetEditorStore = signalStore(
         const on = change.enabled;
         const kind = body();
         if (t.kind === 'stand-in-light') standInLightChange(t.id, { enabled: on });
+        // One of the planet's own moons: on is as it starts, so not kept.
+        else if (t.kind === 'moon')
+          moonSettings(t.path, (m) => (on ? without(m, ['enabled']) : { ...m, enabled: false }));
         // A sky's overlay, or one of its parts (the stage's sky's, or the library's).
         else if (t.kind === 'group' && t.skyOverlay) {
           const below = t.stage ? skyOverlayOn(undefined, d.library(), t.skyOverlay) : true;
@@ -1639,10 +1882,20 @@ export const AssetEditorStore = signalStore(
         materialClear(store.target(), keys);
       },
       setBody(change: Partial<BodySettings>): void {
+        const t = store.target();
+        if (t.kind === 'moon') {
+          moonSettings(t.path, (m) => ({ ...m, ...change }));
+          return;
+        }
         const kind = body();
         if (kind) d.setLibraryBody(kind, asset().id, change);
       },
       clearBody(keys: readonly (keyof BodySettings)[]): void {
+        const t = store.target();
+        if (t.kind === 'moon') {
+          moonSettings(t.path, (m) => without(m, keys));
+          return;
+        }
         const kind = body();
         if (kind) d.clearLibraryBody(kind, asset().id, keys);
       },
@@ -1670,6 +1923,14 @@ export const AssetEditorStore = signalStore(
         else d.clearLibraryBody(kind, asset().id, ['parts']);
       },
       resetBody(): void {
+        const t = store.target();
+        if (t.kind === 'moon') {
+          // Back as a new moon: its orbit, its own overlays, nothing set.
+          changeMoons((moons) =>
+            changeMoon(moons, t.path, (m) => ({ id: m.id, key: m.key, orbit: DEFAULT_ORBIT })),
+          );
+          return;
+        }
         const kind = body();
         if (kind) d.resetLibraryBody(kind, asset().id);
       },
@@ -1732,25 +1993,35 @@ export const AssetEditorStore = signalStore(
         }
         store._ui.open({ kind: 'style', id });
       },
-      moveCamera(): void {
-        // the stage keeps the game's camera
+      /** The camera the stage is seen through moved (dragged in the view): the editor's, kept while the asset is open. */
+      moveCamera(set: SceneCameraSet): void {
+        patchState(store, { editorCamera: { ...store.editorCamera(), ...set } });
       },
       lookThrough(): void {
-        // the stage has one camera
+        // the stage has one camera (the game's, moved by the editor's)
       },
+      /** The editor's camera back where the game's is. */
       resetEditorCamera(): void {
-        // the stage keeps the game's camera
+        patchState(store, { editorCamera: null });
       },
-      showMarker(): void {
-        // nothing on the stage is marked
+      /** A light's marker clicked: that light selected, its rows unfolded to it. */
+      showMarker(key: string): void {
+        if (key.startsWith(STAGE_STAND_IN)) store.expand(STAGE, STAGE_STAND_IN);
+        else store.expand(ASSET, ASSET_LIGHTS);
+        patchState(store, { selected: key });
       },
       /** A part made here selected in the tree. */
       showAdded(key: string): void {
         store.expand(ASSET);
         patchState(store, { selected: key });
       },
-      /** A part made here taken out (by the id its row's key ends with). */
+      /** A part made here taken out (by the id its row's key ends with); a planet's own moon too. */
       removeAdded(key: string): void {
+        const t = targetOf(key, asset());
+        if (t.kind === 'moon') {
+          removeMoonAt(t.path);
+          return;
+        }
         const host = store._addHost();
         if (host) removePart(host, key.slice(key.lastIndexOf(':') + 1));
       },
@@ -1793,14 +2064,17 @@ export const AssetEditorStore = signalStore(
         const sky = selectedSky();
         if (sky) d.setSkyOverlays(sky.stage ? PREVIEW_SCENE : null, undefined);
       },
-      addOverlay(): void {
-        // a library asset wears no overlays of its own choosing: overlays are worn in scenes
+      /** A moon of the planet open wears overlays here (the planet wears them in scenes). */
+      addOverlay(id: string): void {
+        moonWears((worn) => (worn.includes(id) ? worn : [...worn, id]));
       },
-      removeOverlay(): void {
-        // as above
+      removeOverlay(id: string): void {
+        moonWears((worn) => worn.filter((w) => w !== id));
       },
       resetOverlays(): void {
-        // as above
+        const t = store.target();
+        if (t.kind === 'moon')
+          changeMoons((moons) => changeMoon(moons, t.path, (m) => without(m, ['overlays']) ?? m));
       },
       setSkyTint(tint: MaterialTint): void {
         const s = selectedSky();
@@ -1834,19 +2108,32 @@ export const AssetEditorStore = signalStore(
         store._ui.confirmReset(false);
       },
       anotherSet(): void {
-        // a scene's: an asset has no random sets, orbits or moons
+        // a scene's: an asset has no random sets
       },
-      setOrbit(): void {
-        // a scene's: an asset has no random sets, orbits or moons
+      /** The selected moon's orbit changed. */
+      setOrbit(change: Partial<Orbit>): void {
+        const t = store.target();
+        if (t.kind === 'moon')
+          changeMoons((moons) =>
+            changeMoon(moons, t.path, (m) => ({ ...m, orbit: { ...m.orbit, ...change } })),
+          );
       },
-      addMoon(): void {
-        // a scene's: an asset has no random sets, orbits or moons
+      /** A moon, by its planet's id, put about the planet open (none about a moon): shown and selected. */
+      addMoon(moon: string): void {
+        if (store.asset().kind !== 'planet' || store.target().kind !== 'body') return;
+        const moons = store._moons();
+        const added = { id: moon, key: nextMoonKey(moons), orbit: DEFAULT_ORBIT };
+        changeMoons(() => addMoonTo(moons, [], added));
+        store.expand(ASSET);
+        patchState(store, { selected: moonKey([moons.length]) });
       },
+      /** The selected moon taken out (with its own): the planet selected. */
       removeMoon(): void {
-        // a scene's: an asset has no random sets, orbits or moons
+        const t = store.target();
+        if (t.kind === 'moon') removeMoonAt(t.path);
       },
       toggleFocus(): void {
-        // a scene's: an asset has no random sets, orbits or moons
+        // a scene's: an asset's moons are shown about it as they are
       },
     };
   }),

@@ -1,4 +1,5 @@
 import type { AddedLight } from '../../scenes/play-background/scene-lights';
+import type { MoonChoices } from '../../scenes/play-background/background-scene';
 import { DOCUMENT } from '@angular/common';
 import { computed, inject } from '@angular/core';
 import {
@@ -124,9 +125,13 @@ export const DraftDesignStore = signalStore(
     _root: inject(DOCUMENT).documentElement,
   })),
   withComputed(({ library, scenes, _published }) => {
-    const changedPlanets = computed(() =>
-      differing(library().planets, _published.library().planets),
-    );
+    // (A planet's own moons are the planet's: changed, it is.)
+    const changedPlanets = computed(() => [
+      ...new Set([
+        ...differing(library().planets, _published.library().planets),
+        ...differing(library().moons ?? {}, _published.library().moons ?? {}),
+      ]),
+    ]);
     const changedStyles = computed(() => [
       ...new Set([
         ...differing(library().styles, _published.library().styles),
@@ -229,6 +234,15 @@ export const DraftDesignStore = signalStore(
       },
       resetLibraryBody(kind: LibraryKind, id: string): void {
         updateLibraryBody(kind, id, () => undefined);
+      },
+      /** A planet's own moons as they are now (none: none kept). */
+      setLibraryMoons(planet: string, moons: readonly MoonChoices[]): void {
+        setLibrary((l) => {
+          const all = { ...l.moons };
+          if (moons.length) all[planet] = moons;
+          else delete all[planet];
+          return { ...l, moons: all };
+        });
       },
       setLibraryMaterial(
         kind: LibraryKind,

@@ -137,8 +137,53 @@ export function lightUniforms(
     ...lights.map((l) => l.softness ?? 1),
     ...Array<number>(MAX_LIGHTS - lights.length).fill(1),
   ]);
+  placedUniforms(u, 'uLight', lights, MAX_LIGHTS);
+  u.fv('uLightGround', [...lights.flatMap((l) => [...(l.ground ?? [0, 0, 0])]), ...pad], '3fv');
   // The light's exposure over the scene's: the planet as bright as the tutorial shows it.
   u.f1('uLightScale', light.exposure / sceneExposure);
+}
+
+/** The kinds of light, as the shaders tell them apart (from a side: 0). */
+export const LIGHT_KINDS = { point: 1, spot: 2, hemisphere: 3, environment: 4 } as const;
+
+/**
+ * Where each light is, for one from a point or a spot (and its kind, each light's): `<prefix>Kind`,
+ * `Pos`, `Fade`, `Aim`, `Cone` (the cosines of its edge and of where its fade starts).
+ */
+function placedUniforms(
+  u: UniformSet,
+  prefix: string,
+  lights: readonly {
+    readonly kind?: 'point' | 'spot' | 'hemisphere' | 'environment';
+    readonly position?: readonly number[];
+    readonly fade?: number;
+    readonly aim?: readonly number[];
+    readonly cone?: number;
+    readonly edge?: number;
+  }[],
+  max: number,
+): void {
+  const pad = (n: number) => Array<number>((max - lights.length) * n).fill(0);
+  const rad = Math.PI / 180;
+  u.iv(`${prefix}Kind`, [...lights.map((l) => (l.kind ? LIGHT_KINDS[l.kind] : 0)), ...pad(1)]);
+  u.fv(
+    `${prefix}Pos`,
+    [...lights.flatMap((l) => [...(l.position ?? [0, 0, 0])]), ...pad(3)],
+    '3fv',
+  );
+  u.fv(`${prefix}Fade`, [...lights.map((l) => l.fade ?? 1), ...pad(1)]);
+  u.fv(`${prefix}Aim`, [...lights.flatMap((l) => [...(l.aim ?? [0, 0, 1])]), ...pad(3)], '3fv');
+  u.fv(
+    `${prefix}Cone`,
+    [
+      ...lights.flatMap((l) => {
+        const cone = (l.cone ?? 90) * rad;
+        return [Math.cos(cone), Math.cos(cone * (1 - (l.edge ?? 0))), 0, 0];
+      }),
+      ...pad(4),
+    ],
+    '4fv',
+  );
 }
 
 /** What darkens a body's part, for the body shader (its shadow first, then the others; one from all round: no direction). */
@@ -154,6 +199,7 @@ export function shadeUniforms(u: UniformSet, darkenings: readonly Darkening[]): 
   u.fv('uShadeColor', [...shades.flatMap((s) => [...s.colour]), ...pad(3)], '3fv');
   u.fv('uShadeStrength', [...shades.map((s) => s.strength), ...pad(1)]);
   u.fv('uShadeSoftness', [...shades.map((s) => s.softness), ...pad(1)]);
+  placedUniforms(u, 'uShade', shades, MAX_SHADES);
 }
 
 /**

@@ -1,5 +1,5 @@
 import type { Signal } from '@angular/core';
-import type { BodySettings, PlanetChoices, SkyChoices } from './background-scene';
+import type { BodySettings, MoonChoices, PlanetChoices, SkyChoices } from './background-scene';
 import { mergeMaterialSettings } from './material-settings';
 import { type AddedLight, mergeLightSettings } from './scene-lights';
 import { type CreatedOverlay, mergeAddedParts } from './created-overlays';
@@ -12,7 +12,7 @@ import {
   type SkySettings,
 } from './scene-planets';
 import type { Backdrop } from './scene-renderer';
-import type { LightBeam } from './scene-beams';
+import type { LightAid } from './scene-beams';
 import type { SceneCameraSet } from './play-scene';
 import { type TintSettings, UNTINTED } from './tint-settings';
 
@@ -33,6 +33,11 @@ export interface LibraryState {
   readonly materials?: MaterialSettingsMap;
   /** Each planet's look, by its id (its own materials, light, shade, tint, directions). */
   readonly planets: Readonly<Record<string, BodySettings>>;
+  /**
+   * Each planet's own moons, by its id (each keyed): brought into every scene the planet is put
+   * in, and the random sets, as the scene sets them (`SceneBody.moonsSet`).
+   */
+  readonly moons?: Readonly<Record<string, readonly MoonChoices[]>>;
   /** Each style's look, by its id (its parts' materials, its shade). */
   readonly styles: Readonly<Record<string, BodySettings>>;
   /** The sky's materials and a tint over all of it. */
@@ -97,7 +102,7 @@ export interface BackgroundSceneSource {
   /** An editing aid shown in place of the sky (none: the sky); never part of the design. */
   readonly backdrop?: Signal<Backdrop | null>;
   /** Lights' beams shown over it (an editing aid: the light selected); never part of the design. */
-  readonly beams?: Signal<readonly LightBeam[]>;
+  readonly beams?: Signal<readonly LightAid[]>;
   /** Where it puts the camera, over the game's (none: the game's). */
   readonly camera?: Signal<SceneCameraSet | undefined>;
   /**

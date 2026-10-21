@@ -1,5 +1,5 @@
 import type { AddedLight } from './scene-lights';
-import type { LightBeam } from './scene-beams';
+import type { LightAid } from './scene-beams';
 import { FrameStats } from './frame-stats';
 import {
   afterRenderEffect,
@@ -53,7 +53,7 @@ interface Running {
   resky(sky: SkySettings): void;
   relight(lights: readonly AddedLight[]): void;
   rebackdrop(backdrop: Backdrop | null): void;
-  rebeam(beams: readonly LightBeam[]): void;
+  rebeam(beams: readonly LightAid[]): void;
   recamera(camera: SceneCameraSet | undefined): void;
 }
 
@@ -136,7 +136,7 @@ export class SceneCanvas {
   /** An editing backdrop in place of the sky (none: the sky). */
   readonly backdrop = input<Backdrop | null>(null);
   /** Lights' beams shown over it (an editor's, of the light selected; none: none). */
-  readonly beams = input<readonly LightBeam[]>([]);
+  readonly beams = input<readonly LightAid[]>([]);
   /** Where a scene puts the camera, over the game's (none: the game's). */
   readonly camera = input<SceneCameraSet | undefined>(undefined);
   /**

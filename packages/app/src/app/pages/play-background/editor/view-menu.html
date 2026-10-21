@@ -21,16 +21,8 @@
     </mat-icon>
     <span>Names</span>
   </button>
-  <button
-    mat-menu-item
-    type="button"
-    role="menuitemcheckbox"
-    [attr.aria-checked]="ui.markers()"
-    (click)="ui.setMarkers(!ui.markers())"
-  >
-    <mat-icon class="material-symbols-outlined" aria-hidden="true">
-      {{ ui.markers() ? 'check_box' : 'check_box_outline_blank' }}
-    </mat-icon>
+  <button mat-menu-item type="button" [matMenuTriggerFor]="markersMenu">
+    <mat-icon class="material-symbols-outlined" aria-hidden="true">location_on</mat-icon>
     <span>Markers</span>
   </button>
   <button
@@ -57,4 +49,20 @@
     <mat-icon class="material-symbols-outlined" aria-hidden="true">delete_forever</mat-icon>
     <span>Clear saved data…</span>
   </button>
+</mat-menu>
+<mat-menu #markersMenu="matMenu">
+  @for (m of markerModes; track m.id) {
+    <button
+      mat-menu-item
+      type="button"
+      role="menuitemradio"
+      [attr.aria-checked]="ui.markers() === m.id"
+      (click)="ui.setMarkers(m.id)"
+    >
+      <mat-icon class="material-symbols-outlined" aria-hidden="true">
+        {{ ui.markers() === m.id ? 'radio_button_checked' : 'radio_button_unchecked' }}
+      </mat-icon>
+      <span>{{ m.label }}</span>
+    </button>
+  }
 </mat-menu>

@@ -4,6 +4,7 @@ import {
   patchState,
   signalMethod,
   signalStore,
+  withHooks,
   withMethods,
   withProps,
   withState,
@@ -14,13 +15,19 @@ import { libraryPath, type OpenKind, type OpenTarget, openPath } from './open-ta
 /** How soon a second click on the same thing makes a double-click, in milliseconds. */
 export const DOUBLE_CLICK = 500;
 
+/**
+ * Which markers the view shows: all of them (the unselected lights' small), only the selected
+ * thing's (a light's own; a body's: its lights'), or none.
+ */
+export type MarkerMode = 'all' | 'selected' | 'none';
+
 interface EditorUiState {
   /** Whether the library shows (its lists on the left), as the URL says; else the editor (its tree). */
   readonly browsing: boolean;
   /** Whether the bodies' names float over them. */
   readonly names: boolean;
-  /** Whether the view marks a scene's cameras, the groups put in it and the selected's lights. */
-  readonly markers: boolean;
+  /** Which of a scene's cameras, the groups put in it and the selected's lights the view marks. */
+  readonly markers: MarkerMode;
   /** Whether the view shows the background's frame stats. */
   readonly stats: boolean;
   /** Whether the tree's panel and the properties' panel are open. */
@@ -47,7 +54,7 @@ export const EditorUiStore = signalStore(
   withState<EditorUiState>({
     browsing: true,
     names: true,
-    markers: true,
+    markers: 'all',
     stats: false,
     left: true,
     right: true,
@@ -123,7 +130,7 @@ export const EditorUiStore = signalStore(
       setNames(names: boolean): void {
         patchState(store, { names });
       },
-      setMarkers(markers: boolean): void {
+      setMarkers(markers: MarkerMode): void {
         patchState(store, { markers });
       },
       setStats(stats: boolean): void {
@@ -145,5 +152,12 @@ export const EditorUiStore = signalStore(
         patchState(store, { screenshot });
       },
     };
+  }),
+  withHooks({
+    onInit(store) {
+      // Kept as on or off before there were modes: all, or none.
+      const kept: unknown = store.markers();
+      if (typeof kept === 'boolean') patchState(store, { markers: kept ? 'all' : 'none' });
+    },
   }),
 );

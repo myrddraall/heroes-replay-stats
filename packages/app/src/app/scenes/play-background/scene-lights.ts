@@ -1,5 +1,5 @@
 import { lightFrom, normalized, type Vec3 } from './scene-directions';
-import type { BodyShade, PlanetLight } from './scene-planets';
+import type { BodyShade, PlanetDirectionalLight, PlanetLight } from './scene-planets';
 
 /**
  * A body's lights as objects: its light rig from the game data (an ambient light, and its
@@ -10,10 +10,13 @@ import type { BodyShade, PlanetLight } from './scene-planets';
  */
 
 /**
- * Where a light comes from: all round, or a side. Either lights, or darkens (`darkens`: an
- * antilight, taking its colour away).
+ * Where a light comes from: all round; a side; a point near the body (fading with distance); a
+ * spot (a point, lighting within a cone); above and below (a hemisphere: one colour from the sky's
+ * side, another from the ground's); the sky round the body (an environment light: the sky's own
+ * colours, each side of the body lit by the sky beyond it). Either lights, or darkens (`darkens`:
+ * an antilight, taking its colour away).
  */
-export type LightKind = 'ambient' | 'directional';
+export type LightKind = 'ambient' | 'directional' | 'point' | 'spot' | 'hemisphere' | 'environment';
 
 /** A light to add: of a kind, or an antilight (a directional light that darkens). */
 export type NewLightKind = LightKind | 'antilight';
@@ -23,7 +26,15 @@ export type NewLightKind = LightKind | 'antilight';
  * darkens). Lights of others kept from before (a grid's reveal and activation, its material's own
  * settings now) are left out wherever lights are read.
  */
-const KINDS: readonly string[] = ['ambient', 'directional', 'shadow'];
+const KINDS: readonly string[] = [
+  'ambient',
+  'directional',
+  'shadow',
+  'point',
+  'spot',
+  'hemisphere',
+  'environment',
+];
 
 /**
  * Added lights of the kinds there are (those kept from before left out), an antilight of before
@@ -75,6 +86,21 @@ export interface LightSettings {
    */
   readonly specular?: string;
   readonly specularStrength?: number;
+  /** A point or spot light's place, in its body's frame, in its radii (x across, y away from the eye, z up). */
+  readonly position?: Vec3;
+  /**
+   * How far a point or spot light reaches, in its body's radii: at this distance it is half as
+   * strong. An environment light's: how far out from the body's edge the sky is read, in its radii.
+   */
+  readonly fade?: number;
+  /** The way a spot light points (none: at its body's middle). */
+  readonly aim?: Vec3;
+  /** A spot light's cone: its half-angle, in degrees. */
+  readonly cone?: number;
+  /** How much of a spot light's cone, from its edge in, it fades over (0 a hard edge, 1 all of it). */
+  readonly edge?: number;
+  /** A hemisphere light's colour from below (`#rrggbb`; its colour is from above, `from`). */
+  readonly ground?: string;
   readonly reach?: LightReach;
   readonly moons?: boolean;
 }
@@ -92,6 +118,25 @@ export interface AddedLight extends LightSettings {
 /** Where a light comes from unless turned: upper left, in front (a shadow: lower right, in front). */
 const NEW_FROM: Vec3 = normalized([-0.55, -0.45, 0.7]);
 const NEW_SHADOW_FROM: Vec3 = normalized([0.6, -0.3, -0.75]);
+/** Where a point light is unless moved: to the right, in front, above; a spot: in front, above (both in view on the stage). */
+const NEW_POSITION: Vec3 = [1.2, -1.2, 0.8];
+const NEW_SPOT_POSITION: Vec3 = [0, -2.5, 1.5];
+const NEW_FADE = 3;
+/** How strong a point light is, and a spot, unless set: dim enough near the body not to white it out. */
+const NEW_POINT_STRENGTH = 0.5;
+const NEW_SPOT_STRENGTH = 0.8;
+/** A spot's cone unless set: within the body as seen from where it starts (a planet's face is about 20 degrees across from there). */
+const NEW_CONE = 15;
+const NEW_EDGE = 0.5;
+/** Where a hemisphere light's sky is unless turned: straight up. */
+const NEW_UP: Vec3 = [0, 0, 1];
+const NEW_GROUND = '#000000';
+/** How far out from the body's edge an environment light reads the sky unless set, in its radii. */
+const NEW_SPREAD = 1.5;
+
+/** The way a spot light points unless aimed: at its body's middle. */
+export const aimAtMiddle = (position: Vec3): Vec3 =>
+  normalized([-position[0], -position[1], -position[2]]).map((v) => v || 0) as unknown as Vec3;
 
 /**
  * A new light of a kind, named after the lights of that kind already added beside it (an
@@ -110,6 +155,10 @@ export function newLight(
     ambient: 'Ambient light',
     directional: 'Directional light',
     antilight: 'Antilight',
+    point: 'Point light',
+    spot: 'Spot light',
+    hemisphere: 'Hemisphere light',
+    environment: 'Environment light',
   }[kind];
   const name = count ? `${base} ${count + 1}` : base;
   switch (kind) {
@@ -127,6 +176,40 @@ export function newLight(
         from: NEW_SHADOW_FROM,
         softness: 1,
       };
+    case 'point':
+      return {
+        id,
+        kind,
+        name,
+        colour: '#ffffff',
+        strength: NEW_POINT_STRENGTH,
+        position: NEW_POSITION,
+        fade: NEW_FADE,
+      };
+    case 'spot':
+      return {
+        id,
+        kind,
+        name,
+        colour: '#ffffff',
+        strength: NEW_SPOT_STRENGTH,
+        position: NEW_SPOT_POSITION,
+        fade: NEW_FADE,
+        cone: NEW_CONE,
+        edge: NEW_EDGE,
+      };
+    case 'hemisphere':
+      return {
+        id,
+        kind,
+        name,
+        colour: '#ffffff',
+        strength: 0.25,
+        from: NEW_UP,
+        ground: NEW_GROUND,
+      };
+    case 'environment':
+      return { id, kind, name, colour: '#ffffff', strength: 1, fade: NEW_SPREAD, softness: 1 };
   }
 }
 
@@ -150,6 +233,24 @@ export function addedLight(light: AddedLight, settings?: LightSettings): BodyLig
           specularStrength: s.specularStrength ?? 1,
         }
       : {}),
+    ...(light.kind === 'point' || light.kind === 'spot'
+      ? {
+          position: s.position ?? (light.kind === 'spot' ? NEW_SPOT_POSITION : NEW_POSITION),
+          fade: s.fade ?? NEW_FADE,
+          softness: s.softness ?? 1,
+          specular: s.specular ?? '#ffffff',
+          specularStrength: s.specularStrength ?? 1,
+        }
+      : {}),
+    ...(light.kind === 'spot'
+      ? { ...(s.aim ? { aim: s.aim } : {}), cone: s.cone ?? NEW_CONE, edge: s.edge ?? NEW_EDGE }
+      : {}),
+    ...(light.kind === 'hemisphere'
+      ? { from: s.from ?? NEW_UP, ground: s.ground ?? NEW_GROUND }
+      : {}),
+    ...(light.kind === 'environment'
+      ? { fade: s.fade ?? NEW_SPREAD, softness: s.softness ?? 1 }
+      : {}),
   };
 }
 
@@ -165,9 +266,63 @@ export interface BodyLight {
   readonly strength: number;
   readonly from?: Vec3;
   readonly softness?: number;
-  /** A directional light's shine (see `LightSettings`). */
+  /** A directional, point or spot light's shine (see `LightSettings`). */
   readonly specular?: string;
   readonly specularStrength?: number;
+  /** A point or spot light's (see `LightSettings`); `fade` an environment light's too. */
+  readonly position?: Vec3;
+  readonly fade?: number;
+  /** A spot light's. */
+  readonly aim?: Vec3;
+  readonly cone?: number;
+  readonly edge?: number;
+  /** A hemisphere light's colour from below. */
+  readonly ground?: string;
+}
+
+/** A light as the renderer takes it (see `PlanetDirectionalLight`): from a side, a point, a spot, above and below, or the sky round the body. */
+export function placedLight(l: BodyLight): PlanetDirectionalLight | undefined {
+  const color = rgbOf(l.colour, l.strength);
+  const shine =
+    (l.specularStrength ?? 0) > 0
+      ? { specular: rgbOf(l.specular ?? '#ffffff', l.specularStrength!) }
+      : {};
+  if (l.kind === 'directional' && l.from)
+    return {
+      direction: [-l.from[0], -l.from[1], -l.from[2]] as const,
+      color,
+      softness: l.softness ?? 1,
+      ...shine,
+    };
+  if ((l.kind === 'point' || l.kind === 'spot') && l.position) {
+    const aim = l.aim ?? aimAtMiddle(l.position);
+    return {
+      kind: l.kind,
+      direction: aim,
+      position: l.position,
+      fade: l.fade ?? NEW_FADE,
+      color,
+      softness: l.softness ?? 1,
+      ...(l.kind === 'spot' ? { aim, cone: l.cone ?? NEW_CONE, edge: l.edge ?? NEW_EDGE } : {}),
+      ...shine,
+    };
+  }
+  if (l.kind === 'hemisphere' && l.from)
+    return {
+      kind: 'hemisphere',
+      direction: [-l.from[0], -l.from[1], -l.from[2]] as const,
+      color,
+      ground: rgbOf(l.ground ?? NEW_GROUND, l.strength),
+    };
+  if (l.kind === 'environment')
+    return {
+      kind: 'environment',
+      direction: [0, 1, 0],
+      color,
+      fade: l.fade ?? NEW_SPREAD,
+      softness: l.softness ?? 1,
+    };
+  return undefined;
 }
 
 /** A light's specular as a colour and a strength (none: white, at 0). */
@@ -501,16 +656,10 @@ export function withAddedLights(
       const c = rgbOf(l.colour, l.strength);
       return [sum[0] + c[0], sum[1] + c[1], sum[2] + c[2]] as const;
     }, base.ambient);
-  const directional = on
-    .filter((l) => l.kind === 'directional' && l.from)
-    .map((l) => ({
-      direction: [-l.from![0], -l.from![1], -l.from![2]] as const,
-      color: rgbOf(l.colour, l.strength),
-      softness: l.softness ?? 1,
-      ...((l.specularStrength ?? 0) > 0
-        ? { specular: rgbOf(l.specular ?? '#ffffff', l.specularStrength!) }
-        : {}),
-    }));
+  const directional = on.flatMap((l) => {
+    const placed = placedLight(l);
+    return placed ? [placed] : [];
+  });
   return { ...base, ambient, directional: [...base.directional, ...directional] };
 }
 
@@ -523,6 +672,13 @@ export interface Darkening {
   readonly strength: number;
   readonly softness: number;
   readonly colour: Vec3;
+  /** From a point, a spot, above and below, or the sky round the body (see `PlanetDirectionalLight`); none: from a side, or all round. */
+  readonly kind?: 'point' | 'spot' | 'hemisphere' | 'environment';
+  readonly position?: Vec3;
+  readonly fade?: number;
+  readonly aim?: Vec3;
+  readonly cone?: number;
+  readonly edge?: number;
 }
 
 /**
@@ -537,10 +693,23 @@ export function bodyDarkenings(
 ): Darkening[] {
   return [...bodyLights(light, shade, settings), ...onLights(added, settings)]
     .filter((l) => l.enabled && l.darkens && l.strength > 0)
-    .map((l) => ({
-      ...(l.from ? { direction: l.from } : {}),
-      strength: l.strength,
-      softness: l.softness ?? 1,
-      colour: rgbOf(l.colour, 1),
-    }));
+    .map((l) => {
+      const placed = l.kind === 'ambient' || l.kind === 'directional' ? undefined : placedLight(l);
+      return {
+        ...(l.from ? { direction: l.from } : {}),
+        strength: l.strength,
+        softness: l.softness ?? 1,
+        colour: rgbOf(l.colour, 1),
+        ...(placed?.kind
+          ? {
+              kind: placed.kind,
+              position: placed.position,
+              fade: placed.fade,
+              aim: placed.aim,
+              cone: placed.cone,
+              edge: placed.edge,
+            }
+          : {}),
+      };
+    });
 }

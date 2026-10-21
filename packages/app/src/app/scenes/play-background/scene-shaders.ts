@@ -87,10 +87,24 @@ uniform vec3 uLightDir[MAX_LIGHTS];
 uniform vec3 uLightColor[MAX_LIGHTS];
 uniform float uLightSoftness[MAX_LIGHTS];
 uniform vec3 uLightSpecular[MAX_LIGHTS];
+// Each light's kind (0 from a side, 1 from a point, 2 a spot, 3 from above and below, 4 the sky
+// round the body), and for a point or a spot where it is (the body's frame, in its radii), how far
+// it reaches (half as strong there; an environment light's: how far out the sky is read), the way
+// a spot points and its cone (the cosines of its edge and of where its fade starts); a
+// hemisphere's colour from below.
+uniform int uLightKind[MAX_LIGHTS];
+uniform vec3 uLightPos[MAX_LIGHTS], uLightAim[MAX_LIGHTS], uLightGround[MAX_LIGHTS];
+uniform float uLightFade[MAX_LIGHTS];
+uniform vec4 uLightCone[MAX_LIGHTS];
 uniform float uSpecularity, uSpecularMult;
 uniform int uLightCount;
 uniform float uLightScale;
 uniform vec3 uEye, uRight, uUp;
+// The sky round the bodies (what doesn't move of it, small and blurred: a frame's worth), and
+// where this body is in it (its middle, and one radius across and up, as shares of the frame).
+uniform sampler2D uSkyLight;
+uniform vec4 uSkyAt;
+const float SKY_LIGHT_LOD = 2.0;
 uniform float uGlowThreshold, uSceneThreshold, uGlowBoost;
 uniform float uStrength, uSpread, uCut, uFalloff;
 uniform int uPattern;
@@ -98,6 +112,46 @@ uniform vec3 uPatternParams;
 uniform vec3 uShadeDir[MAX_SHADES], uShadeColor[MAX_SHADES];
 uniform float uShadeStrength[MAX_SHADES], uShadeSoftness[MAX_SHADES];
 uniform int uShadeCount;
+uniform int uShadeKind[MAX_SHADES];
+uniform vec3 uShadePos[MAX_SHADES], uShadeAim[MAX_SHADES];
+uniform float uShadeFade[MAX_SHADES];
+uniform vec4 uShadeCone[MAX_SHADES];
+// The sky's colour beyond a body's edge the way a normal n points across the view, spread radii
+// out from its middle.
+vec3 skyLight(vec3 n, float spread) {
+  vec2 uv = uSkyAt.xy + vec2(dot(n, uRight), dot(n, uUp)) * uSkyAt.zw * (1.0 + spread);
+  return textureLod(uSkyLight, clamp(uv, 0.0, 1.0), SKY_LIGHT_LOD).rgb;
+}
+// How much a light reaches a point p (the body's frame) facing n, and the way from it to the light
+// (to): one from a side (kind 0) by how squarely the point faces it (to the power of its
+// softness); one from a point (1) or a spot (2) by that and how far away it is (half as strong at
+// fade), a spot only within its cone, fading in over its edge; one from above and below (3) by how
+// far the point faces the side it comes from (0 the other way, 1 squarely: its colours mixed by it);
+// the sky round the body (4) by how far the point faces away from the eye (none facing it
+// squarely, all at the edge and behind, to the power of its softness: the sky lights the body's
+// edges, its colour there read by skyLight).
+float reachOf(int kind, vec3 dir, vec3 pos, float fade, vec3 aim, vec4 cone, float softness, vec3 n, vec3 p, out vec3 to) {
+  if (kind == 0) {
+    to = -normalize(dir);
+    return pow(max(0.0, dot(n, to)), softness);
+  }
+  if (kind == 3) {
+    to = -normalize(dir);
+    return dot(n, to) * 0.5 + 0.5;
+  }
+  if (kind == 4) {
+    to = n;
+    return pow(clamp(1.0 - dot(n, normalize(uEye)), 0.0, 1.0), softness);
+  }
+  vec3 d = pos - p;
+  float dist = max(length(d), 1e-6);
+  to = d / dist;
+  float strength = pow(max(0.0, dot(n, to)), softness) / (1.0 + dist * dist / (fade * fade));
+  // (A spot's cone with no edge to fade over: cut at its edge; smoothstep's result is undefined
+  // where its edges meet.)
+  if (kind == 2) strength *= cone.y > cone.x ? smoothstep(cone.x, cone.y, dot(-to, aim)) : step(cone.x, dot(-to, aim));
+  return strength;
+}
 // A grid's: shown where its reveal reaches (its emissive times how much), coloured from
 // inactive (its diffuse) to uActiveColor where its activation reaches; each its side
 // (body frame), spread, falloff and strength, an activation's how much it energizes (reveals too).
@@ -298,11 +352,20 @@ vec3 lit(vec3 albedo) {
   vec3 shine = vec3(0.0);
   for (int i = 0; i < MAX_LIGHTS; i++) {
     if (i >= uLightCount) continue;
-    vec3 to = -normalize(uLightDir[i]);
-    float facing = dot(n, to);
-    light += uLightColor[i] * pow(max(0.0, facing), uLightSoftness[i]);
-    if (shines && facing > 0.0)
-      shine += uLightSpecular[i] * pow(max(0.0, dot(n, normalize(to + view))), uSpecularity);
+    vec3 to;
+    float reach = reachOf(uLightKind[i], uLightDir[i], uLightPos[i], uLightFade[i], uLightAim[i], uLightCone[i], uLightSoftness[i], n, vWorld, to);
+    if (uLightKind[i] == 3) {
+      light += mix(uLightGround[i], uLightColor[i], reach);
+      continue;
+    }
+    if (uLightKind[i] == 4) {
+      light += uLightColor[i] * skyLight(n, uLightFade[i]) * reach;
+      continue;
+    }
+    light += uLightColor[i] * reach;
+    // (A point's or a spot's shine as far as it reaches.)
+    if (shines && reach > 0.0)
+      shine += uLightSpecular[i] * pow(max(0.0, dot(n, normalize(to + view))), uSpecularity) * (uLightKind[i] == 0 ? 1.0 : reach);
   }
   return (albedo * light + shine * map) * uLightScale;
 }
@@ -333,10 +396,14 @@ void shade() {
   // the way each comes from (all over, one from all round); what it emits isn't.
   for (int i = 0; i < MAX_SHADES; i++) {
     if (i < uShadeCount && uShadeStrength[i] > 0.0) {
-      float facing = dot(uShadeDir[i], uShadeDir[i]) > 0.0
-        ? pow(max(0.0, dot(normalize(vNormal), uShadeDir[i])), uShadeSoftness[i])
+      vec3 to;
+      // (From all round: all over; else as far as it reaches, the way it comes from.)
+      float facing = dot(uShadeDir[i], uShadeDir[i]) > 0.0 || uShadeKind[i] > 0
+        ? reachOf(uShadeKind[i], -uShadeDir[i], uShadePos[i], uShadeFade[i], uShadeAim[i], uShadeCone[i], uShadeSoftness[i], normalize(vNormal), vWorld, to)
         : 1.0;
-      base *= 1.0 - uShadeStrength[i] * facing * uShadeColor[i];
+      // (The sky round the body, darkening: its colour there taken away.)
+      vec3 cut = uShadeKind[i] == 4 ? uShadeColor[i] * skyLight(normalize(vNormal), uShadeFade[i]) : uShadeColor[i];
+      base *= 1.0 - uShadeStrength[i] * facing * cut;
     }
   }
 #endif
@@ -928,6 +995,91 @@ void main() {
   if (hidden()) discard;
   float facing = abs(dot(normalize(vNormal), normalize(uEye - vAt)));
   float a = uAlpha * (uEdge ? pow(1.0 - facing, 8.0) : facing) * (1.0 - vAlong);
+  outColor = vec4(uColor * a, a);
+}`;
+
+/** A square facing the eye about a body (as the bodies' own), each corner's place in the scene for the outline's shader. */
+export const OUTLINE_VERTEX = `#version 300 es
+in vec2 aCorner;
+uniform mat4 uViewProjection;
+uniform vec3 uCentre;
+uniform mat3 uAxes;
+uniform float uExtent;
+out vec3 vAt;
+void main() {
+  vAt = uCentre + uAxes * vec3(aCorner.x * uExtent, 0.0, aCorner.y * uExtent);
+  gl_Position = uViewProjection * vec4(vAt, 1.0);
+}`;
+
+/**
+ * The outline of where a light falls on its body's sphere (see \`LightOutline\`): the sphere found
+ * under each pixel (none: nothing), the point on it taken into the body's frame, and lines drawn
+ * a pixel or so wide where the light's reach crosses its edges: its terminator (from a side, a
+ * point, a hemisphere's divide), a spot's cone and (fainter) where its fade starts, a point's
+ * Reach (fainter), the ring where the sky round the body starts to take (half way to its edge).
+ * None where the scene has something nearer (its depth, a little past the sphere's own), nor
+ * behind another body's sphere.
+ */
+export const OUTLINE_FRAGMENT = `#version 300 es
+precision highp float;
+#define MAX_SPHERES ${MAX_BEAM_SPHERES}
+uniform highp sampler2D uDepth;
+uniform mat4 uViewProjection;
+uniform vec3 uEye, uCentre, uColor;
+uniform mat3 uAxes;
+uniform float uRadius, uAlpha;
+uniform int uKind;
+uniform vec3 uDir, uPos, uAim;
+uniform float uFade, uCosCone, uCosFade;
+uniform vec4 uSpheres[MAX_SPHERES];
+uniform int uSphereCount;
+in vec3 vAt;
+out vec4 outColor;
+// Where the line of sight from the eye along d meets a sphere first (none: -1).
+float meets(vec4 sphere, vec3 d) {
+  vec3 oc = uEye - sphere.xyz;
+  float b = dot(oc, d);
+  float disc = b * b - (dot(oc, oc) - sphere.w * sphere.w);
+  return disc > 0.0 ? -b - sqrt(disc) : -1.0;
+}
+// A line where f crosses 0, a pixel and a half wide, smoothed.
+float line(float f) {
+  return 1.0 - smoothstep(0.0, 1.5, abs(f) / max(fwidth(f), 1e-6));
+}
+void main() {
+  vec3 d = normalize(vAt - uEye);
+  float t = meets(vec4(uCentre, uRadius), d);
+  if (t <= 0.0) discard;
+  for (int i = 0; i < MAX_SPHERES; i++) {
+    if (i >= uSphereCount) break;
+    float near = meets(uSpheres[i], d);
+    if (near > 0.0 && near < t) discard;
+  }
+  vec3 hit = uEye + d * t;
+  vec4 clip = uViewProjection * vec4(hit, 1.0);
+  float depth = clip.z / clip.w * 0.5 + 0.5;
+  if (depth > texelFetch(uDepth, ivec2(gl_FragCoord.xy), 0).r + 2e-4) discard;
+  // The point on the sphere in the body's frame: its normal too (a unit sphere).
+  vec3 n = normalize(transpose(uAxes) * (hit - uCentre));
+  float main_ = 1.0, faint = 1.0;
+  if (uKind == 0 || uKind == 3) {
+    main_ = dot(n, -normalize(uDir));
+  } else if (uKind == 1) {
+    vec3 to = uPos - n;
+    main_ = dot(n, normalize(to));
+    faint = length(to) - uFade;
+  } else if (uKind == 2) {
+    vec3 to = normalize(uPos - n);
+    if (dot(n, to) <= 0.0) discard;
+    float along = dot(-to, uAim);
+    main_ = along - uCosCone;
+    faint = along - uCosFade;
+  } else {
+    vec3 look = transpose(uAxes) * (uEye - uCentre);
+    main_ = 0.5 - dot(n, normalize(look));
+  }
+  float a = max(line(main_), 0.45 * line(faint)) * uAlpha;
+  if (a <= 0.0) discard;
   outColor = vec4(uColor * a, a);
 }`;
 

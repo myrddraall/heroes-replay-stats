@@ -67,6 +67,22 @@
     box-shadow: 0 0 0 2px var(--mat-sys-primary);
   }
 
+  // A light not selected: a dot, its icon on hover (or focus), not to get in the light's way.
+  &.lite:not(:hover, :focus-visible) mat-icon {
+    font-size: 0;
+    background: none;
+    box-shadow: none;
+
+    &::after {
+      content: '';
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgb(0 0 0 / 0.65);
+      box-shadow: 0 0 0 1px rgb(var(--hrs-glass-edge) / 0.8);
+    }
+  }
+
   &.off {
     opacity: 0.55;
   }

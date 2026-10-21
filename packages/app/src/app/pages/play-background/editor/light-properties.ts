@@ -1,3 +1,5 @@
+import { aimAtMiddle } from '../../../scenes/play-background/scene-lights';
+import type { Vec3 } from '../../../scenes/play-background/background-scene';
 import { Component, computed, input, output } from '@angular/core';
 import type {
   LightReach,
@@ -22,6 +24,12 @@ const LIGHT_KEYS: readonly (keyof LightSettings)[] = [
   'softness',
   'specular',
   'specularStrength',
+  'position',
+  'fade',
+  'aim',
+  'cone',
+  'edge',
+  'ground',
 ];
 
 /** What a light does, as its Effect list offers it. */
@@ -42,6 +50,7 @@ const REACH_MODES: readonly PropertyOption[] = [
  * A body's light's properties (presentational), the same rows for every light: whether it lights
  * or darkens (an antilight: its colour taken away, its strength how much), its colour and
  * strength, a directional light's side (Light from) and how softly it falls off round the body,
+ * a point's or spot's place and reach (an environment light's: how far out the sky is read),
  * and one that lights its specular colour and strength (its shine on a material that shines);
  * what of its body it reaches (its parts and their materials, checked), and whether it reaches the
  * body's moons. Whether it is on is its row's checkbox in the tree.
@@ -116,5 +125,28 @@ export class LightProperties {
 
   protected isSet(key: keyof LightSettings): boolean {
     return this.light().set?.[key] !== undefined;
+  }
+
+  /** Whether it is a directional, point or spot light: one with a shine. */
+  protected readonly shiny = computed(() => {
+    const k = this.light().light.kind;
+    return k === 'directional' || k === 'point' || k === 'spot';
+  });
+  /** Whether it falls off round the body (a softness): one with a shine, or an environment light. */
+  protected readonly sided = computed(
+    () => this.shiny() || this.light().light.kind === 'environment',
+  );
+
+  /** The way a spot light points: as aimed, else at its body's middle. */
+  protected readonly aim = computed((): Vec3 => {
+    const l = this.light().light;
+    return l.aim ?? aimAtMiddle(l.position ?? [0, -2.5, 1.5]);
+  });
+
+  /** A point or spot light moved along one axis of its body's frame (0 across, 1 towards the eye, 2 up). */
+  protected move(axis: 0 | 1 | 2, value: number): void {
+    const position: [number, number, number] = [...(this.light().light.position ?? [0, 0, 0])];
+    position[axis] = axis === 1 ? -value : value;
+    this.settingsChange.emit({ position });
   }
 }

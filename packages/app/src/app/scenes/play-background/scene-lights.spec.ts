@@ -16,6 +16,9 @@ import {
   withReceiver,
   tunedRig,
   knownLights,
+  aimAtMiddle,
+  addedLight,
+  placedLight,
 } from './scene-lights';
 import { DEFAULT_SHADE, type PlanetLight } from './scene-planets';
 
@@ -313,5 +316,64 @@ describe("a body's rig as tuned", () => {
     const turned = tunedRig(rig, 1, [1, 0, 0]);
     // The key light (the brightest) shone along +y, so came from -y: now it comes from +x.
     turned.directional[0]!.direction.forEach((v, i) => expect(v).toBeCloseTo([-1, 0, 0][i]!, 6));
+  });
+});
+
+describe('lights from a point, a spot, and above and below', () => {
+  it('start where new lights of their kind do, named after those there are', () => {
+    const point = newLight('point', []);
+    expect(point).toMatchObject({ kind: 'point', name: 'Point light', fade: 3 });
+    expect(point.position).toEqual([1.2, -1.2, 0.8]);
+    expect(newLight('spot', [point])).toMatchObject({ kind: 'spot', cone: 15, edge: 0.5 });
+    expect(newLight('hemisphere', []).ground).toBe('#000000');
+    expect(newLight('point', [point, newLight('spot', [])]).name).toBe('Point light 2');
+  });
+
+  it('reach the renderer as placed lights: a point or a spot where it is, a hemisphere with its ground colour', () => {
+    const point = newLight('point', []);
+    const spot = { ...newLight('spot', []), position: [0, -2, 0] as const };
+    const sky = {
+      ...newLight('hemisphere', []),
+      colour: '#0000ff',
+      ground: '#ff0000',
+      strength: 0.5,
+    };
+    const lit = withAddedLights(undefined, [point, spot, sky], undefined, 1)!;
+    expect(lit.directional).toHaveLength(3);
+    expect(lit.directional[0]).toMatchObject({
+      kind: 'point',
+      position: [1.2, -1.2, 0.8],
+      fade: 3,
+    });
+    // A spot points at its body's middle unless aimed.
+    expect(lit.directional[1]).toMatchObject({ kind: 'spot', aim: [0, 1, 0], cone: 15, edge: 0.5 });
+    expect(lit.directional[2]).toMatchObject({
+      kind: 'hemisphere',
+      direction: [-0, -0, -1],
+      color: [0, 0, 0.5],
+      ground: [0.5, 0, 0],
+    });
+    expect(aimAtMiddle([3, 0, 4])).toEqual([-0.6, 0, -0.8]);
+    // One aimed keeps its aim; one from a side with no side is no light.
+    expect(placedLight(addedLight(spot, { aim: [1, 0, 0] }))?.aim).toEqual([1, 0, 0]);
+    const nowhere = { ...addedLight(newLight('directional', [])), from: undefined };
+    expect(placedLight(nowhere)).toBeUndefined();
+  });
+
+  it('read the sky round the body as an environment light: how far out, how softly', () => {
+    const sky = newLight('environment', []);
+    expect(sky).toMatchObject({ kind: 'environment', name: 'Environment light', fade: 1.5 });
+    const lit = withAddedLights(undefined, [sky], { [sky.id]: { fade: 2, softness: 3 } }, 1)!;
+    expect(lit.directional[0]).toMatchObject({ kind: 'environment', fade: 2, softness: 3 });
+    const [d] = bodyDarkenings(undefined, DEFAULT_SHADE, [{ ...sky, darkens: true }], {
+      shadow: { enabled: false },
+    });
+    expect(d).toMatchObject({ kind: 'environment', fade: 1.5, softness: 1 });
+  });
+
+  it('darken from a point too, as far as it reaches', () => {
+    const point = { ...newLight('point', []), darkens: true, strength: 0.4 };
+    const [d] = bodyDarkenings(undefined, DEFAULT_SHADE, [point], { shadow: { enabled: false } });
+    expect(d).toMatchObject({ kind: 'point', position: [1.2, -1.2, 0.8], fade: 3, strength: 0.4 });
   });
 });

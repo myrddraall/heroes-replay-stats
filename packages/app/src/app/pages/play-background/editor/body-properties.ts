@@ -51,6 +51,12 @@ export class BodyProperties {
   readonly overlayOptions = input.required<readonly PickChoice[]>();
   /** Its orbit, where it is a moon. */
   readonly orbit = input<Orbit | null>(null);
+  /** Its orbit under the level edited (reset to; its planet's for a moon of its own, else a new moon's). */
+  readonly orbitBase = input<Orbit>(DEFAULT_ORBIT);
+  /** Whether it is one of its planet's own moons: it can't be taken out of a scene (switched off instead). */
+  readonly inherited = input(false);
+  /** Whether the view can be centred on it (a scene's moons). */
+  readonly focusable = input(true);
   /** Where it is and how big, where it is one of a scene's planets (x across, y away, z up). */
   readonly place = input<{ readonly position: Vec3; readonly radius: number } | null>(null);
   /** Whether anything of it is set here, to reset. */
@@ -102,12 +108,13 @@ export class BodyProperties {
     return this.set()[key] !== undefined;
   }
 
-  /** Whether its orbit (or one part of it) is other than a new moon's. */
+  /** Whether its orbit (or one part of it) is other than under the level edited. */
   protected orbitSet(field?: keyof Orbit): boolean {
     const orbit = this.orbit();
     if (!orbit) return false;
+    const base = this.orbitBase();
     const fields = field ? [field] : (Object.keys(DEFAULT_ORBIT) as (keyof Orbit)[]);
-    return fields.some((f) => orbit[f] !== DEFAULT_ORBIT[f]);
+    return fields.some((f) => orbit[f] !== base[f]);
   }
 
   /** A planet moved along one axis (0 across, 1 away, 2 up). */
@@ -119,9 +126,10 @@ export class BodyProperties {
     this.placeChange.emit({ position });
   }
 
-  /** Its orbit (or one part of it) back to a new moon's. */
+  /** Its orbit (or one part of it) back to what is under the level edited. */
   protected resetOrbit(field?: keyof Orbit): void {
-    this.orbitChange.emit(field ? { [field]: DEFAULT_ORBIT[field] } : DEFAULT_ORBIT);
+    const base = this.orbitBase();
+    this.orbitChange.emit(field ? { [field]: base[field] } : base);
   }
 
   /** A point on the face mirrored through its centre, on the same side: a lean and the side it is bright on. */

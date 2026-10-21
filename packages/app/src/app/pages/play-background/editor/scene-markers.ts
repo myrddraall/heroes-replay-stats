@@ -3,6 +3,7 @@ import { MatIcon } from '@angular/material/icon';
 import type { Vec3 } from '../../../scenes/play-background/background-scene';
 import type { SceneCamera } from '../../../scenes/play-background/play-scene';
 import { cameraOutline, viewLine, viewPoint } from '../../../scenes/play-background/scene-camera';
+import type { MarkerMode } from './editor-ui.store';
 
 /**
  * Something of a scene marked in the view where it is: a camera (what it sees outlined), a group
@@ -19,6 +20,8 @@ export interface SceneMarker {
   readonly at: Vec3;
   /** Where its line starts (a light's: at the body it lights). */
   readonly from?: Vec3;
+  /** Its other lines, shown when it is selected (a spot's: the edges of its cone, to the body). */
+  readonly lines?: readonly (readonly [Vec3, Vec3])[];
   /** A camera's own (what it sees outlined, as far ahead as `outline`). */
   readonly camera?: SceneCamera;
   readonly outline?: number;
@@ -49,7 +52,10 @@ interface Line {
 /**
  * The scene's markers over the view (presentational): each where it is as `camera` sees it, in a
  * view `aspect` wide, a button that picks it (`picked`: its row's key), with its lines (a light's
- * to its body, what a camera sees). One behind the view, or out of it, isn't shown.
+ * to its body and a spot's cone's edges, when it is selected; what a camera sees). One behind
+ * the view, or out of it, isn't shown. A light's marker not selected is small (`lite`: a dot,
+ * its icon on hover), not to get in the way of the light itself; in the `selected` mode only the
+ * selected thing's markers show (a light's own; otherwise the lights of the body selected).
  */
 @Component({
   selector: 'hrs-scene-markers',
@@ -59,6 +65,7 @@ interface Line {
 })
 export class SceneMarkers {
   readonly markers = input.required<readonly SceneMarker[]>();
+  readonly mode = input<MarkerMode>('all');
   readonly camera = input.required<SceneCamera>();
   readonly aspect = input.required<number>();
   readonly picked = output<string>();
@@ -67,7 +74,17 @@ export class SceneMarkers {
     const camera = this.camera();
     const aspect = this.aspect();
     const lines: Line[] = [];
-    const points: (SceneMarker & { readonly left: string; readonly y: number })[] = [];
+    const points: (SceneMarker & {
+      readonly left: string;
+      readonly y: number;
+      readonly lite: boolean;
+    })[] = [];
+    const all = this.markers();
+    const lightSelected = all.some((m) => m.kind === 'light' && m.selected);
+    const markers =
+      this.mode() === 'selected'
+        ? all.filter((m) => m.selected || (m.kind === 'light' && !lightSelected))
+        : all;
     const line = (a: Vec3, b: Vec3, m: SceneMarker) => {
       const l = viewLine(camera, aspect, a, b);
       if (l)
@@ -80,11 +97,13 @@ export class SceneMarkers {
           off: !!m.off,
         });
     };
-    for (const m of this.markers()) {
+    for (const m of markers) {
       const p = viewPoint(camera, aspect, m.at, m.camera ? NEAREST : undefined);
       // A camera where the view is (or behind it) isn't marked: its lines would fill the view.
       if (m.camera && !p) continue;
-      if (m.from) line(m.from, m.at, m);
+      const lite = m.kind === 'light' && !m.selected;
+      if (m.from && !lite) line(m.from, m.at, m);
+      if (m.selected) for (const [a, b] of m.lines ?? []) line(a, b, m);
       if (m.camera)
         for (const [a, b] of cameraOutline(m.camera, aspect, m.outline ?? OUTLINE)) line(a, b, m);
       if (p && p.x >= 0 && p.x <= 1 && p.y >= 0 && p.y <= 1)
@@ -92,6 +111,7 @@ export class SceneMarkers {
           ...m,
           left: `calc(${p.x * 100}% + ${(m.nudge ?? 0) * MARKER_WIDTH}px)`,
           y: p.y * 100,
+          lite,
         });
     }
     return { lines, points };

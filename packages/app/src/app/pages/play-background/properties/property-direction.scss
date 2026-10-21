@@ -17,7 +17,7 @@
   min-width: 0;
 }
 
-// The planet's face as the eye sees it: a point on it drags to where the direction points.
+// The planet seen from a side: a point on it drags to where the direction points.
 .disc {
   position: relative;
   flex: none;
@@ -55,6 +55,19 @@
   }
 }
 
+// The cuts the point snaps to (eight, like a pizza), shown while it does.
+.cuts {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: repeating-conic-gradient(
+    from -0.5deg,
+    rgb(var(--hrs-glass-edge) / 0.45) 0deg 1deg,
+    transparent 1deg 45deg
+  );
+  pointer-events: none;
+}
+
 .point {
   position: absolute;
   width: 8px;
@@ -65,18 +78,65 @@
   transform: translate(-50%, -50%);
   pointer-events: none;
 
-  &--behind {
+  &--far {
     background: transparent;
   }
 }
 
-.side {
-  @include property-row.button;
+// The six sides the disc looks from, laid out as a cross (top over, left and right beside, bottom
+// under the front), the opposite side in the corner; the one in use filled.
+.views {
+  display: grid;
   flex: none;
-  padding: 0 6px;
+  grid-template: repeat(3, 16px) / repeat(3, 16px);
+  gap: 0;
 }
 
-// Where it points across the face, a line for each way (the switch beside it shows the side).
+.view {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 1px solid rgb(var(--hrs-glass-edge) / 0.3);
+  background: rgb(var(--hrs-glass-tint) / 0.5);
+  color: inherit;
+  font-size: 9px;
+  line-height: 1;
+  cursor: pointer;
+
+  &--top {
+    grid-area: 1 / 2;
+  }
+  &--left {
+    grid-area: 2 / 1;
+  }
+  &--front {
+    grid-area: 2 / 2;
+  }
+  &--right {
+    grid-area: 2 / 3;
+  }
+  &--bottom {
+    grid-area: 3 / 2;
+  }
+  &--behind {
+    grid-area: 3 / 3;
+  }
+
+  &:hover,
+  &:focus-visible {
+    border-color: rgb(var(--hrs-glass-edge) / 0.8);
+    outline: none;
+  }
+
+  &[aria-pressed='true'] {
+    background: var(--mat-sys-primary);
+    color: var(--mat-sys-on-primary);
+  }
+}
+
+// Where it points across the view, a line for each way (and whether it is on the far side).
 .readout {
   display: grid;
   min-width: 0;
