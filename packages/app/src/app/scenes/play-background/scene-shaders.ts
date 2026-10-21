@@ -114,7 +114,10 @@ uniform vec3 uTintColor, uBodyTintColor;
 uniform int uTintBlend, uBodyTintBlend;
 uniform float uTintStrength, uBodyTintStrength;
 layout(location = 0) out vec4 outColor;
-layout(location = 1) out vec4 outGlow;
+// What is drawn: the colour (0), or in its place the glow (1: what blooms beyond the scene's own
+// bloom), each into a target of its own (a draw writes one output: see the renderer's targets).
+uniform int uOutput;
+vec4 outGlow;
 // How much of the pixel the shape covers (a body's edge, smoothed; a mesh's: all of it).
 float coverage = 1.0;
 // Whether the pixel is past a sphere's outline (in its smoothed edge): its textures are seen
@@ -416,6 +419,7 @@ void main() {
   }
 #endif
   shade();
+  if (uOutput == 1) outColor = outGlow;
 }`;
 
 /**
@@ -714,6 +718,7 @@ void main() {
     outGlow = vec4(0.0);
     gl_FragDepth = 1.0;
   }
+  if (uOutput == 1) outColor = outGlow;
 }`;
 
 /**
@@ -752,11 +757,9 @@ uniform float uBodyTintStrength;
 in vec2 vUv;
 in vec4 vColor;
 layout(location = 0) out vec4 outColor;
-layout(location = 1) out vec4 outGlow;
 ${BLEND_GLSL}
 ${TINT_GLSL}
 void main() {
-  outGlow = vec4(0.0);
   vec4 t = texture(uTexture, vUv);
   vec3 c = uChannel <= 1 ? t.rgb : vec3(uChannel == 2 ? t.a : uChannel == 3 ? t.r : uChannel == 4 ? t.g : t.b);
   vec3 star = tintBy(c * uBright * vColor.rgb, uBodyTintColor, uBodyTintBlend, uBodyTintStrength);
@@ -972,8 +975,9 @@ void main() {
 
 /**
  * A body baked (drawn on its own into a target the size of the rectangle it covers, each pixel
- * the frame's), put back into the frame pixel for pixel: its colour (premultiplied: over what is
- * there as far as it covers, its added light added), at the depth it was drawn at. Pass 0 gives
+ * the frame's), put back into the frame pixel for pixel: its colour, or its glow from its glow
+ * bake (premultiplied: over what is there as far as it covers, its added light added), at the
+ * depth it was drawn at. Pass 0 gives
  * the frame its opaque pixels' depths (as drawing it would); pass 1 its colour, tested at its
  * depth where it has one, else at its nearest (an added light has none: in front of what it is
  * in front of).

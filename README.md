@@ -183,12 +183,15 @@ would differ from the last (`needsFrame`: something changed, the sky moves, a bo
 baked); a still scene draws none. Every body's part draws with the one body shader (`bodyFragment`,
 its shape chosen as it runs), on a square only as wide as the part reaches; the programs are
 compiled in the background where the browser can (`KHR_parallel_shader_compile`) and kept for the
-canvas's life, shared by every scene drawn into it (`programsOf`). Every target has one colour
-output: the shaders write a glow for the bloom as well, but nothing is attached for it, because
-with Direct3D (ANGLE) a program linked for one output is compiled again, uncached, the first time
-it draws into two, and for the body shader that holds the whole browser up for ten seconds or more
-on every load. The bloom isn't drawn (since 4c0573d); drawing it again needs its glow some way
-that keeps every draw at one output. A material's `falloff` is how sharply its edge-on fresnel rises toward the limb (the formula to that power: 2 unless set; the Play screen planets' grid 1.3, measured against a Quick Match screenshot). A material's `spreadFrom` is the side its
+canvas's life, shared by every scene drawn into it (`programsOf`). Every draw writes one output:
+the colour, or the glow (what blooms beyond the scene's own bloom) in its place (the shaders'
+`uOutput`), each into a target of its own with a depth of its own (`OUTPUTS`); the still layers,
+the bakes and the frame are each drawn twice, never into two outputs at once, because with
+Direct3D (ANGLE) a program linked for one output is compiled again, uncached, the first time it
+draws into two, and for the body shader that holds the whole browser up for ten seconds or more on
+every load. A body is baked twice only when it changes; per frame only what moves of the sky is
+drawn twice (the particles glow not at all, so once). The bloom (`drawBloom`, off by accident from
+4c0573d until 2026-10-21) takes the frame's colour over the scene's threshold and the frame's glow. A material's `falloff` is how sharply its edge-on fresnel rises toward the limb (the formula to that power: 2 unless set; the Play screen planets' grid 1.3, measured against a Quick Match screenshot). A material's `spreadFrom` is the side its
 fresnel is brightest on (the editor's Spread from), in place of its layers' own turn. How a planet shows
 is settable per placement (`SetPlanet`): its light's strength, where its key light comes from
 (its rig turned together), a shade and where it falls, where its rims and glows lean

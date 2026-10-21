@@ -97,13 +97,16 @@ import { GpuTimer } from './gpu-timer';
 export { layerBrightness } from './draw-uniforms';
 export { V_SAMPLES } from './scene-shaders';
 
-/*
- * Every target has one colour output. The shaders write a second (the glow, for the bloom), but
- * nothing is attached for it: with Direct3D (ANGLE), a program linked for one output is compiled
- * again, uncached, the first time it draws into two, and for the bodies' shader that takes the
- * whole browser away for ten seconds or more on every load. The bloom isn't drawn (since 4c0573d);
- * when it is again, its glow needs a way that keeps every draw at one output.
+/**
+ * What a draw writes: the colour, or the glow (what blooms beyond the scene's own bloom). Each goes
+ * to a target of its own, in a pass of its own (the shaders' `uOutput`), never both at once: with
+ * Direct3D (ANGLE), a program linked for one output is compiled again, uncached, the first time it
+ * draws into two, and for the bodies' shader that takes the whole browser away for ten seconds or
+ * more on every load. A body is baked twice only when it changes; per frame only what moves of the
+ * sky is drawn twice (the particles glow not at all: drawn once).
  */
+const OUTPUTS = ['colour', 'glow'] as const;
+type Output = (typeof OUTPUTS)[number];
 
 /** The key the bodies' program is kept under. */
 const BODY = 'body';
@@ -488,6 +491,10 @@ interface Target {
   /** Its depth, as a texture (a beam is hidden where the frame's is nearer). */
   depth: WebGLTexture | null;
   texture: WebGLTexture | null;
+  /** Its glow, drawn in a pass of its own (see `OUTPUTS`), with a depth of its own. */
+  readonly glowFramebuffer: WebGLFramebuffer;
+  glow: WebGLTexture | null;
+  glowDepth: WebGLTexture | null;
 }
 
 const moves = (m: SceneMaterial) =>
@@ -538,6 +545,10 @@ interface Bake {
   readonly framebuffer: WebGLFramebuffer;
   color: WebGLTexture | null;
   depth: WebGLTexture | null;
+  /** Its glow, drawn in a pass of its own (see `OUTPUTS`), with a depth of its own. */
+  readonly glowFramebuffer: WebGLFramebuffer;
+  glow: WebGLTexture | null;
+  glowDepth: WebGLTexture | null;
   /** Its textures' size. */
   width: number;
   height: number;
@@ -689,6 +700,9 @@ export class SceneRenderer {
       framebuffer: gl.createFramebuffer(),
       depth: null,
       texture: null,
+      glowFramebuffer: gl.createFramebuffer(),
+      glow: null,
+      glowDepth: null,
     });
     this.stillBackground = target();
     this.stillScene = target();
@@ -1188,10 +1202,14 @@ export class SceneRenderer {
     gl.bindSampler(0, null);
     gl.uniform1i(this.uniform(p, 'uSource'), 0);
     gl.uniform1f(this.uniform(p, 'uThreshold'), this.sceneThreshold());
-    // The bright part, from the frame (the planets' own glow isn't kept: see the targets).
+    // The bright part, from the frame, and the planets' own glow.
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.bloom[0]!.framebuffer);
     gl.bindTexture(gl.TEXTURE_2D, this.frame.texture);
-    gl.uniform1i(this.uniform(p, 'uGlow'), 0);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindSampler(1, null);
+    gl.bindTexture(gl.TEXTURE_2D, this.frame.glow);
+    gl.uniform1i(this.uniform(p, 'uGlow'), 1);
+    gl.activeTexture(gl.TEXTURE0);
     gl.uniform1i(this.uniform(p, 'uPass'), 0);
     gl.uniform2f(this.uniform(p, 'uStep'), 1 / this.canvas.width, 1 / this.canvas.height);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -1220,15 +1238,19 @@ export class SceneRenderer {
   private drawStill(): void {
     // Behind a backdrop the alpha keeps what the scene covers (none yet).
     this.begin(this.stillBackground, this.backdrop ? 0 : 1);
-    this.drawMeshes(0, 'background', false);
     this.begin(this.stillScene, 0);
-    this.drawMeshes(0, 'scene', false);
+    for (const output of OUTPUTS) {
+      this.bind(this.stillBackground, output);
+      this.drawMeshes(0, 'background', output, false);
+      this.bind(this.stillScene, output);
+      this.drawMeshes(0, 'scene', output, false);
+    }
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
     this.stillDirty = false;
   }
 
-  /** A target's colour over the bound one, as far as its alpha covers. */
-  private composite(target: Target): void {
+  /** A target's colour (or its glow) over the bound one, as far as its alpha covers. */
+  private composite(target: Target, output: Output): void {
     const gl = this.gl;
     const p = this.compositeProgram;
     gl.disable(gl.DEPTH_TEST);
@@ -1238,21 +1260,33 @@ export class SceneRenderer {
     gl.useProgram(p);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindSampler(0, null);
-    gl.bindTexture(gl.TEXTURE_2D, target.texture);
+    gl.bindTexture(gl.TEXTURE_2D, output === 'glow' ? target.glow : target.texture);
     gl.uniform1i(this.uniform(p, 'uColor'), 0);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
 
-  /** One target's colour, or its depth, into another as it is; the other bound after. */
-  private copy(from: Target, into: Target, what: 'colour' | 'depth'): void {
+  /**
+   * One target's picture (its colour or its glow, as `output` says), or that picture's depth, into
+   * another as it is; the other's bound after.
+   */
+  private copy(from: Target, into: Target, what: 'picture' | 'depth', output: Output): void {
     const gl = this.gl;
     const { width, height } = this.canvas;
-    gl.bindFramebuffer(gl.READ_FRAMEBUFFER, from.framebuffer);
-    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, into.framebuffer);
+    gl.bindFramebuffer(gl.READ_FRAMEBUFFER, this.framebufferOf(from, output));
+    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, this.framebufferOf(into, output));
     const what_ = what === 'depth' ? gl.DEPTH_BUFFER_BIT : gl.COLOR_BUFFER_BIT;
     gl.blitFramebuffer(0, 0, width, height, 0, 0, width, height, what_, gl.NEAREST);
     gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, into.framebuffer);
+    this.bind(into, output);
+  }
+
+  private framebufferOf(target: Target | Bake, output: Output): WebGLFramebuffer {
+    return output === 'glow' ? target.glowFramebuffer : target.framebuffer;
+  }
+
+  /** A target's (or a bake's) framebuffer for an output bound to draw into. */
+  private bind(target: Target | Bake, output: Output): void {
+    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.framebufferOf(target, output));
   }
 
   /** The particles drawn at this depth: they add light, hidden behind what is opaque in the scene. */
@@ -1453,20 +1487,24 @@ export class SceneRenderer {
     // set), what doesn't move of it and then what does; the scene's objects over it: the sky's
     // that don't move, the bodies (far to near), the sky's that move, at their depths; the
     // foreground over all of them (as if at the camera).
-    this.copy(this.stillBackground, this.frame, 'colour');
-    gl.viewport(0, 0, width, height);
-    this.drawMeshes(seconds, 'background', true);
-    this.drawParticles(seconds, 'background');
-    this.composite(this.stillScene);
-    this.copy(this.stillScene, this.frame, 'depth');
-    this.compositeBodies(viewProjection);
-    this.drawMeshes(seconds, 'scene', true);
-    this.drawParticles(seconds, 'scene');
-    this.drawMeshes(seconds, 'foreground');
-    this.drawParticles(seconds, 'foreground');
+    for (const output of OUTPUTS) {
+      const colour = output === 'colour';
+      this.copy(this.stillBackground, this.frame, 'picture', output);
+      gl.viewport(0, 0, width, height);
+      this.drawMeshes(seconds, 'background', output, true);
+      if (colour) this.drawParticles(seconds, 'background');
+      this.composite(this.stillScene, output);
+      this.copy(this.stillScene, this.frame, 'depth', output);
+      this.compositeBodies(viewProjection, output);
+      this.drawMeshes(seconds, 'scene', output, true);
+      if (colour) this.drawParticles(seconds, 'scene');
+      this.drawMeshes(seconds, 'foreground', output);
+      if (colour) this.drawParticles(seconds, 'foreground');
+    }
 
     gl.disable(gl.BLEND);
     gl.disable(gl.DEPTH_TEST);
+    this.drawBloom();
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, width, height);
     gl.useProgram(this.toneProgram);
@@ -1553,13 +1591,9 @@ export class SceneRenderer {
     bake.scroll = 0;
     if (!rect) return;
     this.sizeBake(bake, rect);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, bake.framebuffer);
     // Its pixels the frame's: the frame's view drawn with the rectangle's corner at the target's
     // (the rest falls off it), each pixel exactly as the frame would have it.
     gl.viewport(-rect.x, -rect.y, width, height);
-    gl.clearColor(0, 0, 0, 0);
-    gl.depthMask(true);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     // Its program still compiling: nothing of it yet (it is baked again next frame).
     const p = this.programs.get(BODY);
     if (!p) {
@@ -1588,28 +1622,35 @@ export class SceneRenderer {
     gl.uniform3fv(this.uniform(p, 'uUp'), up);
     gl.uniform1i(this.uniform(p, 'uSurfaceCount'), this.surfaces.length);
     if (this.surfaces.length) gl.uniform4fv(this.uniform(p, 'uSurfaces'), this.surfaces.flat());
-    gl.bindVertexArray(this.quad);
-    for (const s of body.states) {
-      if (!s.enabled || !s.part) continue;
-      this.applyState(p, s, seconds);
-      // The square as wide as this part reaches (not the body's widest: fewer pixels to trace),
-      // and two pixels past, for its edge's smoothing.
-      const reachOf = partsExtent(radius, [s.part], eyeDistance * radius) + 2 * pixel;
-      gl.uniform1f(this.uniform(p, 'uExtent'), Math.min(e, reachOf));
-      const shape = s.part.shape;
-      if (shape.kind === 'ring') {
-        const k = ringScale(shape, eyeDistance);
-        gl.uniform3f(
-          this.uniform(p, 'uShapeParams'),
-          shape.inner * k,
-          shape.outer * k,
-          shape.depth,
-        );
+    for (const output of OUTPUTS) {
+      this.bind(bake, output);
+      gl.clearColor(0, 0, 0, 0);
+      gl.depthMask(true);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      gl.uniform1i(this.uniform(p, 'uOutput'), output === 'glow' ? 1 : 0);
+      gl.bindVertexArray(this.quad);
+      for (const s of body.states) {
+        if (!s.enabled || !s.part) continue;
+        this.applyState(p, s, seconds);
+        // The square as wide as this part reaches (not the body's widest: fewer pixels to trace),
+        // and two pixels past, for its edge's smoothing.
+        const reachOf = partsExtent(radius, [s.part], eyeDistance * radius) + 2 * pixel;
+        gl.uniform1f(this.uniform(p, 'uExtent'), Math.min(e, reachOf));
+        const shape = s.part.shape;
+        if (shape.kind === 'ring') {
+          const k = ringScale(shape, eyeDistance);
+          gl.uniform3f(
+            this.uniform(p, 'uShapeParams'),
+            shape.inner * k,
+            shape.outer * k,
+            shape.depth,
+          );
+        }
+        this.blend(s.blend);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       }
-      this.blend(s.blend);
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      gl.bindVertexArray(null);
     }
-    gl.bindVertexArray(null);
     // How fast its scrolling layers move across it: it is baked again each half pixel they move.
     bake.scroll = scrollPixels(
       body.states
@@ -1640,7 +1681,7 @@ export class SceneRenderer {
    * depths (as drawing them would leave), then their colour over what is there, each pixel tested
    * at its depth (an added light, which has none, at its body's nearest).
    */
-  private compositeBodies(viewProjection: Float32Array): void {
+  private compositeBodies(viewProjection: Float32Array, output: Output): void {
     const gl = this.gl;
     const { width, height } = this.canvas;
     const eye = this.camera.eye;
@@ -1667,7 +1708,7 @@ export class SceneRenderer {
       gl.uniform2i(this.uniform(p, 'uOrigin'), r.x, r.y);
       gl.uniform1f(this.uniform(p, 'uFront'), this.frontDepth(body, viewProjection));
       gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, bake.color);
+      gl.bindTexture(gl.TEXTURE_2D, output === 'glow' ? bake.glow : bake.color);
       gl.activeTexture(gl.TEXTURE1);
       gl.bindTexture(gl.TEXTURE_2D, bake.depth);
       // Its opaque pixels' depths.
@@ -1676,7 +1717,7 @@ export class SceneRenderer {
       gl.colorMask(false, false, false, false);
       gl.depthMask(true);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-      // Its colour over what is there.
+      // Its colour (or its glow) over what is there.
       gl.uniform1i(this.uniform(p, 'uPass'), 1);
       gl.colorMask(true, true, true, true);
       gl.depthMask(false);
@@ -1712,6 +1753,9 @@ export class SceneRenderer {
       framebuffer: this.gl.createFramebuffer(),
       color: null,
       depth: null,
+      glowFramebuffer: this.gl.createFramebuffer(),
+      glow: null,
+      glowDepth: null,
       width: 0,
       height: 0,
       rect: null,
@@ -1738,22 +1782,30 @@ export class SceneRenderer {
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
       return t;
     };
-    gl.deleteTexture(bake.color);
-    gl.deleteTexture(bake.depth);
+    for (const t of [bake.color, bake.depth, bake.glow, bake.glowDepth]) gl.deleteTexture(t);
     bake.color = texture(this.format);
     bake.depth = texture(gl.DEPTH_COMPONENT24);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, bake.framebuffer);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, bake.color, 0);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, bake.depth, 0);
+    bake.glow = texture(this.format);
+    bake.glowDepth = texture(gl.DEPTH_COMPONENT24);
+    this.attach(bake.framebuffer, bake.color, bake.depth);
+    this.attach(bake.glowFramebuffer, bake.glow, bake.glowDepth);
+  }
+
+  /** A framebuffer's colour and depth textures, attached. */
+  private attach(framebuffer: WebGLFramebuffer, colour: WebGLTexture, depth: WebGLTexture): void {
+    const gl = this.gl;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, colour, 0);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, depth, 0);
   }
 
   /** A bake's GPU memory freed. */
   private freeBake(bake: Bake | null): void {
     if (!bake) return;
     const gl = this.gl;
-    gl.deleteTexture(bake.color);
-    gl.deleteTexture(bake.depth);
+    for (const t of [bake.color, bake.depth, bake.glow, bake.glowDepth]) gl.deleteTexture(t);
     gl.deleteFramebuffer(bake.framebuffer);
+    gl.deleteFramebuffer(bake.glowFramebuffer);
   }
 
   /** Beams to show over the picture (none: none); drawn at the next frame. */
@@ -1845,9 +1897,10 @@ export class SceneRenderer {
       gl.deleteFramebuffer(target.framebuffer);
     }
     for (const target of [this.stillBackground, this.stillScene, this.frame]) {
-      gl.deleteTexture(target.texture);
-      gl.deleteTexture(target.depth);
+      for (const t of [target.texture, target.depth, target.glow, target.glowDepth])
+        gl.deleteTexture(t);
       gl.deleteFramebuffer(target.framebuffer);
+      gl.deleteFramebuffer(target.glowFramebuffer);
     }
     for (const placed of this.placed) this.freeBake(placed.bake);
     this.timer.dispose();
@@ -1856,31 +1909,35 @@ export class SceneRenderer {
   /** A target sized to the canvas: a texture's storage is fixed, so a new size is a new texture. */
   private allocate(target: Target): void {
     const gl = this.gl;
-    gl.deleteTexture(target.texture);
-    target.texture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, target.texture);
-    gl.texStorage2D(gl.TEXTURE_2D, 1, this.format, this.canvas.width, this.canvas.height);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, target.framebuffer);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, target.texture, 0);
-    gl.deleteTexture(target.depth);
-    target.depth = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, target.depth);
-    gl.texStorage2D(gl.TEXTURE_2D, 1, gl.DEPTH_COMPONENT24, this.canvas.width, this.canvas.height);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, target.depth, 0);
+    const { width, height } = this.canvas;
+    const texture = (format: number) => {
+      const t = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, t);
+      gl.texStorage2D(gl.TEXTURE_2D, 1, format, width, height);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      return t;
+    };
+    for (const t of [target.texture, target.depth, target.glow, target.glowDepth])
+      gl.deleteTexture(t);
+    target.texture = texture(this.format);
+    target.depth = texture(gl.DEPTH_COMPONENT24);
+    target.glow = texture(this.format);
+    target.glowDepth = texture(gl.DEPTH_COMPONENT24);
+    this.attach(target.framebuffer, target.texture, target.depth);
+    this.attach(target.glowFramebuffer, target.glow, target.glowDepth);
   }
 
-  /** Draw into a target from black (covering as far as `alpha` says), nothing in front yet. */
+  /** A target's colour and glow from black (covering as far as `alpha` says), nothing in front yet. */
   private begin(target: Target, alpha: number): void {
     const gl = this.gl;
-    gl.bindFramebuffer(gl.FRAMEBUFFER, target.framebuffer);
     gl.viewport(0, 0, this.canvas.width, this.canvas.height);
     gl.clearColor(0, 0, 0, alpha);
     gl.depthMask(true);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    for (const output of OUTPUTS) {
+      this.bind(target, output);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    }
   }
 
   /** A blend: opaque writes colour and depth; the rest add or blend over. */
@@ -1925,7 +1982,12 @@ export class SceneRenderer {
    * all), into the bound target: the scene's depth-tested, the background's and foreground's
    * drawn over what is there. None in front of a backdrop.
    */
-  private drawMeshes(seconds: number, depth: MaterialDepth, moving?: boolean): void {
+  private drawMeshes(
+    seconds: number,
+    depth: MaterialDepth,
+    output: Output,
+    moving?: boolean,
+  ): void {
     if (this.backdrop) return;
     const draws = this.skyStates.filter(
       (s) => s.enabled && s.depth === depth && (moving === undefined || s.moving === moving),
@@ -1951,6 +2013,7 @@ export class SceneRenderer {
     gl.uniform3f(this.uniform(p, 'uUp'), v[1]!, v[5]!, v[9]!);
     gl.uniform1f(this.uniform(p, 'uSmear'), this.smear);
     gl.uniform1i(this.uniform(p, 'uLit'), 0);
+    gl.uniform1i(this.uniform(p, 'uOutput'), output === 'glow' ? 1 : 0);
     for (const s of draws) {
       gl.bindVertexArray(s.draw.vao);
       this.blend(s.blend);
