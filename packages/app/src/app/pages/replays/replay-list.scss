@@ -1,0 +1,21 @@
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.count {
+  color: var(--mat-sys-on-surface-variant);
+}
+.cta {
+  margin-top: 16px;
+}
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.error {
+  color: var(--mat-sys-error);
+}

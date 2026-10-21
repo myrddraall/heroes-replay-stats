@@ -1,0 +1,23 @@
+@if (options().length > 1) {
+  <label class="look">
+    <mat-icon class="material-symbols-outlined" aria-hidden="true">videocam</mat-icon>
+    <span class="visually-hidden">Look through</span>
+    <select [value]="look()" (change)="lookChange.emit($any($event.target).value)">
+      @for (o of options(); track o.id) {
+        <option [value]="o.id" [selected]="o.id === look()">{{ o.label }}</option>
+      }
+    </select>
+  </label>
+}
+@if (moved()) {
+  <button
+    mat-icon-button
+    type="button"
+    class="reset"
+    aria-label="Editor camera back to the primary camera"
+    matTooltip="Back to the primary camera"
+    (click)="resetRequested.emit()"
+  >
+    <mat-icon class="material-symbols-outlined" aria-hidden="true">restart_alt</mat-icon>
+  </button>
+}

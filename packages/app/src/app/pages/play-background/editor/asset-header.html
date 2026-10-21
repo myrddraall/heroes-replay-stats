@@ -1,0 +1,21 @@
+@if (store.parent(); as parent) {
+  <div class="shown" role="group" aria-label="Shown on">
+    <span class="shown__label">Shown on</span>
+    <button
+      type="button"
+      class="button"
+      [attr.aria-pressed]="!store.onStandIn()"
+      (click)="store.showOnStandIn(false)"
+    >
+      {{ parent.label }}
+    </button>
+    <button
+      type="button"
+      class="button"
+      [attr.aria-pressed]="store.onStandIn()"
+      (click)="store.showOnStandIn(true)"
+    >
+      Stand-in
+    </button>
+  </div>
+}

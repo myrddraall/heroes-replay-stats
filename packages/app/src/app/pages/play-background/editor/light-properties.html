@@ -1,0 +1,237 @@
+@let entry = light();
+@let l = entry.light;
+@if (entry.addedIn) {
+  <p class="data-name">Added in {{ entry.addedIn }}</p>
+}
+<hrs-property-section
+  title="General"
+  [changed]="isSet('name')"
+  (resetRequested)="clear.emit(['name'])"
+>
+  <hrs-property-text
+    label="Name"
+    [value]="entry.removable ? l.name : (entry.set?.name ?? '')"
+    [placeholder]="entry.nameBelow"
+    [changed]="isSet('name')"
+    [origin]="entry.origins.name"
+    (resetRequested)="clear.emit(['name'])"
+    (valueChange)="rename($event)"
+  />
+</hrs-property-section>
+<hrs-property-section title="Light" [changed]="changed()" (resetRequested)="clear.emit(lightKeys)">
+  <hrs-property-select
+    label="Effect"
+    [value]="l.darkens ? 'darkens' : 'lights'"
+    [options]="effects"
+    [changed]="isSet('darkens')"
+    [origin]="entry.origins.darkens"
+    (resetRequested)="clear.emit(['darkens'])"
+    (valueChange)="settingsChange.emit({ darkens: $event === 'darkens' })"
+  />
+  <hrs-property-colour
+    label="Colour"
+    [value]="l.colour"
+    [changed]="isSet('colour')"
+    [origin]="entry.origins.colour"
+    (resetRequested)="clear.emit(['colour'])"
+    (valueChange)="settingsChange.emit({ colour: $event })"
+  />
+  <hrs-property-number
+    label="Strength"
+    [value]="l.strength"
+    [min]="0"
+    [max]="l.darkens ? 1 : undefined"
+    [step]="0.01"
+    [changed]="isSet('strength')"
+    [origin]="entry.origins.strength"
+    (resetRequested)="clear.emit(['strength'])"
+    (valueChange)="settingsChange.emit({ strength: $event })"
+  />
+  @if (l.from; as from) {
+    <hrs-property-direction
+      [label]="l.kind === 'hemisphere' ? 'Sky from' : 'Light from'"
+      [value]="from"
+      [changed]="isSet('from')"
+      [origin]="entry.origins.from"
+      (resetRequested)="clear.emit(['from'])"
+      (valueChange)="settingsChange.emit({ from: $event })"
+    />
+  }
+  @if (l.kind === 'hemisphere') {
+    <hrs-property-colour
+      label="Ground colour"
+      [value]="l.ground ?? '#000000'"
+      [changed]="isSet('ground')"
+      [origin]="entry.origins.ground"
+      (resetRequested)="clear.emit(['ground'])"
+      (valueChange)="settingsChange.emit({ ground: $event })"
+    />
+  }
+  @if (l.position; as at) {
+    <hrs-property-number
+      label="Across"
+      [value]="at[0]"
+      [step]="0.1"
+      [changed]="isSet('position')"
+      [origin]="entry.origins.position"
+      (resetRequested)="clear.emit(['position'])"
+      (valueChange)="move(0, $event)"
+    />
+    <hrs-property-number
+      label="Towards"
+      [value]="-at[1]"
+      [step]="0.1"
+      [changed]="isSet('position')"
+      [origin]="entry.origins.position"
+      (resetRequested)="clear.emit(['position'])"
+      (valueChange)="move(1, $event)"
+    />
+    <hrs-property-number
+      label="Up"
+      [value]="at[2]"
+      [step]="0.1"
+      [changed]="isSet('position')"
+      [origin]="entry.origins.position"
+      (resetRequested)="clear.emit(['position'])"
+      (valueChange)="move(2, $event)"
+    />
+  }
+  @if (l.position || l.kind === 'environment') {
+    <hrs-property-number
+      label="Reach"
+      [value]="l.fade ?? (l.kind === 'environment' ? 1.5 : 3)"
+      [min]="l.kind === 'environment' ? 0 : 0.1"
+      [step]="0.1"
+      [changed]="isSet('fade')"
+      [origin]="entry.origins.fade"
+      (resetRequested)="clear.emit(['fade'])"
+      (valueChange)="settingsChange.emit({ fade: $event })"
+    />
+  }
+  @if (l.kind === 'spot') {
+    <hrs-property-select
+      label="Aim"
+      [value]="aimKind()"
+      [options]="aims"
+      [changed]="isSet('lookAt') || isSet('aim')"
+      [origin]="entry.origins.lookAt"
+      (resetRequested)="clear.emit(['lookAt', 'aim'])"
+      (valueChange)="chooseAim($event)"
+    />
+    @if (aimKind() === 'body') {
+      <hrs-property-direction
+        label="Aim at"
+        [value]="aimedPoint()"
+        [changed]="isSet('lookAt')"
+        [origin]="entry.origins.lookAt"
+        (resetRequested)="clear.emit(['lookAt', 'aim'])"
+        (valueChange)="aimAt($event)"
+      />
+    } @else {
+      <hrs-property-direction
+        label="Aim along"
+        [value]="aimDirection()"
+        [changed]="isSet('lookAt') || isSet('aim')"
+        [origin]="entry.origins.lookAt"
+        (resetRequested)="clear.emit(['lookAt', 'aim'])"
+        (valueChange)="aimAlong($event)"
+      />
+    }
+    <hrs-property-number
+      label="Cone"
+      [value]="l.cone ?? 15"
+      [min]="1"
+      [max]="90"
+      [step]="1"
+      [changed]="isSet('cone')"
+      [origin]="entry.origins.cone"
+      (resetRequested)="clear.emit(['cone'])"
+      (valueChange)="settingsChange.emit({ cone: $event })"
+    />
+    <hrs-property-number
+      label="Edge"
+      [value]="l.edge ?? 0.5"
+      [min]="0"
+      [max]="1"
+      [step]="0.05"
+      [changed]="isSet('edge')"
+      [origin]="entry.origins.edge"
+      (resetRequested)="clear.emit(['edge'])"
+      (valueChange)="settingsChange.emit({ edge: $event })"
+    />
+  }
+  @if (sided()) {
+    <hrs-property-number
+      label="Softness"
+      [value]="l.softness ?? 1"
+      [min]="0.1"
+      [step]="0.05"
+      [changed]="isSet('softness')"
+      [origin]="entry.origins.softness"
+      (resetRequested)="clear.emit(['softness'])"
+      (valueChange)="settingsChange.emit({ softness: $event })"
+    />
+  }
+  @if (shiny() && !l.darkens) {
+    <hrs-property-colour
+      label="Specular colour"
+      [value]="l.specular ?? '#ffffff'"
+      [changed]="isSet('specular')"
+      [origin]="entry.origins.specular"
+      (resetRequested)="clear.emit(['specular'])"
+      (valueChange)="settingsChange.emit({ specular: $event })"
+    />
+    <hrs-property-number
+      label="Specular strength"
+      [value]="l.specularStrength ?? 0"
+      [min]="0"
+      [step]="0.1"
+      [changed]="isSet('specularStrength')"
+      [origin]="entry.origins.specularStrength"
+      (resetRequested)="clear.emit(['specularStrength'])"
+      (valueChange)="settingsChange.emit({ specularStrength: $event })"
+    />
+  }
+</hrs-property-section>
+@if (entry.receivers.length) {
+  <hrs-property-section
+    title="Linking"
+    [changed]="isSet('reach') || isSet('moons')"
+    (resetRequested)="unset(['reach', 'moons'])"
+  >
+    <hrs-property-select
+      label="Reaches"
+      [value]="reachMode()"
+      [options]="reachModes"
+      [changed]="isSet('reach')"
+      [origin]="entry.origins.reach"
+      (resetRequested)="unset(['reach'])"
+      (valueChange)="chooseReach($event)"
+    />
+    @if (reachMode() !== 'all') {
+      @for (item of entry.receivers; track item.receiver) {
+        <hrs-property-check
+          [class.receiver--material]="item.material"
+          [label]="item.label"
+          [checked]="entry.reach?.receivers?.includes(item.receiver) ?? false"
+          (checkedChange)="checkReceiver(item.receiver, $event)"
+        />
+      }
+    }
+    @if (entry.canReachMoons) {
+      <hrs-property-check
+        label="Reaches its moons"
+        [checked]="entry.moons"
+        [changed]="isSet('moons')"
+        [origin]="entry.origins.moons"
+        (resetRequested)="unset(['moons'])"
+        (checkedChange)="settingsChange.emit({ moons: $event })"
+      />
+    }
+  </hrs-property-section>
+}
+@if (entry.removable) {
+  <div class="buttons">
+    <button type="button" class="button" (click)="removed.emit()">Remove light</button>
+  </div>
+}

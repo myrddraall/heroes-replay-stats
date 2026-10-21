@@ -1,0 +1,47 @@
+@use 'property-row';
+
+:host {
+  @include property-row.row;
+  grid-template-columns: 84px 72px minmax(0, 1fr) property-row.$reset-column;
+}
+
+.label {
+  @include property-row.label;
+}
+
+// Dragged up or down to scrub it (the cursor says so), typed once clicked.
+.number {
+  @include property-row.field;
+  width: 100%;
+  min-width: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  cursor: ns-resize;
+  touch-action: none;
+  user-select: none;
+
+  &:hover,
+  &.number--scrubbing {
+    border-color: rgb(var(--hrs-glass-edge) / 0.8);
+  }
+
+  &:focus {
+    cursor: text;
+    user-select: text;
+  }
+}
+
+.limits {
+  overflow: hidden;
+  font: var(--mat-sys-body-small);
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.6;
+}
+
+.reset-slot {
+  @include property-row.reset-slot;
+}
+
+@include property-row.origin;

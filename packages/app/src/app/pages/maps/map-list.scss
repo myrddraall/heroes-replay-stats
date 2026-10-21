@@ -1,0 +1,47 @@
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.error {
+  color: var(--mat-sys-error);
+}
+.maps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+.map {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  color: inherit; // a glass panel (hrs-glass)
+  text-decoration: none;
+
+  &:hover .map__name,
+  &:focus-visible .map__name {
+    color: rgb(var(--hrs-glass-edge));
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgb(var(--hrs-glass-edge));
+    outline-offset: 2px;
+  }
+}
+.map__picture {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  background: var(--mat-sys-surface-container-high);
+}
+.map__name {
+  font: var(--mat-sys-title-small);
+}
+.map__details {
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}

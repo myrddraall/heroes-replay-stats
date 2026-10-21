@@ -1,0 +1,71 @@
+@for (pod of pods(); track pod.aid) {
+  <ul class="tree" [attr.aria-label]="pod.label">
+    @for (item of pod.rows; track item.row.key) {
+      @let row = item.row;
+      @let i = item.index;
+      <li
+        class="row"
+        [class.row--head]="row.depth === 0"
+        [class.row--open]="row.depth === 0 && row.expanded"
+        [class.row--selected]="row.key === selected()"
+        [class.row--aid]="row.aid"
+        [class.row--drop-before]="dropAt()?.key === row.key && !dropAt()?.after"
+        [class.row--drop-after]="dropAt()?.key === row.key && dropAt()?.after"
+        [style.--depth]="row.depth"
+        [attr.draggable]="row.movable ? 'true' : null"
+        (dragstart)="dragStart(row, $event)"
+        (dragover)="dragOver(row, $event)"
+        (drop)="drop($event)"
+        (dragend)="dragEnd()"
+      >
+        @if (row.expandable) {
+          <button
+            type="button"
+            class="fold"
+            [attr.aria-expanded]="row.expanded"
+            [attr.aria-label]="(row.expanded ? 'Fold ' : 'Unfold ') + row.label"
+            (click)="expandToggle.emit(row.key)"
+          >
+            <mat-icon class="material-symbols-outlined" aria-hidden="true">
+              {{ row.expanded ? 'expand_more' : 'chevron_right' }}
+            </mat-icon>
+          </button>
+        } @else {
+          <span class="fold" aria-hidden="true"></span>
+        }
+        @if (row.enabled !== undefined) {
+          <input
+            type="checkbox"
+            class="check"
+            [checked]="row.enabled"
+            (change)="enabled(row, $event)"
+            [attr.aria-label]="'Draw ' + row.label"
+          />
+        }
+        <button
+          type="button"
+          class="name"
+          [class.name--off]="row.enabled === false || underOff().has(row.key)"
+          [attr.aria-pressed]="row.key === selected()"
+          (click)="rowSelect.emit(row.key)"
+          (keydown.arrowdown)="move($event, i, 1)"
+          (keydown.arrowup)="move($event, i, -1)"
+          (keydown.alt.arrowdown)="moveBy($event, i, 1)"
+          (keydown.alt.arrowup)="moveBy($event, i, -1)"
+          [attr.aria-keyshortcuts]="row.movable ? 'Alt+ArrowUp Alt+ArrowDown' : null"
+        >
+          <mat-icon class="material-symbols-outlined icon" aria-hidden="true">{{
+            row.icon
+          }}</mat-icon>
+          <span class="text">{{ row.label }}</span>
+          @if (row.detail) {
+            <span class="detail">{{ row.detail }}</span>
+          }
+          @if (row.unsaved) {
+            <span class="unsaved" title="Not saved yet" aria-label="not saved yet"></span>
+          }
+        </button>
+      </li>
+    }
+  </ul>
+}

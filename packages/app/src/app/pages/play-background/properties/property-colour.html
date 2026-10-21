@@ -1,0 +1,30 @@
+<label class="label" [class.label--changed]="changed()" [for]="id"
+  >{{ label() }}
+  @if (origin() && !changed()) {
+    <span class="origin" [title]="'Set in ' + origin()"
+      ><span class="origin__text">, set in {{ origin() }}</span></span
+    >
+  }
+</label>
+<input type="color" class="swatch" [id]="id" [value]="value()" (input)="picked($event)" />
+<input
+  type="text"
+  class="hex"
+  [value]="value()"
+  (change)="typed($event)"
+  spellcheck="false"
+  [attr.aria-label]="label() + ' hex'"
+/>
+<span class="reset-slot">
+  @if (changed()) {
+    <button
+      type="button"
+      class="reset"
+      [attr.aria-label]="'Reset ' + label()"
+      title="Reset"
+      (click)="resetRequested.emit()"
+    >
+      <mat-icon class="material-symbols-outlined" aria-hidden="true">restart_alt</mat-icon>
+    </button>
+  }
+</span>

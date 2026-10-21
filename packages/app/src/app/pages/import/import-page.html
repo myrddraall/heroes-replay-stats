@@ -1,0 +1,10 @@
+<hrs-layout>
+  <hrs-import-jobs
+    [jobs]="store.jobs()"
+    [overall]="store.overall()"
+    [desktop]="store.desktop()"
+    (importRequested)="store.importReplays()"
+    (clearFinished)="store.clearFinished()"
+    (dismiss)="store.dismiss($event)"
+  />
+</hrs-layout>

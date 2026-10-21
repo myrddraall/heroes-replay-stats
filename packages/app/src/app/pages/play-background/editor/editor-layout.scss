@@ -1,0 +1,145 @@
+@use '../../../../theme/glass-mixins' as glass;
+@use '../properties/property-row';
+
+:host {
+  display: block;
+  height: 100%;
+}
+
+// The drawer container fills the page; the scene fills the content beside the panel, as the map
+// does beside its panels.
+.layout {
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+  // The panel is square (its groups too, below); the controls in it keep Material's shapes.
+  --mat-sidenav-container-shape: 0;
+  --hrs-glass-radius: 0;
+}
+
+.layout__drawer {
+  width: var(--hrs-map-panel-width, min(320px, 90vw));
+  overflow: hidden;
+  border-radius: 0;
+
+  // Only the panel's body may scroll.
+  :host ::ng-deep &.mat-drawer .mat-drawer-inner-container {
+    overflow: hidden;
+  }
+
+  // the frame's glass over the scene, lit along the edge facing it
+  &.mat-drawer-end {
+    @include glass.frame-glass(left, 1, 0);
+  }
+
+  // (Material marks only an end drawer: a start one is any other.)
+  &:not(.mat-drawer-end) {
+    @include glass.frame-glass(right, -1, 0);
+  }
+}
+
+.layout__content {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+
+.layout__scene {
+  position: absolute;
+  inset: 0;
+}
+
+// The frame stats, small in the bottom left.
+.layout__stats {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  z-index: 1;
+}
+
+// Back to the site, in the top left; dark behind it so it reads over the brightest sky.
+.back {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  // Firm enough to read over a bright editing backdrop (a white grid) too.
+  background: rgb(var(--hrs-glass-tint) / 0.85);
+  backdrop-filter: var(--hrs-glass-backdrop-frame);
+}
+
+// Over the scene's top corners: each panel's toggle on its own side (the scene's beside Back).
+.layout__toggle {
+  position: absolute;
+  top: 8px;
+  inset-inline-end: 8px;
+  z-index: 10001;
+  // Firm enough to read over a bright editing backdrop (a white grid) too.
+  background: rgb(var(--hrs-glass-tint) / 0.85);
+  backdrop-filter: var(--hrs-glass-backdrop-frame);
+
+  &--start {
+    inset-inline-end: auto;
+    inset-inline-start: 56px;
+  }
+}
+
+// What the view looks through, beside the tree's toggle.
+.layout__look {
+  position: absolute;
+  top: 8px;
+  inset-inline-start: 104px;
+  z-index: 10001;
+}
+
+// The screenshot mode's hint: shown a moment, then gone, so it isn't in the picture.
+.layout__hint {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  margin: 0;
+  padding: 6px 12px;
+  background: rgb(var(--hrs-glass-tint) / 0.8);
+  font: var(--mat-sys-body-small);
+  transform: translateX(-50%);
+  animation: hint-away 2.5s ease-in forwards;
+  pointer-events: none;
+}
+
+@keyframes hint-away {
+  0%,
+  70% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+// Back from what is open to the library's list, at the top of the left panel, a rule under it.
+// Back to the library, and the draft's status, discard, save and view options beside it.
+.layout__back {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgb(var(--hrs-glass-edge) / 0.35);
+}
+
+.layout__bar {
+  flex: 1;
+  min-width: 0;
+}
+
+.layout__library {
+  @include property-row.button;
+  gap: 4px;
+
+  mat-icon {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+  }
+}

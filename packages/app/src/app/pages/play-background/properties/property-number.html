@@ -1,0 +1,44 @@
+<label class="label" [class.label--changed]="changed()" [for]="id"
+  >{{ label() }}
+  @if (origin() && !changed()) {
+    <span class="origin" [title]="'Set in ' + origin()"
+      ><span class="origin__text">, set in {{ origin() }}</span></span
+    >
+  }
+</label>
+<input
+  type="text"
+  inputmode="decimal"
+  role="spinbutton"
+  class="number"
+  [class.number--scrubbing]="scrubbing()"
+  [id]="id"
+  [value]="shown()"
+  [attr.aria-valuenow]="value()"
+  [attr.aria-valuemin]="min()"
+  [attr.aria-valuemax]="max()"
+  [attr.aria-describedby]="id + '-limits'"
+  title="Drag up or down, or scroll, to change; click to type"
+  (pointerdown)="pressed($event)"
+  (pointermove)="moved($event)"
+  (pointerup)="released($event)"
+  (lostpointercapture)="released($event)"
+  (dragstart)="$event.preventDefault()"
+  (keydown)="keyed($event)"
+  (wheel)="wheel($event)"
+  (change)="typed($event)"
+/>
+<span class="limits" [id]="id + '-limits'">{{ limits() }}</span>
+<span class="reset-slot">
+  @if (changed()) {
+    <button
+      type="button"
+      class="reset"
+      [attr.aria-label]="'Reset ' + label()"
+      title="Reset"
+      (click)="resetRequested.emit()"
+    >
+      <mat-icon class="material-symbols-outlined" aria-hidden="true">restart_alt</mat-icon>
+    </button>
+  }
+</span>

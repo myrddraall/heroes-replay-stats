@@ -1,0 +1,21 @@
+@if (scene.hasValue()) {
+  <hrs-scene-canvas
+    [scene]="scene.value()"
+    [tint]="tint()"
+    [sky]="sky()"
+    [lights]="sceneLights()"
+    [backdrop]="backdrop()"
+    [beams]="beams()"
+    [camera]="camera()"
+    [sceneKey]="sceneKey()"
+    [animate]="drawing().animate"
+    [fps]="store.fps()"
+    [fadeFps]="store.fadeFps()"
+    [resolution]="drawing().resolution"
+    [picture]="store.picture()"
+    [placements]="shown()"
+    [names]="names()"
+    [pickable]="pickable()"
+    (planetPick)="planetPick.emit($event)"
+  />
+}

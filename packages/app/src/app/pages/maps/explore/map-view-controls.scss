@@ -1,0 +1,72 @@
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 12px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--hrs-glass-line);
+}
+
+.controls__heading {
+  margin: 0;
+  font: var(--mat-sys-title-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.controls__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.controls__label {
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+// The swap: Order's dot, the arrows, Chaos's dot, as the points of interest colour their dots.
+// Pressed, the dots trade places (the button's row runs the other way).
+.controls__team {
+  --mat-button-outlined-horizontal-padding: 12px;
+
+  display: inline-flex;
+  min-width: 0;
+
+  ::ng-deep .mat-mdc-button-touch-target {
+    display: none;
+  }
+
+  // (The icon inside the span, not a direct child: Material would move a direct one out of the label.)
+  .controls__swap {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+
+  &.controls__team--swapped .controls__swap {
+    flex-direction: row-reverse;
+  }
+
+  mat-icon {
+    margin: 0;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.controls__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: none;
+
+  &--order {
+    background: var(--hrs-blue-soft);
+  }
+
+  &--chaos {
+    background: var(--hrs-bronze-hot);
+  }
+}

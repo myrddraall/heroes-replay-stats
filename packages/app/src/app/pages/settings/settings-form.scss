@@ -1,0 +1,21 @@
+.card {
+  padding: 20px;
+  margin-bottom: 16px; // a glass panel (hrs-glass)
+}
+.setting {
+  display: flex;
+  justify-content: space-between;
+  font: var(--mat-sys-body-large);
+}
+.setting__value {
+  color: var(--hrs-bronze);
+  font-variant-numeric: tabular-nums;
+}
+.slider {
+  width: 100%;
+  max-width: 480px;
+}
+.hint {
+  color: var(--mat-sys-on-surface-variant);
+  margin: 8px 0 0;
+}

@@ -1,0 +1,34 @@
+@let s = shown();
+<svg class="lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+  @for (l of s.lines; track $index) {
+    <line
+      [attr.x1]="l.x1"
+      [attr.y1]="l.y1"
+      [attr.x2]="l.x2"
+      [attr.y2]="l.y2"
+      [class.selected]="l.selected"
+      [class.off]="l.off"
+      vector-effect="non-scaling-stroke"
+    />
+  }
+</svg>
+@for (m of s.points; track m.id) {
+  <button
+    type="button"
+    class="marker"
+    [class.selected]="m.selected"
+    [class.lite]="m.lite"
+    [class.off]="m.off"
+    [style.left]="m.left"
+    [style.top.%]="m.y"
+    [attr.aria-label]="m.label"
+    [attr.aria-pressed]="m.selected"
+    [title]="m.label"
+    (click)="picked.emit(m.key)"
+  >
+    <mat-icon class="material-symbols-outlined" aria-hidden="true">{{ m.icon }}</mat-icon>
+    @if (m.kind !== 'light' || m.selected) {
+      <span class="label">{{ m.label }}</span>
+    }
+  </button>
+}

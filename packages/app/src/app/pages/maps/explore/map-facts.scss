@@ -1,0 +1,69 @@
+.facts,
+.objectives {
+  margin-bottom: 20px;
+}
+
+.facts__heading {
+  margin: 0 0 8px;
+  font: var(--mat-sys-title-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+// The pack's art and icons come in whatever size and shape the game has them: sized here.
+.facts__art {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--hrs-glass-line);
+}
+
+.facts__list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 0;
+  font: var(--mat-sys-body-medium);
+
+  dt {
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  dd {
+    margin: 0;
+  }
+}
+
+.facts__hint {
+  margin: 0;
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.objective {
+  margin: 0 0 12px;
+}
+
+.objective__icons {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.objective__icon {
+  width: auto;
+  border-radius: 6px;
+}
+
+.objective__title {
+  margin: 0 0 4px;
+  font: var(--mat-sys-title-small);
+}
+
+.objective__text {
+  margin: 0;
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+}

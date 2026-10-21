@@ -1,0 +1,68 @@
+<button
+  mat-icon-button
+  type="button"
+  class="gear"
+  aria-label="View options"
+  matTooltip="View options"
+  [matMenuTriggerFor]="viewMenu"
+>
+  <mat-icon class="material-symbols-outlined" aria-hidden="true">settings</mat-icon>
+</button>
+<mat-menu #viewMenu="matMenu" xPosition="before">
+  <button
+    mat-menu-item
+    type="button"
+    role="menuitemcheckbox"
+    [attr.aria-checked]="ui.names()"
+    (click)="ui.setNames(!ui.names())"
+  >
+    <mat-icon class="material-symbols-outlined" aria-hidden="true">
+      {{ ui.names() ? 'check_box' : 'check_box_outline_blank' }}
+    </mat-icon>
+    <span>Names</span>
+  </button>
+  <button mat-menu-item type="button" [matMenuTriggerFor]="markersMenu">
+    <mat-icon class="material-symbols-outlined" aria-hidden="true">location_on</mat-icon>
+    <span>Markers</span>
+  </button>
+  <button
+    mat-menu-item
+    type="button"
+    role="menuitemcheckbox"
+    [attr.aria-checked]="ui.stats()"
+    (click)="ui.setStats(!ui.stats())"
+  >
+    <mat-icon class="material-symbols-outlined" aria-hidden="true">
+      {{ ui.stats() ? 'check_box' : 'check_box_outline_blank' }}
+    </mat-icon>
+    <span>Frame stats</span>
+  </button>
+  <button mat-menu-item type="button" (click)="ui.setScreenshot(true)">
+    <mat-icon class="material-symbols-outlined" aria-hidden="true">photo_camera</mat-icon>
+    <span>Screenshot mode</span>
+  </button>
+  <button mat-menu-item type="button" (click)="ui.confirmReset(true)">
+    <mat-icon class="material-symbols-outlined" aria-hidden="true">restart_alt</mat-icon>
+    <span>{{ editor.resetAllLabel() }}…</span>
+  </button>
+  <button mat-menu-item type="button" (click)="ui.confirmClear(true)">
+    <mat-icon class="material-symbols-outlined" aria-hidden="true">delete_forever</mat-icon>
+    <span>Clear saved data…</span>
+  </button>
+</mat-menu>
+<mat-menu #markersMenu="matMenu">
+  @for (m of markerModes; track m.id) {
+    <button
+      mat-menu-item
+      type="button"
+      role="menuitemradio"
+      [attr.aria-checked]="ui.markers() === m.id"
+      (click)="ui.setMarkers(m.id)"
+    >
+      <mat-icon class="material-symbols-outlined" aria-hidden="true">
+        {{ ui.markers() === m.id ? 'radio_button_checked' : 'radio_button_unchecked' }}
+      </mat-icon>
+      <span>{{ m.label }}</span>
+    </button>
+  }
+</mat-menu>
