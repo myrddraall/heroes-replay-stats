@@ -157,6 +157,8 @@ export abstract class Editor {
   /** What the view may look through (the editor's camera, a scene's cameras), by id; none: no choice. */
   abstract readonly lookOptions: Signal<readonly { readonly id: string; readonly label: string }[]>;
   abstract readonly look: Signal<string>;
+  /** What it looks through now (the library's preview: a scene's camera, never the editor's). */
+  abstract readonly lookShown: Signal<string>;
   abstract lookThrough(id: string): void;
   /** Whether the editor's camera is moved from the scene's primary, and putting it back. */
   abstract readonly editorCameraMoved: Signal<boolean>;

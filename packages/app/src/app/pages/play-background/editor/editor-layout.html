@@ -85,7 +85,7 @@
       class="layout__scene"
       [names]="ui.names() && !ui.screenshot()"
       [pickable]="!ui.screenshot()"
-      [hrsCameraDrag]="ui.screenshot() ? null : editor.camera()"
+      [hrsCameraDrag]="ui.screenshot() || ui.browsing() ? null : editor.camera()"
       (cameraMove)="editor.moveCamera($event)"
       (cameraMoveStart)="draft.holdHistory()"
       (cameraMoveEnd)="draft.releaseHistory()"
@@ -145,7 +145,7 @@
       <hrs-look-through
         class="layout__look"
         [options]="editor.lookOptions()"
-        [look]="editor.look()"
+        [look]="editor.lookShown()"
         [moved]="editor.editorCameraMoved()"
         (lookChange)="editor.lookThrough($event)"
         (resetRequested)="editor.resetEditorCamera()"

@@ -588,6 +588,7 @@ export const AssetEditorStore = signalStore(
         camera: computed((): SceneCamera | null => null),
         lookOptions: computed((): readonly { readonly id: string; readonly label: string }[] => []),
         look: computed(() => ''),
+        lookShown: computed(() => ''),
         editorCameraMoved: computed(() => false),
         markers: computed((): readonly SceneMarker[] => []),
         skyOverlayOpen: computed(() => _skyOverlay() !== null),

@@ -451,7 +451,10 @@ export const SceneEditorStore = signalStore(
       _draft,
       _index,
       _sceneFile,
+      _ui,
     }) => {
+      /** Whether the library shows the scene (a preview: seen through its own cameras, not moved). */
+      const browsing = computed(() => _ui.browsing());
       const entry = computed(() => _draft.scenes().planets[sceneId()]);
       const choices = computed(() => entry() ?? {});
       const publishedEntry = computed(() => _draft.publishedScenes().planets[sceneId()]);
@@ -605,6 +608,10 @@ export const SceneEditorStore = signalStore(
         return id && cameraList().some((c) => c.id === id) ? id : GAME_CAMERA;
       });
       const cameraSetById = (id: string) => cameraList().find((c) => c.id === id)?.set;
+      /** What the view looks through now: as chosen, but the library's preview through the primary, not the editor's camera. */
+      const lookShown = computed(() =>
+        browsing() && look() === EDITOR_CAMERA ? primaryCamera() : look(),
+      );
       /**
        * The camera the view looks through (none: the random sets', or loading): one of its own,
        * or the editor's, where it has been moved to from its primary.
@@ -612,7 +619,7 @@ export const SceneEditorStore = signalStore(
       const camera = computed((): SceneCamera | null => {
         const scene = sceneFile();
         if (!scene || random()) return null;
-        const own = look() === EDITOR_CAMERA ? undefined : cameraSetById(look());
+        const own = lookShown() === EDITOR_CAMERA ? undefined : cameraSetById(lookShown());
         return own
           ? { ...scene.camera, ...own }
           : { ...scene.camera, ...cameraSetById(primaryCamera()), ...editorCamera() };
@@ -747,6 +754,7 @@ export const SceneEditorStore = signalStore(
         addedCameras: computed((): readonly AddedCamera[] => choices().cameras ?? []),
         primaryCamera,
         camera,
+        lookShown,
         /** Where the view puts the camera, for the background (none: the random sets' own). */
         viewCamera: computed((): SceneCameraSet | undefined => {
           const c = camera();
@@ -768,11 +776,11 @@ export const SceneEditorStore = signalStore(
           const eye = c.eye.map((v) => Math.round(v * 1000) / 1000 || 0) as unknown as Vec3;
           return { eye, ...cameraAngles(c.forward), fovY: c.fovY };
         }),
-        /** What the view may look through: the editor's camera, then the scene's (none: no choice). */
+        /** What the view may look through: the editor's camera (not in the library's preview), then the scene's (none: no choice). */
         lookOptions: computed((): readonly { readonly id: string; readonly label: string }[] =>
           cameraList().length
             ? [
-                { id: EDITOR_CAMERA, label: 'Editor camera' },
+                ...(browsing() ? [] : [{ id: EDITOR_CAMERA, label: 'Editor camera' }]),
                 ...cameraList().map((c) => ({
                   id: c.id,
                   label: c.id === primaryCamera() ? `${c.name} (primary)` : c.name,
@@ -782,7 +790,7 @@ export const SceneEditorStore = signalStore(
         ),
         /** Whether the view looks through the editor's camera, moved from the scene's primary. */
         editorCameraMoved: computed(
-          () => !random() && look() === EDITOR_CAMERA && editorCamera() !== null,
+          () => !random() && !browsing() && look() === EDITOR_CAMERA && editorCamera() !== null,
         ),
         groupOpen,
         placements,
@@ -1829,7 +1837,7 @@ export const SceneEditorStore = signalStore(
        * the scene is open; one of the scene's, kept with it.
        */
       moveCamera(set: SceneCameraSet): void {
-        if (store.sets()) return;
+        if (store.sets() || store._ui.browsing()) return; // the library's preview isn't moved
         if (
           store.look() === EDITOR_CAMERA ||
           !store.cameraList().some((c) => c.id === store.look())
