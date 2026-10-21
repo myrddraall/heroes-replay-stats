@@ -1,7 +1,10 @@
-import { Component, input, output } from '@angular/core';
-import { MatIcon } from '@angular/material/icon';
+import { Component, computed, input, output } from '@angular/core';
 import type { CreatedShape } from '../../../scenes/play-background/created-overlays';
 import type { PickChoice } from './pick-list';
+import { SplitButton, type SplitOption } from './split-button';
+
+/** The option that reuses one of the game data's parts. */
+const EXISTING = 'existing';
 
 /** Each shape a part may take, as offered to add: its name and icon. */
 const SHAPES: Readonly<Record<CreatedShape, { readonly label: string; readonly icon: string }>> = {
@@ -10,19 +13,18 @@ const SHAPES: Readonly<Record<CreatedShape, { readonly label: string; readonly i
   band: { label: 'Band', icon: 'panorama_horizontal' },
 };
 
-let next = 0;
-
 /**
  * The controls to add parts (presentational) to what is selected: a body, a sky, an overlay made
- * in the editor; in the section of its parts. One button for each new shape it may take (a planet's: a sphere or a ring about the
- * body; the sky's: a band), a list of the game data's parts to reuse (`existing`), and, where what
- * was added here may be (`savable`), a button to save it as an overlay.
+ * in the editor; in the section of its parts. One button for each new shape it may take (a
+ * planet's: a sphere or a ring about the body; the sky's: a band) and for the game data's parts to
+ * reuse (`existing`, picked from a flyout), its arrow choosing; and, where what was added here may
+ * be (`savable`), a button to save it as an overlay.
  */
 @Component({
   selector: 'hrs-add-part',
-  imports: [MatIcon],
+  imports: [SplitButton],
   templateUrl: './add-part.html',
-  styleUrls: ['./properties-panel.scss', './add-part.scss'],
+  styleUrl: './properties-panel.scss',
 })
 export class AddPart {
   readonly shapes = input.required<readonly CreatedShape[]>();
@@ -31,12 +33,36 @@ export class AddPart {
   readonly added = output<CreatedShape>();
   readonly reused = output<string>();
   readonly saved = output<void>();
-  protected readonly named = SHAPES;
-  protected readonly id = `add-part-${next++}`;
+  protected readonly options = computed((): SplitOption[] => {
+    const existing = this.existing();
+    return [
+      ...this.shapes().map((s) => ({ id: s, ...SHAPES[s] })),
+      ...(existing.length
+        ? [
+            {
+              id: EXISTING,
+              label: 'Existing part',
+              icon: 'category',
+              pick: {
+                title: 'Existing part',
+                icon: 'category',
+                // ("Surface · korhal": the part, and whose it is.)
+                items: existing.map((o) => {
+                  const [label = o.label, ...whose] = o.label.split(' · ');
+                  return { id: o.value, label, caption: whose.join(' · ') };
+                }),
+              },
+            },
+          ]
+        : []),
+    ];
+  });
 
-  protected reuse(event: Event): void {
-    const select = event.target as HTMLSelectElement;
-    if (select.value) this.reused.emit(select.value);
-    select.value = '';
+  protected add(id: string): void {
+    this.added.emit(id as CreatedShape);
+  }
+
+  protected reuse(picked: { readonly item: string }): void {
+    this.reused.emit(picked.item);
   }
 }

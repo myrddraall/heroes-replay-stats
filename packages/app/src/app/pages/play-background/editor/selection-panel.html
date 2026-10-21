@@ -21,8 +21,11 @@
       >
         <hrs-property-section planetsPod title="Planets">
           <div class="buttons">
-            <hrs-add-planet (picked)="s.addPlanet($event)" />
-            <hrs-add-group [groups]="s.groupOptions()" (picked)="s.addGroup($event)" />
+            <hrs-add-planet
+              [groups]="s.groupOptions()"
+              (picked)="s.addPlanet($event)"
+              (groupPicked)="s.addGroup($event)"
+            />
           </div>
           <hrs-added-list
             title="Planets"
@@ -64,7 +67,7 @@
     <p class="hint">Over the whole sky, its stars too. Its materials are under it in the tree.</p>
     <hrs-pick-list
       title="Overlays"
-      placeholder="Overlay…"
+      addLabel="Add overlay"
       removeLabel="Take off"
       [picked]="editor.skyWorn()"
       [choices]="editor.skyOverlayOptions()"
@@ -256,7 +259,7 @@
     @if (editor.partMaterials(); as pm) {
       <hrs-pick-list
         title="Materials"
-        placeholder="Material…"
+        addLabel="Add material"
         icon="texture"
         [picked]="pm.picked"
         [choices]="pm.choices"

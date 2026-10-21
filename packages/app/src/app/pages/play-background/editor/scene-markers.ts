@@ -6,8 +6,9 @@ import { cameraOutline, viewLine, viewPoint } from '../../../scenes/play-backgro
 
 /**
  * Something of a scene marked in the view where it is: a camera (what it sees outlined), a group
- * put in it, a light (on the side it comes from, a line to the body it lights). `key` is the row
- * it selects; `id` tells markers apart (a scene's light marks each planet it lights).
+ * put in it, a light (one from a side on that side, a line to the body it lights; one from all
+ * round on the body's middle). `key` is the row it selects; `id` tells markers apart (a scene's
+ * light marks each planet it lights).
  */
 export interface SceneMarker {
   readonly id: string;
@@ -24,10 +25,14 @@ export interface SceneMarker {
   readonly selected: boolean;
   /** Whether it is switched off. */
   readonly off?: boolean;
+  /** How many markers' widths it is moved across from where it is (several at one place, side by side). */
+  readonly nudge?: number;
 }
 
 /** How far ahead of a camera what it sees is outlined, where not given, in the scene's units. */
 const OUTLINE = 12;
+/** A marker's width and the gap after it, in pixels (what a nudge moves it by). */
+const MARKER_WIDTH = 32;
 /** How near a camera's own place may be to the view's and still be marked (nearer: it is where the view is). */
 const NEAREST = 1;
 
@@ -62,7 +67,7 @@ export class SceneMarkers {
     const camera = this.camera();
     const aspect = this.aspect();
     const lines: Line[] = [];
-    const points: (SceneMarker & { readonly x: number; readonly y: number })[] = [];
+    const points: (SceneMarker & { readonly left: string; readonly y: number })[] = [];
     const line = (a: Vec3, b: Vec3, m: SceneMarker) => {
       const l = viewLine(camera, aspect, a, b);
       if (l)
@@ -83,7 +88,11 @@ export class SceneMarkers {
       if (m.camera)
         for (const [a, b] of cameraOutline(m.camera, aspect, m.outline ?? OUTLINE)) line(a, b, m);
       if (p && p.x >= 0 && p.x <= 1 && p.y >= 0 && p.y <= 1)
-        points.push({ ...m, x: p.x * 100, y: p.y * 100 });
+        points.push({
+          ...m,
+          left: `calc(${p.x * 100}% + ${(m.nudge ?? 0) * MARKER_WIDTH}px)`,
+          y: p.y * 100,
+        });
     }
     return { lines, points };
   });

@@ -1518,37 +1518,57 @@ export const SceneEditorStore = signalStore(
       );
       const placed = store._placed();
       if (!placed) return out;
-      /** A light's marker out from a body it lights, on the side it comes from (in the body's frame). */
-      const lit = (key: string, light: LightEntry['light'], body: SetPlanet, i: number) => {
-        if (!light.from) return;
-        const { axes } = bodyFrame(body.position, body.radius, view.eye);
-        const f = light.from;
-        const way = [0, 1, 2].map(
-          (k) => f[0] * axes[k]! + f[1] * axes[3 + k]! + f[2] * axes[6 + k]!,
-        );
-        const length = Math.hypot(...way) || 1;
-        const along = (radii: number) =>
-          body.position.map(
-            (v, k) => v + (way[k]! / length) * body.radius * radii,
-          ) as unknown as Vec3;
-        out.push({
+      /**
+       * A body's lights' markers: each one from a side out from the body, on the side it comes
+       * from (in the body's frame), a line to it; each one from all round on the body's middle
+       * (several there side by side).
+       */
+      const lit = (
+        lights: readonly { readonly key: string; readonly light: LightEntry['light'] }[],
+        body: SetPlanet,
+        i: number,
+      ) => {
+        const round = lights.filter(({ light }) => light.kind === 'ambient');
+        const marker = (key: string, light: LightEntry['light'], at: Vec3) => ({
           id: `${key}@${i}`,
           key,
-          kind: 'light',
+          kind: 'light' as const,
           label: light.name,
           icon: LIGHT_ICONS[light.kind],
-          at: along(1.8),
-          from: along(1.05),
+          at,
           selected: store.selected() === key,
           off: !light.enabled,
         });
+        round.forEach(({ key, light }, n) =>
+          out.push({ ...marker(key, light, body.position), nudge: n - (round.length - 1) / 2 }),
+        );
+        const { axes } = bodyFrame(body.position, body.radius, view.eye);
+        for (const { key, light } of lights) {
+          if (!light.from) continue;
+          const f = light.from;
+          const way = [0, 1, 2].map(
+            (k) => f[0] * axes[k]! + f[1] * axes[3 + k]! + f[2] * axes[6 + k]!,
+          );
+          const length = Math.hypot(...way) || 1;
+          const along = (radii: number) =>
+            body.position.map(
+              (v, k) => v + (way[k]! / length) * body.radius * radii,
+            ) as unknown as Vec3;
+          out.push({ ...marker(key, light, along(1.8)), from: along(1.05) });
+        }
       };
       if (t.kind === 'scene-light') {
         placed.picks.forEach((pick, i) => {
           const body = placed.planets[i];
           if (!body || !pick.startsWith('body:') || pathOf(pick.slice(5)).length !== 1) return;
-          for (const { light } of sceneLightsOf(store.sceneLights()))
-            lit(sceneLightKey(light.id), light, body, i);
+          lit(
+            sceneLightsOf(store.sceneLights()).map(({ light }) => ({
+              key: sceneLightKey(light.id),
+              light,
+            })),
+            body,
+            i,
+          );
         });
       } else if ('path' in t && t.path.length) {
         const key = bodyKey(t.path);
@@ -1556,8 +1576,11 @@ export const SceneEditorStore = signalStore(
         const i = placed.picks.indexOf(key);
         const body = placed.planets[i];
         if (b && body)
-          for (const { light } of lightsOfBody(b))
-            lit(lightRowKey(t.path, light.id), light, body, i);
+          lit(
+            lightsOfBody(b).map(({ light }) => ({ key: lightRowKey(t.path, light.id), light })),
+            body,
+            i,
+          );
       }
       return out;
     }),

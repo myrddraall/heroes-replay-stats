@@ -1,8 +1,3 @@
 <div class="buttons">
-  @for (k of kinds; track k.kind) {
-    <button type="button" class="button" (click)="added.emit(k.kind)">
-      <mat-icon class="material-symbols-outlined" aria-hidden="true">{{ icons[k.kind] }}</mat-icon>
-      {{ k.label }}
-    </button>
-  }
+  <hrs-split-button [options]="kinds" menuLabel="Other kinds of light" (chosen)="add($event)" />
 </div>

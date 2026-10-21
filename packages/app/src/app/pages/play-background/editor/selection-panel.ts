@@ -32,7 +32,6 @@ import { AddPart } from './add-part';
 import { PickList } from './pick-list';
 import { LitBy } from './lit-by';
 import { ReferenceProperties, type ReferenceValues } from './reference-properties';
-import { AddGroup } from './add-group';
 import { GroupPlacementProperties } from './group-placement-properties';
 import { AddCamera } from './add-camera';
 import { AddedList } from './added-list';
@@ -68,7 +67,6 @@ import { TintSection } from './tint-section';
     EditingAidProperties,
     ReferenceProperties,
     AddPlanet,
-    AddGroup,
     GroupPlacementProperties,
     AddCamera,
     AddedList,

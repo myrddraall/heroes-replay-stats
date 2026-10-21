@@ -3,25 +3,13 @@
   [changed]="changed()"
   (resetRequested)="resetRequested.emit()"
 >
-  @if (others().length) {
-    <div class="add">
-      <label class="label" [for]="id">Add</label>
-      <select class="select" [id]="id" (change)="add($event)">
-        <option value="" selected>{{ placeholder() }}</option>
-        @for (o of others(); track o.value) {
-          <option [value]="o.value">{{ o.label }}</option>
-        }
-      </select>
-    </div>
-  }
-  @if (newLabel()) {
-    <div class="buttons">
-      <button type="button" class="button" (click)="created.emit()">
-        <mat-icon class="material-symbols-outlined" aria-hidden="true">add</mat-icon>
-        {{ newLabel() }}
-      </button>
-    </div>
-  }
+  <div class="buttons">
+    <hrs-split-button
+      [options]="options()"
+      (chosen)="created.emit()"
+      (picked)="added.emit($event.item)"
+    />
+  </div>
   <hrs-added-list
     [title]="title()"
     [items]="items()"
