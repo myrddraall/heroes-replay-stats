@@ -312,22 +312,28 @@
         (settingsChange)="editor.setMaterial($event)"
         (clear)="editor.clearMaterial($event)"
       />
+      <hrs-property-section
+        title="Lights"
+        [changed]="m.set?.gridLights !== undefined"
+        (resetRequested)="editor.clearMaterial(['gridLights'])"
+      >
+        <hrs-add-light (added)="addGridLight($event)" />
+        <hrs-added-list
+          title="Lights"
+          [items]="shieldLights()"
+          (itemShow)="editor.select($event)"
+          (itemRemove)="removeGridLight($event)"
+        />
+      </hrs-property-section>
     }
   }
-  @case ('effect') {
-    @if (editor.material(); as m) {
-      @if (editor.materialView(); as view) {
-        @if (view.kind === 'effect') {
-          <hrs-effect-properties
-            [effect]="view.effect"
-            [values]="m.values"
-            [set]="m.set"
-            [origins]="m.origins"
-            (settingsChange)="editor.setMaterial($event)"
-            (clear)="editor.clearMaterial($event)"
-          />
-        }
-      }
+  @case ('gridLight') {
+    @if (gridLight(); as l) {
+      <hrs-grid-light-properties
+        [light]="l"
+        (lightChange)="changeGridLight(l.id, $event)"
+        (removed)="removeGridLight(editor.selected())"
+      />
     }
   }
   @case ('layer') {

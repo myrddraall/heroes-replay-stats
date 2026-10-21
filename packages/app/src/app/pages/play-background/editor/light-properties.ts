@@ -14,7 +14,21 @@ import { PropertyText } from '../properties/property-text';
 import type { LightEntry } from './editor-model';
 
 /** A light's own settings (its name is apart, and its switch: the tree row's). */
-const LIGHT_KEYS: readonly (keyof LightSettings)[] = ['colour', 'strength', 'from', 'softness'];
+const LIGHT_KEYS: readonly (keyof LightSettings)[] = [
+  'darkens',
+  'colour',
+  'strength',
+  'from',
+  'softness',
+  'specular',
+  'specularStrength',
+];
+
+/** What a light does, as its Effect list offers it. */
+const EFFECTS: readonly PropertyOption[] = [
+  { value: 'lights', label: 'Lights' },
+  { value: 'darkens', label: 'Darkens' },
+];
 
 /** What a light reaches of its body, as its Reaches list offers it. */
 type ReachMode = 'all' | LightReach['mode'];
@@ -25,11 +39,12 @@ const REACH_MODES: readonly PropertyOption[] = [
 ];
 
 /**
- * A body's light's properties (presentational), the same rows for every light: its colour and
- * strength (an ambient light's from all round, a directional light's from a side, Light from); a
- * shadow's strength (how dark), the side it darkens from and how softly; what of its body it
- * reaches (its parts and their materials, checked), and whether it reaches the body's moons. Whether
- * it is on is its row's checkbox in the tree.
+ * A body's light's properties (presentational), the same rows for every light: whether it lights
+ * or darkens (an antilight: its colour taken away, its strength how much), its colour and
+ * strength, a directional light's side (Light from) and how softly it falls off round the body,
+ * and one that lights its specular colour and strength (its shine on a material that shines);
+ * what of its body it reaches (its parts and their materials, checked), and whether it reaches the
+ * body's moons. Whether it is on is its row's checkbox in the tree.
  */
 @Component({
   selector: 'hrs-light-properties',
@@ -54,6 +69,7 @@ export class LightProperties {
   readonly removed = output<void>();
   /** Its light's settings (its name is apart). */
   protected readonly lightKeys = LIGHT_KEYS;
+  protected readonly effects = EFFECTS;
   protected readonly changed = computed(() => LIGHT_KEYS.some((k) => this.isSet(k)));
 
   /**

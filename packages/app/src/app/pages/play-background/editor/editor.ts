@@ -19,8 +19,8 @@ import type {
 } from './editor-model';
 import type {
   LightId,
-  LightKind,
   LightSettings,
+  NewLightKind,
 } from '../../../scenes/play-background/scene-lights';
 import type { AssetTarget, OpenTarget } from './open-target';
 import type { TreeMove, TreeRow } from './scene-tree';
@@ -95,7 +95,7 @@ export abstract class Editor {
   abstract setLight(change: Partial<LightSettings>): void;
   abstract clearLight(keys?: readonly (keyof LightSettings)[]): void;
   /** A light added: to the scene where it is selected, else to the body selected; selected. */
-  abstract addLight(kind: LightKind): void;
+  abstract addLight(kind: NewLightKind): void;
   /** A light taken out, where it was added at the level edited: one of the selected body's (by id), else the one selected. */
   abstract removeLight(id?: LightId): void;
   /** What lights the selected body, part or material (none: something else is selected). */

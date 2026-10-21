@@ -38,6 +38,7 @@ import {
   type SkySettings,
 } from './scene-planets';
 import type { PlanetPlacement } from './scene-renderer';
+import { keepUnchanged } from './stable-placements';
 import { browserColourParser, rendererTint } from './scene-tints';
 import { backgroundTints } from './tint-settings';
 
@@ -100,6 +101,8 @@ export class PlayBackground {
   );
   /** An editing backdrop in place of the sky, where the scene shown has one. */
   protected readonly backdrop = computed(() => this.source?.backdrop?.() ?? null);
+  /** Lights' beams over it, where the scene shown has any. */
+  protected readonly beams = computed(() => this.source?.beams?.() ?? []);
   protected readonly drawing = this.store.drawing;
   private readonly parse = browserColourParser();
   /** The tint over the whole picture: the scene's, where it has one; else the site's. */
@@ -350,7 +353,8 @@ export class PlayBackground {
           shade: p.shade,
         });
       }
-      return out;
+      // Each body as it was where it hasn't changed: only a changed one is drawn again.
+      return keepUnchanged(previous?.value, out);
     },
   });
 }

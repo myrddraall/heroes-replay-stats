@@ -1,4 +1,6 @@
 import type { AddedLight } from './scene-lights';
+import type { LightBeam } from './scene-beams';
+import { FrameStats } from './frame-stats';
 import {
   afterRenderEffect,
   Component,
@@ -51,6 +53,7 @@ interface Running {
   resky(sky: SkySettings): void;
   relight(lights: readonly AddedLight[]): void;
   rebackdrop(backdrop: Backdrop | null): void;
+  rebeam(beams: readonly LightBeam[]): void;
   recamera(camera: SceneCameraSet | undefined): void;
 }
 
@@ -86,6 +89,18 @@ function samePlanets(a: readonly PlanetPlacement[], b: readonly PlanetPlacement[
 }
 const easeOut = (u: number) => 1 - (1 - u) * (1 - u);
 
+/** A planet's name's place over it: its name, and where it floats (shares of the canvas). */
+interface Label {
+  readonly id: string;
+  readonly x: number;
+  readonly top: number;
+}
+
+/** Whether names would show where they already do. */
+const sameLabels = (a: readonly Label[], b: readonly Label[]) =>
+  a.length === b.length &&
+  a.every((l, i) => l.id === b[i]!.id && l.x === b[i]!.x && l.top === b[i]!.top);
+
 /**
  * A loaded scene drawn into a canvas that fills this element (presentational), at a share of the
  * screen's resolution (`resolution`) whatever its size.
@@ -120,6 +135,8 @@ export class SceneCanvas {
   readonly lights = input<readonly AddedLight[]>([]);
   /** An editing backdrop in place of the sky (none: the sky). */
   readonly backdrop = input<Backdrop | null>(null);
+  /** Lights' beams shown over it (an editor's, of the light selected; none: none). */
+  readonly beams = input<readonly LightBeam[]>([]);
   /** Where a scene puts the camera, over the game's (none: the game's). */
   readonly camera = input<SceneCameraSet | undefined>(undefined);
   /**
@@ -151,7 +168,7 @@ export class SceneCanvas {
   readonly names = input(false);
 
   /** Where the names go: each planet's, over the top of its body, as shares of the canvas. */
-  protected readonly labels = signal<{ id: string; x: number; top: number }[]>([]);
+  protected readonly labels = signal<readonly Label[]>([]);
 
   /** Whether a frame has been drawn: the picture fades in then. */
   protected readonly drawn = signal(false);
@@ -159,6 +176,8 @@ export class SceneCanvas {
   /** The last picture, over the new one as it fades away. */
   private readonly previous = viewChild.required<ElementRef<HTMLCanvasElement>>('previous');
   private readonly host: HTMLElement = inject(ElementRef).nativeElement;
+  /** The frames' stats, timed while anything shows them. */
+  private readonly frameStats = inject(FrameStats);
   private running?: Running;
 
   constructor() {
@@ -177,6 +196,10 @@ export class SceneCanvas {
     effect(() => {
       const backdrop = this.backdrop();
       untracked(() => this.running?.rebackdrop(backdrop));
+    });
+    effect(() => {
+      const beams = this.beams();
+      untracked(() => this.running?.rebeam(beams));
     });
     effect(() => {
       const camera = this.camera();
@@ -250,10 +273,21 @@ export class SceneCanvas {
     let flights = 0;
 
     const draw = () => {
+      const timed = this.frameStats.watching();
+      renderer.timing = timed;
+      const start = timed ? performance.now() : 0;
       renderer.draw(clock);
+      if (timed) {
+        this.frameStats.frame(performance.now() - start);
+        for (const ms of renderer.gpuTimes()) this.frameStats.gpu(ms);
+      }
       drawnAt = performance.now();
       if (!this.drawn()) this.drawn.set(true);
-      if (this.names()) this.labels.set(renderer.anchors());
+      // The names moved only where the planets or the view did: the page is told only then.
+      if (this.names()) {
+        const anchors = renderer.anchors();
+        if (!sameLabels(anchors, this.labels())) this.labels.set(anchors);
+      }
     };
     /** Draws what `change` makes, the picture there was fading away over it. */
     const crossFadeTo = (change: () => void) => {
@@ -323,6 +357,8 @@ export class SceneCanvas {
       const step = last === undefined ? 0 : Math.min(MAX_STEP, (now - last) / 1000);
       clock += step;
       last = now;
+      // Nothing changed and nothing moves: the picture up is the one it would draw.
+      if (!fading && !renderer.needsFrame(clock)) return;
       if (renderer.fade < 1) renderer.fade = Math.min(1, renderer.fade + step / FADE_SECONDS);
       flyOn(step);
       draw();
@@ -402,6 +438,10 @@ export class SceneCanvas {
         renderer.setBackdrop(backdrop);
         if (!frame) draw();
       },
+      rebeam: (beams) => {
+        renderer.setBeams(beams);
+        if (!frame) draw();
+      },
       // The camera moved (a scene's): drawn again from there.
       recamera: (camera) => {
         renderer.setCamera(camera);
@@ -453,6 +493,7 @@ export class SceneCanvas {
     renderer.setSky(this.sky());
     renderer.setSceneLights(this.lights());
     renderer.setBackdrop(this.backdrop());
+    renderer.setBeams(this.beams());
     renderer.setCamera(this.camera());
     resize();
     play();

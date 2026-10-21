@@ -7,6 +7,7 @@ import type {
   SkyOverlayFile,
 } from './play-scene';
 import type { TintBlend } from './scene-tints';
+import type { LightKind } from './scene-lights';
 import { BUILT_IN_PREFIX, type BuiltInPlanets } from './built-in-planets';
 import type { AddedPart } from './created-overlays';
 
@@ -54,6 +55,10 @@ export interface PlanetIndex {
 export interface PlanetDirectionalLight {
   readonly direction: readonly [number, number, number];
   readonly color: readonly [number, number, number];
+  /** How softly it falls off round the body: the power of how squarely it faces it (1: as the game lights). */
+  readonly softness?: number;
+  /** Its shine on a material that has a specular layer: its specular colour times its multiplier (none: none). */
+  readonly specular?: readonly [number, number, number];
 }
 
 /**
@@ -95,7 +100,108 @@ export type PartShape =
        * limb from there: seen from elsewhere it is sized to lie there still. None: as it is.
        */
       readonly seen?: number;
+    }
+  | {
+      /** A tube about `axis` (its body's up unless set), `length` long about its centre, open at both ends. */
+      readonly kind: 'tube';
+      readonly radius: number;
+      readonly length: number;
+      /** Its outside, nearer wall (`near`), or its inside, farther one (`far`: seen from inside it too). */
+      readonly side: 'near' | 'far';
+      readonly axis?: Vec3;
+      readonly centre?: Vec3;
+    }
+  | {
+      /** A cone (cut off: a frustum) about `axis`, `bottom` wide at its low end to `top` at its high, `length` long, open at both. */
+      readonly kind: 'cone';
+      readonly bottom: number;
+      readonly top: number;
+      readonly length: number;
+      readonly side: 'near' | 'far';
+      readonly axis?: Vec3;
+      readonly centre?: Vec3;
+    }
+  | {
+      /** A flat disc (a hole in it `inner` wide: an annulus) square to `axis`, about its centre. */
+      readonly kind: 'disc';
+      readonly inner: number;
+      readonly outer: number;
+      readonly axis?: Vec3;
+      readonly centre?: Vec3;
+    }
+  | {
+      /** A capsule about `axis`: a tube `length` long, closed at both ends by half spheres. */
+      readonly kind: 'capsule';
+      readonly radius: number;
+      readonly length: number;
+      readonly side: 'near' | 'far';
+      readonly axis?: Vec3;
+      readonly centre?: Vec3;
+    }
+  | {
+      /** A flat rectangle square to `axis` (facing the eye unless set), `height` along `up` (its body's up unless set). */
+      readonly kind: 'plane';
+      readonly width: number;
+      readonly height: number;
+      readonly axis?: Vec3;
+      readonly up?: Vec3;
+      readonly centre?: Vec3;
     };
+
+/** The shapes drawn round an axis: tubes, cones, discs and capsules (their axis their body's up unless set). */
+export type RoundShape = Extract<PartShape, { kind: 'tube' | 'cone' | 'disc' | 'capsule' }>;
+
+/** A round shape's axis, or a plane's (the way it faces): its own, else its body's up (a plane: the eye). */
+export const axisOf = (shape: RoundShape | Extract<PartShape, { kind: 'plane' }>): Vec3 =>
+  shape.axis ?? (shape.kind === 'plane' ? [0, -1, 0] : [0, 0, 1]);
+
+/** A plane's texture: across it once, from its left to its right and its top to its bottom (`repeat` times, mirrored when flipped). */
+export function planeMapping(
+  shape: Extract<PartShape, { kind: 'plane' }>,
+  repeat = 1,
+  flip = false,
+): PartMapping {
+  const axis = axisOf(shape);
+  const up = shape.up ?? [0, 0, 1];
+  const right: Vec3 = [
+    up[1] * axis[2] - up[2] * axis[1],
+    up[2] * axis[0] - up[0] * axis[2],
+    up[0] * axis[1] - up[1] * axis[0],
+  ];
+  const along = (v: Vec3, size: number, sign: number) =>
+    [
+      (v[0] * sign * repeat) / size,
+      (v[1] * sign * repeat) / size,
+      (v[2] * sign * repeat) / size,
+      0.5,
+    ] as const;
+  return {
+    kind: 'linear',
+    u: along(right, shape.width, flip ? -1 : 1),
+    v: along(up, shape.height, -1),
+  };
+}
+
+/** How far a part's shape reaches from its body's centre, in its radii (a ring's: its outer edge). */
+export function shapeReach(shape: PartShape): number {
+  const off = 'centre' in shape && shape.centre ? Math.hypot(...shape.centre) : 0;
+  switch (shape.kind) {
+    case 'sphere':
+      return shape.radius + off;
+    case 'ring':
+      return shape.outer;
+    case 'tube':
+      return Math.hypot(shape.radius, shape.length / 2) + off;
+    case 'cone':
+      return Math.hypot(Math.max(shape.bottom, shape.top), shape.length / 2) + off;
+    case 'disc':
+      return shape.outer + off;
+    case 'capsule':
+      return shape.length / 2 + shape.radius + off;
+    case 'plane':
+      return Math.hypot(shape.width, shape.height) / 2 + off;
+  }
+}
 
 /**
  * How a part's surface maps to its materials' texture coordinates. A uv sphere: u round the pole
@@ -103,7 +209,10 @@ export type PartShape =
  * `v` its values at even steps from the pole to the opposite one (as the game's mesh has it: not
  * always a straight line). Linear: u and v each a·x + b·y + c·z + d of the point. A ring: u greatest
  * (uMax) at the azimuth `from` (radians in the body's xz plane, from +x towards +z), falling to 0
- * at the opposite side either way round; v 0 at both edges, 1 midway.
+ * at the opposite side either way round; v 0 at both edges, 1 midway. Round (a tube's, a cone's,
+ * a disc's): u round `axis` from `meridian` (the other way round when flipped), from u0, `repeat`
+ * times round; v along the axis (`along: 'height'`) or out from it (`'radius'`), 0 at `v0`, 1 at
+ * `v1` (from the shape's centre).
  */
 export type PartMapping =
   | {
@@ -125,13 +234,36 @@ export type PartMapping =
       readonly uMax: number;
       /** How far across the ring (from its inner edge, 0 to 1) v is greatest (none: midway). */
       readonly mid?: number;
+    }
+  | {
+      readonly kind: 'round';
+      readonly axis: Vec3;
+      readonly meridian: Vec3;
+      readonly flip: boolean;
+      readonly u0: number;
+      readonly repeat: number;
+      readonly along: 'height' | 'radius';
+      readonly v0: number;
+      readonly v1: number;
     };
 
 /**
  * What a part is to its body: its surface, a layer on it, its atmosphere shell, a ring, a style's
  * shield; or a part of an overlay made in the editor (a sphere, a ring, the sky's band).
  */
-export type PartRole = 'surface' | 'layer' | 'shell' | 'ring' | 'shield' | 'sphere' | 'band';
+export type PartRole =
+  | 'surface'
+  | 'layer'
+  | 'shell'
+  | 'ring'
+  | 'shield'
+  | 'sphere'
+  | 'band'
+  | 'tube'
+  | 'cone'
+  | 'disc'
+  | 'capsule'
+  | 'plane';
 
 /**
  * A part of a placed body by whose it is and which part of it it is: the body's own by its part
@@ -173,8 +305,10 @@ export interface PartSettings {
   readonly turn?: number;
   readonly tilt?: number;
   readonly width?: number;
-  /** A sky's band's height, times its own, about its middle (up and down). */
+  /** A sky's band's height, times its own, about its middle (up and down); a tube's or a cone's length, times its own. */
   readonly height?: number;
+  /** A tube's or a cone's side: its outside (`near`) or its inside (`far`), in place of its own. */
+  readonly side?: 'near' | 'far';
   readonly depth?: number;
   readonly mid?: number;
   readonly keepToLimb?: boolean;
@@ -219,7 +353,7 @@ function turned(v: Vec3, axis: Vec3, degrees: number): Vec3 {
  * The texture moves with it: a point reads what the point turned back read.
  */
 function turnedMapping(mapping: PartMapping, turn: number, tilt: number): PartMapping {
-  if (mapping.kind === 'ring' || (!turn && !tilt)) return mapping;
+  if (mapping.kind === 'ring' || mapping.kind === 'round' || (!turn && !tilt)) return mapping;
   const pole: Vec3 = mapping.kind === 'sphere' ? mapping.pole : [0, 0, 1];
   const r = (v: Vec3) => turned(turned(v, pole, turn), [1, 0, 0], tilt);
   if (mapping.kind === 'sphere')
@@ -236,6 +370,33 @@ export function withPart(part: BodyPart, settings: PartSettings | undefined): Bo
   if (!settings) return part;
   const { size = 1, turn = 0, tilt = 0 } = settings;
   const { shape } = part;
+  if (
+    shape.kind === 'tube' ||
+    shape.kind === 'cone' ||
+    shape.kind === 'disc' ||
+    shape.kind === 'capsule'
+  )
+    return withRoundPart(part, shape, settings);
+  if (shape.kind === 'plane') {
+    // Sized, its width and height each times its own; tilted about the body's x, turned about
+    // where it faces; its texture across it as it is now.
+    const tilted = (v: Vec3) => turned(v, [1, 0, 0], tilt);
+    const axis = tilted(axisOf(shape));
+    const up = tilted(turned(shape.up ?? [0, 0, 1], axisOf(shape), turn));
+    const plane = {
+      ...shape,
+      width: shape.width * size * (settings.width ?? 1),
+      height: shape.height * size * (settings.height ?? 1),
+      axis,
+      up,
+      ...(shape.centre ? { centre: shape.centre.map((c) => c * size) as unknown as Vec3 } : {}),
+    };
+    return {
+      ...part,
+      shape: plane,
+      mapping: planeMapping(plane, settings.repeat ?? 1, settings.flip ?? false),
+    };
+  }
   if (shape.kind === 'sphere') {
     const mapping = turnedMapping(part.mapping, turn, tilt);
     return {
@@ -274,6 +435,85 @@ export function withPart(part: BodyPart, settings: PartSettings | undefined): Bo
 }
 
 /**
+ * A tube, cone or disc with its settings applied: sized (and a tube's or cone's length times its
+ * Height, a disc's width about its middle times its Width), its axis tilted about the body's x
+ * (its top towards the eye) and its texture turned round the axis by Turn, mirrored, repeated.
+ */
+function withRoundPart(part: BodyPart, shape: RoundShape, settings: PartSettings): BodyPart {
+  const { size = 1, turn = 0, tilt = 0 } = settings;
+  const tilted = (v: Vec3) => turned(v, [1, 0, 0], tilt);
+  const axis = tilted(axisOf(shape));
+  const centre = shape.centre && { centre: shape.centre.map((c) => c * size) as unknown as Vec3 };
+  const length = 'length' in shape ? shape.length * size * (settings.height ?? 1) : 0;
+  const sized: RoundShape =
+    shape.kind === 'tube' || shape.kind === 'capsule'
+      ? { ...shape, radius: shape.radius * size, length, side: settings.side ?? shape.side }
+      : shape.kind === 'cone'
+        ? {
+            ...shape,
+            bottom: shape.bottom * size,
+            top: shape.top * size,
+            length,
+            side: settings.side ?? shape.side,
+          }
+        : (() => {
+            const middle = ((shape.inner + shape.outer) / 2) * size;
+            const half = ((shape.outer - shape.inner) / 2) * size * (settings.width ?? 1);
+            return { ...shape, inner: Math.max(0, middle - half), outer: middle + half };
+          })();
+  const mapping = part.mapping;
+  return {
+    ...part,
+    shape: { ...sized, axis, ...centre },
+    mapping:
+      mapping.kind === 'round'
+        ? {
+            ...mapping,
+            axis: tilted(mapping.axis),
+            meridian: tilted(turned(mapping.meridian, mapping.axis, turn)),
+            ...(settings.flip !== undefined ? { flip: settings.flip } : {}),
+            ...(settings.repeat !== undefined ? { repeat: settings.repeat } : {}),
+            // Along its length or across its width as it is now.
+            ...(mapping.along === 'height' && length
+              ? {
+                  v0: (mapping.v0 / ('length' in shape ? shape.length : 1)) * length,
+                  v1: (mapping.v1 / ('length' in shape ? shape.length : 1)) * length,
+                }
+              : mapping.along === 'radius' && sized.kind === 'disc'
+                ? { v0: sized.inner, v1: sized.outer }
+                : {}),
+          }
+        : mapping,
+  };
+}
+
+/**
+ * A grid's (the shield's) light, its own: it lights nothing, it says where the grid shows and where
+ * it is active. From all round (`ambient`: all of it alike) or from a side (`from`, body frame,
+ * any side, the far one too), as strong as `strength` (past 1, further round fully), reaching round
+ * the face (`reach`: 0 the half facing it, 1 on round to the point facing away) as softly as
+ * `softness` (the power of how squarely the face turns to it). What it does: reveals the grid
+ * (`reveals`: shows it), activates it (`activates`: turns it from its inactive colour to its active
+ * one, revealing `energizes` times as much there too and shining `glow` brighter), either or both;
+ * one that darkens (`darkens`) does the opposite: hides it, deactivates it.
+ */
+export interface GridLight {
+  readonly id: `grid-${string}`;
+  readonly name: string;
+  readonly kind: LightKind;
+  readonly enabled?: boolean;
+  readonly darkens?: boolean;
+  readonly strength?: number;
+  readonly from?: Vec3;
+  readonly softness?: number;
+  readonly reach?: number;
+  readonly reveals?: boolean;
+  readonly activates?: boolean;
+  readonly energizes?: number;
+  readonly glow?: number;
+}
+
+/**
  * How a material shows, where something says (a planet's tuning, a style's, a placement): the
  * data's way otherwise. The same settings for any material, a planet's, a style's or the sky's;
  * each does nothing where the material has nothing for it to act on (a strength on an opaque
@@ -297,11 +537,16 @@ export interface MaterialSettings {
   readonly inactive?: string;
   readonly active?: string;
   /**
-   * A grid's (the shield's) reveal: where it shows at all, the more the face turns to its side
-   * (`revealFrom`, any side, the far one too), reaching round the face (`revealReach`: 0 the half
-   * facing it, 1 on round to the point facing away), falling off (`revealFalloff`), as strong as
-   * `revealStrength` (past 1, further round fully); shown unless `revealOn` is false (then not at
-   * all).
+   * A grid's (the shield's) lights, its own (see `GridLight`): where it shows and where it is
+   * active. Set as a whole, a level's list in place of the one under it.
+   */
+  readonly gridLights?: readonly GridLight[];
+  /**
+   * A grid's reveal and activation of before its lights were its own (read as its lights where
+   * none are set: `gridLightsOf`): its reveal from `revealFrom`, reaching round the face
+   * (`revealReach`), falling off (`revealFalloff`), as strong as `revealStrength`, unless
+   * `revealOn` is false; its activation (once `activationOn`) shaped so, from the reveal's side
+   * while `activationTied`, energizing (`activationEnergizes`) and glowing (`activationGlow`).
    */
   readonly revealOn?: boolean;
   readonly revealStrength?: number;
@@ -324,6 +569,13 @@ export interface MaterialSettings {
   readonly activationGlow?: number;
   /** How far it shows away from the limb, 0 to 1: a floor under its layers' fresnel (unset: each layer's own). */
   readonly spread?: number;
+  /**
+   * A lit material's shine where it has a specular layer: how strong (its specular multiplier, in
+   * place of the data's), and how glossy (the highlight's power: higher, tighter; in place of its
+   * specularity).
+   */
+  readonly specular?: number;
+  readonly glossiness?: number;
   /**
    * The side it spreads from: the point on its face (body frame) its layers' fresnel is brightest
    * on, as a light comes from one (unset: each layer's own turn).

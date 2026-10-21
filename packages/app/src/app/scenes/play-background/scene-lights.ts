@@ -4,23 +4,37 @@ import type { BodyShade, PlanetLight } from './scene-planets';
 /**
  * A body's lights as objects: its light rig from the game data (an ambient light, and its
  * directional lights, named by how bright they are: its key, fill and back), and its shadow (a
- * light that darkens: the shade). Each light's settings (on or off, colour, strength, where it
- * comes from, a shadow's softness) apply over the data's only where set, so a body nothing is set
- * for is lit exactly as its data lights it.
+ * directional light that darkens: the shade). Each light's settings (on or off, whether it lights
+ * or darkens, colour, strength, where it comes from, softness) apply over the data's only where
+ * set, so a body nothing is set for is lit exactly as its data lights it.
  */
 
-/** What a light does: lights from all round, lights from a side, or darkens from a side (an antilight). */
-export type LightKind = 'ambient' | 'directional' | 'shadow';
+/**
+ * Where a light comes from: all round, or a side. Either lights, or darkens (`darkens`: an
+ * antilight, taking its colour away).
+ */
+export type LightKind = 'ambient' | 'directional';
+
+/** A light to add: of a kind, or an antilight (a directional light that darkens). */
+export type NewLightKind = LightKind | 'antilight';
 
 /**
- * The kinds there are: lights of others kept from before (a grid's reveal and activation, its
- * material's own settings now) are left out wherever lights are read.
+ * The kinds there are, and the antilight of before (`shadow`: now a directional light that
+ * darkens). Lights of others kept from before (a grid's reveal and activation, its material's own
+ * settings now) are left out wherever lights are read.
  */
 const KINDS: readonly string[] = ['ambient', 'directional', 'shadow'];
 
-/** Added lights of the kinds there are (those kept from before left out). */
-export const knownLights = <T extends { readonly kind: string }>(added: readonly T[]): T[] =>
-  added.filter((l) => KINDS.includes(l.kind));
+/**
+ * Added lights of the kinds there are (those kept from before left out), an antilight of before
+ * as the directional light that darkens it now is.
+ */
+export const knownLights = <T extends { readonly kind: string; readonly darkens?: boolean }>(
+  added: readonly T[],
+): T[] =>
+  added
+    .filter((l) => KINDS.includes(l.kind))
+    .map((l) => (l.kind === 'shadow' ? { ...l, kind: 'directional', darkens: true } : l));
 
 /**
  * A light by what it is: a body's rig's ambient, its directional lights by index, its shadow; or
@@ -41,18 +55,26 @@ export interface LightReach {
 }
 
 /**
- * A light's settings, each where set: on or off, colour (`#rrggbb`) and strength, the side it
- * comes from, a shadow's softness; what of its body it reaches (all of it unless set), and, one
- * added to a body, whether it reaches the body's moons too (theirs too).
+ * A light's settings, each where set: on or off, whether it darkens instead of lighting, colour
+ * (`#rrggbb`: one that darkens takes it away) and strength, the side it comes from and how softly
+ * it falls off round the body; what of its body it reaches (all of it unless set), and, one added
+ * to a body, whether it reaches the body's moons too (theirs too).
  */
 export interface LightSettings {
   /** Its name as shown, in place of its own (a rig's light's, by how bright it is). */
   readonly name?: string;
   readonly enabled?: boolean;
+  readonly darkens?: boolean;
   readonly colour?: string;
   readonly strength?: number;
   readonly from?: Vec3;
   readonly softness?: number;
+  /**
+   * A directional light's shine on a material with a specular layer: its colour (`#rrggbb`) and
+   * strength (the game's specular colour times its multiplier).
+   */
+  readonly specular?: string;
+  readonly specularStrength?: number;
   readonly reach?: LightReach;
   readonly moons?: boolean;
 }
@@ -71,17 +93,23 @@ export interface AddedLight extends LightSettings {
 const NEW_FROM: Vec3 = normalized([-0.55, -0.45, 0.7]);
 const NEW_SHADOW_FROM: Vec3 = normalized([0.6, -0.3, -0.75]);
 
-/** A new light of a kind, named after the lights of that kind already added beside it. */
+/**
+ * A new light of a kind, named after the lights of that kind already added beside it (an
+ * antilight's: after the antilights).
+ */
 export function newLight(
-  kind: LightKind,
-  existing: readonly { readonly kind: LightKind }[],
+  kind: NewLightKind,
+  existing: readonly { readonly kind: LightKind; readonly darkens?: boolean }[],
 ): AddedLight {
   const id = `added-${Math.random().toString(36).slice(2, 10)}` as const;
-  const count = existing.filter((l) => l.kind === kind).length;
+  const darkens = kind === 'antilight';
+  const count = existing.filter(
+    (l) => (darkens ? 'directional' : kind) === l.kind && !!l.darkens === darkens,
+  ).length;
   const base = {
     ambient: 'Ambient light',
     directional: 'Directional light',
-    shadow: 'Antilight',
+    antilight: 'Antilight',
   }[kind];
   const name = count ? `${base} ${count + 1}` : base;
   switch (kind) {
@@ -89,25 +117,39 @@ export function newLight(
       return { id, kind, name, colour: '#ffffff', strength: 0.2 };
     case 'directional':
       return { id, kind, name, colour: '#ffffff', strength: 1, from: NEW_FROM };
-    case 'shadow':
-      return { id, kind, name, strength: 0.5, from: NEW_SHADOW_FROM, softness: 1 };
+    case 'antilight':
+      return {
+        id,
+        kind: 'directional',
+        name,
+        darkens: true,
+        strength: 0.5,
+        from: NEW_SHADOW_FROM,
+        softness: 1,
+      };
   }
 }
 
 /** An added light as shown, with what is set for it over its own settings (by its id). */
 export function addedLight(light: AddedLight, settings?: LightSettings): BodyLight {
   const s = { ...light, ...settings };
+  const darkens = s.darkens ?? false;
   return {
     id: light.id,
     kind: light.kind,
     name: s.name,
     enabled: s.enabled ?? true,
-    colour: s.colour ?? (light.kind === 'shadow' ? '#000000' : '#ffffff'),
+    darkens,
+    colour: s.colour ?? '#ffffff',
     strength: s.strength ?? 1,
-    ...(light.kind !== 'ambient'
-      ? { from: s.from ?? (light.kind === 'shadow' ? NEW_SHADOW_FROM : NEW_FROM) }
+    ...(light.kind === 'directional'
+      ? {
+          from: s.from ?? (darkens ? NEW_SHADOW_FROM : NEW_FROM),
+          softness: s.softness ?? 1,
+          specular: s.specular ?? '#ffffff',
+          specularStrength: s.specularStrength ?? 1,
+        }
       : {}),
-    ...(light.kind === 'shadow' ? { softness: s.softness ?? 1 } : {}),
   };
 }
 
@@ -117,10 +159,24 @@ export interface BodyLight {
   readonly kind: LightKind;
   readonly name: string;
   readonly enabled: boolean;
+  /** Whether it darkens (an antilight, taking its colour away) instead of lighting. */
+  readonly darkens: boolean;
   readonly colour: string;
   readonly strength: number;
   readonly from?: Vec3;
   readonly softness?: number;
+  /** A directional light's shine (see `LightSettings`). */
+  readonly specular?: string;
+  readonly specularStrength?: number;
+}
+
+/** A light's specular as a colour and a strength (none: white, at 0). */
+function specularOf(rgb: readonly number[] | undefined): {
+  specular: string;
+  specularStrength: number;
+} {
+  const { colour, strength } = colourAndStrength(rgb ?? [0, 0, 0]);
+  return { specular: colour, specularStrength: strength };
 }
 
 /** The directional lights' names by how bright they are, brightest first. */
@@ -168,7 +224,8 @@ const brightness = (rgb: readonly number[]) =>
 
 /**
  * A body's lights as the data has them, with their settings in effect: its rig's (none where it
- * has no rig: its materials aren't lit), and its shadow (`shade`, as its settings come to).
+ * has no rig: its materials aren't lit), and its shadow (`shade`, as its settings come to: a
+ * directional light that darkens, taking white away, unless set otherwise).
  */
 export function bodyLights(
   light: PlanetLight | undefined,
@@ -181,11 +238,14 @@ export function bodyLights(
     return {
       ...own,
       enabled: s?.enabled ?? true,
+      ...(s?.darkens !== undefined ? { darkens: s.darkens } : {}),
       ...(s?.name !== undefined ? { name: s.name } : {}),
       ...(s?.colour !== undefined ? { colour: s.colour } : {}),
       ...(s?.strength !== undefined ? { strength: s.strength } : {}),
       ...(s?.from !== undefined ? { from: s.from } : {}),
       ...(s?.softness !== undefined ? { softness: s.softness } : {}),
+      ...(s?.specular !== undefined ? { specular: s.specular } : {}),
+      ...(s?.specularStrength !== undefined ? { specularStrength: s.specularStrength } : {}),
     };
   };
   if (light) {
@@ -194,6 +254,7 @@ export function bodyLights(
         id: 'ambient',
         kind: 'ambient',
         name: 'Ambient light',
+        darkens: false,
         ...colourAndStrength(light.ambient),
       }),
     );
@@ -208,8 +269,11 @@ export function bodyLights(
           id: `directional-${i}`,
           kind: 'directional',
           name: RANKS[rank] ?? `Light ${rank + 1}`,
+          darkens: false,
           ...colourAndStrength(l.color),
           from: [-d[0], -d[1], -d[2]],
+          softness: l.softness ?? 1,
+          ...specularOf(l.specular),
         }),
       );
     });
@@ -217,24 +281,29 @@ export function bodyLights(
   out.push(
     set('shadow', {
       id: 'shadow',
-      kind: 'shadow',
+      kind: 'directional',
       name: 'Antilight',
-      colour: '#000000',
+      darkens: true,
+      colour: '#ffffff',
       strength: shade.strength,
       from: shade.direction,
       softness: shade.softness,
+      ...specularOf(undefined),
     }),
   );
   return out;
 }
 
-/** A light rig with its lights' settings applied (each where set; one switched off gives no light). */
+/**
+ * A light rig with its lights' settings applied (each where set; one switched off, or darkening
+ * instead, gives no light).
+ */
 export function withLightSettings(light: PlanetLight, settings?: LightSettingsMap): PlanetLight {
   if (!settings) return light;
   const rgb = (id: LightId, own: readonly number[]): Vec3 | readonly number[] => {
     const s = settings[id];
     if (!s) return own;
-    if (s.enabled === false) return [0, 0, 0];
+    if (s.enabled === false || s.darkens) return [0, 0, 0];
     if (s.colour === undefined && s.strength === undefined) return own;
     const was = colourAndStrength(own);
     return rgbOf(s.colour ?? was.colour, s.strength ?? was.strength);
@@ -245,21 +314,22 @@ export function withLightSettings(light: PlanetLight, settings?: LightSettingsMa
     directional: light.directional.map((l, i) => {
       const id: LightId = `directional-${i}`;
       const from = settings[id]?.from;
+      const s = settings[id];
+      const softness = s?.softness ?? l.softness;
+      const was = specularOf(l.specular);
+      const specular =
+        s?.enabled === false || s?.darkens
+          ? undefined
+          : s?.specular !== undefined || s?.specularStrength !== undefined
+            ? rgbOf(s.specular ?? was.specular, s.specularStrength ?? was.specularStrength)
+            : l.specular;
       return {
         color: rgb(id, l.color) as PlanetLight['ambient'],
         direction: from ? ([-from[0], -from[1], -from[2]] as const) : l.direction,
+        ...(softness !== undefined ? { softness } : {}),
+        ...(specular && Math.max(...specular) > 0 ? { specular } : {}),
       };
     }),
-  };
-}
-
-/** A shade with its shadow light's settings applied (switched off: no shade). */
-export function withShadowSettings(shade: BodyShade, settings?: LightSettings): BodyShade {
-  if (!settings) return shade;
-  return {
-    direction: settings.from ?? shade.direction,
-    strength: settings.enabled === false ? 0 : (settings.strength ?? shade.strength),
-    softness: settings.softness ?? shade.softness,
   };
 }
 
@@ -392,19 +462,37 @@ function onLights(added: readonly AddedLight[], settings?: LightSettingsMap): Bo
 }
 
 /**
- * A body's light rig with the lights added to it: their light from all round added to its ambient,
- * their directional lights after its own. A body without a rig is lit by them alone (at the scene's
- * exposure); none at all: unlit.
+ * Whether any of the lights added to a body (or its shadow, set to light instead) lights it, not
+ * darkens it.
+ */
+export function addedLighting(
+  added: readonly AddedLight[],
+  settings: LightSettingsMap | undefined,
+): boolean {
+  const shadow = settings?.shadow;
+  return (
+    onLights(added, settings).some((l) => !l.darkens) ||
+    (shadow?.darkens === false && shadow.enabled !== false)
+  );
+}
+
+/**
+ * A body's light rig with the lights added to it, and its shadow where set to light instead
+ * (`shade`): their light from all round added to its ambient, their directional lights after its
+ * own. A body without a rig is lit by them alone (at the scene's exposure); none at all: unlit.
+ * Those that darken are apart (`bodyDarkenings`).
  */
 export function withAddedLights(
   light: PlanetLight | undefined,
   added: readonly AddedLight[],
   settings: LightSettingsMap | undefined,
   exposure: number,
+  shade?: BodyShade,
 ): PlanetLight | undefined {
-  const on = onLights(added, settings).filter(
-    (l) => l.kind === 'ambient' || l.kind === 'directional',
-  );
+  const shadow = shade
+    ? bodyLights(undefined, shade, settings).filter((l) => l.enabled && !l.darkens)
+    : [];
+  const on = [...shadow, ...onLights(added, settings).filter((l) => !l.darkens)];
   if (!on.length) return light;
   const base: PlanetLight = light ?? { ambient: [0, 0, 0], directional: [], exposure };
   const ambient = on
@@ -418,16 +506,41 @@ export function withAddedLights(
     .map((l) => ({
       direction: [-l.from![0], -l.from![1], -l.from![2]] as const,
       color: rgbOf(l.colour, l.strength),
+      softness: l.softness ?? 1,
+      ...((l.specularStrength ?? 0) > 0
+        ? { specular: rgbOf(l.specular ?? '#ffffff', l.specularStrength!) }
+        : {}),
     }));
   return { ...base, ambient, directional: [...base.directional, ...directional] };
 }
 
-/** The shadows added to a body, as shades (its own shade is apart). */
-export function addedShades(
+/**
+ * What darkens a body: from a side (`direction`, the way the light comes from; none: all round),
+ * how strongly, how softly round the body, and the colour it takes away (each channel 0 to 1).
+ */
+export interface Darkening {
+  readonly direction?: Vec3;
+  readonly strength: number;
+  readonly softness: number;
+  readonly colour: Vec3;
+}
+
+/**
+ * The lights that darken a body, on and of some strength: its rig's and its shadow (`shade`), as
+ * set, then those added to it.
+ */
+export function bodyDarkenings(
+  light: PlanetLight | undefined,
+  shade: BodyShade,
   added: readonly AddedLight[],
   settings: LightSettingsMap | undefined,
-): BodyShade[] {
-  return onLights(added, settings)
-    .filter((l) => l.kind === 'shadow' && l.from)
-    .map((l) => ({ direction: l.from!, strength: l.strength, softness: l.softness ?? 1 }));
+): Darkening[] {
+  return [...bodyLights(light, shade, settings), ...onLights(added, settings)]
+    .filter((l) => l.enabled && l.darkens && l.strength > 0)
+    .map((l) => ({
+      ...(l.from ? { direction: l.from } : {}),
+      strength: l.strength,
+      softness: l.softness ?? 1,
+      colour: rgbOf(l.colour, 1),
+    }));
 }

@@ -211,7 +211,7 @@ export function withStandInLight(
  */
 export function standInLights(set: LightSettingsMap): LightEntry[] {
   return bodyLights(LIGHT, DEFAULT_SHADE, standInLightSettings(set))
-    .filter((l) => l.kind === 'ambient' || l.kind === 'directional')
+    .filter((l) => l.id !== 'shadow')
     .map((l) => {
       const name = LIGHT_NAMES[l.id] ?? l.name;
       return {

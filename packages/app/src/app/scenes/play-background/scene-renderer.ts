@@ -1,7 +1,6 @@
 import {
   type LoadedPlayScene,
   layerOffset,
-  type LayerChannel,
   type SceneBlend,
   type SceneLayer,
   type SceneMaterial,
@@ -14,28 +13,29 @@ import { INSTANCE_FLOATS, ParticleSystem } from './scene-particles';
 import {
   DEFAULT_ACTIVE,
   gridFields,
-  type GridField,
   MATERIAL_DEFAULTS,
   materialValues,
   materialKey,
   mergeSettings,
 } from './material-settings';
 import { rimTurn } from './scene-directions';
+import { BEAM_LENGTH, beamAcross, type LightBeam, beamTube } from './scene-beams';
+import { fitTube, type Tube, tubeCover } from './scene-tubes';
 import { overlayOfFile } from './overlays';
 import { skyOverlayParts } from './sky-overlays';
 import { skyDepths } from './sky-depths';
 import {
   type AddedLight,
-  addedShades,
+  addedLighting,
+  bodyDarkenings,
   type LightSettingsMap,
   linkedSettings,
-  rgbOf,
   withAddedLights,
   withLightSettings,
   tunedRig,
-  withShadowSettings,
 } from './scene-lights';
 import {
+  shapeReach,
   type BodyPart,
   type BodyShade,
   drawOrder,
@@ -47,7 +47,6 @@ import {
   type MaterialTint,
   type SkySettings,
   type PlanetLight,
-  type PartMapping,
   wearOf,
   ownPartKey,
   overlayOfPartKey,
@@ -59,596 +58,59 @@ import {
   withMasks,
   wornParts,
 } from './scene-planets';
+import { BLEND_MODES, NO_TINT, type Tint } from './scene-tints';
 import {
-  BLEND_GLSL,
-  BLEND_MODES,
-  NO_TINT,
-  parseCanvasColour,
-  type Tint,
-  TINT_GLSL,
-} from './scene-tints';
+  BEAM_FRAGMENT,
+  BEAM_VERTEX,
+  BLOOM_FRAGMENT,
+  BODY_VERTEX,
+  bodyFragment,
+  COMPOSITE_FRAGMENT,
+  IMPOSTOR_FRAGMENT,
+  IMPOSTOR_VERTEX,
+  MAX_BEAM_SPHERES,
+  MAX_SURFACES,
+  MESH_VERTEX,
+  meshFragment,
+  PARTICLE_FRAGMENT,
+  PARTICLE_VERTEX,
+  TONE_FRAGMENT,
+  TONE_VERTEX,
+} from './scene-shaders';
+import { applyBlock, compileBlock, type UniformBlock, UniformSet } from './scene-uniforms';
+import { ATTRIBUTES, program, type Programs, programsOf } from './scene-programs';
+import {
+  CHANNELS,
+  gridUniforms,
+  layerBrightness,
+  layersOf,
+  lightUniforms,
+  materialUniforms,
+  partUniforms,
+  scrollingLayers,
+  shadeUniforms,
+  tintUniforms,
+} from './draw-uniforms';
+import { bakeRect, bakeSize, type PixelRect, REBAKE_PIXELS, scrollPixels } from './body-bakes';
+import { GpuTimer } from './gpu-timer';
 
-/** How many directional lights, and how many shades (shadows), a body is drawn with at most. */
-const MAX_LIGHTS = 8;
-const MAX_SHADES = 4;
-/** How many reveals, and how many activations, a grid is drawn with at most (its material's own: one of each). */
-const MAX_FIELDS = 4;
-/** A target's outputs: the colour and the glow (COLOR_ATTACHMENT0 and 1). */
-const DRAW_BUFFERS = [0x8ce0, 0x8ce1];
+export { layerBrightness } from './draw-uniforms';
+export { V_SAMPLES } from './scene-shaders';
 
-const CHANNELS: Record<LayerChannel, number> = { rgb: 0, rgba: 1, a: 2, r: 3, g: 4, b: 5 };
-/** A material's layer slots, in the shader's order, and their samplers. */
-const SLOTS = ['uDiffuse', 'uEmissive', 'uMask0', 'uMask1'] as const;
-/** How many values a uv sphere's v table has, from the pole to the opposite one (as exported). */
-export const V_SAMPLES = 32;
+/*
+ * Every target has one colour output. The shaders write a second (the glow, for the bloom), but
+ * nothing is attached for it: with Direct3D (ANGLE), a program linked for one output is compiled
+ * again, uncached, the first time it draws into two, and for the bodies' shader that takes the
+ * whole browser away for ten seconds or more on every load. The bloom isn't drawn (since 4c0573d);
+ * when it is again, its glow needs a way that keeps every draw at one output.
+ */
+
+/** The key the bodies' program is kept under. */
+const BODY = 'body';
+
 /** How many hexes a drawn hex pattern has round a body at scale 1, where it doesn't say how many its texture has. */
 const HEX_ROUND = 24;
 
-/**
- * How strongly a layer's brightness multiplier acts: the data's value, squared. Measured, as the
- * data doesn't say: against a screenshot of the game's Play screen, squared multipliers give its
- * colours (within 1-4 levels of 255), the faint energy wisps and the faint stars' count; taken as
- * they are, the energy's wisps came out about three times too strong and the stars too few.
- */
-export function layerBrightness(brightMult: number): number {
-  return brightMult * brightMult;
-}
-
-const MESH_VERTEX = `#version 300 es
-in vec3 aPosition;
-in vec2 aUv;
-in vec2 aUv2;
-in vec3 aNormal;
-in vec4 aColor;
-uniform mat4 uViewProjection;
-out vec2 vUv;
-out vec2 vUv2;
-out vec3 vNormal;
-out vec3 vWorld;
-out vec4 vColor;
-void main() {
-  vUv = aUv;
-  vUv2 = aUv2;
-  vNormal = aNormal;
-  vWorld = aPosition;
-  vColor = aColor;
-  gl_Position = uViewProjection * vec4(aPosition, 1.0);
-}`;
-
-/**
- * A material as the game's standard material draws one of these: the colour is the diffuse layer
- * (unshaded materials only: the lit ones here draw nothing but their emissive) plus the emissive
- * layer; the alpha is the alpha masks' product (and the vertex alpha, where the material uses it).
- * Each layer reads its channel, in the mesh's first or second texture coordinates (its uvSet),
- * through its tiling about the texture's centre, less its offset (the
- * offset moves the texture: the scrolls then carry the energy inwards, as the game's sequence names
- * it, and the nebula sits where the game shows it), and its rotation. A layer's midtone offset lifts
- * its middle values (a gamma curve; the data doesn't say which curve, and it changes little here).
- * A mask at its full offset (1) cuts nothing out of an opaque material: the Play screen planets'
- * birth masks run from 0 (their hex dissolve, cut at half) to 1 as they are born and rest there,
- * born whole (as the game shows them), while what they fade (the birth glow) keeps its curve.
- * A layer may be a colour of its own instead of a texture, and may fade by its fresnel: from its
- * minimum where the surface faces the camera to its maximum edge-on, the view first turned by its
- * yaw and pitch (the planets' hex grid brightens towards one side of their rims). The game's
- * fresnel comes out squared and brighter than that formula: measured against a Quick Match
- * screenshot, the planets' hex grid matches the formula's square times FRESNEL_GAIN, where the
- * formula alone left it all but invisible (the data doesn't say why); that was measured on the
- * grid's kind of fresnel (type 1); the inverted kind (type 2, the flyby planets' atmospheres and
- * city lights, strongest facing the camera) comes out squared too, without the gain: measured
- * against the tutorial's own shot of Azeroth, whose atmosphere shell (a colour layer and a mask
- * layer, both type 2) falls off from the body's limb as the game shows it only so. A mask layer's
- * fresnel scales its mask as the formula gives it, once. The emissive
- * layer adds to the diffuse colour, or multiplies it (mod, twice for mod2x). A blended material's
- * output is premultiplied; an opaque one's is cut out where its alpha falls below its threshold.
- * A lit material (a flyby planet's) takes its diffuse colour times the light on it: the ambient
- * colour plus each directional light's colour by how squarely the surface faces against the way it
- * travels, as the game's standard material is lit (its specular left out). A material that uses
- * the vertex colour multiplies its diffuse by it.
- */
-/** The material shading, shared by the meshes' and the bodies' shaders (each declares the surface inputs). */
-const MATERIAL_GLSL = `
-struct Layer {
-  bool used; bool textured; vec4 color; int uvSet; int channel; float bright; float midtone;
-  vec2 offset; float angle; vec2 tiling;
-  int fresnel; float fExponent; float fMin; float fMax; vec2 fTurn;
-};
-const float FRESNEL_GAIN = 4.3;
-uniform sampler2D uDiffuse, uEmissive, uMask0, uMask1;
-uniform Layer uLayers[4];
-#define MAX_LIGHTS ${MAX_LIGHTS}
-#define MAX_SHADES ${MAX_SHADES}
-#define MAX_FIELDS ${MAX_FIELDS}
-uniform bool uUnshaded, uVertexAlpha, uVertexColor, uOpaque;
-uniform int uEmissiveBlend;
-uniform float uEmissiveMult, uCutout;
-uniform float uSmear;
-uniform bool uLit;
-uniform vec3 uAmbient;
-uniform vec3 uLightDir[MAX_LIGHTS];
-uniform vec3 uLightColor[MAX_LIGHTS];
-uniform int uLightCount;
-uniform float uLightScale;
-uniform vec3 uEye, uRight, uUp;
-uniform float uGlowThreshold, uSceneThreshold, uGlowBoost;
-uniform float uStrength, uSpread, uCut, uFalloff;
-uniform int uPattern;
-uniform vec3 uPatternParams;
-uniform vec3 uShadeDir[MAX_SHADES];
-uniform float uShadeStrength[MAX_SHADES], uShadeSoftness[MAX_SHADES];
-uniform int uShadeCount;
-// A grid's: shown where its reveal reaches (its emissive times how much), coloured from
-// inactive (its diffuse) to uActiveColor where its activation reaches; each its side
-// (body frame), spread, falloff and strength, an activation's how much it energizes (reveals too).
-uniform bool uRevealed;
-uniform int uRevealCount, uActivationCount;
-uniform vec3 uRevealFrom[MAX_FIELDS];
-uniform float uRevealSpread[MAX_FIELDS], uRevealFalloff[MAX_FIELDS], uRevealStrength[MAX_FIELDS];
-uniform vec3 uActivationFrom[MAX_FIELDS];
-uniform float uActivationSpread[MAX_FIELDS], uActivationFalloff[MAX_FIELDS], uActivationStrength[MAX_FIELDS];
-uniform float uActivationEnergy[MAX_FIELDS], uActivationGlow[MAX_FIELDS];
-uniform vec3 uActiveColor;
-uniform vec2 uRimTurn;
-uniform vec3 uTintColor, uBodyTintColor;
-uniform int uTintBlend, uBodyTintBlend;
-uniform float uTintStrength, uBodyTintStrength;
-layout(location = 0) out vec4 outColor;
-layout(location = 1) out vec4 outGlow;
-// How much of the pixel the shape covers (a body's edge, smoothed; a mesh's: all of it).
-float coverage = 1.0;
-// Whether the pixel is past a sphere's outline (in its smoothed edge): its textures are seen
-// wholly edge-on there, so read at their coarsest (the point it takes, the outline's, is the
-// same for its neighbours, which would otherwise read them sharpest and alias).
-bool pastOutline = false;
-${BLEND_GLSL}
-${TINT_GLSL}
-// The material's own tint, then its body's over all its materials (a planet's; the sky's over the sky's).
-vec3 tinted(vec3 c) {
-  return tintBy(tintBy(c, uTintColor, uTintBlend, uTintStrength), uBodyTintColor, uBodyTintBlend, uBodyTintStrength);
-}
-
-// A layer's texture coordinates, the mesh's shifted by du along u first (the sky's go right round).
-vec2 layerUvFrom(Layer l, float du) {
-  vec2 t = ((l.uvSet == 2 ? vUv2 : vUv) + vec2(du, 0.0) - 0.5 - l.offset) * l.tiling;
-  float c = cos(l.angle), s = sin(l.angle);
-  return mat2(c, s, -s, c) * t + 0.5;
-}
-vec2 layerUv(Layer l) {
-  return layerUvFrom(l, 0.0);
-}
-vec4 channel(vec4 texel, int c) {
-  if (c == 0) return vec4(texel.rgb, 1.0);
-  if (c == 1) return texel;
-  float v = c == 2 ? texel.a : c == 3 ? texel.r : c == 4 ? texel.g : texel.b;
-  return vec4(v);
-}
-vec3 turn(vec3 v, vec3 axis, float angle) {
-  return v * cos(angle) + cross(axis, v) * sin(angle) + axis * dot(axis, v) * (1.0 - cos(angle));
-}
-// The formula's fresnel: from the layer's minimum facing the camera to its maximum edge-on (type
-// 1), or the other way about (type 2: the facing itself to the exponent, so a low exponent keeps
-// it up nearly to the limb, as the flyby's city lights stay in view in the tutorial's shots).
-float fresnelWith(Layer l, vec2 lean, float spread) {
-  // The turn (the layer's own), and its planet's lean of its rims and glows.
-  vec2 t = lean + uRimTurn;
-  vec3 view = turn(turn(normalize(uEye - vWorld), uUp, t.x), uRight, t.y);
-  float facing = clamp(dot(normalize(vNormal), view), 0.0, 1.0);
-  // Spread: in place of the layer's minimum (none set: as the layer has it), so what shows at
-  // the limb shows across the face; 0 is nothing but the limb.
-  float low = spread < 0.0 ? l.fMin : spread * l.fMax;
-  return mix(low, l.fMax, pow(l.fresnel == 2 ? facing : 1.0 - facing, l.fExponent));
-}
-float fresnelFormula(Layer l) {
-  return fresnelWith(l, l.fTurn, uSpread);
-}
-// A colour layer's fresnel as the game shows it (squared, type 1 with the gain), to a falloff.
-float fresnelTo(Layer l, vec2 lean, float spread, float falloff) {
-  float f = fresnelWith(l, lean, spread);
-  return l.fresnel == 2 ? f * f : pow(f, falloff) * FRESNEL_GAIN;
-}
-// How much a grid's reveal or activation reaches here, 0 to 1: as a light does, the more the face turns to its
-// side (any side, the far one too), wrapped round by its spread (0: the half facing it; 1: on round
-// to the point facing away, fading all the way) and sharpened by its falloff. Times its strength
-// (more than 1 reaches further fully), what it reaches never comes out even: its side and its
-// falloff always tell.
-float fieldAt(vec3 from, float spread, float falloff) {
-  float facing = dot(normalize(vNormal), normalize(from));
-  return pow(clamp((facing + spread) / (1.0 + spread), 0.0, 1.0), falloff);
-}
-float activationAt(int i) {
-  return fieldAt(uActivationFrom[i], uActivationSpread[i], uActivationFalloff[i]);
-}
-// How active a grid is here: its activations added up (up to 1), each times its strength.
-float activation() {
-  float a = 0.0;
-  for (int i = 0; i < MAX_FIELDS; i++) {
-    if (i >= uActivationCount) break;
-    a += uActivationStrength[i] * activationAt(i);
-  }
-  return min(a, 1.0);
-}
-// How much brighter a grid shines here, and blooms: what its glowing activations activate,
-// times how much each glows.
-float activeGlow() {
-  float g = 0.0;
-  for (int i = 0; i < MAX_FIELDS; i++) {
-    if (i >= uActivationCount) break;
-    g += uActivationGlow[i] * min(uActivationStrength[i] * activationAt(i), 1.0);
-  }
-  return g;
-}
-// How much of a grid shows here, 0 to 1: its reveals added up, and what its energizing
-// activations reveal too (as much as they activate, times how much each energizes).
-float revealed() {
-  float sum = 0.0;
-  for (int i = 0; i < MAX_FIELDS; i++)
-    if (i < uRevealCount)
-      sum += uRevealStrength[i] * fieldAt(uRevealFrom[i], uRevealSpread[i], uRevealFalloff[i]);
-  for (int i = 0; i < MAX_FIELDS; i++)
-    if (i < uActivationCount)
-      sum += uActivationEnergy[i] * uActivationStrength[i] * activationAt(i);
-  return min(sum, 1.0);
-}
-// A colour layer's fresnel, its own: to the material's falloff (2, as measured on the planets'
-// grid, unless set).
-float fresnel(Layer l) {
-  if (l.fresnel == 0) return 1.0;
-  return fresnelTo(l, l.fTurn, uSpread, uFalloff);
-}
-vec4 midtone(vec4 v, float m) {
-  return m > 0.0 ? pow(v, vec4(1.0 / (1.0 + m))) : v;
-}
-// A texel at texture coordinates that may wrap (a body's u, round its sphere): the mipmap level
-// from the coordinates' change across the pixel, taken where they don't jump (the same
-// coordinates wrapped elsewhere change less there), so the wrap leaves no seam.
-vec4 sampled(sampler2D tex, vec2 uv) {
-  if (pastOutline) return textureGrad(tex, uv, vec2(1.0, 0.0), vec2(0.0, 1.0));
-  vec2 dx = dFdx(uv), dy = dFdy(uv);
-  vec2 elsewhere = fract(uv + 0.5);
-  vec2 dxb = dFdx(elsewhere), dyb = dFdy(elsewhere);
-  if (dot(dxb, dxb) + dot(dyb, dyb) < dot(dx, dx) + dot(dy, dy)) return textureGrad(tex, uv, dxb, dyb);
-  return textureGrad(tex, uv, dx, dy);
-}
-// A layer's texel; smeared across the mesh's u by uSmear (of the way round the sky: the same
-// sweep for every layer whatever its tiling) as the view sweeps in a fly.
-vec4 texel(sampler2D tex, Layer l) {
-  if (uSmear <= 0.0) return sampled(tex, layerUv(l));
-  vec4 sum = vec4(0.0);
-  for (int k = -3; k <= 3; k++) sum += texture(tex, layerUvFrom(l, float(k) * uSmear / 3.0));
-  return sum / 7.0;
-}
-vec4 colorLayer(sampler2D tex, Layer l) {
-  if (!l.used) return vec4(0.0, 0.0, 0.0, 1.0);
-  vec4 v = l.textured ? midtone(channel(texel(tex, l), l.channel), l.midtone) : l.color;
-  return vec4(v.rgb * l.bright * fresnel(l), v.a);
-}
-// A hex grid's lines, drawn: the distance from the nearest cell's edge in a grid of pointy
-// hexes a unit apart, the lines "width" of a cell wide (anti-aliased by the pixel's footprint)
-// and glowing "soft" about themselves.
-float hexLines(vec2 p, float width, float soft) {
-  const vec2 r = vec2(1.0, 1.7320508);
-  vec2 h = r * 0.5;
-  vec2 a = mod(p, r) - h;
-  vec2 b = mod(p - h, r) - h;
-  vec2 c = abs(dot(a, a) < dot(b, b) ? a : b);
-  float edge = 0.5 - max(dot(c, normalize(vec2(1.0, 1.7320508))), c.x);
-  float aa = fwidth(edge);
-  float line = 1.0 - smoothstep(width - aa, width + aa, edge);
-  float halo = soft * exp(-max(edge - width, 0.0) * 6.0);
-  return max(line, halo);
-}
-// The emissive layer drawn as a pattern instead of read from its texture: the hexes on the
-// mapping, so many round it (the params: round, width, soft), regular at the equator.
-vec4 patternLayer(Layer l) {
-  if (!l.used) return vec4(0.0, 0.0, 0.0, 1.0);
-  vec2 p = vec2(vUv.x, vUv.y * 0.5) * uPatternParams.x;
-  float v = hexLines(p, uPatternParams.y, uPatternParams.z);
-  return vec4(vec3(v) * l.bright * fresnel(l), 1.0);
-}
-float maskLayer(sampler2D tex, Layer l) {
-  if (!l.used) return 1.0;
-  if (uOpaque && l.midtone >= 1.0) return 1.0; // fully born: nothing cut out
-  float v = clamp(channel(sampled(tex, layerUv(l)), l.channel).a * l.bright, 0.0, 1.0);
-  return midtone(vec4(v), l.midtone).a * (l.fresnel == 0 ? 1.0 : clamp(fresnelFormula(l), 0.0, 1.0));
-}
-vec3 lit(vec3 albedo) {
-  vec3 n = normalize(vNormal);
-  vec3 light = uAmbient;
-  for (int i = 0; i < MAX_LIGHTS; i++) {
-    if (i < uLightCount) light += uLightColor[i] * max(0.0, dot(n, -normalize(uLightDir[i])));
-  }
-  return albedo * light * uLightScale;
-}
-void shade() {
-  vec4 diffuse = colorLayer(uDiffuse, uLayers[0]);
-  if (uVertexColor) diffuse.rgb *= vColor.rgb;
-  // A grid's colour, from inactive (its own) towards active where its activation reaches.
-  if (uActivationCount > 0) diffuse.rgb = mix(diffuse.rgb, uActiveColor * uLayers[0].bright, activation());
-  vec4 emissive = uPattern == 1 ? patternLayer(uLayers[1]) : colorLayer(uEmissive, uLayers[1]);
-  // A grid shows where its reveal reaches it (with its own fade, the game's look).
-  if (uRevealed) emissive.rgb *= revealed();
-  vec3 base = uUnshaded ? diffuse.rgb : uLit ? lit(diffuse.rgb) : vec3(0.0);
-  // The shades (its shadows): the body's colour cut where it faces each one's direction; what it
-  // emits isn't.
-  for (int i = 0; i < MAX_SHADES; i++) {
-    if (i < uShadeCount && uShadeStrength[i] > 0.0)
-      base *= 1.0 - uShadeStrength[i] * pow(max(0.0, dot(normalize(vNormal), uShadeDir[i])), uShadeSoftness[i]);
-  }
-  vec3 glow = emissive.rgb * uEmissiveMult;
-  // The emissive pattern cut: what is below the cut goes black, the rest keeps its range.
-  if (uCut > 0.0) glow = max(glow - uCut, 0.0) / (1.0 - uCut);
-  // A grid shines brighter, and blooms more, where its glowing activation activates it.
-  float shining = uActivationCount > 0 ? activeGlow() : 0.0;
-  glow *= 1.0 + shining;
-  vec3 rgb = tinted(uEmissiveBlend == 2 ? base + glow : base * glow * (uEmissiveBlend == 1 ? 2.0 : 1.0));
-  float alpha = maskLayer(uMask0, uLayers[2]) * maskLayer(uMask1, uLayers[3]) * diffuse.a;
-  if (uVertexAlpha) alpha *= vColor.a;
-  if (!uOpaque) alpha *= uStrength; // a part shown less strongly: its blended materials fainter
-  if (uOpaque) {
-    if (alpha < uCutout) discard;
-    // Opaque, but for its edge: blended there by how much of the pixel it covers.
-    outColor = vec4(rgb * coverage, coverage);
-  } else {
-    alpha *= coverage;
-    outColor = vec4(rgb * alpha, alpha);
-  }
-  // What blooms under its own light's threshold that the scene's wouldn't (the glow up to 1 of
-  // it: 0 none, 1 as the data has it), and past 1 its emissive light boosted (a glow as if
-  // through haze): the bloom adds them. Below 1 the glow also takes back as much of what the
-  // scene's own bloom would make of this light, so at 0 it glows not at all. The light is the
-  // emissive layer's, or the colour it modulates (a grid over a colour glows in that colour).
-  vec3 shine = uEmissiveBlend == 2 ? tinted(glow) : rgb;
-  float up = min(uGlowBoost, 1.0);
-  outGlow = vec4(up * max(outColor.rgb - uGlowThreshold, 0.0) - max(outColor.rgb - uSceneThreshold, 0.0)
-    + (max(uGlowBoost - 1.0, 0.0) + shining) * shine * (uOpaque ? coverage : alpha), outColor.a);
-}
-`;
-
-const MESH_FRAGMENT = `#version 300 es
-precision highp float;
-in vec2 vUv;
-in vec2 vUv2;
-in vec3 vNormal;
-in vec3 vWorld;
-in vec4 vColor;
-${MATERIAL_GLSL}
-void main() {
-  shade();
-}`;
-
-/**
- * A planet's part on one square facing the camera, as wide as the body's widest part: the vertex
- * shader puts the square up in the body's frame (x right, y away from the eye, z up, about the
- * body's centre); the fragment shader finds the part's shape under each pixel, in units of the
- * body's radius (the eye and the square's point are given in those), and shades it as the meshes
- * are shaded, with the depth the point has, so parts and bodies hide one another as the meshes
- * did: a sphere by its near side, or its far side (an atmosphere shell modelled inside out, its
- * normals inward: what shows is past the body's limb); a flat ring in the plane facing the eye.
- * The texture coordinates come from the mapping the exporter fitted to the game's mesh (a uv
- * sphere about a pole, linear in the point, or round a ring).
- */
-const BODY_VERTEX = `#version 300 es
-in vec2 aCorner;
-uniform mat4 uViewProjection;
-uniform vec3 uCentre;
-uniform mat3 uAxes;
-uniform float uExtent;
-out vec2 vQuad;
-void main() {
-  vQuad = aCorner * uExtent;
-  gl_Position = uViewProjection * vec4(uCentre + uAxes * vec3(vQuad.x, 0.0, vQuad.y), 1.0);
-}`;
-
-const BODY_FRAGMENT = `#version 300 es
-precision highp float;
-const int RING_SAMPLES = 4;
-vec2 vUv;
-vec2 vUv2;
-vec3 vNormal;
-vec3 vWorld;
-vec4 vColor;
-${MATERIAL_GLSL}
-uniform mat4 uViewProjection;
-uniform vec3 uCentre;
-uniform mat3 uAxes;
-uniform float uRadius;
-uniform int uShape;
-uniform vec3 uShapeParams, uShapeCentre;
-struct Mapping { int kind; vec3 pole; vec3 meridian; vec4 a; vec4 b; float v[${V_SAMPLES}]; };
-uniform Mapping uMap, uMap2;
-uniform vec4 uPartColor;
-in vec2 vQuad;
-const float PI = 3.14159265;
-// A uv sphere's v at an angle from the pole (0 to 1), between the table's values.
-float vAt(float table[${V_SAMPLES}], float polar) {
-  float at = clamp(polar, 0.0, 1.0) * float(${V_SAMPLES - 1});
-  int k = int(floor(at));
-  if (k >= ${V_SAMPLES - 1}) return table[${V_SAMPLES - 1}];
-  return mix(table[k], table[k + 1], at - float(k));
-}
-// A point's texture coordinates by a mapping (the ring's by where it is across the ring too).
-vec2 mapped(Mapping m, vec3 p, float across) {
-  if (m.kind == 0) {
-    vec3 u = normalize(p);
-    float polar = acos(clamp(dot(u, m.pole), -1.0, 1.0));
-    float az = atan(dot(u, cross(m.pole, m.meridian)), dot(u, m.meridian)) / (2.0 * PI);
-    return vec2(fract(m.a.y + (m.a.x > 0.5 ? -az : az)), vAt(m.v, polar / PI));
-  }
-  if (m.kind == 1) return vec2(dot(m.a, vec4(p, 1.0)), dot(m.b, vec4(p, 1.0)));
-  float az = abs(mod(atan(p.z, p.x) - m.a.x + PI, 2.0 * PI) - PI);
-  // v: nothing at both edges, all at the circle a.z of the way across (as the mesh has it).
-  float mid = clamp(m.a.z, 0.001, 0.999);
-  return vec2(m.a.y * (1.0 - az / PI), across < mid ? across / mid : (1.0 - across) / (1.0 - mid));
-}
-void main() {
-  vec3 eye = uEye;
-  vec3 d = normalize(vec3(vQuad.x, 0.0, vQuad.y) / uRadius - eye);
-  vec3 p, n;
-  // Each shape's edge smoothed over a pixel: how far inside it the pixel is, over how much that
-  // changes across the pixel (worked out for every pixel of the square, before any is dropped).
-  float r = uShapeParams.x;
-  vec3 from = eye - uShapeCentre;
-  float b = dot(from, d);
-  float disc = b * b - dot(from, from) + r * r;
-  float tRing = (uShapeParams.z - eye.y) / d.y;
-  float rr = length((eye + tRing * d).xz);
-  float inside = uShape <= 1 ? disc : min(rr - uShapeParams.x, uShapeParams.y - rr);
-  coverage = clamp(inside / max(fwidth(inside), 1e-6) + 0.5, 0.0, 1.0);
-  // A pixel the shape misses isn't dropped (its neighbours' texture derivatives need it: a
-  // dropped one leaves them undefined, and the textures alias along the edge); it is shaded as
-  // the edge and given nothing, below.
-  if (uShape <= 1) {
-    // Past the edge but within the pixel: the edge itself.
-    pastOutline = disc < 0.0;
-    float t = uShape == 0 ? -b - sqrt(max(disc, 0.0)) : -b + sqrt(max(disc, 0.0));
-    if (t <= 0.0) discard;
-    p = from + t * d;
-    n = p / r * (uShape == 0 ? 1.0 : -1.0);
-  } else {
-    if (tRing <= 0.0) discard;
-    p = eye + tRing * d;
-    n = vec3(0.0, -1.0, 0.0);
-  }
-  float across = uShape == 2 ? (length(p.xz) - uShapeParams.x) / max(1e-5, uShapeParams.y - uShapeParams.x) : 0.0;
-  vNormal = n;
-  vWorld = p;
-  vColor = uPartColor;
-  vec3 at = uShape <= 1 ? p + uShapeCentre : p;
-  vec4 clip = uViewProjection * vec4(uCentre + uAxes * (at * uRadius), 1.0);
-  gl_FragDepth = clip.z / clip.w * 0.5 + 0.5;
-  if (uShape == 2) {
-    // A ring is brightest along one circle (its v's peak: a crease a pixel or so wide when
-    // small): shaded at RING_SAMPLES points across the pixel's width of it, and averaged, so the
-    // line is as smooth as the game's drawn larger and scaled down, not a staircase.
-    float width = fwidth(across);
-    vec4 colour = vec4(0.0), glow = vec4(0.0);
-    for (int i = 0; i < RING_SAMPLES; i++) {
-      float a = clamp(across + width * ((float(i) + 0.5) / float(RING_SAMPLES) - 0.5), 0.0, 1.0);
-      vUv = mapped(uMap, p, a);
-      vUv2 = mapped(uMap2, p, a);
-      shade();
-      colour += outColor;
-      glow += outGlow;
-    }
-    outColor = colour / float(RING_SAMPLES);
-    outGlow = glow / float(RING_SAMPLES);
-  } else {
-    vUv = mapped(uMap, p, across);
-    vUv2 = mapped(uMap2, p, across);
-    shade();
-  }
-  if (coverage <= 0.0) {
-    // Missed: nothing drawn, nothing hidden.
-    outColor = vec4(0.0);
-    outGlow = vec4(0.0);
-    gl_FragDepth = 1.0;
-  }
-}`;
-
-/**
- * A particle as a square facing the camera, its size its side (the brightest stars then come out
- * as wide, and as many, as in a screenshot of the game); streaked across the view while the
- * background flies to another set of planets (uStreak, 0 to 1): drawn out to STREAK_LENGTH times
- * its size, thinned and dimmed as it goes, as a star smears when the view sweeps.
- */
-const PARTICLE_VERTEX = `#version 300 es
-const float STREAK_LENGTH = 14.0;
-in vec2 aCorner;
-in vec4 aParticle;
-in vec4 aParticleColor;
-uniform mat4 uView, uProjection;
-uniform float uStreak;
-out vec2 vUv;
-out vec4 vColor;
-void main() {
-  vec4 at = uView * vec4(aParticle.xyz, 1.0);
-  at.x += aCorner.x * aParticle.w * (1.0 + uStreak * STREAK_LENGTH);
-  at.y += aCorner.y * aParticle.w * mix(1.0, 0.3, uStreak);
-  vUv = aCorner + 0.5;
-  vColor = vec4(aParticleColor.rgb, aParticleColor.a * mix(1.0, 0.55, uStreak));
-  gl_Position = uProjection * at;
-}`;
-
-const PARTICLE_FRAGMENT = `#version 300 es
-precision highp float;
-uniform sampler2D uTexture;
-uniform int uChannel;
-uniform float uBright;
-// The sky's tint: the stars are the sky's.
-uniform vec3 uBodyTintColor;
-uniform int uBodyTintBlend;
-uniform float uBodyTintStrength;
-in vec2 vUv;
-in vec4 vColor;
-layout(location = 0) out vec4 outColor;
-layout(location = 1) out vec4 outGlow;
-${BLEND_GLSL}
-${TINT_GLSL}
-void main() {
-  outGlow = vec4(0.0);
-  vec4 t = texture(uTexture, vUv);
-  vec3 c = uChannel <= 1 ? t.rgb : vec3(uChannel == 2 ? t.a : uChannel == 3 ? t.r : uChannel == 4 ? t.g : t.b);
-  vec3 star = tintBy(c * uBright * vColor.rgb, uBodyTintColor, uBodyTintBlend, uBodyTintStrength);
-  outColor = vec4(star * vColor.a, 0.0);
-}`;
-
-const TONE_VERTEX = `#version 300 es
-out vec2 vUv;
-void main() {
-  vec2 p = vec2((gl_VertexID << 1) & 2, gl_VertexID & 2);
-  vUv = p;
-  gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0);
-}`;
-
-/**
- * A layer drawn on its own (premultiplied: its alpha what it covers), over the frame: its colour
- * and its glow, each covering what is under it as far as the layer's alpha says.
- */
-const COMPOSITE_FRAGMENT = `#version 300 es
-precision highp float;
-uniform sampler2D uColor, uGlow;
-in vec2 vUv;
-layout(location = 0) out vec4 outColor;
-layout(location = 1) out vec4 outGlow;
-void main() {
-  outColor = texture(uColor, vUv);
-  outGlow = vec4(texture(uGlow, vUv).rgb, outColor.a);
-}`;
-
-/**
- * The bloom: what is brighter than the light's threshold, channel by channel (so a deep red or
- * blue glow blooms in its colour, as the tutorial's planets' atmospheres do; by luminance they
- * barely would) (uPass 0: taken from the frame, at a
- * fraction of its size, four texels averaged), blurred (uPass 1: nine taps along uStep, run across
- * then down, a few times), for the tone pass to add back over the picture, as the game's HDR spreads
- * what glows (its threshold is the light's; how far and how strongly it spreads aren't in the
- * data: measured against the tutorial's shots of its planets, whose atmospheres bloom well past
- * them).
- */
-const BLOOM_FRAGMENT = `#version 300 es
-precision highp float;
-uniform sampler2D uSource, uGlow;
-uniform vec2 uStep;
-uniform float uThreshold;
-uniform int uPass;
-in vec2 vUv;
-out vec4 outColor;
-void main() {
-  if (uPass == 0) {
-    vec3 c = (texture(uSource, vUv + uStep * vec2(-0.5, -0.5)).rgb + texture(uSource, vUv + uStep * vec2(0.5, -0.5)).rgb
-      + texture(uSource, vUv + uStep * vec2(-0.5, 0.5)).rgb + texture(uSource, vUv + uStep * vec2(0.5, 0.5)).rgb) * 0.25;
-    vec3 g = (texture(uGlow, vUv + uStep * vec2(-0.5, -0.5)).rgb + texture(uGlow, vUv + uStep * vec2(0.5, -0.5)).rgb
-      + texture(uGlow, vUv + uStep * vec2(-0.5, 0.5)).rgb + texture(uGlow, vUv + uStep * vec2(0.5, 0.5)).rgb) * 0.25;
-    outColor = vec4(max(c - uThreshold, 0.0) + g, 1.0);
-  } else {
-    float w[5] = float[](0.227, 0.194, 0.121, 0.054, 0.016);
-    vec3 sum = texture(uSource, vUv).rgb * w[0];
-    for (int i = 1; i < 5; i++) {
-      sum += texture(uSource, vUv + uStep * float(i)).rgb * w[i];
-      sum += texture(uSource, vUv - uStep * float(i)).rgb * w[i];
-    }
-    outColor = vec4(sum, 1.0);
-  }
-}`;
 /**
  * How strongly the bloom is added back, how many times it is blurred across and down, how far
  * apart its taps are (in its texels) and how much smaller than the canvas it is: together, how
@@ -661,44 +123,11 @@ const BLOOM_SCALE = 8;
 /** The bloom's threshold where the light doesn't set one: the tutorial's lights' 0.6. */
 const DEFAULT_BLOOM_THRESHOLD = 0.6;
 
-/**
- * The light's HDR tone mapping: the scene scaled by its exposure, its luminance through Reinhard's
- * curve to the light's white point (what reaches it shows as white). The data gives the exposure
- * and white point but not the curve (its operator is a number); on luminance this one matches the
- * game's screenshot within a few levels, where the same curve per channel darkens the blues too much.
- * Then the tint, as CSS blends a colour over the picture: fading from the tint before (uTint[1])
- * to the tint now (uTint[0]) by uFade.
- */
-const TONE_FRAGMENT = `#version 300 es
-precision highp float;
-uniform sampler2D uScene, uBloom;
-uniform float uExposure, uWhitePoint, uFade, uBloomStrength;
-uniform vec3 uTint[2];
-uniform int uBlend[2];
-// An editing backdrop in place of the sky (0: none; 1: a colour; 2: a grid of two, uGridSize
-// pixels a square), under what the scene covers (its alpha), as it is: not tone-mapped or tinted.
-uniform int uBackdrop;
-uniform vec3 uBackdropA, uBackdropB;
-uniform float uGridSize;
-in vec2 vUv;
-out vec4 outColor;
-${BLEND_GLSL}
-void main() {
-  vec4 scene = texture(uScene, vUv);
-  vec3 hdr = scene.rgb + texture(uBloom, vUv).rgb * uBloomStrength;
-  float light = dot(hdr, vec3(0.2126, 0.7152, 0.0722));
-  vec3 c = hdr * uExposure;
-  float l = light * uExposure;
-  float mapped = l * (1.0 + l / (uWhitePoint * uWhitePoint)) / (1.0 + l);
-  c = clamp(l > 0.0 ? c * (mapped / l) : c, 0.0, 1.0);
-  vec3 shown = mix(blend(c, uTint[1], uBlend[1]), blend(c, uTint[0], uBlend[0]), uFade);
-  if (uBackdrop > 0) {
-    vec2 cell = floor(gl_FragCoord.xy / uGridSize);
-    vec3 back = uBackdrop == 2 && mod(cell.x + cell.y, 2.0) >= 1.0 ? uBackdropB : uBackdropA;
-    shown = clamp(shown + back * (1.0 - clamp(scene.a, 0.0, 1.0)), 0.0, 1.0);
-  }
-  outColor = vec4(shown, 1.0);
-}`;
+/** How strongly a beam shows down its middle, by its body: one that lights, one that darkens. */
+const BEAM_ALPHA = 0.35;
+const DARK_BEAM_ALPHA = 0.7;
+/** How strongly a dark beam's edges show. */
+const BEAM_EDGE_ALPHA = 0.5;
 
 /**
  * An editing aid in place of the sky (none of the sky, its stars or particles drawn): a plain
@@ -830,25 +259,6 @@ function multiply(a: Float32Array, b: Float32Array): Float32Array {
   return out;
 }
 
-function program(gl: WebGL2RenderingContext, vertex: string, fragment: string): WebGLProgram {
-  const p = gl.createProgram();
-  for (const [type, source] of [
-    [gl.VERTEX_SHADER, vertex],
-    [gl.FRAGMENT_SHADER, fragment],
-  ] as const) {
-    const s = gl.createShader(type)!;
-    gl.shaderSource(s, source);
-    gl.compileShader(s);
-    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS))
-      throw new Error(gl.getShaderInfoLog(s) ?? 'shader');
-    gl.attachShader(p, s);
-  }
-  gl.linkProgram(p);
-  if (!gl.getProgramParameter(p, gl.LINK_STATUS))
-    throw new Error(gl.getProgramInfoLog(p) ?? 'program');
-  return p;
-}
-
 /**
  * One material drawn on one mesh, or on one part of a placed planet's body; moving when one of
  * its layers scrolls.
@@ -870,6 +280,8 @@ interface MeshDraw {
   readonly owner?: LoadedPlanet;
   /** The part of the planet's body it is, drawn on the square instead of a mesh. */
   readonly part?: BodyPart;
+  /** The exact tube its mesh stands for, where it is one (the sky's star cylinder): drawn as that. */
+  readonly tube?: Tube;
   /** That part by whose it is and its role, for its settings. */
   readonly partKey?: PartKey;
   /** How it is lit, where it is a lit material of a flyby planet. */
@@ -925,6 +337,16 @@ interface Placed {
   frame: BodyFrame;
   /** The half-side of the square its parts are drawn on, in the scene's units: its widest part. */
   extent: number;
+  /** Its draws as drawn, in drawing order. */
+  states: DrawState[];
+  /** Bumped whenever what it is drawn as changes (its settings, where it is): it is baked again. */
+  version: number;
+  /** How far its parts reach from its centre, in the scene's units. */
+  reachOf: number;
+  /** Whether it has a part of another shape than a sphere or a ring (hidden behind bodies' surfaces). */
+  hasShapes: boolean;
+  /** It drawn on its own, put back into each frame. */
+  bake: Bake | null;
 }
 
 /** A body's frame: its axes in the world (column-major: x, y, z), and the eye in it, in units of its radius. */
@@ -1039,7 +461,7 @@ export function partsExtent(
   eyeDistance: number,
 ): number {
   const d = eyeDistance / radius;
-  let out = bodyExtent(radius, reach(parts.filter((p) => p.shape.kind === 'sphere')), eyeDistance);
+  let out = bodyExtent(radius, reach(parts.filter((p) => p.shape.kind !== 'ring')), eyeDistance);
   for (const { shape } of parts) {
     if (shape.kind !== 'ring') continue;
     const plane = d + shape.depth;
@@ -1053,9 +475,9 @@ export function reach(parts: readonly BodyPart[], distance?: number): number {
   return Math.max(
     1,
     ...parts.map((p) =>
-      p.shape.kind === 'sphere'
-        ? p.shape.radius + Math.hypot(...(p.shape.centre ?? [0, 0, 0]))
-        : p.shape.outer * (distance ? ringScale(p.shape, distance) : 1),
+      p.shape.kind === 'ring'
+        ? p.shape.outer * (distance ? ringScale(p.shape, distance) : 1)
+        : shapeReach(p.shape),
     ),
   );
 }
@@ -1063,14 +485,13 @@ export function reach(parts: readonly BodyPart[], distance?: number): number {
 /** A float render target (half floats where the browser can render to them), with depth. */
 interface Target {
   readonly framebuffer: WebGLFramebuffer;
-  readonly depth: WebGLRenderbuffer;
+  /** Its depth, as a texture (a beam is hidden where the frame's is nearer). */
+  depth: WebGLTexture | null;
   texture: WebGLTexture | null;
-  /** What blooms under the planets' own lights' thresholds beyond the scene's. */
-  glow: WebGLTexture | null;
 }
 
 const moves = (m: SceneMaterial) =>
-  [m.diffuse, m.emissive, ...m.alphaMasks].some((layer) => layer?.scroll);
+  [m.diffuse, m.emissive, m.specular, ...m.alphaMasks].some((layer) => layer?.scroll);
 
 interface ParticleDraw {
   /** Its material's name (the sky's settings for it apply). */
@@ -1082,28 +503,98 @@ interface ParticleDraw {
 }
 
 /**
+ * A draw as it is drawn: worked out once from its material, its settings and its body (when one
+ * of them changes, not each frame), its uniforms then given to GL as they are.
+ */
+interface DrawState {
+  readonly draw: MeshDraw;
+  /** Whether it is drawn at all: switched on, its body and its part shown. */
+  readonly enabled: boolean;
+  readonly depth: MaterialDepth;
+  readonly blend: SceneBlend;
+  readonly moving: boolean;
+  /** Its material as set (its masks, its layers' textures and transforms, lit or flat). */
+  readonly material: SceneMaterial;
+  /** Its uniforms but for where it is seen from and the time (a scrolling layer's offset). */
+  readonly uniforms: UniformSet;
+  /** Its layers that scroll, by slot. */
+  readonly scrolls: readonly { readonly slot: number; readonly layer: SceneLayer }[];
+  /** Each slot's texture and sampler. */
+  readonly textures: readonly (WebGLTexture | null)[];
+  readonly samplers: readonly (WebGLSampler | null)[];
+  /** A body's part as set: its shape, its mappings. */
+  readonly part?: BodyPart;
+  /** What it was worked out from (the sky's draws: whether they have to be drawn again). */
+  readonly signature: string;
+  /** Its uniforms as each program takes them, found once. */
+  readonly blocks: Map<WebGLProgram, UniformBlock>;
+}
+
+/**
+ * A body drawn on its own (baked), into a target the size of the pixels it covers: put back into
+ * each frame as it is, until it changes (or the view does, or its layers scroll a pixel on).
+ */
+interface Bake {
+  readonly framebuffer: WebGLFramebuffer;
+  color: WebGLTexture | null;
+  depth: WebGLTexture | null;
+  /** Its textures' size. */
+  width: number;
+  height: number;
+  /** The frame's pixels it covers (none: none of it shows). */
+  rect: PixelRect | null;
+  /** What it was baked for (the view, the body, the surfaces in front of its shapes). */
+  key: string;
+  /** The time it was baked at, on the scene's clock. */
+  at: number;
+  /** Whether its program was ready (else it is baked again, next frame). */
+  complete: boolean;
+  /** How many pixels a second its scrolling layers move across it (0: none scroll). */
+  scroll: number;
+}
+
+/**
  * Draws the scene into a canvas with WebGL 2: the sky's meshes through the game's camera, the
- * placed planets' bodies each on one camera-facing square (their parts' shapes found under each
+ * placed planets' bodies each on camera-facing squares (their parts' shapes found under each
  * pixel: no mesh), then the particles as camera-facing squares, into a half-float target (light
- * adds up past white, as in the game's HDR), tone-mapped onto the canvas. Opaque materials (the
- * planets' surfaces) draw first and hide what is behind them; the blended ones follow by
- * priority. What doesn't move (the sky's nebula and stars, the planets) is drawn once per size
- * into a target of its own, colour and depth, and each frame starts from a copy of it, drawing
- * only what moves (the energy's scroll, the particles). Each target also keeps what glows beyond
- * the scene's own bloom, for the bloom pass. Each material is drawn as its settings say (the
- * sky's as set by `setSky`; a planet's as its placement, its tuning and its style's say): not at
- * all, fainter, blended another way, glowing more or less, its pattern sized.
+ * adds up past white, as in the game's HDR), tone-mapped onto the canvas. Opaque materials draw
+ * first and hide what is behind them; the blended ones follow by priority.
+ *
+ * What is drawn is worked out once and kept (`DrawState`): each draw's settings, material, light
+ * and uniforms, made again only when what they come from changes (a body's placement, the sky's
+ * settings, the scene's lights). What doesn't move is drawn once and kept too: the sky's (the
+ * nebula and stars) in targets of its own, colour and depth, each frame starting from a copy of
+ * them; each body on its own (`Bake`), put back into each frame pixel for pixel, baked again only
+ * when it changes, the view does, or its scrolling layers have moved half a pixel. A frame is only
+ * worth drawing when something has changed or moves (`needsFrame`). Each target also keeps what
+ * glows beyond the scene's own bloom. Each material is drawn as its settings say (the sky's as set
+ * by `setSky`; a planet's as its placement, its tuning and its style's say): not at all, fainter,
+ * blended another way, glowing more or less, its pattern sized. The bodies are drawn with one
+ * program any part can be drawn with (its shape and what it is drawn with chosen as it runs),
+ * compiled in the background where the browser can. Only the one: with Direct3D (ANGLE), a
+ * program's first draw into two targets compiles it again, uncached, holding the whole browser up
+ * for a second or more, so each program more (a variant per part) would hold it up again; and the
+ * context keeps them for the next scene (`programsOf`).
  */
 export class SceneRenderer {
   private readonly gl: WebGL2RenderingContext;
+  /** The meshes' program (the sky's). */
   private readonly meshProgram: WebGLProgram;
-  private readonly bodyProgram: WebGLProgram;
+  /** The bodies' program (compiled in the background where the browser can: none until done). */
+  private readonly programs: Programs;
   /** The square a body's parts are drawn on. */
   private readonly quad: WebGLVertexArrayObject;
   private readonly particleProgram: WebGLProgram;
   private readonly toneProgram: WebGLProgram;
   private readonly bloomProgram: WebGLProgram;
   private readonly compositeProgram: WebGLProgram;
+  private readonly impostorProgram: WebGLProgram;
+  private readonly beamProgram: WebGLProgram;
+  /** A beam's tube, put where each beam is when drawn. */
+  private readonly beamVao: WebGLVertexArrayObject;
+  private readonly beamCount: number;
+  /** The beams shown over the picture (an editor's: the light selected). */
+  private beams: readonly LightBeam[] = [];
   /** The bloom's two small targets, blurred from one into the other and back. */
   private readonly bloom: { framebuffer: WebGLFramebuffer; texture: WebGLTexture | null }[];
   private bloomSize: [number, number] = [1, 1];
@@ -1111,11 +602,15 @@ export class SceneRenderer {
   /** How layers sample their textures, by whether they repeat across u (1) and across v (2). */
   private readonly samplers: WebGLSampler[];
   private readonly vaos: WebGLVertexArrayObject[] = [];
-  /** The scene's own draws (its sky), then its sky's overlays', then the placed planets'. */
+  /** The scene's own draws (its sky), then its sky's overlays'. */
   private readonly sceneDraws: MeshDraw[] = [];
   private skyOverlayDraws: MeshDraw[] = [];
-  private planetDraws: MeshDraw[] = [];
-  private draws: MeshDraw[] = [];
+  /** The sky's draws as drawn, in drawing order; and what they were worked out from. */
+  private skyStates: DrawState[] = [];
+  private skySignature = '';
+  /** Whether any of the sky's draws moves, and any of its particles shows (frames are drawn then). */
+  private skyMoves = false;
+  private particlesShown = false;
   /** The sky's overlays' meshes on the GPU, and what they were made for (rebuilt when it changes). */
   private skyOverlayVaos: WebGLVertexArrayObject[] = [];
   private skyOverlayKey = '';
@@ -1127,8 +622,9 @@ export class SceneRenderer {
   /** The targets' format: half floats where the browser can render to them, else bytes. */
   private readonly format: number;
   /**
-   * What doesn't move, drawn once per size: the background (the sky, behind every object), and the
-   * scene's objects on their own (premultiplied, over nothing) for what moves behind them to go under.
+   * What doesn't move of the sky, drawn once per size: the background (behind every object), and
+   * what is among the objects on its own (premultiplied, over nothing) for what moves behind it to
+   * go under.
    */
   private readonly stillBackground: Target;
   private readonly stillScene: Target;
@@ -1138,8 +634,19 @@ export class SceneRenderer {
   private projection: Float32Array = new Float32Array(16);
   /** The camera turned from where the scene puts it, about its up, in radians. */
   private yaw = 0;
-  /** Whether what doesn't move has to be drawn again before the next frame. */
+  /** Whether what doesn't move of the sky has to be drawn again before the next frame. */
   private stillDirty = true;
+  /** Whether anything has changed since the last frame (a frame is worth drawing). */
+  private changed = true;
+  /** Bumped whenever the view changes (where the camera is or looks, the canvas's size): bodies are baked again. */
+  private viewVersion = 0;
+  /** The bodies' surfaces (spheres in the world) shapes are hidden behind, and what they are, as a key. */
+  private surfaces: number[][] = [];
+  private surfacesKey = '';
+  /** Times the GPU takes, where it can be timed. */
+  private readonly timer: GpuTimer;
+  /** Whether the GPU's time is measured (frame stats shown). */
+  timing = false;
 
   /** Throws when the browser has no WebGL 2. */
   constructor(
@@ -1154,13 +661,20 @@ export class SceneRenderer {
     });
     if (!gl) throw new Error('WebGL 2 is not available');
     this.gl = gl;
-    this.meshProgram = program(gl, MESH_VERTEX, MESH_FRAGMENT);
-    this.bodyProgram = program(gl, BODY_VERTEX, BODY_FRAGMENT);
+    this.programs = programsOf(gl);
+    this.programs.request(BODY, BODY_VERTEX, bodyFragment());
+    this.meshProgram = program(gl, MESH_VERTEX, meshFragment(true));
     this.quad = this.quadVao();
     this.particleProgram = program(gl, PARTICLE_VERTEX, PARTICLE_FRAGMENT);
     this.toneProgram = program(gl, TONE_VERTEX, TONE_FRAGMENT);
     this.bloomProgram = program(gl, TONE_VERTEX, BLOOM_FRAGMENT);
     this.compositeProgram = program(gl, TONE_VERTEX, COMPOSITE_FRAGMENT);
+    this.impostorProgram = program(gl, IMPOSTOR_VERTEX, IMPOSTOR_FRAGMENT);
+    this.beamProgram = program(gl, BEAM_VERTEX, BEAM_FRAGMENT);
+    this.timer = new GpuTimer(gl);
+    const tube = beamTube();
+    this.beamCount = tube.length / 3;
+    this.beamVao = this.tubeVao(tube);
     this.bloom = [0, 1].map(() => ({ framebuffer: gl.createFramebuffer(), texture: null }));
     this.samplers = [0, 1, 2, 3].map((wrap) => {
       const s = gl.createSampler();
@@ -1173,9 +687,8 @@ export class SceneRenderer {
     this.format = gl.getExtension('EXT_color_buffer_float') !== null ? gl.RGBA16F : gl.RGBA8;
     const target = (): Target => ({
       framebuffer: gl.createFramebuffer(),
-      depth: gl.createRenderbuffer(),
+      depth: null,
       texture: null,
-      glow: null,
     });
     this.stillBackground = target();
     this.stillScene = target();
@@ -1188,17 +701,22 @@ export class SceneRenderer {
     for (const [name, mesh] of Object.entries(scene.meshes)) {
       if (!mesh.materials.length) continue; // an emitter, not drawn
       if (mesh.planet) continue; // the scene's own planets: put up as placed planets instead
-      const vao = this.meshVao(mesh);
+      const tube = fitTube(mesh);
+      // A tube is drawn on a cover that reaches round and past it (its own mesh's corners cut
+      // its round ends to their sides).
+      const drawn = tube ? tubeCover(tube) : mesh;
+      const vao = this.meshVao(drawn);
       this.vaos.push(vao);
       for (const m of mesh.materials) {
         const material = this.material(m, name, scene.materials);
         this.sceneDraws.push({
           vao,
-          count: mesh.indices.length,
+          count: drawn.indices.length,
           name: m,
           key: m,
           material,
           moving: moves(material),
+          ...(tube ? { tube } : {}),
         });
       }
     }
@@ -1215,63 +733,265 @@ export class SceneRenderer {
         material: this.material(system.material, 'particles', scene.materials),
       });
     }
-    this.draws = [...this.sceneDraws];
     this.placeSkyOverlays(); // the overlays its data says it wears, until told otherwise
+    this.resolveSky();
     gl.enable(gl.CULL_FACE);
     gl.depthFunc(gl.LEQUAL);
   }
 
   /**
    * The planets put up in the scene, replacing those there were: their textures go to the GPU the
-   * first time each planet is placed. What doesn't move is drawn again at the next frame.
+   * first time each planet is placed. A body put up as it was (the same placement) keeps what is
+   * worked out and baked of it; only the others are worked out again.
    */
   setPlanets(placements: readonly PlanetPlacement[]): void {
     const { eye } = this.camera;
-    this.placed = placements.map((placement) => ({
-      placement,
-      frame: bodyFrame(placement.position, placement.radius, eye),
-      extent: partsExtent(placement.radius, partsOf(placement), distance(placement.position, eye)),
-    }));
-    const draws: MeshDraw[] = [];
-    for (const placed of this.placed) {
-      const { planet } = placed.placement;
-      const overlays = overlaysOf(placed.placement);
-      for (const loaded of [planet, ...overlays]) {
+    let uploaded = false;
+    for (const placement of placements)
+      for (const loaded of [placement.planet, ...overlaysOf(placement)]) {
         if (this.planetsOnGpu.has(loaded)) continue;
         for (const [textureKey, image] of Object.entries(loaded.images))
-          if (!this.textures.has(textureKey)) this.textures.set(textureKey, this.texture(image));
+          if (!this.textures.has(textureKey)) {
+            this.textures.set(textureKey, this.texture(image));
+            uploaded = true;
+          }
         this.planetsOnGpu.add(loaded);
       }
-      // The body's own parts lit by its overlays' light where one has one, then the overlays' parts.
-      const light = overlays.find((o) => o.planet.light)?.planet.light ?? planet.planet.light;
-      for (const loaded of [planet, ...overlays]) {
-        const own = loaded === planet;
-        const parts = own ? loaded.planet.parts : overlayParts(placed.placement, loaded);
-        parts.forEach((part, i) => {
-          for (const m of part.materials) {
-            const material = this.material(m, `${loaded.id}/${i}`, loaded.planet.materials);
-            const overlay = own ? undefined : overlayOfFile(loaded.id);
-            draws.push({
-              vao: this.quad,
-              count: 4,
-              name: m,
-              key: materialKey(m, overlay),
-              ...(overlay ? { overlay } : {}),
-              material,
-              moving: moves(material),
-              placed,
-              owner: loaded,
-              part,
-              partKey: own ? ownPartKey(part) : overlayPartKey(overlayOfFile(loaded.id), part),
-              light,
-            });
-          }
-        });
-      }
+    // New textures: what reads one (a layer set to another planet's texture) is worked out again.
+    if (uploaded) this.resolveSky();
+    const before = new Map(this.placed.map((p) => [p.placement, p]));
+    this.placed = placements.map((placement) => {
+      const kept = before.get(placement);
+      before.delete(placement);
+      if (kept && !uploaded) return kept;
+      const placed: Placed = {
+        placement,
+        frame: bodyFrame(placement.position, placement.radius, eye),
+        extent: 0,
+        states: [],
+        // Its version goes on from the one before (its bake, kept, is then made again).
+        version: kept?.version ?? 0,
+        reachOf: 0,
+        hasShapes: false,
+        bake: kept?.bake ?? null,
+      };
+      this.measure(placed);
+      this.resolveBody(placed);
+      return placed;
+    });
+    for (const gone of before.values()) this.freeBake(gone.bake);
+    this.updateSurfaces();
+    this.changed = true;
+  }
+
+  /** A body's square and reach as placed now, seen from the eye. */
+  private measure(placed: Placed): void {
+    const { position, radius } = placed.placement;
+    const parts = partsOf(placed.placement);
+    placed.extent = partsExtent(radius, parts, distance(position, this.camera.eye));
+    placed.reachOf = reach(parts) * radius;
+    placed.hasShapes = parts.some((p) => p.shape.kind !== 'sphere' && p.shape.kind !== 'ring');
+  }
+
+  /** A body's draws made and worked out (its parts', and its overlays' as it wears them), in drawing order. */
+  private resolveBody(placed: Placed): void {
+    const { planet } = placed.placement;
+    const overlays = overlaysOf(placed.placement);
+    // The body's own parts lit by its overlays' light where one has one, then the overlays' parts.
+    const light = overlays.find((o) => o.planet.light)?.planet.light ?? planet.planet.light;
+    const draws: MeshDraw[] = [];
+    for (const loaded of [planet, ...overlays]) {
+      const own = loaded === planet;
+      const parts = own ? loaded.planet.parts : overlayParts(placed.placement, loaded);
+      parts.forEach((part, i) => {
+        for (const m of part.materials) {
+          const material = this.material(m, `${loaded.id}/${i}`, loaded.planet.materials);
+          const overlay = own ? undefined : overlayOfFile(loaded.id);
+          draws.push({
+            vao: this.quad,
+            count: 4,
+            name: m,
+            key: materialKey(m, overlay),
+            ...(overlay ? { overlay } : {}),
+            material,
+            moving: moves(material),
+            placed,
+            owner: loaded,
+            part,
+            partKey: own ? ownPartKey(part) : overlayPartKey(overlayOfFile(loaded.id), part),
+            light,
+          });
+        }
+      });
     }
-    this.planetDraws = draws;
-    this.draws = [...this.sceneDraws, ...this.skyOverlayDraws, ...this.planetDraws];
-    this.stillDirty = true;
+    placed.states = sorted(
+      draws.map((d) => this.resolve(d)),
+      () => placed.placement.order,
+    );
+    placed.version++;
+  }
+
+  /** The sky's draws worked out again; what doesn't move of it drawn again where any has changed. */
+  private resolveSky(): void {
+    const states = [...this.sceneDraws, ...this.skyOverlayDraws].map((d) => this.resolve(d));
+    this.skyStates = sorted(states, () => this.sky.order);
+    this.skyMoves = this.skyStates.some((s) => s.enabled && s.moving);
+    this.particlesShown = this.particles.some(
+      (p) => this.sky.materials?.[p.name]?.enabled ?? MATERIAL_DEFAULTS.enabled,
+    );
+    const signature = JSON.stringify([
+      this.skyStates.map((s) => s.signature),
+      this.sky.tint ?? null,
+      this.textures.size,
+    ]);
+    if (signature !== this.skySignature) {
+      this.skySignature = signature;
+      this.stillDirty = true;
+    }
+    this.changed = true;
+  }
+
+  /** A draw worked out: its settings, its material as set, how it is lit, its uniforms. */
+  private resolve(draw: MeshDraw): DrawState {
+    const settings = this.settingsOf(draw);
+    const has = (texture: string) => this.textures.has(texture);
+    // A material as set: its masks and its layers' textures and transforms (a scroll set makes
+    // it move).
+    const layered = withLayers(withMasks(draw.material, settings?.masks), settings?.layers, has);
+    const placement = draw.placed?.placement;
+    // Lit or flat as set (else as the data has it); lit with no light to light it: flat.
+    const unshaded =
+      !!draw.part &&
+      ((settings?.lit !== undefined ? !settings.lit : layered.unshaded) ||
+        (!draw.light && !addedLighting(this.addedTo(placement), placement?.lights)));
+    const material =
+      draw.part && unshaded !== layered.unshaded ? { ...layered, unshaded } : layered;
+    const moving = draw.moving || (material !== draw.material && moves(material));
+    const blend = settings?.blend ?? draw.material.blend;
+    const enabled = (settings?.enabled ?? MATERIAL_DEFAULTS.enabled) && shown(draw);
+    const depth = this.depthOf(draw.name, settings, !!draw.placed);
+    const scale = settings?.scale ?? MATERIAL_DEFAULTS.scale;
+    const u = new UniformSet();
+    materialUniforms(
+      u,
+      material,
+      scale,
+      blend,
+      (layer) => !!layer.texture && has(layer.texture),
+      settings?.spreadFrom,
+    );
+    u.f1('uGlowBoost', settings?.glow ?? MATERIAL_DEFAULTS.glow);
+    u.f1('uSpread', settings?.spread ?? -1);
+    u.f1('uFalloff', settings?.falloff ?? MATERIAL_DEFAULTS.falloff);
+    u.f1('uCut', settings?.cut ?? MATERIAL_DEFAULTS.cut);
+    u.f1('uStrength', settings?.strength ?? MATERIAL_DEFAULTS.strength);
+    tintUniforms(u, 'uTint', settings?.tint);
+    const textures = layersOf(material).map((layer) =>
+      layer?.texture ? (this.textures.get(layer.texture) ?? null) : null,
+    );
+    const samplers = layersOf(material).map((layer, i) => {
+      if (!textures[i] || !layer) return null;
+      const [wu, wv] = layer.wrap ?? [true, true];
+      return this.samplers[(wu ? 1 : 0) | (wv ? 2 : 0)]!;
+    });
+    const base = {
+      draw,
+      enabled,
+      depth,
+      blend,
+      moving,
+      material,
+      uniforms: u,
+      scrolls: scrollingLayers(material),
+      textures,
+      samplers,
+      blocks: new Map<WebGLProgram, UniformBlock>(),
+    };
+    if (!draw.part || !draw.placed || !placement) {
+      const tube = draw.tube;
+      u.i1('uTube', tube ? 1 : 0);
+      if (tube) {
+        u.f4('uTubeShape', tube.centre[0], tube.centre[1], tube.radius, 0);
+        u.f4('uTubeMap', ...tube.u, ...tube.v);
+        u.f2('uTubeSpan', tube.low, tube.high);
+      }
+      return {
+        ...base,
+        signature: JSON.stringify([draw.key, settings ?? null, blend, depth, enabled]),
+      };
+    }
+    const part = withPart(draw.part, draw.partKey && placement.parts?.[draw.partKey]);
+    partUniforms(u, part);
+    const tuning = placement.planet.planet.tuning;
+    const rig = material.unshaded ? undefined : draw.light;
+    const turned =
+      rig &&
+      tunedRig(
+        rig,
+        placement.lighting ?? tuning?.lighting,
+        placement.lightFrom ?? tuning?.lightFrom,
+      );
+    // Its rig as set, and the lights added to it (its own, its overlay's, its scene's), each
+    // only where it reaches this part and material (its linking).
+    const added = this.addedTo(placement);
+    const linked = linkedSettings(placement.lights, added, draw.partKey, draw.key);
+    const shade = this.shadeOf(placement);
+    const exposure = this.loaded.scene.tone.exposure;
+    const light = material.unshaded
+      ? undefined
+      : withAddedLights(
+          turned && withLightSettings(turned, linked),
+          added,
+          linked,
+          exposure,
+          shade,
+        );
+    lightUniforms(u, light, exposure);
+    const shine = materialValues(material, settings);
+    u.f1('uSpecularMult', shine.specular);
+    u.f1('uSpecularity', shine.glossiness);
+    tintUniforms(u, 'uBodyTint', placement.tint ?? tuning?.tint);
+    const rim = placement.rim ?? tuning?.rim;
+    u.v2('uRimTurn', rim ? rimTurn(rim) : [0, 0]);
+    const darkenings = bodyDarkenings(
+      draw.light &&
+        tunedRig(
+          draw.light,
+          placement.lighting ?? tuning?.lighting,
+          placement.lightFrom ?? tuning?.lightFrom,
+        ),
+      shade,
+      added,
+      linked,
+    );
+    shadeUniforms(u, darkenings);
+    // A grid: shown where its reveal reaches, and coloured by its activation (its material's).
+    const grid = draw.part.pattern?.kind === 'hex';
+    if (grid) {
+      const { reveal, activation } = gridFields(materialValues(material, settings));
+      gridUniforms(u, reveal, activation, settings?.inactive, settings?.active ?? DEFAULT_ACTIVE);
+    }
+    // The body glows under its own light's bloom threshold, lit or not (its city lights aren't lit).
+    const worn = overlaysOf(placement);
+    const own = worn.length
+      ? worn.find((o) => o.planet.light)?.planet.light
+      : placement.planet.planet.light;
+    u.f1('uGlowThreshold', own?.bloomThreshold ?? this.sceneThreshold());
+    // A drawn pattern (unless shown as its texture, as the game does): as many cells round
+    // the part as its texture has (or HEX_ROUND), over its scale; its lines' width and glow.
+    const pattern = draw.part.pattern;
+    const drawn = pattern?.kind === 'hex' && settings?.drawAs !== 'texture';
+    const round = pattern?.across
+      ? pattern.across * (material.emissive?.tiling?.[0] ?? 1)
+      : HEX_ROUND;
+    u.i1('uPattern', drawn ? 1 : 0);
+    u.f3(
+      'uPatternParams',
+      round / scale,
+      settings?.width ?? MATERIAL_DEFAULTS.width,
+      settings?.soft ?? MATERIAL_DEFAULTS.soft,
+    );
+    return { ...base, part, signature: '' };
   }
 
   /**
@@ -1340,12 +1060,20 @@ export class SceneRenderer {
     this.placed.forEach((placed, i) => {
       const position = positions[i] ?? placed.placement.position;
       const radius = radii?.[i] ?? placed.placement.radius;
-      placed.placement = { ...placed.placement, position, radius };
+      const was = placed.placement;
+      if (position === was.position && radius === was.radius && eye === this.placedFrom) return;
+      placed.placement = { ...was, position, radius };
       placed.frame = bodyFrame(position, radius, eye);
-      placed.extent = partsExtent(radius, partsOf(placed.placement), distance(position, eye));
+      this.measure(placed);
+      placed.version++;
     });
-    this.stillDirty = true;
+    this.placedFrom = eye;
+    this.updateSurfaces();
+    this.changed = true;
   }
+
+  /** The eye the bodies were last placed from. */
+  private placedFrom?: Vec3;
 
   /** Where a scene puts the camera, over the game's (what it sets of it). */
   private cameraSet: SceneCameraSet = {};
@@ -1365,9 +1093,12 @@ export class SceneRenderer {
     this.cameraSet = next;
     this.view = this.viewNow();
     this.projection = this.projectionNow();
+    this.placedFrom = undefined;
     this.placePlanets(this.placed.map((p) => p.placement.position));
     this.placeSkyOverlays();
+    this.resolveSky();
     this.stillDirty = true;
+    this.viewChanged();
   }
 
   /** The camera turned about its up from where the scene puts it, in radians. */
@@ -1376,6 +1107,13 @@ export class SceneRenderer {
     this.yaw = yaw;
     this.view = this.viewNow();
     this.stillDirty = true;
+    this.viewChanged();
+  }
+
+  /** The view changed: every body is baked again, and the frame drawn. */
+  private viewChanged(): void {
+    this.viewVersion++;
+    this.changed = true;
   }
 
   private projectionNow(): Float32Array {
@@ -1408,6 +1146,7 @@ export class SceneRenderer {
     this.allocate(this.frame);
     this.allocateBloom();
     this.stillDirty = true;
+    this.viewChanged();
   }
 
   /** The bloom's targets, a quarter of the canvas each way. */
@@ -1449,14 +1188,10 @@ export class SceneRenderer {
     gl.bindSampler(0, null);
     gl.uniform1i(this.uniform(p, 'uSource'), 0);
     gl.uniform1f(this.uniform(p, 'uThreshold'), this.sceneThreshold());
-    // The bright part, from the frame, and the planets' own glow.
+    // The bright part, from the frame (the planets' own glow isn't kept: see the targets).
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.bloom[0]!.framebuffer);
     gl.bindTexture(gl.TEXTURE_2D, this.frame.texture);
-    gl.activeTexture(gl.TEXTURE1);
-    gl.bindSampler(1, null);
-    gl.bindTexture(gl.TEXTURE_2D, this.frame.glow);
-    gl.uniform1i(this.uniform(p, 'uGlow'), 1);
-    gl.activeTexture(gl.TEXTURE0);
+    gl.uniform1i(this.uniform(p, 'uGlow'), 0);
     gl.uniform1i(this.uniform(p, 'uPass'), 0);
     gl.uniform2f(this.uniform(p, 'uStep'), 1 / this.canvas.width, 1 / this.canvas.height);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -1481,18 +1216,18 @@ export class SceneRenderer {
     return this.loaded.scene.tone.bloomThreshold ?? DEFAULT_BLOOM_THRESHOLD;
   }
 
-  /** What doesn't move, drawn into its targets: the background's, and the scene's over nothing. */
+  /** What doesn't move of the sky, drawn into its targets: the background's, and what is among the objects over nothing. */
   private drawStill(): void {
     // Behind a backdrop the alpha keeps what the scene covers (none yet).
     this.begin(this.stillBackground, this.backdrop ? 0 : 1);
-    this.drawMeshes(0, { moving: false, depth: 'background' });
+    this.drawMeshes(0, 'background', false);
     this.begin(this.stillScene, 0);
-    this.drawMeshes(0, { moving: false, depth: 'scene' });
+    this.drawMeshes(0, 'scene', false);
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
     this.stillDirty = false;
   }
 
-  /** A target's colour and glow over the bound one, as far as its alpha covers. */
+  /** A target's colour over the bound one, as far as its alpha covers. */
   private composite(target: Target): void {
     const gl = this.gl;
     const p = this.compositeProgram;
@@ -1505,43 +1240,17 @@ export class SceneRenderer {
     gl.bindSampler(0, null);
     gl.bindTexture(gl.TEXTURE_2D, target.texture);
     gl.uniform1i(this.uniform(p, 'uColor'), 0);
-    gl.activeTexture(gl.TEXTURE1);
-    gl.bindSampler(1, null);
-    gl.bindTexture(gl.TEXTURE_2D, target.glow);
-    gl.uniform1i(this.uniform(p, 'uGlow'), 1);
-    gl.activeTexture(gl.TEXTURE0);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
 
-  /** One target's colour and glow, or its depth, into another as they are; the other bound after. */
+  /** One target's colour, or its depth, into another as it is; the other bound after. */
   private copy(from: Target, into: Target, what: 'colour' | 'depth'): void {
     const gl = this.gl;
     const { width, height } = this.canvas;
     gl.bindFramebuffer(gl.READ_FRAMEBUFFER, from.framebuffer);
     gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, into.framebuffer);
-    if (what === 'depth') {
-      gl.blitFramebuffer(0, 0, width, height, 0, 0, width, height, gl.DEPTH_BUFFER_BIT, gl.NEAREST);
-    } else {
-      // One attachment at a time (a blit copies the one read into every one drawn).
-      for (let i = 0; i < DRAW_BUFFERS.length; i++) {
-        gl.readBuffer(gl.COLOR_ATTACHMENT0 + i);
-        gl.drawBuffers(DRAW_BUFFERS.map((b, j) => (j === i ? b : gl.NONE)));
-        gl.blitFramebuffer(
-          0,
-          0,
-          width,
-          height,
-          0,
-          0,
-          width,
-          height,
-          gl.COLOR_BUFFER_BIT,
-          gl.NEAREST,
-        );
-      }
-      gl.readBuffer(gl.COLOR_ATTACHMENT0);
-      gl.drawBuffers(DRAW_BUFFERS);
-    }
+    const what_ = what === 'depth' ? gl.DEPTH_BUFFER_BIT : gl.COLOR_BUFFER_BIT;
+    gl.blitFramebuffer(0, 0, width, height, 0, 0, width, height, what_, gl.NEAREST);
     gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
     gl.bindFramebuffer(gl.FRAMEBUFFER, into.framebuffer);
   }
@@ -1623,17 +1332,21 @@ export class SceneRenderer {
 
   /** An editing backdrop shown in place of the sky (null: the sky again). */
   setBackdrop(backdrop: Backdrop | null): void {
+    if (JSON.stringify(backdrop) === JSON.stringify(this.backdrop)) return;
     this.backdrop = backdrop;
     this.stillDirty = true;
+    this.changed = true;
   }
 
   /** The scene's lights: added to every planet's (see `scene-lights.ts`). */
   private sceneLights: readonly AddedLight[] = [];
 
-  /** The scene's lights, lighting every planet as its own added ones do. */
+  /** The scene's lights, lighting every planet as its own added ones do: each body worked out again. */
   setSceneLights(lights: readonly AddedLight[]): void {
+    if (JSON.stringify(lights) === JSON.stringify(this.sceneLights)) return;
     this.sceneLights = lights;
-    this.stillDirty = true;
+    for (const placed of this.placed) this.resolveBody(placed);
+    this.changed = true;
   }
 
   /** The lights added to a placed planet: its own and its overlay's, then the scene's. */
@@ -1649,7 +1362,7 @@ export class SceneRenderer {
   setSky(settings: SkySettings): void {
     this.sky = settings;
     this.placeSkyOverlays();
-    this.stillDirty = true;
+    this.resolveSky();
   }
 
   /**
@@ -1708,26 +1421,48 @@ export class SceneRenderer {
         });
       }
     }
-    this.draws = [...this.sceneDraws, ...this.skyOverlayDraws, ...this.planetDraws];
+  }
+
+  /**
+   * Whether a frame drawn at `seconds` would differ from the last: something has changed, the
+   * bodies' program is still compiling, the sky moves (its scrolling layers, its particles), or a
+   * body's scrolling layers have moved far enough to bake it again.
+   */
+  needsFrame(seconds: number): boolean {
+    if (this.changed || this.stillDirty) return true;
+    if (!this.backdrop && (this.skyMoves || this.particlesShown)) return true;
+    return this.placed.some((b) => this.bakeDue(b, seconds));
+  }
+
+  /** The GPU's times for the frames drawn since last asked (ms), where it can be timed. */
+  gpuTimes(): number[] {
+    return this.timer.poll();
   }
 
   /** The scene at `seconds` on its clock. */
   draw(seconds: number): void {
     const gl = this.gl;
     const { width, height } = this.canvas;
+    if (this.timing) this.timer.begin();
     if (this.stillDirty) this.drawStill();
+    const viewProjection = multiply(this.projection, this.view);
+    // The bodies that have changed (or whose layers have scrolled on) baked again first.
+    for (const body of this.placed)
+      if (this.bakeDue(body, seconds)) this.bakeBody(body, seconds, viewProjection);
     // In depth order: the background (as if infinitely far: under every object, wherever it is
-    // set), what doesn't move of it and then what does; the scene's objects over it, what doesn't
-    // move and then what does, at their depths; the foreground over all of them (as if at the camera).
+    // set), what doesn't move of it and then what does; the scene's objects over it: the sky's
+    // that don't move, the bodies (far to near), the sky's that move, at their depths; the
+    // foreground over all of them (as if at the camera).
     this.copy(this.stillBackground, this.frame, 'colour');
     gl.viewport(0, 0, width, height);
-    this.drawMeshes(seconds, { moving: true, depth: 'background' });
+    this.drawMeshes(seconds, 'background', true);
     this.drawParticles(seconds, 'background');
     this.composite(this.stillScene);
     this.copy(this.stillScene, this.frame, 'depth');
-    this.drawMeshes(seconds, { moving: true, depth: 'scene' });
+    this.compositeBodies(viewProjection);
+    this.drawMeshes(seconds, 'scene', true);
     this.drawParticles(seconds, 'scene');
-    this.drawMeshes(seconds, { depth: 'foreground' });
+    this.drawMeshes(seconds, 'foreground');
     this.drawParticles(seconds, 'foreground');
 
     gl.disable(gl.BLEND);
@@ -1774,6 +1509,322 @@ export class SceneRenderer {
       );
     }
     gl.drawArrays(gl.TRIANGLES, 0, 3);
+    this.drawBeams();
+    if (this.timing) this.timer.end();
+    this.changed = false;
+  }
+
+  /** What a body's bake is for: the view, the body as it is, the surfaces its shapes are hidden behind. */
+  private bakeKey(body: Placed): string {
+    return `${this.viewVersion}:${body.version}:${body.hasShapes ? this.surfacesKey : ''}`;
+  }
+
+  /** Whether a body has to be baked (again) for a frame at `seconds`. */
+  private bakeDue(body: Placed, seconds: number): boolean {
+    if (body.placement.hidden) return false;
+    const b = body.bake;
+    if (!b || !b.complete || b.key !== this.bakeKey(body)) return true;
+    return b.scroll > 0 && Math.abs(seconds - b.at) * b.scroll >= REBAKE_PIXELS;
+  }
+
+  /**
+   * A body drawn on its own into its bake: the frame's pixels it covers, each as the frame has it
+   * (its view drawn with their corner at the bake's), its draws in its drawing order, at `seconds`.
+   */
+  private bakeBody(body: Placed, seconds: number, viewProjection: Float32Array): void {
+    const gl = this.gl;
+    const { width, height } = this.canvas;
+    const { position } = body.placement;
+    const { axes } = body.frame;
+    const e = body.extent;
+    const corners: Vec3[] = [-1, 1].flatMap((sx) =>
+      [-1, 1].map((sz): Vec3 => [
+        position[0] + (axes[0]! * sx + axes[6]! * sz) * e,
+        position[1] + (axes[1]! * sx + axes[7]! * sz) * e,
+        position[2] + (axes[2]! * sx + axes[8]! * sz) * e,
+      ]),
+    );
+    const rect = bakeRect(corners, viewProjection, width, height);
+    const bake = (body.bake ??= this.newBake());
+    bake.key = this.bakeKey(body);
+    bake.at = seconds;
+    bake.rect = rect;
+    bake.complete = true;
+    bake.scroll = 0;
+    if (!rect) return;
+    this.sizeBake(bake, rect);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, bake.framebuffer);
+    // Its pixels the frame's: the frame's view drawn with the rectangle's corner at the target's
+    // (the rest falls off it), each pixel exactly as the frame would have it.
+    gl.viewport(-rect.x, -rect.y, width, height);
+    gl.clearColor(0, 0, 0, 0);
+    gl.depthMask(true);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    // Its program still compiling: nothing of it yet (it is baked again next frame).
+    const p = this.programs.get(BODY);
+    if (!p) {
+      bake.complete = false;
+      return;
+    }
+    gl.enable(gl.DEPTH_TEST);
+    const v = this.view;
+    const right = intoFrame(axes, [v[0]!, v[4]!, v[8]!]);
+    const up = intoFrame(axes, [v[1]!, v[5]!, v[9]!]);
+    const eyeDistance = Math.hypot(...body.frame.eye);
+    const radius = body.placement.radius;
+    // How wide a pixel is at the body, in the scene's units.
+    const pixel =
+      (2 * eyeDistance * radius * Math.tan((this.camera.fovY * Math.PI) / 360)) / height;
+    // What every draw of the bake shares.
+    gl.useProgram(p);
+    gl.uniformMatrix4fv(this.uniform(p, 'uViewProjection'), false, viewProjection);
+    gl.uniform1f(this.uniform(p, 'uSmear'), 0);
+    gl.uniform1f(this.uniform(p, 'uSceneThreshold'), this.sceneThreshold());
+    gl.uniform3fv(this.uniform(p, 'uCentre'), position);
+    gl.uniformMatrix3fv(this.uniform(p, 'uAxes'), false, axes);
+    gl.uniform1f(this.uniform(p, 'uRadius'), body.placement.radius);
+    gl.uniform3fv(this.uniform(p, 'uEye'), body.frame.eye);
+    gl.uniform3fv(this.uniform(p, 'uRight'), right);
+    gl.uniform3fv(this.uniform(p, 'uUp'), up);
+    gl.uniform1i(this.uniform(p, 'uSurfaceCount'), this.surfaces.length);
+    if (this.surfaces.length) gl.uniform4fv(this.uniform(p, 'uSurfaces'), this.surfaces.flat());
+    gl.bindVertexArray(this.quad);
+    for (const s of body.states) {
+      if (!s.enabled || !s.part) continue;
+      this.applyState(p, s, seconds);
+      // The square as wide as this part reaches (not the body's widest: fewer pixels to trace),
+      // and two pixels past, for its edge's smoothing.
+      const reachOf = partsExtent(radius, [s.part], eyeDistance * radius) + 2 * pixel;
+      gl.uniform1f(this.uniform(p, 'uExtent'), Math.min(e, reachOf));
+      const shape = s.part.shape;
+      if (shape.kind === 'ring') {
+        const k = ringScale(shape, eyeDistance);
+        gl.uniform3f(
+          this.uniform(p, 'uShapeParams'),
+          shape.inner * k,
+          shape.outer * k,
+          shape.depth,
+        );
+      }
+      this.blend(s.blend);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    }
+    gl.bindVertexArray(null);
+    // How fast its scrolling layers move across it: it is baked again each half pixel they move.
+    bake.scroll = scrollPixels(
+      body.states
+        .filter((s) => s.enabled)
+        .flatMap((s) => s.scrolls.map(({ layer }) => layer))
+        .flatMap((l) => (l.scroll ? [{ scroll: l.scroll, tiling: l.tiling }] : [])),
+      rect,
+    );
+  }
+
+  /** A state's uniforms given to its program (found once), its layers' scroll at `seconds`, its textures bound. */
+  private applyState(p: WebGLProgram, s: DrawState, seconds: number): void {
+    const gl = this.gl;
+    let block = s.blocks.get(p);
+    if (!block) s.blocks.set(p, (block = compileBlock(s.uniforms, (n) => this.uniform(p, n))));
+    applyBlock(gl, block);
+    for (const { slot, layer } of s.scrolls)
+      gl.uniform2fv(this.uniform(p, `uLayers[${slot}].offset`), layerOffset(layer, seconds));
+    for (let i = 0; i < s.textures.length; i++) {
+      gl.activeTexture(gl.TEXTURE0 + i);
+      gl.bindTexture(gl.TEXTURE_2D, s.textures[i]!);
+      gl.bindSampler(i, s.samplers[i]!);
+    }
+  }
+
+  /**
+   * The bodies' bakes put back into the frame (bound), far to near: first their opaque pixels'
+   * depths (as drawing them would leave), then their colour over what is there, each pixel tested
+   * at its depth (an added light, which has none, at its body's nearest).
+   */
+  private compositeBodies(viewProjection: Float32Array): void {
+    const gl = this.gl;
+    const { width, height } = this.canvas;
+    const eye = this.camera.eye;
+    const shown = this.placed
+      .filter((b) => !b.placement.hidden && b.bake?.rect)
+      .sort((a, b) => distance(b.placement.position, eye) - distance(a.placement.position, eye));
+    if (!shown.length) return;
+    const p = this.impostorProgram;
+    gl.useProgram(p);
+    gl.enable(gl.DEPTH_TEST);
+    gl.uniform1i(this.uniform(p, 'uColor'), 0);
+    gl.uniform1i(this.uniform(p, 'uDepth'), 1);
+    for (let unit = 0; unit < 2; unit++) gl.bindSampler(unit, null);
+    for (const body of shown) {
+      const bake = body.bake!;
+      const r = bake.rect!;
+      gl.uniform4f(
+        this.uniform(p, 'uRect'),
+        (2 * r.x) / width - 1,
+        (2 * r.y) / height - 1,
+        (2 * (r.x + r.w)) / width - 1,
+        (2 * (r.y + r.h)) / height - 1,
+      );
+      gl.uniform2i(this.uniform(p, 'uOrigin'), r.x, r.y);
+      gl.uniform1f(this.uniform(p, 'uFront'), this.frontDepth(body, viewProjection));
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, bake.color);
+      gl.activeTexture(gl.TEXTURE1);
+      gl.bindTexture(gl.TEXTURE_2D, bake.depth);
+      // Its opaque pixels' depths.
+      gl.uniform1i(this.uniform(p, 'uPass'), 0);
+      gl.disable(gl.BLEND);
+      gl.colorMask(false, false, false, false);
+      gl.depthMask(true);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      // Its colour over what is there.
+      gl.uniform1i(this.uniform(p, 'uPass'), 1);
+      gl.colorMask(true, true, true, true);
+      gl.depthMask(false);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    }
+    gl.activeTexture(gl.TEXTURE0);
+  }
+
+  /** The depth of a body's nearest point (as far as its parts reach towards the eye), in the frame. */
+  private frontDepth(body: Placed, viewProjection: Float32Array): number {
+    const { position } = body.placement;
+    const eye = this.camera.eye;
+    const d = distance(eye, position);
+    if (d <= 0) return 0;
+    const r = Math.min(body.reachOf, d * 0.99);
+    const p: Vec3 = [
+      position[0] + ((eye[0] - position[0]) / d) * r,
+      position[1] + ((eye[1] - position[1]) / d) * r,
+      position[2] + ((eye[2] - position[2]) / d) * r,
+    ];
+    const m = viewProjection;
+    const w = m[3]! * p[0] + m[7]! * p[1] + m[11]! * p[2] + m[15]!;
+    if (w <= 0) return 0;
+    const z = (m[2]! * p[0] + m[6]! * p[1] + m[10]! * p[2] + m[14]!) / w;
+    return Math.min(1, Math.max(0, z * 0.5 + 0.5));
+  }
+
+  /** A bake's framebuffer, its textures made when first sized. */
+  private newBake(): Bake {
+    return {
+      framebuffer: this.gl.createFramebuffer(),
+      color: null,
+      depth: null,
+      width: 0,
+      height: 0,
+      rect: null,
+      key: '',
+      at: 0,
+      complete: false,
+      scroll: 0,
+    };
+  }
+
+  /** A bake's textures big enough for a rectangle (kept while it fits and isn't far too big). */
+  private sizeBake(bake: Bake, rect: PixelRect): void {
+    const fits = rect.w <= bake.width && rect.h <= bake.height;
+    const roomy = bake.width > 2 * bakeSize(rect.w) || bake.height > 2 * bakeSize(rect.h);
+    if (fits && !roomy) return;
+    const gl = this.gl;
+    bake.width = bakeSize(rect.w);
+    bake.height = bakeSize(rect.h);
+    const texture = (format: number) => {
+      const t = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, t);
+      gl.texStorage2D(gl.TEXTURE_2D, 1, format, bake.width, bake.height);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      return t;
+    };
+    gl.deleteTexture(bake.color);
+    gl.deleteTexture(bake.depth);
+    bake.color = texture(this.format);
+    bake.depth = texture(gl.DEPTH_COMPONENT24);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, bake.framebuffer);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, bake.color, 0);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, bake.depth, 0);
+  }
+
+  /** A bake's GPU memory freed. */
+  private freeBake(bake: Bake | null): void {
+    if (!bake) return;
+    const gl = this.gl;
+    gl.deleteTexture(bake.color);
+    gl.deleteTexture(bake.depth);
+    gl.deleteFramebuffer(bake.framebuffer);
+  }
+
+  /** Beams to show over the picture (none: none); drawn at the next frame. */
+  setBeams(beams: readonly LightBeam[]): void {
+    if (beams === this.beams) return;
+    this.beams = beams;
+    this.changed = true;
+  }
+
+  /**
+   * The beams over the picture as shown (after its exposure and bloom: as they are whatever the
+   * scene's light), each hidden where the frame's depth is nearer; one that lights adds its
+   * colour, one that darkens takes it away.
+   */
+  private drawBeams(): void {
+    if (!this.beams.length) return;
+    const gl = this.gl;
+    const p = this.beamProgram;
+    gl.useProgram(p);
+    gl.bindVertexArray(this.beamVao);
+    gl.disable(gl.CULL_FACE); // its far side as well as its near: as deep as it is seen through
+    gl.disable(gl.DEPTH_TEST);
+    gl.depthMask(false);
+    gl.enable(gl.BLEND);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindSampler(0, null);
+    gl.bindTexture(gl.TEXTURE_2D, this.frame.depth);
+    gl.uniform1i(this.uniform(p, 'uDepth'), 0);
+    gl.uniformMatrix4fv(
+      this.uniform(p, 'uViewProjection'),
+      false,
+      multiply(this.projection, this.view),
+    );
+    gl.uniform3fv(this.uniform(p, 'uEye'), this.camera.eye);
+    const eye = this.camera.eye;
+    const spheres = this.placed
+      .map(({ placement: { position, radius } }) => [...position, radius] as const)
+      .sort((a, b) => distance([a[0], a[1], a[2]], eye) - distance([b[0], b[1], b[2]], eye))
+      .slice(0, MAX_BEAM_SPHERES);
+    gl.uniform1i(this.uniform(p, 'uSphereCount'), spheres.length);
+    if (spheres.length) gl.uniform4fv(this.uniform(p, 'uSpheres'), spheres.flat());
+    for (const beam of this.beams) {
+      const way = normalize(beam.from);
+      const [across, up] = beamAcross(way);
+      gl.uniform3fv(this.uniform(p, 'uCentre'), beam.centre);
+      gl.uniform4f(this.uniform(p, 'uBody'), ...beam.centre, beam.radius);
+      gl.uniform3fv(this.uniform(p, 'uWay'), way);
+      gl.uniform3fv(this.uniform(p, 'uAcross'), across);
+      gl.uniform3fv(this.uniform(p, 'uUp'), up);
+      gl.uniform1f(this.uniform(p, 'uRadius'), beam.radius);
+      gl.uniform1f(this.uniform(p, 'uLength'), beam.radius * BEAM_LENGTH);
+      gl.uniform3fv(this.uniform(p, 'uColor'), beam.colour);
+      gl.uniform1i(this.uniform(p, 'uEdge'), 0);
+      // Its colour added, or taken away (the shown picture's alpha kept either way); one taken
+      // away with its edges lit faintly as well.
+      if (beam.darkens) {
+        gl.uniform1f(this.uniform(p, 'uAlpha'), DARK_BEAM_ALPHA);
+        gl.blendFuncSeparate(gl.ZERO, gl.ONE_MINUS_SRC_COLOR, gl.ZERO, gl.ONE);
+        gl.drawArrays(gl.TRIANGLES, 0, this.beamCount);
+        gl.uniform1i(this.uniform(p, 'uEdge'), 1);
+        gl.uniform3f(this.uniform(p, 'uColor'), 1, 1, 1);
+        gl.uniform1f(this.uniform(p, 'uAlpha'), BEAM_EDGE_ALPHA);
+      } else {
+        gl.uniform1f(this.uniform(p, 'uAlpha'), BEAM_ALPHA);
+      }
+      gl.blendFuncSeparate(gl.ONE, gl.ONE, gl.ZERO, gl.ONE);
+      gl.drawArrays(gl.TRIANGLES, 0, this.beamCount);
+    }
+    gl.bindVertexArray(null);
+    gl.enable(gl.CULL_FACE);
+    gl.disable(gl.BLEND);
   }
 
   /** Free what the GPU holds; the context goes with the canvas anyway. */
@@ -1787,25 +1838,19 @@ export class SceneRenderer {
       gl.deleteVertexArray(p.vao);
       gl.deleteBuffer(p.buffer);
     }
-    for (const p of [
-      this.meshProgram,
-      this.bodyProgram,
-      this.particleProgram,
-      this.toneProgram,
-      this.bloomProgram,
-      this.compositeProgram,
-    ])
-      gl.deleteProgram(p);
+    // (Its programs are the context's, kept for the next scene: see `programsOf`.)
+    gl.deleteVertexArray(this.beamVao);
     for (const target of this.bloom) {
       gl.deleteTexture(target.texture);
       gl.deleteFramebuffer(target.framebuffer);
     }
     for (const target of [this.stillBackground, this.stillScene, this.frame]) {
       gl.deleteTexture(target.texture);
-      gl.deleteTexture(target.glow);
-      gl.deleteRenderbuffer(target.depth);
+      gl.deleteTexture(target.depth);
       gl.deleteFramebuffer(target.framebuffer);
     }
+    for (const placed of this.placed) this.freeBake(placed.bake);
+    this.timer.dispose();
   }
 
   /** A target sized to the canvas: a texture's storage is fixed, so a new size is a new texture. */
@@ -1817,24 +1862,15 @@ export class SceneRenderer {
     gl.texStorage2D(gl.TEXTURE_2D, 1, this.format, this.canvas.width, this.canvas.height);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.deleteTexture(target.glow);
-    target.glow = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, target.glow);
-    gl.texStorage2D(gl.TEXTURE_2D, 1, this.format, this.canvas.width, this.canvas.height);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.bindFramebuffer(gl.FRAMEBUFFER, target.framebuffer);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, target.texture, 0);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, target.glow, 0);
-    gl.drawBuffers(DRAW_BUFFERS);
-    gl.bindRenderbuffer(gl.RENDERBUFFER, target.depth);
-    gl.renderbufferStorage(
-      gl.RENDERBUFFER,
-      gl.DEPTH_COMPONENT24,
-      this.canvas.width,
-      this.canvas.height,
-    );
-    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, target.depth);
+    gl.deleteTexture(target.depth);
+    target.depth = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, target.depth);
+    gl.texStorage2D(gl.TEXTURE_2D, 1, gl.DEPTH_COMPONENT24, this.canvas.width, this.canvas.height);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, target.depth, 0);
   }
 
   /** Draw into a target from black (covering as far as `alpha` says), nothing in front yet. */
@@ -1885,279 +1921,110 @@ export class SceneRenderer {
   }
 
   /**
-   * The mesh draws at a depth (those that move, or those that don't, if asked), into the bound
-   * target: the scene's depth-tested, the background's and foreground's drawn over what is there.
+   * The sky's draws at a depth (those that move, or those that don't, if asked; the foreground's
+   * all), into the bound target: the scene's depth-tested, the background's and foreground's
+   * drawn over what is there. None in front of a backdrop.
    */
-  private drawMeshes(seconds: number, which: { moving?: boolean; depth: MaterialDepth }): void {
+  private drawMeshes(seconds: number, depth: MaterialDepth, moving?: boolean): void {
+    if (this.backdrop) return;
+    const draws = this.skyStates.filter(
+      (s) => s.enabled && s.depth === depth && (moving === undefined || s.moving === moving),
+    );
+    if (!draws.length) return;
     const gl = this.gl;
-    this.depthTest(which.depth);
+    this.depthTest(depth);
     const viewProjection = multiply(this.projection, this.view);
     const v = this.view;
-    const right: Vec3 = [v[0]!, v[4]!, v[8]!];
-    const up: Vec3 = [v[1]!, v[5]!, v[9]!];
     const threshold = this.sceneThreshold();
-    gl.useProgram(this.bodyProgram);
-    gl.uniformMatrix4fv(this.uniform(this.bodyProgram, 'uViewProjection'), false, viewProjection);
-    gl.uniform1f(this.uniform(this.bodyProgram, 'uSmear'), 0);
-    gl.uniform1f(this.uniform(this.bodyProgram, 'uSceneThreshold'), threshold);
-    gl.useProgram(this.meshProgram);
-    gl.uniformMatrix4fv(this.uniform(this.meshProgram, 'uViewProjection'), false, viewProjection);
-    gl.uniform1f(this.uniform(this.meshProgram, 'uSceneThreshold'), threshold);
-    gl.uniform1f(this.uniform(this.meshProgram, 'uGlowThreshold'), threshold); // the sky: no glow of its own
-    gl.uniform1i(this.uniform(this.meshProgram, 'uPattern'), 0);
-    gl.uniform1i(this.uniform(this.meshProgram, 'uShadeCount'), 0);
-    this.bindTint(this.meshProgram, 'uBodyTint', this.sky.tint); // the sky's over all of it
-    gl.uniform2f(this.uniform(this.meshProgram, 'uRimTurn'), 0, 0);
-    gl.uniform3fv(this.uniform(this.meshProgram, 'uEye'), this.camera.eye);
-    gl.uniform3fv(this.uniform(this.meshProgram, 'uRight'), right);
-    gl.uniform3fv(this.uniform(this.meshProgram, 'uUp'), up);
-    gl.uniform1f(this.uniform(this.meshProgram, 'uSmear'), this.smear);
-    gl.uniform1i(this.uniform(this.meshProgram, 'uLit'), 0);
-    let program = this.meshProgram;
-    // Each draw as its material's settings say; the sky's in drawing order by the blend they
-    // give it, then the planets' likewise.
-    // A material as set: its masks and its layers' textures and transforms (a scroll set makes
-    // it move).
-    const loaded = (texture: string) => this.textures.has(texture);
-    const set = this.draws
-      .filter((draw) => draw.placed || !this.backdrop)
-      .map((draw) => {
-        const settings = this.settingsOf(draw);
-        const layered = withLayers(
-          withMasks(draw.material, settings?.masks),
-          settings?.layers,
-          loaded,
-        );
-        // Lit or flat as set (else as the data has it); lit with no light to light it: flat.
-        const unshaded =
-          !!draw.part &&
-          ((settings?.lit !== undefined ? !settings.lit : layered.unshaded) ||
-            (!draw.light &&
-              !this.addedTo(draw.placed?.placement).some(
-                (l) => l.kind === 'ambient' || l.kind === 'directional',
-              )));
-        const material =
-          draw.part && unshaded !== layered.unshaded ? { ...layered, unshaded } : layered;
-        const moving = draw.moving || (material !== draw.material && moves(material));
-        return { draw, settings, material, moving, blend: settings?.blend ?? draw.material.blend };
-      });
-    // Where any body moves, every body is drawn each frame: together, in their order (a surface
-    // drawn after a glow that is in front of it would cover the glow).
-    const bodiesMove = set.some((d) => d.draw.placed && d.moving);
-    const draws = set
-      .map((d) => (d.draw.placed && bodiesMove ? { ...d, moving: true } : d))
-      .filter(
-        ({ draw, settings, moving }) =>
-          (which.moving === undefined || moving === which.moving) &&
-          (settings?.enabled ?? MATERIAL_DEFAULTS.enabled) &&
-          shown(draw) &&
-          this.depthOf(draw.name, settings, !!draw.placed) === which.depth,
-      );
-    if (!draws.length) return;
-    const ordered = [
-      ...sorted(
-        draws.filter((d) => !d.draw.placed),
-        () => this.sky.order,
-      ),
-      ...sorted(
-        draws.filter((d) => d.draw.placed),
-        (placed) => placed?.placement.order,
-      ),
-    ];
-    for (const { draw, settings, material, blend } of ordered) {
-      const p = draw.part ? this.bodyProgram : this.meshProgram;
-      if (p !== program) gl.useProgram((program = p));
-      gl.bindVertexArray(draw.vao);
-      this.blend(blend);
-      if (which.depth !== 'scene') gl.depthMask(false); // as if infinitely far, or at the camera
-      const scale = settings?.scale ?? MATERIAL_DEFAULTS.scale;
-      this.bindMaterial(p, material, seconds, scale, blend, settings?.spreadFrom);
-      gl.uniform1f(this.uniform(p, 'uGlowBoost'), settings?.glow ?? MATERIAL_DEFAULTS.glow);
-      gl.uniform1f(this.uniform(p, 'uSpread'), settings?.spread ?? -1);
-      gl.uniform1f(this.uniform(p, 'uFalloff'), settings?.falloff ?? MATERIAL_DEFAULTS.falloff);
-      gl.uniform1f(this.uniform(p, 'uCut'), settings?.cut ?? MATERIAL_DEFAULTS.cut);
-      gl.uniform1f(this.uniform(p, 'uStrength'), settings?.strength ?? MATERIAL_DEFAULTS.strength);
-      this.bindTint(p, 'uTint', settings?.tint);
-      const placement = draw.placed?.placement;
-      if (draw.part && draw.placed && placement) {
-        const part = withPart(draw.part, draw.partKey && placement.parts?.[draw.partKey]);
-        this.bindPart(part, draw.placed, right, up);
-        const tuning = placement.planet.planet.tuning;
-        const rig = material.unshaded ? undefined : draw.light;
-        const turned =
-          rig &&
-          tunedRig(
-            rig,
-            placement.lighting ?? tuning?.lighting,
-            placement.lightFrom ?? tuning?.lightFrom,
-          );
-        // Its rig as set, and the lights added to it (its own, its overlay's, its scene's), each
-        // only where it reaches this part and material (its linking).
-        const added = this.addedTo(placement);
-        const linked = linkedSettings(placement.lights, added, draw.partKey, draw.key);
-        const light = material.unshaded
-          ? undefined
-          : withAddedLights(
-              turned && withLightSettings(turned, linked),
-              added,
-              linked,
-              this.loaded.scene.tone.exposure,
-            );
-        this.bindLight(light);
-        this.bindTint(p, 'uBodyTint', placement.tint ?? tuning?.tint);
-        const rim = placement.rim ?? tuning?.rim;
-        gl.uniform2fv(this.uniform(p, 'uRimTurn'), rim ? rimTurn(rim) : [0, 0]);
-        this.bindShade(placement, linked);
-        // A grid: shown where its reveal reaches, and coloured by its activation (its material's).
-        if (draw.part.pattern?.kind === 'hex') {
-          const { reveal, activation } = gridFields(materialValues(material, settings));
-          this.bindGrid(
-            p,
-            reveal,
-            activation,
-            settings?.inactive,
-            settings?.active ?? DEFAULT_ACTIVE,
-          );
-        }
-        // The body glows under its own light's bloom threshold, lit or not (its city lights aren't lit).
-        const worn = overlaysOf(placement);
-        const own = worn.length
-          ? worn.find((o) => o.planet.light)?.planet.light
-          : placement.planet.planet.light;
-        gl.uniform1f(this.uniform(p, 'uGlowThreshold'), own?.bloomThreshold ?? threshold);
-        // A drawn pattern (unless shown as its texture, as the game does): as many cells round
-        // the part as its texture has (or HEX_ROUND), over its scale; its lines' width and glow.
-        const pattern = draw.part.pattern;
-        const drawn = pattern?.kind === 'hex' && settings?.drawAs !== 'texture';
-        const round = pattern?.across
-          ? pattern.across * (material.emissive?.tiling?.[0] ?? 1)
-          : HEX_ROUND;
-        gl.uniform1i(this.uniform(p, 'uPattern'), drawn ? 1 : 0);
-        gl.uniform3f(
-          this.uniform(p, 'uPatternParams'),
-          round / scale,
-          settings?.width ?? MATERIAL_DEFAULTS.width,
-          settings?.soft ?? MATERIAL_DEFAULTS.soft,
-        );
-        gl.drawArrays(gl.TRIANGLE_STRIP, 0, draw.count);
-      } else {
-        gl.drawElements(gl.TRIANGLES, draw.count, gl.UNSIGNED_SHORT, 0);
-      }
+    // What every mesh drawn shares.
+    const p = this.meshProgram;
+    gl.useProgram(p);
+    gl.uniformMatrix4fv(this.uniform(p, 'uViewProjection'), false, viewProjection);
+    gl.uniform1f(this.uniform(p, 'uSceneThreshold'), threshold);
+    gl.uniform1f(this.uniform(p, 'uGlowThreshold'), threshold); // the sky: no glow of its own
+    gl.uniform1i(this.uniform(p, 'uPattern'), 0);
+    gl.uniform1i(this.uniform(p, 'uShadeCount'), 0);
+    this.bindTint(p, 'uBodyTint', this.sky.tint); // the sky's over all of it
+    gl.uniform2f(this.uniform(p, 'uRimTurn'), 0, 0);
+    gl.uniform3fv(this.uniform(p, 'uEye'), this.camera.eye);
+    gl.uniform3f(this.uniform(p, 'uRight'), v[0]!, v[4]!, v[8]!);
+    gl.uniform3f(this.uniform(p, 'uUp'), v[1]!, v[5]!, v[9]!);
+    gl.uniform1f(this.uniform(p, 'uSmear'), this.smear);
+    gl.uniform1i(this.uniform(p, 'uLit'), 0);
+    for (const s of draws) {
+      gl.bindVertexArray(s.draw.vao);
+      this.blend(s.blend);
+      if (depth !== 'scene') gl.depthMask(false); // as if infinitely far, or at the camera
+      this.applyState(p, s, seconds);
+      gl.drawElements(gl.TRIANGLES, s.draw.count, gl.UNSIGNED_SHORT, 0);
     }
     gl.bindVertexArray(null);
   }
 
   /** A tint into the uniforms `<name>Color`, `<name>Blend` and `<name>Strength` (none: strength 0). */
   private bindTint(p: WebGLProgram, name: string, tint: MaterialTint | undefined): void {
-    const gl = this.gl;
-    const colour = tint ? parseCanvasColour(tint.colour) : null;
-    gl.uniform1f(this.uniform(p, `${name}Strength`), colour && tint ? tint.strength : 0);
-    if (!colour || !tint) return;
-    gl.uniform3fv(this.uniform(p, `${name}Color`), colour);
-    gl.uniform1i(this.uniform(p, `${name}Blend`), BLEND_MODES[tint.blend]);
+    const u = new UniformSet();
+    tintUniforms(u, name, tint);
+    applyBlock(
+      this.gl,
+      compileBlock(u, (n) => this.uniform(p, n)),
+    );
   }
 
-  /** A body's part and its frame, for the body shader: in units of the body's radius. */
-  private bindPart(part: BodyPart, placed: Placed, right: Vec3, up: Vec3): void {
-    const gl = this.gl;
-    const p = this.bodyProgram;
-    const { position, radius } = placed.placement;
-    const { axes, eye } = placed.frame;
-    gl.uniform3fv(this.uniform(p, 'uCentre'), position);
-    gl.uniformMatrix3fv(this.uniform(p, 'uAxes'), false, axes);
-    gl.uniform1f(this.uniform(p, 'uRadius'), radius);
-    gl.uniform1f(this.uniform(p, 'uExtent'), placed.extent);
-    gl.uniform3fv(this.uniform(p, 'uEye'), eye);
-    gl.uniform3fv(this.uniform(p, 'uRight'), intoFrame(axes, right));
-    gl.uniform3fv(this.uniform(p, 'uUp'), intoFrame(axes, up));
-    const { shape, mapping, color } = part;
-    if (shape.kind === 'sphere') {
-      gl.uniform1i(this.uniform(p, 'uShape'), shape.side === 'near' ? 0 : 1);
-      gl.uniform3f(this.uniform(p, 'uShapeParams'), shape.radius, 0, 0);
-      gl.uniform3fv(this.uniform(p, 'uShapeCentre'), shape.centre ?? [0, 0, 0]);
-    } else {
-      gl.uniform1i(this.uniform(p, 'uShape'), 2);
-      const k = ringScale(shape, Math.hypot(eye[0], eye[1], eye[2]));
-      gl.uniform3f(this.uniform(p, 'uShapeParams'), shape.inner * k, shape.outer * k, shape.depth);
+  /**
+   * The bodies' surfaces a shape part is hidden behind (the body shader's `uSurfaces`): each shown
+   * body's surface, its sphere in the world, where a material on it is on; the nearest first.
+   */
+  private updateSurfaces(): void {
+    const surfaces: number[][] = [];
+    for (const placed of this.placed) {
+      const seen = new Set<PartKey | undefined>();
+      for (const s of placed.states) {
+        const { part } = s;
+        if (!s.enabled || s.draw.part?.role !== 'surface' || part?.shape.kind !== 'sphere')
+          continue;
+        if (seen.has(s.draw.partKey)) continue;
+        seen.add(s.draw.partKey);
+        const { shape } = part;
+        const { position, radius } = placed.placement;
+        const [x, y, z] = (shape.centre ?? [0, 0, 0]).map((c) => c * radius) as [
+          number,
+          number,
+          number,
+        ];
+        const a = placed.frame.axes;
+        surfaces.push([
+          position[0] + a[0]! * x + a[3]! * y + a[6]! * z,
+          position[1] + a[1]! * x + a[4]! * y + a[7]! * z,
+          position[2] + a[2]! * x + a[5]! * y + a[8]! * z,
+          shape.radius * radius,
+        ]);
+      }
     }
-    this.bindMapping('uMap', mapping);
-    this.bindMapping('uMap2', part.mapping2 ?? mapping);
-    const c = color ?? [255, 255, 255, 255];
-    gl.uniform4f(this.uniform(p, 'uPartColor'), c[0] / 255, c[1] / 255, c[2] / 255, c[3] / 255);
+    const eye = this.camera.eye;
+    this.surfaces = surfaces
+      .sort((a, b) => distance(a as unknown as Vec3, eye) - distance(b as unknown as Vec3, eye))
+      .slice(0, MAX_SURFACES);
+    this.surfacesKey = JSON.stringify(this.surfaces);
   }
 
-  /** A part's mapping to texture coordinates, for the body shader, into its uniform struct. */
-  private bindMapping(name: string, mapping: PartMapping): void {
-    const gl = this.gl;
-    const at = (field: string) => this.uniform(this.bodyProgram, `${name}.${field}`);
-    if (mapping.kind === 'sphere') {
-      gl.uniform1i(at('kind'), 0);
-      gl.uniform3fv(at('pole'), mapping.pole);
-      gl.uniform3fv(at('meridian'), mapping.meridian);
-      gl.uniform4f(at('a'), mapping.flip ? 1 : 0, mapping.u0, 0, 0);
-      if (mapping.v.length !== V_SAMPLES)
-        throw new Error(`a planet's v table has ${mapping.v.length} values, not ${V_SAMPLES}`);
-      gl.uniform1fv(at('v[0]'), mapping.v);
-    } else if (mapping.kind === 'linear') {
-      gl.uniform1i(at('kind'), 1);
-      gl.uniform4fv(at('a'), mapping.u);
-      gl.uniform4fv(at('b'), mapping.v);
-    } else {
-      gl.uniform1i(at('kind'), 2);
-      gl.uniform4f(at('a'), mapping.from, mapping.uMax, mapping.mid ?? 0.5, 0);
-    }
-  }
-
-  /** A placed planet's shade, for the body shader: its own over its overlays' over the default (none). */
-  private bindShade(placement: PlanetPlacement, lights: LightSettingsMap | undefined): void {
-    const gl = this.gl;
-    const p = this.bodyProgram;
-    // The planet's own tuning shades it as it is; an overlay it wears shades it its way instead,
-    // as the planet wears it (the later over the earlier).
+  /**
+   * A placed planet's shade as the data has it: its own over its overlays' over the default (none).
+   * The planet's own tuning shades it as it is; an overlay it wears shades it its way instead, as
+   * the planet wears it (the later over the earlier).
+   */
+  private shadeOf(placement: PlanetPlacement): BodyShade {
     const worn = overlaysOf(placement);
     const wears = wearsIn(placement);
-    const shade = withShadowSettings(
-      {
-        ...DEFAULT_SHADE,
-        ...placement.planet.planet.tuning?.shade,
-        ...worn.reduce(
-          (a: Partial<BodyShade>, o, i) => ({ ...a, ...o.planet.shade, ...wears[i]?.shade }),
-          {},
-        ),
-        ...placement.shade,
-      },
-      lights?.shadow,
-    );
-    // Its own shade, then the shadows added to it (its own, its overlay's, its scene's).
-    const shades = [shade, ...addedShades(this.addedTo(placement), lights)].slice(0, MAX_SHADES);
-    const pad = (n: number) => Array<number>((MAX_SHADES - shades.length) * n).fill(0);
-    gl.uniform1i(this.uniform(p, 'uShadeCount'), shades.length);
-    gl.uniform3fv(this.uniform(p, 'uShadeDir'), [
-      ...shades.flatMap((s) => [...normalize(s.direction)]),
-      ...pad(3),
-    ]);
-    gl.uniform1fv(this.uniform(p, 'uShadeStrength'), [...shades.map((s) => s.strength), ...pad(1)]);
-    gl.uniform1fv(this.uniform(p, 'uShadeSoftness'), [...shades.map((s) => s.softness), ...pad(1)]);
-  }
-
-  /** How a body's part is lit, for the body shader: not at all (no rig), or by its rig. */
-  private bindLight(light: PlanetLight | undefined): void {
-    const gl = this.gl;
-    const p = this.bodyProgram;
-    gl.uniform1i(this.uniform(p, 'uLit'), light ? 1 : 0);
-    if (!light) return;
-    const lights = light.directional.slice(0, MAX_LIGHTS);
-    const pad = Array<number>((MAX_LIGHTS - lights.length) * 3).fill(0);
-    // The light's exposure over the scene's: the planet as bright as the tutorial shows it.
-    const scale = light.exposure / this.loaded.scene.tone.exposure;
-    gl.uniform3fv(this.uniform(p, 'uAmbient'), light.ambient);
-    gl.uniform1i(this.uniform(p, 'uLightCount'), lights.length);
-    gl.uniform3fv(this.uniform(p, 'uLightDir'), [
-      ...lights.flatMap((l) => [...l.direction]),
-      ...pad,
-    ]);
-    gl.uniform3fv(this.uniform(p, 'uLightColor'), [...lights.flatMap((l) => [...l.color]), ...pad]);
-    gl.uniform1f(this.uniform(p, 'uLightScale'), scale);
+    return {
+      ...DEFAULT_SHADE,
+      ...placement.planet.planet.tuning?.shade,
+      ...worn.reduce(
+        (a: Partial<BodyShade>, o, i) => ({ ...a, ...o.planet.shade, ...wears[i]?.shade }),
+        {},
+      ),
+      ...placement.shade,
+    };
   }
 
   private material(
@@ -2170,169 +2037,6 @@ export class SceneRenderer {
     if (!['opaque', 'alpha', 'add', 'alphaAdd'].includes(material.blend))
       throw new Error(`${name}: ${material.blend} blending isn't drawn yet`);
     return material;
-  }
-
-  /**
-   * `emissiveScale` sizes the emissive layer's pattern (its tiling over it: 2, twice the size);
-   * `blend` is the blend it is drawn with (its own, or its settings'); `spreadFrom`, where set, is
-   * the side its layers' fresnel is brightest on, in place of their own turn (which leans the other way).
-   */
-  private bindMaterial(
-    p: WebGLProgram,
-    material: SceneMaterial,
-    seconds: number,
-    emissiveScale: number,
-    blend: SceneBlend,
-    spreadFrom?: Vec3,
-  ): void {
-    const turn = spreadFrom ? rimTurn(spreadFrom).map((a) => -a) : null;
-    const gl = this.gl;
-    const layers: (SceneLayer | null | undefined)[] = [
-      material.diffuse,
-      material.emissive,
-      material.alphaMasks[0],
-      material.alphaMasks[1],
-    ];
-    layers.forEach((layer, i) => {
-      const at = (field: string) => this.uniform(p, `uLayers[${i}].${field}`);
-      gl.uniform1i(at('used'), layer ? 1 : 0);
-      gl.activeTexture(gl.TEXTURE0 + i);
-      const texture = layer?.texture ? this.textures.get(layer.texture)! : null;
-      gl.bindTexture(gl.TEXTURE_2D, texture);
-      const [u, v] = layer?.wrap ?? [true, true];
-      gl.bindSampler(i, texture ? this.samplers[(u ? 1 : 0) | (v ? 2 : 0)]! : null);
-      gl.uniform1i(this.uniform(p, SLOTS[i]!), i);
-      if (!layer) return;
-      gl.uniform1i(at('textured'), texture ? 1 : 0);
-      const color = layer.color ?? [255, 255, 255, 255];
-      gl.uniform4f(at('color'), color[0] / 255, color[1] / 255, color[2] / 255, color[3] / 255);
-      gl.uniform1i(at('uvSet'), layer.uvSet ?? 1);
-      gl.uniform1i(at('channel'), CHANNELS[layer.channel ?? 'rgb']);
-      gl.uniform1f(at('bright'), layerBrightness(layer.brightMult));
-      gl.uniform1f(at('midtone'), layer.midtone ?? 0);
-      gl.uniform2fv(at('offset'), layerOffset(layer, seconds));
-      gl.uniform1f(at('angle'), layer.angle ?? 0);
-      const tiling = layer.tiling ?? [1, 1];
-      const scale = i === 1 ? emissiveScale : 1;
-      gl.uniform2f(at('tiling'), tiling[0] / scale, tiling[1] / scale);
-      const f = layer.fresnel;
-      gl.uniform1i(at('fresnel'), f?.type ?? 0);
-      gl.uniform1f(at('fExponent'), f?.exponent ?? 1);
-      gl.uniform1f(at('fMin'), f?.min ?? 0);
-      gl.uniform1f(at('fMax'), f?.max ?? 1);
-      gl.uniform2f(at('fTurn'), turn?.[0] ?? f?.yaw ?? 0, turn?.[1] ?? f?.pitch ?? 0);
-    });
-    gl.uniform1i(this.uniform(p, 'uUnshaded'), material.unshaded ? 1 : 0);
-    gl.uniform1i(this.uniform(p, 'uVertexAlpha'), material.vertexAlpha ? 1 : 0);
-    gl.uniform1i(this.uniform(p, 'uVertexColor'), material.vertexColor ? 1 : 0);
-    gl.uniform1f(this.uniform(p, 'uEmissiveMult'), material.emissiveMult);
-    gl.uniform1i(this.uniform(p, 'uOpaque'), blend === 'opaque' ? 1 : 0);
-    gl.uniform1i(
-      this.uniform(p, 'uEmissiveBlend'),
-      { mod: 0, mod2x: 1, add: 2 }[material.emissiveBlend ?? 'add'],
-    );
-    gl.uniform1f(this.uniform(p, 'uCutout'), material.cutout ?? 0);
-    // Not a grid unless bound as one (`bindGrid`): its layers' own fresnel, its own colour.
-    gl.uniform1i(this.uniform(p, 'uRevealed'), 0);
-    gl.uniform1i(this.uniform(p, 'uActivationCount'), 0);
-  }
-
-  /**
-   * A grid's reveals and activations (each at most MAX_FIELDS) and its colours: inactive in
-   * place of its diffuse's own where set, and active.
-   */
-  private bindGrid(
-    p: WebGLProgram,
-    reveals: readonly GridField[],
-    activations: readonly GridField[],
-    inactive: string | undefined,
-    active: string,
-  ): void {
-    const gl = this.gl;
-    const pad = <T>(list: readonly T[], fill: T): T[] => [
-      ...list.slice(0, MAX_FIELDS),
-      ...Array<T>(Math.max(0, MAX_FIELDS - list.length)).fill(fill),
-    ];
-    const r = reveals.slice(0, MAX_FIELDS);
-    gl.uniform1i(this.uniform(p, 'uRevealed'), 1);
-    gl.uniform1i(this.uniform(p, 'uRevealCount'), r.length);
-    gl.uniform3fv(
-      this.uniform(p, 'uRevealFrom'),
-      pad(
-        r.map((l) => [...normalize(l.from)]),
-        [0, -1, 0],
-      ).flat(),
-    );
-    gl.uniform1fv(
-      this.uniform(p, 'uRevealSpread'),
-      pad(
-        r.map((l) => l.reach),
-        0,
-      ),
-    );
-    gl.uniform1fv(
-      this.uniform(p, 'uRevealFalloff'),
-      pad(
-        r.map((l) => l.falloff),
-        1,
-      ),
-    );
-    gl.uniform1fv(
-      this.uniform(p, 'uRevealStrength'),
-      pad(
-        r.map((l) => l.strength),
-        0,
-      ),
-    );
-    const a = activations.slice(0, MAX_FIELDS);
-    gl.uniform1i(this.uniform(p, 'uActivationCount'), a.length);
-    gl.uniform3fv(
-      this.uniform(p, 'uActivationFrom'),
-      pad(
-        a.map((l) => [...normalize(l.from)]),
-        [0, -1, 0],
-      ).flat(),
-    );
-    gl.uniform1fv(
-      this.uniform(p, 'uActivationSpread'),
-      pad(
-        a.map((l) => l.reach),
-        0,
-      ),
-    );
-    gl.uniform1fv(
-      this.uniform(p, 'uActivationFalloff'),
-      pad(
-        a.map((l) => l.falloff),
-        1,
-      ),
-    );
-    gl.uniform1fv(
-      this.uniform(p, 'uActivationStrength'),
-      pad(
-        a.map((l) => l.strength),
-        0,
-      ),
-    );
-    gl.uniform1fv(
-      this.uniform(p, 'uActivationEnergy'),
-      pad(
-        a.map((l) => l.energizes ?? 0),
-        0,
-      ),
-    );
-    gl.uniform1fv(
-      this.uniform(p, 'uActivationGlow'),
-      pad(
-        a.map((l) => l.glow ?? 0),
-        0,
-      ),
-    );
-    gl.uniform3fv(this.uniform(p, 'uActiveColor'), rgbOf(active, 1));
-    if (inactive) {
-      const c = rgbOf(inactive, 1);
-      gl.uniform4f(this.uniform(p, 'uLayers[0].color'), c[0], c[1], c[2], 1);
-    }
   }
 
   private uniform(p: WebGLProgram, name: string): WebGLUniformLocation | null {
@@ -2366,8 +2070,7 @@ export class SceneRenderer {
       type: number,
       normalized: boolean,
     ) => {
-      const at = gl.getAttribLocation(this.meshProgram, name);
-      if (at < 0) return;
+      const at = ATTRIBUTES[name]!;
       gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
       gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
       gl.enableVertexAttribArray(at);
@@ -2394,16 +2097,29 @@ export class SceneRenderer {
     gl.bindVertexArray(vao);
     gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
-    const corner = gl.getAttribLocation(this.bodyProgram, 'aCorner');
+    const corner = ATTRIBUTES['aCorner']!;
     gl.enableVertexAttribArray(corner);
     gl.vertexAttribPointer(corner, 2, gl.FLOAT, false, 0, 0);
     gl.bindVertexArray(null);
     return vao;
   }
 
+  /** A beam's tube on the GPU (see `beamTube`). */
+  private tubeVao(tube: Float32Array): WebGLVertexArrayObject {
+    const gl = this.gl;
+    const vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData(gl.ARRAY_BUFFER, tube, gl.STATIC_DRAW);
+    const at = ATTRIBUTES['aTube']!;
+    gl.enableVertexAttribArray(at);
+    gl.vertexAttribPointer(at, 3, gl.FLOAT, false, 0, 0);
+    gl.bindVertexArray(null);
+    return vao;
+  }
+
   private particleVao(particles: ParticleSystem): [WebGLVertexArrayObject, WebGLBuffer] {
     const gl = this.gl;
-    const p = this.particleProgram;
     const vao = gl.createVertexArray();
     gl.bindVertexArray(vao);
     gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
@@ -2412,7 +2128,7 @@ export class SceneRenderer {
       new Float32Array([-0.5, -0.5, 0.5, -0.5, -0.5, 0.5, 0.5, 0.5]),
       gl.STATIC_DRAW,
     );
-    const corner = gl.getAttribLocation(p, 'aCorner');
+    const corner = ATTRIBUTES['aCorner']!;
     gl.enableVertexAttribArray(corner);
     gl.vertexAttribPointer(corner, 2, gl.FLOAT, false, 0, 0);
     const buffer = gl.createBuffer();
@@ -2423,7 +2139,7 @@ export class SceneRenderer {
       ['aParticle', 0],
       ['aParticleColor', 16],
     ] as const) {
-      const at = gl.getAttribLocation(p, name);
+      const at = ATTRIBUTES[name]!;
       gl.enableVertexAttribArray(at);
       gl.vertexAttribPointer(at, 4, gl.FLOAT, false, stride, offset);
       gl.vertexAttribDivisor(at, 1);

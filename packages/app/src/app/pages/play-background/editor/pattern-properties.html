@@ -67,8 +67,8 @@
   </hrs-property-section>
   <hrs-property-section
     title="Colours"
-    [changed]="isSet('inactive')"
-    (resetRequested)="clear.emit(['inactive'])"
+    [changed]="anySet(['inactive', 'active'])"
+    (resetRequested)="clear.emit(['inactive', 'active'])"
   >
     <hrs-property-colour
       label="Inactive"
@@ -77,6 +77,14 @@
       [origin]="origins()?.inactive"
       (resetRequested)="clear.emit(['inactive'])"
       (valueChange)="settingsChange.emit({ inactive: $event })"
+    />
+    <hrs-property-colour
+      label="Active"
+      [value]="v.active"
+      [changed]="isSet('active')"
+      [origin]="origins()?.active"
+      (resetRequested)="clear.emit(['active'])"
+      (valueChange)="settingsChange.emit({ active: $event })"
     />
   </hrs-property-section>
 } @else {

@@ -12,6 +12,7 @@ import {
   type SkySettings,
 } from './scene-planets';
 import type { Backdrop } from './scene-renderer';
+import type { LightBeam } from './scene-beams';
 import type { SceneCameraSet } from './play-scene';
 import { type TintSettings, UNTINTED } from './tint-settings';
 
@@ -95,6 +96,8 @@ export interface BackgroundSceneSource {
   readonly tint: Signal<TintSettings | null>;
   /** An editing aid shown in place of the sky (none: the sky); never part of the design. */
   readonly backdrop?: Signal<Backdrop | null>;
+  /** Lights' beams shown over it (an editing aid: the light selected); never part of the design. */
+  readonly beams?: Signal<readonly LightBeam[]>;
   /** Where it puts the camera, over the game's (none: the game's). */
   readonly camera?: Signal<SceneCameraSet | undefined>;
   /**

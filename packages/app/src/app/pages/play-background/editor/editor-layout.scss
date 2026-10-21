@@ -49,6 +49,14 @@
   inset: 0;
 }
 
+// The frame stats, small in the bottom left.
+.layout__stats {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  z-index: 1;
+}
+
 // Back to the site, in the top left; dark behind it so it reads over the brightest sky.
 .back {
   position: absolute;

@@ -417,9 +417,10 @@ export function visualExtent(
       ),
     ),
   ];
-  const spheres = parts.filter((p) => p.shape.kind === 'sphere');
+  // Its spheres, tubes, cones and discs with room for their glow; its rings as they lie.
+  const solids = parts.filter((p) => p.shape.kind !== 'ring');
   const rings = parts.filter((p) => p.shape.kind === 'ring');
-  return Math.max(margin * reach(spheres), reach(rings, Infinity));
+  return Math.max(margin * reach(solids), reach(rings, Infinity));
 }
 
 /** A body's parts' settings in effect: under the level edited (its own defaults, its overlays'), then that level's. */

@@ -1,5 +1,11 @@
 import { Component, computed, inject } from '@angular/core';
-import type { LayerSettings, LayerSlot } from '../../../scenes/play-background/scene-planets';
+import type {
+  GridLight,
+  LayerSettings,
+  LayerSlot,
+} from '../../../scenes/play-background/scene-planets';
+import { newGridLight, withGridLight } from '../../../scenes/play-background/material-settings';
+import type { NewLightKind } from '../../../scenes/play-background/scene-lights';
 import { DraftDesignStore } from '../draft-design.store';
 import type { PropertyOption } from '../properties/property-select';
 import { AddPlanet } from './add-planet';
@@ -20,8 +26,14 @@ import {
 } from './editing-aids.store';
 import { Editor } from './editor';
 import { EditorUiStore } from './editor-ui.store';
-import { EffectProperties } from './effect-properties';
-import type { LayerEntry, MaterialEntry } from './editor-model';
+import { GridLightProperties } from './grid-light-properties';
+import {
+  type LayerEntry,
+  lightIcon,
+  type MaterialEntry,
+  splitViewKey,
+  viewKey,
+} from './editor-model';
 import { LayerProperties } from './layer-properties';
 import { MaterialProperties } from './material-properties';
 import { PatternProperties } from './pattern-properties';
@@ -34,7 +46,7 @@ import { LitBy } from './lit-by';
 import { ReferenceProperties, type ReferenceValues } from './reference-properties';
 import { GroupPlacementProperties } from './group-placement-properties';
 import { AddCamera } from './add-camera';
-import { AddedList } from './added-list';
+import { type AddedItem, AddedList } from './added-list';
 import { PropertySection } from '../properties/property-section';
 import { CameraProperties } from './camera-properties';
 import { SceneEditorStore } from './scene-editor.store';
@@ -56,7 +68,7 @@ import { TintSection } from './tint-section';
     BodyProperties,
     MaterialProperties,
     PatternProperties,
-    EffectProperties,
+    GridLightProperties,
     LayerProperties,
     PartProperties,
     LightProperties,
@@ -189,6 +201,54 @@ export class SelectionPanel {
       ...(change.sky !== undefined ? { backdropSky: change.sky } : {}),
       ...(change.gridSize !== undefined ? { gridSize: change.gridSize as GridSize } : {}),
     });
+  }
+
+  /** The shield shader's lights (the selected shader's, or the selected light's shader's), as rows of its Lights. */
+  protected readonly shieldLights = computed((): readonly AddedItem[] => {
+    const base = splitViewKey(this.editor.selected())?.base;
+    const lights = this.editor.material()?.values.gridLights ?? [];
+    return base
+      ? lights.map((l) => ({
+          key: viewKey(base, { kind: 'gridLight', id: l.id }),
+          label: l.name,
+          icon: lightIcon(l),
+          removable: true,
+        }))
+      : [];
+  });
+
+  /** The selected shield light, where one is. */
+  protected readonly gridLight = computed(() => {
+    const view = this.editor.materialView();
+    return view?.kind === 'gridLight'
+      ? this.editor.material()?.values.gridLights.find((l) => l.id === view.id)
+      : undefined;
+  });
+
+  /** A light added to the shield shader (its lights set at the level edited), and selected. */
+  protected addGridLight(kind: NewLightKind): void {
+    const base = splitViewKey(this.editor.selected())?.base;
+    const lights = this.editor.material()?.values.gridLights ?? [];
+    if (!base) return;
+    const light = newGridLight(kind, lights);
+    this.editor.setMaterial({ gridLights: [...lights, light] });
+    this.editor.select(viewKey(base, { kind: 'gridLight', id: light.id }));
+  }
+
+  /** One of the shield shader's lights changed (its lights set at the level edited). */
+  protected changeGridLight(id: GridLight['id'], change: Partial<GridLight>): void {
+    const lights = this.editor.material()?.values.gridLights ?? [];
+    this.editor.setMaterial({ gridLights: withGridLight(lights, id, change) });
+  }
+
+  /** One of the shield shader's lights taken out; it selected: the shader selected instead. */
+  protected removeGridLight(key: string): void {
+    const split = splitViewKey(key);
+    if (!split || split.view === 'group' || split.view.kind !== 'gridLight') return;
+    const id = split.view.id;
+    const lights = this.editor.material()?.values.gridLights ?? [];
+    this.editor.setMaterial({ gridLights: lights.filter((l) => l.id !== id) });
+    if (this.editor.selected() === key) this.editor.select(viewKey(split.base, { kind: 'shader' }));
   }
 
   /** The selected layer, with the material it is a layer of. */

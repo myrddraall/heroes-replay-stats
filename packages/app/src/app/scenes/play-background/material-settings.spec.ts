@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
-  GRID_DEFAULTS,
+  DEFAULT_GRID_LIGHTS,
+  GRID_LIGHT_DEFAULTS,
   gridFields,
+  gridLightsOf,
+  newGridLight,
+  withGridLight,
   materialControls,
   materialValues,
   mergeMaterialSettings,
@@ -85,6 +89,7 @@ describe('materials’ settings', () => {
       particles: false,
       depth: false,
       lit: true,
+      specular: false,
     });
     const emissive = material({
       emissive: { texture: 'grid', brightMult: 1, fresnel: fresnel(0) },
@@ -100,7 +105,12 @@ describe('materials’ settings', () => {
       particles: false,
       depth: false,
       lit: true,
+      specular: false,
     });
+    // A specular layer: its shine is set.
+    expect(
+      materialControls(material({ specular: { texture: 'rock', brightMult: 1 } })).specular,
+    ).toBe(true);
     // A drawn pattern: its lines are set, not a texture's range; a grid's colours too (its own
     // fade, spread and its side, still its own: its reveal lights say where it shows).
     expect(materialControls(emissive, { pattern: true })).toMatchObject({
@@ -128,6 +138,7 @@ describe('materials’ settings', () => {
       particles: true,
       depth: true,
       lit: false,
+      specular: false,
     });
   });
 
@@ -155,31 +166,52 @@ describe('materials’ settings', () => {
     ).toEqual({ strength: 'its tuning', glow: 'the library (planet)' });
   });
 
-  it('reveal a grid from the front, its whole face, and activate it only once switched on', () => {
+  it('reveal a grid from the front, its whole face, by one light of its own where none is set', () => {
     const v = materialValues(material(), undefined);
+    expect(v.gridLights).toEqual(DEFAULT_GRID_LIGHTS);
     const { reveal, activation } = gridFields(v);
     expect(reveal).toEqual([{ from: TOWARDS_EYE, reach: 1, falloff: 1, strength: 2 }]);
     expect(activation).toEqual([]);
-    // Switched off: shown nowhere.
-    expect(gridFields(materialValues(material(), { revealOn: false })).reveal).toEqual([]);
   });
 
-  it("activate a grid as set, from its reveal's side while tied, else its own", () => {
+  it('reveal and activate a grid by each of its lights that does, one switched off doing neither', () => {
     const right = [1, 0, 0] as const;
-    const left = [-1, 0, 0] as const;
-    const on = { activationOn: true, revealFrom: right, activationFrom: left };
-    expect(gridFields(materialValues(material(), on)).activation).toEqual([
+    const both = { ...newGridLight('directional', []), from: right, activates: true };
+    const all = newGridLight('ambient', [both]);
+    const anti = { ...newGridLight('antilight', []), strength: 0.5 };
+    const off = { ...newGridLight('directional', []), enabled: false };
+    const { reveal, activation } = gridFields(
+      materialValues(material(), { gridLights: [both, all, anti, off] }),
+    );
+    // Revealing: the one doing both, the one from all round (no side), the antilight hiding.
+    expect(reveal).toEqual([
+      { from: right, reach: 1, falloff: 1, strength: 1 },
+      { reach: 1, falloff: 1, strength: 1 },
+      { from: anti.from, reach: 1, falloff: 1, strength: -0.5 },
+    ]);
+    // Activating, from the same side as it reveals: the one doing both.
+    expect(activation).toEqual([
       {
         from: right,
-        reach: GRID_DEFAULTS.activationReach,
-        falloff: GRID_DEFAULTS.activationFalloff,
-        strength: GRID_DEFAULTS.activationStrength,
-        energizes: GRID_DEFAULTS.activationEnergizes,
-        glow: GRID_DEFAULTS.activationGlow,
+        reach: 1,
+        falloff: 1,
+        strength: 1,
+        energizes: GRID_LIGHT_DEFAULTS.energizes,
+        glow: GRID_LIGHT_DEFAULTS.glow,
       },
     ]);
-    expect(
-      gridFields(materialValues(material(), { ...on, activationTied: false })).activation[0]!.from,
-    ).toEqual(left);
+    expect(withGridLight([both, all], both.id, { enabled: false })[0]!.enabled).toBe(false);
+  });
+
+  it('read a reveal and activation of before as lights of its own', () => {
+    const right = [1, 0, 0] as const;
+    const left = [-1, 0, 0] as const;
+    const before = { activationOn: true, revealFrom: right, activationFrom: left };
+    const [reveal, activation] = gridLightsOf(before);
+    expect(reveal).toMatchObject({ from: right, strength: 2 });
+    // Tied (as it was unless set): from the reveal's side.
+    expect(activation).toMatchObject({ from: right, reveals: false, activates: true, strength: 1 });
+    expect(gridLightsOf({ ...before, activationTied: false })[1]!.from).toEqual(left);
+    expect(gridLightsOf({ revealOn: false })).toEqual([]);
   });
 });

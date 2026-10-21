@@ -48,7 +48,7 @@ describe('overlays', () => {
         styles: {
           nexus: {
             parts: { 'style:shield': { size: 1.1 } } as never,
-            added: [{ id: 'added-1', kind: 'shadow', name: 'Antilight', reach }],
+            added: [{ id: 'added-1', kind: 'shadow' as never, name: 'Antilight', reach }],
           },
         },
         sky: {},

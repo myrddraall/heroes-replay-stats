@@ -38,6 +38,7 @@ import {
   knownLights,
   type LightId,
   type LightKind,
+  type NewLightKind,
   type LightSettings,
   type LightReach,
   type LightSettingsMap,
@@ -75,6 +76,7 @@ import {
   layerSlots,
   type LayerSettings,
   type LayerSlot,
+  type GridLight,
   type MaterialDepth,
   type MaterialSettings,
   type MaterialSettingsMap,
@@ -119,10 +121,10 @@ export type TargetKind =
   | 'camera'
   | 'part'
   | 'light'
-  /** What of a material a row shows: one of its layers, its shield shader, one of that's effects. */
+  /** What of a material a row shows: one of its layers, its shield shader, one of that's lights. */
   | 'layer'
   | 'shader'
-  | 'effect';
+  | 'gridLight';
 
 /**
  * An overlay a body wears, as an editor has it: which, its settings under the layer edited (the
@@ -582,6 +584,8 @@ export interface PartValues {
   readonly mid: number;
   readonly keepToLimb: boolean;
   readonly flip: boolean;
+  /** A tube's or a cone's side: its outside, or its inside. */
+  readonly side: 'near' | 'far';
   readonly from: number;
   readonly repeat: number;
 }
@@ -595,8 +599,8 @@ export interface PartEntry {
   readonly labelBelow: string;
   /** Whose it is: the body's own, or an overlay's (an overlay opened on its own: its own, kept as an overlay's). */
   readonly from: 'own' | 'style';
-  /** Its shape: a body's sphere or ring, or a sky overlay's part about the eye. */
-  readonly kind: 'sphere' | 'ring' | 'sky';
+  /** Its shape: a body's sphere, ring, tube, cone or disc, or a sky overlay's part about the eye. */
+  readonly kind: 'sphere' | 'ring' | 'tube' | 'cone' | 'disc' | 'capsule' | 'plane' | 'sky';
   /** Whether it is a band (a sky overlay's part made in the editor: it has a width). */
   readonly band?: boolean;
   readonly values: PartValues;
@@ -654,7 +658,19 @@ export const overlayEnabled = (b: BodyInfo, id: string) =>
 export const overlayEnabledBelow = (b: BodyInfo, id: string) => overlayOn(id, b.below) ?? true;
 
 /** Each part's icon in the tree: a sphere, or a ring. */
-export const partIcon = (p: PartEntry) => (p.kind === 'ring' ? 'radio_button_unchecked' : 'circle');
+export const partIcon = (p: PartEntry) => PART_ICONS[p.kind];
+
+/** Each shape's icon in the tree (and where parts are added). */
+export const PART_ICONS: Record<PartEntry['kind'], string> = {
+  sphere: 'circle',
+  ring: 'radio_button_unchecked',
+  tube: 'crop_portrait',
+  cone: 'change_history',
+  disc: 'album',
+  capsule: 'pill',
+  plane: 'rectangle',
+  sky: 'panorama_horizontal',
+};
 
 const PART_NAMES: Record<PartRole, string> = {
   surface: 'Surface',
@@ -664,6 +680,11 @@ const PART_NAMES: Record<PartRole, string> = {
   shield: 'Shield',
   sphere: 'Sphere',
   band: 'Band',
+  tube: 'Tube',
+  cone: 'Cone',
+  disc: 'Disc',
+  capsule: 'Capsule',
+  plane: 'Plane',
 };
 
 /** A part of the game data's name: its role's (Surface, Shell, Ring…). */
@@ -728,11 +749,20 @@ export function partsOfBody(b: BodyInfo): PartEntry[] {
           depth: settings?.depth ?? (shape.kind === 'ring' ? shape.depth : 0),
           mid: settings?.mid ?? (mapping.kind === 'ring' ? (mapping.mid ?? 0.5) : 0.5),
           keepToLimb: settings?.keepToLimb ?? (shape.kind === 'ring' && shape.seen !== undefined),
-          flip: settings?.flip ?? (mapping.kind === 'sphere' && mapping.flip),
+          flip:
+            settings?.flip ??
+            ((mapping.kind === 'sphere' || mapping.kind === 'round') && mapping.flip),
+          side: settings?.side ?? ('side' in shape ? shape.side : 'near'),
           from:
             settings?.from ??
             (mapping.kind === 'ring' ? Math.round(((mapping.from * 180) / Math.PI) * 10) / 10 : 0),
-          repeat: settings?.repeat ?? (mapping.kind === 'ring' ? mapping.uMax : 1),
+          repeat:
+            settings?.repeat ??
+            (mapping.kind === 'ring'
+              ? mapping.uMax
+              : mapping.kind === 'round'
+                ? mapping.repeat
+                : 1),
         },
         set,
         origins: originsOf(levels.map(([name, l]) => [name, l?.[key]] as const)),
@@ -749,12 +779,16 @@ export function partsOfBody(b: BodyInfo): PartEntry[] {
   );
 }
 
-/** Each kind of light's icon in the tree. */
-export const LIGHT_ICONS: Record<LightKind, string> = {
+/** Each kind of light's icon (an antilight's: any light that darkens). */
+export const LIGHT_ICONS: Record<NewLightKind, string> = {
   ambient: 'brightness_low',
   directional: 'wb_sunny',
-  shadow: 'contrast',
+  antilight: 'contrast',
 };
+
+/** A light's icon in the tree: by its kind, or an antilight's where it darkens. */
+export const lightIcon = (l: { readonly kind: LightKind; readonly darkens?: boolean }): string =>
+  l.darkens ? LIGHT_ICONS.antilight : LIGHT_ICONS[l.kind];
 
 /** A body's light as its properties show it. */
 export interface LightEntry {
@@ -1010,8 +1044,9 @@ export function litByOf(
         ? (parts.get(receiver.slice(5)) ?? []).includes(m.key)
         : receiver === `material:${m.key}`,
   );
-  // Lights light a lit material; an antilight darkens any of a body's.
-  const acts = (kind: LightKind) => shown.some((m) => kind === 'shadow' || m.values.lit);
+  // Lights light a lit material; one that darkens darkens any of a body's.
+  const acts = (light: { readonly darkens: boolean }) =>
+    light.darkens || shown.some((m) => m.values.lit);
   const under = lightsBelowOf(b);
   const addedBelow = new Map(addedBelowOf(b).map((l) => [l.id, l] as const));
   const lights = [
@@ -1043,8 +1078,7 @@ export function litByOf(
   return lights
     .filter(
       ({ light, removable }) =>
-        (acts(light.kind) || (receiver === null && removable)) &&
-        (receiver === null || light.enabled),
+        (acts(light) || (receiver === null && removable)) && (receiver === null || light.enabled),
     )
     .map(({ light, ...l }) => ({
       id: light.id,
@@ -1381,6 +1415,7 @@ export function skyPartsOf(
         mid: 0.5,
         keepToLimb: false,
         flip: false,
+        side: 'near',
         from: 0,
         repeat: 1,
       },
@@ -1492,16 +1527,12 @@ export const referenceRow = (): TreeRow => ({
 
 /**
  * What of a material a row shows, where it isn't the material itself: one of its layers; the
- * shield shader it is drawn with (its pattern); one of that shader's effects (its reveal, its
- * activation).
+ * shield shader it is drawn with (its pattern); one of that shader's lights (by its id).
  */
 export type MaterialView =
   | { readonly kind: 'layer'; readonly slot: LayerSlot }
   | { readonly kind: 'shader' }
-  | { readonly kind: 'effect'; readonly effect: GridEffect };
-
-/** A shield shader's effects: where its grid shows, and where it is active. */
-export type GridEffect = 'reveal' | 'activation';
+  | { readonly kind: 'gridLight'; readonly id: GridLight['id'] };
 
 const VIEW = '::';
 
@@ -1510,14 +1541,14 @@ export function viewKey(materialKey: string, view: MaterialView): string {
   const what =
     view.kind === 'layer'
       ? `layer:${view.slot}`
-      : view.kind === 'effect'
-        ? `effect:${view.effect}`
+      : view.kind === 'gridLight'
+        ? `light:${view.id}`
         : 'shader';
   return `${materialKey}${VIEW}${what}`;
 }
 
-/** A shield shader's groups' keys (they only fold): its materials, its effects. */
-export const shaderGroupKey = (materialKey: string, group: 'materials' | 'effects') =>
+/** A shield shader's groups' keys (they only fold): its materials, its lights. */
+export const shaderGroupKey = (materialKey: string, group: 'materials' | 'lights') =>
   `${materialKey}${VIEW}group:${group}`;
 
 /**
@@ -1533,12 +1564,8 @@ export function splitViewKey(
   const what = key.slice(at + VIEW.length);
   if (what === 'shader') return { base, view: { kind: 'shader' } };
   if (what.startsWith('group:')) return { base, view: 'group' };
-  if (what.startsWith('effect:')) {
-    const effect = what.slice(7);
-    return effect === 'reveal' || effect === 'activation'
-      ? { base, view: { kind: 'effect', effect } }
-      : null;
-  }
+  if (what.startsWith('light:grid-'))
+    return { base, view: { kind: 'gridLight', id: what.slice(6) as GridLight['id'] } };
   if (what.startsWith('layer:')) {
     const slot = what.slice(6) as LayerSlot;
     return LAYER_SLOTS.includes(slot) ? { base, view: { kind: 'layer', slot } } : null;
@@ -1548,10 +1575,11 @@ export function splitViewKey(
 
 const LAYER_SLOTS: readonly LayerSlot[] = ['diffuse', 'emissive', 'mask1', 'mask2'];
 
-/** A view's title: its shader, its effect, or its layer (by the material's own name for it, where given). */
+/** A view's title: its shader, its light, or its layer (by the material's own name for it, where given). */
 export function viewTitle(view: MaterialView, m?: MaterialEntry): string {
   if (view.kind === 'shader') return 'Shield shader';
-  if (view.kind === 'effect') return view.effect === 'reveal' ? 'Reveal' : 'Activation';
+  if (view.kind === 'gridLight')
+    return m?.values.gridLights.find((l) => l.id === view.id)?.name ?? 'Light';
   const layer = m?.layers.find((l) => l.slot === view.slot)?.label ?? LAYER_NAMES[view.slot];
   return m ? `${m.label} · ${layer}` : layer;
 }
@@ -1569,8 +1597,29 @@ export function layerRows(materialKey: string, m: MaterialEntry, depth: number):
 }
 
 /**
+ * A material's row key with the part it is drawn on after it (`#`), where the same material is
+ * drawn on more than one of a list's parts (each its own row; its settings, by name, still shared).
+ */
+export const onPart = (key: string, part?: string) => (part ? `${key}#${part}` : key);
+
+/** A material's name from its row key's (the part it is on, where given, left off). */
+export const offPart = (name: string) => name.split('#')[0] ?? name;
+
+/** The materials drawn on more than one of these parts (their rows told apart by part). */
+export function sharedMaterials(
+  list: readonly { readonly materials: readonly { readonly name: string }[] }[],
+): ReadonlySet<string> {
+  const seen = new Set<string>();
+  const shared = new Set<string>();
+  for (const { materials } of list)
+    for (const name of new Set(materials.map((m) => m.name)))
+      (seen.has(name) ? shared : seen).add(name);
+  return shared;
+}
+
+/**
  * A part's materials as rows under it: a shield's (a grid's) under its shader, the shader's
- * materials and its effects (where it shows, where it is active) under that, each its own row
+ * materials and its lights (where it shows, where it is active) under that, each its own row
  * (open unless folded: their keys among those kept mean folded); any other part's materials
  * right under it. Each material's row is the editor's own (`material`, at a depth), its layers
  * under it.
@@ -1599,7 +1648,7 @@ export function partMaterialRows(
     expanded: !open.has(shader),
   });
   if (open.has(shader)) return;
-  const group = (which: 'materials' | 'effects', label: string, icon: string) => {
+  const group = (which: 'materials' | 'lights', label: string, icon: string) => {
     const key = shaderGroupKey(base, which);
     push({
       key,
@@ -1614,18 +1663,15 @@ export function partMaterialRows(
   };
   if (group('materials', 'Materials', 'texture'))
     for (const m of materials) material(keyOf(m.name), m, depth + 2);
-  if (group('effects', 'Effects', 'auto_awesome'))
-    for (const [effect, label, icon, on] of [
-      ['reveal', 'Reveal', 'visibility', grid.values.revealOn],
-      ['activation', 'Activation', 'flare', grid.values.activationOn],
-    ] as const)
+  if (group('lights', 'Lights', 'lightbulb'))
+    for (const l of grid.values.gridLights)
       push({
-        key: viewKey(base, { kind: 'effect', effect }),
-        label,
-        icon,
+        key: viewKey(base, { kind: 'gridLight', id: l.id }),
+        label: l.name,
+        icon: lightIcon(l),
         depth: depth + 2,
         expandable: false,
         expanded: false,
-        enabled: on,
+        enabled: l.enabled ?? true,
       });
 }

@@ -15,7 +15,7 @@ import { type PropertyOption, PropertySelect } from '../properties/property-sele
 
 /**
  * A material's pattern (presentational): a shield's shader's (its cells, drawn or the game's
- * texture, and its colour where inactive), or any other's emissive texture (how large, how much of
+ * texture, and its colours where inactive and where active), or any other's emissive texture (how large, how much of
  * it is cut away).
  */
 @Component({

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  addedShades,
+  addedLighting,
+  bodyDarkenings,
   bodyLights,
   linkedSettings,
   lightsForMoons,
@@ -11,7 +12,6 @@ import {
   mergeLightSettings,
   rgbOf,
   withLightSettings,
-  withShadowSettings,
   reachesReceiver,
   withReceiver,
   tunedRig,
@@ -38,8 +38,10 @@ describe('a body’s lights', () => {
       ['directional-0', 'directional', 'Fill light'],
       ['directional-1', 'directional', 'Back light'],
       ['directional-2', 'directional', 'Key light'],
-      ['shadow', 'shadow', 'Antilight'],
+      ['shadow', 'directional', 'Antilight'],
     ]);
+    // Its shadow darkens (white taken away); the rig's lights light.
+    expect(lights.map((l) => l.darkens)).toEqual([false, false, false, false, true]);
     // A light comes from where it shines from: against the way it travels.
     const key = lights[3]!;
     key.from!.forEach((v, i) => expect(v).toBeCloseTo([0.14, 0.11, 0.98][i]!, 1));
@@ -73,14 +75,52 @@ describe('a body’s lights', () => {
     expect(set.ambient).toEqual([0.2, 0.2, 0.2]);
   });
 
-  it('set the shadow, or switch it off', () => {
+  it('darken by the shadow as set, or not at all switched off', () => {
     const shade = { ...DEFAULT_SHADE, strength: 0.6 };
-    expect(withShadowSettings(shade, { enabled: false }).strength).toBe(0);
-    expect(withShadowSettings(shade, { from: [1, 0, 0], softness: 2 })).toEqual({
-      direction: [1, 0, 0],
-      strength: 0.6,
-      softness: 2,
-    });
+    expect(bodyDarkenings(undefined, shade, [], { shadow: { enabled: false } })).toEqual([]);
+    expect(
+      bodyDarkenings(undefined, shade, [], { shadow: { from: [1, 0, 0], softness: 2 } }),
+    ).toEqual([{ direction: [1, 0, 0], strength: 0.6, softness: 2, colour: [1, 1, 1] }]);
+  });
+
+  it('darken by any light set to: its light taken out of the rig, its colour taken away', () => {
+    const set = { ambient: { darkens: true, colour: '#0000ff' } } as const;
+    expect(withLightSettings({ ...rig, ambient: [0.2, 0.2, 0.2] }, set).ambient).toEqual([0, 0, 0]);
+    const [ambient] = bodyDarkenings({ ...rig, ambient: [0.5, 0.5, 0.5] }, DEFAULT_SHADE, [], set);
+    // From all round: no direction (all of it darkened alike).
+    expect(ambient).toEqual({ strength: 0.5, softness: 1, colour: [0, 0, 1] });
+  });
+
+  it('light by the shadow set to light instead', () => {
+    const shade = { ...DEFAULT_SHADE, strength: 0.6 };
+    const set = { shadow: { darkens: false } };
+    expect(bodyDarkenings(undefined, shade, [], set)).toEqual([]);
+    expect(addedLighting([], set)).toBe(true);
+    const lit = withAddedLights(undefined, [], set, 1.5, shade)!;
+    expect(lit.directional).toHaveLength(1);
+    expect(lit.directional[0]!.color).toEqual([0.6, 0.6, 0.6]);
+  });
+
+  it('shine as the data has them, or as set, and not at all switched off or darkening', () => {
+    const shiny: PlanetLight = {
+      ...rig,
+      directional: [{ ...rig.directional[0]!, specular: [31.6, 17, 9.5] }],
+    };
+    const [, key] = bodyLights(shiny, DEFAULT_SHADE);
+    expect(key!.specularStrength).toBeCloseTo(31.6);
+    expect(key!.specular).toBe('#ff894d');
+    expect(withLightSettings(shiny, {}).directional[0]!.specular).toEqual([31.6, 17, 9.5]);
+    const set = withLightSettings(shiny, { 'directional-0': { specularStrength: 2 } });
+    expect(Math.max(...set.directional[0]!.specular!)).toBeCloseTo(2);
+    const off = withLightSettings(shiny, { 'directional-0': { enabled: false } });
+    expect(off.directional[0]!.specular).toBeUndefined();
+    // A rig's light with no specular has none, at strength 0.
+    expect(bodyLights(rig, DEFAULT_SHADE)[1]!.specularStrength).toBe(0);
+  });
+
+  it('read an antilight of before as a directional light that darkens', () => {
+    const old = { id: 'added-a', kind: 'shadow', name: 'Antilight', strength: 0.4 } as const;
+    expect(knownLights([old])).toEqual([{ ...old, kind: 'directional', darkens: true }]);
   });
 
   it('merge their settings level over level, each its own', () => {
@@ -99,7 +139,12 @@ describe('a body’s lights', () => {
     const fill = { ...newLight('ambient', []), strength: 0.5 };
     const lit = withAddedLights(rig, [blue, fill], undefined, 1.5)!;
     expect(lit.directional).toHaveLength(4);
-    expect(lit.directional[3]).toEqual({ direction: [-1, -0, -0], color: [0, 0, 2] });
+    expect(lit.directional[3]).toEqual({
+      direction: [-1, -0, -0],
+      color: [0, 0, 2],
+      softness: 1,
+      specular: [1, 1, 1], // an added light shines white unless set
+    });
     expect(lit.ambient).toEqual([0.5, 0.5, 0.5]);
     // Switched off where it is added to: none of its light.
     const off = withAddedLights(rig, [blue], { [blue.id]: { enabled: false } }, 1.5);
@@ -113,11 +158,16 @@ describe('a body’s lights', () => {
     expect(lit.directional).toHaveLength(1);
   });
 
-  it('add shadows as shades of their own', () => {
-    const shadow = newLight('shadow', []);
-    expect(addedShades([shadow], undefined)).toEqual([
-      { direction: shadow.from, strength: 0.5, softness: 1 },
+  it('add antilights as darkenings, not light', () => {
+    const shadow = newLight('antilight', []);
+    expect(shadow).toMatchObject({ kind: 'directional', darkens: true, name: 'Antilight' });
+    expect(bodyDarkenings(undefined, DEFAULT_SHADE, [shadow], undefined)).toEqual([
+      { direction: shadow.from, strength: 0.5, softness: 1, colour: [1, 1, 1] },
     ]);
+    expect(withAddedLights(undefined, [shadow], undefined, 1.5)).toBeUndefined();
+    expect(addedLighting([shadow], undefined)).toBe(false);
+    expect(newLight('antilight', [shadow]).name).toBe('Antilight 2');
+    expect(newLight('directional', [shadow]).name).toBe('Directional light');
   });
 
   it('name new lights after those of their kind there are', () => {

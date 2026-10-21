@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { SceneMaterial } from '../../../scenes/play-background/play-scene';
 import type { BodyPart, PlanetFile } from '../../../scenes/play-background/scene-planets';
-import { type BodyInfo, materialAt, materialsOf } from './editor-model';
+import {
+  type BodyInfo,
+  materialAt,
+  materialsOf,
+  offPart,
+  onPart,
+  sharedMaterials,
+} from './editor-model';
 
 const material: SceneMaterial = {
   blend: 'alpha',
@@ -60,5 +67,24 @@ describe('editor model', () => {
     });
     expect(list.map((m) => m.key)).toEqual(['style:@overlay-1:clouds']);
     expect(list[0]?.values.strength).toBe(4);
+  });
+});
+
+describe('a material’s rows on parts', () => {
+  it('tells apart by part only the materials drawn on more than one part', () => {
+    const shared = sharedMaterials([
+      { materials: [{ name: 'rock' }, { name: 'glow' }, { name: 'glow' }] },
+      { materials: [{ name: 'rock' }] },
+      { materials: [{ name: 'sea' }] },
+    ]);
+    expect([...shared]).toEqual(['rock']);
+  });
+
+  it('keeps the material’s name in its key, the part after it', () => {
+    const key = onPart('body:0/m/rock', 'own:tube-1');
+    expect(key).toBe('body:0/m/rock#own:tube-1');
+    expect(offPart(key.slice('body:0/m/'.length))).toBe('rock');
+    expect(onPart('body:0/m/rock')).toBe('body:0/m/rock');
+    expect(offPart('rock')).toBe('rock');
   });
 });

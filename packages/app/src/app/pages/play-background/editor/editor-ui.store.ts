@@ -21,6 +21,8 @@ interface EditorUiState {
   readonly names: boolean;
   /** Whether the view marks a scene's cameras, the groups put in it and the selected's lights. */
   readonly markers: boolean;
+  /** Whether the view shows the background's frame stats. */
+  readonly stats: boolean;
   /** Whether the tree's panel and the properties' panel are open. */
   readonly left: boolean;
   readonly right: boolean;
@@ -46,6 +48,7 @@ export const EditorUiStore = signalStore(
     browsing: true,
     names: true,
     markers: true,
+    stats: false,
     left: true,
     right: true,
     aspect: 16 / 9,
@@ -53,7 +56,13 @@ export const EditorUiStore = signalStore(
     confirmingClear: false,
     screenshot: false,
   }),
-  withLocalStorage<EditorUiState>('hrs.background-editor', ['names', 'markers', 'left', 'right']),
+  withLocalStorage<EditorUiState>('hrs.background-editor', [
+    'names',
+    'markers',
+    'stats',
+    'left',
+    'right',
+  ]),
   withProps(() => ({
     _router: inject(Router),
     /** The last click on something in the lists: what (its key), and when. */
@@ -116,6 +125,9 @@ export const EditorUiStore = signalStore(
       },
       setMarkers(markers: boolean): void {
         patchState(store, { markers });
+      },
+      setStats(stats: boolean): void {
+        patchState(store, { stats });
       },
       setPanel(panel: 'left' | 'right', open: boolean): void {
         patchState(store, { [panel]: open });

@@ -19,21 +19,28 @@
   />
 </hrs-property-section>
 <hrs-property-section title="Light" [changed]="changed()" (resetRequested)="clear.emit(lightKeys)">
-  @if (l.kind === 'ambient' || l.kind === 'directional') {
-    <hrs-property-colour
-      label="Colour"
-      [value]="l.colour"
-      [changed]="isSet('colour')"
-      [origin]="entry.origins.colour"
-      (resetRequested)="clear.emit(['colour'])"
-      (valueChange)="settingsChange.emit({ colour: $event })"
-    />
-  }
+  <hrs-property-select
+    label="Effect"
+    [value]="l.darkens ? 'darkens' : 'lights'"
+    [options]="effects"
+    [changed]="isSet('darkens')"
+    [origin]="entry.origins.darkens"
+    (resetRequested)="clear.emit(['darkens'])"
+    (valueChange)="settingsChange.emit({ darkens: $event === 'darkens' })"
+  />
+  <hrs-property-colour
+    label="Colour"
+    [value]="l.colour"
+    [changed]="isSet('colour')"
+    [origin]="entry.origins.colour"
+    (resetRequested)="clear.emit(['colour'])"
+    (valueChange)="settingsChange.emit({ colour: $event })"
+  />
   <hrs-property-number
     label="Strength"
     [value]="l.strength"
     [min]="0"
-    [max]="l.kind === 'shadow' ? 1 : undefined"
+    [max]="l.darkens ? 1 : undefined"
     [step]="0.01"
     [changed]="isSet('strength')"
     [origin]="entry.origins.strength"
@@ -50,7 +57,7 @@
       (valueChange)="settingsChange.emit({ from: $event })"
     />
   }
-  @if (l.kind === 'shadow') {
+  @if (l.kind === 'directional') {
     <hrs-property-number
       label="Softness"
       [value]="l.softness ?? 1"
@@ -60,6 +67,26 @@
       [origin]="entry.origins.softness"
       (resetRequested)="clear.emit(['softness'])"
       (valueChange)="settingsChange.emit({ softness: $event })"
+    />
+  }
+  @if (l.kind === 'directional' && !l.darkens) {
+    <hrs-property-colour
+      label="Specular colour"
+      [value]="l.specular ?? '#ffffff'"
+      [changed]="isSet('specular')"
+      [origin]="entry.origins.specular"
+      (resetRequested)="clear.emit(['specular'])"
+      (valueChange)="settingsChange.emit({ specular: $event })"
+    />
+    <hrs-property-number
+      label="Specular strength"
+      [value]="l.specularStrength ?? 0"
+      [min]="0"
+      [step]="0.1"
+      [changed]="isSet('specularStrength')"
+      [origin]="entry.origins.specularStrength"
+      (resetRequested)="clear.emit(['specularStrength'])"
+      (valueChange)="settingsChange.emit({ specularStrength: $event })"
     />
   }
 </hrs-property-section>

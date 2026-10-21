@@ -10,6 +10,7 @@ import {
   withLayer,
   withLayers,
   withPart,
+  shapeReach,
 } from './scene-planets';
 
 const layer = (texture: string): SceneLayer => ({
@@ -183,5 +184,46 @@ describe('the order materials are drawn in', () => {
       'a',
       'd',
     ]);
+  });
+});
+
+describe('a tube, a cone and a disc', () => {
+  const tube: BodyPart = {
+    role: 'tube',
+    shape: { kind: 'tube', radius: 1.2, length: 2.4, side: 'near' },
+    mapping: {
+      kind: 'round',
+      axis: [0, 0, 1],
+      meridian: [0, -1, 0],
+      flip: false,
+      u0: 0,
+      repeat: 1,
+      along: 'height',
+      v0: 1.2,
+      v1: -1.2,
+    },
+    materials: [],
+  };
+
+  it('are sized, lengthened, tilted and seen from inside as set, their texture along them still', () => {
+    const set = withPart(tube, { size: 2, height: 0.5, tilt: 90, side: 'far', repeat: 3 });
+    const shape = set.shape as Extract<BodyPart['shape'], { kind: 'tube' }>;
+    expect(shape.radius).toBeCloseTo(2.4);
+    expect(shape.length).toBeCloseTo(2.4);
+    expect(shape.side).toBe('far');
+    // Tilted its top towards the eye (-y): its axis lies along it.
+    expect(shape.axis![1]).toBeCloseTo(-1);
+    const mapping = set.mapping as Extract<BodyPart['mapping'], { kind: 'round' }>;
+    expect(mapping.repeat).toBe(3);
+    expect(mapping.v0).toBeCloseTo(1.2);
+    expect(mapping.v1).toBeCloseTo(-1.2);
+  });
+
+  it('reach as far as their farthest edge', () => {
+    expect(shapeReach(tube.shape)).toBeCloseTo(Math.hypot(1.2, 1.2));
+    expect(shapeReach({ kind: 'cone', bottom: 2, top: 1, length: 2, side: 'near' })).toBeCloseTo(
+      Math.hypot(2, 1),
+    );
+    expect(shapeReach({ kind: 'disc', inner: 1, outer: 1.9 })).toBeCloseTo(1.9);
   });
 });

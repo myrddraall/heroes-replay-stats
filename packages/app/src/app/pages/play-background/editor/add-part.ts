@@ -10,13 +10,18 @@ const EXISTING = 'existing';
 const SHAPES: Readonly<Record<CreatedShape, { readonly label: string; readonly icon: string }>> = {
   sphere: { label: 'Sphere', icon: 'circle' },
   ring: { label: 'Ring', icon: 'radio_button_unchecked' },
+  tube: { label: 'Tube', icon: 'crop_portrait' },
+  cone: { label: 'Cone', icon: 'change_history' },
+  disc: { label: 'Disc', icon: 'album' },
+  capsule: { label: 'Capsule', icon: 'pill' },
+  plane: { label: 'Plane', icon: 'rectangle' },
   band: { label: 'Band', icon: 'panorama_horizontal' },
 };
 
 /**
  * The controls to add parts (presentational) to what is selected: a body, a sky, an overlay made
  * in the editor; in the section of its parts. One button for each new shape it may take (a
- * planet's: a sphere or a ring about the body; the sky's: a band) and for the game data's parts to
+ * planet's: a sphere, a ring, a tube, a cone or a disc about the body; the sky's: a band) and for the game data's parts to
  * reuse (`existing`, picked from a flyout), its arrow choosing; and, where what was added here may
  * be (`savable`), a button to save it as an overlay.
  */

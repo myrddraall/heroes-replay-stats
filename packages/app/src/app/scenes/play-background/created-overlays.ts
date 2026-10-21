@@ -9,7 +9,14 @@ import type {
   SkyPart,
 } from './play-scene';
 import { BAND } from './sky-overlays';
-import { type BodyPart, type LoadedPlanet, partId, type PlanetFile } from './scene-planets';
+import type { Vec3 } from './scene-directions';
+import {
+  type BodyPart,
+  type LoadedPlanet,
+  partId,
+  type PlanetFile,
+  planeMapping,
+} from './scene-planets';
 import { V_SAMPLES } from './scene-renderer';
 
 /**
@@ -26,8 +33,9 @@ import { V_SAMPLES } from './scene-renderer';
 /** What an overlay is worn on: a planet (or moon), or the sky. */
 export type OverlayKind = 'planet' | 'sky';
 
-/** The shapes a new part can take: a sphere or a ring (a planet's), a band (the sky's). */
-export type CreatedShape = 'sphere' | 'ring' | 'band';
+/** The shapes a new part can take: a sphere, a ring, a tube, a cone or a disc (a planet's), a band (the sky's). */
+export type CreatedShape =
+  'sphere' | 'ring' | 'tube' | 'cone' | 'disc' | 'capsule' | 'plane' | 'band';
 
 /**
  * Where a part is in the game data, to be reused: a planet's or a data overlay's (by its id, else
@@ -207,7 +215,12 @@ function found(
     const f = lookup.material(source, name);
     if (!f) continue;
     materials[name] = f.material;
-    for (const layer of [f.material.diffuse, f.material.emissive, ...f.material.alphaMasks]) {
+    for (const layer of [
+      f.material.diffuse,
+      f.material.emissive,
+      f.material.specular,
+      ...f.material.alphaMasks,
+    ]) {
       const key = layer?.texture;
       const texture = key ? f.textures[key] : undefined;
       if (key && texture) textures[key] = texture;
@@ -218,7 +231,7 @@ function found(
 
 /** The shapes a planet's overlay's parts may take, and the sky's. */
 export const PART_SHAPES: Readonly<Record<OverlayKind, readonly CreatedShape[]>> = {
-  planet: ['sphere', 'ring'],
+  planet: ['sphere', 'ring', 'tube', 'cone', 'disc', 'capsule', 'plane'],
   sky: ['band'],
 };
 
@@ -244,6 +257,47 @@ const RING: Pick<BodyPart, 'shape' | 'mapping'> = {
   mapping: { kind: 'ring', from: Math.PI / 2, uMax: 1, mid: 0.5 },
 };
 
+/** A round shape's texture as it starts: once round its axis from the front, along it from `v0` to `v1`. */
+const round = (along: 'height' | 'radius', v0: number, v1: number, axis: Vec3 = [0, 0, 1]) =>
+  ({
+    kind: 'round',
+    axis,
+    meridian: [0, -1, 0],
+    flip: false,
+    u0: 0,
+    repeat: 1,
+    along,
+    v0,
+    v1,
+  }) as const;
+/** A disc's axis as it starts: up, tipped towards the eye (so it shows, as a planet's rings do). */
+const DISC_AXIS: Vec3 = [0, -0.34, 0.94];
+/** A plane as it starts: facing the eye, wider than the body. */
+const PLANE = { kind: 'plane', width: 3, height: 2 } as const;
+/** A tube, a cone, a disc, a capsule and a plane as each starts: about the body, upright (the disc tipped to the eye). */
+const ROUND: Record<
+  'tube' | 'cone' | 'disc' | 'capsule' | 'plane',
+  Pick<BodyPart, 'shape' | 'mapping'>
+> = {
+  tube: {
+    shape: { kind: 'tube', radius: 1.2, length: 2.4, side: 'near' },
+    mapping: round('height', 1.2, -1.2),
+  },
+  cone: {
+    shape: { kind: 'cone', bottom: 1.4, top: 0.5, length: 2.4, side: 'near' },
+    mapping: round('height', 1.2, -1.2),
+  },
+  disc: {
+    shape: { kind: 'disc', inner: 1.3, outer: 1.9, axis: DISC_AXIS },
+    mapping: round('radius', 1.3, 1.9, DISC_AXIS),
+  },
+  capsule: {
+    shape: { kind: 'capsule', radius: 0.7, length: 1.6, side: 'near' },
+    mapping: round('height', 1.5, -1.5),
+  },
+  plane: { shape: PLANE, mapping: planeMapping(PLANE) },
+};
+
 /**
  * A planet's part made in the editor as built: a new one's shape, or a reused one's (its data's,
  * once loaded), drawing those of its materials found (none: not a planet's, or not loaded yet).
@@ -258,11 +312,11 @@ function bodyPartOf(
     const data = lookup.bodyPart(p.from);
     return data ? { ...data, id: p.id, materials: drawn } : undefined;
   }
-  if (p.shape !== 'sphere' && p.shape !== 'ring') return undefined;
+  if (p.shape === 'band' || p.shape === 'mesh') return undefined;
   return {
     id: p.id,
     role: p.shape,
-    ...(p.shape === 'ring' ? RING : SPHERE),
+    ...(p.shape === 'ring' ? RING : p.shape === 'sphere' ? SPHERE : ROUND[p.shape]),
     materials: drawn,
   };
 }

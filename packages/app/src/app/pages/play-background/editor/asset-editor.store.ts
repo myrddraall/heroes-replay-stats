@@ -18,7 +18,7 @@ import {
 } from '../../../scenes/play-background/background-design';
 import { fitRadius, without } from '../../../scenes/play-background/background-scene';
 import {
-  GRID_DEFAULTS,
+  withGridLight,
   materialKey,
   NO_MATERIAL_TINT,
 } from '../../../scenes/play-background/material-settings';
@@ -35,7 +35,7 @@ import {
 } from '../../../scenes/play-background/scene-bodies';
 import {
   type LightId,
-  type LightKind,
+  type NewLightKind,
   type LightSettings,
   newLight,
   type Receiver,
@@ -63,7 +63,7 @@ import {
   bodyView,
   type MaterialEntry,
   type LightEntry,
-  LIGHT_ICONS,
+  lightIcon,
   lightsOfBody,
   byDepth,
   partsOfBody,
@@ -83,6 +83,9 @@ import {
   materialsOf,
   type MaterialView,
   splitViewKey,
+  offPart,
+  onPart,
+  sharedMaterials,
   layerRows,
   partMaterialRows,
   viewTitle,
@@ -291,7 +294,7 @@ function targetOf(key: string, asset: AssetTarget): Target {
   if (key.startsWith(`${ASSET}/l/`))
     return { kind: 'light', id: key.slice(ASSET.length + 3) as LightId };
   if (key.startsWith(`${ASSET}/m/`)) {
-    const name = key.slice(ASSET.length + 3);
+    const name = offPart(key.slice(ASSET.length + 3));
     // An overlay open: its own materials are kept as the overlay's (see `materialKey`).
     if (asset.kind === 'style') return { kind: 'material', name, key: materialKey(name, asset.id) };
     return asset.kind === 'planet'
@@ -300,7 +303,7 @@ function targetOf(key: string, asset: AssetTarget): Target {
   }
   if (key.startsWith(`${ASSET}/om/`)) {
     const [overlay = '', ...parts] = key.slice(ASSET.length + 4).split('/');
-    const name = parts.join('/');
+    const name = offPart(parts.join('/'));
     return { kind: 'material', name, key: materialKey(name, overlay), overlay };
   }
   if (key.startsWith(`${ASSET}/overlay/`))
@@ -1203,6 +1206,7 @@ export const AssetEditorStore = signalStore(
             const nodes = partNodes(b, materialsOf(b));
             const lights = lightsOfBody(b);
             const parts = (list: readonly PartNode[], at: number, overlay?: string) => {
+              const shared = sharedMaterials(list);
               for (const { part, materials } of list) {
                 const key = assetPartKey(part.key);
                 rows.push({
@@ -1220,7 +1224,10 @@ export const AssetEditorStore = signalStore(
                     at + 1,
                     open,
                     (name) =>
-                      overlay ? assetOverlayMaterialKey(overlay, name) : assetMaterialKey(name),
+                      onPart(
+                        overlay ? assetOverlayMaterialKey(overlay, name) : assetMaterialKey(name),
+                        shared.has(name) ? part.key : undefined,
+                      ),
                     materialRow,
                     (r) => rows.push(r),
                   );
@@ -1242,7 +1249,7 @@ export const AssetEditorStore = signalStore(
                   rows.push({
                     key: assetLightKey(light.id),
                     label: light.name,
-                    icon: LIGHT_ICONS[light.kind],
+                    icon: lightIcon(light),
                     depth: at + 1,
                     expandable: false,
                     expanded: false,
@@ -1337,7 +1344,7 @@ export const AssetEditorStore = signalStore(
                 rows.push({
                   key: standInLightKey(light.id),
                   label: light.name,
-                  icon: LIGHT_ICONS[light.kind],
+                  icon: lightIcon(light),
                   depth: 2,
                   expandable: false,
                   expanded: false,
@@ -1501,11 +1508,18 @@ export const AssetEditorStore = signalStore(
           else d.clearLibraryBody(kind, asset().id, ['overlaysEnabled']);
           if (now.overlayEnabled !== undefined)
             d.clearLibraryBody(kind, asset().id, ['overlayEnabled']);
-        } else if ('view' in t && t.view?.kind === 'effect') {
-          // A shield's effect switched: as it starts, nothing set.
-          const field = t.view.effect === 'reveal' ? 'revealOn' : 'activationOn';
-          if (on === GRID_DEFAULTS[field]) materialClear(t, [field]);
-          else materialChange(change.key, { [field]: on });
+        } else if ('view' in t && t.view?.kind === 'gridLight') {
+          // One of a shield's lights switched: the shield's lights set here.
+          const m =
+            t.kind === 'base-material'
+              ? store.baseMaterial()
+              : t.kind === 'material'
+                ? materialAt(store._ownMaterials(), t.key)
+                : undefined;
+          const lights = m?.values.gridLights ?? [];
+          materialChange(change.key, {
+            gridLights: withGridLight(lights, t.view.id, { enabled: on }),
+          });
         } else if (on === materialBelow(t)) materialClear(t, ['enabled']);
         else materialChange(change.key, { enabled: on });
       },
@@ -1514,7 +1528,7 @@ export const AssetEditorStore = signalStore(
         if (t.kind === 'stand-in-light') standInLightChange(t.id, change);
         else if (t.kind === 'light') lightChange((s) => withLightChange(s, t.id, change));
       },
-      addLight(kind: LightKind): void {
+      addLight(kind: NewLightKind): void {
         const b = store._body();
         if (!b) return;
         const light = newLight(

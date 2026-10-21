@@ -35,6 +35,7 @@ import { EditingAidsStore } from './editing-aids.store';
 import { ReferenceOverlay } from './reference-overlay';
 import { LookThrough } from './look-through';
 import { SceneMarkers } from './scene-markers';
+import { FrameStatsReadout } from './frame-stats-readout';
 
 /**
  * An editor's layout (container, on the `Editor` in effect and the page's UI store): on the left
@@ -70,6 +71,7 @@ import { SceneMarkers } from './scene-markers';
     ReferenceOverlay,
     LookThrough,
     SceneMarkers,
+    FrameStatsReadout,
   ],
   templateUrl: './editor-layout.html',
   styleUrl: './editor-layout.scss',

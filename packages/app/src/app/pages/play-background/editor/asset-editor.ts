@@ -4,6 +4,7 @@ import { AssetEditorStore } from './asset-editor.store';
 import { AssetHeader } from './asset-header';
 import { Editor } from './editor';
 import { EditorLayout } from './editor-layout';
+import { selectParentWhenGone } from './select-parent-when-gone';
 import type { AssetTarget } from './open-target';
 
 /**
@@ -37,6 +38,7 @@ export class AssetEditor {
   readonly asset = input.required<AssetTarget>();
 
   constructor() {
+    selectParentWhenGone(inject(Editor));
     inject(AssetEditorStore).showAsset(this.asset);
   }
 }

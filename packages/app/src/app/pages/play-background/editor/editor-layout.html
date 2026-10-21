@@ -91,6 +91,9 @@
       (cameraMoveEnd)="draft.releaseHistory()"
       (planetPick)="pick($event)"
     />
+    @if (ui.stats() && !ui.screenshot()) {
+      <hrs-frame-stats-readout class="layout__stats" />
+    }
     @if (ui.markers() && !ui.screenshot()) {
       @if (editor.camera(); as camera) {
         <hrs-scene-markers

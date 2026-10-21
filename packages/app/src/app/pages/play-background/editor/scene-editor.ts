@@ -1,7 +1,9 @@
-import { Component, inject, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { BACKGROUND_SCENE } from '../../../scenes/play-background/background-design.tokens';
 import { Editor } from './editor';
 import { EditorLayout } from './editor-layout';
+import { selectParentWhenGone } from './select-parent-when-gone';
+import { EditorUiStore } from './editor-ui.store';
 import { SceneEditorStore } from './scene-editor.store';
 import { SceneHeader } from './scene-header';
 
@@ -19,6 +21,7 @@ import { SceneHeader } from './scene-header';
       provide: BACKGROUND_SCENE,
       useFactory: () => {
         const store = inject(SceneEditorStore);
+        const ui = inject(EditorUiStore);
         return {
           planets: store.scenePlanets,
           sky: store.sceneSky,
@@ -27,6 +30,8 @@ import { SceneHeader } from './scene-header';
           key: store.scene,
           random: store.sets,
           camera: store.viewCamera,
+          // The light selected's beams, with the markers (none in a screenshot).
+          beams: computed(() => (ui.markers() && !ui.screenshot() ? store.beams() : [])),
         };
       },
     },
@@ -38,6 +43,7 @@ export class SceneEditor {
   readonly scene = input.required<string>();
 
   constructor() {
+    selectParentWhenGone(inject(Editor));
     inject(SceneEditorStore).showScene(this.scene);
   }
 }

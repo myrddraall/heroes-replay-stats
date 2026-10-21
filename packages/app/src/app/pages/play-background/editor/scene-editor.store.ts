@@ -39,7 +39,8 @@ import {
   without,
 } from '../../../scenes/play-background/background-scene';
 import {
-  GRID_DEFAULTS,
+  gridLightValues,
+  withGridLight,
   materialKey,
   NO_MATERIAL_TINT,
 } from '../../../scenes/play-background/material-settings';
@@ -56,6 +57,7 @@ import {
   forwardOf,
 } from '../../../scenes/play-background/scene-camera';
 import { bodyFrame } from '../../../scenes/play-background/scene-renderer';
+import type { LightBeam } from '../../../scenes/play-background/scene-beams';
 import type { CameraValues } from './camera-properties';
 import type { SceneMarker } from './scene-markers';
 import type { AddedItem, AddedLists } from './added-list';
@@ -92,6 +94,7 @@ import {
 } from '../../../scenes/play-background/scene-bodies';
 import {
   loadPlanetIndex,
+  type GridLight,
   type MaterialSettings,
   type MaterialTint,
   partId,
@@ -134,7 +137,7 @@ import {
   lightsOfBody,
   type LightEntry,
   sceneLightsOf,
-  LIGHT_ICONS,
+  lightIcon,
   byDepth,
   referenceRow,
   skyMaterialsOf,
@@ -146,6 +149,10 @@ import {
   withLitBy,
   type MaterialView,
   splitViewKey,
+  offPart,
+  onPart,
+  sharedMaterials,
+  viewKey,
   layerRows,
   partMaterialRows,
   viewTitle,
@@ -180,9 +187,10 @@ import type { TreeMove, TreeRow } from './scene-tree';
 import {
   type AddedLight,
   type LightId,
-  type LightKind,
+  type NewLightKind,
   type LightSettings,
   knownLights,
+  rgbOf,
   newLight,
   type Receiver,
 } from '../../../scenes/play-background/scene-lights';
@@ -325,12 +333,12 @@ function targetOf(key: string): Target {
   if (tail === '/lights' || tail.startsWith('/overlay-lights/')) return { kind: 'group', path };
   if (tail.startsWith('/l/')) return { kind: 'light', path, id: tail.slice(3) as LightId };
   if (tail.startsWith('/m/')) {
-    const name = tail.slice(3);
+    const name = offPart(tail.slice(3));
     return { kind: 'material', path, name, key: name };
   }
   if (tail.startsWith('/om/')) {
     const [overlay = '', ...rest] = tail.slice(4).split('/');
-    const name = rest.join('/');
+    const name = offPart(rest.join('/'));
     return { kind: 'material', path, name, key: materialKey(name, overlay), overlay };
   }
   if (tail.startsWith('/p/')) return { kind: 'part', path, key: tail.slice(3) as PartKey };
@@ -360,6 +368,45 @@ export interface CameraEntry {
   readonly name: string;
   readonly set: SceneCameraSet;
   readonly game: boolean;
+}
+
+/**
+ * A shield's lights as lights to mark (their rows' keys under its material's, `base`): each as it
+ * is set, white.
+ */
+function shieldLightsOf(
+  base: string,
+  lights: readonly GridLight[],
+): { readonly key: string; readonly light: LightEntry['light'] }[] {
+  return lights.map((l) => {
+    const v = gridLightValues(l);
+    return {
+      key: viewKey(base, { kind: 'gridLight', id: l.id }),
+      light: {
+        id: l.id as unknown as LightId,
+        kind: l.kind,
+        name: l.name,
+        enabled: v.enabled,
+        darkens: v.darkens,
+        colour: '#ffffff',
+        strength: v.strength,
+        ...(v.from ? { from: v.from } : {}),
+      },
+    };
+  });
+}
+
+/**
+ * The way a light comes from (`from`, in its body's frame), out of the body as the eye at `eye`
+ * sees it, in the scene: a unit vector.
+ */
+function wayOut(from: Vec3, body: SetPlanet, eye: Vec3): Vec3 {
+  const { axes } = bodyFrame(body.position, body.radius, eye);
+  const way = [0, 1, 2].map(
+    (k) => from[0] * axes[k]! + from[1] * axes[3 + k]! + from[2] * axes[6 + k]!,
+  );
+  const length = Math.hypot(...way) || 1;
+  return way.map((v) => v / length) as unknown as Vec3;
 }
 
 /**
@@ -1014,7 +1061,7 @@ export const SceneEditorStore = signalStore(
             lights: sceneLightsOf(store.sceneLights()).map(({ light }) => ({
               key: sceneLightKey(light.id),
               label: light.name,
-              icon: LIGHT_ICONS[light.kind],
+              icon: lightIcon(light),
               removable: true,
             })),
           };
@@ -1107,7 +1154,7 @@ export const SceneEditorStore = signalStore(
             rows.push({
               key: sceneLightKey(light.id),
               label: light.name,
-              icon: LIGHT_ICONS[light.kind],
+              icon: lightIcon(light),
               depth: 2,
               expandable: false,
               expanded: false,
@@ -1227,6 +1274,7 @@ export const SceneEditorStore = signalStore(
         const nodes = partNodes(b, materialsOf(b));
         const lights = lightsOfBody(b);
         const parts = (list: readonly PartNode[], at: number, overlay?: string) => {
+          const shared = sharedMaterials(list);
           for (const { part, materials } of list) {
             const key = partRowKey(path, part.key);
             rows.push({
@@ -1243,7 +1291,11 @@ export const SceneEditorStore = signalStore(
                 materials,
                 at + 1,
                 open,
-                (name) => materialRowKey(path, name, overlay),
+                (name) =>
+                  onPart(
+                    materialRowKey(path, name, overlay),
+                    shared.has(name) ? part.key : undefined,
+                  ),
                 leaf,
                 (r) => rows.push(r),
               );
@@ -1265,7 +1317,7 @@ export const SceneEditorStore = signalStore(
               rows.push({
                 key: lightRowKey(path, light.id),
                 label: light.name,
-                icon: LIGHT_ICONS[light.kind],
+                icon: lightIcon(light),
                 depth: at + 1,
                 expandable: false,
                 expanded: false,
@@ -1534,7 +1586,7 @@ export const SceneEditorStore = signalStore(
           key,
           kind: 'light' as const,
           label: light.name,
-          icon: LIGHT_ICONS[light.kind],
+          icon: lightIcon(light),
           at,
           selected: store.selected() === key,
           off: !light.enabled,
@@ -1542,18 +1594,11 @@ export const SceneEditorStore = signalStore(
         round.forEach(({ key, light }, n) =>
           out.push({ ...marker(key, light, body.position), nudge: n - (round.length - 1) / 2 }),
         );
-        const { axes } = bodyFrame(body.position, body.radius, view.eye);
         for (const { key, light } of lights) {
           if (!light.from) continue;
-          const f = light.from;
-          const way = [0, 1, 2].map(
-            (k) => f[0] * axes[k]! + f[1] * axes[3 + k]! + f[2] * axes[6 + k]!,
-          );
-          const length = Math.hypot(...way) || 1;
+          const way = wayOut(light.from, body, view.eye);
           const along = (radii: number) =>
-            body.position.map(
-              (v, k) => v + (way[k]! / length) * body.radius * radii,
-            ) as unknown as Vec3;
+            body.position.map((v, k) => v + way[k]! * body.radius * radii) as unknown as Vec3;
           out.push({ ...marker(key, light, along(1.8)), from: along(1.05) });
         }
       };
@@ -1570,6 +1615,15 @@ export const SceneEditorStore = signalStore(
             i,
           );
         });
+      } else if (t.kind === 'material' && t.view?.kind === 'gridLight') {
+        // A shield's light selected: its shield's lights, round its body.
+        const split = splitViewKey(store.selected());
+        const key = bodyKey(t.path);
+        const b = store.bodyByKey().get(key);
+        const i = placed.picks.indexOf(key);
+        const body = placed.planets[i];
+        const m = b && materialAt(materialsOf(b), t.key);
+        if (m && body && split) lit(shieldLightsOf(split.base, m.values.gridLights), body, i);
       } else if ('path' in t && t.path.length) {
         const key = bodyKey(t.path);
         const b = store.bodyByKey().get(key);
@@ -1583,6 +1637,54 @@ export const SceneEditorStore = signalStore(
           );
       }
       return out;
+    }),
+    /**
+     * The beam of the light selected, from a side: out of each body it lights (the scene's: each
+     * of its planets), the way it comes from.
+     */
+    beams: computed((): readonly LightBeam[] => {
+      const view = store.camera();
+      const placed = store._placed();
+      const t = store.target();
+      if (!view || !placed) return [];
+      const beam = (light: LightEntry['light'], body: SetPlanet): LightBeam[] =>
+        light.from && light.enabled
+          ? [
+              {
+                centre: body.position,
+                radius: body.radius,
+                from: wayOut(light.from, body, view.eye),
+                colour: rgbOf(light.colour, 1),
+                darkens: light.darkens,
+              },
+            ]
+          : [];
+      if (t.kind === 'scene-light') {
+        const light = sceneLightsOf(store.sceneLights()).find((l) => l.light.id === t.id)?.light;
+        if (!light) return [];
+        return placed.picks.flatMap((pick, i) => {
+          const body = placed.planets[i];
+          return body && pick.startsWith('body:') && pathOf(pick.slice(5)).length === 1
+            ? beam(light, body)
+            : [];
+        });
+      }
+      if (t.kind === 'material' && t.view?.kind === 'gridLight') {
+        const id = t.view.id;
+        const key = bodyKey(t.path);
+        const b = store.bodyByKey().get(key);
+        const body = placed.planets[placed.picks.indexOf(key)];
+        const m = b && materialAt(materialsOf(b), t.key);
+        const light =
+          m && shieldLightsOf('', m.values.gridLights).find((l) => l.light.id === (id as string));
+        return light && body ? beam(light.light, body) : [];
+      }
+      if (t.kind !== 'light') return [];
+      const key = bodyKey(t.path);
+      const b = store.bodyByKey().get(key);
+      const body = placed.planets[placed.picks.indexOf(key)];
+      const light = b && lightsOfBody(b).find((l) => l.light.id === t.id)?.light;
+      return light && body ? beam(light, body) : [];
     }),
   })),
   withMethods((store) => {
@@ -1929,13 +2031,12 @@ export const SceneEditorStore = signalStore(
           const below = materialAt(store.skyMaterials(), t.key)?.enabledBelow ?? true;
           if (on === below) d.clearSkyMaterial(store.scene(), t.key, ['enabled']);
           else materialChange(change.key, { enabled: on });
-        } else if (t.kind === 'material' && t.view?.kind === 'effect') {
-          // A shield's effect switched: as it starts, nothing set.
-          const field = t.view.effect === 'reveal' ? 'revealOn' : 'activationOn';
+        } else if (t.kind === 'material' && t.view?.kind === 'gridLight' && b) {
+          // One of a shield's lights switched: the shield's lights set here.
+          const id = t.view.id;
+          const lights = materialAt(materialsOf(b), t.key)?.values.gridLights ?? [];
           settings(t.path, (s) =>
-            on === GRID_DEFAULTS[field]
-              ? withoutMaterial(s, t.key, [field])
-              : withMaterial(s, t.key, { [field]: on }),
+            withMaterial(s, t.key, { gridLights: withGridLight(lights, id, { enabled: on }) }),
           );
         } else if (t.kind === 'material' && b) {
           const below = materialAt(materialsOf(b), t.key)?.enabledBelow ?? true;
@@ -1973,7 +2074,7 @@ export const SceneEditorStore = signalStore(
         if (!b) return;
         settings(t.path, (s) => withLitBy(s, b, light, receiver, change.on));
       },
-      addLight(kind: LightKind): void {
+      addLight(kind: NewLightKind): void {
         const t = store.target();
         const path = selectedPath();
         if (path && t.kind !== 'scene-light') {

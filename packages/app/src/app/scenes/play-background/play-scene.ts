@@ -100,6 +100,13 @@ export interface SceneMaterial {
   readonly diffuse: SceneLayer | null;
   readonly emissive: SceneLayer | null;
   readonly alphaMasks: readonly SceneLayer[];
+  /**
+   * A lit material's shine, where it has any: where its specular layer says, its lights' specular
+   * colours times `specularMult`, as tight as `specularity` (the highlight's power).
+   */
+  readonly specular?: SceneLayer;
+  readonly specularity?: number;
+  readonly specularMult?: number;
 }
 
 /** RGBA, 0-255. */

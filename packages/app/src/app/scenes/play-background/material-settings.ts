@@ -1,6 +1,8 @@
 import type { SceneBlend, SceneMaterial } from './play-scene';
-import { TOWARDS_EYE, type Vec3 } from './scene-directions';
+import { normalized, TOWARDS_EYE, type Vec3 } from './scene-directions';
+import type { NewLightKind } from './scene-lights';
 import type {
+  GridLight,
   LayerSlot,
   MaterialDepth,
   MaterialDrawAs,
@@ -37,32 +39,22 @@ export interface MaterialValues {
   readonly depth: MaterialDepth;
   /** Whether its body's light lights it (else flat, as its textures have it). */
   readonly lit: boolean;
+  /** Its shine (see `MaterialSettings`): its own where not set. */
+  readonly specular: number;
+  readonly glossiness: number;
   /** A grid's colours: inactive (its own), and active (where it is activated). */
   readonly inactive: string;
   readonly active: string;
-  /** A grid's reveal and activation (see `MaterialSettings`). */
-  readonly revealOn: boolean;
-  readonly revealStrength: number;
-  readonly revealFrom: Vec3;
-  readonly revealReach: number;
-  readonly revealFalloff: number;
-  readonly activationOn: boolean;
-  readonly activationStrength: number;
-  readonly activationTied: boolean;
-  readonly activationFrom: Vec3;
-  readonly activationReach: number;
-  readonly activationFalloff: number;
-  readonly activationEnergizes: number;
-  readonly activationGlow: number;
+  /** A grid's lights (see `GridLight`): as set, else its reveal of before, else one from the front. */
+  readonly gridLights: readonly GridLight[];
 }
 
 /**
- * A grid's reveal and activation where nothing is set: revealed from the front, enough to show
- * all of its face (as the game shows a grid), its side and falloff telling once turned or
- * narrowed; activated (once switched on) the same way at half the strength, its side the
- * reveal's, energizing and glowing a little.
+ * A grid's reveal and activation of before its lights were its own, where nothing was set:
+ * revealed from the front, enough to show all of its face; activated (once switched on) the same
+ * way at half the strength, its side the reveal's, energizing and glowing a little.
  */
-export const GRID_DEFAULTS = {
+const LEGACY_GRID = {
   revealOn: true,
   revealStrength: 2,
   revealFrom: TOWARDS_EYE,
@@ -78,9 +70,113 @@ export const GRID_DEFAULTS = {
   activationGlow: 0.5,
 } as const;
 
-/** A grid's reveal or activation as it is drawn: its side, reach, falloff and strength; an activation's energizing and glow. */
+/** A grid light's settings where not set: it reveals, from its side, reaching all of its face. */
+export const GRID_LIGHT_DEFAULTS = {
+  enabled: true,
+  darkens: false,
+  strength: 1,
+  softness: 1,
+  reach: 1,
+  reveals: true,
+  activates: false,
+  energizes: 0.25,
+  glow: 0.5,
+} as const;
+
+/** A grid's lights where none are set: one from the front, enough to show all of its face (as the game shows a grid). */
+export const DEFAULT_GRID_LIGHTS: readonly GridLight[] = [
+  { id: 'grid-front', name: 'Front', kind: 'directional', strength: 2, from: TOWARDS_EYE },
+];
+
+/** Where a new grid light comes from unless turned: upper left, in front. */
+const NEW_GRID_FROM: Vec3 = normalized([-0.55, -0.45, 0.7]);
+
+/** A grid light's settings in effect: its own over the defaults (one from a side: from the front unless set). */
+export function gridLightValues(l: GridLight): Required<Omit<GridLight, 'from'>> & {
+  readonly from?: Vec3;
+} {
+  return {
+    ...GRID_LIGHT_DEFAULTS,
+    ...l,
+    ...(l.kind === 'directional' ? { from: l.from ?? TOWARDS_EYE } : { from: undefined }),
+  };
+}
+
+/**
+ * A new grid light of a kind (an antilight: one from a side that darkens), named after those of
+ * the kind already there: it reveals.
+ */
+export function newGridLight(kind: NewLightKind, existing: readonly GridLight[]): GridLight {
+  const id = `grid-${Math.random().toString(36).slice(2, 10)}` as const;
+  const darkens = kind === 'antilight';
+  const base = {
+    ambient: 'Ambient light',
+    directional: 'Directional light',
+    antilight: 'Antilight',
+  }[kind];
+  const count = existing.filter(
+    (l) => l.kind === (darkens ? 'directional' : kind) && !!l.darkens === darkens,
+  ).length;
+  const name = count ? `${base} ${count + 1}` : base;
+  return kind === 'ambient'
+    ? { id, name, kind }
+    : { id, name, kind: 'directional', from: NEW_GRID_FROM, ...(darkens ? { darkens } : {}) };
+}
+
+/**
+ * A grid's lights from its settings: as set, else its reveal and activation of before (each a
+ * light: the reveal's, the activation's from the reveal's side while tied), else one from the front.
+ */
+export function gridLightsOf(s: MaterialSettings | undefined): readonly GridLight[] {
+  if (s?.gridLights) return s.gridLights;
+  const legacy = (Object.keys(LEGACY_GRID) as (keyof typeof LEGACY_GRID)[]).some(
+    (k) => s?.[k] !== undefined,
+  );
+  if (!legacy) return DEFAULT_GRID_LIGHTS;
+  const g = { ...LEGACY_GRID, ...s } as typeof LEGACY_GRID;
+  const out: GridLight[] = [];
+  if (g.revealOn)
+    out.push({
+      id: 'grid-reveal',
+      name: 'Reveal',
+      kind: 'directional',
+      strength: g.revealStrength,
+      from: g.revealFrom,
+      reach: g.revealReach,
+      softness: g.revealFalloff,
+    });
+  if (g.activationOn)
+    out.push({
+      id: 'grid-activation',
+      name: 'Activation',
+      kind: 'directional',
+      strength: g.activationStrength,
+      from: g.activationTied ? g.revealFrom : g.activationFrom,
+      reach: g.activationReach,
+      softness: g.activationFalloff,
+      reveals: false,
+      activates: true,
+      energizes: g.activationEnergizes,
+      glow: g.activationGlow,
+    });
+  return out;
+}
+
+/** A grid's lights with one of them changed (the rest as they are). */
+export function withGridLight(
+  lights: readonly GridLight[],
+  id: GridLight['id'],
+  change: Partial<GridLight>,
+): GridLight[] {
+  return lights.map((l) => (l.id === id ? { ...l, ...change } : l));
+}
+
+/**
+ * A grid's reveal or activation as it is drawn: its side (none: all round, all of it alike),
+ * reach, falloff and strength (one that darkens: taken away); an activation's energizing and glow.
+ */
 export interface GridField {
-  readonly from: Vec3;
+  readonly from?: Vec3;
   readonly reach: number;
   readonly falloff: number;
   readonly strength: number;
@@ -88,34 +184,23 @@ export interface GridField {
   readonly glow?: number;
 }
 
-/** A grid's reveal and activation as drawn (none of either where switched off): an activation tied to the reveal from its side. */
+/** A grid's reveals and activations as drawn: its lights that are on, by what each does. */
 export function gridFields(v: MaterialValues): {
   readonly reveal: readonly GridField[];
   readonly activation: readonly GridField[];
 } {
+  const on = v.gridLights.map(gridLightValues).filter((l) => l.enabled);
+  const field = (l: ReturnType<typeof gridLightValues>): GridField => ({
+    ...(l.from ? { from: l.from } : {}),
+    reach: l.reach,
+    falloff: l.softness,
+    strength: l.darkens ? -l.strength : l.strength,
+  });
   return {
-    reveal: v.revealOn
-      ? [
-          {
-            from: v.revealFrom,
-            reach: v.revealReach,
-            falloff: v.revealFalloff,
-            strength: v.revealStrength,
-          },
-        ]
-      : [],
-    activation: v.activationOn
-      ? [
-          {
-            from: v.activationTied ? v.revealFrom : v.activationFrom,
-            reach: v.activationReach,
-            falloff: v.activationFalloff,
-            strength: v.activationStrength,
-            energizes: v.activationEnergizes,
-            glow: v.activationGlow,
-          },
-        ]
-      : [],
+    reveal: on.filter((l) => l.reveals).map(field),
+    activation: on
+      .filter((l) => l.activates)
+      .map((l) => ({ ...field(l), energizes: l.energizes, glow: l.glow })),
   };
 }
 
@@ -144,6 +229,8 @@ export interface MaterialControls {
   readonly depth: boolean;
   /** A body's material is lit by its light or flat (the sky and particles aren't lit). */
   readonly lit: boolean;
+  /** A body's material with a specular layer shines where its lights' specular says. */
+  readonly specular: boolean;
 }
 
 /** What a material is used as, for which of its controls do anything. */
@@ -172,6 +259,9 @@ export function ownInactive(material: SceneMaterial): string {
 }
 
 /** The settings where nothing says otherwise (the spread's is the material's own, see `ownSpread`). */
+/** A material's glossiness where it has no specularity of its own (the game's usual, 20). */
+export const DEFAULT_GLOSSINESS = 20;
+
 export const MATERIAL_DEFAULTS = {
   enabled: true,
   strength: 1,
@@ -283,21 +373,11 @@ export function materialValues(
     tint: settings?.tint ?? NO_MATERIAL_TINT,
     depth: settings?.depth ?? ownDepth,
     lit: settings?.lit ?? !material.unshaded,
+    specular: settings?.specular ?? material.specularMult ?? 0,
+    glossiness: settings?.glossiness ?? material.specularity ?? DEFAULT_GLOSSINESS,
     inactive: settings?.inactive ?? ownInactive(material),
     active: settings?.active ?? DEFAULT_ACTIVE,
-    revealOn: settings?.revealOn ?? GRID_DEFAULTS.revealOn,
-    revealStrength: settings?.revealStrength ?? GRID_DEFAULTS.revealStrength,
-    revealFrom: settings?.revealFrom ?? GRID_DEFAULTS.revealFrom,
-    revealReach: settings?.revealReach ?? GRID_DEFAULTS.revealReach,
-    revealFalloff: settings?.revealFalloff ?? GRID_DEFAULTS.revealFalloff,
-    activationOn: settings?.activationOn ?? GRID_DEFAULTS.activationOn,
-    activationStrength: settings?.activationStrength ?? GRID_DEFAULTS.activationStrength,
-    activationTied: settings?.activationTied ?? GRID_DEFAULTS.activationTied,
-    activationFrom: settings?.activationFrom ?? GRID_DEFAULTS.activationFrom,
-    activationReach: settings?.activationReach ?? GRID_DEFAULTS.activationReach,
-    activationFalloff: settings?.activationFalloff ?? GRID_DEFAULTS.activationFalloff,
-    activationEnergizes: settings?.activationEnergizes ?? GRID_DEFAULTS.activationEnergizes,
-    activationGlow: settings?.activationGlow ?? GRID_DEFAULTS.activationGlow,
+    gridLights: gridLightsOf(settings),
   };
 }
 
@@ -323,6 +403,7 @@ export function materialControls(
       particles,
       depth: sky,
       lit: false,
+      specular: false,
     };
   const layers = [material.diffuse, material.emissive, ...material.alphaMasks];
   const drawn = pattern && drawAs === 'pattern';
@@ -337,6 +418,7 @@ export function materialControls(
     lines: drawn,
     depth: sky,
     lit: !sky,
+    specular: !sky && material.specular !== undefined,
   };
 }
 
