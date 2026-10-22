@@ -379,6 +379,18 @@ describe('lights from a point, a spot, and above and below', () => {
     expect(d).toMatchObject({ kind: 'environment', fade: 1.5, softness: 1 });
   });
 
+  it('light the rim, leaned and spread in, and wrap a side’s light round the body', () => {
+    const rim = newLight('rim', []);
+    expect(rim).toMatchObject({ kind: 'rim', name: 'Rim light' });
+    const placed = placedLight(addedLight(rim, { from: [1, 0, 0], fade: 0.3, softness: 2 }))!;
+    expect(placed).toMatchObject({ kind: 'rim', fade: 0.3, softness: 2 });
+    expect(placed.aim!.map((v) => Math.round(v * 1000) / 1000 || 0)).toEqual([-1.571, 0, 0]);
+    // A rim light setting no lean, spread or falloff leaves them unset (a shield fills in its own).
+    expect(addedLight(rim).from).toBeUndefined();
+    const wrapped = placedLight(addedLight(newLight('directional', []), { wrap: 0.5 }))!;
+    expect(wrapped.wrap).toBe(0.5);
+  });
+
   it('darken from a point too, as far as it reaches', () => {
     const point = { ...newLight('point', []), darkens: true, strength: 0.4 };
     const [d] = bodyDarkenings(undefined, DEFAULT_SHADE, [point], { shadow: { enabled: false } });

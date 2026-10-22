@@ -9,6 +9,7 @@ import {
   offPart,
   onPart,
   sharedMaterials,
+  shieldLightsOfBody,
 } from './editor-model';
 
 const material: SceneMaterial = {
@@ -25,7 +26,15 @@ const material: SceneMaterial = {
 const file = (kind: PlanetFile['kind']): PlanetFile =>
   ({
     kind,
-    parts: [{ id: 'sphere-1', role: 'sphere', materials: ['clouds'] } as unknown as BodyPart],
+    parts: [
+      {
+        id: 'sphere-1',
+        role: 'sphere',
+        materials: ['clouds'],
+        shape: { kind: 'sphere', radius: 1 },
+        mapping: { kind: 'sphere' },
+      } as unknown as BodyPart,
+    ],
     materials: { clouds: material },
     textures: {},
   }) as PlanetFile;
@@ -106,5 +115,46 @@ describe('a light’s marker', () => {
     // A point light's line goes to the nearest of the surface.
     const point = lightMarkerAt({ kind: 'point', position: [0, -3, 2] }, body, eye)!;
     expect(Math.hypot(point.from![0], point.from![1] - 10, point.from![2])).toBeCloseTo(1.05);
+  });
+});
+
+describe('shieldLightsOfBody', () => {
+  const shield = (): PlanetFile =>
+    ({
+      kind: 'style',
+      parts: [
+        {
+          id: 'shield-1',
+          role: 'shield',
+          materials: ['grid'],
+          shape: { kind: 'sphere', radius: 1 },
+          mapping: { kind: 'sphere' },
+          pattern: { kind: 'hex' },
+        } as unknown as BodyPart,
+      ],
+      materials: { grid: material },
+      textures: {},
+    }) as PlanetFile;
+  const worn = (): BodyInfo => ({
+    key: 'body',
+    id: 'korhal',
+    overlays: [{ id: '@overlay-1', file: shield() }],
+    overlaysSet: false,
+    settings: {},
+    file: file('world'),
+    moons: [],
+  });
+
+  it("marks a shield's lights under the shield's material row, with the body's own lights", () => {
+    const lights = shieldLightsOfBody(worn(), materialsOf(worn()), (name, overlay) =>
+      overlay ? `om/${overlay}/${name}` : `m/${name}`,
+    );
+    expect(lights.map((l) => l.key)).toEqual(['om/@overlay-1/grid::light:added-rim']);
+    expect(lights[0]?.light.kind).toBe('rim');
+  });
+
+  it('marks nothing where a body has no shield', () => {
+    const b = { ...worn(), overlays: [] };
+    expect(shieldLightsOfBody(b, materialsOf(b), (name) => name)).toEqual([]);
   });
 });

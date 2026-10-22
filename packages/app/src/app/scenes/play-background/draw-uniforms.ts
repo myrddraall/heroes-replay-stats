@@ -137,6 +137,10 @@ export function lightUniforms(
     ...lights.map((l) => l.softness ?? 1),
     ...Array<number>(MAX_LIGHTS - lights.length).fill(1),
   ]);
+  u.fv('uLightWrap', [
+    ...lights.map((l) => l.wrap ?? 0),
+    ...Array<number>(MAX_LIGHTS - lights.length).fill(0),
+  ]);
   placedUniforms(u, 'uLight', lights, MAX_LIGHTS);
   u.fv('uLightGround', [...lights.flatMap((l) => [...(l.ground ?? [0, 0, 0])]), ...pad], '3fv');
   // The light's exposure over the scene's: the planet as bright as the tutorial shows it.
@@ -144,7 +148,7 @@ export function lightUniforms(
 }
 
 /** The kinds of light, as the shaders tell them apart (from a side: 0). */
-export const LIGHT_KINDS = { point: 1, spot: 2, hemisphere: 3, environment: 4 } as const;
+export const LIGHT_KINDS = { point: 1, spot: 2, hemisphere: 3, environment: 4, rim: 5 } as const;
 
 /**
  * Where each light is, for one from a point or a spot (and its kind, each light's): `<prefix>Kind`,
@@ -154,7 +158,7 @@ function placedUniforms(
   u: UniformSet,
   prefix: string,
   lights: readonly {
-    readonly kind?: 'point' | 'spot' | 'hemisphere' | 'environment';
+    readonly kind?: 'point' | 'spot' | 'hemisphere' | 'environment' | 'rim';
     readonly position?: readonly number[];
     readonly fade?: number;
     readonly aim?: readonly number[];
@@ -199,12 +203,15 @@ export function shadeUniforms(u: UniformSet, darkenings: readonly Darkening[]): 
   u.fv('uShadeColor', [...shades.flatMap((s) => [...s.colour]), ...pad(3)], '3fv');
   u.fv('uShadeStrength', [...shades.map((s) => s.strength), ...pad(1)]);
   u.fv('uShadeSoftness', [...shades.map((s) => s.softness), ...pad(1)]);
+  u.fv('uShadeWrap', [...shades.map((s) => s.wrap ?? 0), ...pad(1)]);
   placedUniforms(u, 'uShade', shades, MAX_SHADES);
 }
 
 /**
- * A grid's reveals and activations (each at most MAX_FIELDS) and its colours: inactive in place
- * of its diffuse's own where set, and active.
+ * A grid's reveals and activations (each at most MAX_FIELDS: its side, wrap, falloff and
+ * strength, and by its kind where it is; the same uniforms a body's lights have, by prefix), its
+ * colours (inactive in place of its diffuse's own where set, and active), and its rim: the kind
+ * of its pattern layer's fresnel (`rimType`), drawn by its rim light in place of the layer's own.
  */
 export function gridUniforms(
   u: UniformSet,
@@ -212,6 +219,7 @@ export function gridUniforms(
   activations: readonly GridField[],
   inactive: string | undefined,
   active: string,
+  rimType: number,
 ): void {
   const pad = <T>(list: readonly T[], fill: T): T[] => [
     ...list.slice(0, MAX_FIELDS),
@@ -224,6 +232,10 @@ export function gridUniforms(
     ).flat();
   const r = reveals.slice(0, MAX_FIELDS);
   u.i1('uRevealed', 1);
+  u.i1('uRimType', rimType);
+  // (The pattern layer's own fresnel is its rim light's now, not the layer's.)
+  u.i1('uLayers[1].fresnel', 0);
+  placedUniforms(u, 'uReveal', r, MAX_FIELDS);
   u.i1('uRevealCount', r.length);
   u.fv('uRevealFrom', from(r), '3fv');
   u.fv(
@@ -248,6 +260,7 @@ export function gridUniforms(
     ),
   );
   const a = activations.slice(0, MAX_FIELDS);
+  placedUniforms(u, 'uActivation', a, MAX_FIELDS);
   u.i1('uActivationCount', a.length);
   u.fv('uActivationFrom', from(a), '3fv');
   u.fv(

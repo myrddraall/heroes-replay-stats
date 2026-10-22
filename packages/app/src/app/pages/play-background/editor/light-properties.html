@@ -49,7 +49,8 @@
   />
   @if (l.from; as from) {
     <hrs-property-direction
-      [label]="l.kind === 'hemisphere' ? 'Sky from' : 'Light from'"
+      [label]="l.kind === 'hemisphere' ? 'Sky from' : l.kind === 'rim' ? 'Lean' : 'Light from'"
+      [sided]="l.kind !== 'rim'"
       [value]="from"
       [changed]="isSet('from')"
       [origin]="entry.origins.from"
@@ -96,12 +97,13 @@
       (valueChange)="move(2, $event)"
     />
   }
-  @if (l.position || l.kind === 'environment') {
+  @if (l.position || l.kind === 'environment' || l.kind === 'rim') {
     <hrs-property-number
-      label="Reach"
-      [value]="l.fade ?? (l.kind === 'environment' ? 1.5 : 3)"
-      [min]="l.kind === 'environment' ? 0 : 0.1"
-      [step]="0.1"
+      [label]="l.kind === 'rim' ? 'Spread' : 'Reach'"
+      [value]="l.fade ?? (l.kind === 'environment' ? 1.5 : l.kind === 'rim' ? 0 : 3)"
+      [min]="l.kind === 'environment' || l.kind === 'rim' ? 0 : 0.1"
+      [max]="l.kind === 'rim' ? 1 : undefined"
+      [step]="l.kind === 'rim' ? 0.05 : 0.1"
       [changed]="isSet('fade')"
       [origin]="entry.origins.fade"
       (resetRequested)="clear.emit(['fade'])"
@@ -158,6 +160,19 @@
       [origin]="entry.origins.edge"
       (resetRequested)="clear.emit(['edge'])"
       (valueChange)="settingsChange.emit({ edge: $event })"
+    />
+  }
+  @if (l.kind === 'directional' || l.position) {
+    <hrs-property-number
+      label="Wrap"
+      [value]="l.wrap ?? 0"
+      [min]="0"
+      [max]="1"
+      [step]="0.01"
+      [changed]="isSet('wrap')"
+      [origin]="entry.origins.wrap"
+      (resetRequested)="clear.emit(['wrap'])"
+      (valueChange)="settingsChange.emit({ wrap: $event })"
     />
   }
   @if (sided()) {
@@ -226,6 +241,41 @@
         [origin]="entry.origins.moons"
         (resetRequested)="unset(['moons'])"
         (checkedChange)="settingsChange.emit({ moons: $event })"
+      />
+    }
+  </hrs-property-section>
+}
+@if (onShield()) {
+  @let s = shield();
+  <hrs-property-section
+    title="Shield"
+    [changed]="isSet('shield')"
+    (resetRequested)="unset(['shield'])"
+  >
+    <hrs-property-check
+      label="Reveals"
+      [checked]="s.reveals"
+      (checkedChange)="shieldChange({ reveals: $event })"
+    />
+    <hrs-property-check
+      label="Activates"
+      [checked]="s.activates"
+      (checkedChange)="shieldChange({ activates: $event })"
+    />
+    @if (s.activates) {
+      <hrs-property-number
+        label="Energizes"
+        [value]="s.energizes"
+        [min]="0"
+        [step]="0.05"
+        (valueChange)="shieldChange({ energizes: $event })"
+      />
+      <hrs-property-number
+        label="Glow"
+        [value]="s.glow"
+        [min]="0"
+        [step]="0.05"
+        (valueChange)="shieldChange({ glow: $event })"
       />
     }
   </hrs-property-section>

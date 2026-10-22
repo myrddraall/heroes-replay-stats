@@ -905,9 +905,11 @@ export class SceneRenderer {
     const layered = withLayers(withMasks(draw.material, settings?.masks), settings?.layers, has);
     const placement = draw.placed?.placement;
     // Lit or flat as set (else as the data has it); lit with no light to light it: flat.
+    // (A grid is an energy field: its own lights say where it shows; no rig lights it.)
     const unshaded =
       !!draw.part &&
-      ((settings?.lit !== undefined ? !settings.lit : layered.unshaded) ||
+      (draw.part.pattern?.kind === 'hex' ||
+        (settings?.lit !== undefined ? !settings.lit : layered.unshaded) ||
         (!draw.light && !addedLighting(this.addedTo(placement), placement?.lights)));
     const material =
       draw.part && unshaded !== layered.unshaded ? { ...layered, unshaded } : layered;
@@ -1014,7 +1016,14 @@ export class SceneRenderer {
     const grid = draw.part.pattern?.kind === 'hex';
     if (grid) {
       const { reveal, activation } = gridFields(materialValues(material, settings));
-      gridUniforms(u, reveal, activation, settings?.inactive, settings?.active ?? DEFAULT_ACTIVE);
+      gridUniforms(
+        u,
+        reveal,
+        activation,
+        settings?.inactive,
+        settings?.active ?? DEFAULT_ACTIVE,
+        material.emissive?.fresnel?.type ?? 1,
+      );
     }
     // The body glows under its own light's bloom threshold, lit or not (its city lights aren't lit).
     const worn = overlaysOf(placement);

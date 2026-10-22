@@ -1,6 +1,12 @@
 import type { SceneBlend, SceneMaterial } from './play-scene';
-import { normalized, TOWARDS_EYE, type Vec3 } from './scene-directions';
-import type { NewLightKind } from './scene-lights';
+import { rimTurn, TOWARDS_EYE, type Vec3 } from './scene-directions';
+import {
+  type AddedLight,
+  addedLight,
+  placedLight,
+  SHIELD_DEFAULTS,
+  type ShieldEffect,
+} from './scene-lights';
 import type {
   GridLight,
   LayerSlot,
@@ -45,8 +51,8 @@ export interface MaterialValues {
   /** A grid's colours: inactive (its own), and active (where it is activated). */
   readonly inactive: string;
   readonly active: string;
-  /** A grid's lights (see `GridLight`): as set, else its reveal of before, else one from the front. */
-  readonly gridLights: readonly GridLight[];
+  /** A grid's lights (lights with a `shield` effect): as set, else those of before, else its rim alone. */
+  readonly gridLights: readonly AddedLight[];
 }
 
 /**
@@ -71,101 +77,89 @@ const LEGACY_GRID = {
 } as const;
 
 /** A grid light's settings where not set: it reveals, from its side, reaching all of its face. */
-export const GRID_LIGHT_DEFAULTS = {
-  enabled: true,
-  darkens: false,
+/**
+ * A grid's rim as a light: the game's own look (its pattern layer's fresnel: brightest at the
+ * limb, leaning to a side), its lean, spread and falloff the material's own unless set.
+ */
+export const RIM_LIGHT: AddedLight = {
+  id: 'added-rim',
+  kind: 'rim',
+  name: 'Rim',
+  colour: '#ffffff',
   strength: 1,
-  softness: 1,
-  reach: 1,
-  reveals: true,
-  activates: false,
-  energizes: 0.25,
-  glow: 0.5,
-} as const;
+};
 
-/** A grid's lights where none are set: one from the front, enough to show all of its face (as the game shows a grid). */
-export const DEFAULT_GRID_LIGHTS: readonly GridLight[] = [
-  { id: 'grid-front', name: 'Front', kind: 'directional', strength: 2, from: TOWARDS_EYE },
-];
+/** A grid's lights where none are set: its rim alone (as the game shows a grid). */
+export const DEFAULT_GRID_LIGHTS: readonly AddedLight[] = [RIM_LIGHT];
 
-/** Where a new grid light comes from unless turned: upper left, in front. */
-const NEW_GRID_FROM: Vec3 = normalized([-0.55, -0.45, 0.7]);
+/** Whether a grid light kept is of the kind from before the shield's lights were lights (see `GridLight`). */
+const isLegacyGridLight = (l: AddedLight | GridLight): l is GridLight => l.id.startsWith('grid-');
 
-/** A grid light's settings in effect: its own over the defaults (one from a side: from the front unless set). */
-export function gridLightValues(l: GridLight): Required<Omit<GridLight, 'from'>> & {
-  readonly from?: Vec3;
-} {
+/** A grid light of before as a light: its reach its wrap, what it did its shield effect. */
+function fromGridLight(l: GridLight): AddedLight {
+  const shield: ShieldEffect = {
+    ...(l.reveals !== undefined ? { reveals: l.reveals } : {}),
+    ...(l.activates !== undefined ? { activates: l.activates } : {}),
+    ...(l.energizes !== undefined ? { energizes: l.energizes } : {}),
+    ...(l.glow !== undefined ? { glow: l.glow } : {}),
+  };
   return {
-    ...GRID_LIGHT_DEFAULTS,
-    ...l,
-    ...(l.kind === 'directional' ? { from: l.from ?? TOWARDS_EYE } : { from: undefined }),
+    id: `added-${l.id}`,
+    kind: l.kind === 'ambient' ? 'ambient' : 'directional',
+    name: l.name,
+    colour: '#ffffff',
+    strength: l.strength ?? 1,
+    ...(l.enabled !== undefined ? { enabled: l.enabled } : {}),
+    ...(l.darkens !== undefined ? { darkens: l.darkens } : {}),
+    ...(l.from ? { from: l.from } : {}),
+    ...(l.softness !== undefined ? { softness: l.softness } : {}),
+    wrap: l.reach ?? 1,
+    ...(Object.keys(shield).length ? { shield } : {}),
   };
 }
 
 /**
- * A new grid light of a kind (an antilight: one from a side that darkens), named after those of
- * the kind already there: it reveals.
+ * A grid's lights from its settings: as set (those kept from before read as lights), else its
+ * reveal and activation of before (each a light, after the rim, which was the grid's look under
+ * them: the activation's from the reveal's side while tied), else its rim alone.
  */
-export function newGridLight(kind: NewLightKind, existing: readonly GridLight[]): GridLight {
-  const id = `grid-${Math.random().toString(36).slice(2, 10)}` as const;
-  const darkens = kind === 'antilight';
-  // (A shield's lights are from all round or a side: any other kind asked for is one from a side.)
-  const base =
-    { ambient: 'Ambient light', antilight: 'Antilight' }[kind as string] ?? 'Directional light';
-  const own: GridLight['kind'] = kind === 'ambient' ? 'ambient' : 'directional';
-  const count = existing.filter((l) => l.kind === own && !!l.darkens === darkens).length;
-  const name = count ? `${base} ${count + 1}` : base;
-  return kind === 'ambient'
-    ? { id, name, kind }
-    : { id, name, kind: 'directional', from: NEW_GRID_FROM, ...(darkens ? { darkens } : {}) };
-}
-
-/**
- * A grid's lights from its settings: as set, else its reveal and activation of before (each a
- * light: the reveal's, the activation's from the reveal's side while tied), else one from the front.
- */
-export function gridLightsOf(s: MaterialSettings | undefined): readonly GridLight[] {
-  if (s?.gridLights) return s.gridLights;
+export function gridLightsOf(s: MaterialSettings | undefined): readonly AddedLight[] {
+  if (s?.gridLights) return s.gridLights.map((l) => (isLegacyGridLight(l) ? fromGridLight(l) : l));
   const legacy = (Object.keys(LEGACY_GRID) as (keyof typeof LEGACY_GRID)[]).some(
     (k) => s?.[k] !== undefined,
   );
   if (!legacy) return DEFAULT_GRID_LIGHTS;
   const g = { ...LEGACY_GRID, ...s } as typeof LEGACY_GRID;
-  const out: GridLight[] = [];
+  const out: AddedLight[] = [RIM_LIGHT];
   if (g.revealOn)
     out.push({
-      id: 'grid-reveal',
+      id: 'added-grid-reveal',
       name: 'Reveal',
       kind: 'directional',
+      colour: '#ffffff',
       strength: g.revealStrength,
       from: g.revealFrom,
-      reach: g.revealReach,
+      wrap: g.revealReach,
       softness: g.revealFalloff,
     });
   if (g.activationOn)
     out.push({
-      id: 'grid-activation',
+      id: 'added-grid-activation',
       name: 'Activation',
       kind: 'directional',
+      colour: '#ffffff',
       strength: g.activationStrength,
       from: g.activationTied ? g.revealFrom : g.activationFrom,
-      reach: g.activationReach,
+      wrap: g.activationReach,
       softness: g.activationFalloff,
-      reveals: false,
-      activates: true,
-      energizes: g.activationEnergizes,
-      glow: g.activationGlow,
+      shield: {
+        reveals: false,
+        activates: true,
+        energizes: g.activationEnergizes,
+        glow: g.activationGlow,
+      },
     });
   return out;
-}
-
-/** A grid's lights with one of them changed (the rest as they are). */
-export function withGridLight(
-  lights: readonly GridLight[],
-  id: GridLight['id'],
-  change: Partial<GridLight>,
-): GridLight[] {
-  return lights.map((l) => (l.id === id ? { ...l, ...change } : l));
 }
 
 /**
@@ -173,31 +167,77 @@ export function withGridLight(
  * reach, falloff and strength (one that darkens: taken away); an activation's energizing and glow.
  */
 export interface GridField {
+  /** The side it comes from (none: all round, or placed by its kind). */
   readonly from?: Vec3;
+  /** How far round the face it wraps (0 the half facing it, 1 all round). */
   readonly reach: number;
   readonly falloff: number;
   readonly strength: number;
   readonly energizes?: number;
   readonly glow?: number;
+  /** From a point, a spot, above and below, the sky round the body, or the rim (as the shaders number them); none: a side, or all round. */
+  readonly kind?: 'point' | 'spot' | 'hemisphere' | 'environment' | 'rim';
+  readonly position?: Vec3;
+  /** A point's or spot's reach, the sky's; a rim's: how far in from the limb it spreads. */
+  readonly fade?: number;
+  /** A spot's aim; a rim's lean as the layer's fresnel turns (yaw, pitch, 0). */
+  readonly aim?: Vec3;
+  readonly cone?: number;
+  readonly edge?: number;
 }
 
-/** A grid's reveals and activations as drawn: its lights that are on, by what each does. */
+/**
+ * A grid's reveals and activations as drawn: its lights that are on, by what each does to it
+ * (its shield effect: reveals unless set), each placed as the renderer places a body's light; a
+ * rim light's lean, spread and falloff the material's own where it sets none.
+ */
 export function gridFields(v: MaterialValues): {
   readonly reveal: readonly GridField[];
   readonly activation: readonly GridField[];
 } {
-  const on = v.gridLights.map(gridLightValues).filter((l) => l.enabled);
-  const field = (l: ReturnType<typeof gridLightValues>): GridField => ({
-    ...(l.from ? { from: l.from } : {}),
-    reach: l.reach,
-    falloff: l.softness,
-    strength: l.darkens ? -l.strength : l.strength,
-  });
+  const on = v.gridLights
+    .map((l) => ({ raw: l, light: addedLight(l), shield: { ...SHIELD_DEFAULTS, ...l.shield } }))
+    .filter(({ light }) => light.enabled);
+  const field = ({ raw, light }: (typeof on)[number]): GridField => {
+    const strength = light.darkens ? -light.strength : light.strength;
+    if (light.kind === 'ambient') return { reach: 0, falloff: 1, strength };
+    if (light.kind === 'rim') {
+      const from = raw.from ?? v.spreadFrom;
+      const [yaw, pitch] = rimTurn(from);
+      // (Its spread is its `fade`, as a body's rim light has it; it wraps by nothing.)
+      return {
+        kind: 'rim',
+        from,
+        fade: raw.fade ?? v.spread,
+        reach: 0,
+        falloff: raw.softness ?? v.falloff,
+        strength,
+        aim: [-yaw, -pitch, 0],
+      };
+    }
+    const placed = placedLight(light);
+    return {
+      ...(placed?.kind
+        ? {
+            kind: placed.kind,
+            position: placed.position,
+            fade: placed.fade,
+            aim: placed.aim,
+            cone: placed.cone,
+            edge: placed.edge,
+          }
+        : {}),
+      ...(light.from ? { from: light.from } : {}),
+      reach: light.wrap ?? 0,
+      falloff: light.softness ?? 1,
+      strength,
+    };
+  };
   return {
-    reveal: on.filter((l) => l.reveals).map(field),
+    reveal: on.filter(({ shield }) => shield.reveals).map(field),
     activation: on
-      .filter((l) => l.activates)
-      .map((l) => ({ ...field(l), energizes: l.energizes, glow: l.glow })),
+      .filter(({ shield }) => shield.activates)
+      .map((l) => ({ ...field(l), energizes: l.shield.energizes, glow: l.shield.glow })),
   };
 }
 
@@ -407,15 +447,17 @@ export function materialControls(
   return {
     particles,
     strength: material.blend !== 'opaque',
-    spread: layers.some((l) => l?.fresnel !== undefined),
+    // (A grid's rim is one of its lights: no Rim section of its own.)
+    spread: layers.some((l) => l?.fresnel !== undefined) && !pattern,
     colours: pattern,
     scale: material.emissive !== null || pattern,
     drawAs: pattern && material.emissive?.texture !== undefined,
     cut: material.emissive !== null && !drawn,
     lines: drawn,
     depth: sky,
-    lit: !sky,
-    specular: !sky && material.specular !== undefined,
+    // (A grid is an unlit energy field: its own lights say where it shows.)
+    lit: !sky && !pattern,
+    specular: !sky && !pattern && material.specular !== undefined,
   };
 }
 

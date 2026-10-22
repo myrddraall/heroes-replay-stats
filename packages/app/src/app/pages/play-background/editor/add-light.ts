@@ -1,4 +1,4 @@
-import { Component, computed, input, output } from '@angular/core';
+import { Component, output } from '@angular/core';
 import type { NewLightKind } from '../../../scenes/play-background/scene-lights';
 import { LIGHT_ICONS } from './editor-model';
 import { SplitButton, type SplitOption } from './split-button';
@@ -13,6 +13,7 @@ const KINDS: readonly SplitOption[] = (
     ['spot', 'Spot light'],
     ['hemisphere', 'Hemisphere light'],
     ['environment', 'Environment light'],
+    ['rim', 'Rim light'],
   ] as const
 ).map(([id, label]) => ({ id, label, icon: LIGHT_ICONS[id] }));
 
@@ -29,12 +30,7 @@ const KINDS: readonly SplitOption[] = (
 })
 export class AddLight {
   readonly added = output<NewLightKind>();
-  /** The kinds offered (none given: every kind). */
-  readonly only = input<readonly NewLightKind[] | null>(null);
-  protected readonly kinds = computed(() => {
-    const only = this.only();
-    return only ? KINDS.filter((k) => only.includes(k.id as NewLightKind)) : KINDS;
-  });
+  protected readonly kinds = KINDS;
 
   protected add(id: string): void {
     this.added.emit(id as NewLightKind);

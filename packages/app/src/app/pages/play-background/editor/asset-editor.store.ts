@@ -33,11 +33,7 @@ import {
   pathOf,
   without,
 } from '../../../scenes/play-background/background-scene';
-import {
-  withGridLight,
-  materialKey,
-  NO_MATERIAL_TINT,
-} from '../../../scenes/play-background/material-settings';
+import { materialKey, NO_MATERIAL_TINT } from '../../../scenes/play-background/material-settings';
 import {
   visualExtent,
   withAddedLight,
@@ -56,6 +52,7 @@ import {
   type LightSettings,
   newLight,
   type Receiver,
+  withLightChanged,
 } from '../../../scenes/play-background/scene-lights';
 import type { SetPlanet } from '../../../scenes/play-background/planet-sets';
 import {
@@ -108,6 +105,8 @@ import {
   partsOfBody,
   referenceRow,
   sharedMaterials,
+  shieldLightsOf,
+  shieldLightsOfBody,
   skyMaterialsOf,
   skyOverlayChoices,
   type SkyOverlayInfo,
@@ -927,11 +926,28 @@ export const AssetEditorStore = signalStore(
               light,
             })),
           };
+        // A shield's shader, or one of its lights, selected: the shield's lights.
+        if ('view' in t && (t.view?.kind === 'gridLight' || t.view?.kind === 'shader')) {
+          const base = splitViewKey(store.selected())?.base;
+          const m =
+            t.kind === 'base-material'
+              ? store.baseMaterial()
+              : t.kind === 'material'
+                ? materialAt(store._ownMaterials(), t.key)
+                : undefined;
+          return m && base ? { body, lights: shieldLightsOf(base, m.values.gridLights) } : null;
+        }
         const b = store._body();
         if (!b || t.kind === 'backdrop' || t.kind === 'reference' || t.kind === 'sky') return null;
+        // The asset's lights, and its shields' (the stand-in wears an overlay open).
         return {
           body,
-          lights: lightsOfBody(b).map(({ light }) => ({ key: assetLightKey(light.id), light })),
+          lights: [
+            ...lightsOfBody(b).map(({ light }) => ({ key: assetLightKey(light.id), light })),
+            ...shieldLightsOfBody(b, store._ownMaterials(), (name, overlay) =>
+              overlay ? assetOverlayMaterialKey(overlay, name) : assetMaterialKey(name),
+            ),
+          ],
         };
       },
     );
@@ -963,7 +979,10 @@ export const AssetEditorStore = signalStore(
           off: !light.enabled,
         });
         const round = lights.filter(
-          ({ light }) => light.kind === 'ambient' || light.kind === 'environment',
+          ({ light }) =>
+            light.kind === 'ambient' ||
+            light.kind === 'environment' ||
+            (light.kind === 'rim' && !light.from),
         );
         round.forEach(({ key, light }, n) =>
           out.push({ ...marker(key, light, body.position), nudge: n - (round.length - 1) / 2 }),
@@ -984,8 +1003,14 @@ export const AssetEditorStore = signalStore(
         const view = store.camera();
         const lit = litBody();
         const t = store.target();
-        if (!view || !lit || (t.kind !== 'light' && t.kind !== 'stand-in-light')) return [];
-        const light = lit.lights.find(({ light }) => light.id === t.id)?.light;
+        if (!view || !lit) return [];
+        const id =
+          t.kind === 'light' || t.kind === 'stand-in-light'
+            ? t.id
+            : 'view' in t && t.view?.kind === 'gridLight'
+              ? t.view.id
+              : null;
+        const light = id && lit.lights.find(({ light }) => light.id === (id as string))?.light;
         return light ? lightAids(light, lit.body, view.eye) : [];
       }),
     };
@@ -1762,7 +1787,7 @@ export const AssetEditorStore = signalStore(
                 : undefined;
           const lights = m?.values.gridLights ?? [];
           materialChange(change.key, {
-            gridLights: withGridLight(lights, t.view.id, { enabled: on }),
+            gridLights: withLightChanged(lights, t.view.id, { enabled: on }),
           });
         } else if (on === materialBelow(t)) materialClear(t, ['enabled']);
         else materialChange(change.key, { enabled: on });

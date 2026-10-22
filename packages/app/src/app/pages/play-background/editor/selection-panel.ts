@@ -1,11 +1,15 @@
+import type { LightEntry } from './editor-model';
 import { Component, computed, inject } from '@angular/core';
-import type {
-  GridLight,
-  LayerSettings,
-  LayerSlot,
-} from '../../../scenes/play-background/scene-planets';
-import { newGridLight, withGridLight } from '../../../scenes/play-background/material-settings';
-import type { NewLightKind } from '../../../scenes/play-background/scene-lights';
+import type { LayerSettings, LayerSlot } from '../../../scenes/play-background/scene-planets';
+import {
+  type AddedLight,
+  addedLight,
+  type LightId,
+  type LightSettings,
+  newLight,
+  type NewLightKind,
+  withLightChanged,
+} from '../../../scenes/play-background/scene-lights';
 import { DraftDesignStore } from '../draft-design.store';
 import type { PropertyOption } from '../properties/property-select';
 import { AddPlanet } from './add-planet';
@@ -26,7 +30,7 @@ import {
 } from './editing-aids.store';
 import { Editor } from './editor';
 import { EditorUiStore } from './editor-ui.store';
-import { GridLightProperties } from './grid-light-properties';
+import { LightProperties } from './light-properties';
 import {
   type LayerEntry,
   lightIcon,
@@ -38,7 +42,6 @@ import { LayerProperties } from './layer-properties';
 import { MaterialProperties } from './material-properties';
 import { PatternProperties } from './pattern-properties';
 import { PartProperties } from './part-properties';
-import { LightProperties } from './light-properties';
 import { AddLight } from './add-light';
 import { AddPart } from './add-part';
 import { PickList } from './pick-list';
@@ -68,7 +71,7 @@ import { TintSection } from './tint-section';
     BodyProperties,
     MaterialProperties,
     PatternProperties,
-    GridLightProperties,
+    LightProperties,
     LayerProperties,
     PartProperties,
     LightProperties,
@@ -217,34 +220,77 @@ export class SelectionPanel {
       : [];
   });
 
-  /** The selected shield light, where one is. */
-  protected readonly gridLight = computed(() => {
+  /**
+   * The selected shield light, where one is, as the light panel shows a light: its own settings
+   * (set here, nothing under it), a rim light's lean, spread and falloff filled in with the
+   * material's own where it sets none.
+   */
+  protected readonly gridLight = computed((): LightEntry | null => {
     const view = this.editor.materialView();
-    return view?.kind === 'gridLight'
-      ? this.editor.material()?.values.gridLights.find((l) => l.id === view.id)
-      : undefined;
+    const m = this.editor.material();
+    const l =
+      view?.kind === 'gridLight' ? m?.values.gridLights.find((l) => l.id === view.id) : null;
+    if (!l || !m) return null;
+    const light = addedLight(l);
+    const rim =
+      l.kind === 'rim'
+        ? {
+            from: l.from ?? m.values.spreadFrom,
+            fade: l.fade ?? m.values.spread,
+            softness: l.softness ?? m.values.falloff,
+          }
+        : {};
+    // (Set here: a rim light's lean, spread and falloff where set over the material's; the rest
+    // is the light's own, nothing under it to go back to.)
+    const set: LightSettings | undefined =
+      l.kind === 'rim' && (l.from || l.fade !== undefined || l.softness !== undefined)
+        ? {
+            ...(l.from ? { from: l.from } : {}),
+            ...(l.fade !== undefined ? { fade: l.fade } : {}),
+            ...(l.softness !== undefined ? { softness: l.softness } : {}),
+          }
+        : undefined;
+    return {
+      light: { ...light, ...rim },
+      nameBelow: l.name,
+      enabledBelow: true,
+      set,
+      origins: {},
+      removable: true,
+      receivers: [],
+      moons: false,
+      canReachMoons: false,
+    };
   });
 
   /** A light added to the shield shader (its lights set at the level edited), and selected. */
-  /** A shield's lights are from all round or a side (an antilight too): no points, spots or hemispheres. */
-  protected readonly gridLightKinds: readonly NewLightKind[] = [
-    'ambient',
-    'directional',
-    'antilight',
-  ];
   protected addGridLight(kind: NewLightKind): void {
     const base = splitViewKey(this.editor.selected())?.base;
     const lights = this.editor.material()?.values.gridLights ?? [];
     if (!base) return;
-    const light = newGridLight(kind, lights);
+    const light = newLight(kind, lights);
     this.editor.setMaterial({ gridLights: [...lights, light] });
     this.editor.select(viewKey(base, { kind: 'gridLight', id: light.id }));
   }
 
   /** One of the shield shader's lights changed (its lights set at the level edited). */
-  protected changeGridLight(id: GridLight['id'], change: Partial<GridLight>): void {
+  protected changeGridLight(id: LightId, change: Partial<LightSettings>): void {
     const lights = this.editor.material()?.values.gridLights ?? [];
-    this.editor.setMaterial({ gridLights: withGridLight(lights, id, change) });
+    this.editor.setMaterial({
+      gridLights: withLightChanged(lights, id as AddedLight['id'], change),
+    });
+  }
+
+  /** A shield light's settings taken back (all of them, or those named): unset, back to its kind's own. */
+  protected cleared(keys: readonly (keyof LightSettings)[] | undefined): Partial<LightSettings> {
+    const all: readonly (keyof LightSettings)[] = keys ?? [
+      'from',
+      'fade',
+      'softness',
+      'wrap',
+      'shield',
+    ];
+    return Object.fromEntries(all.map((k) => [k, undefined]));
   }
 
   /** One of the shield shader's lights taken out; it selected: the shader selected instead. */

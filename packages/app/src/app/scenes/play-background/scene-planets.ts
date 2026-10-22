@@ -7,7 +7,7 @@ import type {
   SkyOverlayFile,
 } from './play-scene';
 import type { TintBlend } from './scene-tints';
-import type { LightKind } from './scene-lights';
+import type { AddedLight, LightKind } from './scene-lights';
 import { BUILT_IN_PREFIX, type BuiltInPlanets } from './built-in-planets';
 import type { AddedPart } from './created-overlays';
 
@@ -56,9 +56,11 @@ export interface PlanetIndex {
  * a light from a point near the body (where it is, in the body's frame and radii; `fade`: the
  * distance it is half as strong at), a spot (that, pointing `aim`, within a cone of `cone`
  * degrees fading over `edge` of it), a hemisphere (its colour from the side `direction` comes
- * from, `ground` from the other), or the sky round the body (an environment light: the sky's
+ * from, `ground` from the other), the sky round the body (an environment light: the sky's
  * colours read `fade` radii out from the body's edge, each side lit by the sky beyond it, its
- * colour over them; `direction` is unused).
+ * colour over them; `direction` is unused), or the rim (its colour where the surface turns away
+ * from the eye, leaned by `aim` (yaw, pitch), spread `fade` of the way in, to its softness). One
+ * from a side, a point or a spot wraps `wrap` of the way round (0: the half facing it).
  */
 export interface PlanetDirectionalLight {
   readonly direction: readonly [number, number, number];
@@ -67,7 +69,8 @@ export interface PlanetDirectionalLight {
   readonly softness?: number;
   /** Its shine on a material that has a specular layer: its specular colour times its multiplier (none: none). */
   readonly specular?: readonly [number, number, number];
-  readonly kind?: 'point' | 'spot' | 'hemisphere' | 'environment';
+  readonly kind?: 'point' | 'spot' | 'hemisphere' | 'environment' | 'rim';
+  readonly wrap?: number;
   readonly position?: readonly [number, number, number];
   readonly fade?: number;
   readonly aim?: readonly [number, number, number];
@@ -503,14 +506,10 @@ function withRoundPart(part: BodyPart, shape: RoundShape, settings: PartSettings
 }
 
 /**
- * A grid's (the shield's) light, its own: it lights nothing, it says where the grid shows and where
- * it is active. From all round (`ambient`: all of it alike) or from a side (`from`, body frame,
- * any side, the far one too), as strong as `strength` (past 1, further round fully), reaching round
- * the face (`reach`: 0 the half facing it, 1 on round to the point facing away) as softly as
- * `softness` (the power of how squarely the face turns to it). What it does: reveals the grid
- * (`reveals`: shows it), activates it (`activates`: turns it from its inactive colour to its active
- * one, revealing `energizes` times as much there too and shining `glow` brighter), either or both;
- * one that darkens (`darkens`) does the opposite: hides it, deactivates it.
+ * A grid's (the shield's) light as it was kept before the shield's lights were the body's kind
+ * of light (`AddedLight`, with a `shield` effect): read as one (`gridLightsOf`), never written.
+ * From all round or a side, as strong as `strength`, reaching round the face (`reach`, its wrap
+ * now) as softly as `softness`; revealing, activating (energizing, glowing), or darkening.
  */
 export interface GridLight {
   readonly id: `grid-${string}`;
@@ -552,10 +551,11 @@ export interface MaterialSettings {
   readonly inactive?: string;
   readonly active?: string;
   /**
-   * A grid's (the shield's) lights, its own (see `GridLight`): where it shows and where it is
-   * active. Set as a whole, a level's list in place of the one under it.
+   * A grid's (the shield's) lights, its own: lights like a body's (each with a `shield` effect:
+   * where the grid shows and where it is active). Set as a whole, a level's list in place of the
+   * one under it; those kept from before (`GridLight`) are read as lights.
    */
-  readonly gridLights?: readonly GridLight[];
+  readonly gridLights?: readonly (AddedLight | GridLight)[];
   /**
    * A grid's reveal and activation of before its lights were its own (read as its lights where
    * none are set: `gridLightsOf`): its reveal from `revealFrom`, reaching round the face

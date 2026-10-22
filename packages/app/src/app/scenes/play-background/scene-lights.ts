@@ -1,5 +1,5 @@
 import { aimOf, type LookAt } from './look-at';
-import { lightFrom, normalized, type Vec3 } from './scene-directions';
+import { lightFrom, normalized, rimTurn, type Vec3 } from './scene-directions';
 
 export { aimAtMiddle } from './look-at';
 import type { BodyShade, PlanetDirectionalLight, PlanetLight } from './scene-planets';
@@ -13,13 +13,16 @@ import type { BodyShade, PlanetDirectionalLight, PlanetLight } from './scene-pla
  */
 
 /**
- * Where a light comes from: all round; a side; a point near the body (fading with distance); a
- * spot (a point, lighting within a cone); above and below (a hemisphere: one colour from the sky's
- * side, another from the ground's); the sky round the body (an environment light: the sky's own
- * colours, each side of the body lit by the sky beyond it). Either lights, or darkens (`darkens`:
- * an antilight, taking its colour away).
+ * Where a light comes from: all round; a side; the rim (the body's edge as seen: brightest where
+ * the surface turns away from the eye, leaning to a side); a point near the body (fading with
+ * distance); a spot (a point, lighting within a cone); above and below (a hemisphere: one colour
+ * from the sky's side, another from the ground's); the sky round the body (an environment light:
+ * the sky's own colours, each side of the body lit by the sky beyond it). Either lights, or
+ * darkens (`darkens`: an antilight, taking its colour away). The same lights light a body's
+ * materials and say where a shield's grid shows (`shield`).
  */
-export type LightKind = 'ambient' | 'directional' | 'point' | 'spot' | 'hemisphere' | 'environment';
+export type LightKind =
+  'ambient' | 'directional' | 'rim' | 'point' | 'spot' | 'hemisphere' | 'environment';
 
 /** A light to add: of a kind, or an antilight (a directional light that darkens). */
 export type NewLightKind = LightKind | 'antilight';
@@ -37,6 +40,7 @@ const KINDS: readonly string[] = [
   'spot',
   'hemisphere',
   'environment',
+  'rim',
 ];
 
 /**
@@ -69,10 +73,33 @@ export interface LightReach {
 }
 
 /**
+ * What a light does to a shield's grid, where it is one of the shield's lights: reveals it
+ * (shows it where it reaches), activates it (colours it from inactive to active there, revealing
+ * `energizes` times as much there too and shining `glow` brighter), either or both. One that
+ * darkens does the opposite: hides, deactivates.
+ */
+export interface ShieldEffect {
+  readonly reveals?: boolean;
+  readonly activates?: boolean;
+  readonly energizes?: number;
+  readonly glow?: number;
+}
+
+/** What a shield's light does unless set: it reveals. */
+export const SHIELD_DEFAULTS: Required<ShieldEffect> = {
+  reveals: true,
+  activates: false,
+  energizes: 0.25,
+  glow: 0.5,
+};
+
+/**
  * A light's settings, each where set: on or off, whether it darkens instead of lighting, colour
  * (`#rrggbb`: one that darkens takes it away) and strength, the side it comes from and how softly
  * it falls off round the body; what of its body it reaches (all of it unless set), and, one added
- * to a body, whether it reaches the body's moons too (theirs too).
+ * to a body, whether it reaches the body's moons too (theirs too). A rim light's `from` is its
+ * lean (the side of the rim it favours), its `fade` how far in from the rim it spreads (0 to 1)
+ * and its `softness` its falloff.
  */
 export interface LightSettings {
   /** Its name as shown, in place of its own (a rig's light's, by how bright it is). */
@@ -106,6 +133,10 @@ export interface LightSettings {
   readonly edge?: number;
   /** A hemisphere light's colour from below (`#rrggbb`; its colour is from above, `from`). */
   readonly ground?: string;
+  /** How far round the body a directional, point or spot light wraps (0 the half facing it, 1 on round to the point facing away). */
+  readonly wrap?: number;
+  /** What it does to a shield's grid, where it is one of the shield's lights (none: it reveals). */
+  readonly shield?: ShieldEffect;
   readonly reach?: LightReach;
   readonly moons?: boolean;
 }
@@ -136,8 +167,11 @@ const NEW_EDGE = 0.5;
 /** Where a hemisphere light's sky is unless turned: straight up. */
 const NEW_UP: Vec3 = [0, 0, 1];
 const NEW_GROUND = '#000000';
+/** A rim light's lean unless turned: none (its rim all round, towards the eye); how far in it spreads unless set. */
+export const NEW_LEAN: Vec3 = [0, -1, 0];
+const NEW_SPREAD = 0;
 /** How far out from the body's edge an environment light reads the sky unless set, in its radii. */
-const NEW_SPREAD = 1.5;
+const NEW_SKY_REACH = 1.5;
 
 /**
  * A new light of a kind, named after the lights of that kind already added beside it (an
@@ -160,6 +194,7 @@ export function newLight(
     spot: 'Spot light',
     hemisphere: 'Hemisphere light',
     environment: 'Environment light',
+    rim: 'Rim light',
   }[kind];
   const name = count ? `${base} ${count + 1}` : base;
   switch (kind) {
@@ -210,8 +245,19 @@ export function newLight(
         ground: NEW_GROUND,
       };
     case 'environment':
-      return { id, kind, name, colour: '#ffffff', strength: 1, fade: NEW_SPREAD, softness: 1 };
+      return { id, kind, name, colour: '#ffffff', strength: 1, fade: NEW_SKY_REACH, softness: 1 };
+    case 'rim':
+      return { id, kind, name, colour: '#ffffff', strength: 1 };
   }
+}
+
+/** A list of lights with one of them changed (the rest as they are); one not among them: as they are. */
+export function withLightChanged(
+  lights: readonly AddedLight[],
+  id: AddedLight['id'],
+  change: Partial<LightSettings>,
+): AddedLight[] {
+  return lights.map((l) => (l.id === id ? { ...l, ...change } : l));
 }
 
 /** An added light as shown, with what is set for it over its own settings (by its id). */
@@ -255,8 +301,18 @@ export function addedLight(light: AddedLight, settings?: LightSettings): BodyLig
       ? { from: s.from ?? NEW_UP, ground: s.ground ?? NEW_GROUND }
       : {}),
     ...(light.kind === 'environment'
-      ? { fade: s.fade ?? NEW_SPREAD, softness: s.softness ?? 1 }
+      ? { fade: s.fade ?? NEW_SKY_REACH, softness: s.softness ?? 1 }
       : {}),
+    // (A rim light's lean, spread and falloff left unset: a shield fills them with its own.)
+    ...(light.kind === 'rim'
+      ? {
+          ...(s.from ? { from: s.from } : {}),
+          ...(s.fade !== undefined ? { fade: s.fade } : {}),
+          ...(s.softness !== undefined ? { softness: s.softness } : {}),
+        }
+      : {}),
+    ...(s.wrap !== undefined ? { wrap: s.wrap } : {}),
+    ...(s.shield ? { shield: s.shield } : {}),
   };
 }
 
@@ -285,6 +341,10 @@ export interface BodyLight {
   readonly edge?: number;
   /** A hemisphere light's colour from below. */
   readonly ground?: string;
+  /** How far round the body it wraps (see `LightSettings`). */
+  readonly wrap?: number;
+  /** What it does to a shield's grid, where it is one of the shield's lights. */
+  readonly shield?: ShieldEffect;
 }
 
 /** A light as the renderer takes it (see `PlanetDirectionalLight`): from a side, a point, a spot, above and below, or the sky round the body. */
@@ -294,13 +354,27 @@ export function placedLight(l: BodyLight): PlanetDirectionalLight | undefined {
     (l.specularStrength ?? 0) > 0
       ? { specular: rgbOf(l.specular ?? '#ffffff', l.specularStrength!) }
       : {};
+  const wrap = l.wrap !== undefined ? { wrap: l.wrap } : {};
   if (l.kind === 'directional' && l.from)
     return {
       direction: [-l.from[0], -l.from[1], -l.from[2]] as const,
       color,
       softness: l.softness ?? 1,
+      ...wrap,
       ...shine,
     };
+  if (l.kind === 'rim') {
+    const lean = l.from ?? NEW_LEAN;
+    const [yaw, pitch] = rimTurn(lean);
+    return {
+      kind: 'rim',
+      direction: [-lean[0], -lean[1], -lean[2]] as const,
+      aim: [-yaw, -pitch, 0],
+      fade: l.fade ?? NEW_SPREAD,
+      color,
+      softness: l.softness ?? 1,
+    };
+  }
   if ((l.kind === 'point' || l.kind === 'spot') && l.position) {
     const aim = aimOf(l.position, l.lookAt, l.aim);
     return {
@@ -310,6 +384,7 @@ export function placedLight(l: BodyLight): PlanetDirectionalLight | undefined {
       fade: l.fade ?? NEW_FADE,
       color,
       softness: l.softness ?? 1,
+      ...wrap,
       ...(l.kind === 'spot' ? { aim, cone: l.cone ?? NEW_CONE, edge: l.edge ?? NEW_EDGE } : {}),
       ...shine,
     };
@@ -326,7 +401,7 @@ export function placedLight(l: BodyLight): PlanetDirectionalLight | undefined {
       kind: 'environment',
       direction: [0, 1, 0],
       color,
-      fade: l.fade ?? NEW_SPREAD,
+      fade: l.fade ?? NEW_SKY_REACH,
       softness: l.softness ?? 1,
     };
   return undefined;
@@ -679,13 +754,14 @@ export interface Darkening {
   readonly strength: number;
   readonly softness: number;
   readonly colour: Vec3;
-  /** From a point, a spot, above and below, or the sky round the body (see `PlanetDirectionalLight`); none: from a side, or all round. */
-  readonly kind?: 'point' | 'spot' | 'hemisphere' | 'environment';
+  /** From a point, a spot, above and below, the sky round the body, or the rim (see `PlanetDirectionalLight`); none: from a side, or all round. */
+  readonly kind?: 'point' | 'spot' | 'hemisphere' | 'environment' | 'rim';
   readonly position?: Vec3;
   readonly fade?: number;
   readonly aim?: Vec3;
   readonly cone?: number;
   readonly edge?: number;
+  readonly wrap?: number;
 }
 
 /**
@@ -707,6 +783,7 @@ export function bodyDarkenings(
         strength: l.strength,
         softness: l.softness ?? 1,
         colour: rgbOf(l.colour, 1),
+        ...(l.wrap !== undefined ? { wrap: l.wrap } : {}),
         ...(placed?.kind
           ? {
               kind: placed.kind,

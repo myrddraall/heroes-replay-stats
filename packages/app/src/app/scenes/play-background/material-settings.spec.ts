@@ -1,11 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import { newLight, SHIELD_DEFAULTS, withLightChanged } from './scene-lights';
 import {
   DEFAULT_GRID_LIGHTS,
-  GRID_LIGHT_DEFAULTS,
   gridFields,
   gridLightsOf,
-  newGridLight,
-  withGridLight,
+  RIM_LIGHT,
   materialControls,
   materialValues,
   mergeMaterialSettings,
@@ -118,7 +117,7 @@ describe('materials’ settings', () => {
       cut: false,
       lines: true,
       colours: true,
-      spread: true,
+      spread: false,
     });
     // Shown as its texture instead (the game's way): the texture's range again, no lines.
     expect(materialControls(emissive, { pattern: true, drawAs: 'texture' })).toMatchObject({
@@ -166,29 +165,49 @@ describe('materials’ settings', () => {
     ).toEqual({ strength: 'its tuning', glow: 'the library (planet)' });
   });
 
-  it('reveal a grid from the front, its whole face, by one light of its own where none is set', () => {
+  it('reveal a grid by its rim alone where no light is set: its material’s own lean, spread and falloff', () => {
     const v = materialValues(material(), undefined);
     expect(v.gridLights).toEqual(DEFAULT_GRID_LIGHTS);
     const { reveal, activation } = gridFields(v);
-    expect(reveal).toEqual([{ from: TOWARDS_EYE, reach: 1, falloff: 1, strength: 2 }]);
+    expect(reveal).toMatchObject([
+      { kind: 'rim', from: v.spreadFrom, fade: v.spread, falloff: v.falloff, strength: 1 },
+    ]);
+    expect(reveal[0]!.aim).toHaveLength(3);
     expect(activation).toEqual([]);
+    // Its lean, spread and falloff set on the light, over the material's.
+    const leaned = gridFields(
+      materialValues(material(), {
+        gridLights: [{ ...RIM_LIGHT, from: [1, 0, 0], fade: 0.5, softness: 3 }],
+      }),
+    );
+    expect(leaned.reveal[0]).toMatchObject({ from: [1, 0, 0], fade: 0.5, falloff: 3 });
   });
 
-  it('reveal and activate a grid by each of its lights that does, one switched off doing neither', () => {
+  it('reveal and activate a grid by each of its lights that does (lights like a body’s), one switched off doing neither', () => {
     const right = [1, 0, 0] as const;
-    const both = { ...newGridLight('directional', []), from: right, activates: true };
-    const all = newGridLight('ambient', [both]);
-    const anti = { ...newGridLight('antilight', []), strength: 0.5 };
-    const off = { ...newGridLight('directional', []), enabled: false };
+    const both = {
+      ...newLight('directional', []),
+      from: right,
+      wrap: 1,
+      shield: { activates: true },
+    };
+    const all = newLight('ambient', [both]);
+    const anti = { ...newLight('antilight', []), strength: 0.5, wrap: 0.5 };
+    const off = { ...newLight('directional', []), enabled: false };
+    const spot = { ...newLight('spot', []), lookAt: { kind: 'body', at: [0, -1, 0] } as const };
+    const sky = newLight('environment', []);
     const { reveal, activation } = gridFields(
-      materialValues(material(), { gridLights: [both, all, anti, off] }),
+      materialValues(material(), { gridLights: [both, all, anti, off, spot, sky] }),
     );
-    // Revealing: the one doing both, the one from all round (no side), the antilight hiding.
-    expect(reveal).toEqual([
+    // Revealing: the one doing both, the one from all round, the antilight hiding, the spot and the sky.
+    expect(reveal).toMatchObject([
       { from: right, reach: 1, falloff: 1, strength: 1 },
-      { reach: 1, falloff: 1, strength: 1 },
-      { from: anti.from, reach: 1, falloff: 1, strength: -0.5 },
+      { reach: 0, falloff: 1, strength: 0.2 },
+      { from: anti.from, reach: 0.5, falloff: 1, strength: -0.5 },
+      { kind: 'spot', position: [0, -2.5, 1.5], cone: 15, edge: 0.5, reach: 0 },
+      { kind: 'environment', fade: 1.5, strength: 1 },
     ]);
+    expect(reveal[3]!.aim!.map((v) => Math.round(v * 1000) / 1000)).toEqual([0, 0.707, -0.707]);
     // Activating, from the same side as it reveals: the one doing both.
     expect(activation).toEqual([
       {
@@ -196,22 +215,48 @@ describe('materials’ settings', () => {
         reach: 1,
         falloff: 1,
         strength: 1,
-        energizes: GRID_LIGHT_DEFAULTS.energizes,
-        glow: GRID_LIGHT_DEFAULTS.glow,
+        energizes: SHIELD_DEFAULTS.energizes,
+        glow: SHIELD_DEFAULTS.glow,
       },
     ]);
-    expect(withGridLight([both, all], both.id, { enabled: false })[0]!.enabled).toBe(false);
+    expect(withLightChanged([both, all], both.id, { enabled: false })[0]!.enabled).toBe(false);
   });
 
-  it('read a reveal and activation of before as lights of its own', () => {
+  it('read a reveal and activation of before, and lights kept as the shield’s own kind, as lights', () => {
     const right = [1, 0, 0] as const;
     const left = [-1, 0, 0] as const;
     const before = { activationOn: true, revealFrom: right, activationFrom: left };
-    const [reveal, activation] = gridLightsOf(before);
-    expect(reveal).toMatchObject({ from: right, strength: 2 });
+    // (The rim, which was the grid's look under them, first.)
+    const [rim, reveal, activation] = gridLightsOf(before);
+    expect(rim).toEqual(RIM_LIGHT);
+    expect(reveal).toMatchObject({ from: right, strength: 2, wrap: 1 });
     // Tied (as it was unless set): from the reveal's side.
-    expect(activation).toMatchObject({ from: right, reveals: false, activates: true, strength: 1 });
-    expect(gridLightsOf({ ...before, activationTied: false })[1]!.from).toEqual(left);
-    expect(gridLightsOf({ revealOn: false })).toEqual([]);
+    expect(activation).toMatchObject({
+      from: right,
+      strength: 1,
+      shield: { reveals: false, activates: true },
+    });
+    expect(gridLightsOf({ ...before, activationTied: false })[2]!.from).toEqual(left);
+    expect(gridLightsOf({ revealOn: false })).toEqual([RIM_LIGHT]);
+    // One kept as the shield's own kind of light: its reach its wrap, what it did its shield effect.
+    const kept = gridLightsOf({
+      gridLights: [
+        {
+          id: 'grid-x',
+          name: 'Front',
+          kind: 'directional',
+          strength: 2,
+          reach: 0.5,
+          activates: true,
+        },
+      ],
+    });
+    expect(kept[0]).toMatchObject({
+      id: 'added-grid-x',
+      kind: 'directional',
+      strength: 2,
+      wrap: 0.5,
+      shield: { activates: true },
+    });
   });
 });

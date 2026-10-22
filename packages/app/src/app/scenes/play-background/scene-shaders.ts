@@ -85,7 +85,7 @@ uniform bool uLit;
 uniform vec3 uAmbient;
 uniform vec3 uLightDir[MAX_LIGHTS];
 uniform vec3 uLightColor[MAX_LIGHTS];
-uniform float uLightSoftness[MAX_LIGHTS];
+uniform float uLightSoftness[MAX_LIGHTS], uLightWrap[MAX_LIGHTS];
 uniform vec3 uLightSpecular[MAX_LIGHTS];
 // Each light's kind (0 from a side, 1 from a point, 2 a spot, 3 from above and below, 4 the sky
 // round the body), and for a point or a spot where it is (the body's frame, in its radii), how far
@@ -110,48 +110,12 @@ uniform float uStrength, uSpread, uCut, uFalloff;
 uniform int uPattern;
 uniform vec3 uPatternParams;
 uniform vec3 uShadeDir[MAX_SHADES], uShadeColor[MAX_SHADES];
-uniform float uShadeStrength[MAX_SHADES], uShadeSoftness[MAX_SHADES];
+uniform float uShadeStrength[MAX_SHADES], uShadeSoftness[MAX_SHADES], uShadeWrap[MAX_SHADES];
 uniform int uShadeCount;
 uniform int uShadeKind[MAX_SHADES];
 uniform vec3 uShadePos[MAX_SHADES], uShadeAim[MAX_SHADES];
 uniform float uShadeFade[MAX_SHADES];
 uniform vec4 uShadeCone[MAX_SHADES];
-// The sky's colour beyond a body's edge the way a normal n points across the view, spread radii
-// out from its middle.
-vec3 skyLight(vec3 n, float spread) {
-  vec2 uv = uSkyAt.xy + vec2(dot(n, uRight), dot(n, uUp)) * uSkyAt.zw * (1.0 + spread);
-  return textureLod(uSkyLight, clamp(uv, 0.0, 1.0), SKY_LIGHT_LOD).rgb;
-}
-// How much a light reaches a point p (the body's frame) facing n, and the way from it to the light
-// (to): one from a side (kind 0) by how squarely the point faces it (to the power of its
-// softness); one from a point (1) or a spot (2) by that and how far away it is (half as strong at
-// fade), a spot only within its cone, fading in over its edge; one from above and below (3) by how
-// far the point faces the side it comes from (0 the other way, 1 squarely: its colours mixed by it);
-// the sky round the body (4) by how far the point faces away from the eye (none facing it
-// squarely, all at the edge and behind, to the power of its softness: the sky lights the body's
-// edges, its colour there read by skyLight).
-float reachOf(int kind, vec3 dir, vec3 pos, float fade, vec3 aim, vec4 cone, float softness, vec3 n, vec3 p, out vec3 to) {
-  if (kind == 0) {
-    to = -normalize(dir);
-    return pow(max(0.0, dot(n, to)), softness);
-  }
-  if (kind == 3) {
-    to = -normalize(dir);
-    return dot(n, to) * 0.5 + 0.5;
-  }
-  if (kind == 4) {
-    to = n;
-    return pow(clamp(1.0 - dot(n, normalize(uEye)), 0.0, 1.0), softness);
-  }
-  vec3 d = pos - p;
-  float dist = max(length(d), 1e-6);
-  to = d / dist;
-  float strength = pow(max(0.0, dot(n, to)), softness) / (1.0 + dist * dist / (fade * fade));
-  // (A spot's cone with no edge to fade over: cut at its edge; smoothstep's result is undefined
-  // where its edges meet.)
-  if (kind == 2) strength *= cone.y > cone.x ? smoothstep(cone.x, cone.y, dot(-to, aim)) : step(cone.x, dot(-to, aim));
-  return strength;
-}
 // A grid's: shown where its reveal reaches (its emissive times how much), coloured from
 // inactive (its diffuse) to uActiveColor where its activation reaches; each its side
 // (body frame), spread, falloff and strength, an activation's how much it energizes (reveals too).
@@ -162,6 +126,14 @@ uniform float uRevealSpread[MAX_FIELDS], uRevealFalloff[MAX_FIELDS], uRevealStre
 uniform vec3 uActivationFrom[MAX_FIELDS];
 uniform float uActivationSpread[MAX_FIELDS], uActivationFalloff[MAX_FIELDS], uActivationStrength[MAX_FIELDS];
 uniform float uActivationEnergy[MAX_FIELDS], uActivationGlow[MAX_FIELDS];
+// Each field's kind and, by it, its place, reach, aim (a rim's: its lean, yaw and pitch) and
+// cone, as a body's lights have them; the kind of the grid's own fresnel (its rim light draws
+// it: 1 brightest at the limb, 2 facing).
+uniform int uRevealKind[MAX_FIELDS], uActivationKind[MAX_FIELDS];
+uniform vec3 uRevealPos[MAX_FIELDS], uRevealAim[MAX_FIELDS], uActivationPos[MAX_FIELDS], uActivationAim[MAX_FIELDS];
+uniform float uRevealFade[MAX_FIELDS], uActivationFade[MAX_FIELDS];
+uniform vec4 uRevealCone[MAX_FIELDS], uActivationCone[MAX_FIELDS];
+uniform int uRimType;
 uniform vec3 uActiveColor;
 uniform vec2 uRimTurn;
 uniform vec3 uTintColor, uBodyTintColor;
@@ -224,20 +196,77 @@ float fresnelTo(Layer l, vec2 lean, float spread, float falloff) {
   float f = fresnelWith(l, lean, spread);
   return l.fresnel == 2 ? f * f : pow(f, falloff) * FRESNEL_GAIN;
 }
+// The sky's colour beyond a body's edge the way a normal n points across the view, spread radii
+// out from its middle.
+vec3 skyLight(vec3 n, float spread) {
+  vec2 uv = uSkyAt.xy + vec2(dot(n, uRight), dot(n, uUp)) * uSkyAt.zw * (1.0 + spread);
+  return textureLod(uSkyLight, clamp(uv, 0.0, 1.0), SKY_LIGHT_LOD).rgb;
+}
+// How much a light reaches a point p (the body's frame) facing n, and the way from it to the light
+// (to): one from a side (kind 0) by how squarely the point faces it (to the power of its
+// softness), wrapped round by wrap (0: the half facing it; 1: on round to the point facing away); one from a point (1) or a spot (2) by that and how far away it is (half as strong at
+// fade), a spot only within its cone, fading in over its edge; one from above and below (3) by how
+// far the point faces the side it comes from (0 the other way, 1 squarely: its colours mixed by it);
+// the sky round the body (4) by how far the point faces away from the eye (none facing it
+// squarely, all at the edge and behind, to the power of its softness: the sky lights the body's
+// edges, its colour there read by skyLight).
+float reachOf(int kind, vec3 dir, vec3 pos, float fade, vec3 aim, vec4 cone, float softness, float wrap, vec3 n, vec3 p, out vec3 to) {
+  if (kind == 0) {
+    to = -normalize(dir);
+    return pow(clamp((dot(n, to) + wrap) / (1.0 + wrap), 0.0, 1.0), softness);
+  }
+  if (kind == 5) {
+    // The rim: on a grid, its pattern layer's own fresnel look (its rim light draws it); else
+    // the surface by how far it turns from the eye (the view leaned by aim), spread fade of the
+    // way in, to its softness.
+    to = n;
+    if (uRevealed) {
+      Layer l = uLayers[1];
+      l.fresnel = uRimType;
+      return fresnelTo(l, aim.xy, fade, softness);
+    }
+    vec3 view = turn(turn(normalize(uEye - p), uUp, aim.x), uRight, aim.y);
+    float facing = clamp(dot(n, normalize(view)), 0.0, 1.0);
+    return pow(mix(fade, 1.0, pow(1.0 - facing, 3.0)), softness);
+  }
+  if (kind == 3) {
+    to = -normalize(dir);
+    return dot(n, to) * 0.5 + 0.5;
+  }
+  if (kind == 4) {
+    to = n;
+    return pow(clamp(1.0 - dot(n, normalize(uEye)), 0.0, 1.0), softness);
+  }
+  vec3 d = pos - p;
+  float dist = max(length(d), 1e-6);
+  to = d / dist;
+  float strength = pow(clamp((dot(n, to) + wrap) / (1.0 + wrap), 0.0, 1.0), softness) / (1.0 + dist * dist / (fade * fade));
+  // (A spot's cone with no edge to fade over: cut at its edge; smoothstep's result is undefined
+  // where its edges meet.)
+  if (kind == 2) strength *= cone.y > cone.x ? smoothstep(cone.x, cone.y, dot(-to, aim)) : step(cone.x, dot(-to, aim));
+  return strength;
+}
 #if GRID
-// How much a grid's reveal or activation reaches here, 0 to 1: as a light does, the more the face turns to its
-// side (any side, the far one too), wrapped round by its spread (0: the half facing it; 1: on round
-// to the point facing away, fading all the way) and sharpened by its falloff. Times its strength
-// (more than 1 reaches further fully), what it reaches never comes out even: its side and its
-// falloff always tell.
-float fieldAt(vec3 from, float spread, float falloff) {
+// How much a grid's reveal or activation reaches here, 0 to 1: as the same light would reach a
+// body (reachOf: from a side, wrapped round by its wrap, 0 the half facing it, 1 on round to the
+// point facing away, and sharpened by its falloff; from a point, a spot, above and below, the sky
+// or the rim likewise). Times its strength (more than 1 reaches further fully), what it reaches
+// never comes out even: its side and its falloff always tell.
+float fieldOf(int kind, vec3 from, float wrap, float falloff, vec3 pos, float fade, vec3 aim, vec4 cone) {
   // From all round: all of it alike.
-  if (dot(from, from) == 0.0) return 1.0;
-  float facing = dot(normalize(vNormal), normalize(from));
-  return pow(clamp((facing + spread) / (1.0 + spread), 0.0, 1.0), falloff);
+  if (kind == 0 && dot(from, from) == 0.0) return 1.0;
+  vec3 n = normalize(vNormal);
+  vec3 to;
+  float r = reachOf(kind, -from, pos, fade, aim, cone, falloff, wrap, n, vWorld, to);
+  // (The sky round the body: by how bright the sky beyond the rim is that way.)
+  if (kind == 4) r *= dot(skyLight(n, fade), vec3(0.2126, 0.7152, 0.0722));
+  return r;
+}
+float revealAt(int i) {
+  return fieldOf(uRevealKind[i], uRevealFrom[i], uRevealSpread[i], uRevealFalloff[i], uRevealPos[i], uRevealFade[i], uRevealAim[i], uRevealCone[i]);
 }
 float activationAt(int i) {
-  return fieldAt(uActivationFrom[i], uActivationSpread[i], uActivationFalloff[i]);
+  return fieldOf(uActivationKind[i], uActivationFrom[i], uActivationSpread[i], uActivationFalloff[i], uActivationPos[i], uActivationFade[i], uActivationAim[i], uActivationCone[i]);
 }
 // How active a grid is here: its activations added up (0 to 1), each times its strength (one
 // that darkens taking away).
@@ -265,7 +294,7 @@ float revealed() {
   float sum = 0.0;
   for (int i = 0; i < MAX_FIELDS; i++)
     if (i < uRevealCount)
-      sum += uRevealStrength[i] * fieldAt(uRevealFrom[i], uRevealSpread[i], uRevealFalloff[i]);
+      sum += uRevealStrength[i] * revealAt(i);
   for (int i = 0; i < MAX_FIELDS; i++)
     if (i < uActivationCount)
       sum += uActivationEnergy[i] * uActivationStrength[i] * activationAt(i);
@@ -353,7 +382,7 @@ vec3 lit(vec3 albedo) {
   for (int i = 0; i < MAX_LIGHTS; i++) {
     if (i >= uLightCount) continue;
     vec3 to;
-    float reach = reachOf(uLightKind[i], uLightDir[i], uLightPos[i], uLightFade[i], uLightAim[i], uLightCone[i], uLightSoftness[i], n, vWorld, to);
+    float reach = reachOf(uLightKind[i], uLightDir[i], uLightPos[i], uLightFade[i], uLightAim[i], uLightCone[i], uLightSoftness[i], uLightWrap[i], n, vWorld, to);
     if (uLightKind[i] == 3) {
       light += mix(uLightGround[i], uLightColor[i], reach);
       continue;
@@ -382,10 +411,6 @@ void shade() {
 #else
   vec4 emissive = colorLayer(uEmissive, uLayers[1]);
 #endif
-#if GRID
-  // A grid shows where its reveal reaches it (with its own fade, the game's look).
-  if (uRevealed) emissive.rgb *= revealed();
-#endif
 #if LIT
   vec3 base = uUnshaded ? diffuse.rgb : uLit ? lit(diffuse.rgb) : vec3(0.0);
 #else
@@ -399,7 +424,7 @@ void shade() {
       vec3 to;
       // (From all round: all over; else as far as it reaches, the way it comes from.)
       float facing = dot(uShadeDir[i], uShadeDir[i]) > 0.0 || uShadeKind[i] > 0
-        ? reachOf(uShadeKind[i], -uShadeDir[i], uShadePos[i], uShadeFade[i], uShadeAim[i], uShadeCone[i], uShadeSoftness[i], normalize(vNormal), vWorld, to)
+        ? reachOf(uShadeKind[i], -uShadeDir[i], uShadePos[i], uShadeFade[i], uShadeAim[i], uShadeCone[i], uShadeSoftness[i], uShadeWrap[i], normalize(vNormal), vWorld, to)
         : 1.0;
       // (The sky round the body, darkening: its colour there taken away.)
       vec3 cut = uShadeKind[i] == 4 ? uShadeColor[i] * skyLight(normalize(vNormal), uShadeFade[i]) : uShadeColor[i];
@@ -407,17 +432,29 @@ void shade() {
     }
   }
 #endif
-  vec3 glow = emissive.rgb * uEmissiveMult;
-  // The emissive pattern cut: what is below the cut goes black, the rest keeps its range.
-  if (uCut > 0.0) glow = max(glow - uCut, 0.0) / (1.0 - uCut);
-  // A grid shines brighter, and blooms more, where its glowing activation activates it.
 #if GRID
+  // A grid's lights say how much of it shows (its reveal) and in what colour; its Glow comes
+  // after: up to 1 it dims the look, past 1 it only blooms (past), revealing nothing more.
+  float reveal = uRevealed ? revealed() : 1.0;
+  float past = uRevealed ? max(uEmissiveMult - 1.0, 0.0) : 0.0;
+  vec3 glow = emissive.rgb * (uRevealed ? min(uEmissiveMult, 1.0) : uEmissiveMult);
+  // A grid shines brighter, and blooms more, where its glowing activation activates it.
   float shining = uActivationCount > 0 ? activeGlow() : 0.0;
 #else
+  float reveal = 1.0;
+  float past = 0.0;
+  vec3 glow = emissive.rgb * uEmissiveMult;
   float shining = 0.0;
 #endif
+  // The emissive pattern cut: what is below the cut goes black, the rest keeps its range.
+  if (uCut > 0.0) glow = max(glow - uCut, 0.0) / (1.0 - uCut);
   glow *= 1.0 + shining;
   vec3 rgb = tinted(uEmissiveBlend == 2 ? base + glow : base * glow * (uEmissiveBlend == 1 ? 2.0 : 1.0));
+  // What a grid's lights reveal of it: that much of its look, no brighter than white (what is
+  // brighter blooms, below, as much of it as is revealed).
+#if GRID
+  if (uRevealed) rgb = min(rgb, 1.0) * reveal;
+#endif
   float alpha = maskLayer(uMask0, uLayers[2]) * maskLayer(uMask1, uLayers[3]) * diffuse.a;
   if (uVertexAlpha) alpha *= vColor.a;
   if (!uOpaque) alpha *= uStrength; // a part shown less strongly: its blended materials fainter
@@ -433,11 +470,12 @@ void shade() {
   // it: 0 none, 1 as the data has it), and past 1 its emissive light boosted (a glow as if
   // through haze): the bloom adds them. Below 1 the glow also takes back as much of what the
   // scene's own bloom would make of this light, so at 0 it glows not at all. The light is the
-  // emissive layer's, or the colour it modulates (a grid over a colour glows in that colour).
-  vec3 shine = uEmissiveBlend == 2 ? tinted(glow) : rgb;
+  // emissive layer's, or the colour it modulates (a grid over a colour glows in that colour); a
+  // grid's Glow past 1 blooms it that much more, as much of it as is revealed.
+  vec3 shine = uEmissiveBlend == 2 ? tinted(glow) * reveal : rgb;
   float up = min(uGlowBoost, 1.0);
   outGlow = vec4(up * max(outColor.rgb - uGlowThreshold, 0.0) - max(outColor.rgb - uSceneThreshold, 0.0)
-    + (max(uGlowBoost - 1.0, 0.0) + shining) * shine * (uOpaque ? coverage : alpha), outColor.a);
+    + (max(uGlowBoost - 1.0, 0.0) + shining + past) * shine * (uOpaque ? coverage : alpha), outColor.a);
 }
 `;
 

@@ -38,12 +38,7 @@ import {
   type Vec3,
   without,
 } from '../../../scenes/play-background/background-scene';
-import {
-  gridLightValues,
-  withGridLight,
-  materialKey,
-  NO_MATERIAL_TINT,
-} from '../../../scenes/play-background/material-settings';
+import { materialKey, NO_MATERIAL_TINT } from '../../../scenes/play-background/material-settings';
 import { playSet, type SetPlanet } from '../../../scenes/play-background/planet-sets';
 import {
   PLAY_SCENE_URL,
@@ -97,7 +92,6 @@ import {
 } from '../../../scenes/play-background/scene-bodies';
 import {
   loadPlanetIndex,
-  type GridLight,
   type MaterialSettings,
   type MaterialTint,
   partId,
@@ -148,6 +142,8 @@ import {
   referenceRow,
   sceneLightsOf,
   sharedMaterials,
+  shieldLightsOf,
+  shieldLightsOfBody,
   skyMaterialsOf,
   skyOverlayChoices,
   skyOverlayInfos,
@@ -156,7 +152,6 @@ import {
   splitViewKey,
   spotEdges,
   type TargetKind,
-  viewKey,
   viewTitle,
   withLitBy,
   wornIds,
@@ -198,6 +193,7 @@ import {
   knownLights,
   newLight,
   type Receiver,
+  withLightChanged,
 } from '../../../scenes/play-background/scene-lights';
 
 /** The scene tree's rows by what they are. */
@@ -373,32 +369,6 @@ export interface CameraEntry {
   readonly name: string;
   readonly set: SceneCameraSet;
   readonly game: boolean;
-}
-
-/**
- * A shield's lights as lights to mark (their rows' keys under its material's, `base`): each as it
- * is set, white.
- */
-function shieldLightsOf(
-  base: string,
-  lights: readonly GridLight[],
-): { readonly key: string; readonly light: LightEntry['light'] }[] {
-  return lights.map((l) => {
-    const v = gridLightValues(l);
-    return {
-      key: viewKey(base, { kind: 'gridLight', id: l.id }),
-      light: {
-        id: l.id as unknown as LightId,
-        kind: l.kind,
-        name: l.name,
-        enabled: v.enabled,
-        darkens: v.darkens,
-        colour: '#ffffff',
-        strength: v.strength,
-        ...(v.from ? { from: v.from } : {}),
-      },
-    };
-  });
 }
 
 /**
@@ -1602,7 +1572,10 @@ export const SceneEditorStore = signalStore(
         i: number,
       ) => {
         const round = lights.filter(
-          ({ light }) => light.kind === 'ambient' || light.kind === 'environment',
+          ({ light }) =>
+            light.kind === 'ambient' ||
+            light.kind === 'environment' ||
+            (light.kind === 'rim' && !light.from),
         );
         const marker = (key: string, light: LightEntry['light'], at: Vec3) => ({
           id: `${key}@${i}`,
@@ -1640,8 +1613,11 @@ export const SceneEditorStore = signalStore(
             i,
           );
         });
-      } else if (t.kind === 'material' && t.view?.kind === 'gridLight') {
-        // A shield's light selected: its shield's lights, round its body.
+      } else if (
+        t.kind === 'material' &&
+        (t.view?.kind === 'gridLight' || t.view?.kind === 'shader')
+      ) {
+        // A shield's light, or its shader, selected: the shield's lights, round its body.
         const split = splitViewKey(store.selected());
         const key = bodyKey(t.path);
         const b = store.bodyByKey().get(key);
@@ -1654,9 +1630,18 @@ export const SceneEditorStore = signalStore(
         const b = store.bodyByKey().get(key);
         const i = placed.picks.indexOf(key);
         const body = placed.planets[i];
+        // The body's lights, and its shields' (an overlay's it wears).
         if (b && body)
           lit(
-            lightsOfBody(b).map(({ light }) => ({ key: lightRowKey(t.path, light.id), light })),
+            [
+              ...lightsOfBody(b).map(({ light }) => ({
+                key: lightRowKey(t.path, light.id),
+                light,
+              })),
+              ...shieldLightsOfBody(b, materialsOf(b), (name, overlay) =>
+                materialRowKey(t.path, name, overlay),
+              ),
+            ],
             body,
             i,
           );
@@ -2054,7 +2039,7 @@ export const SceneEditorStore = signalStore(
           const id = t.view.id;
           const lights = materialAt(materialsOf(b), t.key)?.values.gridLights ?? [];
           settings(t.path, (s) =>
-            withMaterial(s, t.key, { gridLights: withGridLight(lights, id, { enabled: on }) }),
+            withMaterial(s, t.key, { gridLights: withLightChanged(lights, id, { enabled: on }) }),
           );
         } else if (t.kind === 'material' && b) {
           const below = materialAt(materialsOf(b), t.key)?.enabledBelow ?? true;

@@ -320,7 +320,7 @@
         [changed]="m.set?.gridLights !== undefined"
         (resetRequested)="editor.clearMaterial(['gridLights'])"
       >
-        <hrs-add-light [only]="gridLightKinds" (added)="addGridLight($event)" />
+        <hrs-add-light (added)="addGridLight($event)" />
         <hrs-added-list
           title="Lights"
           [items]="shieldLights()"
@@ -332,9 +332,11 @@
   }
   @case ('gridLight') {
     @if (gridLight(); as l) {
-      <hrs-grid-light-properties
+      <hrs-light-properties
         [light]="l"
-        (lightChange)="changeGridLight(l.id, $event)"
+        [onShield]="true"
+        (settingsChange)="changeGridLight(l.light.id, $event)"
+        (clear)="changeGridLight(l.light.id, cleared($event))"
         (removed)="removeGridLight(editor.selected())"
       />
     }

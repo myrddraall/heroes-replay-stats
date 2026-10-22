@@ -89,7 +89,6 @@ import {
   layerSlots,
   type LayerSettings,
   type LayerSlot,
-  type GridLight,
   type MaterialDepth,
   type MaterialSettings,
   type MaterialSettingsMap,
@@ -814,6 +813,7 @@ export const LIGHT_ICONS: Record<NewLightKind, string> = {
   spot: 'highlight',
   hemisphere: 'wb_twilight',
   environment: 'lens_blur',
+  rim: 'blur_circular',
 };
 
 /** A light's icon in the tree: by its kind, or an antilight's where it darkens. */
@@ -1386,6 +1386,54 @@ export function lightWay(
   return way ? wayOut(way, body, eye) : null;
 }
 
+/**
+ * A shield's lights as lights to mark (their rows' keys under its material's, `base`): each as it
+ * is set, white.
+ */
+export function shieldLightsOf(
+  base: string,
+  lights: readonly AddedLight[],
+): { readonly key: string; readonly light: LightEntry['light'] }[] {
+  return lights.map((l) => ({
+    key: viewKey(base, { kind: 'gridLight', id: l.id }),
+    light: addedLight(l),
+  }));
+}
+
+/** The shield among a part's materials: the grid, drawn with the shield shader (none: no shield). */
+export const shieldOf = (materials: readonly MaterialEntry[]) =>
+  materials.find((m) => m.controls.colours);
+
+/**
+ * A body's shields' lights as lights to mark, with the body's own: each part's shield's (its own
+ * parts' first, then each overlay's it wears), their rows' keys as the tree keys them (`keyOf`:
+ * a material's row by its name and, an overlay's, the overlay; a material drawn on several parts
+ * under each part).
+ */
+export function shieldLightsOfBody(
+  b: BodyInfo,
+  materials: readonly MaterialEntry[],
+  keyOf: (name: string, overlay?: string) => string,
+): { readonly key: string; readonly light: LightEntry['light'] }[] {
+  const nodes = partNodes(b, materials);
+  const lightsOf = (list: readonly PartNode[], overlay?: string) => {
+    const shared = sharedMaterials(list);
+    return list.flatMap(({ part, materials }) => {
+      const grid = shieldOf(materials);
+      return grid
+        ? shieldLightsOf(
+            onPart(keyOf(grid.name, overlay), shared.has(grid.name) ? part.key : undefined),
+            grid.values.gridLights,
+          )
+        : [];
+    });
+  };
+  return [
+    ...lightsOf(nodes.own),
+    ...nodes.overlays.flatMap((o) => lightsOf(o.nodes, o.overlay.id)),
+  ];
+}
+
 /** A body's name as shown: as renamed (the level edited's, else the library's), else its id. */
 export const bodyLabel = (b: BodyInfo) => b.settings.label ?? bodyLabelBelow(b);
 export const bodyLabelBelow = (b: BodyInfo) => b.below?.label ?? b.name ?? b.id;
@@ -1722,7 +1770,7 @@ export const referenceRow = (): TreeRow => ({
 export type MaterialView =
   | { readonly kind: 'layer'; readonly slot: LayerSlot }
   | { readonly kind: 'shader' }
-  | { readonly kind: 'gridLight'; readonly id: GridLight['id'] };
+  | { readonly kind: 'gridLight'; readonly id: AddedLight['id'] };
 
 const VIEW = '::';
 
@@ -1754,8 +1802,8 @@ export function splitViewKey(
   const what = key.slice(at + VIEW.length);
   if (what === 'shader') return { base, view: { kind: 'shader' } };
   if (what.startsWith('group:')) return { base, view: 'group' };
-  if (what.startsWith('light:grid-'))
-    return { base, view: { kind: 'gridLight', id: what.slice(6) as GridLight['id'] } };
+  if (what.startsWith('light:'))
+    return { base, view: { kind: 'gridLight', id: what.slice(6) as AddedLight['id'] } };
   if (what.startsWith('layer:')) {
     const slot = what.slice(6) as LayerSlot;
     return LAYER_SLOTS.includes(slot) ? { base, view: { kind: 'layer', slot } } : null;
@@ -1822,7 +1870,7 @@ export function partMaterialRows(
   material: (key: string, m: MaterialEntry, depth: number) => void,
   push: (row: TreeRow) => void,
 ): void {
-  const grid = materials.find((m) => m.controls.colours);
+  const grid = shieldOf(materials);
   if (!grid) {
     for (const m of materials) material(keyOf(m.name), m, depth);
     return;

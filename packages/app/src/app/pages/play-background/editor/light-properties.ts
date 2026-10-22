@@ -1,10 +1,11 @@
 import type { Vec3 } from '../../../scenes/play-background/background-scene';
 import { aimedPoint, aimOf, type LookAt } from '../../../scenes/play-background/look-at';
 import { Component, computed, input, output } from '@angular/core';
-import type {
-  LightReach,
-  LightSettings,
-  Receiver,
+import {
+  type LightReach,
+  type LightSettings,
+  type Receiver,
+  SHIELD_DEFAULTS,
 } from '../../../scenes/play-background/scene-lights';
 import { PropertyCheck } from '../properties/property-check';
 import { PropertyColour } from '../properties/property-colour';
@@ -31,6 +32,8 @@ const LIGHT_KEYS: readonly (keyof LightSettings)[] = [
   'cone',
   'edge',
   'ground',
+  'wrap',
+  'shield',
 ];
 
 /** What a light does, as its Effect list offers it. */
@@ -78,6 +81,8 @@ const REACH_MODES: readonly PropertyOption[] = [
 })
 export class LightProperties {
   readonly light = input.required<LightEntry>();
+  /** Whether it is one of a shield's lights: what it does to the grid is shown (its Shield section). */
+  readonly onShield = input(false);
   readonly settingsChange = output<Partial<LightSettings>>();
   /** Settings set here to take back (none given: all of them). */
   readonly clear = output<readonly (keyof LightSettings)[] | undefined>();
@@ -139,10 +144,20 @@ export class LightProperties {
     const k = this.light().light.kind;
     return k === 'directional' || k === 'point' || k === 'spot';
   });
-  /** Whether it falls off round the body (a softness): one with a shine, or an environment light. */
-  protected readonly sided = computed(
-    () => this.shiny() || this.light().light.kind === 'environment',
-  );
+  /** Whether it falls off round the body (a softness): one with a shine, an environment light or a rim light. */
+  protected readonly sided = computed(() => {
+    const k = this.light().light.kind;
+    return this.shiny() || k === 'environment' || k === 'rim';
+  });
+  /** What it does to a shield's grid, as set over what a shield's light does unless set. */
+  protected readonly shield = computed(() => ({
+    ...SHIELD_DEFAULTS,
+    ...this.light().light.shield,
+  }));
+
+  protected shieldChange(change: Partial<typeof SHIELD_DEFAULTS>): void {
+    this.settingsChange.emit({ shield: { ...this.light().light.shield, ...change } });
+  }
 
   protected readonly aims = AIMS;
   /** What a spot light looks at: a spot on its planet (unless aimed along a direction, as set or kept from before). */
