@@ -1973,7 +1973,11 @@ export class ThreeSceneRenderer {
   private bakeBody(body: Placed, seconds: number, viewProjection: Float32Array): void {
     // Baked only whole: until every draw of it is ready (built now where missing), its last whole
     // bake stays up (a new body shows once whole); `bakeDue` asks again each frame meanwhile.
-    if (!body.states.every((s) => !s.enabled || !s.part || this.gpuOf(s)?.ready)) return;
+    // (Every part asked for, not only up to the first that isn't ready: each one's mipmaps and
+    // compile start together, not one after another.)
+    let whole = true;
+    for (const s of body.states) if (s.enabled && s.part && !this.gpuOf(s)?.ready) whole = false;
+    if (!whole) return;
     const { width, height } = this.canvas;
     const { position } = body.placement;
     const { axes } = body.frame;

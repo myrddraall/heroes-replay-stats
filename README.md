@@ -25,6 +25,8 @@ viewer), which began here as `tools/map-capture`, is now
 ```bash
 pnpm install
 pnpm start          # Angular dev server on http://localhost:4200
+pnpm restart        # stops any running dev server of this repository (wherever it was started), then starts it
+pnpm stop [port]    # stops them (with a port, only that one's)
 pnpm desktop        # Electron against the dev server (needs `pnpm start` running)
 pnpm build          # every package
 pnpm test           # every package with tests
