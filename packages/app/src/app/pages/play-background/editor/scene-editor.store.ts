@@ -98,6 +98,7 @@ import {
   type PartKey,
   type PartSettings,
   reordered,
+  type SkyAnchor,
 } from '../../../scenes/play-background/scene-planets';
 import { PRESETS } from '../../../scenes/play-background/tint-settings';
 import { withPlanetFiles } from '../../../scenes/play-background/with-planet-files';
@@ -144,6 +145,7 @@ import {
   sharedMaterials,
   shieldLightsOf,
   shieldLightsOfBody,
+  skyAnchorView,
   skyMaterialsOf,
   skyOverlayChoices,
   skyOverlayInfos,
@@ -746,6 +748,16 @@ export const SceneEditorStore = signalStore(
           const c = camera();
           return c ? { eye: c.eye, forward: c.forward, fovY: c.fovY } : undefined;
         }),
+        /**
+         * The scene's camera being authored, for an anchored sky to move with where it doesn't
+         * follow the view: the one of its own looked through, else its primary (never the editor's
+         * camera); the random sets': the game's.
+         */
+        sceneCamera: computed((): SceneCameraSet => {
+          if (random()) return {};
+          const shown = lookShown();
+          return cameraSetById(shown === EDITOR_CAMERA ? primaryCamera() : shown) ?? {};
+        }),
         /** The selected camera of the scene's. */
         selectedCamera: computed((): CameraEntry | null => {
           const t = targetOf(selected());
@@ -938,6 +950,7 @@ export const SceneEditorStore = signalStore(
         skyChanged: computed(() => Object.keys(sky()).length > 0),
         skyTint: computed((): MaterialTint => sky().tint ?? library().sky.tint ?? NO_MATERIAL_TINT),
         skyTintSet: computed(() => sky().tint),
+        skyAnchor: computed(() => skyAnchorView(library().sky, sky())),
         sets: random,
         /** The overlays a body may wear: the game data's, and those made in the editor; by name. */
         overlayOptions: computed((): readonly PickChoice[] =>
@@ -2365,6 +2378,12 @@ export const SceneEditorStore = signalStore(
       },
       clearSkyTint(): void {
         d.clearSkyTint(store.scene());
+      },
+      setSkyAnchor(anchor: SkyAnchor): void {
+        d.setSkyAnchor(store.scene(), anchor);
+      },
+      clearSkyAnchor(): void {
+        d.setSkyAnchor(store.scene(), undefined);
       },
       resetSky(): void {
         d.resetSky(store.scene());

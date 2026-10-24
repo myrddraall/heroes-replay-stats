@@ -105,9 +105,11 @@ import {
   type PartKey,
   type PartSettings,
   type PartSettingsMap,
+  type SkyAnchor,
   withLayer,
   withMasks,
 } from '../../../scenes/play-background/scene-planets';
+import { DEFAULT_SKY_ANCHOR } from '../../../scenes/play-background/sky-anchors';
 
 /**
  * What an editor of the background's design shows, whichever layer it edits (a scene, over the
@@ -1478,6 +1480,8 @@ export function skyMaterialsOf(
   overlays: readonly SkyOverlayInfo[] = [],
 ): MaterialEntry[] {
   const out: MaterialEntry[] = [];
+  // Each material anchored as the sky is, where none of its levels says otherwise.
+  const anchor = skyAnchorView(below, edited).value;
   const meshes = Object.values(scene.meshes)
     .filter((mesh) => !mesh.planet) // the scene's own planets are placed planets
     .flatMap((mesh) => mesh.materials.map((name) => ({ name, particles: false })));
@@ -1502,6 +1506,7 @@ export function skyMaterialsOf(
         material,
         mergeMaterialSettings(base, below?.materials, edited?.materials)[name],
         skyDepths(scene)[name],
+        anchor,
       ),
       enabledBelow: under?.enabled ?? MATERIAL_DEFAULTS.enabled,
       controls: materialControls(material, { particles: drawn, sky: true }),
@@ -1546,7 +1551,7 @@ export function skyMaterialsOf(
             ? { from: 'style' as const, overlay: o.id }
             : { from: 'own' as const, added: true }),
           origins: originsOf(levels),
-          values: materialValues(material, settings, skyDepths(scene)[name]),
+          values: materialValues(material, settings, skyDepths(scene)[name], anchor),
           enabledBelow: under?.enabled ?? MATERIAL_DEFAULTS.enabled,
           controls: materialControls(material, { particles: false, sky: true }),
           set: edited?.materials?.[key],
@@ -1736,6 +1741,38 @@ export const DEPTH_GROUPS: readonly {
   { depth: 'scene', label: 'Midground', icon: 'vertical_align_center' },
   { depth: 'foreground', label: 'Foreground', icon: 'flip_to_front' },
 ];
+
+/** The anchors a sky or its material may be given, as their choices show them. */
+export const SKY_ANCHOR_CHOICES: readonly { readonly value: SkyAnchor; readonly label: string }[] = [
+  { value: 'world', label: 'World' },
+  { value: 'position', label: 'Camera position' },
+  { value: 'camera', label: 'Camera' },
+];
+
+/**
+ * How a sky is anchored against the camera, as its panel shows it: its anchor, what the layer
+ * edited sets (none: nothing), and which level under it sets it, where one does.
+ */
+export interface SkyAnchorView {
+  readonly value: SkyAnchor;
+  readonly set?: SkyAnchor;
+  readonly origin?: string;
+}
+
+/** A sky's anchor as shown: the layer edited's, over the level under it (`belowName`), over the world. */
+export function skyAnchorView(
+  below: SkyChoices | undefined,
+  edited: SkyChoices | undefined,
+  belowName = 'the library (sky)',
+): SkyAnchorView {
+  const set = edited?.anchor;
+  const under = below?.anchor;
+  return {
+    value: set ?? under ?? DEFAULT_SKY_ANCHOR,
+    ...(set ? { set } : {}),
+    ...(under ? { origin: belowName } : {}),
+  };
+}
 
 /** A sky's materials by their depth as set (else as the data puts them), in its groups' order; empty groups left out. */
 export function byDepth(materials: readonly MaterialEntry[]): {

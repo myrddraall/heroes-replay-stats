@@ -11,7 +11,7 @@ import {
   withLightChanged,
 } from '../../../scenes/play-background/scene-lights';
 import { DraftDesignStore } from '../draft-design.store';
-import type { PropertyOption } from '../properties/property-select';
+import { type PropertyOption, PropertySelect } from '../properties/property-select';
 import { AddPlanet } from './add-planet';
 import { AssetCatalogStore } from './asset-catalog.store';
 import { BodyProperties } from './body-properties';
@@ -35,6 +35,7 @@ import {
   type LayerEntry,
   lightIcon,
   type MaterialEntry,
+  SKY_ANCHOR_CHOICES,
   splitViewKey,
   viewKey,
 } from './editor-model';
@@ -86,6 +87,7 @@ import { TintSection } from './tint-section';
     AddCamera,
     AddedList,
     PropertySection,
+    PropertySelect,
     CameraProperties,
   ],
   templateUrl: './selection-panel.html',
@@ -109,6 +111,8 @@ export class SelectionPanel {
     { value: 'colour', label: 'Colour' },
     { value: 'grid', label: 'Grid' },
   ];
+  /** The anchors a sky may be given. */
+  protected readonly skyAnchors: readonly PropertyOption[] = SKY_ANCHOR_CHOICES;
   protected readonly standInFills: readonly PropertyOption[] = [
     { value: 'colour', label: 'Colour' },
     { value: 'grid', label: 'Grid' },
@@ -329,6 +333,12 @@ export class SelectionPanel {
     const layers = Object.keys(kept).length ? { ...others, [slot]: kept } : others;
     if (Object.keys(layers).length) this.editor.setMaterial({ layers });
     else this.editor.clearMaterial(['layers']);
+  }
+
+  /** The sky's anchor chosen (one of those there are). */
+  protected setSkyAnchor(value: string): void {
+    const found = SKY_ANCHOR_CHOICES.find((o) => o.value === value);
+    if (found) this.editor.setSkyAnchor(found.value);
   }
 
   /** The selected material as the library has it (shared), opened from what it is selected in. */

@@ -168,4 +168,17 @@ describe('DraftDesignStore', () => {
     expect(draft.scenes().planets['play-screen']).toBeUndefined();
     expect(draft.unsaved()).toBe(0);
   });
+
+  it('anchors a scene’s sky or the library’s against the camera, and takes it back', () => {
+    const draft = TestBed.inject(DraftDesignStore);
+    draft.setSkyAnchor(null, 'position');
+    draft.setSkyAnchor('play-screen', 'camera');
+    expect(draft.library().sky.anchor).toBe('position');
+    expect(draft.scenes().planets['play-screen']?.sky?.anchor).toBe('camera');
+    draft.setSkyAnchor('play-screen', undefined);
+    expect(draft.scenes().planets['play-screen']?.sky).toBeUndefined();
+    draft.setSkyAnchor(null, undefined);
+    expect(draft.library().sky).toEqual({});
+    expect(draft.unsaved()).toBe(0);
+  });
 });

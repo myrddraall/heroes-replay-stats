@@ -53,6 +53,7 @@ import type {
   MaterialTint,
   PartKey,
   PartSettings,
+  SkyAnchor,
 } from '../../scenes/play-background/scene-planets';
 import { type PartTint, PRESETS, UNTINTED } from '../../scenes/play-background/tint-settings';
 
@@ -346,6 +347,10 @@ export const DraftDesignStore = signalStore(
       /** The parts added onto a sky at its level (a scene's sky, or the library's: null); none: none. */
       setSkyAddedParts(scene: string | null, parts: readonly AddedPart[]): void {
         changeSky(scene, (sky) => ({ ...sky, addedParts: parts.length ? parts : undefined }));
+      },
+      /** How a sky is anchored against the camera (a scene's sky, or the library's: null); none: as under it. */
+      setSkyAnchor(scene: string | null, anchor: SkyAnchor | undefined): void {
+        changeSky(scene, (sky) => ({ ...sky, anchor }));
       },
       /** A sky's settings changed as a whole (a scene's sky, or the library's: null). */
       changeSky(scene: string | null, change: (sky: SkyChoices) => SkyChoices): void {

@@ -631,6 +631,11 @@ export interface MaterialSettings {
    */
   readonly depth?: MaterialDepth;
   /**
+   * How it is anchored against the camera (a sky material's say), over the sky's own anchor (see
+   * `SkyAnchor`); unset: as the sky is.
+   */
+  readonly anchor?: SkyAnchor;
+  /**
    * Whether its body's light lights it (`true`), or it shows as its textures have it, flat (a
    * painting with its light painted in); unset: as the data has it (`unshaded`). A lit one on a
    * body with no light shows flat.
@@ -726,6 +731,16 @@ export interface MaterialTint {
 /** Where a material is drawn among the scene's objects: behind them, among them or in front. */
 export type MaterialDepth = 'background' | 'scene' | 'foreground';
 
+/**
+ * How the sky is anchored against the camera that sees it: fixed in the world (`world`: moving or
+ * turning the camera shows it from elsewhere, nearer or past its edges), moved with the camera's
+ * place but keeping its directions in the world (`position`: as a skybox, looking round shows
+ * other parts of it, but it never comes nearer), or moved and turned with the camera (`camera`: a
+ * fixed backdrop, always as the scene's own camera sees it). Seen from the scene's own camera, all
+ * three look the same.
+ */
+export type SkyAnchor = 'world' | 'position' | 'camera';
+
 /** How a material with a drawn pattern shows it: drawn, or as its texture (the game's way). */
 export type MaterialDrawAs = 'pattern' | 'texture';
 
@@ -742,6 +757,8 @@ export interface SkySettings {
   /** The materials' base settings, by name (under its overlays' materials' own). */
   readonly base?: MaterialSettingsMap;
   readonly tint?: MaterialTint;
+  /** How it is anchored against the camera, where its materials don't say otherwise (unset: `world`). */
+  readonly anchor?: SkyAnchor;
   /** Its materials' draw order, by `materialKey` (the later over the earlier; see `drawOrder`), where set. */
   readonly order?: readonly string[];
   /** The overlays it wears and draws, in order, by id (none given: its data's). */

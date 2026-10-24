@@ -106,6 +106,11 @@ export interface BackgroundSceneSource {
   /** Where it puts the camera, over the game's (none: the game's). */
   readonly camera?: Signal<SceneCameraSet | undefined>;
   /**
+   * The camera an anchored sky moves with (a viewing aid, never part of the design): null, the
+   * one it is drawn through; else one put where this says, over the game's (none: null).
+   */
+  readonly skyFollow?: Signal<SceneCameraSet | null>;
+  /**
    * Which scene this is (an editor's open scene or asset): its planets changing under the same
    * one are drawn again in place (faded), not flown to; another one is flown to.
    */
@@ -217,6 +222,7 @@ export function skyWithLibrary(
     ),
     ...(library.materials ? { base: library.materials } : {}),
     tint: sky?.tint ?? library.sky.tint,
+    anchor: sky?.anchor ?? library.sky.anchor,
     order: sky?.order ?? library.sky.order,
     overlays,
     parts: mergePartSettings(...styles.map((s) => s?.parts), library.sky.parts, sky?.parts),

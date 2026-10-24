@@ -9,7 +9,8 @@ import { EditorUiStore, type MarkerMode } from './editor-ui.store';
 
 /**
  * The view's options behind a gear (container, on the page's UI store and the `Editor` in
- * effect): the names over the bodies, which markers the view shows, the screenshot mode, everything in what is open reset
+ * effect): the names over the bodies, which markers the view shows, the frame stats, whether an
+ * anchored sky follows the camera looked through, the screenshot mode, everything in what is open reset
  * (asked for here, confirmed by the reset confirmation), all the saved design cleared (confirmed
  * likewise), and the app's settings, in a dialog over the editor.
  */

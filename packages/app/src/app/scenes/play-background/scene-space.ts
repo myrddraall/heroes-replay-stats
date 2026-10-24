@@ -88,6 +88,38 @@ export function viewMatrix(eye: Vec3, forward: Vec3, up: Vec3): Float32Array {
   ]);
 }
 
+/** Two 4×4 matrices (column-major) multiplied: `a` after `b`. */
+export function multiplyMatrices(a: Float32Array, b: Float32Array): Float32Array {
+  const out = new Float32Array(16);
+  for (let c = 0; c < 4; c++)
+    for (let r = 0; r < 4; r++)
+      for (let k = 0; k < 4; k++) out[c * 4 + r]! += a[k * 4 + r]! * b[c * 4 + k]!;
+  return out;
+}
+
+/** Where the eye of a view matrix (as `viewMatrix` makes one: a turn and a move) is in the world. */
+export function eyeOf(view: Float32Array): Vec3 {
+  const t = [view[12]!, view[13]!, view[14]!];
+  const at = (c: number) =>
+    -(view[c * 4]! * t[0]! + view[c * 4 + 1]! * t[1]! + view[c * 4 + 2]! * t[2]!);
+  return [at(0), at(1), at(2)];
+}
+
+/**
+ * A turn and a move undone (column-major, as `viewMatrix` makes them: no scale): the turn
+ * transposed, the move turned back and the other way.
+ */
+export function rigidInverse(m: Float32Array): Float32Array {
+  const out = new Float32Array(16);
+  for (let c = 0; c < 3; c++) for (let r = 0; r < 3; r++) out[c * 4 + r] = m[r * 4 + c]!;
+  const [x, y, z] = eyeOf(m);
+  out[12] = x;
+  out[13] = y;
+  out[14] = z;
+  out[15] = 1;
+  return out;
+}
+
 /**
  * A perspective projection (column-major) with a vertical field of view in degrees; its far plane
  * may be infinitely far (nothing however far is cut off).

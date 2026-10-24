@@ -15,7 +15,9 @@ import type {
   MaterialSettings,
   MaterialSettingsMap,
   MaterialTint,
+  SkyAnchor,
 } from './scene-planets';
+import { anchoredDepth, skyAnchorOf } from './sky-anchors';
 
 /**
  * Materials' settings as the renderer and the Background page's panel read them: what a
@@ -41,8 +43,13 @@ export interface MaterialValues {
   readonly width: number;
   readonly soft: number;
   readonly tint: MaterialTint;
-  /** Where it is drawn among the scene's objects (a sky material's; a planet's are among them). */
+  /**
+   * Where it is drawn among the scene's objects (a sky material's; a planet's are among them): one
+   * not anchored to the world never among them (`anchoredDepth`).
+   */
   readonly depth: MaterialDepth;
+  /** How it is anchored against the camera (a sky material's): its own, else the sky's. */
+  readonly anchor: SkyAnchor;
   /** Whether its body's light lights it (else flat, as its textures have it). */
   readonly lit: boolean;
   /** Its shine (see `MaterialSettings`): its own where not set. */
@@ -264,6 +271,8 @@ export interface MaterialControls {
   readonly particles: boolean;
   /** A sky material is drawn behind the scene's objects, among them or in front of them. */
   readonly depth: boolean;
+  /** A sky material is anchored against the camera. */
+  readonly anchor: boolean;
   /** A body's material is lit by its light or flat (the sky and particles aren't lit). */
   readonly lit: boolean;
   /** A body's material with a specular layer shines where its lights' specular says. */
@@ -387,13 +396,16 @@ export function ownSpreadFrom(material: SceneMaterial): Vec3 {
 
 /**
  * A material's settings as shown: what is set, over the material's own ways, over the defaults (a
- * sky material's depth its own, as `skyDepths` finds it, where given).
+ * sky material's depth its own, as `skyDepths` finds it, where given; its anchor the sky's, where
+ * given).
  */
 export function materialValues(
   material: SceneMaterial,
   settings: MaterialSettings | undefined,
   ownDepth: MaterialDepth = 'background',
+  skyAnchor?: SkyAnchor,
 ): MaterialValues {
+  const anchor = skyAnchorOf(settings, skyAnchor);
   return {
     enabled: settings?.enabled ?? MATERIAL_DEFAULTS.enabled,
     strength: settings?.strength ?? MATERIAL_DEFAULTS.strength,
@@ -408,7 +420,8 @@ export function materialValues(
     width: settings?.width ?? MATERIAL_DEFAULTS.width,
     soft: settings?.soft ?? MATERIAL_DEFAULTS.soft,
     tint: settings?.tint ?? NO_MATERIAL_TINT,
-    depth: settings?.depth ?? ownDepth,
+    depth: anchoredDepth(settings?.depth ?? ownDepth, anchor),
+    anchor,
     lit: settings?.lit ?? !material.unshaded,
     specular: settings?.specular ?? material.specularMult ?? 0,
     glossiness: settings?.glossiness ?? material.specularity ?? DEFAULT_GLOSSINESS,
@@ -439,6 +452,7 @@ export function materialControls(
       lines: false,
       particles,
       depth: sky,
+      anchor: sky,
       lit: false,
       specular: false,
     };
@@ -455,6 +469,7 @@ export function materialControls(
     cut: material.emissive !== null && !drawn,
     lines: drawn,
     depth: sky,
+    anchor: sky,
     // (A grid is an unlit energy field: its own lights say where it shows.)
     lit: !sky && !pattern,
     specular: !sky && !pattern && material.specular !== undefined,

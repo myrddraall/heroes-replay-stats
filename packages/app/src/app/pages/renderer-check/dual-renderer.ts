@@ -173,6 +173,9 @@ export class DualRenderer implements BackgroundRenderer {
   setCamera(set: SceneCameraSet | undefined): void {
     for (const r of this.all) r.setCamera(set);
   }
+  setSkyFollow(set: SceneCameraSet | null): void {
+    for (const r of this.all) r.setSkyFollow(set);
+  }
   setSky(settings: SkySettings): void {
     for (const r of this.all) r.setSky(settings);
   }

@@ -30,6 +30,12 @@ interface EditorUiState {
   readonly markers: MarkerMode;
   /** Whether the view shows the background's frame stats. */
   readonly stats: boolean;
+  /**
+   * Whether a sky anchored against the camera moves with the camera the view looks through (as a
+   * player would see it); else with the scene's camera, so the view shows it from outside, where
+   * it is for that camera.
+   */
+  readonly skyFollows: boolean;
   /** Whether the tree's panel and the properties' panel are open. */
   readonly left: boolean;
   readonly right: boolean;
@@ -56,6 +62,7 @@ export const EditorUiStore = signalStore(
     names: true,
     markers: 'all',
     stats: false,
+    skyFollows: true,
     left: true,
     right: true,
     aspect: 16 / 9,
@@ -67,6 +74,7 @@ export const EditorUiStore = signalStore(
     'names',
     'markers',
     'stats',
+    'skyFollows',
     'left',
     'right',
   ]),
@@ -135,6 +143,9 @@ export const EditorUiStore = signalStore(
       },
       setStats(stats: boolean): void {
         patchState(store, { stats });
+      },
+      setSkyFollows(skyFollows: boolean): void {
+        patchState(store, { skyFollows });
       },
       setPanel(panel: 'left' | 'right', open: boolean): void {
         patchState(store, { [panel]: open });

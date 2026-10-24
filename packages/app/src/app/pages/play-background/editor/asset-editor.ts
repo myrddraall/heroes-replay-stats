@@ -31,6 +31,8 @@ import type { AssetTarget } from './open-target';
           backdrop: store.stageBackdrop,
           key: store.stageKey,
           camera: store.viewCamera,
+          // An anchored sky moves with the view's camera, or (not following it) with the game's.
+          skyFollow: computed(() => (ui.skyFollows() ? null : {})),
           // The light selected's beams, with the markers (none in a screenshot).
           beams: computed(() => (ui.markers() !== 'none' && !ui.screenshot() ? store.beams() : [])),
         };

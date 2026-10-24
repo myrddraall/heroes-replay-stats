@@ -23,3 +23,21 @@ describe('the editor’s clicks in the lists', () => {
     expect(ui.clickedAgain('planet:azeroth', 100 + DOUBLE_CLICK + 1)).toBe(false);
   });
 });
+
+describe('the editor’s view of an anchored sky', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    TestBed.configureTestingModule({ providers: [EditorUiStore, provideRouter([])] });
+  });
+
+  it('has the sky follow the camera looked through until switched off, and keeps the choice', () => {
+    const ui = TestBed.inject(EditorUiStore);
+    expect(ui.skyFollows()).toBe(true);
+    ui.setSkyFollows(false);
+    expect(ui.skyFollows()).toBe(false);
+    TestBed.tick();
+    expect(JSON.parse(localStorage.getItem('hrs.background-editor') ?? '{}')).toMatchObject({
+      skyFollows: false,
+    });
+  });
+});

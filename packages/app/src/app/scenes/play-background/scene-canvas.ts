@@ -56,6 +56,7 @@ interface Running {
   rebackdrop(backdrop: Backdrop | null): void;
   rebeam(beams: readonly LightAid[]): void;
   recamera(camera: SceneCameraSet | undefined): void;
+  refollow(follow: SceneCameraSet | null): void;
 }
 
 /** A fly from one set of planets to the next, part way through. */
@@ -142,6 +143,11 @@ export class SceneCanvas {
   /** Where a scene puts the camera, over the game's (none: the game's). */
   readonly camera = input<SceneCameraSet | undefined>(undefined);
   /**
+   * The camera an anchored sky moves with: null, the camera it is drawn through; else one put
+   * where this says, over the game's (an editor's, to see the sky from outside).
+   */
+  readonly skyFollow = input<SceneCameraSet | null>(null);
+  /**
    * Which scene the planets are of: new planets under the same key are faded to in place (a
    * scene edited), under another flown to (another scene, another set). None: always flown to.
    */
@@ -208,6 +214,10 @@ export class SceneCanvas {
     effect(() => {
       const camera = this.camera();
       untracked(() => this.running?.recamera(camera));
+    });
+    effect(() => {
+      const follow = this.skyFollow();
+      untracked(() => this.running?.refollow(follow));
     });
     effect(() => {
       this.animate();
@@ -468,6 +478,11 @@ export class SceneCanvas {
         renderer.setCamera(camera);
         if (!frame) draw();
       },
+      // The camera the sky moves with changed: drawn again with the sky where it puts it.
+      refollow: (follow) => {
+        renderer.setSkyFollow(follow);
+        if (!frame) draw();
+      },
       play,
       resize,
       newPicture: () => {
@@ -516,6 +531,7 @@ export class SceneCanvas {
     renderer.setBackdrop(this.backdrop());
     renderer.setBeams(this.beams());
     renderer.setCamera(this.camera());
+    renderer.setSkyFollow(this.skyFollow());
     resize();
     play();
     const placements = this.placements(); // may have loaded before the scene did

@@ -113,6 +113,8 @@ export class PlayBackground {
   });
   /** Where the scene shown puts the camera, over the game's. */
   protected readonly camera = computed(() => this.source?.camera?.());
+  /** The camera an anchored sky moves with, where the scene shown says (none: the one it is drawn through). */
+  protected readonly skyFollow = computed(() => this.source?.skyFollow?.() ?? null);
   /** The scene's lights, where there is a scene that has any. */
   protected readonly sceneLights = computed(() => this.source?.lights?.() ?? []);
   /**

@@ -4,9 +4,10 @@ import { overlayPartKey, type PartKey } from './scene-planets';
 
 /**
  * A sky's overlays: parts about the eye (meshes as the sky's are, or bands), each drawing its
- * materials as the sky's are drawn. A sky has no radius to fit them to: every sky shares the
- * game's camera, so a part is placed by the view, about the eye: made bigger or smaller (further
- * or nearer, the same in view), turned round the eye, and tilted up or down.
+ * materials as the sky's are drawn. A sky has no radius to fit them to: a part is placed by the
+ * view of the scene's own camera (the scene file's, which the sky's meshes are placed for), about
+ * its eye: made bigger or smaller (further or nearer, the same in view), turned round the eye, and
+ * tilted up or down; then anchored against the camera that sees it as the rest of the sky is.
  */
 
 type Vec3 = readonly [number, number, number];

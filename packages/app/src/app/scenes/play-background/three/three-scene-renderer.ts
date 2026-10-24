@@ -50,6 +50,7 @@ import { fitTube, type Tube, tubeCover } from '../scene-tubes';
 import { overlayOfFile } from '../overlays';
 import { skyOverlayParts } from '../sky-overlays';
 import { skyDepths } from '../sky-depths';
+import { anchoredDepth, anchoredView, skyAnchorOf } from '../sky-anchors';
 import {
   type AddedLight,
   addedLighting,
@@ -72,6 +73,7 @@ import {
   overlayPartKey,
   type PartKey,
   type PlanetLight,
+  type SkyAnchor,
   type SkySettings,
   wearOf,
   withLayers,
@@ -99,6 +101,8 @@ import {
   type Backdrop,
   bodyFrame,
   type BodyFrame,
+  eyeOf,
+  multiplyMatrices as multiply,
   type PlanetPlacement,
   partsExtent,
   projectionMatrix,
@@ -217,13 +221,6 @@ function turnAbout(v: Vec3, axis: Vec3, angle: number): Vec3 {
   return [v[0] * c + k[0] * s + axis[0] * d, v[1] * c + k[1] * s + axis[1] * d, v[2] * c + k[2] * s + axis[2] * d];
 }
 
-function multiply(a: Float32Array, b: Float32Array): Float32Array {
-  const out = new Float32Array(16);
-  for (let c = 0; c < 4; c++)
-    for (let r = 0; r < 4; r++) for (let k = 0; k < 4; k++) out[c * 4 + r]! += a[k * 4 + r]! * b[c * 4 + k]!;
-  return out;
-}
-
 /** A vector in a body's frame (its axes column-major), from the world. */
 function intoFrame(axes: Float32Array, v: Vec3): Vec3 {
   return [
@@ -314,6 +311,8 @@ interface DrawState {
   /** Whether it is drawn at all: switched on, its body and its part shown. */
   readonly enabled: boolean;
   readonly depth: MaterialDepth;
+  /** How a sky draw is anchored against the camera (a body's: fixed in the world). */
+  readonly anchor: SkyAnchor;
   readonly blend: SceneBlend;
   readonly moving: boolean;
   /** Its material as set (its masks, its layers' textures and transforms, lit or flat). */
@@ -651,6 +650,13 @@ export class ThreeSceneRenderer {
   /** Where the bodies' frames were last turned to face from: the eye, and the view's up. */
   private placedFrom?: { readonly eye: Vec3; readonly up: Vec3 };
   private cameraSet: SceneCameraSet = {};
+  /**
+   * The camera an anchored sky moves with (see `sky-anchors.ts`): null, the camera that draws (as
+   * it is turned too); else one put where this says, over the game's.
+   */
+  private skyFollow: SceneCameraSet | null = null;
+  /** The scene's own camera's view (its file's): where an anchored sky is for it, whatever its anchor. */
+  private readonly referenceView: Float32Array;
 
   /** Throws when the browser has neither WebGPU nor WebGL 2. */
   constructor(
@@ -707,6 +713,7 @@ export class ThreeSceneRenderer {
     this.beamGeometry.setAttribute('position', new BufferAttribute(tube, 3));
     for (const [key, image] of Object.entries(loaded.images)) this.textures.set(key, image);
     const { scene } = loaded;
+    this.referenceView = viewMatrix(scene.camera.eye, scene.camera.forward, scene.camera.up);
     for (const [name, mesh] of Object.entries(scene.meshes)) {
       if (!mesh.materials.length) continue;
       if (mesh.planet) continue;
@@ -924,6 +931,7 @@ export class ThreeSceneRenderer {
     const moving = draw.moving || (material !== draw.material && moves(material));
     const blend = settings?.blend ?? draw.material.blend;
     const enabled = (settings?.enabled ?? MATERIAL_DEFAULTS.enabled) && shown(draw);
+    const anchor: SkyAnchor = draw.placed ? 'world' : skyAnchorOf(settings, this.sky.anchor);
     const depth = this.depthOf(draw.name, settings, !!draw.placed);
     const scale = settings?.scale ?? MATERIAL_DEFAULTS.scale;
     const u = new UniformSet();
@@ -934,7 +942,7 @@ export class ThreeSceneRenderer {
     u.f1('uCut', settings?.cut ?? MATERIAL_DEFAULTS.cut);
     u.f1('uStrength', settings?.strength ?? MATERIAL_DEFAULTS.strength);
     tintUniforms(u, 'uTint', settings?.tint);
-    const base = { draw, enabled, depth, blend, moving, material, uniforms: u, scrolls: scrollingLayers(material) };
+    const base = { draw, enabled, depth, anchor, blend, moving, material, uniforms: u, scrolls: scrollingLayers(material) };
     if (!draw.part || !draw.placed || !placement) {
       const tube = draw.tube;
       u.i1('uTube', tube ? 1 : 0);
@@ -943,7 +951,7 @@ export class ThreeSceneRenderer {
         u.f4('uTubeMap', ...tube.u, ...tube.v);
         u.f2('uTubeSpan', tube.low, tube.high);
       }
-      return { ...base, signature: JSON.stringify([draw.key, settings ?? null, blend, depth, enabled]) };
+      return { ...base, signature: JSON.stringify([draw.key, settings ?? null, blend, depth, anchor, enabled]) };
     }
     const part = withPart(draw.part, draw.partKey && placement.parts?.[draw.partKey]);
     partUniforms(u, part);
@@ -1370,7 +1378,7 @@ export class ThreeSceneRenderer {
 
   /**
    * The camera put where a scene says (none set: the game's): everything seen from there (the
-   * planets' faces turned to it, the sky's overlays placed about it), drawn again.
+   * planets' faces turned to it; the sky as its anchors put it), drawn again.
    */
   setCamera(set: SceneCameraSet | undefined): void {
     const next = set ?? {};
@@ -1380,8 +1388,6 @@ export class ThreeSceneRenderer {
     this.projection = this.projectionNow();
     this.placedFrom = undefined;
     this.placePlanets(this.placed.map((p) => p.placement.position));
-    this.placeSkyOverlays();
-    this.resolveSky();
     this.stillDirty = true;
     this.viewChanged();
   }
@@ -1642,9 +1648,53 @@ export class ThreeSceneRenderer {
 
   // --- Settings --------------------------------------------------------------------------------
 
+  /**
+   * Where a draw is drawn among the scene's objects: a body's among them; a sky material's as set,
+   * else as the data puts it, never among them where it isn't anchored to the world.
+   */
   private depthOf(name: string, settings: MaterialSettings | undefined, placed: boolean): MaterialDepth {
     if (placed) return 'scene';
-    return settings?.depth ?? skyDepths(this.loaded.scene)[name] ?? 'background';
+    const depth = settings?.depth ?? skyDepths(this.loaded.scene)[name] ?? 'background';
+    return anchoredDepth(depth, skyAnchorOf(settings, this.sky.anchor));
+  }
+
+  /** Whether any of the sky shown moves with the camera (a mesh or a particle system not anchored to the world). */
+  private skyAnchored(): boolean {
+    return (
+      this.skyStates.some((s) => s.enabled && s.anchor !== 'world') ||
+      this.particles.some((p) => {
+        const settings = this.sky.materials?.[p.name];
+        return (settings?.enabled ?? MATERIAL_DEFAULTS.enabled) && skyAnchorOf(settings, this.sky.anchor) !== 'world';
+      })
+    );
+  }
+
+  /**
+   * The view a sky draw anchored so is seen through (see `anchoredView`): the camera's own for one
+   * fixed in the world; else as the followed camera moves it.
+   */
+  private skyView(anchor: SkyAnchor): Float32Array {
+    if (anchor === 'world') return this.view;
+    return anchoredView(anchor, this.view, this.followView(), this.referenceView);
+  }
+
+  /** The followed camera's view: the camera that draws (turned as it is), or the one set, over the game's. */
+  private followView(): Float32Array {
+    if (!this.skyFollow) return this.view;
+    const camera = { ...this.loaded.scene.camera, ...this.skyFollow };
+    return viewMatrix(camera.eye, camera.forward, camera.up);
+  }
+
+  /**
+   * The camera an anchored sky moves with: null, the camera that draws; else one put where this
+   * says, over the game's (the editor's view of the sky from outside). What doesn't move of the sky
+   * is drawn again where any of it is anchored.
+   */
+  setSkyFollow(set: SceneCameraSet | null): void {
+    if (JSON.stringify(set) === JSON.stringify(this.skyFollow)) return;
+    this.skyFollow = set;
+    if (this.skyStates.some((s) => s.enabled && !s.moving && s.anchor !== 'world')) this.stillDirty = true;
+    if (this.skyAnchored()) this.changed = true;
   }
 
   /** An editing backdrop shown in place of the sky (null: the sky again). */
@@ -1688,7 +1738,7 @@ export class ThreeSceneRenderer {
         return file ? [{ id, file, images: made?.images }] : [];
       }),
     ];
-    const key = JSON.stringify([worn.map(({ id, file }) => [id, fileId(file)]), this.sky.parts ?? null, this.cameraSet]);
+    const key = JSON.stringify([worn.map(({ id, file }) => [id, fileId(file)]), this.sky.parts ?? null]);
     if (key === this.skyOverlayKey) return;
     this.skyOverlayKey = key;
     const oldGeometries = this.skyOverlayGeometries;
@@ -1699,7 +1749,9 @@ export class ThreeSceneRenderer {
       for (const [textureKey, image] of Object.entries(images ?? {}))
         if (!this.textures.has(textureKey)) this.textures.set(textureKey, image);
     const files = new Map(worn.map((w) => [w.id, w.file]));
-    for (const part of skyOverlayParts(worn, this.sky.parts, this.camera)) {
+    // Placed about the scene's own camera, as the sky's meshes are where they are for it; then
+    // anchored as the rest of the sky is.
+    for (const part of skyOverlayParts(worn, this.sky.parts, scene.camera)) {
       const file = files.get(overlayOfPartKey(part.key) ?? '');
       if (!file) continue;
       const geometry = meshGeometry({ ...part.mesh, materials: part.materials });
@@ -1720,7 +1772,7 @@ export class ThreeSceneRenderer {
         });
       });
     }
-    // The draws kept (the camera moved, a part's setting changed): their meshes given the new
+    // The draws kept (a part's setting changed): their meshes given the new
     // geometry, nothing built; the draws gone let go of; the old geometry after.
     const ids = new Set(this.skyOverlayDraws.map((d) => d.id));
     for (const d of this.skyOverlayDraws) {
@@ -1866,8 +1918,23 @@ export class ThreeSceneRenderer {
       (s) => s.enabled && s.depth === depth && (moving === undefined || s.moving === moving),
     );
     if (!states.length) return;
-    const v = this.view;
-    const viewProjection = multiply(this.projection, this.view);
+    // Each anchor's view (see `skyView`), and where the eye is for it and its axes, in the sky's
+    // own space (where its meshes' points are): what a draw is shaded from.
+    const seen = new Map<SkyAnchor, { viewProjection: Float32Array; eye: Vec3; right: Vec3; up: Vec3 }>();
+    const seenAs = (anchor: SkyAnchor) => {
+      let found = seen.get(anchor);
+      if (!found) {
+        const v = this.skyView(anchor);
+        found = {
+          viewProjection: multiply(this.projection, v),
+          eye: anchor === 'world' ? this.camera.eye : eyeOf(v),
+          right: [v[0]!, v[4]!, v[8]!],
+          up: [v[1]!, v[5]!, v[9]!],
+        };
+        seen.set(anchor, found);
+      }
+      return found;
+    };
     const threshold = this.sceneThreshold();
     const tint = new UniformSet();
     tintUniforms(tint, 'uBodyTint', this.sky.tint);
@@ -1876,16 +1943,17 @@ export class ThreeSceneRenderer {
       const g = this.gpuOf(s);
       if (!g?.ready) return;
       const u = g.uniforms;
-      u.set('uViewProjection', viewProjection);
+      const view = seenAs(s.anchor);
+      u.set('uViewProjection', view.viewProjection);
       u.set('uSceneThreshold', threshold);
       u.set('uGlowThreshold', threshold);
       u.set('uPattern', 0);
       u.set('uShadeCount', 0);
       u.apply(tint);
       u.set('uRimTurn', [0, 0]);
-      u.set('uEye', this.camera.eye);
-      u.set('uRight', [v[0]!, v[4]!, v[8]!]);
-      u.set('uUp', [v[1]!, v[5]!, v[9]!]);
+      u.set('uEye', view.eye);
+      u.set('uRight', view.right);
+      u.set('uUp', view.up);
       u.set('uSmear', this.smear);
       u.set('uLit', 0);
       u.set('uOutput', output === 'glow' ? 1 : 0);
@@ -1917,7 +1985,7 @@ export class ThreeSceneRenderer {
       const gpu = this.particleGpu(p, depth);
       if (!gpu?.ready) continue;
       const u = gpu.uniforms;
-      u.set('uView', this.view);
+      u.set('uView', this.skyView(skyAnchorOf(settings, this.sky.anchor)));
       u.set('uProjection', this.projection);
       u.set('uStreak', this.streak);
       u.apply(tint);

@@ -70,6 +70,7 @@ import {
   type PartKey,
   type PartSettings,
   reordered,
+  type SkyAnchor,
 } from '../../../scenes/play-background/scene-planets';
 import { DraftDesignStore, type LibraryKind } from '../draft-design.store';
 import { AssetCatalogStore, type MaterialUse } from './asset-catalog.store';
@@ -107,6 +108,7 @@ import {
   sharedMaterials,
   shieldLightsOf,
   shieldLightsOfBody,
+  skyAnchorView,
   skyMaterialsOf,
   skyOverlayChoices,
   type SkyOverlayInfo,
@@ -769,9 +771,13 @@ export const AssetEditorStore = signalStore(
           return sky?.edited.tint ?? sky?.below?.tint ?? NO_MATERIAL_TINT;
         }),
         skyTintSet: computed(() => selectedSky()?.edited.tint),
+        skyAnchor: computed(() => {
+          const sky = selectedSky();
+          return skyAnchorView(sky?.below, sky?.edited);
+        }),
         skyChanged: computed(() => {
           const sky = selectedSky();
-          return !!sky && (!!sky.edited.materials || !!sky.edited.tint);
+          return !!sky && (!!sky.edited.materials || !!sky.edited.tint || !!sky.edited.anchor);
         }),
         overlayOptions: computed((): readonly PickChoice[] => []),
         sets: computed(() => false),
@@ -2112,6 +2118,14 @@ export const AssetEditorStore = signalStore(
         if (!s) return;
         if (s.stage) d.clearSkyTint(PREVIEW_SCENE);
         else d.clearLibrarySkyTint();
+      },
+      setSkyAnchor(anchor: SkyAnchor): void {
+        const s = selectedSky();
+        if (s) d.setSkyAnchor(s.stage ? PREVIEW_SCENE : null, anchor);
+      },
+      clearSkyAnchor(): void {
+        const s = selectedSky();
+        if (s) d.setSkyAnchor(s.stage ? PREVIEW_SCENE : null, undefined);
       },
       resetSky(): void {
         const s = selectedSky();

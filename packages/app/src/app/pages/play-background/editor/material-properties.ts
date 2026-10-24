@@ -12,7 +12,9 @@ import type {
   MaterialDepth,
   MaterialSettings,
   MaterialTint,
+  SkyAnchor,
 } from '../../../scenes/play-background/scene-planets';
+import { SKY_ANCHOR_CHOICES } from './editor-model';
 import { PropertyCheck } from '../properties/property-check';
 import { PropertySection } from '../properties/property-section';
 import { TintSection } from './tint-section';
@@ -23,7 +25,7 @@ import { PropertyDirection } from '../properties/property-direction';
 
 /**
  * A material's properties (presentational), in sections as a design tool shows them: how it is
- * composited into the scene, its tint, its light and its rim (only those that do anything for it).
+ * composited into the scene (a sky material's: anchored against the camera, and at what depth), its tint, its light and its rim (only those that do anything for it).
  * Its layers, a shield shader's pattern and effects are rows of their own under it in the tree.
  */
 @Component({
@@ -72,6 +74,10 @@ export class MaterialProperties {
     { value: 'scene', label: 'Midground' },
     { value: 'foreground', label: 'Foreground' },
   ];
+  /** The depths a sky material not anchored to the world may have: never among the scene's objects. */
+  protected readonly anchoredDepthOptions = this.depthOptions.filter((o) => o.value !== 'scene');
+  protected readonly anchorOptions: readonly { value: SkyAnchor; label: string }[] =
+    SKY_ANCHOR_CHOICES;
 
   protected blend(blend: string): void {
     if (MATERIAL_BLENDS.includes(blend as SceneBlend))
@@ -81,6 +87,11 @@ export class MaterialProperties {
   protected depth(value: string): void {
     const found = this.depthOptions.find((o) => o.value === value);
     if (found) this.settingsChange.emit({ depth: found.value });
+  }
+
+  protected anchor(value: string): void {
+    const found = this.anchorOptions.find((o) => o.value === value);
+    if (found) this.settingsChange.emit({ anchor: found.value });
   }
 
   /** Renamed here; left empty, back to its name under the level edited. */

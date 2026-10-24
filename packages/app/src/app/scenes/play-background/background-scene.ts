@@ -1,4 +1,9 @@
-import type { MaterialSettingsMap, MaterialTint, PartSettingsMap } from './scene-planets';
+import type {
+  MaterialSettingsMap,
+  MaterialTint,
+  PartSettingsMap,
+  SkyAnchor,
+} from './scene-planets';
 import type { AddedLight, LightSettingsMap } from './scene-lights';
 import type { AddedPart } from './created-overlays';
 import type { SceneCameraSet } from './play-scene';
@@ -343,6 +348,8 @@ export function fitScene<T extends { readonly position: Vec3; readonly radius: n
 export interface SkyChoices {
   readonly materials?: MaterialSettingsMap;
   readonly tint?: MaterialTint;
+  /** How it is anchored against the camera (unset: as the level under it has it; else `world`). */
+  readonly anchor?: SkyAnchor;
   /** Its materials' draw order, by `materialKey` (the later over the earlier; see `drawOrder`), where set. */
   readonly order?: readonly string[];
   /** The overlays it wears, the later over the earlier (none given: what is under it; the data's). */

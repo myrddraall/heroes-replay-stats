@@ -33,8 +33,8 @@
 </hrs-property-section>
 <hrs-property-section
   title="Surface"
-  [changed]="anySet(['strength', 'blend', 'depth'])"
-  (resetRequested)="clear.emit(['strength', 'blend', 'depth'])"
+  [changed]="anySet(['strength', 'blend', 'depth', 'anchor'])"
+  (resetRequested)="clear.emit(['strength', 'blend', 'depth', 'anchor'])"
 >
   @if (c.strength) {
     <hrs-property-number
@@ -60,11 +60,22 @@
       (valueChange)="blend($event)"
     />
   }
+  @if (c.anchor) {
+    <hrs-property-select
+      label="Anchor"
+      [value]="v.anchor"
+      [options]="anchorOptions"
+      [changed]="isSet('anchor')"
+      [origin]="origins()?.anchor"
+      (resetRequested)="clear.emit(['anchor'])"
+      (valueChange)="anchor($event)"
+    />
+  }
   @if (c.depth) {
     <hrs-property-select
       label="Depth"
       [value]="v.depth"
-      [options]="depthOptions"
+      [options]="v.anchor === 'world' ? depthOptions : anchoredDepthOptions"
       [changed]="isSet('depth')"
       [origin]="origins()?.depth"
       (resetRequested)="clear.emit(['depth'])"

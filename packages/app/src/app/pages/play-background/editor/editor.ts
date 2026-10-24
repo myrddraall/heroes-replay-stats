@@ -4,6 +4,7 @@ import type {
   MaterialSettings,
   MaterialTint,
   PartSettings,
+  SkyAnchor,
 } from '../../../scenes/play-background/scene-planets';
 import type { CreatedShape } from '../../../scenes/play-background/created-overlays';
 import type { PickChoice } from './pick-list';
@@ -15,6 +16,7 @@ import type {
   MaterialEntry,
   MaterialView,
   PartEntry,
+  SkyAnchorView,
   TargetKind,
 } from './editor-model';
 import type {
@@ -121,6 +123,10 @@ export abstract class Editor {
   abstract resetSkyOverlays(): void;
   abstract setSkyTint(tint: MaterialTint): void;
   abstract clearSkyTint(): void;
+  /** How the sky selected is anchored against the camera, as shown, as set in the layer edited, and where else it is set. */
+  abstract readonly skyAnchor: Signal<SkyAnchorView>;
+  abstract setSkyAnchor(anchor: SkyAnchor): void;
+  abstract clearSkyAnchor(): void;
   abstract resetSky(): void;
 
   /** Everything in the layer edited back as what is under it (a scene; the whole library). */

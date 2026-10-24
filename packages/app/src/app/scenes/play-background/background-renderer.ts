@@ -29,6 +29,11 @@ export interface BackgroundRenderer {
   placePlanets(positions: readonly Vec3[], radii?: readonly number[]): void;
   setYaw(yaw: number): void;
   setCamera(set: SceneCameraSet | undefined): void;
+  /**
+   * The camera an anchored sky moves with: null, the camera that draws; else one put where this
+   * says, over the game's (see `sky-anchors.ts`).
+   */
+  setSkyFollow(set: SceneCameraSet | null): void;
   setSky(settings: SkySettings): void;
   setSceneLights(lights: readonly AddedLight[]): void;
   setBackdrop(backdrop: Backdrop | null): void;

@@ -65,6 +65,22 @@
       (clear)="editor.clearSkyTint()"
     />
     <p class="hint">Over the whole sky, its stars too. Its materials are under it in the tree.</p>
+    @let anchor = editor.skyAnchor();
+    <hrs-property-section
+      title="Placement"
+      [changed]="anchor.set !== undefined"
+      (resetRequested)="editor.clearSkyAnchor()"
+    >
+      <hrs-property-select
+        label="Anchor"
+        [value]="anchor.value"
+        [options]="skyAnchors"
+        [changed]="anchor.set !== undefined"
+        [origin]="anchor.origin"
+        (resetRequested)="editor.clearSkyAnchor()"
+        (valueChange)="setSkyAnchor($event)"
+      />
+    </hrs-property-section>
     <hrs-pick-list
       title="Overlays"
       addLabel="Add overlay"

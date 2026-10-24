@@ -87,6 +87,7 @@ describe('materials’ settings', () => {
       lines: false,
       particles: false,
       depth: false,
+      anchor: false,
       lit: true,
       specular: false,
     });
@@ -103,6 +104,7 @@ describe('materials’ settings', () => {
       lines: false,
       particles: false,
       depth: false,
+      anchor: false,
       lit: true,
       specular: false,
     });
@@ -125,7 +127,7 @@ describe('materials’ settings', () => {
       cut: true,
       lines: false,
     });
-    // A particle system's: drawn or not, its strength, and (the sky's) its depth.
+    // A particle system's: drawn or not, its strength, and (the sky's) its depth and anchor.
     expect(materialControls(emissive, { particles: true, sky: true })).toEqual({
       strength: true,
       spread: false,
@@ -136,6 +138,7 @@ describe('materials’ settings', () => {
       lines: false,
       particles: true,
       depth: true,
+      anchor: true,
       lit: false,
       specular: false,
     });
