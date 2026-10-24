@@ -1,4 +1,4 @@
-import { bodyFrame } from '../../../scenes/play-background/scene-space';
+import { bodyFrame, viewUp, type Viewpoint } from '../../../scenes/play-background/scene-space';
 import type { SetPlanet } from '../../../scenes/play-background/planet-sets';
 import {
   MATERIAL_DEFAULTS,
@@ -1251,11 +1251,11 @@ function inheritedChanged(b: BodyInfo): boolean {
 }
 
 /**
- * The way a light comes from (`from`, in its body's frame), out of the body as the eye at `eye`
- * sees it, in the scene: a unit vector.
+ * The way a light comes from (`from`, in its body's frame), out of the body as seen from
+ * `view`, in the scene: a unit vector.
  */
-export function wayOut(from: Vec3, body: SetPlanet, eye: Vec3): Vec3 {
-  const { axes } = bodyFrame(body.position, body.radius, eye);
+export function wayOut(from: Vec3, body: SetPlanet, view: Viewpoint): Vec3 {
+  const { axes } = bodyFrame(body.position, body.radius, view.eye, viewUp(view));
   const way = [0, 1, 2].map(
     (k) => from[0] * axes[k]! + from[1] * axes[3 + k]! + from[2] * axes[6 + k]!,
   );
@@ -1263,9 +1263,9 @@ export function wayOut(from: Vec3, body: SetPlanet, eye: Vec3): Vec3 {
   return way.map((v) => v / length) as unknown as Vec3;
 }
 
-/** A place near a body (in its frame, in its radii) as the eye at `eye` sees it, in the scene. */
-export function placeOut(at: Vec3, body: SetPlanet, eye: Vec3): Vec3 {
-  const { axes } = bodyFrame(body.position, body.radius, eye);
+/** A place near a body (in its frame, in its radii) as seen from `view`, in the scene. */
+export function placeOut(at: Vec3, body: SetPlanet, view: Viewpoint): Vec3 {
+  const { axes } = bodyFrame(body.position, body.radius, view.eye, viewUp(view));
   return [0, 1, 2].map(
     (k) =>
       body.position[k]! +
@@ -1289,60 +1289,60 @@ export function lightMarkerAt(
     readonly aim?: Vec3;
   },
   body: SetPlanet,
-  eye: Vec3,
+  view: Viewpoint,
 ): { readonly at: Vec3; readonly from?: Vec3 } | null {
   const along = (way: Vec3, radii: number) =>
     body.position.map((v, k) => v + way[k]! * body.radius * radii) as unknown as Vec3;
   if (light.position) {
-    const at = placeOut(light.position, body, eye);
+    const at = placeOut(light.position, body, view);
     if (light.kind === 'spot') {
       const p = light.position;
       const aim = aimOf(p, light.lookAt, light.aim);
       const t = alongToSphere(p, aim);
       return {
         at,
-        from: placeOut([p[0] + aim[0] * t, p[1] + aim[1] * t, p[2] + aim[2] * t], body, eye),
+        from: placeOut([p[0] + aim[0] * t, p[1] + aim[1] * t, p[2] + aim[2] * t], body, view),
       };
     }
-    const way = wayOut(light.position, body, eye);
+    const way = wayOut(light.position, body, view);
     return { at, from: along(way, 1.05) };
   }
   if (light.from) {
-    const way = wayOut(light.from, body, eye);
+    const way = wayOut(light.from, body, view);
     return { at: along(way, 1.8), from: along(way, 1.05) };
   }
   return null;
 }
 
 /**
- * The edges of a spot light's cone as seen from `eye`, from the spot to the body (none for any
+ * The edges of a spot light's cone as seen from `view`, from the spot to the body (none for any
  * other light, or with the eye inside the cone), in the scene: drawn with its marker when it is
  * selected.
  */
 export function spotEdges(
   light: BodyLight,
   body: SetPlanet,
-  eye: Vec3,
+  view: Viewpoint,
 ): readonly (readonly [Vec3, Vec3])[] {
   const placed = placedLight(light);
   if (placed?.kind !== 'spot' || !placed.position || !placed.aim) return [];
-  const frame = bodyFrame(body.position, body.radius, eye);
+  const frame = bodyFrame(body.position, body.radius, view.eye, viewUp(view));
   return coneEdges(placed.position, placed.aim, placed.cone ?? 90, frame.eye).map(
-    ([a, b]) => [placeOut(a, body, eye), placeOut(b, body, eye)] as const,
+    ([a, b]) => [placeOut(a, body, view), placeOut(b, body, view)] as const,
   );
 }
 
 /**
- * What the view shows of a light selected, about a body it lights, seen from `eye`: the outline
+ * What the view shows of a light selected, about a body it lights, seen from `view`: the outline
  * of where it falls on the body's sphere (any light but one from all round), and a directional
  * light's beam out of the body the way it comes from. None of a light switched off.
  */
-export function lightAids(light: BodyLight, body: SetPlanet, eye: Vec3): LightAid[] {
+export function lightAids(light: BodyLight, body: SetPlanet, view: Viewpoint): LightAid[] {
   if (!light.enabled) return [];
   const placed = placedLight(light);
   if (!placed) return [];
   const colour = rgbOf(light.colour, 1);
-  const { axes } = bodyFrame(body.position, body.radius, eye);
+  const { axes } = bodyFrame(body.position, body.radius, view.eye, viewUp(view));
   const outline: LightOutline = {
     shape: 'outline',
     centre: body.position,
@@ -1358,7 +1358,7 @@ export function lightAids(light: BodyLight, body: SetPlanet, eye: Vec3): LightAi
     colour,
     darkens: light.darkens,
   };
-  const from = placed.kind ? null : lightWay(light, body, eye);
+  const from = placed.kind ? null : lightWay(light, body, view);
   return from
     ? [
         {
@@ -1374,14 +1374,14 @@ export function lightAids(light: BodyLight, body: SetPlanet, eye: Vec3): LightAi
     : [outline];
 }
 
-/** The way a light comes from, out of its body as seen from `eye`: a side's, or a point's or spot's place. */
+/** The way a light comes from, out of its body as seen from `view`: a side's, or a point's or spot's place. */
 export function lightWay(
   light: { readonly from?: Vec3; readonly position?: Vec3 },
   body: SetPlanet,
-  eye: Vec3,
+  view: Viewpoint,
 ): Vec3 | null {
   const way = light.position ?? light.from;
-  return way ? wayOut(way, body, eye) : null;
+  return way ? wayOut(way, body, view) : null;
 }
 
 /**

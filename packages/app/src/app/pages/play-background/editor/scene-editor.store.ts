@@ -429,7 +429,7 @@ export const SceneEditorStore = signalStore(
       /** A preset's planets until it sets its own: the Play screen's, the game's three. */
       const defaults = computed((): readonly SceneBody[] =>
         sceneId() === PLAY_SCREEN_SCENE && _index.hasValue() && _sceneFile.hasValue()
-          ? playScreenBodies(playSet(_index.value()), _sceneFile.value().camera.eye)
+          ? playScreenBodies(playSet(_index.value()), _sceneFile.value().camera)
           : [],
       );
       /** The scene's planets, each with its moons. */
@@ -1400,12 +1400,10 @@ export const SceneEditorStore = signalStore(
       if (!planets.length && !grouped.length) return { planets: [], picks: [] };
       const scene = store._sceneFile.hasValue() ? store._sceneFile.value() : null;
       if (!scene) return null;
-      // Seen through its camera (the game's, where it sets none). What is drawn smaller to keep
-      // in view is fitted to the game's camera, so the scene's own moves round the same layout.
-      const camera = store.camera() ?? scene.camera;
-      const eye = camera.eye;
-      const fitCamera = scene.camera;
-      const up = Math.tan((fitCamera.fovY * Math.PI) / 360);
+      // Its moons are placed, and what is drawn smaller to keep in view fitted, as the game's
+      // camera sees them, so the scene's own cameras and the editor's move round the same layout.
+      const layoutView = scene.camera;
+      const up = Math.tan((layoutView.fovY * Math.PI) / 360);
       const reach = { up, across: up * store._ui.aspect() };
       const t = store.target();
       const selected = 'path' in t ? t.path : null;
@@ -1470,13 +1468,14 @@ export const SceneEditorStore = signalStore(
       /** What must stay in view of each body put out, in its radii. */
       const extents: number[] = [];
       for (const { root, moons, under, fit, chain, pick, lights } of roots) {
-        // A selected moon among these is shown where it can be seen.
+        // A selected moon among these is shown where it can be seen from the game's camera: the
+        // layout is fitted to that camera, so only from it does hidden here match what is drawn.
         const inside =
           selected && under.length && under.every((v, i) => selected[i] === v)
             ? selected.slice(under.length)
             : null;
         const overrides = inside?.length
-          ? reveal(root, moons, eye, inside)
+          ? reveal(root, moons, layoutView, layoutView.eye, inside)
           : new Map<string, number>();
         // What must stay in view of each body: as far as its parts and its halo reach.
         const extent = (path: BodyPath) => {
@@ -1486,9 +1485,9 @@ export const SceneEditorStore = signalStore(
             : visualExtent();
         };
         const base = fit
-          ? { ...root, radius: fitRadius(root, moons, fitCamera.eye, reach, overrides, extent) }
+          ? { ...root, radius: fitRadius(root, moons, layoutView, reach, overrides, extent) }
           : root;
-        for (const p of placeBodies(base, moons, eye, overrides)) {
+        for (const p of placeBodies(base, moons, layoutView, overrides)) {
           const bodies = chain(p.path);
           const b = bodies.at(-1);
           if (!b || !filesLoaded(b)) return null;
@@ -1529,7 +1528,7 @@ export const SceneEditorStore = signalStore(
       }
       // Several planets where they are put: the whole drawn smaller where any would leave the view.
       return {
-        planets: roots.length > 1 ? fitScene(out, extents, fitCamera, reach) : out,
+        planets: roots.length > 1 ? fitScene(out, extents, layoutView, reach) : out,
         picks,
       };
     }),
@@ -1608,12 +1607,12 @@ export const SceneEditorStore = signalStore(
           out.push({ ...marker(key, light, body.position), nudge: n - (round.length - 1) / 2 }),
         );
         for (const { key, light } of lights) {
-          const at = lightMarkerAt(light, body, view.eye);
+          const at = lightMarkerAt(light, body, view);
           if (at)
             out.push({
               ...marker(key, light, at.at),
               from: at.from,
-              lines: spotEdges(light, body, view.eye),
+              lines: spotEdges(light, body, view),
             });
         }
       };
@@ -1675,7 +1674,7 @@ export const SceneEditorStore = signalStore(
       const t = store.target();
       if (!view || !placed) return [];
       const beam = (light: LightEntry['light'], body: SetPlanet): LightAid[] =>
-        lightAids(light, body, view.eye);
+        lightAids(light, body, view);
       if (t.kind === 'scene-light') {
         const light = sceneLightsOf(store.sceneLights()).find((l) => l.light.id === t.id)?.light;
         if (!light) return [];

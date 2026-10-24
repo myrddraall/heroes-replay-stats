@@ -31,7 +31,7 @@ import {
   wornParts,
 } from './scene-planets';
 import { wornKey } from './overlays';
-import { reach } from './scene-space';
+import { reach, type Viewpoint } from './scene-space';
 import type { AddedLight, LightId, LightSettings } from './scene-lights';
 import type { PlanetSet, SetPlanet } from './planet-sets';
 
@@ -139,9 +139,10 @@ export function canPutGroup(
 
 /**
  * The Play screen's planets, from the game's set (`playSet`'s): each where the game puts it, its
- * small one a moon of its medium one, on the orbit that puts it there.
+ * small one a moon of its medium one, on the orbit that puts it there as the game's camera
+ * (`layoutView`, the scene's own) places it.
  */
-export function playScreenBodies(set: PlanetSet, eye: Vec3): SceneBody[] {
+export function playScreenBodies(set: PlanetSet, layoutView: Viewpoint): SceneBody[] {
   const medium = set.find((p) => p.id === 'play-medium');
   const small = set.find((p) => p.id === 'play-small');
   return set
@@ -149,7 +150,7 @@ export function playScreenBodies(set: PlanetSet, eye: Vec3): SceneBody[] {
     .map((p): SceneBody => {
       const body = { id: p.id, position: p.position, radius: p.radius };
       return p === medium && small
-        ? { ...body, moons: [{ id: small.id, orbit: orbitTo(medium, small, eye) }] }
+        ? { ...body, moons: [{ id: small.id, orbit: orbitTo(medium, small, layoutView) }] }
         : body;
     });
 }
@@ -329,18 +330,18 @@ export function resetMoon(
 
 /**
  * A set of planets with each planet's own moons (the library's) placed about it, after it, as
- * the renderer puts them (`placeBodies`, seen from `eye`): drawn where the planet and every body
- * each is a moon of are.
+ * the scene places them (`placeBodies`, from `layoutView`: the scene's own camera, whatever the
+ * view looks through): drawn where the planet and every body each is a moon of are.
  */
 export function setWithMoons(
   set: readonly SetPlanet[],
   library: LibraryState,
-  eye: Vec3,
+  layoutView: Viewpoint,
 ): SetPlanet[] {
   return set.flatMap((p) => {
     const moons = library.moons?.[p.id] ?? [];
     if (!moons.length) return [p];
-    const placed = placeBodies({ position: p.position, radius: p.radius }, moons, eye);
+    const placed = placeBodies({ position: p.position, radius: p.radius }, moons, layoutView);
     return [
       p,
       ...placed.slice(1).map((at): SetPlanet => {

@@ -18,6 +18,8 @@ import {
 } from './background-scene';
 
 const eye: Vec3 = [0, -41.2, 5.6];
+/** The Play screen's camera: looking along +y, tilted down a little, z up. */
+const view = { eye, forward: [0, 0.9997, -0.025], up: [0, 0, 1] } as const;
 const root = { position: [0, 65, 4] as Vec3, radius: 18 };
 const moon = (id: string, progress: number, moons?: MoonChoices[]): MoonChoices => ({
   id,
@@ -54,7 +56,7 @@ describe('the scene’s moons', () => {
   });
 
   it('are placed about their parents, their size a share of their parent’s', () => {
-    const bodies = placeBodies(root, [moon('a', 0, [moon('b', 0.5)])], eye);
+    const bodies = placeBodies(root, [moon('a', 0, [moon('b', 0.5)])], view);
     expect(bodies.map((b) => pathKey(b.path))).toEqual(['', '0', '0.0']);
     const [planet, a, b] = bodies;
     expect(a!.radius).toBeCloseTo(18 * DEFAULT_ORBIT.size);
@@ -69,9 +71,9 @@ describe('the scene’s moons', () => {
       [25, 66, 4],
       [0, 50, 30],
     ] as Vec3[]) {
-      const orbit = orbitTo(root, { position: at, radius: 3 }, eye);
+      const orbit = orbitTo(root, { position: at, radius: 3 }, view);
       expect(Math.abs(orbit.tilt)).toBeLessThanOrEqual(90);
-      const [, placed] = placeBodies(root, [{ id: 'm', orbit }], eye);
+      const [, placed] = placeBodies(root, [{ id: 'm', orbit }], view);
       placed!.position.forEach((v, k) => expect(v).toBeCloseTo(at[k]!, 4));
       expect(placed!.radius).toBeCloseTo(3);
     }
@@ -79,16 +81,40 @@ describe('the scene’s moons', () => {
 
   it('know a moon behind its planet is hidden, and show it to one side while it is selected', () => {
     const behind = [moon('a', 0.25)];
-    const bodies = placeBodies(root, behind, eye);
+    const bodies = placeBodies(root, behind, view);
     expect(hidden(bodies[1]!, bodies, eye)).toBe(true);
-    const overrides = reveal(root, behind, eye, [0]);
-    const shown = placeBodies(root, behind, eye, overrides);
+    const overrides = reveal(root, behind, view, eye, [0]);
+    const shown = placeBodies(root, behind, view, overrides);
     expect(hidden(shown[1]!, shown, eye)).toBe(false);
     // The shortest way round: still behind the planet's middle, not swung right round.
     const progress = overrides.get('0')!;
     expect(Math.min(Math.abs(progress - 0.25), 1 - Math.abs(progress - 0.25))).toBeLessThan(0.25);
     // One in view is left where it is.
-    expect(reveal(root, [moon('a', 0.9)], eye, [0]).size).toBe(0);
+    expect(reveal(root, [moon('a', 0.9)], view, eye, [0]).size).toBe(0);
+  });
+
+  /** An eye on the planet's far side from the scene's camera, looking back at it. */
+  const farEye: Vec3 = [0, 171.2, 5.6];
+
+  it('stay where the scene puts them, passing behind or in front of their planet as the eye goes round', () => {
+    // Placed from the scene's camera: behind the planet from there, in front of it from its far side.
+    const [planet, a] = placeBodies(root, [moon('a', 0.25)], view);
+    const from = (e: Vec3, b: { position: Vec3 }) =>
+      Math.hypot(b.position[0] - e[0], b.position[1] - e[1], b.position[2] - e[2]);
+    expect(from(eye, a!)).toBeGreaterThan(from(eye, planet!));
+    expect(from(farEye, a!)).toBeLessThan(from(farEye, planet!));
+    expect(hidden(a!, [planet!, a!], farEye)).toBe(false);
+  });
+
+  it('show a selected moon where the eye looking through the view sees it, placed as the scene places it', () => {
+    // Behind from the scene's camera, but in front from the far side: left where it is.
+    expect(reveal(root, [moon('a', 0.25)], view, farEye, [0]).size).toBe(0);
+    // In front from the scene's camera, so behind from the far side: moved to where it shows.
+    const front = [moon('a', 0.75)];
+    const overrides = reveal(root, front, view, farEye, [0]);
+    expect(overrides.size).toBe(1);
+    const shown = placeBodies(root, front, view, overrides);
+    expect(hidden(shown[1]!, shown, farEye)).toBe(false);
   });
 });
 
@@ -96,19 +122,19 @@ describe('the scene fitted to the view', () => {
   const reach = { across: 0.4, up: 0.4 };
 
   it('keeps the planet as it is when everything is in view', () => {
-    expect(fitRadius({ ...root, radius: 10 }, [], eye, reach)).toBe(10);
+    expect(fitRadius({ ...root, radius: 10 }, [], view, reach)).toBe(10);
   });
 
   it('makes the planet smaller where a moon would leave the view', () => {
     const far = [{ id: 'a', orbit: { ...DEFAULT_ORBIT, tilt: 0, radius: 5, progress: 0 } }];
-    const r = fitRadius(root, far, eye, reach);
+    const r = fitRadius(root, far, view, reach);
     expect(r).toBeLessThan(root.radius);
     // As the eye sees it, the moon's far edge stays within the view, in front of the planet too.
     for (const progress of [0, 0.9]) {
       const orbit = { ...DEFAULT_ORBIT, tilt: 0, radius: 5, progress };
       const moons = [{ id: 'a', orbit }];
-      const fitted = fitRadius(root, moons, eye, reach);
-      const moon = placeBodies({ ...root, radius: fitted }, moons, eye)[1]!;
+      const fitted = fitRadius(root, moons, view, reach);
+      const moon = placeBodies({ ...root, radius: fitted }, moons, view)[1]!;
       const depth = moon.position[1] - eye[1];
       expect((Math.abs(moon.position[0] - eye[0]) + moon.radius) / depth).toBeLessThanOrEqual(
         reach.across,

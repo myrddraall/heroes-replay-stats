@@ -104,6 +104,7 @@ import {
   projectionMatrix,
   reach,
   viewMatrix,
+  viewUp,
 } from '../scene-space';
 import { bodyNodes } from './shader-body';
 import { meshNodes } from './shader-mesh';
@@ -647,7 +648,8 @@ export class ThreeSceneRenderer {
   private sky: SkySettings = {};
   private backdrop: Backdrop | null = null;
   private sceneLights: readonly AddedLight[] = [];
-  private placedFrom?: Vec3;
+  /** Where the bodies' frames were last turned to face from: the eye, and the view's up. */
+  private placedFrom?: { readonly eye: Vec3; readonly up: Vec3 };
   private cameraSet: SceneCameraSet = {};
 
   /** Throws when the browser has neither WebGPU nor WebGL 2. */
@@ -788,6 +790,7 @@ export class ThreeSceneRenderer {
    */
   setPlanets(placements: readonly PlanetPlacement[]): void {
     const { eye } = this.camera;
+    const up = this.viewUpNow();
     let loaded = false;
     for (const placement of placements)
       for (const planet of [placement.planet, ...overlaysOf(placement)]) {
@@ -817,7 +820,7 @@ export class ThreeSceneRenderer {
       const placed: Placed = {
         id: keep?.id ?? nextPlacedId++,
         placement,
-        frame: bodyFrame(placement.position, placement.radius, eye),
+        frame: bodyFrame(placement.position, placement.radius, eye, up),
         extent: 0,
         states: [],
         version: keep?.version ?? 0,
@@ -1328,10 +1331,12 @@ export class ThreeSceneRenderer {
       return [(x + 1) / 2, (1 - y) / 2];
     };
     const out: { id: string; x: number; y: number; top: number }[] = [];
-    for (const { placement } of this.placed) {
+    for (const { placement, frame } of this.placed) {
       const { position, radius } = placement;
       const centre = project(position);
-      const top = project([position[0], position[1], position[2] + radius]);
+      // Its top as drawn: up its frame (turned to the view's up), not the world's.
+      const z = frame.axes.subarray(6, 9);
+      const top = project([position[0] + z[0]! * radius, position[1] + z[1]! * radius, position[2] + z[2]! * radius]);
       if (centre && top) out.push({ id: placement.planet.label ?? placement.planet.id, x: centre[0], y: centre[1], top: top[1] });
     }
     return out;
@@ -1340,17 +1345,21 @@ export class ThreeSceneRenderer {
   /** The placed planets moved: their positions and radii, in the order they were placed. */
   placePlanets(positions: readonly Vec3[], radii?: readonly number[]): void {
     const { eye } = this.camera;
+    const up = this.viewUpNow();
+    // The eye moved or the view turned: every body faces it anew.
+    const from = this.placedFrom;
+    const seen = from?.eye === eye && from.up.every((v, k) => v === up[k]);
     this.placed.forEach((placed, i) => {
       const position = positions[i] ?? placed.placement.position;
       const radius = radii?.[i] ?? placed.placement.radius;
       const was = placed.placement;
-      if (position === was.position && radius === was.radius && eye === this.placedFrom) return;
+      if (position === was.position && radius === was.radius && seen) return;
       placed.placement = { ...was, position, radius };
-      placed.frame = bodyFrame(position, radius, eye);
+      placed.frame = bodyFrame(position, radius, eye, up);
       this.measure(placed);
       placed.version++;
     });
-    this.placedFrom = eye;
+    this.placedFrom = { eye, up };
     this.updateSurfaces();
     this.changed = true;
   }
@@ -1382,6 +1391,7 @@ export class ThreeSceneRenderer {
     if (yaw === this.yaw) return;
     this.yaw = yaw;
     this.view = this.viewNow();
+    this.placePlanets(this.placed.map((p) => p.placement.position)); // turned with the view
     this.stillDirty = true;
     this.viewChanged();
   }
@@ -1399,6 +1409,12 @@ export class ThreeSceneRenderer {
   private viewNow(): Float32Array {
     const camera = this.camera;
     return viewMatrix(camera.eye, turnAbout(camera.forward, camera.up, this.yaw), camera.up);
+  }
+
+  /** Up on the screen as the view (`viewNow`) has it: what the bodies' frames are turned to. */
+  private viewUpNow(): Vec3 {
+    const camera = this.camera;
+    return viewUp({ forward: turnAbout(camera.forward, camera.up, this.yaw), up: camera.up });
   }
 
   /**

@@ -331,7 +331,7 @@ export const AssetCatalogStore = signalStore(
       planetsOf: computed(() => {
         const scenes = _draft.scenes().planets;
         const scene = _sceneFile.hasValue() ? _sceneFile.value() : null;
-        const play = index() && scene ? playScreenBodies(playSet(index()!), scene.camera.eye) : [];
+        const play = index() && scene ? playScreenBodies(playSet(index()!), scene.camera) : [];
         return (id: string): readonly SceneBody[] =>
           id === RANDOM_SCENE
             ? []

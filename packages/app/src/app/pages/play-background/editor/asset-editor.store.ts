@@ -804,7 +804,7 @@ export const AssetEditorStore = signalStore(
             const moons = planet === a.id ? (lib.moons?.[planet] ?? []) : [];
             return {
               ...root,
-              radius: fitRadius(root, moons, scene.camera.eye, view, new Map(), () => extent),
+              radius: fitRadius(root, moons, scene.camera, view, new Map(), () => extent),
             };
           };
           if (a.kind === 'sky' || _skyOverlay()) return []; // the sky alone (with its overlay)
@@ -849,10 +849,10 @@ export const AssetEditorStore = signalStore(
                   : undefined;
             return [standIn(owner)];
           }
+          // Its moons about it as the scene places them: from the game's camera, so moving the
+          // editor's goes round them.
           if (a.kind === 'planet')
-            return scene
-              ? setWithMoons([own(a.id)], _draft.library(), scene.camera.eye)
-              : [own(a.id)];
+            return scene ? setWithMoons([own(a.id)], _draft.library(), scene.camera) : [own(a.id)];
           // An overlay on the stand-in: what it adds, on a plain body.
           // A planet's overlay on the stand-in: what it adds, on a plain body (one not yet known to
           // be a planet's, nothing until it is: a sky's is the sky's).
@@ -988,12 +988,12 @@ export const AssetEditorStore = signalStore(
           out.push({ ...marker(key, light, body.position), nudge: n - (round.length - 1) / 2 }),
         );
         for (const { key, light } of lights) {
-          const at = lightMarkerAt(light, body, view.eye);
+          const at = lightMarkerAt(light, body, view);
           if (at)
             out.push({
               ...marker(key, light, at.at),
               from: at.from,
-              lines: spotEdges(light, body, view.eye),
+              lines: spotEdges(light, body, view),
             });
         }
         return out;
@@ -1011,7 +1011,7 @@ export const AssetEditorStore = signalStore(
               ? t.view.id
               : null;
         const light = id && lit.lights.find(({ light }) => light.id === (id as string))?.light;
-        return light ? lightAids(light, lit.body, view.eye) : [];
+        return light ? lightAids(light, lit.body, view) : [];
       }),
     };
   }),

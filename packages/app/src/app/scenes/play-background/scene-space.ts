@@ -37,11 +37,37 @@ const normalize = (a: Vec3): Vec3 => {
   return [a[0] / l, a[1] / l, a[2] / l];
 };
 
+/**
+ * A camera's axes as its view has them: the way it looks, to its right, and up on the screen (its
+ * `up` made square to the way it looks). Looking straight along its up (no right to be had), the
+ * right is as it is with the camera turned to look along +y (of a z up: x), its view's up the
+ * limit it comes to tilted there.
+ */
+function viewAxes(forward: Vec3, up: Vec3): { f: Vec3; r: Vec3; u: Vec3 } {
+  const f = normalize(forward);
+  const across = cross(f, up);
+  const r = Math.hypot(...across) > 1e-9 ? normalize(across) : normalize(cross([0, 1, 0], up));
+  return { f, r, u: cross(r, f) };
+}
+
+/** Where things are seen from: the eye, the way it looks and its up (a camera, as `viewMatrix` takes it). */
+export interface Viewpoint {
+  readonly eye: Vec3;
+  readonly forward: Vec3;
+  readonly up: Vec3;
+}
+
+/**
+ * Up on the screen for a camera looking along `forward`, `up` its up (as `viewMatrix` takes them):
+ * the view's up, its second row. What a body's frame is turned to (`bodyFrame`): give it this.
+ */
+export function viewUp({ forward, up }: Pick<Viewpoint, 'forward' | 'up'>): Vec3 {
+  return viewAxes(forward, up).u;
+}
+
 /** A view matrix (column-major) for an eye looking along `forward`, `up` as near up as it allows. */
 export function viewMatrix(eye: Vec3, forward: Vec3, up: Vec3): Float32Array {
-  const f = normalize(forward);
-  const r = normalize(cross(f, up));
-  const u = cross(r, f);
+  const { f, r, u } = viewAxes(forward, up);
   return new Float32Array([
     r[0],
     u[0],
@@ -143,18 +169,26 @@ export interface BodyFrame {
   readonly eye: Vec3;
 }
 
+/** Some unit vector square to a unit one. */
+const squareTo = (v: Vec3): Vec3 =>
+  normalize(cross(v, Math.abs(v[0]) < 0.9 ? [1, 0, 0] : [0, 1, 0]));
+
 /**
  * A planet's body's frame, as the game's billboards turn to face the eye: about its centre, y
- * away from the eye, z as near up as it can be, x to the right; and the eye in that frame, in
- * units of the body's radius.
+ * away from the eye, z as near the view's up (`viewUp`: up on the screen) as it can be, x to the
+ * right; and the eye in that frame, in units of the body's radius. Turned with the camera, so a
+ * body (with its moons and its lights, placed in its frame) keeps its way up on the screen however
+ * the camera turns or tilts, straight down or up as well: the view's up is square to the way the
+ * camera looks, so for anything in view it is never along the way to it. (The eye at the body's
+ * centre, there is no way to face: it faces any way square to the view's up.)
  */
-export function bodyFrame(position: Vec3, radius: number, eye: Vec3): BodyFrame {
-  const y = normalize([position[0] - eye[0], position[1] - eye[1], position[2] - eye[2]]);
-  const up: Vec3 = Math.abs(y[2]) < 0.999 ? [0, 0, 1] : [0, 1, 0]; // straight above or below: any way up
-  const lean = dot(up, y);
-  const z = normalize([up[0] - lean * y[0], up[1] - lean * y[1], up[2] - lean * y[2]]);
-  const x = cross(y, z);
+export function bodyFrame(position: Vec3, radius: number, eye: Vec3, viewUp: Vec3): BodyFrame {
   const to: Vec3 = [eye[0] - position[0], eye[1] - position[1], eye[2] - position[2]];
+  const y = Math.hypot(...to) > 1e-9 ? normalize([-to[0], -to[1], -to[2]]) : squareTo(normalize(viewUp));
+  const lean = dot(viewUp, y);
+  const off: Vec3 = [viewUp[0] - lean * y[0], viewUp[1] - lean * y[1], viewUp[2] - lean * y[2]];
+  const z = Math.hypot(...off) > 1e-9 ? normalize(off) : squareTo(y); // straight above or below on the screen: never in view
+  const x = cross(y, z);
   return {
     axes: new Float32Array([...x, ...y, ...z]),
     eye: [dot(to, x) / radius, dot(to, y) / radius, dot(to, z) / radius],

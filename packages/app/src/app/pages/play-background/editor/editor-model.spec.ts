@@ -102,18 +102,18 @@ describe('a material’s rows on parts', () => {
 describe('a light’s marker', () => {
   // A body a radius wide at 10 ahead of an eye at the origin looking along +y.
   const body = { id: 'b', position: [0, 10, 0] as const, radius: 1 };
-  const eye = [0, 0, 0] as const;
+  const view = { eye: [0, 0, 0], forward: [0, 1, 0], up: [0, 0, 1] } as const;
 
   it('puts a spot’s line along its aim to where it meets the body, past it to its nearest point', () => {
     // Straight in front, aimed at the middle: the line ends at the near surface.
-    const at = lightMarkerAt({ kind: 'spot', position: [0, -3, 0] }, body, eye)!;
+    const at = lightMarkerAt({ kind: 'spot', position: [0, -3, 0] }, body, view)!;
     expect(at.at.map((v) => Math.round(v * 100) / 100)).toEqual([0, 7, 0]);
     expect(at.from!.map((v) => Math.round(v * 100) / 100)).toEqual([0, 9, 0]);
     // Aimed up, past the body: as far as level with its middle.
-    const past = lightMarkerAt({ kind: 'spot', position: [0, -3, 2], aim: [0, 1, 0] }, body, eye)!;
+    const past = lightMarkerAt({ kind: 'spot', position: [0, -3, 2], aim: [0, 1, 0] }, body, view)!;
     expect(past.from!.map((v) => Math.round(v * 100) / 100)).toEqual([0, 10, 2]);
     // A point light's line goes to the nearest of the surface.
-    const point = lightMarkerAt({ kind: 'point', position: [0, -3, 2] }, body, eye)!;
+    const point = lightMarkerAt({ kind: 'point', position: [0, -3, 2] }, body, view)!;
     expect(Math.hypot(point.from![0], point.from![1] - 10, point.from![2])).toBeCloseTo(1.05);
   });
 });

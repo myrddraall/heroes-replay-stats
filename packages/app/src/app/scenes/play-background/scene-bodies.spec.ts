@@ -80,7 +80,7 @@ describe('scene bodies', () => {
 });
 
 describe('the Play screen’s planets', () => {
-  const eye = [-0.0018, -41.1988, 5.6051] as const;
+  const view = { eye: [-0.0018, -41.1988, 5.6051], forward: [0, 0.9997, -0.025], up: [0, 0, 1] } as const;
   const set = [
     { id: 'play-large', position: [-48.249, 64.647, 25.444], radius: 27.25 },
     { id: 'play-medium', position: [37.282, 64.892, 14.189], radius: 9.037 },
@@ -88,14 +88,25 @@ describe('the Play screen’s planets', () => {
   ] as const;
 
   it('are the game’s, its small one a moon of its medium one where the game puts it', () => {
-    const bodies = playScreenBodies(set, eye);
+    const bodies = playScreenBodies(set, view);
     expect(bodies.map((b) => b.id)).toEqual(['play-large', 'play-medium']);
     expect(bodies[0]).toEqual({ ...set[0] });
     const medium = bodies[1]!;
     expect(medium.moons?.map((m) => m.id)).toEqual(['play-small']);
-    const [, small] = placeBodies(medium, medium.moons!, eye);
+    const [, small] = placeBodies(medium, medium.moons!, view);
     small!.position.forEach((v, k) => expect(v).toBeCloseTo(set[2].position[k]!, 4));
     expect(small!.radius).toBeCloseTo(set[2].radius, 6);
+  });
+
+  it('keep the small one where the game puts it, seen from anywhere: behind the medium one from its far side', () => {
+    const medium = playScreenBodies(set, view)[1]!;
+    const [, small] = placeBodies(medium, medium.moons!, view);
+    // Looked at from beyond the medium one (as the editor's camera may), the small one is where
+    // it was, so further off than the medium one: drawn behind it.
+    const far = [37.282, 140, 14.189] as const;
+    const from = (p: readonly number[]) => Math.hypot(...p.map((v, k) => v - far[k]!));
+    small!.position.forEach((v, k) => expect(v).toBeCloseTo(set[2].position[k]!, 4));
+    expect(from(small!.position)).toBeGreaterThan(from(medium.position));
   });
 });
 
@@ -283,7 +294,7 @@ describe("a planet's own moons", () => {
   });
 
   it('places them about a set’s planets, off where the planet or a body each is a moon of is', () => {
-    const eye = [0, -40, 5] as const;
+    const view = { eye: [0, -40, 5], forward: [0, 1, 0], up: [0, 0, 1] } as const;
     const set = [
       { id: 'korhal', position: [0, 65, 4] as const, radius: 18 },
       { id: 'azeroth', position: [30, 65, 4] as const, radius: 9, enabled: false },
@@ -292,7 +303,7 @@ describe("a planet's own moons", () => {
       ...EMPTY_LIBRARY,
       moons: { korhal: [rock, { ...ice, settings: { enabled: false } }], azeroth: [rock] },
     };
-    const placed = setWithMoons(set, off, eye);
+    const placed = setWithMoons(set, off, view);
     expect(placed.map((p) => p.id)).toEqual(['korhal', 'rock', 'ice', 'dust', 'azeroth', 'rock']);
     expect(placed[1]).toMatchObject({ overlays: ['nexus'] });
     expect(placed[1]?.enabled).toBeUndefined();
@@ -300,7 +311,7 @@ describe("a planet's own moons", () => {
     expect(placed[3]?.enabled).toBe(false); // its parent is off
     expect(placed[5]?.enabled).toBe(false); // its planet is off
     expect(placed[1]?.position).toEqual(
-      placeBodies({ position: [0, 65, 4], radius: 18 }, inheritedMoons([rock], undefined), eye)[1]
+      placeBodies({ position: [0, 65, 4], radius: 18 }, inheritedMoons([rock], undefined), view)[1]
         ?.position,
     );
     expect(libraryMoonsOf(set, off).map((m) => m.id)).toEqual(['rock', 'ice', 'dust', 'rock']);

@@ -2,7 +2,7 @@ import type { MaterialSettingsMap, MaterialTint, PartSettingsMap } from './scene
 import type { AddedLight, LightSettingsMap } from './scene-lights';
 import type { AddedPart } from './created-overlays';
 import type { SceneCameraSet } from './play-scene';
-import { bodyFrame } from './scene-space';
+import { bodyFrame, viewUp, type Viewpoint } from './scene-space';
 import { orbitOffset, orbitThrough, type OrbitPlace, type PlacementMode } from './placement';
 
 /**
@@ -176,17 +176,21 @@ export type ProgressOverrides = ReadonlyMap<string, number>;
 
 /**
  * The scene's bodies placed: the planet where it is put, each moon about its parent by its orbit
- * (its parent's frame turned to face the eye, as the renderer turns it), its moons about it.
+ * (its parent's frame as the scene's own camera, `layoutView`, sees it: turned to face its eye and
+ * its view's up), its moons about it. The scene's layout, not what any view looks from: seen
+ * through another camera, each moon stays where it is, passing behind or in front of its parent as
+ * the eye goes round (the bodies themselves still turn to face the eye they are drawn for).
  */
 export function placeBodies(
   root: { readonly position: Vec3; readonly radius: number },
   moons: readonly MoonChoices[],
-  eye: Vec3,
+  layoutView: Viewpoint,
   overrides: ProgressOverrides = new Map(),
 ): PlacedBody[] {
   const out: PlacedBody[] = [{ path: [], position: root.position, radius: root.radius }];
+  const up = viewUp(layoutView);
   const place = (parent: PlacedBody, list: readonly MoonChoices[]) => {
-    const { axes } = bodyFrame(parent.position, parent.radius, eye);
+    const { axes } = bodyFrame(parent.position, parent.radius, layoutView.eye, up);
     list.forEach((moon, i) => {
       const path = [...parent.path, i];
       const progress = overrides.get(pathKey(path)) ?? moon.orbit.progress;
@@ -208,16 +212,16 @@ export function placeBodies(
 
 /**
  * The orbit that puts a moon where a body is, about a parent where it is (as `placeBodies` places
- * a moon, untilted on the screen: its turn 0), its size the two's radii's ratio: the tilt within a
- * quarter turn either way, its far side up or down as the body is above or below the parent's
- * middle, the body behind or in front of it as it is.
+ * a moon from the same `layoutView`, untilted on the screen: its turn 0), its size the two's
+ * radii's ratio: the tilt within a quarter turn either way, its far side up or down as the body is
+ * above or below the parent's middle, the body behind or in front of it as it is.
  */
 export function orbitTo(
   parent: { readonly position: Vec3; readonly radius: number },
   body: { readonly position: Vec3; readonly radius: number },
-  eye: Vec3,
+  layoutView: Viewpoint,
 ): Orbit {
-  const { axes } = bodyFrame(parent.position, parent.radius, eye);
+  const { axes } = bodyFrame(parent.position, parent.radius, layoutView.eye, viewUp(layoutView));
   const d = sub(body.position, parent.position);
   const at = [0, 3, 6].map(
     (k) => (axes[k]! * d[0] + axes[k + 1]! * d[1] + axes[k + 2]! * d[2]) / parent.radius,
@@ -252,12 +256,15 @@ const REVEAL_STEPS = 72;
 
 /**
  * Where the moons on the way to the body at `path` are shown so it can be seen: each moon from the
- * planet down that is hidden is moved round its orbit, the shortest way either way, to where it
- * isn't (to one side of what hid it). Only while it is selected: its own progress is kept.
+ * planet down that is hidden from `eye` is moved round its orbit, the shortest way either way, to
+ * where it isn't (to one side of what hid it). Placed as the scene places them (from `layoutView`,
+ * the scene's own camera), seen from `eye` (the scene editor gives that camera's: what is drawn
+ * smaller is fitted to it). Only while it is selected: its own progress is kept.
  */
 export function reveal(
   root: { readonly position: Vec3; readonly radius: number },
   moons: readonly MoonChoices[],
+  layoutView: Viewpoint,
   eye: Vec3,
   path: BodyPath,
 ): ProgressOverrides {
@@ -268,7 +275,7 @@ export function reveal(
     const moon = moonAt(moons, at);
     if (!moon) break;
     const shows = (progress: number) => {
-      const bodies = placeBodies(root, moons, eye, new Map([...overrides, [key, progress]]));
+      const bodies = placeBodies(root, moons, layoutView, new Map([...overrides, [key, progress]]));
       const body = bodies.find((b) => pathKey(b.path) === key)!;
       return !hidden(body, bodies, eye);
     };
@@ -313,20 +320,21 @@ const FIT_MARGIN = 0.85;
  * scaling with the planet. As the eye sees it: a body `x` planet radii across from the planet's
  * centre and `y` nearer or further, at radius R, is seen (x + r)·R / (d + y·R) across, which must
  * stay within the view's reach; solved for R body by body, across and up. A body's `extent` (in
- * its radii: its shells and halo past its surface, 1 by default) is what must stay in view.
+ * its radii: its shells and halo past its surface, 1 by default) is what must stay in view. Fitted
+ * to the scene's own camera (`layoutView`), as its moons are placed from it.
  */
 export function fitRadius(
   root: { readonly position: Vec3; readonly radius: number },
   moons: readonly MoonChoices[],
-  eye: Vec3,
+  layoutView: Viewpoint,
   reach: ViewReach,
   overrides: ProgressOverrides = new Map(),
   extent: (path: BodyPath) => number = () => 1,
 ): number {
-  const unit = placeBodies({ position: root.position, radius: 1 }, moons, eye, overrides);
-  const { axes } = bodyFrame(root.position, 1, eye);
+  const unit = placeBodies({ position: root.position, radius: 1 }, moons, layoutView, overrides);
+  const { axes } = bodyFrame(root.position, 1, layoutView.eye, viewUp(layoutView));
   const along = (o: Vec3, k: number) => o[0] * axes[k]! + o[1] * axes[k + 1]! + o[2] * axes[k + 2]!;
-  const d = length(sub(root.position, eye));
+  const d = length(sub(root.position, layoutView.eye));
   let radius = root.radius;
   for (const b of unit) {
     const o = sub(b.position, root.position);

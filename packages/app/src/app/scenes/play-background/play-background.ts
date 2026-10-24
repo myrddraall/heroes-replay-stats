@@ -338,7 +338,7 @@ export class PlayBackground {
       // The random sets' planets with their own moons about them (placed once the scene's
       // camera is in; an editor's scene places its own).
       if (random && !scene && libraryMoonsOf(set, library).length) return previous?.value ?? null;
-      const placed = random && scene ? setWithMoons(set, library, scene.scene.camera.eye) : set;
+      const placed = random && scene ? setWithMoons(set, library, scene.scene.camera) : set;
       const file = this.overlayFile();
       const out: PlanetPlacement[] = [];
       for (const p of placed.map((s) => withLibrary(s, library))) {
