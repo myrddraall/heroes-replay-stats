@@ -3,6 +3,7 @@ import type { AddedLight, LightSettingsMap } from './scene-lights';
 import type { AddedPart } from './created-overlays';
 import type { SceneCameraSet } from './play-scene';
 import { bodyFrame } from './scene-renderer';
+import { orbitOffset, orbitThrough, type OrbitPlace, type PlacementMode } from './placement';
 
 /**
  * The Background page's scene: its planets, each with its moons (and theirs), under the sky. A
@@ -14,18 +15,24 @@ export type Vec3 = readonly [number, number, number];
 
 /**
  * A moon's orbit about its parent, in the parent's frame as the eye sees it (x to the right, y
- * away from the eye, z up): a circle in the plane facing up, `radius` parent radii from its
- * centre; tilted about x by `tilt` degrees (its far side up), then turned about the line of sight
- * by `turn` degrees; the moon `progress` of the way round it (0 to the right, 0.25 behind, 0.5 to
- * the left, 0.75 in front), its own radius `size` times its parent's.
+ * away from the eye, z up): its place on it (`OrbitPlace`), its own radius `size` times its
+ * parent's, and how its place is set in the editor (`mode`; none: on its orbit). Whichever way it
+ * is set, its place is kept as an orbit.
  */
-export interface Orbit {
-  readonly radius: number;
-  readonly tilt: number;
-  readonly turn: number;
-  readonly progress: number;
+export interface Orbit extends OrbitPlace {
   readonly size: number;
+  readonly mode?: PlacementMode;
 }
+
+/** What an orbit keeps: its place, its size, and how its place is set. */
+export const ORBIT_KEYS: readonly (keyof Orbit)[] = [
+  'radius',
+  'tilt',
+  'turn',
+  'progress',
+  'size',
+  'mode',
+];
 
 /** A new moon's orbit: in front and to the right, a little tilted, about a quarter its parent's size. */
 export const DEFAULT_ORBIT: Orbit = { radius: 2.4, tilt: 12, turn: 0, progress: 0.9, size: 0.27 };
@@ -155,18 +162,7 @@ export function addMoon(
 }
 
 /** Where a moon is from its parent's centre, in the parent's frame, in the parent's radii. */
-export function orbitOffset(orbit: Orbit): Vec3 {
-  const a = orbit.progress * 2 * Math.PI;
-  const t = (orbit.tilt * Math.PI) / 180;
-  const u = (orbit.turn * Math.PI) / 180;
-  const x = Math.cos(a) * orbit.radius;
-  const y0 = Math.sin(a) * orbit.radius;
-  // Tilted about x: the far side of the circle up.
-  const y = y0 * Math.cos(t);
-  const z = y0 * Math.sin(t);
-  // Turned about the line of sight (y): the tilted circle's long axis turned on the screen.
-  return [x * Math.cos(u) - z * Math.sin(u), y, x * Math.sin(u) + z * Math.cos(u)];
-}
+export { orbitOffset };
 
 /** A body placed in the scene: where, and how big, in the scene's units. */
 export interface PlacedBody {
@@ -223,21 +219,10 @@ export function orbitTo(
 ): Orbit {
   const { axes } = bodyFrame(parent.position, parent.radius, eye);
   const d = sub(body.position, parent.position);
-  const [x, y, z] = [0, 3, 6].map(
+  const at = [0, 3, 6].map(
     (k) => (axes[k]! * d[0] + axes[k + 1]! * d[1] + axes[k + 2]! * d[2]) / parent.radius,
-  ) as [number, number, number];
-  // y0 sin a round the circle (before the tilt): its sign the body's side, nearer or further.
-  const side = y < 0 ? -1 : 1;
-  const y0 = side * Math.hypot(y, z);
-  const tilt = (Math.atan2(side * z, side * y) * 180) / Math.PI;
-  const progress = Math.atan2(y0, x) / (2 * Math.PI);
-  return {
-    radius: Math.hypot(x, y, z),
-    tilt,
-    turn: 0,
-    progress: ((progress % 1) + 1) % 1,
-    size: body.radius / parent.radius,
-  };
+  ) as unknown as Vec3;
+  return { ...orbitThrough(at, 0), size: body.radius / parent.radius };
 }
 
 const sub = (a: Vec3, b: Vec3): Vec3 => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
@@ -464,13 +449,27 @@ export interface GroupPlacement {
 /** The game's camera, by the id a scene's cameras know it by (first among them, always there). */
 export const GAME_CAMERA = 'game';
 
-/** A camera added to a scene: its name, where it is, the way it looks, its field of view. */
+/**
+ * How a camera's place is set in the editor: about one of its scene's planets (by its place among
+ * them), one way or another (`PlacementMode`, in the planet's radii, along the scene's axes: x
+ * across, y away, z up), with the turn of the orbit it is on (none: 0). None: in the scene's own
+ * space. Whichever way it is set, its place is kept as its eye: it stays where it is if the
+ * planet moves.
+ */
+export interface CameraPlacement {
+  readonly about: number;
+  readonly mode: PlacementMode;
+  readonly turn?: number;
+}
+
+/** A camera added to a scene: its name, where it is, the way it looks, its field of view, how its place is set. */
 export interface AddedCamera {
   readonly id: `camera-${string}`;
   readonly name: string;
   readonly eye: Vec3;
   readonly forward: Vec3;
   readonly fovY: number;
+  readonly placement?: CameraPlacement;
 }
 
 /** Where a camera added to a scene puts the view (its place, its way of looking, its field of view). */
@@ -506,8 +505,8 @@ export interface PlanetChoices {
   readonly group?: boolean;
   /** The groups put in it, in order. */
   readonly groups?: readonly GroupPlacement[];
-  /** Where it puts the game's camera, over the data's (each where set): where it is, where it looks, its field of view. */
-  readonly camera?: SceneCameraSet;
+  /** Where it puts the game's camera, over the data's (each where set): where it is, where it looks, its field of view; how its place is set. */
+  readonly camera?: SceneCameraSet & { readonly placement?: CameraPlacement };
   /** Cameras added to it (a scene's; not a group's), in order. */
   readonly cameras?: readonly AddedCamera[];
   /** The camera it is shown through, by id: one added (none: the game's). */

@@ -23,6 +23,7 @@ import {
   type AddedCamera,
   type BodyPath,
   type BodySettings,
+  type CameraPlacement,
   cameraSetOf,
   fitRadius,
   GAME_CAMERA,
@@ -52,7 +53,7 @@ import {
   forwardOf,
 } from '../../../scenes/play-background/scene-camera';
 import type { LightAid } from '../../../scenes/play-background/scene-beams';
-import type { CameraValues } from './camera-properties';
+import type { CameraPlaced, CameraPlanet, CameraValues } from './camera-properties';
 import type { SceneMarker } from './scene-markers';
 import type { AddedItem, AddedLists } from './added-list';
 import {
@@ -369,6 +370,8 @@ export interface CameraEntry {
   readonly name: string;
   readonly set: SceneCameraSet;
   readonly game: boolean;
+  /** How its place is set (none: in the scene's own space). */
+  readonly placement?: CameraPlacement;
 }
 
 /**
@@ -570,12 +573,19 @@ export const SceneEditorStore = signalStore(
         if (random() || groupOpen()) return [];
         const c = choices();
         return [
-          { id: GAME_CAMERA, name: 'Game camera', set: c.camera ?? {}, game: true },
+          {
+            id: GAME_CAMERA,
+            name: 'Game camera',
+            set: without(c.camera, ['placement']) ?? {},
+            game: true,
+            ...(c.camera?.placement ? { placement: c.camera.placement } : {}),
+          },
           ...(c.cameras ?? []).map((a) => ({
             id: a.id,
             name: a.name,
             set: cameraSetOf(a),
             game: false,
+            ...(a.placement ? { placement: a.placement } : {}),
           })),
         ];
       });
@@ -742,6 +752,13 @@ export const SceneEditorStore = signalStore(
           const t = targetOf(selected());
           return t.kind === 'camera' ? (cameraList().find((c) => c.id === t.id) ?? null) : null;
         }),
+        /** The scene's planets a camera may be placed about, in order: each named, where it is, how big. */
+        cameraPlanets: computed((): readonly CameraPlanet[] =>
+          sceneBodiesNow().map((p, i) => {
+            const b = bodyByKey().get(bodyKey([i]));
+            return { label: b ? bodyLabel(b) : p.id, position: p.position, radius: p.radius };
+          }),
+        ),
         /** The selected camera as its panel shows it: where it is, its turn and tilt, its field of view. */
         cameraValues: computed((): CameraValues | null => {
           const t = targetOf(selected());
@@ -1779,10 +1796,15 @@ export const SceneEditorStore = signalStore(
       });
     };
     /** One of the scene's cameras moved or set: the game's over the data's, one added as it is. */
-    const changeCamera = (id: string, set: SceneCameraSet) => {
+    const changeCamera = (id: string, set: SceneCameraSet & { placement?: CameraPlacement }) => {
       if (id === GAME_CAMERA) {
-        const game = store.cameraList().find((c) => c.id === GAME_CAMERA)?.set;
-        d.setSceneCamera(store.scene(), { ...game, ...set });
+        const game = store.cameraList().find((c) => c.id === GAME_CAMERA);
+        const placement = 'placement' in set ? set.placement : game?.placement;
+        d.setSceneCamera(store.scene(), {
+          ...game?.set,
+          ...without(set, ['placement']),
+          ...(placement ? { placement } : {}),
+        });
       } else
         d.setSceneCameras(
           store.scene(),
@@ -1851,6 +1873,11 @@ export const SceneEditorStore = signalStore(
             : {}),
           ...(change.fovY !== undefined ? { fovY: fieldOfView(change.fovY) } : {}),
         });
+      },
+      /** The selected camera placed (about a planet, or in the scene's own space): where it is now, how it is set. */
+      setCameraPlacement(change: CameraPlaced): void {
+        const c = store.selectedCamera();
+        if (c) changeCamera(c.id, { eye: change.eye, placement: change.placement });
       },
       /** The game's camera, selected, back where the game puts it. */
       resetCamera(): void {

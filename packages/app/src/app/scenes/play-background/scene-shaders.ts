@@ -210,6 +210,14 @@ vec3 skyLight(vec3 n, float spread) {
 // the sky round the body (4) by how far the point faces away from the eye (none facing it
 // squarely, all at the edge and behind, to the power of its softness: the sky lights the body's
 // edges, its colour there read by skyLight).
+// How much of a spot's cone a point along its aim (the cosine) is in: all of it in to where its
+// fade starts (cone.y, its Edge in from its edge), falling off to nothing at its edge (cone.x),
+// faster the higher its softness; a cone with no edge to fade over: cut at its edge (smoothstep's
+// result is undefined where its edges meet).
+float coneEdge(vec4 cone, float along, float softness) {
+  float within = cone.y > cone.x ? smoothstep(cone.x, cone.y, along) : step(cone.x, along);
+  return pow(within, softness);
+}
 float reachOf(int kind, vec3 dir, vec3 pos, float fade, vec3 aim, vec4 cone, float softness, float wrap, vec3 n, vec3 p, out vec3 to) {
   if (kind == 0) {
     to = -normalize(dir);
@@ -240,33 +248,42 @@ float reachOf(int kind, vec3 dir, vec3 pos, float fade, vec3 aim, vec4 cone, flo
   vec3 d = pos - p;
   float dist = max(length(d), 1e-6);
   to = d / dist;
-  float strength = pow(clamp((dot(n, to) + wrap) / (1.0 + wrap), 0.0, 1.0), softness) / (1.0 + dist * dist / (fade * fade));
-  // (A spot's cone with no edge to fade over: cut at its edge; smoothstep's result is undefined
-  // where its edges meet.)
-  if (kind == 2) strength *= cone.y > cone.x ? smoothstep(cone.x, cone.y, dot(-to, aim)) : step(cone.x, dot(-to, aim));
+  float facing = clamp((dot(n, to) + wrap) / (1.0 + wrap), 0.0, 1.0);
+  // (A spot: its softness is its cone's, below, not its facing's.)
+  float strength = (kind == 2 ? facing : pow(facing, softness)) / (1.0 + dist * dist / (fade * fade));
+  if (kind == 2) strength *= coneEdge(cone, dot(-to, aim), softness);
   return strength;
 }
 #if GRID
-// How much a grid's reveal or activation reaches here, 0 to 1: as the same light would reach a
-// body (reachOf: from a side, wrapped round by its wrap, 0 the half facing it, 1 on round to the
-// point facing away, and sharpened by its falloff; from a point, a spot, above and below, the sky
-// or the rim likewise). Times its strength (more than 1 reaches further fully), what it reaches
-// never comes out even: its side and its falloff always tell.
-float fieldOf(int kind, vec3 from, float wrap, float falloff, vec3 pos, float fade, vec3 aim, vec4 cone) {
+// How much a grid's reveal or activation reaches here: as the same light would reach a body
+// (reachOf: from a side, wrapped round by its wrap, 0 the half facing it, 1 on round to the
+// point facing away, and sharpened by its falloff; from a point, above and below, the sky or the
+// rim likewise), times its strength (more than 1 reaches further fully); what it reaches never
+// comes out even: its side and its falloff always tell (one that darkens: taken away). A spot:
+// its cone alone shapes what it reaches (coneEdge: full in to where its fade starts, off at its
+// edge, its softness how fast); its strength, how squarely the grid faces it and how far it is
+// (Strength, Wrap, Reach) say how fully, up to full, so a strong spot fills its cone without
+// hardening its edge.
+float fieldOf(int kind, vec3 from, float wrap, float falloff, vec3 pos, float fade, vec3 aim, vec4 cone, float strength) {
   // From all round: all of it alike.
-  if (kind == 0 && dot(from, from) == 0.0) return 1.0;
+  if (kind == 0 && dot(from, from) == 0.0) return strength;
   vec3 n = normalize(vNormal);
   vec3 to;
+  if (kind == 2) {
+    float within = reachOf(kind, -from, pos, fade, aim, vec4(-1.0), falloff, wrap, n, vWorld, to);
+    float edge = coneEdge(cone, dot(-to, aim), falloff);
+    return edge * sign(strength) * min(1.0, abs(strength) * within);
+  }
   float r = reachOf(kind, -from, pos, fade, aim, cone, falloff, wrap, n, vWorld, to);
   // (The sky round the body: by how bright the sky beyond the rim is that way.)
   if (kind == 4) r *= dot(skyLight(n, fade), vec3(0.2126, 0.7152, 0.0722));
-  return r;
+  return strength * r;
 }
 float revealAt(int i) {
-  return fieldOf(uRevealKind[i], uRevealFrom[i], uRevealSpread[i], uRevealFalloff[i], uRevealPos[i], uRevealFade[i], uRevealAim[i], uRevealCone[i]);
+  return fieldOf(uRevealKind[i], uRevealFrom[i], uRevealSpread[i], uRevealFalloff[i], uRevealPos[i], uRevealFade[i], uRevealAim[i], uRevealCone[i], uRevealStrength[i]);
 }
 float activationAt(int i) {
-  return fieldOf(uActivationKind[i], uActivationFrom[i], uActivationSpread[i], uActivationFalloff[i], uActivationPos[i], uActivationFade[i], uActivationAim[i], uActivationCone[i]);
+  return fieldOf(uActivationKind[i], uActivationFrom[i], uActivationSpread[i], uActivationFalloff[i], uActivationPos[i], uActivationFade[i], uActivationAim[i], uActivationCone[i], uActivationStrength[i]);
 }
 // How active a grid is here: its activations added up (0 to 1), each times its strength (one
 // that darkens taking away).
@@ -274,7 +291,7 @@ float activation() {
   float a = 0.0;
   for (int i = 0; i < MAX_FIELDS; i++) {
     if (i >= uActivationCount) break;
-    a += uActivationStrength[i] * activationAt(i);
+    a += activationAt(i);
   }
   return clamp(a, 0.0, 1.0);
 }
@@ -284,7 +301,7 @@ float activeGlow() {
   float g = 0.0;
   for (int i = 0; i < MAX_FIELDS; i++) {
     if (i >= uActivationCount) break;
-    g += uActivationGlow[i] * min(uActivationStrength[i] * activationAt(i), 1.0);
+    g += uActivationGlow[i] * min(activationAt(i), 1.0);
   }
   return max(g, 0.0);
 }
@@ -294,10 +311,10 @@ float revealed() {
   float sum = 0.0;
   for (int i = 0; i < MAX_FIELDS; i++)
     if (i < uRevealCount)
-      sum += uRevealStrength[i] * revealAt(i);
+      sum += revealAt(i);
   for (int i = 0; i < MAX_FIELDS; i++)
     if (i < uActivationCount)
-      sum += uActivationEnergy[i] * uActivationStrength[i] * activationAt(i);
+      sum += uActivationEnergy[i] * activationAt(i);
   return clamp(sum, 0.0, 1.0);
 }
 #endif
@@ -433,9 +450,11 @@ void shade() {
   }
 #endif
 #if GRID
-  // A grid's lights say how much of it shows (its reveal) and in what colour; its Glow comes
-  // after: up to 1 it dims the look, past 1 it only blooms (past), revealing nothing more.
-  float reveal = uRevealed ? revealed() : 1.0;
+  // A grid's lights say how much of it shows (its reveal, as the eye sees it: half revealed
+  // looks half as bright, so a light's fall-off reads across its reach) and in what colour; its
+  // Glow comes after: up to 1 it dims the look, past 1 it only blooms (past), revealing nothing
+  // more.
+  float reveal = uRevealed ? pow(revealed(), 2.2) : 1.0;
   float past = uRevealed ? max(uEmissiveMult - 1.0, 0.0) : 0.0;
   vec3 glow = emissive.rgb * (uRevealed ? min(uEmissiveMult, 1.0) : uEmissiveMult);
   // A grid shines brighter, and blooms more, where its glowing activation activates it.

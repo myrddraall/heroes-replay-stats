@@ -46,7 +46,6 @@ import {
   type AddedPart,
 } from '../../scenes/play-background/created-overlays';
 import { withOverlayParts } from './editor/part-hosts';
-import type { SceneCameraSet } from '../../scenes/play-background/play-scene';
 import { withDesignHistory } from './with-design-history';
 import { PublishedDesignStore } from '../../scenes/play-background/published-design.store';
 import type {
@@ -448,7 +447,7 @@ export const DraftDesignStore = signalStore(
         return id;
       },
       /** Where a scene puts the camera, over the game's (none: the game's). */
-      setSceneCamera(id: string, camera: SceneCameraSet | undefined): void {
+      setSceneCamera(id: string, camera: PlanetChoices['camera']): void {
         setScene(id, (p) => ({ ...p, camera }));
       },
       /** The cameras added to a scene (none: none); its primary kept where it is still one of them. */

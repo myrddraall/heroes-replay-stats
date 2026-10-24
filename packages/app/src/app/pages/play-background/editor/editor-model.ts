@@ -31,6 +31,7 @@ import {
   type Vec3,
   without,
   DEFAULT_ORBIT,
+  ORBIT_KEYS,
 } from '../../../scenes/play-background/background-scene';
 import { keyLightFrom, TOWARDS_EYE } from '../../../scenes/play-background/scene-directions';
 import {
@@ -1246,10 +1247,7 @@ function inheritedChanged(b: BodyInfo): boolean {
   const wears =
     worn !== undefined &&
     (worn.length !== (base_?.length ?? -1) || worn.some((id, i) => id !== base_?.[i]));
-  return (
-    wears ||
-    (Object.keys(DEFAULT_ORBIT) as (keyof Orbit)[]).some((k) => b.orbit![k] !== base.orbit[k])
-  );
+  return wears || ORBIT_KEYS.some((k) => b.orbit![k] !== base.orbit[k]);
 }
 
 /**

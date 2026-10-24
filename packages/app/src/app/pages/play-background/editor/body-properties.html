@@ -59,45 +59,16 @@
   />
 }
 @if (orbit(); as o) {
-  <hrs-property-section title="Orbit" [changed]="orbitSet()" (resetRequested)="resetOrbit()">
-    <hrs-property-number
-      label="Progress"
-      [value]="o.progress"
-      [min]="0"
-      [max]="1"
-      [step]="0.01"
-      [changed]="orbitSet('progress')"
-      (resetRequested)="resetOrbit('progress')"
-      (valueChange)="orbitChange.emit({ progress: $event })"
-    />
-    <hrs-property-number
-      label="Distance"
-      [value]="o.radius"
-      [min]="1"
+  <hrs-property-section title="Place" [changed]="orbitSet()" (resetRequested)="resetOrbit()">
+    <hrs-property-placement
+      [mode]="o.mode ?? 'orbit'"
+      [position]="moonPosition()"
+      [turn]="o.turn"
+      [orbitPlace]="o"
       [step]="0.05"
-      [changed]="orbitSet('radius')"
-      (resetRequested)="resetOrbit('radius')"
-      (valueChange)="orbitChange.emit({ radius: $event })"
-    />
-    <hrs-property-number
-      label="Tilt"
-      [value]="o.tilt"
-      [min]="-90"
-      [max]="90"
-      [step]="1"
-      [changed]="orbitSet('tilt')"
-      (resetRequested)="resetOrbit('tilt')"
-      (valueChange)="orbitChange.emit({ tilt: $event })"
-    />
-    <hrs-property-number
-      label="Turn"
-      [value]="o.turn"
-      [min]="-180"
-      [max]="180"
-      [step]="1"
-      [changed]="orbitSet('turn')"
-      (resetRequested)="resetOrbit('turn')"
-      (valueChange)="orbitChange.emit({ turn: $event })"
+      [changed]="placeSet()"
+      (resetRequested)="resetOrbit(placeKeys)"
+      (placeChange)="placeMoon($event)"
     />
     <hrs-property-number
       label="Size"
@@ -105,7 +76,7 @@
       [min]="0.01"
       [step]="0.01"
       [changed]="orbitSet('size')"
-      (resetRequested)="resetOrbit('size')"
+      (resetRequested)="resetOrbit(['size'])"
       (valueChange)="orbitChange.emit({ size: $event })"
     />
   </hrs-property-section>

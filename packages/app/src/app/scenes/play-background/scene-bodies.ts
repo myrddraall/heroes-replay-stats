@@ -7,6 +7,7 @@ import {
   changeMoon,
   DEFAULT_ORBIT,
   moonAt,
+  ORBIT_KEYS,
   type MoonChoices,
   type MoonOverride,
   type Orbit,
@@ -246,8 +247,7 @@ const sameList = (a: readonly string[] | undefined, b: readonly string[] | undef
 /** The orbit's values that differ from a base's (none: none). */
 function orbitOver(orbit: Orbit, base: Orbit): Partial<Orbit> | undefined {
   const out: { -readonly [K in keyof Orbit]?: Orbit[K] } = {};
-  for (const k of Object.keys(DEFAULT_ORBIT) as (keyof Orbit)[])
-    if (orbit[k] !== base[k]) out[k] = orbit[k];
+  for (const k of ORBIT_KEYS) if (orbit[k] !== base[k]) Object.assign(out, { [k]: orbit[k] });
   return Object.keys(out).length ? out : undefined;
 }
 

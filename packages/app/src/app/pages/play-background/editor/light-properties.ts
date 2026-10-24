@@ -11,6 +11,7 @@ import { PropertyCheck } from '../properties/property-check';
 import { PropertyColour } from '../properties/property-colour';
 import { PropertyDirection } from '../properties/property-direction';
 import { PropertyNumber } from '../properties/property-number';
+import { type PlacementChange, PropertyPlacement } from '../properties/property-placement';
 import { type PropertyOption, PropertySelect } from '../properties/property-select';
 import { PropertySection } from '../properties/property-section';
 import { PropertyText } from '../properties/property-text';
@@ -26,6 +27,8 @@ const LIGHT_KEYS: readonly (keyof LightSettings)[] = [
   'specular',
   'specularStrength',
   'position',
+  'placement',
+  'orbitTurn',
   'fade',
   'lookAt',
   'aim',
@@ -75,6 +78,7 @@ const REACH_MODES: readonly PropertyOption[] = [
     PropertyText,
     PropertySelect,
     PropertyCheck,
+    PropertyPlacement,
   ],
   templateUrl: './light-properties.html',
   styleUrl: './properties-panel.scss',
@@ -144,7 +148,7 @@ export class LightProperties {
     const k = this.light().light.kind;
     return k === 'directional' || k === 'point' || k === 'spot';
   });
-  /** Whether it falls off round the body (a softness): one with a shine, an environment light or a rim light. */
+  /** Whether it falls off across what it reaches (a Drop off): one with a shine, an environment light or a rim light. */
   protected readonly sided = computed(() => {
     const k = this.light().light.kind;
     return this.shiny() || k === 'environment' || k === 'rim';
@@ -193,10 +197,13 @@ export class LightProperties {
     this.settingsChange.emit({ lookAt: { kind: 'free', direction } });
   }
 
-  /** A point or spot light moved along one axis of its body's frame (0 across, 1 towards the eye, 2 up). */
-  protected move(axis: 0 | 1 | 2, value: number): void {
-    const position: [number, number, number] = [...(this.light().light.position ?? [0, 0, 0])];
-    position[axis] = axis === 1 ? -value : value;
-    this.settingsChange.emit({ position });
+  /** A point or spot light placed: where it is, how it is set, the turn of the orbit it is on (where it changed). */
+  protected place(change: PlacementChange): void {
+    const l = this.light().light;
+    this.settingsChange.emit({
+      position: change.position,
+      ...(change.mode ? { placement: change.mode } : {}),
+      ...(change.orbit.turn !== (l.orbitTurn ?? 0) ? { orbitTurn: change.orbit.turn } : {}),
+    });
   }
 }

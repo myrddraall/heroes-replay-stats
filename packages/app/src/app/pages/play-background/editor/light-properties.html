@@ -69,32 +69,14 @@
     />
   }
   @if (l.position; as at) {
-    <hrs-property-number
-      label="Across"
-      [value]="at[0]"
-      [step]="0.1"
-      [changed]="isSet('position')"
+    <hrs-property-placement
+      [mode]="l.placement ?? 'free'"
+      [position]="at"
+      [turn]="l.orbitTurn ?? 0"
+      [changed]="isSet('position') || isSet('placement')"
       [origin]="entry.origins.position"
-      (resetRequested)="clear.emit(['position'])"
-      (valueChange)="move(0, $event)"
-    />
-    <hrs-property-number
-      label="Towards"
-      [value]="-at[1]"
-      [step]="0.1"
-      [changed]="isSet('position')"
-      [origin]="entry.origins.position"
-      (resetRequested)="clear.emit(['position'])"
-      (valueChange)="move(1, $event)"
-    />
-    <hrs-property-number
-      label="Up"
-      [value]="at[2]"
-      [step]="0.1"
-      [changed]="isSet('position')"
-      [origin]="entry.origins.position"
-      (resetRequested)="clear.emit(['position'])"
-      (valueChange)="move(2, $event)"
+      (resetRequested)="clear.emit(['position', 'placement', 'orbitTurn'])"
+      (placeChange)="place($event)"
     />
   }
   @if (l.position || l.kind === 'environment' || l.kind === 'rim') {
@@ -177,7 +159,7 @@
   }
   @if (sided()) {
     <hrs-property-number
-      label="Softness"
+      label="Drop off"
       [value]="l.softness ?? 1"
       [min]="0.1"
       [step]="0.05"

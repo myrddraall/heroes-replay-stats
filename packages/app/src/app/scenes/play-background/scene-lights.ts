@@ -1,4 +1,5 @@
 import { aimOf, type LookAt } from './look-at';
+import type { PlacementMode } from './placement';
 import { lightFrom, normalized, rimTurn, type Vec3 } from './scene-directions';
 
 export { aimAtMiddle } from './look-at';
@@ -118,6 +119,13 @@ export interface LightSettings {
   readonly specularStrength?: number;
   /** A point or spot light's place, in its body's frame, in its radii (x across, y away from the eye, z up). */
   readonly position?: Vec3;
+  /**
+   * How a point or spot light's place is set in the editor (none: free), and the turn of the
+   * orbit it is on (kept as it moves, so its orbit stays where it was set; none: 0). Its place is
+   * always kept as `position`.
+   */
+  readonly placement?: PlacementMode;
+  readonly orbitTurn?: number;
   /**
    * How far a point or spot light reaches, in its body's radii: at this distance it is half as
    * strong. An environment light's: how far out from the body's edge the sky is read, in its radii.
@@ -283,6 +291,8 @@ export function addedLight(light: AddedLight, settings?: LightSettings): BodyLig
     ...(light.kind === 'point' || light.kind === 'spot'
       ? {
           position: s.position ?? (light.kind === 'spot' ? NEW_SPOT_POSITION : NEW_POSITION),
+          ...(s.placement ? { placement: s.placement } : {}),
+          ...(s.orbitTurn !== undefined ? { orbitTurn: s.orbitTurn } : {}),
           fade: s.fade ?? NEW_FADE,
           softness: s.softness ?? 1,
           specular: s.specular ?? '#ffffff',
@@ -333,6 +343,8 @@ export interface BodyLight {
   readonly specularStrength?: number;
   /** A point or spot light's (see `LightSettings`); `fade` an environment light's too. */
   readonly position?: Vec3;
+  readonly placement?: PlacementMode;
+  readonly orbitTurn?: number;
   readonly fade?: number;
   /** A spot light's (see `LightSettings`). */
   readonly lookAt?: LookAt;

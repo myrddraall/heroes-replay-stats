@@ -5,6 +5,8 @@ import {
   type BodyValues,
   DEFAULT_ORBIT,
   type Orbit,
+  ORBIT_KEYS,
+  orbitOffset,
   type Vec3,
 } from '../../../scenes/play-background/background-scene';
 import {
@@ -16,6 +18,7 @@ import { PropertySection } from '../properties/property-section';
 import { TintSection } from './tint-section';
 import { PickList, type PickChoice } from './pick-list';
 import { PropertyNumber } from '../properties/property-number';
+import { type PlacementChange, PropertyPlacement } from '../properties/property-placement';
 import { PropertyText } from '../properties/property-text';
 
 /**
@@ -34,6 +37,7 @@ import { PropertyText } from '../properties/property-text';
     PickList,
     PropertyDirection,
     PropertyText,
+    PropertyPlacement,
   ],
   templateUrl: './body-properties.html',
   styleUrl: './properties-panel.scss',
@@ -113,7 +117,7 @@ export class BodyProperties {
     const orbit = this.orbit();
     if (!orbit) return false;
     const base = this.orbitBase();
-    const fields = field ? [field] : (Object.keys(DEFAULT_ORBIT) as (keyof Orbit)[]);
+    const fields = field ? [field] : ORBIT_KEYS;
     return fields.some((f) => orbit[f] !== base[f]);
   }
 
@@ -126,10 +130,31 @@ export class BodyProperties {
     this.placeChange.emit({ position });
   }
 
-  /** Its orbit (or one part of it) back to what is under the level edited. */
-  protected resetOrbit(field?: keyof Orbit): void {
+  /** Its orbit (or some of it) back to what is under the level edited. */
+  protected resetOrbit(fields: readonly (keyof Orbit)[] = ORBIT_KEYS): void {
     const base = this.orbitBase();
-    this.orbitChange.emit(field ? { [field]: base[field] } : base);
+    this.orbitChange.emit(Object.fromEntries(fields.map((f) => [f, base[f]])));
+  }
+
+  /** How a moon is placed: what keeps its place (not its size). */
+  protected readonly placeKeys: readonly (keyof Orbit)[] = [
+    'radius',
+    'tilt',
+    'turn',
+    'progress',
+    'mode',
+  ];
+  /** Whether a moon's place (or how it is set) is other than under the level edited. */
+  protected readonly placeSet = computed(() => this.placeKeys.some((k) => this.orbitSet(k)));
+  /** Where a moon is from its parent's middle. */
+  protected readonly moonPosition = computed(() => {
+    const o = this.orbit();
+    return o ? orbitOffset(o) : ([0, 0, 0] as const);
+  });
+
+  /** A moon placed: its orbit through where it is now (its turn kept), and how it is set. */
+  protected placeMoon(change: PlacementChange): void {
+    this.orbitChange.emit({ ...change.orbit, ...(change.mode ? { mode: change.mode } : {}) });
   }
 
   /** A point on the face mirrored through its centre, on the same side: a lean and the side it is bright on. */
