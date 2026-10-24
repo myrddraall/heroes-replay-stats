@@ -41,6 +41,10 @@
     <mat-icon class="material-symbols-outlined" aria-hidden="true">photo_camera</mat-icon>
     <span>Screenshot mode</span>
   </button>
+  <button mat-menu-item type="button" (click)="openSettings()">
+    <mat-icon class="material-symbols-outlined" aria-hidden="true">tune</mat-icon>
+    <span>Settings…</span>
+  </button>
   <button mat-menu-item type="button" (click)="ui.confirmReset(true)">
     <mat-icon class="material-symbols-outlined" aria-hidden="true">restart_alt</mat-icon>
     <span>{{ editor.resetAllLabel() }}…</span>

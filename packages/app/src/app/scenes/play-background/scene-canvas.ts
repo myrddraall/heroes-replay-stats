@@ -17,7 +17,8 @@ import { DEFAULT_DRAWING } from './background.store';
 import { beyondEdge } from './planet-sets';
 import type { LoadedPlayScene, SceneCameraSet } from './play-scene';
 import type { SkySettings } from './scene-planets';
-import { type Backdrop, type PlanetPlacement, SceneRenderer } from './scene-renderer';
+import type { Backdrop, PlanetPlacement } from './scene-space';
+import { BACKGROUND_RENDERER, type BackgroundRenderer, type BackgroundRendererFactory } from './background-renderer';
 import { NO_TINT, sameTint, type Tint } from './scene-tints';
 
 /** Device pixels per CSS pixel at most: past this the extra sharpness isn't worth the fill rate. */
@@ -112,7 +113,8 @@ const sameLabels = (a: readonly Label[], b: readonly Label[]) =>
  * It is always first drawn untinted, and fades into `tint`. The planets up are `placements`;
  * a new set is flown to while it animates (the camera turns, the planets slide out and the new
  * ones in, the stars streak), or cross-faded to where it doesn't. The sky's materials show as
- * `sky` says. Without WebGL 2 it stays empty: the element's own background shows.
+ * `sky` says. Where the browser has neither WebGPU nor WebGL 2 it stays empty: the element's own
+ * background shows.
  */
 @Component({
   selector: 'hrs-scene-canvas',
@@ -178,6 +180,8 @@ export class SceneCanvas {
   private readonly host: HTMLElement = inject(ElementRef).nativeElement;
   /** The frames' stats, timed while anything shows them. */
   private readonly frameStats = inject(FrameStats);
+  /** What makes its renderer (a new canvas and renderer each time it changes: see the template). */
+  protected readonly makeRenderer = inject(BACKGROUND_RENDERER);
   private running?: Running;
 
   constructor() {
@@ -228,7 +232,8 @@ export class SceneCanvas {
       const loaded = this.scene();
       const canvas = this.canvas().nativeElement;
       const previous = this.previous().nativeElement;
-      untracked(() => this.run(loaded, canvas, previous, onCleanup));
+      const make = this.makeRenderer();
+      untracked(() => this.run(loaded, canvas, previous, make, onCleanup));
     });
   }
 
@@ -249,11 +254,12 @@ export class SceneCanvas {
     loaded: LoadedPlayScene,
     canvas: HTMLCanvasElement,
     previous: HTMLCanvasElement,
+    make: BackgroundRendererFactory,
     onCleanup: (cleanup: () => void) => void,
   ): void {
-    let renderer: SceneRenderer;
+    let renderer: BackgroundRenderer;
     try {
-      renderer = new SceneRenderer(canvas, loaded);
+      renderer = make(canvas, loaded);
     } catch (error) {
       console.warn('the background scene is not drawn:', error);
       return;
@@ -272,7 +278,22 @@ export class SceneCanvas {
     let fly: Fly | undefined;
     let flights = 0;
 
+    /** A frame asked for while the renderer is still settling (see `settle`). */
+    let settling = 0;
+    /**
+     * While the renderer is still compiling or baking, a frame each animation frame until it is
+     * done, animating or not: a scene that doesn't move would otherwise never show what was still
+     * compiling when it was last drawn.
+     */
+    const settle = () => {
+      if (settling || !renderer.settling) return;
+      settling = requestAnimationFrame(() => {
+        settling = 0;
+        draw();
+      });
+    };
     const draw = () => {
+      settle();
       const timed = this.frameStats.watching();
       renderer.timing = timed;
       const start = timed ? performance.now() : 0;
@@ -505,6 +526,7 @@ export class SceneCanvas {
       this.running = undefined;
       this.pickAt = undefined;
       cancelAnimationFrame(frame);
+      cancelAnimationFrame(settling);
       crossFade?.cancel();
       sized.disconnect();
       seen.disconnect();

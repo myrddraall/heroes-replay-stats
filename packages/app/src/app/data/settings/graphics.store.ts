@@ -31,6 +31,12 @@ export interface GraphicsQuality {
 export type GraphicsTheme = 'neutral' | 'nexus';
 /** The background's colour: the one chosen, or a preset at random or the next one, each page. */
 export type ColourMode = 'fixed' | 'random' | 'in-turn';
+/**
+ * What the background draws with: the best the browser has (`auto`: see `BACKGROUND_RENDERER`),
+ * WebGPU (WebGL 2 where the browser has no WebGPU), or WebGL 2.
+ */
+export type GraphicsApi = 'auto' | 'webgpu' | 'webgl2';
+export const GRAPHICS_APIS: readonly GraphicsApi[] = ['auto', 'webgpu', 'webgl2'];
 
 export interface GraphicsSettings extends GraphicsQuality {
   readonly theme: GraphicsTheme;
@@ -41,6 +47,8 @@ export interface GraphicsSettings extends GraphicsQuality {
   readonly glassAlpha: number;
   /** How see-through the frame is (the menu and the header). */
   readonly frameAlpha: number;
+  /** What the background draws with. */
+  readonly api: GraphicsApi;
 }
 
 export const QUALITIES = ['low', 'medium', 'high', 'ultra', 'extreme'] as const;
@@ -77,6 +85,7 @@ export const DEFAULT_GRAPHICS: GraphicsSettings = {
   colour: PRESETS[0]!.id,
   glassAlpha: 0.5,
   frameAlpha: 0.55,
+  api: 'auto',
 };
 
 const QUALITY_KEYS = Object.keys(QUALITY_PRESETS.high) as (keyof GraphicsQuality)[];
@@ -113,6 +122,7 @@ function valid(saved: Partial<Record<keyof GraphicsSettings, unknown>>): Partial
     colour: oneOf(saved.colour, PRESETS.map((p) => p.id)),
     glassAlpha: number(saved.glassAlpha, GLASS_ALPHA_RANGE, 0.01),
     frameAlpha: number(saved.frameAlpha, GLASS_ALPHA_RANGE, 0.01),
+    api: oneOf(saved.api, GRAPHICS_APIS),
   };
   return Object.fromEntries(
     Object.entries(chosen).filter(([, v]) => v !== undefined),

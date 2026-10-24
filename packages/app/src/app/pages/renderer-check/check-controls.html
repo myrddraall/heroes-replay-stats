@@ -1,0 +1,18 @@
+<p class="actions">
+  <button type="button" [disabled]="phase() === 'running'" (click)="start.emit()">
+    {{ phase() === 'idle' ? 'Start the check' : 'Run it again' }}
+  </button>
+  @if (hasResults()) {
+    <button type="button" (click)="copyResults.emit()">{{ copyLabel() }}</button>
+  }
+</p>
+<p role="status">
+  @switch (phase()) {
+    @case ('running') {
+      Running: {{ step() }}. Keep this window in view until it is done.
+    }
+    @case ('done') {
+      Done.
+    }
+  }
+</p>

@@ -38,7 +38,7 @@ import {
   type PlanetIndex,
   type SkySettings,
 } from './scene-planets';
-import type { PlanetPlacement } from './scene-renderer';
+import type { PlanetPlacement } from './scene-space';
 import { keepUnchanged } from './stable-placements';
 import { browserColourParser, rendererTint } from './scene-tints';
 import { backgroundTints } from './tint-settings';

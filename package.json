@@ -20,7 +20,8 @@
     "desktop": "pnpm --filter @myrddraall/heroes-replay-stats-desktop dev",
     "generate.analysis-goldens": "pnpm --filter @myrddraall/heroes-replay-stats-analysers goldens:generate",
     "generate.play-background": "heroes-capture ui background -o packages/app/public/backgrounds/play",
-    "serve.maps": "node tools/serve-maps.ts"
+    "serve.maps": "node tools/serve-maps.ts",
+    "serve.reports": "node tools/serve-reports.ts"
   },
   "devDependencies": {
     "@cpdevtools/git-flow": "^1.1.1",

@@ -1,4 +1,4 @@
-import type { PlanetPlacement } from './scene-renderer';
+import type { PlanetPlacement } from './scene-space';
 
 /**
  * Whether two values are the same data: numbers, strings and the like alike, arrays and plain

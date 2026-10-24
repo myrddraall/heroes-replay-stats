@@ -8,6 +8,7 @@ import {
 } from '@angular/router';
 import { provideHeroData } from './data/heroes/hero-data';
 import { provideReplayDb } from './data/import/provide-replay-db';
+import { DEV_REPORTS_URL } from './platform/dev-reports';
 import { providePlatform } from './platform/provide-platform';
 import { provideSiteBackground } from './scenes/play-background/provide-site-background';
 import { routes } from './app.routes';
@@ -22,6 +23,7 @@ function onBackgroundPage(route: ActivatedRouteSnapshot | null): boolean {
 export const appConfig: ApplicationConfig = {
   providers: [
     { provide: MAP_PACKS_URL, useValue: environment.mapPacksUrl },
+    { provide: DEV_REPORTS_URL, useValue: environment.devReportsUrl },
     provideBrowserGlobalErrorListeners(),
     provideRouter(
       routes,

@@ -31,7 +31,7 @@ import {
   wornParts,
 } from './scene-planets';
 import { wornKey } from './overlays';
-import { reach } from './scene-renderer';
+import { reach } from './scene-space';
 import type { AddedLight, LightId, LightSettings } from './scene-lights';
 import type { PlanetSet, SetPlanet } from './planet-sets';
 

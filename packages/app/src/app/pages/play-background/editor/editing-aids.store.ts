@@ -8,7 +8,7 @@ import {
   withState,
 } from '@ngrx/signals';
 import { withLocalStorage } from '../../../data/store-features/with-local-storage';
-import type { Backdrop } from '../../../scenes/play-background/scene-renderer';
+import type { Backdrop } from '../../../scenes/play-background/scene-space';
 import type { LightSettingsMap } from '../../../scenes/play-background/scene-lights';
 import { forgetReference, keepReference, loadReference } from './reference-image';
 

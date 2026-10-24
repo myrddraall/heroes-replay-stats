@@ -89,6 +89,22 @@ describe('GraphicsStore', () => {
     expect(again.colour()).toBe('gold');
   });
 
+  it('draws with the best API until another is chosen, remembers it, and keeps it through presets', () => {
+    const store = TestBed.inject(GraphicsStore);
+    expect(store.api()).toBe('auto');
+    store.set({ api: 'webgl2' });
+    store.setQuality('low');
+    expect(store.api()).toBe('webgl2');
+    expect(JSON.parse(localStorage.getItem(GRAPHICS_STORAGE_KEY)!)).toEqual({ api: 'webgl2' });
+    TestBed.resetTestingModule();
+    accelerated();
+    expect(TestBed.inject(GraphicsStore).api()).toBe('webgl2');
+    localStorage.setItem(GRAPHICS_STORAGE_KEY, JSON.stringify({ api: 'vulkan' }));
+    TestBed.resetTestingModule();
+    accelerated();
+    expect(TestBed.inject(GraphicsStore).api()).toBe('auto');
+  });
+
   it('ignores broken storage and values that are not values', () => {
     localStorage.setItem(
       GRAPHICS_STORAGE_KEY,
