@@ -77,6 +77,12 @@ export function editBackgroundMatcher(segments: UrlSegment[]): UrlMatchResult | 
 }
 
 export const routes: Routes = [
+  // Both renderers drawing the site's background at once, their pictures compared.
+  {
+    path: 'renderer-check',
+    title: 'Renderer check · Heroes Replay Stats',
+    loadComponent: () => import('./pages/renderer-check/renderer-check-page').then((m) => m.RendererCheckPage),
+  },
   // A page of its own, filling the window without the shell.
   {
     matcher: editBackgroundMatcher,

@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import {
-  bodyExtent,
-  layerBrightness,
-  partsExtent,
-  projectionMatrix,
-  viewMatrix,
-} from './scene-renderer';
+import { layerBrightness } from './draw-uniforms';
+import { bodyExtent, partsExtent, projectionMatrix, viewMatrix } from './scene-space';
 import type { BodyPart } from './scene-planets';
 
 /** A point through a column-major matrix, divided by w: normalized device coordinates. */

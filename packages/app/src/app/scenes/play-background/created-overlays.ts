@@ -17,7 +17,7 @@ import {
   type PlanetFile,
   planeMapping,
 } from './scene-planets';
-import { V_SAMPLES } from './scene-renderer';
+import { V_SAMPLES } from './scene-limits';
 
 /**
  * Parts made in the editor: an overlay's (kept in the design's library, by an id starting

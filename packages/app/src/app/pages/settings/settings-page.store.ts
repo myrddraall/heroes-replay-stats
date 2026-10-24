@@ -15,7 +15,7 @@ import {
 } from '../../data/settings/settings.store';
 import { injectPlatform } from '../../platform/platform';
 
-/** {@link SettingsPage}'s component store: the settings, the Graphics ones, and this device and app. */
+/** {@link SettingsPanel}'s component store: the settings, the Graphics ones, and this device and app. */
 export const SettingsPageStore = signalStore(
   withProps(() => {
     const cores = deviceCores() ?? null;

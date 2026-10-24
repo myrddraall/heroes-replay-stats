@@ -15,7 +15,7 @@ import {
   type PartMapping,
   type PlanetLight,
 } from './scene-planets';
-import { MAX_FIELDS, MAX_LIGHTS, MAX_SHADES, V_SAMPLES } from './scene-shaders';
+import { MAX_FIELDS, MAX_LIGHTS, MAX_SHADES, V_SAMPLES } from './scene-limits';
 import { BLEND_MODES, parseCanvasColour } from './scene-tints';
 import type { UniformSet } from './scene-uniforms';
 
@@ -334,7 +334,7 @@ export function mappingUniforms(u: UniformSet, name: string, mapping: PartMappin
 
 /**
  * A body's part's shape, mappings and colour, for the body shader, as far as they don't depend on
- * where it is seen from (a ring's size does: see `SceneRenderer`).
+ * where it is seen from (a ring's size does: set as its body is baked, by `ringScale`).
  */
 export function partUniforms(u: UniformSet, part: BodyPart): void {
   const { shape } = part;

@@ -2,7 +2,7 @@ import type { MaterialSettingsMap, MaterialTint, PartSettingsMap } from './scene
 import type { AddedLight, LightSettingsMap } from './scene-lights';
 import type { AddedPart } from './created-overlays';
 import type { SceneCameraSet } from './play-scene';
-import { bodyFrame } from './scene-renderer';
+import { bodyFrame } from './scene-space';
 import { orbitOffset, orbitThrough, type OrbitPlace, type PlacementMode } from './placement';
 
 /**

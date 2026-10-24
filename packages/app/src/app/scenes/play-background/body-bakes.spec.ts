@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { bakeRect, bakeSize, scrollPixels } from './body-bakes';
-import { projectionMatrix, viewMatrix } from './scene-renderer';
+import { projectionMatrix, viewMatrix } from './scene-space';
 
 const view = viewMatrix([0, 0, 0], [0, 1, 0], [0, 0, 1]);
 const vp = (() => {

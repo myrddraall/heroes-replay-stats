@@ -11,7 +11,7 @@ import {
   mergePartSettings,
   type SkySettings,
 } from './scene-planets';
-import type { Backdrop } from './scene-renderer';
+import type { Backdrop } from './scene-space';
 import type { LightAid } from './scene-beams';
 import type { SceneCameraSet } from './play-scene';
 import { type TintSettings, UNTINTED } from './tint-settings';

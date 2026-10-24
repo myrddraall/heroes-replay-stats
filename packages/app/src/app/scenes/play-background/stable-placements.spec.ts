@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { LoadedPlanet } from './scene-planets';
-import type { PlanetPlacement } from './scene-renderer';
+import type { PlanetPlacement } from './scene-space';
 import { keepUnchanged, sameData, samePlacement } from './stable-placements';
 
 const korhal = { id: 'korhal' } as unknown as LoadedPlanet;

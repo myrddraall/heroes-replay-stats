@@ -1,4 +1,4 @@
-import { bodyFrame } from '../../../scenes/play-background/scene-renderer';
+import { bodyFrame } from '../../../scenes/play-background/scene-space';
 import type { SetPlanet } from '../../../scenes/play-background/planet-sets';
 import {
   MATERIAL_DEFAULTS,

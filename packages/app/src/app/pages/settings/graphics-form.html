@@ -121,4 +121,31 @@
       (valueChange)="change(slider.key, $event)"
     />
   }
+
+  <h3>Drawing</h3>
+  <span class="label" id="api-label">Graphics API</span>
+  <mat-button-toggle-group
+    class="choice"
+    aria-labelledby="api-label"
+    hideSingleSelectionIndicator
+    [value]="s.api"
+    (change)="changed.emit({ api: $event.value })"
+  >
+    @for (api of apis; track api.value) {
+      <mat-button-toggle [value]="api.value">{{ api.label }}</mat-button-toggle>
+    }
+  </mat-button-toggle-group>
+  <p class="hint">
+    @switch (s.api) {
+      @case ('auto') {
+        WebGPU where the browser has it, otherwise WebGL 2.
+      }
+      @case ('webgpu') {
+        WebGPU, or WebGL 2 where the browser has no WebGPU.
+      }
+      @case ('webgl2') {
+        The older API: simpler, and on some machines quicker to start.
+      }
+    }
+  </p>
 </section>

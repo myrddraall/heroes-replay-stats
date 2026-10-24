@@ -1,4 +1,4 @@
-/** How a uniform's value is given to GL: its `gl.uniform*` call. */
+/** What a uniform's value is: an int, a float, a vector, an array, a matrix (named as GL's `uniform*` calls are). */
 export type UniformKind =
   '1i' | '1f' | '2f' | '3f' | '4f' | '1fv' | '1iv' | '3fv' | '4fv' | 'm3' | 'm4';
 
@@ -9,9 +9,9 @@ export interface UniformValue {
 }
 
 /**
- * Uniforms' values set by name, without GL: what a draw sets, worked out once (when what it is
- * drawn as changes, not every frame), then given to GL each time it is drawn (`UniformBlock`).
- * A name set again keeps its last value.
+ * Uniforms' values set by name: what a draw sets, worked out once (when what it is drawn as
+ * changes, not every frame), then given to its shader each time it is drawn (three/shader-uniforms.ts,
+ * `DrawValues.apply`). A name set again keeps its last value.
  */
 export class UniformSet {
   readonly values = new Map<string, UniformValue>();
@@ -60,72 +60,5 @@ export class UniformSet {
   merge(other: UniformSet): this {
     for (const [name, value] of other.values) this.values.set(name, value);
     return this;
-  }
-}
-
-/** One uniform of a block: where it is in its program, and what it is set to. */
-interface BlockEntry {
-  readonly at: WebGLUniformLocation;
-  readonly kind: UniformKind;
-  readonly value: Float32Array | Int32Array;
-}
-
-/** A set's values for one program: those the program has (by location), ready to give to GL. */
-export type UniformBlock = readonly BlockEntry[];
-
-/**
- * A set's values as a program takes them: each name's location found once (one the program
- * doesn't use, as the compiler leaves it out, is dropped).
- */
-export function compileBlock(
-  set: UniformSet,
-  locate: (name: string) => WebGLUniformLocation | null,
-): UniformBlock {
-  const out: BlockEntry[] = [];
-  for (const [name, { kind, value }] of set.values) {
-    const at = locate(name);
-    if (at) out.push({ at, kind, value });
-  }
-  return out;
-}
-
-/** A block's values given to GL (its program in use). */
-export function applyBlock(gl: WebGL2RenderingContext, block: UniformBlock): void {
-  for (const { at, kind, value } of block) applyValue(gl, at, kind, value);
-}
-
-/** One value given to GL. */
-export function applyValue(
-  gl: WebGL2RenderingContext,
-  at: WebGLUniformLocation,
-  kind: UniformKind,
-  value: Float32Array | Int32Array,
-): void {
-  switch (kind) {
-    case '1i':
-    case '1iv':
-      gl.uniform1iv(at, value as Int32Array);
-      return;
-    case '1f':
-    case '1fv':
-      gl.uniform1fv(at, value as Float32Array);
-      return;
-    case '2f':
-      gl.uniform2fv(at, value as Float32Array);
-      return;
-    case '3f':
-    case '3fv':
-      gl.uniform3fv(at, value as Float32Array);
-      return;
-    case '4f':
-    case '4fv':
-      gl.uniform4fv(at, value as Float32Array);
-      return;
-    case 'm3':
-      gl.uniformMatrix3fv(at, false, value as Float32Array);
-      return;
-    case 'm4':
-      gl.uniformMatrix4fv(at, false, value as Float32Array);
-      return;
   }
 }

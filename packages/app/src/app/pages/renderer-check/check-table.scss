@@ -1,0 +1,36 @@
+:host {
+  display: block;
+  margin-top: 20px;
+}
+
+h2 {
+  margin: 0 0 6px;
+  font: var(--mat-sys-title-medium);
+}
+
+.scroll {
+  overflow-x: auto;
+}
+
+table {
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 3px 14px 3px 0;
+    text-align: left;
+    vertical-align: top;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  thead th {
+    font-weight: 500;
+    white-space: normal;
+    min-width: 5em;
+  }
+
+  tbody th {
+    font-weight: 400;
+  }
+}

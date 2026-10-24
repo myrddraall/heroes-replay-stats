@@ -5,6 +5,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import {
   type ColourMode,
   FPS_RANGE,
+  type GraphicsApi,
   GLASS_ALPHA_RANGE,
   type GraphicsSettings,
   type GraphicsTheme,
@@ -83,8 +84,8 @@ const GLASS_SLIDERS: readonly SliderSetting[] = [
 ];
 
 /**
- * The Graphics settings (presentational): a quality preset, its values, and the look (the theme,
- * the background's colour and the glass).
+ * The Graphics settings (presentational): a quality preset, its values, the look (the theme,
+ * the background's colour and the glass), and what the background draws with.
  */
 @Component({
   selector: 'hrs-graphics-form',
@@ -112,6 +113,11 @@ export class GraphicsForm {
   protected readonly themes: readonly { value: GraphicsTheme; label: string }[] = [
     { value: 'neutral', label: 'Purple' },
     { value: 'nexus', label: 'Nexus' },
+  ];
+  protected readonly apis: readonly { value: GraphicsApi; label: string }[] = [
+    { value: 'auto', label: 'Automatic' },
+    { value: 'webgpu', label: 'WebGPU' },
+    { value: 'webgl2', label: 'WebGL 2' },
   ];
   protected readonly colourModes: readonly { value: ColourMode; label: string }[] = [
     { value: 'fixed', label: 'Fixed' },

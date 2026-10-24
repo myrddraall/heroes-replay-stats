@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { beyondEdge, playSet, randomSet, seeded } from './planet-sets';
-import { projectionMatrix, viewMatrix } from './scene-renderer';
+import { projectionMatrix, viewMatrix } from './scene-space';
 import type { SceneCamera } from './play-scene';
 import type { PlanetIndex } from './scene-planets';
 
