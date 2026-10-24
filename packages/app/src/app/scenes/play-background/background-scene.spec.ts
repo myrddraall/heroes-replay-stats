@@ -5,7 +5,6 @@ import {
   DEFAULT_ORBIT,
   fitRadius,
   fitScene,
-  hidden,
   type MoonChoices,
   moonAt,
   orbitOffset,
@@ -13,7 +12,6 @@ import {
   pathKey,
   pathOf,
   placeBodies,
-  reveal,
   type Vec3,
 } from './background-scene';
 
@@ -79,20 +77,6 @@ describe('the scene’s moons', () => {
     }
   });
 
-  it('know a moon behind its planet is hidden, and show it to one side while it is selected', () => {
-    const behind = [moon('a', 0.25)];
-    const bodies = placeBodies(root, behind, view);
-    expect(hidden(bodies[1]!, bodies, eye)).toBe(true);
-    const overrides = reveal(root, behind, view, eye, [0]);
-    const shown = placeBodies(root, behind, view, overrides);
-    expect(hidden(shown[1]!, shown, eye)).toBe(false);
-    // The shortest way round: still behind the planet's middle, not swung right round.
-    const progress = overrides.get('0')!;
-    expect(Math.min(Math.abs(progress - 0.25), 1 - Math.abs(progress - 0.25))).toBeLessThan(0.25);
-    // One in view is left where it is.
-    expect(reveal(root, [moon('a', 0.9)], view, eye, [0]).size).toBe(0);
-  });
-
   /** An eye on the planet's far side from the scene's camera, looking back at it. */
   const farEye: Vec3 = [0, 171.2, 5.6];
 
@@ -103,18 +87,6 @@ describe('the scene’s moons', () => {
       Math.hypot(b.position[0] - e[0], b.position[1] - e[1], b.position[2] - e[2]);
     expect(from(eye, a!)).toBeGreaterThan(from(eye, planet!));
     expect(from(farEye, a!)).toBeLessThan(from(farEye, planet!));
-    expect(hidden(a!, [planet!, a!], farEye)).toBe(false);
-  });
-
-  it('show a selected moon where the eye looking through the view sees it, placed as the scene places it', () => {
-    // Behind from the scene's camera, but in front from the far side: left where it is.
-    expect(reveal(root, [moon('a', 0.25)], view, farEye, [0]).size).toBe(0);
-    // In front from the scene's camera, so behind from the far side: moved to where it shows.
-    const front = [moon('a', 0.75)];
-    const overrides = reveal(root, front, view, farEye, [0]);
-    expect(overrides.size).toBe(1);
-    const shown = placeBodies(root, front, view, overrides);
-    expect(hidden(shown[1]!, shown, farEye)).toBe(false);
   });
 });
 

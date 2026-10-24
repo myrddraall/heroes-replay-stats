@@ -232,66 +232,6 @@ export function orbitTo(
 const sub = (a: Vec3, b: Vec3): Vec3 => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
 const length = (a: Vec3) => Math.hypot(a[0], a[1], a[2]);
 
-/**
- * Whether a body is hidden from the eye by another nearer one: more than half of it behind it
- * (their centres closer, as the eye sees them, than the nearer one's angular radius and half its own).
- */
-export function hidden(body: PlacedBody, bodies: readonly PlacedBody[], eye: Vec3): boolean {
-  const to = sub(body.position, eye);
-  const d = length(to);
-  const own = Math.asin(Math.min(1, body.radius / d));
-  return bodies.some((other) => {
-    if (other === body) return false;
-    const toOther = sub(other.position, eye);
-    const e = length(toOther);
-    if (e >= d) return false;
-    const cos = (to[0] * toOther[0] + to[1] * toOther[1] + to[2] * toOther[2]) / (d * e);
-    const apart = Math.acos(Math.max(-1, Math.min(1, cos)));
-    return apart < Math.asin(Math.min(1, other.radius / e)) + own * 0.5;
-  });
-}
-
-/** How finely a hidden moon's orbit is searched for where it shows: steps round it. */
-const REVEAL_STEPS = 72;
-
-/**
- * Where the moons on the way to the body at `path` are shown so it can be seen: each moon from the
- * planet down that is hidden from `eye` is moved round its orbit, the shortest way either way, to
- * where it isn't (to one side of what hid it). Placed as the scene places them (from `layoutView`,
- * the scene's own camera), seen from `eye` (the scene editor gives that camera's: what is drawn
- * smaller is fitted to it). Only while it is selected: its own progress is kept.
- */
-export function reveal(
-  root: { readonly position: Vec3; readonly radius: number },
-  moons: readonly MoonChoices[],
-  layoutView: Viewpoint,
-  eye: Vec3,
-  path: BodyPath,
-): ProgressOverrides {
-  const overrides = new Map<string, number>();
-  for (let depth = 1; depth <= path.length; depth++) {
-    const at = path.slice(0, depth);
-    const key = pathKey(at);
-    const moon = moonAt(moons, at);
-    if (!moon) break;
-    const shows = (progress: number) => {
-      const bodies = placeBodies(root, moons, layoutView, new Map([...overrides, [key, progress]]));
-      const body = bodies.find((b) => pathKey(b.path) === key)!;
-      return !hidden(body, bodies, eye);
-    };
-    const own = moon.orbit.progress;
-    if (shows(own)) continue;
-    for (let step = 1; step <= REVEAL_STEPS / 2; step++) {
-      const found = [own + step / REVEAL_STEPS, own - step / REVEAL_STEPS].find(shows);
-      if (found !== undefined) {
-        overrides.set(key, ((found % 1) + 1) % 1);
-        break;
-      }
-    }
-  }
-  return overrides;
-}
-
 /** A body's own settings as shown: its own, over its style's, over its file's tuning, over the defaults. */
 export interface BodyValues {
   readonly overlays: readonly string[];

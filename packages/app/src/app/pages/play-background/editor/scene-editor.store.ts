@@ -33,7 +33,6 @@ import {
   pathKey,
   pathOf,
   placeBodies,
-  reveal,
   type GroupPlacement,
   type SceneBody,
   type Vec3,
@@ -1405,8 +1404,6 @@ export const SceneEditorStore = signalStore(
       const layoutView = scene.camera;
       const up = Math.tan((layoutView.fovY * Math.PI) / 360);
       const reach = { up, across: up * store._ui.aspect() };
-      const t = store.target();
-      const selected = 'path' in t ? t.path : null;
       /** The scene's bodies from its planet down to the one at a path. */
       const sceneChain = (at: BodyPath) =>
         at.map((_, i) => store.bodyByKey().get(bodyKey(at.slice(0, i + 1))));
@@ -1417,7 +1414,6 @@ export const SceneEditorStore = signalStore(
       interface Root {
         readonly root: { readonly position: Vec3; readonly radius: number };
         readonly moons: readonly MoonChoices[];
-        readonly under: BodyPath;
         readonly fit: boolean;
         readonly chain: (path: BodyPath) => (BodyInfo | undefined)[];
         readonly pick: (path: BodyPath) => string;
@@ -1430,7 +1426,6 @@ export const SceneEditorStore = signalStore(
             {
               root: SCENE_CENTRE,
               moons: focused.moons ?? [],
-              under: focus,
               fit: true,
               chain: (path) => sceneChain([...focus, ...path]),
               pick: (path) => bodyKey([...focus, ...path]),
@@ -1441,7 +1436,6 @@ export const SceneEditorStore = signalStore(
             ...planets.map((p, i): Root => ({
               root: { position: p.position, radius: p.radius },
               moons: p.moons ?? [],
-              under: [i],
               // A scene of one planet is kept in view; several are where they are put.
               fit: planets.length === 1 && !grouped.length,
               chain: (path) => sceneChain([i, ...path]),
@@ -1452,7 +1446,6 @@ export const SceneEditorStore = signalStore(
             ...grouped.map((g, j): Root => ({
               root: { position: g.body.position, radius: g.body.radius },
               moons: g.body.moons ?? [],
-              under: [],
               fit: false,
               chain: (path) =>
                 [[], ...path.map((_, k) => path.slice(0, k + 1))].map((at) =>
@@ -1467,16 +1460,7 @@ export const SceneEditorStore = signalStore(
       const picks: string[] = [];
       /** What must stay in view of each body put out, in its radii. */
       const extents: number[] = [];
-      for (const { root, moons, under, fit, chain, pick, lights } of roots) {
-        // A selected moon among these is shown where it can be seen from the game's camera: the
-        // layout is fitted to that camera, so only from it does hidden here match what is drawn.
-        const inside =
-          selected && under.length && under.every((v, i) => selected[i] === v)
-            ? selected.slice(under.length)
-            : null;
-        const overrides = inside?.length
-          ? reveal(root, moons, layoutView, layoutView.eye, inside)
-          : new Map<string, number>();
+      for (const { root, moons, fit, chain, pick, lights } of roots) {
         // What must stay in view of each body: as far as its parts and its halo reach.
         const extent = (path: BodyPath) => {
           const b = chain(path).at(-1);
@@ -1485,9 +1469,9 @@ export const SceneEditorStore = signalStore(
             : visualExtent();
         };
         const base = fit
-          ? { ...root, radius: fitRadius(root, moons, layoutView, reach, overrides, extent) }
+          ? { ...root, radius: fitRadius(root, moons, layoutView, reach, new Map(), extent) }
           : root;
-        for (const p of placeBodies(base, moons, layoutView, overrides)) {
+        for (const p of placeBodies(base, moons, layoutView)) {
           const bodies = chain(p.path);
           const b = bodies.at(-1);
           if (!b || !filesLoaded(b)) return null;
