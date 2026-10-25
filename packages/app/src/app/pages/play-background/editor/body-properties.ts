@@ -52,6 +52,8 @@ export class BodyProperties {
   readonly values = input.required<BodyValues>();
   /** Which level under the one edited sets each setting, where one does (shown by its row). */
   readonly origins = input<SettingOrigins<keyof BodySettings>>();
+  /** Which level over the one edited wins for each of its settings, where one does (those rows marked overridden). */
+  readonly overrides = input<SettingOrigins<keyof BodySettings>>();
   /**
    * The side its rims and glows come from: the bright side, opposite the point they lean to (what
    * is kept), as every direction here is a side something comes from.
@@ -86,12 +88,10 @@ export class BodyProperties {
   readonly overlaysSet = input(false);
   /**
    * Whether a body's own settings (its orientation, tint, rim, fit) are offered: not for an overlay
-   * the sky or a scene wears (one open in the library). A planet's overlay offers them all: what
-   * it sets applies to the bodies wearing it.
+   * the sky wears (one open in the library). A planet's overlay offers them all: what it sets
+   * applies to the bodies wearing it.
    */
   readonly bodySettings = input(true);
-  /** What its overlays are called (a scene's overlay's: those it puts on every planet). */
-  readonly overlaysTitle = input('Overlays');
   /** Whether it is an overlay itself (one open in the library): reset as one. */
   readonly overlay = input(false);
   /** Its name as shown, and as the levels under the one edited have it. */
@@ -105,8 +105,6 @@ export class BodyProperties {
   readonly overlayShow = output<string>();
   /** A new overlay made, and worn. */
   readonly overlayNew = output<void>();
-  /** Its changes made into a new overlay it wears, and taken off it. */
-  readonly overlayFromChanges = output<void>();
   readonly settingsChange = output<Partial<BodySettings>>();
   readonly orbitChange = output<Partial<Orbit>>();
   readonly placeChange = output<{ readonly position?: Vec3; readonly radius?: number }>();

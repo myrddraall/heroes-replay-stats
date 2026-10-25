@@ -1,3 +1,4 @@
+import type { VariantRow } from './variant-list';
 import { computed, inject, resource } from '@angular/core';
 import {
   patchState,
@@ -150,7 +151,14 @@ import {
   settingsAsOverlay,
   withOverlayParts,
 } from './part-hosts';
-import { overlaySettingsOf, ownOverlays } from '../../../scenes/play-background/overlays';
+import { ownOverlays } from '../../../scenes/play-background/overlays';
+import {
+  type Variant,
+  variantSettingsOf,
+  variantsOf,
+  variantsOnOf,
+} from '../../../scenes/play-background/variants';
+import { editingVariant } from './editing-variant';
 import { EditingAidsStore, GRID_CELLS, REFERENCE_KEY } from './editing-aids.store';
 import type { PickChoice } from './pick-list';
 import { EditorUiStore } from './editor-ui.store';
@@ -372,6 +380,11 @@ interface AssetEditorState {
   readonly onStandIn: boolean;
   /** Where the editor's own camera is, over the game's (none: there): the stage seen from any side; not kept. */
   readonly editorCamera: SceneCameraSet | null;
+  /**
+   * The variant of the planet open that is edited (what is set goes into it; see `variantOpen`),
+   * none: the planet's own settings.
+   */
+  readonly variantEdited: string | null;
 }
 
 /**
@@ -389,6 +402,7 @@ export const AssetEditorStore = signalStore(
     previewPlanet: DEFAULT_PREVIEW_PLANET,
     onStandIn: false,
     editorCamera: null,
+    variantEdited: null,
   }),
   withFolding([STAGE, ASSET]),
   withLocalStorage<AssetEditorState & { expanded: readonly string[] }>(
@@ -404,8 +418,51 @@ export const AssetEditorStore = signalStore(
       loader: ({ abortSignal }) => loadPlaySceneFile(PLAY_SCENE_URL, abortSignal),
     }),
   })),
-  withProps(({ asset, previewPlanet, _draft, _catalog, _sceneFile }) => {
+  withProps(({ asset, previewPlanet, variantEdited, _draft, _catalog, _sceneFile }) => {
     const library = _draft.library;
+    /** The planet open's variants: its data's (with the library's changes), then those made here. */
+    const variants = computed((): readonly Variant[] => {
+      const a = asset();
+      return a.kind === 'planet'
+        ? variantsOf(_catalog.dataVariants().get(a.id), library().planets[a.id])
+        : [];
+    });
+    /** The variant edited, where it is one of the planet open's (else none: its own settings). */
+    const variantOpen = computed(() => {
+      const id = variantEdited();
+      return id && variants().some((v) => v.id === id) ? id : null;
+    });
+    /**
+     * The planet open's levels as edited: its own settings, its variants on (by default) over them;
+     * or one of its variants edited: its changes, over its own settings, its variants on before it
+     * and the variant's data's settings, under those on after it.
+     */
+    const planetLevels = (
+      id: string,
+    ): Pick<BodyInfo, 'settings' | 'below' | 'variantsBelow' | 'above'> => {
+      const own = library().planets[id];
+      const on = variantsOnOf(own);
+      const edited = variantOpen();
+      const named = (v: Variant) => v.layers.map((settings) => ({ name: `the ${v.name} variant`, settings }));
+      if (!edited) return { settings: own ?? {}, above: variants().filter((v) => on.includes(v.id)).flatMap(named) };
+      const at = variants().findIndex((v) => v.id === edited);
+      const variant = variants()[at]!;
+      const kept = own?.variants?.find((v) => v.id === edited);
+      const before = variants().slice(0, at).filter((v) => on.includes(v.id));
+      const after = variants().slice(at + 1).filter((v) => on.includes(v.id));
+      // (A data variant's own settings, under its changes here: its first layer, where it has one.)
+      const data = !variant.made && kept?.settings ? variant.layers.slice(0, -1) : variant.made ? [] : variant.layers;
+      return {
+        // (Its name as the name edited: renamed there, the variant is.)
+        settings: { ...kept?.settings, label: variant.name },
+        below: own,
+        variantsBelow: [
+          ...before.flatMap(named),
+          ...data.map((settings) => ({ name: `the ${variant.name} variant (its data)`, settings })),
+        ],
+        above: after.flatMap(named),
+      };
+    };
     const stageScene = computed(() => _draft.scenes().planets[PREVIEW_SCENE] ?? {});
     /** A sky (the stage's, or the library's): what is under it, and what is set. */
     const skyOf = (stage: boolean): { below: SkyChoices | undefined; edited: SkyChoices } =>
@@ -458,6 +515,38 @@ export const AssetEditorStore = signalStore(
       return a.kind === 'planet' ? (library().moons?.[a.id] ?? []) : [];
     });
     return {
+      _variants: variants,
+      variantOpen,
+      /** The planet open's variants as its properties list them: each one's name, whether on by default, made here. */
+      variantRows: computed((): readonly VariantRow[] => {
+        const a = asset();
+        const on = a.kind === 'planet' ? variantsOnOf(library().planets[a.id]) : [];
+        return variants().map((v) => ({ id: v.id, name: v.name, on: on.includes(v.id), removable: v.made }));
+      }),
+      /** Whether which of the planet open's variants are on is set in the library. */
+      variantsOnSet: computed(() => {
+        const a = asset();
+        return a.kind === 'planet' && library().planets[a.id]?.variantsOn !== undefined;
+      }),
+      /** Whether variants are made and edited here: a planet open. */
+      variantsEditable: computed(() => asset().kind === 'planet'),
+      /** Whether the planet open has changes of its own a variant can take (and none is edited). */
+      variantFromChangesOffered: computed(() => {
+        const a = asset();
+        if (a.kind !== 'planet' || variantOpen()) return false;
+        return Object.keys(variantSettingsOf(library().planets[a.id] ?? {}).variant).length > 0;
+      }),
+      /** The levels edited here: a planet's own settings, then each of its variants. */
+      layerOptions: computed((): readonly PickChoice[] => {
+        const a = asset();
+        if (a.kind !== 'planet' || !variants().length) return [];
+        return [
+          { value: '', label: library().planets[a.id]?.label ?? a.id },
+          ...variants().map((v) => ({ value: v.id, label: v.name })),
+        ];
+      }),
+      layer: computed(() => variantOpen() ?? ''),
+      variantEdited: variantOpen,
       /** The overlay open, where it is one made in the editor. */
       _created: computed(() => {
         const a = asset();
@@ -522,16 +611,9 @@ export const AssetEditorStore = signalStore(
                 _catalog.madeLookup(),
               )
             : files[overlayFileFor(library(), a.id)];
-        // A planet wears what it chooses for itself, else what its data says; a scene's overlay,
-        // what it puts on every planet in a scene wearing it; any other overlay, none.
-        const sceneOverlay = library().created?.[a.id]?.kind === 'scene';
-        const chosen =
-          a.kind === 'planet'
-            ? library().planets[a.id]?.overlays
-            : sceneOverlay
-              ? library().styles[a.id]?.overlays
-              : undefined;
-        const worn = a.kind === 'planet' ? (chosen ?? ownOverlays(file?.tuning?.style)) : (chosen ?? []);
+        // A planet wears what it chooses for itself, else what its data says; an overlay, none.
+        const chosen = a.kind === 'planet' ? library().planets[a.id]?.overlays : undefined;
+        const worn = a.kind === 'planet' ? (chosen ?? ownOverlays(file?.tuning?.style)) : [];
         const name = (id: string) => library().created?.[id]?.label;
         const made = name(a.id) ?? skyOverlay()?.name;
         return {
@@ -545,9 +627,7 @@ export const AssetEditorStore = signalStore(
             file: files[overlayFileFor(library(), id)],
           })),
           overlaysSet: chosen !== undefined,
-          settings: library()[kind][a.id] ?? {},
-          // (A planet's own settings: what the overlays it wears set is over them.)
-          underOverlays: a.kind === 'planet',
+          ...(a.kind === 'planet' ? planetLevels(a.id) : { settings: library()[kind][a.id] ?? {} }),
           materialBase: library().materials,
           file,
           moons: [],
@@ -611,6 +691,7 @@ export const AssetEditorStore = signalStore(
       previewPlanet,
       onStandIn,
       editorCamera,
+      variantOpen,
       _draft,
       _skyOf,
       _skyMaterials,
@@ -720,11 +801,7 @@ export const AssetEditorStore = signalStore(
           }
           const b = _body();
           // A planet can have moons of its own; an overlay none.
-          // (A scene's overlay chooses what planets wear: its overlays, as a planet chooses its own.)
-          const sceneOverlay = library().created?.[asset().id]?.kind === 'scene';
-          return t.kind === 'body' && b
-            ? bodyView(b, false, asset().kind === 'planet', false, asset().kind === 'planet' || sceneOverlay)
-            : null;
+          return t.kind === 'body' && b ? bodyView(b, false, asset().kind === 'planet') : null;
         }),
         baseMaterial: computed((): MaterialEntry | undefined => {
           const use = _materialUse();
@@ -824,8 +901,8 @@ export const AssetEditorStore = signalStore(
                 planet ? lib.planets[planet]?.parts : undefined,
                 ...overlays.map((id) => lib.styles[id]?.parts),
               ),
-              // (What an overlay it wears sets over its own, the later over the earlier.)
-              [planet ? lib.planets[planet] : undefined, ...overlays.map((id) => lib.styles[id])]
+              // (Its own, over what an overlay it wears sets: the later over the earlier.)
+              [...overlays.map((id) => lib.styles[id]), planet ? lib.planets[planet] : undefined]
                 .map((s) => s?.glowMargin)
                 .filter((m) => m !== undefined)
                 .at(-1),
@@ -857,10 +934,20 @@ export const AssetEditorStore = signalStore(
               lights: standInLightSettings(_aids.standInLights()),
             };
           };
-          /** A planet wearing its own: what it chooses for itself, else what its data says. */
+          /**
+           * A planet wearing its own: what it chooses for itself, else what its data says; the
+           * planet open with the variant edited on too (as it is seen while it is edited).
+           */
           const own = (id: string): SetPlanet => {
             const overlays = _draft.library().planets[id]?.overlays ?? ownOverlays(files[id]?.tuning?.style);
-            return { id, overlays, ...fitted(id, overlays) };
+            const edited = id === a.id ? variantOpen() : null;
+            const on = variantsOnOf(_draft.library().planets[id]);
+            return {
+              id,
+              overlays,
+              ...(edited && !on.includes(edited) ? { variantsOn: [...on, edited] } : {}),
+              ...fitted(id, overlays),
+            };
           };
           /** The planet on the stage wearing an overlay. */
           const wearing = (overlay: string): SetPlanet => ({
@@ -887,17 +974,10 @@ export const AssetEditorStore = signalStore(
           // An overlay on the stand-in: what it adds, on a plain body.
           // A planet's overlay on the stand-in: what it adds, on a plain body (one not yet known to
           // be a planet's, nothing until it is: a sky's is the sky's).
-          if (a.kind === 'style') {
-            // A scene's overlay: what it puts on planets, and its lights (its own settings), on
-            // the stand-in.
-            if (_draft.library().created?.[a.id]?.kind === 'scene') {
-              const worn = [...(_draft.library().styles[a.id]?.overlays ?? []), a.id];
-              return [{ ...standIn(), overlays: worn, ...fitted(undefined, worn) }];
-            }
+          if (a.kind === 'style')
             return _catalog.styles().includes(a.id)
               ? [{ ...standIn(), overlays: [a.id], ...fitted(undefined, [a.id]) }]
               : [];
-          }
           if (use?.kind === 'planet') return [{ id: use.id, ...fitted(use.id) }];
           if (use?.kind === 'style') return [wearing(use.id)];
           return [{ id: previewPlanet(), ...fitted(previewPlanet()) }];
@@ -1647,8 +1727,9 @@ export const AssetEditorStore = signalStore(
     }),
   })),
   withMethods((store) => {
-    const d = store._draft;
+    const draft = store._draft;
     const asset = () => store.asset();
+    const d = editingVariant(draft, () => (asset().kind === 'planet' ? asset().id : null), store.variantOpen);
     const materialChange = (key: string, change: Partial<MaterialSettings>) => {
       const t = targetOf(key, asset());
       const kind = libraryKind(asset().kind);
@@ -1731,17 +1812,13 @@ export const AssetEditorStore = signalStore(
         }),
       );
     /** What the selected moon wears changed (the later over the earlier), over its own. */
-    /**
-     * What the planet open (its library's choice), a scene's overlay open (what it puts on every
-     * planet) or the moon selected wears changed.
-     */
+    /** What the planet open (its library's choice) or its moon selected wears changed. */
     const wears = (change: (worn: readonly string[]) => readonly string[]) => {
       const t = store.target();
-      const a = asset();
-      const kind = a.kind === 'planet' ? 'planets' : d.library().created?.[a.id]?.kind === 'scene' ? 'styles' : null;
-      if (t.kind === 'body' && kind) {
+      if (t.kind === 'body' && asset().kind === 'planet') {
         const b = store._body();
-        if (b) d.setLibraryBody(kind, a.id, { overlays: change(b.overlays.map((o) => o.id)) });
+        // (What it can wear is the planet's own, whatever is edited: a variant only switches it.)
+        if (b) draft.setLibraryBody('planets', asset().id, { overlays: change(b.overlays.map((o) => o.id)) });
         return;
       }
       const m = t.kind === 'moon' ? store._moonInfos().get(moonKey(t.path)) : undefined;
@@ -2195,15 +2272,67 @@ export const AssetEditorStore = signalStore(
       removeOverlay(id: string): void {
         wears((worn) => worn.filter((w) => w !== id));
       },
-      /** The planet open's changes made into an overlay it wears (see `Editor.overlayFromChanges`). */
-      overlayFromChanges(): void {
-        const b = store._body();
-        if (store.target().kind !== 'body' || asset().kind !== 'planet' || !b) return;
-        const { overlay, kept } = overlaySettingsOf(b.settings);
-        if (!Object.keys(overlay).length) return;
-        const id = d.createOverlayFrom(overlay);
-        const overlays = [...b.overlays.map((o) => o.id), id];
-        d.changeLibraryBody('planets', asset().id, () => ({ ...kept, overlays }));
+      // The planet open's variants.
+      /** The variant of the planet open edited (what is set goes into it), or its own settings (none). */
+      editVariant(id: string | null): void {
+        patchState(store, { variantEdited: id });
+      },
+      setLayer(value: string): void {
+        patchState(store, { variantEdited: value || null });
+      },
+      showLayer(name: string): void {
+        const v = store._variants().find(
+          (x) => name === `the ${x.name} variant` || name === `the ${x.name} variant (its data)`,
+        );
+        if (v) patchState(store, { variantEdited: v.id });
+        else if (name === 'the library (planet)') patchState(store, { variantEdited: null });
+      },
+      /** A new variant of the planet open, edited. */
+      newVariant(): void {
+        const a = asset();
+        if (a.kind !== 'planet') return;
+        const id = draft.createVariant(a.id, `Variant ${store._variants().length + 1}`);
+        patchState(store, { variantEdited: id });
+      },
+      /**
+       * The planet open's own changes made into a new variant of it (what a variant can take of
+       * them: see `variantSettingsOf`), taken off it and the variant switched on, so it looks the
+       * same; edited.
+       */
+      variantFromChanges(): void {
+        const a = asset();
+        if (a.kind !== 'planet' || store.variantOpen()) return;
+        const own = draft.library().planets[a.id] ?? {};
+        const { variant, kept } = variantSettingsOf(own);
+        if (!Object.keys(variant).length) return;
+        const on = variantsOnOf(own);
+        const id = draft.createVariant(a.id, `Variant ${store._variants().length + 1}`, variant);
+        draft.changeLibraryBody('planets', a.id, (s) => ({ ...kept, variants: s.variants, variantsOn: [...on, id] }));
+        patchState(store, { variantEdited: id });
+      },
+      /** A variant of the planet open switched on or off by default. */
+      setVariantOn(id: string, on: boolean): void {
+        const a = asset();
+        if (a.kind !== 'planet') return;
+        const now = variantsOnOf(draft.library().planets[a.id]);
+        draft.setVariantsOn(a.id, on ? [...now.filter((v) => v !== id), id] : now.filter((v) => v !== id));
+      },
+      /** Which of the planet open's variants are on by default back as its data has them (none). */
+      resetVariantsOn(): void {
+        const a = asset();
+        if (a.kind === 'planet') draft.setVariantsOn(a.id, undefined);
+      },
+      /** A variant of the planet open made here deleted (its own settings edited again if it was edited). */
+      deleteVariant(id: string): void {
+        const a = asset();
+        if (a.kind !== 'planet') return;
+        draft.deleteVariant(a.id, id);
+        if (store.variantEdited() === id) patchState(store, { variantEdited: null });
+      },
+      /** A variant of the planet open renamed. */
+      renameVariant(id: string, name: string): void {
+        const a = asset();
+        if (a.kind === 'planet') draft.changeVariant(a.id, id, (v) => ({ ...v, name }));
       },
       /** What the planet open or its moon selected wears back as its own (its data's; a moon's, its planet's). */
       resetOverlays(): void {
@@ -2211,9 +2340,7 @@ export const AssetEditorStore = signalStore(
         if (t.kind === 'moon')
           changeMoons((moons) => changeMoon(moons, t.path, (m) => without(m, ['overlays']) ?? m));
         else if (t.kind === 'body' && asset().kind === 'planet')
-          d.clearLibraryBody('planets', asset().id, ['overlays']);
-        else if (t.kind === 'body' && d.library().created?.[asset().id]?.kind === 'scene')
-          d.clearLibraryBody('styles', asset().id, ['overlays']);
+          draft.clearLibraryBody('planets', asset().id, ['overlays']);
       },
       setSkyTint(tint: MaterialTint): void {
         const s = selectedSky();

@@ -22,6 +22,8 @@ export interface SetPlanet {
    * planet's own choice in the library, where it makes one, is worn in its place.
    */
   readonly ownOverlays?: boolean;
+  /** Which of its variants are on where it is put (none: as the library has it for the planet). */
+  readonly variantsOn?: readonly string[];
   /** Parts added onto it (its own, after its data's). */
   readonly addedParts?: readonly AddedPart[];
   /** Whether the overlays it wears are drawn (off: drawn as if it wore none); kept before each had its own. */

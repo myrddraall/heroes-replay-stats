@@ -1,4 +1,14 @@
 @let added = editor.added();
+@if (editor.layerOptions().length) {
+  <div class="layer">
+    <hrs-property-select
+      label="Editing"
+      [value]="editor.layer()"
+      [options]="editor.layerOptions()"
+      (valueChange)="editor.setLayer($event)"
+    />
+  </div>
+}
 @switch (editor.kind()) {
   @case ('scene') {
     @if (scene; as s) {
@@ -36,21 +46,16 @@
         </hrs-property-section>
       </hrs-scene-properties>
       @if (!s.sets()) {
-        <hrs-pick-list
-          title="Overlays"
-          addLabel="Add overlay"
-          removeLabel="Take off"
-          [picked]="s.sceneWorn()"
-          [choices]="s.sceneOverlayOptions()"
-          [changed]="s.sceneWorn().length > 0"
-          icon="style"
-          [linkable]="true"
-          newLabel="New overlay"
-          (added)="s.addSceneOverlay($event)"
-          (removed)="s.removeSceneOverlay($event)"
-          (itemShow)="s.showSceneOverlay($event)"
-          (created)="newOverlay('scene')"
-          (resetRequested)="s.resetSceneOverlays()"
+        <hrs-variant-list
+          [rows]="s.sceneVariantRows()"
+          [edited]="s.sceneVariantOpen()"
+          [changed]="s.sceneVariantsOnSet()"
+          (toggled)="s.setSceneVariantOn($event.id, $event.on)"
+          (edit)="s.editSceneVariant($event)"
+          (renamed)="s.renameSceneVariant($event.id, $event.name)"
+          (removed)="s.deleteSceneVariant($event)"
+          (created)="s.newSceneVariant()"
+          (resetRequested)="s.resetSceneVariantsOn()"
         />
       }
       @if (s.cameraList().length) {
@@ -149,6 +154,7 @@
       <hrs-body-properties
         [values]="b.values"
         [origins]="b.origins"
+        [overrides]="b.overrides"
         [overlayOptions]="editor.overlayOptions()"
         [orbit]="b.info.orbit ?? null"
         [orbitBase]="b.orbitBase"
@@ -160,10 +166,7 @@
         [baseTint]="b.baseTint"
         [overlaysSet]="b.info.overlaysSet"
         [overlay]="b.info.file?.kind === 'style'"
-        [bodySettings]="!editor.skyOverlayOpen() && draft.library().created?.[b.info.id]?.kind !== 'scene'"
-        [overlaysTitle]="
-          draft.library().created?.[b.info.id]?.kind === 'scene' ? 'Planet overlays' : 'Overlays'
-        "
+        [bodySettings]="!editor.skyOverlayOpen()"
         [label]="b.label"
         [labelBelow]="b.labelBelow"
         [styled]="b.styled"
@@ -172,7 +175,6 @@
         (overlayAdd)="editor.addOverlay($event)"
         (overlayShow)="editor.showOverlay($event)"
         (overlayNew)="newOverlay('planet')"
-        (overlayFromChanges)="editor.overlayFromChanges()"
         (overlayRemove)="editor.removeOverlay($event)"
         (overlaysReset)="editor.resetOverlays()"
         (settingsChange)="editor.setBody($event)"
@@ -209,6 +211,22 @@
           }
         </hrs-property-section>
       </hrs-body-properties>
+      @if (editor.variantRows().length || editor.variantsEditable()) {
+        <hrs-variant-list
+          [rows]="editor.variantRows()"
+          [edited]="editor.variantEdited()"
+          [changed]="editor.variantsOnSet()"
+          [editable]="editor.variantsEditable()"
+          [fromChangesOffered]="editor.variantFromChangesOffered()"
+          (toggled)="editor.setVariantOn($event.id, $event.on)"
+          (edit)="editor.editVariant($event)"
+          (renamed)="editor.renameVariant($event.id, $event.name)"
+          (removed)="editor.deleteVariant($event)"
+          (created)="editor.newVariant()"
+          (fromChanges)="editor.variantFromChanges()"
+          (resetRequested)="editor.resetVariantsOn()"
+        />
+      }
       @if (editor.partShapes().length) {
         <hrs-property-section title="Parts">
           <hrs-add-part
@@ -328,6 +346,7 @@
         [name]="m.name"
         [origin]="m.origin"
         [origins]="m.origins"
+        [overrides]="m.overrides"
         [values]="m.values"
         [controls]="m.controls"
         [changed]="m.set !== undefined"
@@ -354,6 +373,7 @@
         [controls]="m.controls"
         [set]="m.set"
         [origins]="m.origins"
+        [overrides]="m.overrides"
         (settingsChange)="editor.setMaterial($event)"
         (clear)="editor.clearMaterial($event)"
       />
@@ -401,6 +421,7 @@
           [controls]="l.material.controls"
           [set]="l.material.set"
           [origins]="l.material.origins"
+          [overrides]="l.material.overrides"
           (settingsChange)="editor.setMaterial($event)"
           (clear)="editor.clearMaterial($event)"
         />
@@ -412,6 +433,7 @@
       <hrs-material-properties
         [name]="m.name"
         [origins]="m.origins"
+        [overrides]="m.overrides"
         [values]="m.values"
         [controls]="m.controls"
         [changed]="m.set !== undefined"

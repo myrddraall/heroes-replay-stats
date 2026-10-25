@@ -67,6 +67,8 @@ export class PropertyPlacement {
   readonly changed = input(false);
   /** Where its place comes from where it isn't set here, if anywhere. */
   readonly origin = input<string>();
+  /** The level over the one edited that wins for it, if one does (its rows marked so). */
+  readonly overridden = input<string>();
   readonly resetRequested = output<void>();
   readonly placeChange = output<PlacementChange>();
 

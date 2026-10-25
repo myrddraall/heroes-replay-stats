@@ -78,13 +78,13 @@ export class AssetBrowser {
             unsaved: d.unsavedLibraryPlanets().has(p.id),
           }));
         case 'style':
-          // Grouped by what they are worn on: planets', the sky's, then scenes'.
+          // Grouped by what they are worn on: planets', then the sky's.
           return c.overlays().map((o) => ({
             key: key(o.id),
             label: d.library().styles[o.id]?.label ?? o.label ?? overlayName(d.library(), o.id),
             caption: o.made ? 'Made here' : d.library().styles[o.id]?.label ? o.id : undefined,
             unsaved: d.unsavedLibraryStyles().has(o.id),
-            group: o.kind === 'sky' ? 'Sky' : o.kind === 'scene' ? 'Scene' : 'Planet',
+            group: o.kind === 'sky' ? 'Sky' : 'Planet',
           }));
         case 'material':
           return c.materials().map((m) => ({

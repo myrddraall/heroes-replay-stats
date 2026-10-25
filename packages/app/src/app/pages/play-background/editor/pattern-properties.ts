@@ -31,6 +31,8 @@ export class PatternProperties {
   readonly set = input<MaterialSettings | undefined>(undefined);
   /** Which level under the one edited sets each setting, where one does. */
   readonly origins = input<SettingOrigins<keyof MaterialSettings>>();
+  /** Which level over the one edited wins for each of its settings, where one does (those rows marked overridden). */
+  readonly overrides = input<SettingOrigins<keyof MaterialSettings>>();
   readonly settingsChange = output<Partial<MaterialSettings>>();
   /** Settings set here to take back, so they are its own again. */
   readonly clear = output<readonly (keyof MaterialSettings)[]>();

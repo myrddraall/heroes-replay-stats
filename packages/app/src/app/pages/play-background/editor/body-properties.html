@@ -9,6 +9,8 @@
     [placeholder]="labelBelow()"
     [changed]="set().label !== undefined"
     [origin]="origins()?.label"
+
+    [overridden]="overrides()?.label"
     (resetRequested)="clear.emit(['label'])"
     (valueChange)="rename($event)"
   />
@@ -37,17 +39,12 @@
     @if (deletable()) {
       <button type="button" class="button" (click)="deleteRequested.emit()">Delete overlay</button>
     }
-    @if (styled() && !overlay() && changed()) {
-      <button type="button" class="button" (click)="overlayFromChanges.emit()">
-        Overlay from changes
-      </button>
-    }
   </div>
 </hrs-property-section>
 @let v = values();
 @if (styled()) {
   <hrs-pick-list
-    [title]="overlaysTitle()"
+    title="Overlays"
     addLabel="Add overlay"
     removeLabel="Take off"
     [picked]="v.overlays"
@@ -127,6 +124,8 @@
       [options]="orientations"
       [changed]="isSet('orientation')"
       [origin]="origins()?.orientation"
+
+      [overridden]="overrides()?.orientation"
       (resetRequested)="clear.emit(['orientation'])"
       (valueChange)="orient($event)"
     />
@@ -135,6 +134,8 @@
       [value]="v.axis"
       [changed]="isSet('axis')"
       [origin]="origins()?.axis"
+
+      [overridden]="overrides()?.axis"
       (resetRequested)="clear.emit(['axis'])"
       (valueChange)="settingsChange.emit({ axis: $event })"
     />
@@ -144,6 +145,8 @@
       [step]="1"
       [changed]="isSet('turn')"
       [origin]="origins()?.turn"
+
+      [overridden]="overrides()?.turn"
       (resetRequested)="clear.emit(['turn'])"
       (valueChange)="settingsChange.emit({ turn: $event })"
     />
@@ -169,6 +172,8 @@
       [value]="rimFrom()"
       [changed]="isSet('rim')"
       [origin]="origins()?.rim"
+
+      [overridden]="overrides()?.rim"
       (resetRequested)="clear.emit(['rim'])"
       (valueChange)="settingsChange.emit({ rim: mirrored($event) })"
     />
@@ -187,6 +192,8 @@
       [step]="0.01"
       [changed]="isSet('glowMargin')"
       [origin]="origins()?.glowMargin"
+
+      [overridden]="overrides()?.glowMargin"
       (resetRequested)="clear.emit(['glowMargin'])"
       (valueChange)="settingsChange.emit({ glowMargin: $event })"
     />

@@ -12,6 +12,8 @@
     [placeholder]="l.labelBelow"
     [changed]="isSet('label')"
     [origin]="l.origins.label"
+
+    [overridden]="l.overrides?.label"
     (resetRequested)="clear.emit(['label'])"
     (valueChange)="rename($event)"
   />
@@ -22,6 +24,8 @@
       [options]="options()"
       [changed]="isSet('texture')"
       [origin]="l.origins.texture"
+
+      [overridden]="l.overrides?.texture"
       (resetRequested)="clear.emit(['texture'])"
       (valueChange)="settingsChange.emit({ texture: $event })"
     />
@@ -34,6 +38,8 @@
         [step]="0.01"
         [changed]="isSet('offset')"
         [origin]="l.origins.offset"
+
+        [overridden]="l.overrides?.offset"
         (resetRequested)="clear.emit(['offset'])"
         (valueChange)="half('offset', i, $event)"
       />
@@ -44,6 +50,8 @@
       [step]="1"
       [changed]="isSet('rotation')"
       [origin]="l.origins.rotation"
+
+      [overridden]="l.overrides?.rotation"
       (resetRequested)="clear.emit(['rotation'])"
       (valueChange)="settingsChange.emit({ rotation: $event })"
     />
@@ -54,6 +62,8 @@
         [step]="0.05"
         [changed]="isSet('tiling')"
         [origin]="l.origins.tiling"
+
+        [overridden]="l.overrides?.tiling"
         (resetRequested)="clear.emit(['tiling'])"
         (valueChange)="half('tiling', i, $event)"
       />
@@ -65,6 +75,8 @@
         [step]="0.005"
         [changed]="isSet('scroll')"
         [origin]="l.origins.scroll"
+
+        [overridden]="l.overrides?.scroll"
         (resetRequested)="clear.emit(['scroll'])"
         (valueChange)="half('scroll', i, $event)"
       />
@@ -75,6 +87,8 @@
         [checked]="v.wrap[i]!"
         [changed]="isSet('wrap')"
         [origin]="l.origins.wrap"
+
+        [overridden]="l.overrides?.wrap"
         (resetRequested)="clear.emit(['wrap'])"
         (checkedChange)="half('wrap', i, $event)"
       />

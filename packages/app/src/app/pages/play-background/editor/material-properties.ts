@@ -51,6 +51,8 @@ export class MaterialProperties {
   readonly values = input.required<MaterialValues>();
   /** Which level under the one edited sets each setting, where one does (shown by its row). */
   readonly origins = input<SettingOrigins<keyof MaterialSettings>>();
+  /** Which level over the one edited wins for each of its settings, where one does (those rows marked overridden). */
+  readonly overrides = input<SettingOrigins<keyof MaterialSettings>>();
   readonly controls = input.required<MaterialControls>();
   /** Whether anything of it is set here, to reset. */
   readonly changed = input(false);

@@ -1,3 +1,4 @@
+import type { Variant } from '../../../scenes/play-background/variants';
 import { bodyFrame, viewUp, type Viewpoint } from '../../../scenes/play-background/scene-space';
 import {
   bodyTransform,
@@ -172,6 +173,12 @@ export interface WornOverlay {
   readonly file?: PlanetFile;
 }
 
+/** A level of a body's settings as an editor names it (as its origins say it) and what it sets. */
+export interface SettingsLevel {
+  readonly name: string;
+  readonly settings: BodySettings | undefined;
+}
+
 /**
  * A body as an editor has it: which planet (or overlay), the overlays it wears, its settings in
  * the layer edited and those under it, its files once loaded.
@@ -188,13 +195,22 @@ export interface BodyInfo {
   readonly overlaysSet: boolean;
   /** Its settings in the layer edited. */
   readonly settings: BodySettings;
-  /**
-   * Whether the layer edited is under the overlays it wears (its own settings, a planet open in
-   * the library: what an overlay it wears sets is over them), not over them (a scene's).
-   */
-  readonly underOverlays?: boolean;
   /** Its own defaults, under the layer edited (the library's, under a scene). */
   readonly below?: BodySettings;
+  /**
+   * Its variants that are on under the level edited, the lowest first: a scene's planet, all of
+   * them; one of its variants edited, its data's settings for it and those on before it.
+   */
+  readonly variantsBelow?: readonly SettingsLevel[];
+  /**
+   * What is set over the level edited, the lowest first (the planet open: its variants on, those
+   * after one edited): what wins over what is set there.
+   */
+  readonly above?: readonly SettingsLevel[];
+  /** Its own variants (its data's, then the library's), where it is a planet. */
+  readonly variants?: readonly Variant[];
+  /** Which of its variants are on where it is (a scene's body: as the scene and its variants have them). */
+  readonly variantsOn?: readonly string[];
   /** The materials' base settings (the library's), under its own. */
   readonly materialBase?: MaterialSettingsMap;
   readonly file?: PlanetFile;
@@ -230,6 +246,8 @@ export interface BodyView {
   readonly focusable: boolean;
   /** Which level under the one edited sets each of its settings, where one does. */
   readonly origins: SettingOrigins<keyof BodySettings>;
+  /** Which level over the one edited wins for each of its settings, where one sets it (see `BodyInfo.above`). */
+  readonly overrides: SettingOrigins<keyof BodySettings>;
   /** Its name as shown, and as the levels under the one edited have it. */
   readonly label: string;
   readonly labelBelow: string;
@@ -249,6 +267,8 @@ export interface TextureEntry {
 
 /** A material as its properties show it: its settings as shown, what is set in the layer edited, which controls do anything, the textures it reads. */
 export interface MaterialEntry {
+  /** Which level over the one edited wins for each of its settings, where one sets it (see `BodyInfo.above`). */
+  readonly overrides?: SettingOrigins<keyof MaterialSettings>;
   /** Its name in the game data (what its base settings are kept by). */
   readonly name: string;
   /** What its settings are kept by (an overlay's: by the overlay too; see `materialKey`). */
@@ -300,6 +320,8 @@ export interface TextureChoice {
 
 /** A material's layer as its properties show it. */
 export interface LayerEntry {
+  /** Which level over the one edited wins for each of its settings, where one sets it. */
+  readonly overrides?: SettingOrigins<keyof LayerSettings>;
   readonly slot: LayerSlot;
   /** Its name: as renamed, else Diffuse, Emissive, Mask (Mask 1, Mask 2 where there are two). */
   readonly label: string;
@@ -328,6 +350,8 @@ export function layersOf(
   set: MaterialSettings | undefined,
   levels: readonly (readonly [string, MaterialSettings | undefined])[],
   textures: Readonly<Record<string, SceneTexture>>,
+  /** What is set over the level edited (see `BodyInfo.above`): what wins over it. */
+  above: readonly (readonly [string, MaterialSettings | undefined])[] = [],
 ): LayerEntry[] {
   const slots = layerSlots(material);
   const masks = slots.filter(([slot]) => slot.startsWith('mask')).length;
@@ -359,6 +383,7 @@ export function layersOf(
       },
       set: set?.layers?.[slot],
       origins: originsOf(levels.map(([name, l]) => [name, l?.layers?.[slot]] as const)),
+      overrides: originsOf(above.map(([name, l]) => [name, l?.layers?.[slot]] as const)),
       texture: info && key ? textureEntry(LAYER_NAMES[slot], info) : undefined,
       choices:
         key && !choices.some((c) => c.key === key)
@@ -465,9 +490,38 @@ export const overlayLabel = (o: WornOverlay) => o.below?.label ?? o.name ?? o.id
 const latest = <T>(values: readonly (T | undefined)[]): T | undefined =>
   values.filter((v) => v !== undefined).at(-1);
 
+/**
+ * A body's own levels under the level edited, the lowest first: its own defaults (the library's),
+ * then its variants on under it (over the overlays it wears, which are shared).
+ */
+export const ownLevels = (b: BodyInfo): readonly SettingsLevel[] => [
+  { name: 'the library (planet)', settings: b.below },
+  ...(b.variantsBelow ?? []),
+];
+/** A setting as the nearest of a body's own levels under the level edited sets it. */
+const ownSetting = <K extends keyof BodySettings>(b: BodyInfo, k: K): BodySettings[K] =>
+  latest(ownLevels(b).map((l) => l.settings?.[k]));
+/** A body's own levels under the level edited, the nearest first (as `overlayOn` reads levels). */
+const ownNearestFirst = (b: BodyInfo) => [...ownLevels(b)].reverse().map((l) => l.settings);
+
+/**
+ * Which level over the one edited wins for each of a body's settings, where one sets it (the
+ * topmost), by `pick`: what of each level is weighed (its settings, one material's, one part's).
+ */
+function overridesOf<T>(
+  b: BodyInfo,
+  pick: (s: BodySettings | undefined) => T | undefined,
+): SettingOrigins<keyof T & string> {
+  return originsOf((b.above ?? []).map((l) => [l.name, pick(l.settings)] as const));
+}
+
 /** A body's parts' settings in effect: those under the layer edited (its own, its overlays'), then the layer edited's. */
 const partSettingsOf = (b: BodyInfo): PartSettingsMap =>
-  mergePartSettings(b.below?.parts, ...b.overlays.map((o) => o.below?.parts), b.settings.parts);
+  mergePartSettings(
+    ...b.overlays.map((o) => o.below?.parts),
+    ...ownLevels(b).map((l) => l.settings?.parts),
+    b.settings.parts,
+  );
 
 /**
  * A body's materials, its own then each overlay's, as shown: each through its file's tuning (and
@@ -503,26 +557,26 @@ export function materialsOf(
                 ],
                 ['the library (material)', b.materialBase?.[name]],
                 [`the library (${overlayLabel(overlay)})`, overlay.below?.materials?.[key]],
-                ['the library (planet)', b.below?.materials?.[key]],
+                ...ownLevels(b).map((l): readonly [string, MaterialSettings | undefined] => [
+                  l.name,
+                  l.settings?.materials?.[key],
+                ]),
               ]
             : [
                 ['its tuning', owner.tuning?.materials?.[name]],
-                // How it wears each overlay it wears, and what each sets for it in the library,
-                // the later over the earlier: an overlay may set its own materials too.
-                ...drawnOverlays(b).map(
-                  (o): readonly [string, MaterialSettings | undefined] => [
-                    `${b.id}'s tuning for ${overlayLabel(o)}`,
-                    wearOf(b.file, o.id)?.materials?.[name],
-                  ],
-                ),
                 ['the library (material)', b.materialBase?.[name]],
-                ['the library (planet)', b.below?.materials?.[key]],
+                // What the overlays it wears set for its own materials (the later over the
+                // earlier), under its own.
                 ...drawnOverlays(b).map(
                   (o): readonly [string, MaterialSettings | undefined] => [
                     `the library (${overlayLabel(o)})`,
                     o.below?.materials?.[key],
                   ],
                 ),
+                ...ownLevels(b).map((l): readonly [string, MaterialSettings | undefined] => [
+                  l.name,
+                  l.settings?.materials?.[key],
+                ]),
               ];
           const under = mergeSettings(...levels.map(([, l]) => l));
           const settings = mergeSettings(under, chosen?.[key]);
@@ -538,6 +592,9 @@ export function materialsOf(
             orientation: drawn?.orientation ?? settings?.orientation ?? bodyOrientation(b),
           };
           const origins = originsOf(levels);
+          const above = (b.above ?? []).map(
+            (l): readonly [string, MaterialSettings | undefined] => [l.name, l.settings?.materials?.[key]],
+          );
           const turnOrigin = settings?.orientation === undefined ? drawn?.origin : undefined;
           const named = under?.label ?? materialLabel(name, material, owner.textures, role);
           return {
@@ -552,6 +609,7 @@ export function materialsOf(
               ? `From the ${overlayLabel(overlay)} overlay, set for ${b.id}`
               : undefined,
             origins: turnOrigin ? { ...origins, orientation: turnOrigin } : origins,
+            overrides: originsOf(above),
             values,
             turned: drawn?.turned ?? true,
             enabledBelow: under?.enabled ?? MATERIAL_DEFAULTS.enabled,
@@ -566,6 +624,7 @@ export function materialsOf(
               chosen?.[key],
               levels,
               { ...sky, ...textures, ...owner.textures, ...b.file?.textures },
+              above,
             ),
           };
         })
@@ -573,7 +632,7 @@ export function materialsOf(
   );
   // In the order they are drawn (the tree's order): the level edited's, else what is under it.
   const orders = b.overlays.flatMap((o) => (o.below?.order ? [o.below.order] : []));
-  const order = b.settings.order ?? b.below?.order ?? (orders.length ? orders.flat() : undefined);
+  const order = b.settings.order ?? ownSetting(b, 'order') ?? (orders.length ? orders.flat() : undefined);
   return inDrawOrder(entries, order);
 }
 
@@ -626,34 +685,31 @@ function overlayShades(b: BodyInfo) {
 
 /** The overlays a body wears that are drawn (those switched off set nothing), the later over the earlier. */
 const drawnOverlays = (b: BodyInfo) =>
-  b.overlays.filter((o) => overlayOn(o.id, b.settings, b.below) !== false);
+  b.overlays.filter((o) => overlayOn(o.id, b.settings, ...ownNearestFirst(b)) !== false);
 
 /**
- * A setting of a body as its levels stack, where one sets it: the layer edited and what its
- * overlays set (the later over the earlier: over the layer edited where it is under them, else
- * under it), over its own defaults.
+ * A setting of a body as its levels stack, where one sets it: the layer edited, over its own
+ * levels (its variants on under it, its own defaults), over what the overlays it wears set
+ * (shared: the later over the earlier).
  */
 export function stackedSetting<K extends keyof BodySettings>(b: BodyInfo, k: K): BodySettings[K] {
-  const worn = latest(drawnOverlays(b).map((o) => o.below?.[k]));
-  const edited = b.settings[k];
-  return (b.underOverlays ? (worn ?? edited) : (edited ?? worn)) ?? b.below?.[k];
+  return b.settings[k] ?? ownSetting(b, k) ?? latest(drawnOverlays(b).map((o) => o.below?.[k]));
 }
 
 /** A body's own settings as shown: the layer edited, over those under it (its overlays' shade over its own), over its files' tuning, over the defaults. */
 export function valuesOf(b: BodyInfo): BodyValues {
   const tuning = b.file?.tuning;
   const s = b.settings;
-  const own = b.below;
   const { strength, direction } = overlayShades(b);
   const at = <K extends keyof BodySettings>(k: K) => stackedSetting(b, k);
   return {
     overlays: wornIds(b),
     lighting: at('lighting') ?? tuning?.lighting ?? 1,
-    // An overlay it wears shades it its way (as it wears it); else its own.
+    // Its own shade, else as an overlay it wears shades it (as it wears it).
     shade:
       s.shade ??
+      ownSetting(b, 'shade') ??
       strength.styled ??
-      own?.shade ??
       strength.wear ??
       strength.style ??
       tuning?.shade?.strength ??
@@ -662,8 +718,8 @@ export function valuesOf(b: BodyInfo): BodyValues {
     lightFrom: at('lightFrom') ?? tuning?.lightFrom ?? keyLightFrom(rigOf(b)),
     shadeTowards:
       s.shadeTowards ??
+      ownSetting(b, 'shadeTowards') ??
       direction.styled ??
-      own?.shadeTowards ??
       direction.wear ??
       direction.style ??
       tuning?.shade?.direction ??
@@ -726,6 +782,8 @@ export interface PartValues {
 
 /** A body's part as its properties show it. */
 export interface PartEntry {
+  /** Which level over the one edited wins for each of its settings, where one sets it. */
+  readonly overrides?: SettingOrigins<keyof PartSettings>;
   readonly key: PartKey;
   /** Its name: as renamed (the level edited's, else under it), else its role's (Surface, Shell, Ring…). */
   readonly label: string;
@@ -790,7 +848,7 @@ export const bodyEnabled = (b: BodyInfo) => b.settings.enabled ?? b.below?.enabl
 /** Whether an overlay a body wears is drawn, as set and under the level edited. */
 export const overlayEnabled = (b: BodyInfo, id: string) =>
   overlayOn(id, b.settings) ?? overlayEnabledBelow(b, id);
-export const overlayEnabledBelow = (b: BodyInfo, id: string) => overlayOn(id, b.below) ?? true;
+export const overlayEnabledBelow = (b: BodyInfo, id: string) => overlayOn(id, ...ownNearestFirst(b)) ?? true;
 
 /** Each part's icon in the tree: a sphere, or a ring. */
 export const partIcon = (p: PartEntry) => PART_ICONS[p.kind];
@@ -854,12 +912,13 @@ export function partsOfBody(b: BodyInfo): PartEntry[] {
       o.file,
     ]),
   ];
+  // The overlays' (shared, the later over the earlier), then its own.
   const levels: [string, PartSettingsMap | undefined][] = [
-    ['the library (planet)', b.below?.parts],
     ...b.overlays.map((o): [string, PartSettingsMap | undefined] => [
       `the library (${overlayLabel(o)})`,
       o.below?.parts,
     ]),
+    ...ownLevels(b).map((l): [string, PartSettingsMap | undefined] => [l.name, l.settings?.parts]),
   ];
   return owners.flatMap(([parts, overlay, owner]) =>
     parts.map((part): PartEntry => {
@@ -907,6 +966,7 @@ export function partsOfBody(b: BodyInfo): PartEntry[] {
             .orientation,
         },
         set,
+        overrides: overridesOf(b, (s) => s?.parts?.[key]),
         origins: {
           ...originsOf(levels.map(([name, l]) => [name, l?.[key]] as const)),
           // Its body's say, where it is neither its own nor it a halo.
@@ -945,6 +1005,8 @@ export const lightIcon = (l: { readonly kind: LightKind; readonly darkens?: bool
 
 /** A body's light as its properties show it. */
 export interface LightEntry {
+  /** Which level over the one edited wins for each of its settings, where one sets it. */
+  readonly overrides?: SettingOrigins<keyof LightSettings>;
   readonly light: BodyLight;
   /** Its name as the levels under the one edited have it (one added here: its own). */
   readonly nameBelow: string;
@@ -1016,12 +1078,13 @@ export function lightsOfBody(b: BodyInfo): LightEntry[] {
     { ...DEFAULT_SHADE, ...b.file?.tuning?.shade },
   ).softness;
   const shade = { strength: values.shade, direction: values.shadeTowards, softness };
+  // The overlays' (shared, the later over the earlier), then its own.
   const levels: [string, LightSettingsMap | undefined][] = [
-    ['the library (planet)', b.below?.lights],
     ...b.overlays.map((o): [string, LightSettingsMap | undefined] => [
       `the library (${overlayLabel(o)})`,
       o.below?.lights,
     ]),
+    ...ownLevels(b).map((l): [string, LightSettingsMap | undefined] => [l.name, l.settings?.lights]),
   ];
   const settings = mergeLightSettings(...levels.map(([, l]) => l), b.settings.lights);
   const under = mergeLightSettings(...levels.map(([, l]) => l));
@@ -1030,7 +1093,11 @@ export function lightsOfBody(b: BodyInfo): LightEntry[] {
   // The lights added to it: under the level edited (the library's for the planet, its overlay's),
   // then the level edited's own (its settings are its own: nothing over them here).
   const below: [string, readonly AddedLight[] | undefined, string | undefined][] = [
-    ['the library (planet)', b.below?.added, undefined],
+    ...ownLevels(b).map((l): [string, readonly AddedLight[] | undefined, undefined] => [
+      l.name,
+      l.settings?.added,
+      undefined,
+    ]),
     ...b.overlays.map((o): [string, readonly AddedLight[] | undefined, string] => [
       `the ${overlayLabel(o)} overlay`,
       o.below?.added,
@@ -1046,6 +1113,7 @@ export function lightsOfBody(b: BodyInfo): LightEntry[] {
         enabledBelow: addedLight(l, under[l.id]).enabled,
         set: b.settings.lights?.[l.id],
         origins: originsOf(levels.map(([level, s]) => [level, s?.[l.id]] as const)),
+        overrides: overridesOf(b, (s) => s?.lights?.[l.id]),
         removable: false,
         addedIn: name,
       })),
@@ -1056,6 +1124,7 @@ export function lightsOfBody(b: BodyInfo): LightEntry[] {
       enabledBelow: true,
       set: undefined,
       origins: {},
+      overrides: overridesOf(b, (s) => s?.lights?.[l.id]),
       removable: true,
     })),
   ];
@@ -1088,6 +1157,7 @@ export function lightsOfBody(b: BodyInfo): LightEntry[] {
         enabledBelow: lightsBelow.get(light.id)?.enabled ?? true,
         set: set && Object.keys(set).length ? set : undefined,
         origins: shadow ? { strength: body.shade, from: body.shadeTowards, ...origins } : origins,
+        overrides: overridesOf(b, (s) => s?.lights?.[light.id]),
         removable: false,
       };
     });
@@ -1107,12 +1177,15 @@ export function moonLightsOf(b: BodyInfo): AddedLight[] {
 
 /** The lights added to a body under the level edited: the library's for it, then its overlays'. */
 const addedBelowOf = (b: BodyInfo): AddedLight[] => [
-  ...(b.below?.added ?? []),
+  ...ownLevels(b).flatMap((l) => l.settings?.added ?? []),
   ...b.overlays.flatMap((o) => o.below?.added ?? []),
 ];
-/** What is set for a body's lights under the level edited: the library's for it, then its overlays'. */
+/** What is set for a body's lights under the level edited: its overlays', then the library's for it. */
 const lightsBelowOf = (b: BodyInfo) =>
-  mergeLightSettings(b.below?.lights, ...b.overlays.map((o) => o.below?.lights));
+  mergeLightSettings(
+    ...b.overlays.map((o) => o.below?.lights),
+    ...ownLevels(b).map((l) => l.settings?.lights),
+  );
 
 /** A scene's own lights as shown: each added to the scene (its settings its own). */
 export function sceneLightsOf(lights: readonly AddedLight[] | undefined): LightEntry[] {
@@ -1288,9 +1361,10 @@ const sameReach = (a: LightReach | undefined, b: LightReach | undefined) => {
  */
 export function bodyOrigins(b: BodyInfo): SettingOrigins<keyof BodySettings> {
   const tuning = b.file?.tuning;
-  const own = b.below;
   const first = (...levels: [string, unknown][]) => levels.find(([, v]) => v !== undefined)?.[0];
-  const library = 'the library (planet)';
+  // Its own levels, the nearest first: its variants on under the level edited, its own defaults.
+  const mine = (k: keyof BodySettings) =>
+    [...ownLevels(b)].reverse().map((l): [string, unknown] => [l.name, l.settings?.[k]]);
   // Each overlay's say, the later's first (as it shades over the earlier's).
   const latestFirst = [...b.overlays].reverse();
   const libraryStyle = (k: 'shade' | 'shadeTowards') =>
@@ -1305,18 +1379,17 @@ export function bodyOrigins(b: BodyInfo): SettingOrigins<keyof BodySettings> {
       `the ${overlayLabel(o)} overlay`,
       o.file?.shade?.[k],
     ]);
-  // What the overlays it wears set (those drawn, the later first): over the layer edited where it
-  // is under them (as nothing under it then says it, they are its only origins but its tuning).
+  // Its own levels, then what the overlays it wears set (those drawn, the later first).
   const drawnLatestFirst = [...drawnOverlays(b)].reverse();
   const stack = (k: keyof BodySettings): [string, unknown][] => [
+    ...mine(k),
     ...drawnLatestFirst.map((o): [string, unknown] => [`the ${overlayLabel(o)} overlay`, o.below?.[k]]),
-    [library, own?.[k]],
   ];
   const out: SettingOrigins<keyof BodySettings> = {
     lighting: first(...stack('lighting'), ['its tuning', tuning?.lighting]),
     shade: first(
+      ...mine('shade'),
       ...libraryStyle('shade'),
-      [library, own?.shade],
       ...worn('strength'),
       ...styleOwn('strength'),
       ['its tuning', tuning?.shade?.strength],
@@ -1324,8 +1397,8 @@ export function bodyOrigins(b: BodyInfo): SettingOrigins<keyof BodySettings> {
     tint: first(...stack('tint'), ['its tuning', tuning?.tint]),
     lightFrom: first(...stack('lightFrom'), ['its tuning', tuning?.lightFrom]),
     shadeTowards: first(
+      ...mine('shadeTowards'),
       ...libraryStyle('shadeTowards'),
-      [library, own?.shadeTowards],
       ...worn('direction'),
       ...styleOwn('direction'),
       ['its tuning', tuning?.shade?.direction],
@@ -1349,8 +1422,6 @@ export function bodyView(
   canHaveMoons: boolean,
   /** One of a library planet's own moons, edited there: its orbit and what it wears; its lights its own planet's. */
   libraryMoon = false,
-  /** Whether what it wears is chosen here (unless said: a scene's bodies, a library planet's own moons). */
-  chooses = canHaveMoons || libraryMoon,
 ): BodyView {
   return {
     info: b,
@@ -1359,9 +1430,10 @@ export function bodyView(
     inherited: !!b.inherited,
     orbitBase: b.inherited?.orbit ?? DEFAULT_ORBIT,
     lights: !libraryMoon,
-    styled: chooses,
+    styled: canHaveMoons || libraryMoon,
     focusable: !libraryMoon,
-    baseTint: b.below?.tint ?? b.file?.tuning?.tint ?? NO_MATERIAL_TINT,
+    baseTint: ownSetting(b, 'tint') ?? b.file?.tuning?.tint ?? NO_MATERIAL_TINT,
+    overrides: overridesOf(b, (s) => s),
     focused,
     canHaveMoons,
     origins: {

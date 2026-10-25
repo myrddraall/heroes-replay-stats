@@ -1,3 +1,4 @@
+import type { VariantRow } from './variant-list';
 import { computed, effect, inject, resource, untracked } from '@angular/core';
 import {
   patchState,
@@ -30,6 +31,7 @@ import {
   fitScene,
   type MoonChoices,
   type Orbit,
+  type PlanetChoices,
   pathKey,
   pathOf,
   placeBodies,
@@ -171,18 +173,21 @@ import {
 } from './editor-model';
 import {
   chosenOverlays,
-  overlaySettingsOf,
   ownOverlays,
-  sceneOverlaysOf,
   wornKey,
 } from '../../../scenes/play-background/overlays';
+import {
+  sceneSwitched,
+  switched,
+  variantsOf,
+  variantsOnOf,
+} from '../../../scenes/play-background/variants';
 import {
   addedSourced,
   createdSkyFile,
   type CreatedShape,
   mergeAddedParts,
   overlayFileFor,
-  overlayName,
   PART_SHAPES,
   sourceFiles,
   withAddedParts,
@@ -379,6 +384,11 @@ interface SceneEditorState {
   readonly look: string;
   /** Where the editor's own camera is, over the scene's primary (none: there); not kept. */
   readonly editorCamera: SceneCameraSet | null;
+  /**
+   * The scene's own variant edited: switching a planet's variants then goes into it (see
+   * `sceneVariantOpen`); none: into the scene's settings for the planet.
+   */
+  readonly sceneVariantEdited: string | null;
 }
 
 /** One of a scene's cameras: its id, its name, where it puts the view (over the game's), whether it is the game's. */
@@ -407,6 +417,7 @@ export const SceneEditorStore = signalStore(
     focus: null,
     look: EDITOR_CAMERA,
     editorCamera: null,
+    sceneVariantEdited: null,
   }),
   withFolding([SCENE, bodyKey([0])]),
   withLocalStorage<SceneEditorState & { expanded: readonly string[] }>(
@@ -430,10 +441,12 @@ export const SceneEditorStore = signalStore(
       selected,
       look,
       editorCamera,
+      sceneVariantEdited,
       _draft,
       _index,
       _sceneFile,
       _ui,
+      _catalog,
     }) => {
       /** Whether the library shows the scene (a preview: seen through its own cameras, not moved). */
       const browsing = computed(() => _ui.browsing());
@@ -464,12 +477,39 @@ export const SceneEditorStore = signalStore(
       });
 
       /**
+       * A body's own variants where it is, and which are on: as the level edited sets them (a
+       * scene's, a planet's own moon's as its planet sets it), else the library's for its planet;
+       * switched by the scene's own variants that are on (`scene`). Those on are its levels under
+       * the scene's (`variantsBelow`).
+       */
+      const variantsWhere = (
+        bodyId: string,
+        path: BodyPath,
+        settings: BodySettings,
+        inherited: MoonChoices | undefined,
+        scene: PlanetChoices | undefined,
+      ): Pick<BodyInfo, 'variants' | 'variantsOn' | 'variantsBelow'> => {
+        const own = library().planets[bodyId];
+        const variants = variantsOf(_catalog.dataVariants().get(bodyId), own);
+        if (!variants.length) return {};
+        const on = sceneSwitched(scene, pathKey(path), variantsOnOf(settings, inherited?.settings, own));
+        return {
+          variants,
+          variantsOn: on,
+          variantsBelow: variants
+            .filter((v) => on.includes(v.id))
+            .flatMap((v) => v.layers.map((l) => ({ name: `the ${v.name} variant`, settings: l }))),
+        };
+      };
+      /**
        * Planets' bodies as the editor has them: each planet, then its moons after it (theirs after
        * each), each named by `keyOf` its path.
        */
       const bodiesOf = (
         planets: readonly SceneBody[],
         keyOf: (path: BodyPath) => string,
+        /** The scene whose variants switch theirs (its own bodies'), if any. */
+        scene?: PlanetChoices,
       ): BodyInfo[] => {
         const all = files();
         const lib = library();
@@ -488,6 +528,7 @@ export const SceneEditorStore = signalStore(
         ): BodyInfo => ({
           key: keyOf(path),
           id: bodyId,
+          ...variantsWhere(bodyId, path, settings, inherited, scene),
           ...(inherited ? { inherited } : {}),
           overlays: worn.map((id) => ({
             id,
@@ -559,7 +600,13 @@ export const SceneEditorStore = signalStore(
         return out;
       };
       /** The scene's bodies: each planet, then its moons after it (theirs after each). */
-      const bodies = computed((): BodyInfo[] => bodiesOf(sceneBodiesNow(), bodyKey));
+      /** The scene as its variants switch its planets': with the one edited on too (as it is seen while edited). */
+      const switching = computed((): PlanetChoices => {
+        const edited = sceneVariantEdited();
+        const on = choices().sceneVariantsOn ?? [];
+        return edited && !on.includes(edited) ? { ...choices(), sceneVariantsOn: [...on, edited] } : choices();
+      });
+      const bodies = computed((): BodyInfo[] => bodiesOf(sceneBodiesNow(), bodyKey, switching()));
       const bodyByKey = computed(() => new Map(bodies().map((b) => [b.key, b] as const)));
       /** Whether what is open is a group (a scene within scenes: no sky of its own). */
       const groupOpen = computed(() => isGroup(sceneId()));
@@ -847,30 +894,13 @@ export const SceneEditorStore = signalStore(
         ),
         /** The scene's own lights, lighting every planet in it. */
         sceneLights: computed((): readonly AddedLight[] => choices().lights ?? []),
-        /** The overlays the scene wears (made for scenes, there), the later over the earlier. */
-        sceneWorn: computed(() =>
-          (choices().overlays ?? []).filter((id) => library().created?.[id]?.kind === 'scene'),
-        ),
-        /** The overlays a scene may wear (those made for scenes), by name. */
-        sceneOverlayOptions: computed((): readonly PickChoice[] =>
-          Object.entries(library().created ?? {})
-            .filter(([, o]) => o.kind === 'scene')
-            .map(([id]) => ({ value: id, label: overlayName(library(), id) })),
-        ),
-        /**
-         * What the scene's overlays add to it, as it is drawn: the overlays every planet in it
-         * wears over its own, the lights they add to the scene's (`sceneOverlaysOf`).
-         */
-        _sceneAdds: computed(() => sceneOverlaysOf(choices(), library())),
         sceneTint: computed(() => _draft.scenes().settings),
         neededFiles: computed(() => {
           const file = overlayFileOf();
           const lib = library();
-          // Each body, what it wears (and the scene's overlays put on it), and the files what is
-          // added onto it (and the sky) reads.
+          // Each body, what it wears, and the files what is added onto it (and the sky) reads.
           return [
             ...new Set([
-              ...sceneOverlaysOf(choices(), lib).planets.map(file),
               ...bodies().flatMap((b) => [
                 b.id,
                 ...wornIds(b).map(file),
@@ -893,11 +923,6 @@ export const SceneEditorStore = signalStore(
             ]),
           ];
         }),
-        /** The scene's lights as it is drawn: its own, then those its overlays add. */
-        drawnSceneLights: computed((): readonly AddedLight[] => [
-          ...(choices().lights ?? []),
-          ...sceneOverlaysOf(choices(), library()).lights,
-        ]),
         kind: computed((): TargetKind => {
           const t = target();
           if ('view' in t && t.view) return t.view.kind;
@@ -1540,9 +1565,8 @@ export const SceneEditorStore = signalStore(
             id: b.id,
             position: p.position,
             radius: p.radius,
-            // What it wears, then what the scene's overlays put on every planet (flattened here,
-            // as it is drawn: each stays linked where it is kept).
-            overlays: [...new Set([...wornIds(b), ...store._sceneAdds().planets])],
+            overlays: wornIds(b),
+            ...(b.variantsOn ? { variantsOn: b.variantsOn } : {}),
             ...(drawn ? {} : { enabled: false }),
             ...(s.overlayEnabled !== undefined ? { overlayEnabled: s.overlayEnabled } : {}),
             ...(s.overlaysEnabled ? { overlaysEnabled: s.overlaysEnabled } : {}),
@@ -1764,6 +1788,64 @@ export const SceneEditorStore = signalStore(
       return light && body ? beam(light, body, b) : [];
     }),
   })),
+  withComputed((store) => {
+    const choices = computed(() => store._draft.scenes().planets[store.scene()] ?? {});
+    /** The scene's variant edited, where it is one of the scene's. */
+    const sceneVariantOpen = computed(() => {
+      const id = store.sceneVariantEdited();
+      return id && (choices().sceneVariants ?? []).some((v) => v.id === id) ? id : null;
+    });
+    /** The body selected, where one is (or one of its materials, parts, lights). */
+    const selectedBody = computed(() => {
+      const t = store.target();
+      return 'path' in t ? store.bodyByKey().get(bodyKey(t.path)) : undefined;
+    });
+    return {
+      sceneVariantOpen,
+      /** The scene's own variants as listed: each one's name, whether on. */
+      sceneVariantRows: computed((): readonly VariantRow[] =>
+        (choices().sceneVariants ?? []).map((v) => ({
+          id: v.id,
+          name: v.name,
+          on: (choices().sceneVariantsOn ?? []).includes(v.id),
+          removable: true,
+        })),
+      ),
+      sceneVariantsOnSet: computed(() => (choices().sceneVariantsOn ?? []).length > 0),
+      /** The selected body's variants, each on or off where it is (in the scene, with its variants). */
+      variantRows: computed((): readonly VariantRow[] => {
+        const b = selectedBody();
+        return (b?.variants ?? []).map((v) => ({
+          id: v.id,
+          name: v.name,
+          on: (b?.variantsOn ?? []).includes(v.id),
+          removable: false,
+        }));
+      }),
+      // (A planet's variants are made and edited in the library; here they are switched.)
+      variantsEditable: computed(() => false),
+      variantEdited: computed((): string | null => null),
+      variantFromChangesOffered: computed(() => false),
+      /** Whether which of the selected body's variants are on is set at the level edited. */
+      variantsOnSet: computed(() => {
+        const b = selectedBody();
+        const t = store.target();
+        if (!b || !('path' in t)) return false;
+        const open = sceneVariantOpen();
+        return open
+          ? (choices().sceneVariants ?? []).find((v) => v.id === open)?.switches?.[pathKey(t.path)] !== undefined
+          : b.settings.variantsOn !== undefined;
+      }),
+      /** The levels edited here: the scene itself, then each of its own variants. */
+      layerOptions: computed((): readonly PickChoice[] => {
+        const variants = choices().sceneVariants ?? [];
+        return variants.length
+          ? [{ value: '', label: 'Scene' }, ...variants.map((v) => ({ value: v.id, label: v.name }))]
+          : [];
+      }),
+      layer: computed(() => sceneVariantOpen() ?? ''),
+    };
+  }),
   withMethods((store) => {
     const d = store._draft;
     /** The scene's planets changed (the random sets' have none of their own). */
@@ -2297,24 +2379,6 @@ export const SceneEditorStore = signalStore(
         else if (t.kind === 'part') settings(t.path, (s) => withoutPartSetting(s, t.key, keys));
       },
       /** An overlay put on the scene's sky, over what it wears. */
-      /** An overlay put on the scene (over what it wears), taken off, or all taken off. */
-      addSceneOverlay(id: string): void {
-        const worn = store.sceneWorn();
-        if (!worn.includes(id)) d.setSceneOverlays(store.scene(), [...worn, id]);
-      },
-      removeSceneOverlay(id: string): void {
-        d.setSceneOverlays(
-          store.scene(),
-          store.sceneWorn().filter((w) => w !== id),
-        );
-      },
-      resetSceneOverlays(): void {
-        d.setSceneOverlays(store.scene(), []);
-      },
-      /** An overlay the scene wears opened in the library (what it puts on planets, its lights). */
-      showSceneOverlay(id: string): void {
-        store._ui.open({ kind: 'style', id });
-      },
       addSkyOverlay(id: string): void {
         const worn = store.skyWorn();
         if (!worn.includes(id)) d.setSkyOverlays(store.scene(), [...worn, id]);
@@ -2390,17 +2454,84 @@ export const SceneEditorStore = signalStore(
       removeOverlay(id: string): void {
         wear((worn) => worn.filter((w) => w !== id));
       },
-      overlayFromChanges(): void {
+      // Variants: the selected body's switched (into the scene, or the scene's variant edited);
+      // the scene's own made, switched, edited, renamed, deleted.
+      setVariantOn(id: string, on: boolean): void {
         const path = selectedPath();
-        const b = path && store.bodyByKey().get(bodyKey(path));
-        if (!path || !b) return;
-        const { overlay, kept } = overlaySettingsOf(b.settings);
-        if (!Object.keys(overlay).length) return;
-        const id = d.createOverlayFrom(overlay);
-        const next = [...wornIds(b), id];
-        edit((bodies) =>
-          changeSettings(setOverlays(bodies, path, next, wornKeyOf(b)), path, wornKey(next), () => kept),
-        );
+        if (!path) return;
+        const open = store.sceneVariantOpen();
+        if (open) {
+          const key = pathKey(path);
+          d.changeSceneVariant(store.scene(), open, (v) => ({
+            ...v,
+            switches: { ...v.switches, [key]: { ...v.switches?.[key], [id]: on } },
+          }));
+          return;
+        }
+        const b = store.bodyByKey().get(bodyKey(path));
+        settings(path, (s) => {
+          const now = variantsOnOf(s, b?.inherited?.settings, d.library().planets[b?.id ?? '']);
+          return { ...s, variantsOn: switched(now, { [id]: on }) };
+        });
+      },
+      resetVariantsOn(): void {
+        const path = selectedPath();
+        if (!path) return;
+        const open = store.sceneVariantOpen();
+        if (open) {
+          const key = pathKey(path);
+          d.changeSceneVariant(store.scene(), open, (v) => {
+            const switches = { ...v.switches };
+            delete switches[key];
+            return { ...v, switches };
+          });
+          return;
+        }
+        settings(path, (s) => without(s, ['variantsOn']));
+      },
+      editVariant(): void {
+        // (A planet's variants are edited in the library.)
+      },
+      newVariant(): void {
+        // (Made in the library.)
+      },
+      variantFromChanges(): void {
+        // (Made in the library.)
+      },
+      deleteVariant(): void {
+        // (Deleted in the library.)
+      },
+      renameVariant(): void {
+        // (Renamed in the library.)
+      },
+      /** The level switching a planet's variants goes into: the scene ('') or one of its variants. */
+      setLayer(value: string): void {
+        patchState(store, { sceneVariantEdited: value || null });
+      },
+      showLayer(): void {
+        // (Nothing is over a scene's settings: no override to show.)
+      },
+      newSceneVariant(): void {
+        const n = (store._draft.scenes().planets[store.scene()]?.sceneVariants ?? []).length + 1;
+        const id = d.createSceneVariant(store.scene(), `Variant ${n}`);
+        patchState(store, { sceneVariantEdited: id });
+      },
+      setSceneVariantOn(id: string, on: boolean): void {
+        const now = store._draft.scenes().planets[store.scene()]?.sceneVariantsOn ?? [];
+        d.setSceneVariantsOn(store.scene(), switched(now, { [id]: on }));
+      },
+      resetSceneVariantsOn(): void {
+        d.setSceneVariantsOn(store.scene(), []);
+      },
+      editSceneVariant(id: string | null): void {
+        patchState(store, { sceneVariantEdited: id });
+      },
+      renameSceneVariant(id: string, name: string): void {
+        d.changeSceneVariant(store.scene(), id, (v) => ({ ...v, name }));
+      },
+      deleteSceneVariant(id: string): void {
+        d.deleteSceneVariant(store.scene(), id);
+        if (store.sceneVariantEdited() === id) patchState(store, { sceneVariantEdited: null });
       },
       /** What the selected body wears back as its own (the library's choice for it, else its data's). */
       resetOverlays(): void {

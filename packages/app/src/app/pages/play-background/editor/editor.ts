@@ -1,3 +1,4 @@
+import type { VariantRow } from './variant-list';
 import type { Signal } from '@angular/core';
 import type { BodySettings, Orbit, Vec3 } from '../../../scenes/play-background/background-scene';
 import type {
@@ -79,11 +80,35 @@ export abstract class Editor {
   abstract showOverlay(id: string): void;
   abstract removeOverlay(id: string): void;
   abstract resetOverlays(): void;
+
+  // Variants (see `variants.ts`): the selected body's own, switched on or off where it is.
+  /** The selected body's variants, each switched on or off where it is (none: no list). */
+  abstract readonly variantRows: Signal<readonly VariantRow[]>;
+  /** Whether variants can be made, edited and deleted here (a planet's, in the library), else only switched. */
+  abstract readonly variantsEditable: Signal<boolean>;
+  /** The variant open to be edited, if one is. */
+  abstract readonly variantEdited: Signal<string | null>;
+  /** Whether which variants are on is set at the level edited. */
+  abstract readonly variantsOnSet: Signal<boolean>;
+  /** Whether a variant can be made of what is set on the selected body (see `variantSettingsOf`). */
+  abstract readonly variantFromChangesOffered: Signal<boolean>;
+  abstract setVariantOn(id: string, on: boolean): void;
+  abstract resetVariantsOn(): void;
+  abstract editVariant(id: string | null): void;
+  abstract newVariant(): void;
+  abstract variantFromChanges(): void;
+  abstract deleteVariant(id: string): void;
+  abstract renameVariant(id: string, name: string): void;
   /**
-   * The selected body's changes made into a new overlay it wears (what an overlay can take of them:
-   * see `overlaySettingsOf`), taken off it, so they are linked wherever the overlay is worn.
+   * The levels what is set can go into (a planet's own settings and its variants; a scene and its
+   * variants), by value ('': the owner's own); none offered: one only.
    */
-  abstract overlayFromChanges(): void;
+  abstract readonly layerOptions: Signal<readonly PickChoice[]>;
+  /** The level what is set goes into ('': the owner's own). */
+  abstract readonly layer: Signal<string>;
+  abstract setLayer(value: string): void;
+  /** The level named so (as an override names it) made the one edited, where it is one here. */
+  abstract showLayer(name: string): void;
 
   /** What of the selected material its row shows (a layer, its shield shader, an effect); none: the material itself. */
   abstract readonly materialView: Signal<MaterialView | null>;

@@ -12,6 +12,7 @@ import {
 } from '../../../scenes/play-background/scene-lights';
 import { DraftDesignStore } from '../draft-design.store';
 import { type PropertyOption, PropertySelect } from '../properties/property-select';
+import { VariantList } from './variant-list';
 import { AddPlanet } from './add-planet';
 import { AssetCatalogStore } from './asset-catalog.store';
 import { BodyProperties } from './body-properties';
@@ -89,6 +90,7 @@ import { TintSection } from './tint-section';
     PropertySection,
     PropertySelect,
     CameraProperties,
+    VariantList,
   ],
   templateUrl: './selection-panel.html',
   styleUrl: './selection-panel.scss',
@@ -342,12 +344,11 @@ export class SelectionPanel {
   }
 
   /** The selected material as the library has it (shared), opened from what it is selected in. */
-  /** A new overlay made (empty, named as it starts) and worn by what is selected: a body, the sky, or the scene. */
-  protected newOverlay(kind: 'planet' | 'sky' | 'scene'): void {
+  /** A new overlay made (empty, named as it starts) and worn by what is selected: a body, or the sky. */
+  protected newOverlay(kind: 'planet' | 'sky'): void {
     const id = this.draft.createOverlay(kind);
     if (kind === 'planet') this.editor.addOverlay(id);
-    else if (kind === 'sky') this.editor.addSkyOverlay(id);
-    else this.scene?.addSceneOverlay(id);
+    else this.editor.addSkyOverlay(id);
   }
 
   protected openShared(): void {

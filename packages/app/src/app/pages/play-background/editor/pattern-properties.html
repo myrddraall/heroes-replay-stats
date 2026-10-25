@@ -14,6 +14,8 @@
         [options]="drawAsOptions"
         [changed]="isSet('drawAs')"
         [origin]="origins()?.drawAs"
+
+        [overridden]="overrides()?.drawAs"
         (resetRequested)="clear.emit(['drawAs'])"
         (valueChange)="drawAs($event)"
       />
@@ -25,6 +27,8 @@
       [step]="0.05"
       [changed]="isSet('scale')"
       [origin]="origins()?.scale"
+
+      [overridden]="overrides()?.scale"
       (resetRequested)="clear.emit(['scale'])"
       (valueChange)="settingsChange.emit({ scale: $event })"
     />
@@ -37,6 +41,8 @@
         [step]="0.01"
         [changed]="isSet('width')"
         [origin]="origins()?.width"
+
+        [overridden]="overrides()?.width"
         (resetRequested)="clear.emit(['width'])"
         (valueChange)="settingsChange.emit({ width: $event })"
       />
@@ -48,6 +54,8 @@
         [step]="0.05"
         [changed]="isSet('soft')"
         [origin]="origins()?.soft"
+
+        [overridden]="overrides()?.soft"
         (resetRequested)="clear.emit(['soft'])"
         (valueChange)="settingsChange.emit({ soft: $event })"
       />
@@ -60,6 +68,8 @@
         [step]="0.05"
         [changed]="isSet('cut')"
         [origin]="origins()?.cut"
+
+        [overridden]="overrides()?.cut"
         (resetRequested)="clear.emit(['cut'])"
         (valueChange)="settingsChange.emit({ cut: $event })"
       />
@@ -75,6 +85,8 @@
       [value]="v.inactive"
       [changed]="isSet('inactive')"
       [origin]="origins()?.inactive"
+
+      [overridden]="overrides()?.inactive"
       (resetRequested)="clear.emit(['inactive'])"
       (valueChange)="settingsChange.emit({ inactive: $event })"
     />
@@ -83,6 +95,8 @@
       [value]="v.active"
       [changed]="isSet('active')"
       [origin]="origins()?.active"
+
+      [overridden]="overrides()?.active"
       (resetRequested)="clear.emit(['active'])"
       (valueChange)="settingsChange.emit({ active: $event })"
     />
@@ -101,6 +115,8 @@
       [step]="0.05"
       [changed]="isSet('scale')"
       [origin]="origins()?.scale"
+
+      [overridden]="overrides()?.scale"
       (resetRequested)="clear.emit(['scale'])"
       (valueChange)="settingsChange.emit({ scale: $event })"
     />
@@ -113,6 +129,8 @@
         [step]="0.05"
         [changed]="isSet('cut')"
         [origin]="origins()?.cut"
+
+        [overridden]="overrides()?.cut"
         (resetRequested)="clear.emit(['cut'])"
         (valueChange)="settingsChange.emit({ cut: $event })"
       />

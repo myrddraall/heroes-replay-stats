@@ -1,3 +1,4 @@
+import type { BodyVariant } from './variants';
 import type {
   SceneBlend,
   SceneColor,
@@ -35,6 +36,8 @@ export interface PlanetIndexEntry {
   readonly kind: PlanetKind;
   /** The style it wears unless a scene says otherwise (its tuning's). */
   readonly style?: string;
+  /** Its own variants as its data has them (see `variantsOf`). */
+  readonly variants?: readonly BodyVariant[];
 }
 
 /** One of the Play screen's own planets where the game puts it, at its body's radius there. */
@@ -913,9 +916,8 @@ export interface PartOverride {
 }
 
 /**
- * How a planet wears a style: its shade and the style's materials' settings, over the style's
- * (and its own materials' settings, by their names, while it wears the style: a style may change
- * how its own surface is drawn); and the style's parts, by their role, shaped and mapped as its own.
+ * How a planet wears a style: its shade and the style's materials' settings, over the style's;
+ * and the style's parts, by their role, shaped and mapped as its own.
  */
 export interface StyleWear {
   readonly shade?: Partial<BodyShade>;
@@ -1036,9 +1038,7 @@ export async function loadPlanetFile(
 ): Promise<PlanetFile> {
   const response = await fetchOk(at(base, `planets/${id}.json`), `the planet ${id}`, signal);
   const planet = (await response.json()) as PlanetFile;
-  // (A style may have none: what its planets' tuning for it sets is all it is.)
-  if (!Array.isArray(planet.parts) || (!planet.parts.length && planet.kind !== 'style'))
-    throw new Error(`the planet ${id} has no parts`);
+  if (!planet.parts?.length) throw new Error(`the planet ${id} has no parts`);
   return planet;
 }
 

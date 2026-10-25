@@ -1,4 +1,5 @@
-import { Component, computed, input, output, signal } from '@angular/core';
+import { Component, computed, input, output, signal, inject } from '@angular/core';
+import { OVERRIDE_SHOWN } from './override-shown';
 import { MatIcon } from '@angular/material/icon';
 
 /** A direction in a planet's placement frame: x to the right, y away from the scene's own camera, z up. */
@@ -105,6 +106,7 @@ export function snapped(x: number, down: number): { readonly x: number; readonly
  */
 @Component({
   selector: 'hrs-property-direction',
+  host: { '[class.row--overridden]': '!!overridden()' },
   imports: [MatIcon],
   templateUrl: './property-direction.html',
   styleUrl: './property-direction.scss',
@@ -115,6 +117,9 @@ export class PropertyDirection {
   readonly changed = input(false);
   /** Where its value comes from where it isn't set here (a level under the one edited), if anywhere. */
   readonly origin = input<string>();
+  /** The level over the one edited that wins for it, if one does (marked so, and shown when its mark is pressed). */
+  readonly overridden = input<string>();
+  protected readonly showOverride = inject(OVERRIDE_SHOWN, { optional: true });
   /** Its reset was pressed: back to what it would be. */
   readonly resetRequested = output<void>();
   readonly value = input.required<Direction>();

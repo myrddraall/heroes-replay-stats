@@ -4,6 +4,7 @@ import { mergeMaterialSettings } from './material-settings';
 import { type AddedLight, mergeLightSettings } from './scene-lights';
 import { type CreatedOverlay, mergeAddedParts } from './created-overlays';
 import { createdOverlay, overlayOn } from './overlays';
+import { type BodyVariant, variantLayersOf, variantsOf, variantsOnOf } from './variants';
 import type { SetPlanet } from './planet-sets';
 import {
   type BodyShade,
@@ -156,17 +157,27 @@ function stacked(levels: readonly (BodySettings | undefined)[]): BodySettings {
 }
 
 /**
- * A planet as the library has it, under what is set for it: its own defaults, then the overlays
- * it wears in order (each may set any of its settings: the later over the earlier), then what is
- * set for it (a scene's); its materials' settings merged by key over the materials' base settings.
+ * A planet as the library has it, under what is set for it: what the overlays it wears set (shared,
+ * each any of its settings: the later over the earlier), then its own defaults, then its variants
+ * that are on (`data`: its data's, with the library's; on as `set` says, else as the library has
+ * it for the planet), then what is set for it (a scene's); its materials' settings merged by key
+ * over the materials' base settings. Flattened here, just before it is drawn: each level is kept
+ * where it is, linked.
  */
-export function withLibrary(set: SetPlanet, library: LibraryState): SetPlanet {
+export function withLibrary(
+  set: SetPlanet,
+  library: LibraryState,
+  data?: readonly BodyVariant[],
+): SetPlanet {
   const own = library.planets[set.id];
-  // Each overlay switched off (by the scene, else the library): drawn as if it didn't wear it;
-  // one made in the editor that is no longer there, as if it never was.
+  // Its own levels, the lowest first: its own defaults, then its variants that are on.
+  const mine = [own, ...variantLayersOf(variantsOf(data, own), set.variantsOn ?? variantsOnOf(own))];
+  const nearestFirst = [...mine].reverse();
+  // Each overlay switched off (by the scene, else a variant, else the library): drawn as if it
+  // didn't wear it; one made in the editor that is no longer there, as if it never was.
   const on = (id: string) =>
     (!createdOverlay(id) || !!library.created?.[id]) &&
-    (set.overlaysEnabled?.[id] ?? set.overlayEnabled ?? overlayOn(id, own)) !== false;
+    (set.overlaysEnabled?.[id] ?? set.overlayEnabled ?? overlayOn(id, ...nearestFirst)) !== false;
   // What it wears: as chosen where it is put, else (its own) the library's choice for it, if any.
   const wears = set.ownOverlays && own?.overlays ? own.overlays : set.overlays;
   const overlays = (wears ?? []).filter(on);
@@ -174,27 +185,35 @@ export function withLibrary(set: SetPlanet, library: LibraryState): SetPlanet {
     wears === set.overlays && overlays.length === (wears ?? []).length ? set : { ...set, overlays };
   const styles = overlays.map((id) => library.styles[id]).filter((s) => !!s);
   const base = library.materials;
-  if (!own && !styles.length && !Object.keys(base ?? {}).length) return planet;
+  if (mine.length === 1 && !own && !styles.length && !Object.keys(base ?? {}).length) return planet;
   const orders = styles.flatMap((s) => (s.order ? [s.order] : []));
-  // Its own and its overlays', the later over the earlier: under what is set for it.
-  const under = stacked([own, ...styles]);
+  // Its overlays' (the later over the earlier), then its own levels: under what is set for it.
+  const under = stacked([...styles, ...mine]);
   return {
     ...planet,
     // (An overlay's materials kept by their `materialKey`, at every level: the base by name.)
     materials: mergeMaterialSettings(
       base,
-      own?.materials,
       ...styles.map((s) => s.materials),
+      ...mine.map((s) => s?.materials),
       planet.materials,
     ),
     ...(base ? { base } : {}),
-    parts: mergePartSettings(own?.parts, ...styles.map((s) => s.parts), planet.parts),
+    parts: mergePartSettings(...styles.map((s) => s.parts), ...mine.map((s) => s?.parts), planet.parts),
     addedParts: mergeAddedParts(own?.addedParts, planet.addedParts),
-    order: planet.order ?? own?.order ?? (orders.length ? orders.flat() : undefined),
-    lights: mergeLightSettings(own?.lights, ...styles.map((s) => s.lights), planet.lights),
+    // (Its own levels' order, the nearest that sets one; else its overlays' joined.)
+    order:
+      planet.order ??
+      nearestFirst.find((s) => s?.order)?.order ??
+      (orders.length ? orders.flat() : undefined),
+    lights: mergeLightSettings(
+      ...styles.map((s) => s.lights),
+      ...mine.map((s) => s?.lights),
+      planet.lights,
+    ),
     added: [
-      ...(own?.added ?? []),
       ...styles.flatMap((s) => s.added ?? []),
+      ...mine.flatMap((s) => s?.added ?? []),
       ...(planet.added ?? []),
     ],
     lighting: planet.lighting ?? under.lighting,
@@ -203,8 +222,7 @@ export function withLibrary(set: SetPlanet, library: LibraryState): SetPlanet {
     rim: planet.rim ?? under.rim,
     ...orientationOf(planet, under),
     shade: {
-      ...shadeOf(own),
-      ...styles.reduce((a: Partial<BodyShade>, s) => ({ ...a, ...shadeOf(s) }), {}),
+      ...[...styles, ...mine].reduce((a: Partial<BodyShade>, s) => ({ ...a, ...shadeOf(s) }), {}),
       ...planet.shade,
     },
   };

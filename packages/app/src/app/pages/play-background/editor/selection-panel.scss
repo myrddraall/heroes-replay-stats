@@ -22,3 +22,9 @@
   font: var(--mat-sys-body-small);
   opacity: 0.75;
 }
+
+// The level what is set goes into (a planet's own settings or one of its variants; a scene or one
+// of its variants), above everything else in the panel.
+.layer {
+  padding: 8px 0 4px;
+}

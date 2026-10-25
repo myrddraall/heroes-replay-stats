@@ -39,6 +39,7 @@ import {
   withoutMaterial,
 } from '../../scenes/play-background/scene-bodies';
 import { migrateDesign, sceneWithout } from '../../scenes/play-background/overlays';
+import { type BodyVariant, MADE_VARIANT, type SceneVariant } from '../../scenes/play-background/variants';
 import {
   type CreatedOverlay,
   nextOverlayId,
@@ -243,6 +244,61 @@ export const DraftDesignStore = signalStore(
       resetLibraryBody(kind: LibraryKind, id: string): void {
         updateLibraryBody(kind, id, () => undefined);
       },
+
+      // A planet's own variants (see `variants.ts`): made here, or changes to its data's.
+      /** A new variant of a planet (named, holding `settings`: none, nothing yet), after its others; its id. */
+      createVariant(planet: string, name: string, settings?: BodySettings): string {
+        const taken = new Set((store.library().planets[planet]?.variants ?? []).map((v) => v.id));
+        let n = 1;
+        while (taken.has(`${MADE_VARIANT}${n}`)) n++;
+        const id = `${MADE_VARIANT}${n}`;
+        updateLibraryBody('planets', planet, (s) => ({
+          ...s,
+          variants: [...(s.variants ?? []), { id, name, ...(settings && Object.keys(settings).length ? { settings } : {}) }],
+        }));
+        return id;
+      },
+      /**
+       * A variant of a planet changed (its settings; a data variant's: the changes to it, kept as
+       * the library's entry for it); one of the data's with nothing changed left: no entry.
+       */
+      changeVariant(
+        planet: string,
+        variant: string,
+        change: (v: BodyVariant) => BodyVariant,
+      ): void {
+        updateLibraryBody('planets', planet, (s) => {
+          const list = s.variants ?? [];
+          const at = list.findIndex((v) => v.id === variant);
+          const changed = change(at >= 0 ? list[at]! : { id: variant });
+          const tidy: BodyVariant = {
+            id: changed.id,
+            ...(changed.name !== undefined ? { name: changed.name } : {}),
+            ...(changed.settings && Object.keys(changed.settings).length ? { settings: changed.settings } : {}),
+          };
+          const kept = !variant.startsWith(MADE_VARIANT) && Object.keys(tidy).length === 1 ? null : tidy;
+          const next = at >= 0 ? list.map((v, i) => (i === at ? kept : v)) : [...list, kept];
+          const variants = next.filter((v): v is BodyVariant => !!v);
+          return without({ ...s, variants }, variants.length ? [] : ['variants']);
+        });
+      },
+      /** A variant made here deleted (off wherever it was on in the library too). */
+      deleteVariant(planet: string, variant: string): void {
+        updateLibraryBody('planets', planet, (s) => {
+          const variants = (s.variants ?? []).filter((v) => v.id !== variant);
+          const on = s.variantsOn?.filter((id) => id !== variant);
+          return without(
+            { ...s, variants, ...(on ? { variantsOn: on } : {}) },
+            variants.length ? [] : ['variants'],
+          );
+        });
+      },
+      /** Which of a planet's variants are on by default (none given: none set: its data's, none). */
+      setVariantsOn(planet: string, on: readonly string[] | undefined): void {
+        updateLibraryBody('planets', planet, (s) =>
+          on ? { ...s, variantsOn: on } : without(s, ['variantsOn']),
+        );
+      },
       /** A planet's own moons as they are now (none: none kept). */
       setLibraryMoons(planet: string, moons: readonly MoonChoices[]): void {
         setLibrary((l) => {
@@ -275,23 +331,9 @@ export const DraftDesignStore = signalStore(
        */
       createOverlay(kind: OverlayKind, parts: readonly AddedPart[] = []): string {
         const { id, n } = nextOverlayId(store.library());
-        const label = `${kind === 'sky' ? 'Sky overlay' : kind === 'scene' ? 'Scene overlay' : 'Overlay'} ${n}`;
+        const label = `${kind === 'sky' ? 'Sky overlay' : 'Overlay'} ${n}`;
         const made = withOverlayParts({ kind, label, parts: [], sources: {} }, parts);
         setLibrary((l) => ({ ...l, created: { ...l.created, [id]: made } }));
-        return id;
-      },
-      /**
-       * A new overlay to wear on a planet, of settings changed on one (what an overlay can take of
-       * them: see `overlaySettingsOf`), named; its id.
-       */
-      createOverlayFrom(settings: BodySettings): string {
-        const { id, n } = nextOverlayId(store.library());
-        const made: CreatedOverlay = { kind: 'planet', label: `Overlay ${n}`, parts: [], sources: {} };
-        setLibrary((l) => ({
-          ...l,
-          created: { ...l.created, [id]: made },
-          styles: { ...l.styles, [id]: settings },
-        }));
         return id;
       },
       /** An overlay made in the editor changed (its parts, the materials they draw). */
@@ -540,9 +582,39 @@ export const DraftDesignStore = signalStore(
       clearSkyTint(id: string): void {
         setSceneSky(id, (sky) => ({ ...sky, tint: undefined }));
       },
-      /** The overlays a scene wears (none: none). */
-      setSceneOverlays(id: string, overlays: readonly string[]): void {
-        setScene(id, (p) => ({ ...p, overlays: overlays.length ? overlays : undefined }));
+      // A scene's own variants (see `SceneVariant`): each switches its planets' variants.
+      /** A new variant of a scene (named), after its others; its id. */
+      createSceneVariant(id: string, name: string): string {
+        const taken = new Set((store.scenes().planets[id]?.sceneVariants ?? []).map((v) => v.id));
+        let n = 1;
+        while (taken.has(`${MADE_VARIANT}${n}`)) n++;
+        const variant = `${MADE_VARIANT}${n}`;
+        setScene(id, (p) => ({ ...p, sceneVariants: [...(p.sceneVariants ?? []), { id: variant, name }] }));
+        return variant;
+      },
+      /** A scene's variant changed (its name, what it switches). */
+      changeSceneVariant(id: string, variant: string, change: (v: SceneVariant) => SceneVariant): void {
+        setScene(id, (p) => ({
+          ...p,
+          sceneVariants: (p.sceneVariants ?? []).map((v) => (v.id === variant ? change(v) : v)),
+        }));
+      },
+      /** A scene's variant deleted (off too). */
+      deleteSceneVariant(id: string, variant: string): void {
+        setScene(id, (p) => {
+          const sceneVariants = (p.sceneVariants ?? []).filter((v) => v.id !== variant);
+          const on = (p.sceneVariantsOn ?? []).filter((v) => v !== variant);
+          return (
+            without(
+              { ...p, sceneVariants, sceneVariantsOn: on },
+              [...(sceneVariants.length ? [] : ['sceneVariants' as const]), ...(on.length ? [] : ['sceneVariantsOn' as const])],
+            ) ?? {}
+          );
+        });
+      },
+      /** Which of a scene's own variants are on (none: none). */
+      setSceneVariantsOn(id: string, on: readonly string[]): void {
+        setScene(id, (p) => (on.length ? { ...p, sceneVariantsOn: on } : (without(p, ['sceneVariantsOn']) ?? {})));
       },
       /** A scene's own lights (none: none). */
       setSceneLights(id: string, lights: readonly AddedLight[]): void {

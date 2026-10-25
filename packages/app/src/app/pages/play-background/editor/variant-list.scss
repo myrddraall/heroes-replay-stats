@@ -1,0 +1,17 @@
+@use '../properties/property-row';
+
+// A variant: its switch and name from the left, delete at the right.
+.variant {
+  grid-template-columns: auto minmax(0, 1fr) property-row.$reset-column;
+}
+
+// The one open to be edited: in the theme's colour.
+.variant--edited .name {
+  color: var(--mat-sys-primary);
+  font-weight: 600;
+}
+
+.switch {
+  margin: 0;
+  accent-color: var(--mat-sys-primary);
+}

@@ -226,7 +226,11 @@ export const AssetCatalogStore = signalStore(
     return {
       planets,
       styles,
-      /** The overlays, by what they are worn on (planets', the sky's, then scenes'), and whether made here. */
+      /** Each planet's own variants as its data has them (the planet index's), by its id. */
+      dataVariants: computed(
+        () => new Map((index()?.planets ?? []).map((p) => [p.id, p.variants] as const)),
+      ),
+      /** The overlays, by what they are worn on (planets', then the sky's), and whether made here. */
       overlays: computed((): CatalogOverlay[] => [
         ...styles().map((id) => ({ id, kind: 'planet' as const, made: createdOverlay(id) })),
         ...Object.entries(sceneFile()?.overlays ?? {}).map(([id, file]) => ({
@@ -238,9 +242,6 @@ export const AssetCatalogStore = signalStore(
         ...Object.entries(_draft.library().created ?? {})
           .filter(([, o]) => o.kind === 'sky')
           .map(([id]) => ({ id, kind: 'sky' as const, made: true })),
-        ...Object.entries(_draft.library().created ?? {})
-          .filter(([, o]) => o.kind === 'scene')
-          .map(([id]) => ({ id, kind: 'scene' as const, made: true })),
       ]),
       materials,
       materialByName: computed(() => new Map(materials().map((m) => [m.name, m] as const))),
@@ -317,7 +318,6 @@ export const AssetCatalogStore = signalStore(
               },
             })),
           ),
-          scene: [],
         };
       }),
       particles: computed(

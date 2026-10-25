@@ -14,6 +14,8 @@
     [placeholder]="entry.nameBelow"
     [changed]="isSet('name')"
     [origin]="entry.origins.name"
+
+    [overridden]="entry.overrides?.name"
     (resetRequested)="clear.emit(['name'])"
     (valueChange)="rename($event)"
   />
@@ -25,6 +27,8 @@
     [options]="effects"
     [changed]="isSet('darkens')"
     [origin]="entry.origins.darkens"
+
+    [overridden]="entry.overrides?.darkens"
     (resetRequested)="clear.emit(['darkens'])"
     (valueChange)="settingsChange.emit({ darkens: $event === 'darkens' })"
   />
@@ -33,6 +37,8 @@
     [value]="l.colour"
     [changed]="isSet('colour')"
     [origin]="entry.origins.colour"
+
+    [overridden]="entry.overrides?.colour"
     (resetRequested)="clear.emit(['colour'])"
     (valueChange)="settingsChange.emit({ colour: $event })"
   />
@@ -44,6 +50,8 @@
     [step]="0.01"
     [changed]="isSet('strength')"
     [origin]="entry.origins.strength"
+
+    [overridden]="entry.overrides?.strength"
     (resetRequested)="clear.emit(['strength'])"
     (valueChange)="settingsChange.emit({ strength: $event })"
   />
@@ -54,6 +62,8 @@
       [value]="from"
       [changed]="isSet('from')"
       [origin]="entry.origins.from"
+
+      [overridden]="entry.overrides?.from"
       (resetRequested)="clear.emit(['from'])"
       (valueChange)="settingsChange.emit({ from: $event })"
     />
@@ -64,6 +74,8 @@
       [value]="l.ground ?? '#000000'"
       [changed]="isSet('ground')"
       [origin]="entry.origins.ground"
+
+      [overridden]="entry.overrides?.ground"
       (resetRequested)="clear.emit(['ground'])"
       (valueChange)="settingsChange.emit({ ground: $event })"
     />
@@ -75,6 +87,8 @@
       [turn]="l.orbitTurn ?? 0"
       [changed]="isSet('position') || isSet('placement')"
       [origin]="entry.origins.position"
+
+      [overridden]="entry.overrides?.position"
       (resetRequested)="clear.emit(['position', 'placement', 'orbitTurn'])"
       (placeChange)="place($event)"
     />
@@ -88,6 +102,8 @@
       [step]="l.kind === 'rim' ? 0.05 : 0.1"
       [changed]="isSet('fade')"
       [origin]="entry.origins.fade"
+
+      [overridden]="entry.overrides?.fade"
       (resetRequested)="clear.emit(['fade'])"
       (valueChange)="settingsChange.emit({ fade: $event })"
     />
@@ -99,6 +115,8 @@
       [options]="aims"
       [changed]="isSet('lookAt') || isSet('aim')"
       [origin]="entry.origins.lookAt"
+
+      [overridden]="entry.overrides?.lookAt"
       (resetRequested)="clear.emit(['lookAt', 'aim'])"
       (valueChange)="chooseAim($event)"
     />
@@ -108,6 +126,8 @@
         [value]="aimedPoint()"
         [changed]="isSet('lookAt')"
         [origin]="entry.origins.lookAt"
+
+        [overridden]="entry.overrides?.lookAt"
         (resetRequested)="clear.emit(['lookAt', 'aim'])"
         (valueChange)="aimAt($event)"
       />
@@ -117,6 +137,8 @@
         [value]="aimDirection()"
         [changed]="isSet('lookAt') || isSet('aim')"
         [origin]="entry.origins.lookAt"
+
+        [overridden]="entry.overrides?.lookAt"
         (resetRequested)="clear.emit(['lookAt', 'aim'])"
         (valueChange)="aimAlong($event)"
       />
@@ -129,6 +151,8 @@
       [step]="1"
       [changed]="isSet('cone')"
       [origin]="entry.origins.cone"
+
+      [overridden]="entry.overrides?.cone"
       (resetRequested)="clear.emit(['cone'])"
       (valueChange)="settingsChange.emit({ cone: $event })"
     />
@@ -140,6 +164,8 @@
       [step]="0.05"
       [changed]="isSet('edge')"
       [origin]="entry.origins.edge"
+
+      [overridden]="entry.overrides?.edge"
       (resetRequested)="clear.emit(['edge'])"
       (valueChange)="settingsChange.emit({ edge: $event })"
     />
@@ -153,6 +179,8 @@
       [step]="0.01"
       [changed]="isSet('wrap')"
       [origin]="entry.origins.wrap"
+
+      [overridden]="entry.overrides?.wrap"
       (resetRequested)="clear.emit(['wrap'])"
       (valueChange)="settingsChange.emit({ wrap: $event })"
     />
@@ -165,6 +193,8 @@
       [step]="0.05"
       [changed]="isSet('softness')"
       [origin]="entry.origins.softness"
+
+      [overridden]="entry.overrides?.softness"
       (resetRequested)="clear.emit(['softness'])"
       (valueChange)="settingsChange.emit({ softness: $event })"
     />
@@ -175,6 +205,8 @@
       [value]="l.specular ?? '#ffffff'"
       [changed]="isSet('specular')"
       [origin]="entry.origins.specular"
+
+      [overridden]="entry.overrides?.specular"
       (resetRequested)="clear.emit(['specular'])"
       (valueChange)="settingsChange.emit({ specular: $event })"
     />
@@ -185,6 +217,8 @@
       [step]="0.1"
       [changed]="isSet('specularStrength')"
       [origin]="entry.origins.specularStrength"
+
+      [overridden]="entry.overrides?.specularStrength"
       (resetRequested)="clear.emit(['specularStrength'])"
       (valueChange)="settingsChange.emit({ specularStrength: $event })"
     />
@@ -202,6 +236,8 @@
       [options]="reachModes"
       [changed]="isSet('reach')"
       [origin]="entry.origins.reach"
+
+      [overridden]="entry.overrides?.reach"
       (resetRequested)="unset(['reach'])"
       (valueChange)="chooseReach($event)"
     />
@@ -221,6 +257,8 @@
         [checked]="entry.moons"
         [changed]="isSet('moons')"
         [origin]="entry.origins.moons"
+
+        [overridden]="entry.overrides?.moons"
         (resetRequested)="unset(['moons'])"
         (checkedChange)="settingsChange.emit({ moons: $event })"
       />

@@ -2522,15 +2522,10 @@ export class ThreeSceneRenderer {
       return draw.overlay
         ? mergeSettings(this.sky.base?.[draw.name], this.sky.materials?.[draw.key])
         : this.sky.materials?.[draw.key];
-    // How the planet wears the overlay the draw is of; its own draw: how it wears each overlay
-    // it wears (its tuning for one may set its own materials too, by name), the later over the earlier.
-    const { planet } = placement.planet;
-    const wears = draw.overlay
-      ? [wearOf(planet, draw.overlay)?.materials?.[draw.name]]
-      : overlaysOf(placement).map((o) => wearOf(planet, overlayOfFile(o.id))?.materials?.[draw.name]);
+    const wear = draw.overlay ? wearOf(placement.planet.planet, draw.overlay) : undefined;
     return mergeSettings(
       draw.owner?.planet.tuning?.materials?.[draw.name],
-      ...wears,
+      wear?.materials?.[draw.name],
       draw.overlay ? placement.base?.[draw.name] : undefined,
       placement.materials?.[draw.key],
     );

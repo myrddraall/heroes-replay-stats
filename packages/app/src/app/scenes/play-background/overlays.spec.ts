@@ -6,8 +6,6 @@ import {
   overlayFile,
   overlayOfFile,
   overlayOn,
-  overlaySettingsOf,
-  sceneOverlaysOf,
   wornKey,
 } from './overlays';
 
@@ -187,46 +185,5 @@ describe('overlays', () => {
       parts: [{ id: 'sphere-1', shape: 'sphere', materials: ['clouds'] }],
       sources: {},
     });
-  });
-});
-
-describe('an overlay made of a body\'s changes', () => {
-  it('takes all but what is the body\'s own alone (its name, being drawn, what it wears, parts added onto it)', () => {
-    const { overlay, kept } = overlaySettingsOf({
-      label: 'Home',
-      enabled: true,
-      overlays: ['nexus'],
-      overlaysEnabled: { nexus: false },
-      shade: 0.4,
-      turn: 30,
-      materials: { clouds: { glow: 2 } },
-    });
-    expect(overlay).toEqual({ shade: 0.4, turn: 30, materials: { clouds: { glow: 2 } } });
-    expect(kept).toEqual({ label: 'Home', enabled: true, overlays: ['nexus'], overlaysEnabled: { nexus: false } });
-    expect(overlaySettingsOf({ shade: 0.4 }).kept).toBeUndefined();
-  });
-});
-
-describe('a scene\'s overlays', () => {
-  it('put what they hold on every planet in it, in order, and add their lights to the scene\'s', () => {
-    const light = { id: 'added-a', kind: 'directional', name: 'Sun' } as const;
-    const library = {
-      planets: {},
-      styles: {
-        '@overlay-1': { overlays: ['painted', 'nexus'], added: [light] },
-        '@overlay-2': { overlays: ['nexus', 'clouds'] },
-        '@overlay-3': { overlays: ['rings'] },
-      },
-      sky: {},
-      created: {
-        '@overlay-1': { kind: 'scene', label: 'Preview', parts: [], sources: {} },
-        '@overlay-2': { kind: 'scene', label: 'Shields', parts: [], sources: {} },
-        '@overlay-3': { kind: 'planet', label: 'Rings', parts: [], sources: {} },
-      },
-    } as const;
-    const adds = sceneOverlaysOf({ overlays: ['@overlay-1', '@overlay-2', '@overlay-3', '@overlay-9'] }, library);
-    expect(adds.planets).toEqual(['painted', 'nexus', 'clouds']); // a planet's overlay, or one gone, adds nothing
-    expect(adds.lights).toEqual([light]);
-    expect(sceneOverlaysOf(undefined, library)).toEqual({ planets: [], lights: [] });
   });
 });

@@ -1,3 +1,4 @@
+import type { BodyVariant, SceneVariant } from './variants';
 import type {
   MaterialSettingsMap,
   MaterialTint,
@@ -61,6 +62,13 @@ export interface BodySettings {
    * the library), the later over the earlier; none: its data's.
    */
   readonly overlays?: readonly string[];
+  /**
+   * A planet's own variants (the library's: those made in the editor, and changes to its data's,
+   * by id; see `variantsOf`).
+   */
+  readonly variants?: readonly BodyVariant[];
+  /** Which of its variants are on, by id (the library's for a planet: by default; a scene's: there). */
+  readonly variantsOn?: readonly string[];
   /**
    * Its rig made stronger and turned together (`lighting`, `lightFrom`): kept from before lights
    * were objects, folded into its lights as they start (`tunedRig`), no longer set.
@@ -472,11 +480,10 @@ export function primaryCameraOf(choices: PlanetChoices | undefined): SceneCamera
  */
 export interface PlanetChoices {
   readonly bodies?: readonly SceneBody[];
-  /**
-   * The overlays it wears (made for scenes), the later over the earlier: each puts the overlays it
-   * holds on every planet in it, over what each wears, and adds its lights to the scene's.
-   */
-  readonly overlays?: readonly string[];
+  /** The scene's own variants: each switches its planets' variants on or off (see `SceneVariant`). */
+  readonly sceneVariants?: readonly SceneVariant[];
+  /** Which of the scene's own variants are on, by id. */
+  readonly sceneVariantsOn?: readonly string[];
   /** The scene's lights, lighting every planet in it (a group's: its own planets alone). */
   readonly lights?: readonly AddedLight[];
   /**

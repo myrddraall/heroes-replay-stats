@@ -8,7 +8,18 @@
         ><span class="origin__text">, set in {{ origin() }}</span></span
       >
     }
-  </label>
+    @if (overridden(); as by) {
+    <button
+      type="button"
+      class="overridden"
+      [title]="'Overridden by ' + by"
+      [attr.aria-label]="'Overridden by ' + by"
+      (click)="$event.preventDefault(); showOverride?.(by)"
+    >
+      <mat-icon class="material-symbols-outlined" aria-hidden="true">layers</mat-icon>
+    </button>
+  }
+</label>
 </span>
 <span class="reset-slot">
   @if (changed()) {

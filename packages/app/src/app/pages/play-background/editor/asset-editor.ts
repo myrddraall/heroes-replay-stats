@@ -3,6 +3,7 @@ import { BACKGROUND_SCENE } from '../../../scenes/play-background/background-des
 import { AssetEditorStore } from './asset-editor.store';
 import { AssetHeader } from './asset-header';
 import { Editor } from './editor';
+import { OVERRIDE_SHOWN } from '../properties/override-shown';
 import { EditorLayout } from './editor-layout';
 import { EditorUiStore } from './editor-ui.store';
 import { selectParentWhenGone } from './select-parent-when-gone';
@@ -19,6 +20,14 @@ import type { AssetTarget } from './open-target';
   providers: [
     AssetEditorStore,
     { provide: Editor, useExisting: AssetEditorStore },
+    // A row marked overridden takes you to the level that wins over it.
+    {
+      provide: OVERRIDE_SHOWN,
+      useFactory: () => {
+        const editor = inject(Editor);
+        return (level: string) => editor.showLayer(level);
+      },
+    },
     {
       provide: BACKGROUND_SCENE,
       useFactory: () => {

@@ -362,3 +362,26 @@ describe("a light's markers and aids", () => {
     for (const [a] of [...front, ...side]) a.forEach((v, k) => expect(v).toBeCloseTo(apex[k]!, 6));
   });
 });
+
+describe("a body's variants as its editor stacks them", () => {
+  it('puts its variants on under the level edited over its own, and names what over it wins', () => {
+    const scene: BodyInfo = {
+      ...korhal({}),
+      below: { turn: 10, materials: { clouds: { glow: 1 } } },
+      variantsBelow: [{ name: 'the Shield variant', settings: { turn: 20, materials: { clouds: { glow: 3 } } } }],
+    };
+    expect(valuesOf(scene).turn).toBe(20); // the variant's over its own
+    expect(bodyView(scene, false, true).origins.turn).toBe('the Shield variant');
+    expect(materialAt(materialsOf(scene), 'clouds')?.origins.glow).toBe('the Shield variant');
+    expect(bodyView(scene, false, true).overrides).toEqual({}); // nothing over a scene's
+    // Its own settings edited, a variant on over them: what the variant sets is marked overridden.
+    const own: BodyInfo = {
+      ...korhal({ turn: 5, materials: { clouds: { glow: 2 } } }),
+      above: [{ name: 'the Shield variant', settings: { turn: 20, materials: { clouds: { glow: 3 } } } }],
+    };
+    expect(valuesOf(own).turn).toBe(5); // the value edited, as edited
+    expect(bodyView(own, false, true).overrides.turn).toBe('the Shield variant');
+    expect(materialAt(materialsOf(own), 'clouds')?.overrides?.glow).toBe('the Shield variant');
+    expect(materialAt(materialsOf(own), 'clouds')?.overrides?.strength).toBeUndefined();
+  });
+});

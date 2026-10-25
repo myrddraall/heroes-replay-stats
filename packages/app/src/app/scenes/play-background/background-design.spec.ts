@@ -69,13 +69,17 @@ describe('withLibrary', () => {
     expect(on.added).toHaveLength(1);
   });
 
-  it("lets a style's shade win over the planet's own", () => {
+  it("lets the planet's own shade win over a style's (an overlay is under the planet's own)", () => {
     const library: LibraryState = {
       planets: { korhal: { shade: 0.3 } },
       styles: { nexus: { shade: 0.8 } },
       sky: {},
     };
     expect(withLibrary({ ...korhal, overlays: ['nexus'] }, library).shade).toEqual({
+      strength: 0.3,
+    });
+    // Where the planet sets none: the style's.
+    expect(withLibrary({ ...korhal, overlays: ['nexus'] }, { ...library, planets: {} }).shade).toEqual({
       strength: 0.8,
     });
   });
@@ -103,7 +107,7 @@ describe('withLibrary', () => {
     expect(scene.shade).toEqual({ strength: 0.2 });
   });
 
-  it('lets an overlay set any of a planet\'s settings over its own, the later over the earlier, the scene over all', () => {
+  it('lets an overlay set any of a planet\'s settings under its own, the later over the earlier, the scene over all', () => {
     const library: LibraryState = {
       ...EMPTY_LIBRARY,
       planets: { korhal: { tint: red, rim: [1, 0, 0], turn: 10 } },
@@ -113,11 +117,13 @@ describe('withLibrary', () => {
       },
     };
     const worn = withLibrary({ ...korhal, overlays: ['warm', 'tilted'] }, library);
-    expect(worn.tint).toEqual(blue); // the overlay's over the planet's own
-    expect(worn.rim).toEqual([1, 0, 0]); // the planet's own where no overlay sets it
-    expect(worn.orientation).toBe('world');
+    expect(worn.tint).toEqual(red); // the planet's own over the overlay's
+    expect(worn.rim).toEqual([1, 0, 0]);
+    expect(worn.orientation).toBe('world'); // an overlay's where the planet sets none
     expect(worn.axis).toEqual([0, 0.5, 1]);
-    expect(worn.turn).toBe(45); // the later overlay's
+    expect(worn.turn).toBe(10); // the planet's own over both
+    const bare = withLibrary({ ...korhal, overlays: ['warm', 'tilted'] }, { ...library, planets: {} });
+    expect(bare.turn).toBe(45); // the later overlay's over the earlier's
     expect(withLibrary({ ...korhal, overlays: ['warm', 'tilted'], turn: 5 }, library).turn).toBe(5); // the scene's
   });
 

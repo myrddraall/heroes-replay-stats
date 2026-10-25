@@ -143,3 +143,34 @@ $reset-column: 16px;
     white-space: nowrap;
   }
 }
+
+// A setting a level over the one edited wins for (editing it here shows only once that lets go):
+// a small mark after the label that names the level (in its title, and in words for assistive
+// technology) and takes you there, the row's controls faded.
+@mixin overridden {
+  .overridden {
+    display: inline-flex;
+    margin-left: 4px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--mat-sys-tertiary);
+    vertical-align: middle;
+    cursor: pointer;
+
+    mat-icon {
+      width: 12px;
+      height: 12px;
+      font-size: 12px;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--mat-sys-primary);
+      outline-offset: 1px;
+    }
+  }
+
+  :host(.row--overridden) > :not(label):not(.label):not(.reset-slot) {
+    opacity: 0.5;
+  }
+}

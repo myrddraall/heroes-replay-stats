@@ -1,6 +1,7 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { BACKGROUND_SCENE } from '../../../scenes/play-background/background-design.tokens';
 import { Editor } from './editor';
+import { OVERRIDE_SHOWN } from '../properties/override-shown';
 import { EditorLayout } from './editor-layout';
 import { selectParentWhenGone } from './select-parent-when-gone';
 import { EditorUiStore } from './editor-ui.store';
@@ -17,6 +18,14 @@ import { SceneHeader } from './scene-header';
   providers: [
     SceneEditorStore,
     { provide: Editor, useExisting: SceneEditorStore },
+    // A row marked overridden takes you to the level that wins over it.
+    {
+      provide: OVERRIDE_SHOWN,
+      useFactory: () => {
+        const editor = inject(Editor);
+        return (level: string) => editor.showLayer(level);
+      },
+    },
     {
       provide: BACKGROUND_SCENE,
       useFactory: () => {
@@ -25,7 +34,7 @@ import { SceneHeader } from './scene-header';
         return {
           planets: store.scenePlanets,
           sky: store.sceneSky,
-          lights: store.drawnSceneLights,
+          lights: store.sceneLights,
           tint: store.sceneTint,
           key: store.scene,
           random: store.sets,

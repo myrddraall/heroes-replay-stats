@@ -19,6 +19,8 @@
     [placeholder]="labelBelow()"
     [changed]="isSet('label')"
     [origin]="origins()?.label"
+
+    [overridden]="overrides()?.label"
     (resetRequested)="clear.emit(['label'])"
     (valueChange)="rename($event)"
   />
@@ -45,6 +47,8 @@
       [step]="0.01"
       [changed]="isSet('strength')"
       [origin]="origins()?.strength"
+
+      [overridden]="overrides()?.strength"
       (resetRequested)="clear.emit(['strength'])"
       (valueChange)="settingsChange.emit({ strength: $event })"
     />
@@ -56,6 +60,8 @@
       [options]="blends"
       [changed]="isSet('blend')"
       [origin]="origins()?.blend"
+
+      [overridden]="overrides()?.blend"
       (resetRequested)="clear.emit(['blend'])"
       (valueChange)="blend($event)"
     />
@@ -67,6 +73,8 @@
       [options]="anchorOptions"
       [changed]="isSet('anchor')"
       [origin]="origins()?.anchor"
+
+      [overridden]="overrides()?.anchor"
       (resetRequested)="clear.emit(['anchor'])"
       (valueChange)="anchor($event)"
     />
@@ -78,6 +86,8 @@
       [options]="v.anchor === 'world' ? depthOptions : anchoredDepthOptions"
       [changed]="isSet('depth')"
       [origin]="origins()?.depth"
+
+      [overridden]="overrides()?.depth"
       (resetRequested)="clear.emit(['depth'])"
       (valueChange)="depth($event)"
     />
@@ -89,6 +99,8 @@
       [options]="orientations"
       [changed]="isSet('orientation')"
       [origin]="origins()?.orientation"
+
+      [overridden]="overrides()?.orientation"
       (resetRequested)="clear.emit(['orientation'])"
       (valueChange)="orient($event)"
     />
@@ -113,6 +125,8 @@
         [checked]="!v.lit"
         [changed]="isSet('lit')"
         [origin]="origins()?.lit"
+
+        [overridden]="overrides()?.lit"
         (resetRequested)="clear.emit(['lit'])"
         (checkedChange)="settingsChange.emit({ lit: !$event })"
       />
@@ -124,6 +138,8 @@
       [step]="0.1"
       [changed]="isSet('glow')"
       [origin]="origins()?.glow"
+
+      [overridden]="overrides()?.glow"
       (resetRequested)="clear.emit(['glow'])"
       (valueChange)="settingsChange.emit({ glow: $event })"
     />
@@ -135,6 +151,8 @@
         [step]="0.05"
         [changed]="isSet('specular')"
         [origin]="origins()?.specular"
+
+        [overridden]="overrides()?.specular"
         (resetRequested)="clear.emit(['specular'])"
         (valueChange)="settingsChange.emit({ specular: $event })"
       />
@@ -145,6 +163,8 @@
         [step]="1"
         [changed]="isSet('glossiness')"
         [origin]="origins()?.glossiness"
+
+        [overridden]="overrides()?.glossiness"
         (resetRequested)="clear.emit(['glossiness'])"
         (valueChange)="settingsChange.emit({ glossiness: $event })"
       />
@@ -164,6 +184,8 @@
         [step]="0.05"
         [changed]="isSet('spread')"
         [origin]="origins()?.spread"
+
+        [overridden]="overrides()?.spread"
         (resetRequested)="clear.emit(['spread'])"
         (valueChange)="settingsChange.emit({ spread: $event })"
       />
@@ -173,6 +195,8 @@
         [value]="v.spreadFrom"
         [changed]="isSet('spreadFrom')"
         [origin]="origins()?.spreadFrom"
+
+        [overridden]="overrides()?.spreadFrom"
         (resetRequested)="clear.emit(['spreadFrom'])"
         (valueChange)="settingsChange.emit({ spreadFrom: $event })"
       />
@@ -183,6 +207,8 @@
         [step]="0.05"
         [changed]="isSet('falloff')"
         [origin]="origins()?.falloff"
+
+        [overridden]="overrides()?.falloff"
         (resetRequested)="clear.emit(['falloff'])"
         (valueChange)="settingsChange.emit({ falloff: $event })"
       />

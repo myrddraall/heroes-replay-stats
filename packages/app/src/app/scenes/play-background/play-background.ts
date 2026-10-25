@@ -183,6 +183,13 @@ export class PlayBackground {
     params: () => this.src(),
     loader: ({ params, abortSignal }) => loadPlanetIndex(params, abortSignal),
   });
+  /** Each planet's own variants as its data has them (the planet index's), by its id. */
+  private readonly dataVariants = computed(
+    () =>
+      new Map(
+        (this.index.hasValue() ? this.index.value().planets : []).map((p) => [p.id, p.variants] as const),
+      ),
+  );
   private readonly planets = computed(
     () => new PlanetLoader(this.src(), this.builtIns ?? undefined),
   );
@@ -242,7 +249,7 @@ export class PlayBackground {
         }))
       : [];
     return neededBy(
-      [...set, ...moons].map((s) => withLibrary(s, library)),
+      [...set, ...moons].map((s) => withLibrary(s, library, this.dataVariants().get(s.id))),
       this.overlayFile(),
     ).join(',');
   });
@@ -347,7 +354,8 @@ export class PlayBackground {
       const placed = random && scene ? setWithMoons(set, library, scene.scene.camera) : set;
       const file = this.overlayFile();
       const out: PlanetPlacement[] = [];
-      for (const p of placed.map((s) => withLibrary(s, library))) {
+      const variants = untracked(this.dataVariants);
+      for (const p of placed.map((s) => withLibrary(s, library, variants.get(s.id)))) {
         const own = loaded.get(p.id);
         const overlays = (p.overlays ?? []).map((id) => loaded.get(file(id)));
         if (!own || overlays.some((o) => !o)) return previous?.value ?? null;
