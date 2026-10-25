@@ -862,13 +862,16 @@ export class ThreeSceneRenderer {
     const kept = new Set<Placed>();
     this.placed = placements.map((placement, i) => {
       // The same body: its placement, or (edited: a new placement) the same planet wearing the
-      // same overlays at the same place in the list. Its id kept, so its draws are (`gpuOf` finds
-      // them: an edit is uniforms, nothing built), and its bake shown till the next is whole.
+      // same overlays, at the same place in the list, else anywhere in it not already taken (a fly
+      // ending: the planets flown to were after those flown from, and moved, so new placements).
+      // Its id kept, so its draws are (`gpuOf` finds them: an edit is uniforms, nothing built),
+      // and its bake shown till the next is whole: nothing flickers out while it is built again.
+      const alike = (p: Placed | undefined) =>
+        !!p && !kept.has(p) && p.placement.planet === placement.planet && sameOverlays(p.placement, placement);
       const at = previous[i];
-      const same =
-        before.get(placement) ??
-        (at && at.placement.planet === placement.planet && sameOverlays(at.placement, placement) ? at : undefined);
-      const keep = same && !kept.has(same) ? same : undefined;
+      const exact = before.get(placement);
+      const keep =
+        (exact && !kept.has(exact) ? exact : undefined) ?? (alike(at) ? at : undefined) ?? previous.find(alike);
       if (keep) kept.add(keep);
       if (keep && keep.placement === placement && !loaded) return keep;
       const placed: Placed = {
@@ -2519,10 +2522,15 @@ export class ThreeSceneRenderer {
       return draw.overlay
         ? mergeSettings(this.sky.base?.[draw.name], this.sky.materials?.[draw.key])
         : this.sky.materials?.[draw.key];
-    const wear = draw.overlay ? wearOf(placement.planet.planet, draw.overlay) : undefined;
+    // How the planet wears the overlay the draw is of; its own draw: how it wears each overlay
+    // it wears (its tuning for one may set its own materials too, by name), the later over the earlier.
+    const { planet } = placement.planet;
+    const wears = draw.overlay
+      ? [wearOf(planet, draw.overlay)?.materials?.[draw.name]]
+      : overlaysOf(placement).map((o) => wearOf(planet, overlayOfFile(o.id))?.materials?.[draw.name]);
     return mergeSettings(
       draw.owner?.planet.tuning?.materials?.[draw.name],
-      wear?.materials?.[draw.name],
+      ...wears,
       draw.overlay ? placement.base?.[draw.name] : undefined,
       placement.materials?.[draw.key],
     );

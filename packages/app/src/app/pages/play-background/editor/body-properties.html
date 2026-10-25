@@ -37,12 +37,17 @@
     @if (deletable()) {
       <button type="button" class="button" (click)="deleteRequested.emit()">Delete overlay</button>
     }
+    @if (styled() && !overlay() && changed()) {
+      <button type="button" class="button" (click)="overlayFromChanges.emit()">
+        Overlay from changes
+      </button>
+    }
   </div>
 </hrs-property-section>
 @let v = values();
 @if (styled()) {
   <hrs-pick-list
-    title="Overlays"
+    [title]="overlaysTitle()"
     addLabel="Add overlay"
     removeLabel="Take off"
     [picked]="v.overlays"
@@ -110,7 +115,7 @@
     />
   </hrs-property-section>
 }
-@if (!overlay()) {
+@if (bodySettings()) {
   <hrs-property-section
     title="Orientation"
     [changed]="isSet('orientation') || isSet('axis') || isSet('turn') || isSet('baseTurn')"
@@ -147,7 +152,7 @@
 @if (moons()) {
   <ng-content select="[moonsPod]" />
 }
-@if (!overlay()) {
+@if (bodySettings()) {
   <hrs-tint-section
     [tint]="v.tint"
     [base]="baseTint()"
@@ -156,7 +161,7 @@
     (clear)="clear.emit(['tint'])"
   />
 }
-@if (!overlay()) {
+@if (bodySettings()) {
   <hrs-property-section title="Rim" [changed]="isSet('rim')" (resetRequested)="clear.emit(['rim'])">
     <hrs-property-direction
       label="Direction"
@@ -169,7 +174,7 @@
     />
   </hrs-property-section>
 }
-@if (!overlay()) {
+@if (bodySettings()) {
   <hrs-property-section
     title="Fit"
     [changed]="isSet('glowMargin')"

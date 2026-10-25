@@ -35,6 +35,24 @@
           />
         </hrs-property-section>
       </hrs-scene-properties>
+      @if (!s.sets()) {
+        <hrs-pick-list
+          title="Overlays"
+          addLabel="Add overlay"
+          removeLabel="Take off"
+          [picked]="s.sceneWorn()"
+          [choices]="s.sceneOverlayOptions()"
+          [changed]="s.sceneWorn().length > 0"
+          icon="style"
+          [linkable]="true"
+          newLabel="New overlay"
+          (added)="s.addSceneOverlay($event)"
+          (removed)="s.removeSceneOverlay($event)"
+          (itemShow)="s.showSceneOverlay($event)"
+          (created)="newOverlay('scene')"
+          (resetRequested)="s.resetSceneOverlays()"
+        />
+      }
       @if (s.cameraList().length) {
         <hrs-property-section title="Cameras">
           <hrs-add-camera (added)="s.addCamera()" />
@@ -142,6 +160,10 @@
         [baseTint]="b.baseTint"
         [overlaysSet]="b.info.overlaysSet"
         [overlay]="b.info.file?.kind === 'style'"
+        [bodySettings]="!editor.skyOverlayOpen() && draft.library().created?.[b.info.id]?.kind !== 'scene'"
+        [overlaysTitle]="
+          draft.library().created?.[b.info.id]?.kind === 'scene' ? 'Planet overlays' : 'Overlays'
+        "
         [label]="b.label"
         [labelBelow]="b.labelBelow"
         [styled]="b.styled"
@@ -150,6 +172,7 @@
         (overlayAdd)="editor.addOverlay($event)"
         (overlayShow)="editor.showOverlay($event)"
         (overlayNew)="newOverlay('planet')"
+        (overlayFromChanges)="editor.overlayFromChanges()"
         (overlayRemove)="editor.removeOverlay($event)"
         (overlaysReset)="editor.resetOverlays()"
         (settingsChange)="editor.setBody($event)"

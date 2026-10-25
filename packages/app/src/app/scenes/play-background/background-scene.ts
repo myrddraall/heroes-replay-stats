@@ -57,6 +57,11 @@ export interface BodySettings {
   /** Whether each overlay it wears is drawn, by the overlay's id (off: as if it didn't wear it, kept). */
   readonly overlaysEnabled?: Readonly<Record<string, boolean>>;
   /**
+   * The overlays a planet wears wherever it is put and nothing chooses otherwise (a planet's, in
+   * the library), the later over the earlier; none: its data's.
+   */
+  readonly overlays?: readonly string[];
+  /**
    * Its rig made stronger and turned together (`lighting`, `lightFrom`): kept from before lights
    * were objects, folded into its lights as they start (`tunedRig`), no longer set.
    */
@@ -378,8 +383,7 @@ export interface SkyChoices {
  */
 /**
  * A planet of a scene: which planet it is, where it is (in the scene's space) and how big, the
- * overlays it wears, its settings for what it wears (by `wornKey`: the overlays' ids joined, '' for
- * none), and its moons.
+ * overlays it wears, its settings in the scene (whatever it wears), and its moons.
  */
 export interface SceneBody {
   readonly id: string;
@@ -389,6 +393,13 @@ export interface SceneBody {
   readonly overlays?: readonly string[];
   /** The one overlay it wore, kept before bodies wore several ('' none). */
   readonly style?: string;
+  /** Its settings in the scene, over its overlays' and its own (whatever it wears). */
+  readonly settings?: BodySettings;
+  /**
+   * Its settings kept before it had one set whatever it wears: a set for each combination of
+   * overlays (by `wornKey`), read as its settings for what it wears now until it is next changed
+   * (see `planetSettingsOf`).
+   */
   readonly variants?: Readonly<Record<string, BodySettings>>;
   /** Its own moons (the scene's), after its planet's own (the library's). */
   readonly moons?: readonly MoonChoices[];
@@ -461,6 +472,11 @@ export function primaryCameraOf(choices: PlanetChoices | undefined): SceneCamera
  */
 export interface PlanetChoices {
   readonly bodies?: readonly SceneBody[];
+  /**
+   * The overlays it wears (made for scenes), the later over the earlier: each puts the overlays it
+   * holds on every planet in it, over what each wears, and adds its lights to the scene's.
+   */
+  readonly overlays?: readonly string[];
   /** The scene's lights, lighting every planet in it (a group's: its own planets alone). */
   readonly lights?: readonly AddedLight[];
   /**

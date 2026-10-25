@@ -150,7 +150,7 @@ import {
   settingsAsOverlay,
   withOverlayParts,
 } from './part-hosts';
-import { ownOverlays } from '../../../scenes/play-background/overlays';
+import { overlaySettingsOf, ownOverlays } from '../../../scenes/play-background/overlays';
 import { EditingAidsStore, GRID_CELLS, REFERENCE_KEY } from './editing-aids.store';
 import type { PickChoice } from './pick-list';
 import { EditorUiStore } from './editor-ui.store';
@@ -522,8 +522,16 @@ export const AssetEditorStore = signalStore(
                 _catalog.madeLookup(),
               )
             : files[overlayFileFor(library(), a.id)];
-        // A planet wears what its data says (overlays are worn in scenes); an overlay, none.
-        const worn = a.kind === 'planet' ? ownOverlays(file?.tuning?.style) : [];
+        // A planet wears what it chooses for itself, else what its data says; a scene's overlay,
+        // what it puts on every planet in a scene wearing it; any other overlay, none.
+        const sceneOverlay = library().created?.[a.id]?.kind === 'scene';
+        const chosen =
+          a.kind === 'planet'
+            ? library().planets[a.id]?.overlays
+            : sceneOverlay
+              ? library().styles[a.id]?.overlays
+              : undefined;
+        const worn = a.kind === 'planet' ? (chosen ?? ownOverlays(file?.tuning?.style)) : (chosen ?? []);
         const name = (id: string) => library().created?.[id]?.label;
         const made = name(a.id) ?? skyOverlay()?.name;
         return {
@@ -536,8 +544,10 @@ export const AssetEditorStore = signalStore(
             below: library().styles[id],
             file: files[overlayFileFor(library(), id)],
           })),
-          overlaysSet: false,
+          overlaysSet: chosen !== undefined,
           settings: library()[kind][a.id] ?? {},
+          // (A planet's own settings: what the overlays it wears set is over them.)
+          underOverlays: a.kind === 'planet',
           materialBase: library().materials,
           file,
           moons: [],
@@ -554,7 +564,7 @@ export const AssetEditorStore = signalStore(
         for (const path of moonPaths(list)) {
           const m = moonAt(list, path)!;
           const file = files[m.id];
-          const worn = m.overlays ?? ownOverlays(file?.tuning?.style);
+          const worn = m.overlays ?? lib.planets[m.id]?.overlays ?? ownOverlays(file?.tuning?.style);
           out.set(moonKey(path), {
             key: moonKey(path),
             id: m.id,
@@ -710,7 +720,11 @@ export const AssetEditorStore = signalStore(
           }
           const b = _body();
           // A planet can have moons of its own; an overlay none.
-          return t.kind === 'body' && b ? bodyView(b, false, asset().kind === 'planet') : null;
+          // (A scene's overlay chooses what planets wear: its overlays, as a planet chooses its own.)
+          const sceneOverlay = library().created?.[asset().id]?.kind === 'scene';
+          return t.kind === 'body' && b
+            ? bodyView(b, false, asset().kind === 'planet', false, asset().kind === 'planet' || sceneOverlay)
+            : null;
         }),
         baseMaterial: computed((): MaterialEntry | undefined => {
           const use = _materialUse();
@@ -810,7 +824,11 @@ export const AssetEditorStore = signalStore(
                 planet ? lib.planets[planet]?.parts : undefined,
                 ...overlays.map((id) => lib.styles[id]?.parts),
               ),
-              planet ? lib.planets[planet]?.glowMargin : undefined,
+              // (What an overlay it wears sets over its own, the later over the earlier.)
+              [planet ? lib.planets[planet] : undefined, ...overlays.map((id) => lib.styles[id])]
+                .map((s) => s?.glowMargin)
+                .filter((m) => m !== undefined)
+                .at(-1),
             );
             const view = { up, across: up * _ui.aspect() };
             // (The planet open with its own moons about it: all kept in view.)
@@ -839,9 +857,9 @@ export const AssetEditorStore = signalStore(
               lights: standInLightSettings(_aids.standInLights()),
             };
           };
-          /** A planet wearing what its data says. */
+          /** A planet wearing its own: what it chooses for itself, else what its data says. */
           const own = (id: string): SetPlanet => {
-            const overlays = ownOverlays(files[id]?.tuning?.style);
+            const overlays = _draft.library().planets[id]?.overlays ?? ownOverlays(files[id]?.tuning?.style);
             return { id, overlays, ...fitted(id, overlays) };
           };
           /** The planet on the stage wearing an overlay. */
@@ -869,10 +887,17 @@ export const AssetEditorStore = signalStore(
           // An overlay on the stand-in: what it adds, on a plain body.
           // A planet's overlay on the stand-in: what it adds, on a plain body (one not yet known to
           // be a planet's, nothing until it is: a sky's is the sky's).
-          if (a.kind === 'style')
+          if (a.kind === 'style') {
+            // A scene's overlay: what it puts on planets, and its lights (its own settings), on
+            // the stand-in.
+            if (_draft.library().created?.[a.id]?.kind === 'scene') {
+              const worn = [...(_draft.library().styles[a.id]?.overlays ?? []), a.id];
+              return [{ ...standIn(), overlays: worn, ...fitted(undefined, worn) }];
+            }
             return _catalog.styles().includes(a.id)
               ? [{ ...standIn(), overlays: [a.id], ...fitted(undefined, [a.id]) }]
               : [];
+          }
           if (use?.kind === 'planet') return [{ id: use.id, ...fitted(use.id) }];
           if (use?.kind === 'style') return [wearing(use.id)];
           return [{ id: previewPlanet(), ...fitted(previewPlanet()) }];
@@ -1706,8 +1731,19 @@ export const AssetEditorStore = signalStore(
         }),
       );
     /** What the selected moon wears changed (the later over the earlier), over its own. */
-    const moonWears = (change: (worn: readonly string[]) => readonly string[]) => {
+    /**
+     * What the planet open (its library's choice), a scene's overlay open (what it puts on every
+     * planet) or the moon selected wears changed.
+     */
+    const wears = (change: (worn: readonly string[]) => readonly string[]) => {
       const t = store.target();
+      const a = asset();
+      const kind = a.kind === 'planet' ? 'planets' : d.library().created?.[a.id]?.kind === 'scene' ? 'styles' : null;
+      if (t.kind === 'body' && kind) {
+        const b = store._body();
+        if (b) d.setLibraryBody(kind, a.id, { overlays: change(b.overlays.map((o) => o.id)) });
+        return;
+      }
       const m = t.kind === 'moon' ? store._moonInfos().get(moonKey(t.path)) : undefined;
       if (t.kind !== 'moon' || !m) return;
       const worn = change(m.overlays.map((o) => o.id));
@@ -2149,17 +2185,35 @@ export const AssetEditorStore = signalStore(
         const sky = selectedSky();
         if (sky) d.setSkyOverlays(sky.stage ? PREVIEW_SCENE : null, undefined);
       },
-      /** A moon of the planet open wears overlays here (the planet wears them in scenes). */
+      /**
+       * An overlay put on the planet open (what it wears wherever it is put, unless a scene chooses
+       * otherwise) or on one of its moons, over what it wears.
+       */
       addOverlay(id: string): void {
-        moonWears((worn) => (worn.includes(id) ? worn : [...worn, id]));
+        wears((worn) => (worn.includes(id) ? worn : [...worn, id]));
       },
       removeOverlay(id: string): void {
-        moonWears((worn) => worn.filter((w) => w !== id));
+        wears((worn) => worn.filter((w) => w !== id));
       },
+      /** The planet open's changes made into an overlay it wears (see `Editor.overlayFromChanges`). */
+      overlayFromChanges(): void {
+        const b = store._body();
+        if (store.target().kind !== 'body' || asset().kind !== 'planet' || !b) return;
+        const { overlay, kept } = overlaySettingsOf(b.settings);
+        if (!Object.keys(overlay).length) return;
+        const id = d.createOverlayFrom(overlay);
+        const overlays = [...b.overlays.map((o) => o.id), id];
+        d.changeLibraryBody('planets', asset().id, () => ({ ...kept, overlays }));
+      },
+      /** What the planet open or its moon selected wears back as its own (its data's; a moon's, its planet's). */
       resetOverlays(): void {
         const t = store.target();
         if (t.kind === 'moon')
           changeMoons((moons) => changeMoon(moons, t.path, (m) => without(m, ['overlays']) ?? m));
+        else if (t.kind === 'body' && asset().kind === 'planet')
+          d.clearLibraryBody('planets', asset().id, ['overlays']);
+        else if (t.kind === 'body' && d.library().created?.[asset().id]?.kind === 'scene')
+          d.clearLibraryBody('styles', asset().id, ['overlays']);
       },
       setSkyTint(tint: MaterialTint): void {
         const s = selectedSky();

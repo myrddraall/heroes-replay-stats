@@ -30,7 +30,6 @@ import {
   withPart,
   wornParts,
 } from './scene-planets';
-import { wornKey } from './overlays';
 import { reach, type Viewpoint } from './scene-space';
 import { compose, pointToWorld, type Transform } from './scene-graph';
 import type { AddedLight, LightId, LightSettings } from './scene-lights';
@@ -401,17 +400,25 @@ export function changeAt(
 }
 
 /**
- * A planet with the overlays it wears changed (none given: back to its own), its settings for what
- * it wears now starting as those for what it wore (`from`: their key) where none are kept for it,
- * so what was set on it stays.
+ * A scene planet's settings, whatever it wears: its own; one kept before it had one set, those it
+ * had for what it wears now (`worn`: their key, see `wornKey`).
+ */
+export const planetSettingsOf = (p: SceneBody, worn: string): BodySettings | undefined =>
+  p.settings ?? p.variants?.[worn];
+
+/** A planet with its settings set (none, or nothing in them: none), those kept before taken off. */
+function settled(p: SceneBody, settings: BodySettings | undefined): SceneBody {
+  const rest = without(p, ['settings', 'variants']) ?? p;
+  return settings && Object.keys(settings).length ? { ...rest, settings } : rest;
+}
+
+/**
+ * A planet with the overlays it wears changed (none given: back to its own), its settings kept
+ * (one kept before it had one set: those for what it wore, `now` their key).
  */
 function wearing(p: SceneBody, overlays: readonly string[] | undefined, now: string): SceneBody {
-  const rest = without(p, ['style', 'overlays']) ?? p;
-  const kept = p.variants?.[now];
-  const key = overlays ? wornKey(overlays) : undefined;
-  const variants =
-    key !== undefined && kept && !p.variants?.[key] ? { ...p.variants, [key]: kept } : p.variants;
-  return { ...rest, ...(overlays ? { overlays } : {}), ...(variants ? { variants } : {}) };
+  const rest = settled(without(p, ['style', 'overlays']) ?? p, planetSettingsOf(p, now));
+  return { ...rest, ...(overlays ? { overlays } : {}) };
 }
 
 /** A moon with the overlays it wears changed (none given: back to its own). */
@@ -421,8 +428,8 @@ function moonWearing(m: MoonChoices, overlays: readonly string[] | undefined): M
 }
 
 /**
- * The overlays a body wears chosen (the later over the earlier; [] none), over its own; its
- * settings for what it wore (by `from`, their key) kept for what it wears now.
+ * The overlays a body wears chosen (the later over the earlier; [] none), over its own, its
+ * settings kept (`from`: the key of what it wore, for one kept before it had one set).
  */
 export const setOverlays = (
   bodies: readonly SceneBody[],
@@ -451,7 +458,10 @@ export const resetOverlays = (
     (m) => moonWearing(m, undefined),
   );
 
-/** A body's settings changed: a planet's for what it wears (`worn`: its key), a moon's its own (none left: none). */
+/**
+ * A body's settings changed (none left: none): a planet's, whatever it wears (`worn`: the key of
+ * what it wears, for one kept before it had one set), a moon's its own.
+ */
 export function changeSettings(
   bodies: readonly SceneBody[],
   path: BodyPath,
@@ -461,13 +471,7 @@ export function changeSettings(
   return changeAt(
     bodies,
     path,
-    (p) => {
-      const variants = { ...p.variants };
-      const changed = change(variants[worn] ?? {});
-      if (changed && Object.keys(changed).length) variants[worn] = changed;
-      else delete variants[worn];
-      return { ...p, variants: Object.keys(variants).length ? variants : undefined };
-    },
+    (p) => settled(p, change(planetSettingsOf(p, worn) ?? {})),
     (m) => {
       const changed = change(m.settings ?? {});
       return { ...m, settings: changed && Object.keys(changed).length ? changed : undefined };

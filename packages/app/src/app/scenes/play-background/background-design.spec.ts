@@ -102,6 +102,36 @@ describe('withLibrary', () => {
     expect(scene.materials?.['grid']).toEqual({ glow: 5 });
     expect(scene.shade).toEqual({ strength: 0.2 });
   });
+
+  it('lets an overlay set any of a planet\'s settings over its own, the later over the earlier, the scene over all', () => {
+    const library: LibraryState = {
+      ...EMPTY_LIBRARY,
+      planets: { korhal: { tint: red, rim: [1, 0, 0], turn: 10 } },
+      styles: {
+        warm: { tint: blue, orientation: 'world', turn: 30 },
+        tilted: { axis: [0, 0.5, 1], turn: 45 },
+      },
+    };
+    const worn = withLibrary({ ...korhal, overlays: ['warm', 'tilted'] }, library);
+    expect(worn.tint).toEqual(blue); // the overlay's over the planet's own
+    expect(worn.rim).toEqual([1, 0, 0]); // the planet's own where no overlay sets it
+    expect(worn.orientation).toBe('world');
+    expect(worn.axis).toEqual([0, 0.5, 1]);
+    expect(worn.turn).toBe(45); // the later overlay's
+    expect(withLibrary({ ...korhal, overlays: ['warm', 'tilted'], turn: 5 }, library).turn).toBe(5); // the scene's
+  });
+
+  it("wears a planet's own choice of overlays where it is put with its own (a set's planet), not where one is chosen", () => {
+    const library: LibraryState = {
+      ...EMPTY_LIBRARY,
+      planets: { korhal: { overlays: ['warm'] } },
+      styles: { warm: { tint: blue } },
+    };
+    const own = withLibrary({ ...korhal, overlays: ['nexus'], ownOverlays: true }, library);
+    expect(own.overlays).toEqual(['warm']);
+    expect(own.tint).toEqual(blue);
+    expect(withLibrary({ ...korhal, overlays: ['nexus'] }, library).overlays).toEqual(['nexus']);
+  });
 });
 
 describe('the material cascade', () => {

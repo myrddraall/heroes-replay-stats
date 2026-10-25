@@ -342,11 +342,12 @@ export class SelectionPanel {
   }
 
   /** The selected material as the library has it (shared), opened from what it is selected in. */
-  /** A new overlay made (empty, named as it starts) and worn by what is selected: a body, or the sky. */
-  protected newOverlay(kind: 'planet' | 'sky'): void {
+  /** A new overlay made (empty, named as it starts) and worn by what is selected: a body, the sky, or the scene. */
+  protected newOverlay(kind: 'planet' | 'sky' | 'scene'): void {
     const id = this.draft.createOverlay(kind);
     if (kind === 'planet') this.editor.addOverlay(id);
-    else this.editor.addSkyOverlay(id);
+    else if (kind === 'sky') this.editor.addSkyOverlay(id);
+    else this.scene?.addSceneOverlay(id);
   }
 
   protected openShared(): void {

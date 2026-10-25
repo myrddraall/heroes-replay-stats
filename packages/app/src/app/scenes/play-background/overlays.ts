@@ -38,6 +38,35 @@ export const overlayOfFile = (file: string) =>
 /** The key a body's settings are kept by for what it wears: the overlays' ids joined ('' for none). */
 export const wornKey = (overlays: readonly string[]) => overlays.join('+');
 
+/**
+ * What of a body's settings is its own alone, never an overlay's: what names it, whether it is
+ * drawn, what it wears (and whether each is drawn), parts added onto it.
+ */
+const BODY_ONLY: readonly (keyof BodySettings)[] = [
+  'label',
+  'enabled',
+  'overlayEnabled',
+  'overlaysEnabled',
+  'overlays',
+  'addedParts',
+];
+
+/**
+ * A body's settings split for making an overlay of them: what an overlay can take (`overlay`:
+ * everything else), and what stays the body's own (`kept`; none: none).
+ */
+export function overlaySettingsOf(settings: BodySettings): {
+  readonly overlay: BodySettings;
+  readonly kept: BodySettings | undefined;
+} {
+  const entries = Object.entries(settings);
+  const kept = Object.fromEntries(entries.filter(([k]) => BODY_ONLY.includes(k as keyof BodySettings)));
+  return {
+    overlay: Object.fromEntries(entries.filter(([k]) => !BODY_ONLY.includes(k as keyof BodySettings))),
+    kept: Object.keys(kept).length ? kept : undefined,
+  };
+}
+
 /** What a body chose to wear (one kept before bodies wore several read as the list of it); none: its own. */
 export function chosenOverlays(
   chosen: { readonly overlays?: readonly string[]; readonly style?: string } | undefined,
@@ -351,6 +380,23 @@ export function sceneWithout(p: PlanetChoices, id: string): PlanetChoices {
     ...(p.sky?.overlays
       ? { sky: { ...p.sky, overlays: p.sky.overlays.filter((o) => o !== id) } }
       : {}),
+    ...(p.overlays ? { overlays: p.overlays.filter((o) => o !== id) } : {}),
+  };
+}
+
+/**
+ * What a scene's overlays add to it (those it wears that are there, in order): the overlays every
+ * planet in it wears over its own, and the lights they add to the scene's.
+ */
+export function sceneOverlaysOf(
+  scene: PlanetChoices | undefined,
+  library: LibraryState,
+): { readonly planets: readonly string[]; readonly lights: readonly AddedLight[] } {
+  const worn = (scene?.overlays ?? []).filter((id) => library.created?.[id]?.kind === 'scene');
+  const settings = worn.map((id) => library.styles[id]);
+  return {
+    planets: [...new Set(settings.flatMap((s) => s?.overlays ?? []))],
+    lights: settings.flatMap((s) => s?.added ?? []),
   };
 }
 

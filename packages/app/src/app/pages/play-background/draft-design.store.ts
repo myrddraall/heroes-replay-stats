@@ -275,9 +275,23 @@ export const DraftDesignStore = signalStore(
        */
       createOverlay(kind: OverlayKind, parts: readonly AddedPart[] = []): string {
         const { id, n } = nextOverlayId(store.library());
-        const label = `${kind === 'sky' ? 'Sky overlay' : 'Overlay'} ${n}`;
+        const label = `${kind === 'sky' ? 'Sky overlay' : kind === 'scene' ? 'Scene overlay' : 'Overlay'} ${n}`;
         const made = withOverlayParts({ kind, label, parts: [], sources: {} }, parts);
         setLibrary((l) => ({ ...l, created: { ...l.created, [id]: made } }));
+        return id;
+      },
+      /**
+       * A new overlay to wear on a planet, of settings changed on one (what an overlay can take of
+       * them: see `overlaySettingsOf`), named; its id.
+       */
+      createOverlayFrom(settings: BodySettings): string {
+        const { id, n } = nextOverlayId(store.library());
+        const made: CreatedOverlay = { kind: 'planet', label: `Overlay ${n}`, parts: [], sources: {} };
+        setLibrary((l) => ({
+          ...l,
+          created: { ...l.created, [id]: made },
+          styles: { ...l.styles, [id]: settings },
+        }));
         return id;
       },
       /** An overlay made in the editor changed (its parts, the materials they draw). */
@@ -296,7 +310,14 @@ export const DraftDesignStore = signalStore(
           delete styles[id];
           const worn = l.sky.overlays;
           const sky = worn ? { ...l.sky, overlays: worn.filter((o) => o !== id) } : l.sky;
-          return { ...l, created, styles, sky };
+          // Off the planets that chose it for themselves too.
+          const planets = Object.fromEntries(
+            Object.entries(l.planets).map(([k, p]) => [
+              k,
+              p.overlays?.includes(id) ? { ...p, overlays: p.overlays.filter((o) => o !== id) } : p,
+            ]),
+          );
+          return { ...l, created, styles, sky, planets };
         });
         setScenes((s) => ({
           ...s,
@@ -518,6 +539,10 @@ export const DraftDesignStore = signalStore(
       },
       clearSkyTint(id: string): void {
         setSceneSky(id, (sky) => ({ ...sky, tint: undefined }));
+      },
+      /** The overlays a scene wears (none: none). */
+      setSceneOverlays(id: string, overlays: readonly string[]): void {
+        setScene(id, (p) => ({ ...p, overlays: overlays.length ? overlays : undefined }));
       },
       /** A scene's own lights (none: none). */
       setSceneLights(id: string, lights: readonly AddedLight[]): void {

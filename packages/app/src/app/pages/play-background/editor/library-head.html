@@ -27,6 +27,10 @@
       <mat-icon class="material-symbols-outlined" aria-hidden="true">add</mat-icon>
       <span>New sky overlay</span>
     </button>
+    <button type="button" class="button new" (click)="catalog.createOverlay('scene')">
+      <mat-icon class="material-symbols-outlined" aria-hidden="true">add</mat-icon>
+      <span>New scene overlay</span>
+    </button>
   </div>
 }
 @if (catalog.type() === 'group') {

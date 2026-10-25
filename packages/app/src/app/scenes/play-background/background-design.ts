@@ -145,9 +145,20 @@ function orientationOf(
 }
 
 /**
- * A planet as the library has it, under what is set for it: its own defaults and its style's
- * (each set value where nothing above sets it), its materials' settings merged by key over the
- * materials' base settings.
+ * A body's settings as levels stack them, each setting the last level's that sets it (`levels`:
+ * the lowest first).
+ */
+function stacked(levels: readonly (BodySettings | undefined)[]): BodySettings {
+  const out: Record<string, unknown> = {};
+  for (const level of levels)
+    for (const [k, v] of Object.entries(level ?? {})) if (v !== undefined) out[k] = v;
+  return out as BodySettings;
+}
+
+/**
+ * A planet as the library has it, under what is set for it: its own defaults, then the overlays
+ * it wears in order (each may set any of its settings: the later over the earlier), then what is
+ * set for it (a scene's); its materials' settings merged by key over the materials' base settings.
  */
 export function withLibrary(set: SetPlanet, library: LibraryState): SetPlanet {
   const own = library.planets[set.id];
@@ -156,13 +167,17 @@ export function withLibrary(set: SetPlanet, library: LibraryState): SetPlanet {
   const on = (id: string) =>
     (!createdOverlay(id) || !!library.created?.[id]) &&
     (set.overlaysEnabled?.[id] ?? set.overlayEnabled ?? overlayOn(id, own)) !== false;
-  const overlays = (set.overlays ?? []).filter(on);
+  // What it wears: as chosen where it is put, else (its own) the library's choice for it, if any.
+  const wears = set.ownOverlays && own?.overlays ? own.overlays : set.overlays;
+  const overlays = (wears ?? []).filter(on);
   const planet: SetPlanet =
-    overlays.length === (set.overlays ?? []).length ? set : { ...set, overlays };
+    wears === set.overlays && overlays.length === (wears ?? []).length ? set : { ...set, overlays };
   const styles = overlays.map((id) => library.styles[id]).filter((s) => !!s);
   const base = library.materials;
   if (!own && !styles.length && !Object.keys(base ?? {}).length) return planet;
   const orders = styles.flatMap((s) => (s.order ? [s.order] : []));
+  // Its own and its overlays', the later over the earlier: under what is set for it.
+  const under = stacked([own, ...styles]);
   return {
     ...planet,
     // (An overlay's materials kept by their `materialKey`, at every level: the base by name.)
@@ -182,11 +197,11 @@ export function withLibrary(set: SetPlanet, library: LibraryState): SetPlanet {
       ...styles.flatMap((s) => s.added ?? []),
       ...(planet.added ?? []),
     ],
-    lighting: planet.lighting ?? own?.lighting,
-    tint: planet.tint ?? own?.tint,
-    lightFrom: planet.lightFrom ?? own?.lightFrom,
-    rim: planet.rim ?? own?.rim,
-    ...orientationOf(planet, own),
+    lighting: planet.lighting ?? under.lighting,
+    tint: planet.tint ?? under.tint,
+    lightFrom: planet.lightFrom ?? under.lightFrom,
+    rim: planet.rim ?? under.rim,
+    ...orientationOf(planet, under),
     shade: {
       ...shadeOf(own),
       ...styles.reduce((a: Partial<BodyShade>, s) => ({ ...a, ...shadeOf(s) }), {}),

@@ -30,8 +30,12 @@ import { V_SAMPLES } from './scene-limits';
  * settings set over it as any material's are. Nothing is copied.
  */
 
-/** What an overlay is worn on: a planet (or moon), or the sky. */
-export type OverlayKind = 'planet' | 'sky';
+/**
+ * What an overlay is worn on: a planet (or moon), the sky, or a scene (its settings: the overlays
+ * every planet in the scene wears over its own, `overlays`, and lights it adds to the scene,
+ * `added`; it has no parts).
+ */
+export type OverlayKind = 'planet' | 'sky' | 'scene';
 
 /** The shapes a new part can take: a sphere, a ring, a tube, a cone or a disc (a planet's), a band (the sky's). */
 export type CreatedShape =
@@ -229,10 +233,11 @@ function found(
   return { materials, textures };
 }
 
-/** The shapes a planet's overlay's parts may take, and the sky's. */
+/** The shapes a planet's overlay's parts may take, and the sky's (a scene's has no parts). */
 export const PART_SHAPES: Readonly<Record<OverlayKind, readonly CreatedShape[]>> = {
   planet: ['sphere', 'ring', 'tube', 'cone', 'disc', 'capsule', 'plane'],
   sky: ['band'],
+  scene: [],
 };
 
 /**
@@ -350,8 +355,9 @@ export function createdPlanetFile(o: Sourced, lookup: SourceLookup): PlanetFile 
 }
 
 /**
- * The planets' overlays made in the editor, their materials as found where they are (`lookup`):
- * each by the file it is loaded as (`overlayFileFor`).
+ * The overlays made in the editor that planets wear (a planet's, and a scene's: no parts of its
+ * own), their materials as found where they are (`lookup`): each by the file it is loaded as
+ * (`overlayFileFor`).
  */
 export function createdFiles(
   library: LibraryState,
@@ -359,7 +365,7 @@ export function createdFiles(
 ): Record<string, PlanetFile> {
   return Object.fromEntries(
     Object.entries(library.created ?? {})
-      .filter(([, o]) => o.kind === 'planet')
+      .filter(([, o]) => o.kind !== 'sky')
       .map(([id, o]) => [overlayFileFor(library, id), createdPlanetFile(o, lookup)]),
   );
 }

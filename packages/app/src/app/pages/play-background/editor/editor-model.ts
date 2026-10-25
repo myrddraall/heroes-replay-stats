@@ -188,6 +188,11 @@ export interface BodyInfo {
   readonly overlaysSet: boolean;
   /** Its settings in the layer edited. */
   readonly settings: BodySettings;
+  /**
+   * Whether the layer edited is under the overlays it wears (its own settings, a planet open in
+   * the library: what an overlay it wears sets is over them), not over them (a scene's).
+   */
+  readonly underOverlays?: boolean;
   /** Its own defaults, under the layer edited (the library's, under a scene). */
   readonly below?: BodySettings;
   /** The materials' base settings (the library's), under its own. */
@@ -502,8 +507,22 @@ export function materialsOf(
               ]
             : [
                 ['its tuning', owner.tuning?.materials?.[name]],
+                // How it wears each overlay it wears, and what each sets for it in the library,
+                // the later over the earlier: an overlay may set its own materials too.
+                ...drawnOverlays(b).map(
+                  (o): readonly [string, MaterialSettings | undefined] => [
+                    `${b.id}'s tuning for ${overlayLabel(o)}`,
+                    wearOf(b.file, o.id)?.materials?.[name],
+                  ],
+                ),
                 ['the library (material)', b.materialBase?.[name]],
                 ['the library (planet)', b.below?.materials?.[key]],
+                ...drawnOverlays(b).map(
+                  (o): readonly [string, MaterialSettings | undefined] => [
+                    `the library (${overlayLabel(o)})`,
+                    o.below?.materials?.[key],
+                  ],
+                ),
               ];
           const under = mergeSettings(...levels.map(([, l]) => l));
           const settings = mergeSettings(under, chosen?.[key]);
@@ -605,15 +624,31 @@ function overlayShades(b: BodyInfo) {
   };
 }
 
+/** The overlays a body wears that are drawn (those switched off set nothing), the later over the earlier. */
+const drawnOverlays = (b: BodyInfo) =>
+  b.overlays.filter((o) => overlayOn(o.id, b.settings, b.below) !== false);
+
+/**
+ * A setting of a body as its levels stack, where one sets it: the layer edited and what its
+ * overlays set (the later over the earlier: over the layer edited where it is under them, else
+ * under it), over its own defaults.
+ */
+export function stackedSetting<K extends keyof BodySettings>(b: BodyInfo, k: K): BodySettings[K] {
+  const worn = latest(drawnOverlays(b).map((o) => o.below?.[k]));
+  const edited = b.settings[k];
+  return (b.underOverlays ? (worn ?? edited) : (edited ?? worn)) ?? b.below?.[k];
+}
+
 /** A body's own settings as shown: the layer edited, over those under it (its overlays' shade over its own), over its files' tuning, over the defaults. */
 export function valuesOf(b: BodyInfo): BodyValues {
   const tuning = b.file?.tuning;
   const s = b.settings;
   const own = b.below;
   const { strength, direction } = overlayShades(b);
+  const at = <K extends keyof BodySettings>(k: K) => stackedSetting(b, k);
   return {
     overlays: wornIds(b),
-    lighting: s.lighting ?? own?.lighting ?? tuning?.lighting ?? 1,
+    lighting: at('lighting') ?? tuning?.lighting ?? 1,
     // An overlay it wears shades it its way (as it wears it); else its own.
     shade:
       s.shade ??
@@ -623,8 +658,8 @@ export function valuesOf(b: BodyInfo): BodyValues {
       strength.style ??
       tuning?.shade?.strength ??
       DEFAULT_SHADE.strength,
-    tint: s.tint ?? own?.tint ?? tuning?.tint ?? NO_MATERIAL_TINT,
-    lightFrom: s.lightFrom ?? own?.lightFrom ?? tuning?.lightFrom ?? keyLightFrom(rigOf(b)),
+    tint: at('tint') ?? tuning?.tint ?? NO_MATERIAL_TINT,
+    lightFrom: at('lightFrom') ?? tuning?.lightFrom ?? keyLightFrom(rigOf(b)),
     shadeTowards:
       s.shadeTowards ??
       direction.styled ??
@@ -633,19 +668,19 @@ export function valuesOf(b: BodyInfo): BodyValues {
       direction.style ??
       tuning?.shade?.direction ??
       DEFAULT_SHADE.direction,
-    rim: s.rim ?? own?.rim ?? tuning?.rim ?? TOWARDS_EYE,
-    glowMargin: s.glowMargin ?? own?.glowMargin ?? HALO_MARGIN,
+    rim: at('rim') ?? tuning?.rim ?? TOWARDS_EYE,
+    glowMargin: at('glowMargin') ?? HALO_MARGIN,
     orientation: bodyOrientation(b),
     // As its data has them unless set: its textures' pole, no turn about it.
-    axis: s.axis ?? own?.axis ?? tuning?.axis ?? poleOf(b.file?.parts ?? []),
-    turn: s.turn ?? own?.turn ?? tuning?.turn ?? 0,
-    baseTurn: s.baseTurn ?? own?.baseTurn ?? tuning?.baseTurn ?? NO_QUAT,
+    axis: at('axis') ?? tuning?.axis ?? poleOf(b.file?.parts ?? []),
+    turn: at('turn') ?? tuning?.turn ?? 0,
+    baseTurn: at('baseTurn') ?? tuning?.baseTurn ?? NO_QUAT,
   };
 }
 
-/** Which way a body's surfaces are turned where its parts and materials don't say, where any of its levels says: the layer edited, those under it, its tuning. */
+/** Which way a body's surfaces are turned where its parts and materials don't say, where any of its levels says: as they stack (see `stackedSetting`), its tuning. */
 const bodySays = (b: BodyInfo): Orientation | undefined =>
-  b.settings.orientation ?? b.below?.orientation ?? b.file?.tuning?.orientation;
+  stackedSetting(b, 'orientation') ?? b.file?.tuning?.orientation;
 /** That, else facing the camera. */
 const bodyOrientation = (b: BodyInfo): Orientation => bodySays(b) ?? DEFAULT_ORIENTATION;
 
@@ -1270,8 +1305,15 @@ export function bodyOrigins(b: BodyInfo): SettingOrigins<keyof BodySettings> {
       `the ${overlayLabel(o)} overlay`,
       o.file?.shade?.[k],
     ]);
+  // What the overlays it wears set (those drawn, the later first): over the layer edited where it
+  // is under them (as nothing under it then says it, they are its only origins but its tuning).
+  const drawnLatestFirst = [...drawnOverlays(b)].reverse();
+  const stack = (k: keyof BodySettings): [string, unknown][] => [
+    ...drawnLatestFirst.map((o): [string, unknown] => [`the ${overlayLabel(o)} overlay`, o.below?.[k]]),
+    [library, own?.[k]],
+  ];
   const out: SettingOrigins<keyof BodySettings> = {
-    lighting: first([library, own?.lighting], ['its tuning', tuning?.lighting]),
+    lighting: first(...stack('lighting'), ['its tuning', tuning?.lighting]),
     shade: first(
       ...libraryStyle('shade'),
       [library, own?.shade],
@@ -1279,8 +1321,8 @@ export function bodyOrigins(b: BodyInfo): SettingOrigins<keyof BodySettings> {
       ...styleOwn('strength'),
       ['its tuning', tuning?.shade?.strength],
     ),
-    tint: first([library, own?.tint], ['its tuning', tuning?.tint]),
-    lightFrom: first([library, own?.lightFrom], ['its tuning', tuning?.lightFrom]),
+    tint: first(...stack('tint'), ['its tuning', tuning?.tint]),
+    lightFrom: first(...stack('lightFrom'), ['its tuning', tuning?.lightFrom]),
     shadeTowards: first(
       ...libraryStyle('shadeTowards'),
       [library, own?.shadeTowards],
@@ -1288,12 +1330,12 @@ export function bodyOrigins(b: BodyInfo): SettingOrigins<keyof BodySettings> {
       ...styleOwn('direction'),
       ['its tuning', tuning?.shade?.direction],
     ),
-    rim: first([library, own?.rim], ['its tuning', tuning?.rim]),
-    glowMargin: first([library, own?.glowMargin]),
-    orientation: first([library, own?.orientation], ['its tuning', tuning?.orientation]),
-    axis: first([library, own?.axis], ['its tuning', tuning?.axis]),
-    turn: first([library, own?.turn], ['its tuning', tuning?.turn]),
-    baseTurn: first([library, own?.baseTurn], ['its tuning', tuning?.baseTurn]),
+    rim: first(...stack('rim'), ['its tuning', tuning?.rim]),
+    glowMargin: first(...stack('glowMargin')),
+    orientation: first(...stack('orientation'), ['its tuning', tuning?.orientation]),
+    axis: first(...stack('axis'), ['its tuning', tuning?.axis]),
+    turn: first(...stack('turn'), ['its tuning', tuning?.turn]),
+    baseTurn: first(...stack('baseTurn'), ['its tuning', tuning?.baseTurn]),
   };
   return Object.fromEntries(Object.entries(out).filter(([, v]) => v)) as SettingOrigins<
     keyof BodySettings
@@ -1307,6 +1349,8 @@ export function bodyView(
   canHaveMoons: boolean,
   /** One of a library planet's own moons, edited there: its orbit and what it wears; its lights its own planet's. */
   libraryMoon = false,
+  /** Whether what it wears is chosen here (unless said: a scene's bodies, a library planet's own moons). */
+  chooses = canHaveMoons || libraryMoon,
 ): BodyView {
   return {
     info: b,
@@ -1315,7 +1359,7 @@ export function bodyView(
     inherited: !!b.inherited,
     orbitBase: b.inherited?.orbit ?? DEFAULT_ORBIT,
     lights: !libraryMoon,
-    styled: canHaveMoons || libraryMoon,
+    styled: chooses,
     focusable: !libraryMoon,
     baseTint: b.below?.tint ?? b.file?.tuning?.tint ?? NO_MATERIAL_TINT,
     focused,

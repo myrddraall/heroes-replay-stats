@@ -25,7 +25,7 @@ import { SceneHeader } from './scene-header';
         return {
           planets: store.scenePlanets,
           sky: store.sceneSky,
-          lights: store.sceneLights,
+          lights: store.drawnSceneLights,
           tint: store.sceneTint,
           key: store.scene,
           random: store.sets,

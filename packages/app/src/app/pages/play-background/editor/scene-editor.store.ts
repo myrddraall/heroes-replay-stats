@@ -89,6 +89,7 @@ import {
   resetMoon,
   storedBodies,
   withLibraryMoons,
+  planetSettingsOf,
 } from '../../../scenes/play-background/scene-bodies';
 import {
   loadPlanetIndex,
@@ -160,6 +161,7 @@ import {
   skyPartsOf,
   splitViewKey,
   spotEdges,
+  stackedSetting,
   type TargetKind,
   viewTitle,
   withLitBy,
@@ -167,13 +169,20 @@ import {
   wornKeyOf,
   wornLabel,
 } from './editor-model';
-import { chosenOverlays, ownOverlays, wornKey } from '../../../scenes/play-background/overlays';
+import {
+  chosenOverlays,
+  overlaySettingsOf,
+  ownOverlays,
+  sceneOverlaysOf,
+  wornKey,
+} from '../../../scenes/play-background/overlays';
 import {
   addedSourced,
   createdSkyFile,
   type CreatedShape,
   mergeAddedParts,
   overlayFileFor,
+  overlayName,
   PART_SHAPES,
   sourceFiles,
   withAddedParts,
@@ -221,7 +230,7 @@ const materialRowKey = (path: BodyPath, name: string, overlay?: string) =>
   overlay ? `${bodyKey(path)}/om/${overlay}/${name}` : `${bodyKey(path)}/m/${name}`;
 const partRowKey = (path: BodyPath, key: PartKey) => `${bodyKey(path)}/p/${key}`;
 /** The room a body's glow is given where the view is fitted to it (as set, else under it). */
-const glowMarginOf = (b: BodyInfo) => b.settings.glowMargin ?? b.below?.glowMargin;
+const glowMarginOf = (b: BodyInfo) => stackedSetting(b, 'glowMargin');
 /** A group put in the scene, by its index there. */
 const placementKey = (index: number) => `place/${index}`;
 /** The scene's cameras, a group of their own; each by its id (the game's: `GAME_CAMERA`). */
@@ -505,9 +514,9 @@ export const SceneEditorStore = signalStore(
           place,
           moons: children,
         });
-        /** What a body wears: as chosen, else its own (its data's). */
+        /** What a body wears: as chosen, else its own (the library's choice for it, else its data's). */
         const worn = (chosen: readonly string[] | undefined, id: string) =>
-          chosen ?? ownOverlays(all[id]?.tuning?.style);
+          chosen ?? lib.planets[id]?.overlays ?? ownOverlays(all[id]?.tuning?.style);
         /** `planet`: the one the moons are about (its own moons, the library's, are among them). */
         const walk = (parent: BodyPath, list: readonly MoonChoices[], planet: string) =>
           list.forEach((moon, i) => {
@@ -539,7 +548,7 @@ export const SceneEditorStore = signalStore(
               planet.id,
               wears,
               chosen !== undefined,
-              planet.variants?.[wornKey(wears)] ?? {},
+              planetSettingsOf(planet, wornKey(wears)) ?? {},
               planet.moons ?? [],
               undefined,
               { position: planet.position, radius: planet.radius },
@@ -838,13 +847,30 @@ export const SceneEditorStore = signalStore(
         ),
         /** The scene's own lights, lighting every planet in it. */
         sceneLights: computed((): readonly AddedLight[] => choices().lights ?? []),
+        /** The overlays the scene wears (made for scenes, there), the later over the earlier. */
+        sceneWorn: computed(() =>
+          (choices().overlays ?? []).filter((id) => library().created?.[id]?.kind === 'scene'),
+        ),
+        /** The overlays a scene may wear (those made for scenes), by name. */
+        sceneOverlayOptions: computed((): readonly PickChoice[] =>
+          Object.entries(library().created ?? {})
+            .filter(([, o]) => o.kind === 'scene')
+            .map(([id]) => ({ value: id, label: overlayName(library(), id) })),
+        ),
+        /**
+         * What the scene's overlays add to it, as it is drawn: the overlays every planet in it
+         * wears over its own, the lights they add to the scene's (`sceneOverlaysOf`).
+         */
+        _sceneAdds: computed(() => sceneOverlaysOf(choices(), library())),
         sceneTint: computed(() => _draft.scenes().settings),
         neededFiles: computed(() => {
           const file = overlayFileOf();
           const lib = library();
-          // Each body, what it wears, and the files what is added onto it (and the sky) reads.
+          // Each body, what it wears (and the scene's overlays put on it), and the files what is
+          // added onto it (and the sky) reads.
           return [
             ...new Set([
+              ...sceneOverlaysOf(choices(), lib).planets.map(file),
               ...bodies().flatMap((b) => [
                 b.id,
                 ...wornIds(b).map(file),
@@ -867,6 +893,11 @@ export const SceneEditorStore = signalStore(
             ]),
           ];
         }),
+        /** The scene's lights as it is drawn: its own, then those its overlays add. */
+        drawnSceneLights: computed((): readonly AddedLight[] => [
+          ...(choices().lights ?? []),
+          ...sceneOverlaysOf(choices(), library()).lights,
+        ]),
         kind: computed((): TargetKind => {
           const t = target();
           if ('view' in t && t.view) return t.view.kind;
@@ -1509,7 +1540,9 @@ export const SceneEditorStore = signalStore(
             id: b.id,
             position: p.position,
             radius: p.radius,
-            overlays: wornIds(b),
+            // What it wears, then what the scene's overlays put on every planet (flattened here,
+            // as it is drawn: each stays linked where it is kept).
+            overlays: [...new Set([...wornIds(b), ...store._sceneAdds().planets])],
             ...(drawn ? {} : { enabled: false }),
             ...(s.overlayEnabled !== undefined ? { overlayEnabled: s.overlayEnabled } : {}),
             ...(s.overlaysEnabled ? { overlaysEnabled: s.overlaysEnabled } : {}),
@@ -2264,6 +2297,24 @@ export const SceneEditorStore = signalStore(
         else if (t.kind === 'part') settings(t.path, (s) => withoutPartSetting(s, t.key, keys));
       },
       /** An overlay put on the scene's sky, over what it wears. */
+      /** An overlay put on the scene (over what it wears), taken off, or all taken off. */
+      addSceneOverlay(id: string): void {
+        const worn = store.sceneWorn();
+        if (!worn.includes(id)) d.setSceneOverlays(store.scene(), [...worn, id]);
+      },
+      removeSceneOverlay(id: string): void {
+        d.setSceneOverlays(
+          store.scene(),
+          store.sceneWorn().filter((w) => w !== id),
+        );
+      },
+      resetSceneOverlays(): void {
+        d.setSceneOverlays(store.scene(), []);
+      },
+      /** An overlay the scene wears opened in the library (what it puts on planets, its lights). */
+      showSceneOverlay(id: string): void {
+        store._ui.open({ kind: 'style', id });
+      },
       addSkyOverlay(id: string): void {
         const worn = store.skyWorn();
         if (!worn.includes(id)) d.setSkyOverlays(store.scene(), [...worn, id]);
@@ -2339,14 +2390,24 @@ export const SceneEditorStore = signalStore(
       removeOverlay(id: string): void {
         wear((worn) => worn.filter((w) => w !== id));
       },
-      /** What the selected body wears back as its own (its data's). */
+      overlayFromChanges(): void {
+        const path = selectedPath();
+        const b = path && store.bodyByKey().get(bodyKey(path));
+        if (!path || !b) return;
+        const { overlay, kept } = overlaySettingsOf(b.settings);
+        if (!Object.keys(overlay).length) return;
+        const id = d.createOverlayFrom(overlay);
+        const next = [...wornIds(b), id];
+        edit((bodies) =>
+          changeSettings(setOverlays(bodies, path, next, wornKeyOf(b)), path, wornKey(next), () => kept),
+        );
+      },
+      /** What the selected body wears back as its own (the library's choice for it, else its data's). */
       resetOverlays(): void {
         const path = selectedPath();
         const b = path && store.bodyByKey().get(bodyKey(path));
-        if (path && b)
-          edit((bodies) =>
-            resetOverlays(bodies, path, wornKeyOf(b), ownOverlays(b.file?.tuning?.style)),
-          );
+        const own = b && (d.library().planets[b.id]?.overlays ?? ownOverlays(b.file?.tuning?.style));
+        if (path && b && own) edit((bodies) => resetOverlays(bodies, path, wornKeyOf(b), own));
       },
       setOrbit(change: Partial<Orbit>): void {
         const path = selectedPath();

@@ -79,6 +79,11 @@ export abstract class Editor {
   abstract showOverlay(id: string): void;
   abstract removeOverlay(id: string): void;
   abstract resetOverlays(): void;
+  /**
+   * The selected body's changes made into a new overlay it wears (what an overlay can take of them:
+   * see `overlaySettingsOf`), taken off it, so they are linked wherever the overlay is worn.
+   */
+  abstract overlayFromChanges(): void;
 
   /** What of the selected material its row shows (a layer, its shield shader, an effect); none: the material itself. */
   abstract readonly materialView: Signal<MaterialView | null>;

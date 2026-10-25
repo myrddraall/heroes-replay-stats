@@ -17,6 +17,11 @@ export interface SetPlanet {
   readonly radius: number;
   /** The overlays it wears, by id, the later over the earlier (none: none). */
   readonly overlays?: readonly string[];
+  /**
+   * Whether what it wears is its own, not chosen where it is put (a set's planet: its data's): the
+   * planet's own choice in the library, where it makes one, is worn in its place.
+   */
+  readonly ownOverlays?: boolean;
   /** Parts added onto it (its own, after its data's). */
   readonly addedParts?: readonly AddedPart[];
   /** Whether the overlays it wears are drawn (off: drawn as if it wore none); kept before each had its own. */
@@ -103,10 +108,13 @@ const ONLY_PLACES: Readonly<Record<string, readonly number[]>> = {
 const EYE: readonly [number, number, number] = [0, -41.2, 5.6];
 const TRIES = 40;
 
-/** What a planet wears unless told otherwise (the index's style), as a set's planet takes it. */
-function ownStyle(index: PlanetIndex, id: string): { overlays?: readonly string[] } {
+/**
+ * What a planet wears unless told otherwise (the index's style), as a set's planet takes it: its
+ * own (the library's choice for it worn in its place, where it makes one).
+ */
+function ownStyle(index: PlanetIndex, id: string): { overlays?: readonly string[]; ownOverlays: true } {
   const style = index.planets.find((p) => p.id === id)?.style;
-  return style ? { overlays: [style] } : {};
+  return { ...(style ? { overlays: [style] } : {}), ownOverlays: true };
 }
 
 /** The game's own set, each in its own style (the Play screen's: their shields). */
