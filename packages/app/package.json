@@ -25,8 +25,12 @@
     "@angular/platform-browser": "^22.1.0",
     "@angular/router": "^22.1.0",
     "@myrddraall/hero-data": "^0.5.0",
+    "@myrddraall/heroes-replay-stats-aether": "workspace:*",
+    "@myrddraall/heroes-replay-stats-aether-forge": "workspace:*",
     "@myrddraall/heroes-replay-stats-analysers": "workspace:*",
     "@myrddraall/heroes-replay-stats-map": "workspace:*",
+    "@myrddraall/heroes-replay-stats-signals": "workspace:*",
+    "@myrddraall/heroes-replay-stats-ui": "workspace:*",
     "@myrddraall/heroprotocol-analysis": "^0.5.0",
     "@myrddraall/heroprotocol-db": "^0.5.0",
     "@ngrx/signals": "^22.0.1",
@@ -53,5 +57,5 @@
     "typescript-eslint": "^8.69.0",
     "vitest": "^4.0.8"
   },
-  "description": "Heroes of the Storm replay statistics \u2014 the Angular app shared by the web and desktop shells"
+  "description": "Heroes of the Storm replay statistics — the Angular app shared by the web and desktop shells"
 }

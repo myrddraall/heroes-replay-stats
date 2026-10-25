@@ -5,12 +5,22 @@ browser and, through a thin Electron shell, on the desktop. Everything happens o
 device: replays are parsed locally and stored in IndexedDB; there is no account, no
 login and no server.
 
-| Package                                                             | What it is                                                            |
-| ------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| [`@myrddraall/heroes-replay-stats`](./packages/app)                 | the Angular 22 + Material app, themed after the game                  |
-| [`@myrddraall/heroes-replay-stats-desktop`](./packages/desktop)     | the Electron shell: a window, and a preload bridge for the filesystem |
-| [`@myrddraall/heroes-replay-stats-analysers`](./packages/analysers) | the app's own replay analysers: timeline and points of interest       |
-| [`@myrddraall/heroes-replay-stats-map`](./packages/map)             | the map viewer: a map pack drawn by a viewer and its layer directives |
+| Package                                                                   | What it is                                                                                |
+| ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| [`@myrddraall/heroes-replay-stats`](./packages/app)                       | the Angular 22 + Material app, themed after the game                                      |
+| [`@myrddraall/heroes-replay-stats-desktop`](./packages/desktop)           | the Electron shell: a window, and a preload bridge for the filesystem                     |
+| [`@myrddraall/heroes-replay-stats-analysers`](./packages/analysers)       | the app's own replay analysers: timeline and points of interest                           |
+| [`@myrddraall/heroes-replay-stats-map`](./packages/map)                   | the map viewer: a map pack drawn by a viewer and its layer directives                     |
+| [`@myrddraall/heroes-replay-stats-aether`](./packages/aether)             | Aether, the 3D engine: scene data, settings stacking, the three.js renderer, the view     |
+| [`@myrddraall/heroes-replay-stats-aether-forge`](./packages/aether-forge) | Aether Forge, its editor: the library, the asset and scene editors (`provideAetherForge`) |
+| [`@myrddraall/heroes-replay-stats-ui`](./packages/ui)                     | shared interface pieces (the side panel)                                                  |
+| [`@myrddraall/heroes-replay-stats-signals`](./packages/signals)           | shared signal store features (state kept in `localStorage`)                               |
+
+Aether's root entry is what an app sets it up with (`provideAether`: where the game data is, the
+storage names, the graphics API and tint presets) and its shared state (`ViewStore`); everything else
+is in an entry per area (`@myrddraall/heroes-replay-stats-aether/design`, `/render`, `/view`, …), so
+what an app loads at once stays small. Each package's lint config keeps its imports inside it
+(`tools/eslint-boundaries.mjs`): Aether uses only `signals`, Aether Forge also Aether and `ui`.
 
 The replay parsing, the model and the generic analysers come from
 [myrddraall/heroprotocol](https://github.com/myrddraall/heroprotocol). The app's ingest
@@ -74,10 +84,10 @@ pnpm run serve.reports              # port 4209
 
 `/edit-background` is the game's Play screen background on a page of its own, filling the
 window: its sky, the energy drifting in towards the horizon, the twinkling stars and the planets, drawn with
-three.js (WebGPU, or its WebGL 2 backend, as Settings' Graphics API chooses) from the game's own camera, meshes, materials and particles (`hrs-play-background`,
-`packages/app/src/app/scenes/play-background`, fills whatever element holds it).
-The site's background is one instance in the shell, behind every page. `BackgroundStore`
-(`packages/app/src/app/scenes/play-background/background.store.ts`) holds how it is tinted, as the
+three.js (WebGPU, or its WebGL 2 backend, as Settings' Graphics API chooses) from the game's own camera, meshes, materials and particles (`aether-scene-view`,
+`packages/aether`, fills whatever element holds it).
+The site's background is one instance in the shell, behind every page. `ViewStore`
+(`packages/aether/src/view/view.store.ts`) holds how it is tinted, as the
 game turns it blue for vs A.I.: a colour and a blend (`multiply`, `color`, `hue`, `overlay`,
 `soft-light`, `color-burn` or `saturation`, as CSS blends them) for the whole of it, and for each
 planet on its own; a change fades over half a second. The site's tints are the Graphics settings'
@@ -93,16 +103,16 @@ effect the tints are on the root element for the interface to use: `--hrs-backgr
 the background's editor (below).
 
 The planets are put up in sets: the game's own as the site loads, then one drawn at random with
-each page (`nextPlanetSet` on BackgroundStore; the Background page's Another set button too), from the
+each page (`nextPlanetSet` on ViewStore; the Background page's Another set button too), from the
 pool heroes-capture exports beside the scene (`planets/`): the Play screen's three, the tutorial
 flyby's three worlds (Azeroth, Korhal, Sanctuary) with their own layered materials and atmosphere
 shells, lit as the flyby lights them, and its nine painted spheres. A planet is a body of parts
-(`scene-planets.ts`): each a shape about the body's centre (a sphere seen from outside or, for an
+(`formats/planets.ts`): each a shape about the body's centre (a sphere seen from outside or, for an
 atmosphere shell modelled inside out, from inside; a flat ring) with a rule mapping it to its
 materials' textures (a uv sphere about a pole, linear in the point, or round the ring), all read
 off the game's meshes by heroes-capture. No mesh is loaded: the renderer draws each part on one
 camera-facing square, finding the shape under each pixel (the body shader in
-`three/shader-body.ts`), turned to face the camera as the game's billboards do and lit by the
+`render/shaders/shader-body.ts`), turned to face the camera as the game's billboards do and lit by the
 flyby's lights where it is a world's. A planet can wear a style (`style-<id>.json`, the same
 form): its parts go about the body and its shade darkens it from a side; `nexus` is the Play
 screen's look for a world (its hex-grid shield and ring, a crescent left lit). A planet may wear
@@ -125,7 +135,7 @@ pixel wide at the Play screen's sizes) is a smooth line, not a staircase. A
 body's outline, and a ring's edges, are smoothed over a pixel (how much of the pixel the shape
 covers, blended by it), as the game's meshes are; a pixel the shape misses is shaded and given
 nothing rather than dropped (dropping it leaves its neighbours' texture derivatives undefined), and
-one past a sphere's outline reads its textures at their coarsest (seen wholly edge-on there). A body's lights are objects (`scene-lights.ts`), each a row in its tree's Lights group: its
+one past a sphere's outline reads its textures at their coarsest (seen wholly edge-on there). A body's lights are objects (`lights/lights.ts`), each a row in its tree's Lights group: its
 light rig from the game data as an ambient light and its directional lights (named Key, Fill and
 Back by how bright they are), and its Antilight (`shadow`, the data's shade: a directional light
 that darkens). Any light lights or darkens (Effect: Lights or Darkens, `darkens`): one that darkens
@@ -136,7 +146,7 @@ an antilight of before (`kind: 'shadow'`) is read as a directional light that da
 place in the body's frame, in its radii, Free, Over a spot or on an Orbit (see a moon's Place); fading with distance, half
 as strong at Reach), a Spot light (a point light that points, Aim, at the body's middle unless
 aimed: Aim, a spot on the planet's face chosen on the direction disc, Aim at, kept as the
-light moves, or a direction of its own, Aim along; `LookAt` in `look-at.ts`, `aimOf`, shared with
+light moves, or a direction of its own, Aim along; `LookAt` in `space/look-at.ts`, `aimOf`, shared with
 whatever looks at something later; within a Cone of so many degrees, fading in over Edge of it) and a Hemisphere light (one
 colour from the side Sky from, its Ground colour from the other, mixed by how far the surface
 faces each: the nebula lighting a planet's upper edge), a Rim light (its colour where the surface
@@ -145,7 +155,7 @@ how far in from the rim it reaches, Drop off) and an Environment light (the sky 
 each side of the body lit by the sky's colour beyond its edge that way, read Reach radii out from
 the edge, falling off from the edge in as fast as its Drop off, so a planet in front of the
 nebula picks up its colours on that side, whatever sky the scene wears; the renderer keeps what
-doesn't move of the sky small and blurred, `skyLight` in `three/three-scene-renderer.ts`, drawn again with the
+doesn't move of the sky small and blurred, `skyLight` in `render/three-renderer.ts`, drawn again with the
 still sky and read by the body shader where the body sits in the frame, `frameSpot`; in front of
 an editing backdrop there is no sky, so none of its light), each lighting or darkening like any
 other (`placedLight`, `reachOf` in the shader); a shield's own lights stay from all round or a
@@ -202,8 +212,8 @@ background (what doesn't move of it kept drawn, then what moves), the objects ov
 move of the sky's kept drawn on their own and laid over it, then the bodies, then what moves,
 depth-tested), then the foreground; its far plane is infinitely far, so an object set however far
 is never cut off. What it draws is worked out once, not each frame: each draw's settings, material,
-light and uniforms (`DrawState`, `draw-uniforms.ts`, given to GL as recorded: `scene-uniforms.ts`),
-made again only when what they come from changes. Each body is baked (`body-bakes.ts`): drawn on its
+light and uniforms (`DrawState`, `render/draw-uniforms.ts`, given to GL as recorded: `render/uniforms.ts`),
+made again only when what they come from changes. Each body is baked (`render/body-bakes.ts`): drawn on its
 own into a target the size of the pixels it covers (its view the frame's, the viewport moved so the
 rectangle's corner is the target's), then put back into each frame pixel for pixel, its opaque
 pixels' depths first (as drawing it would leave), then its colour; it is baked again only
@@ -211,8 +221,8 @@ when it changes, the view does, or its scrolling layers have moved half a pixel 
 The Play background keeps each placement it puts up as it was where it hasn't changed
 (`keepUnchanged`), so an edit of one body bakes only that one again. A frame is drawn only when it
 would differ from the last (`needsFrame`: something changed, the sky moves, a body is due to be
-baked); a still scene draws none. It is drawn by three.js (`three/three-scene-renderer.ts`): every
-body's part with the one body shader (`three/shader-body.ts`, its shape chosen as it runs), on a
+baked); a still scene draws none. It is drawn by three.js (`render/three-renderer.ts`): every
+body's part with the one body shader (`render/shaders/shader-body.ts`, its shape chosen as it runs), on a
 square only as wide as the part reaches, every sky mesh with the one mesh shader, each pass with
 its own; what a material has (a grid, a pattern, lights, shades, a layer's texture) is data the
 shader branches on, never a shader of its own, so whatever planets come up nothing new compiles.
@@ -230,26 +240,26 @@ drawn twice (the particles glow not at all, so once). The bloom (`drawBloom`, of
 fresnel is brightest on (the editor's Spread from), in place of its layers' own turn. How a planet shows
 is settable per placement (`SetPlanet`): its light's strength, where its key light comes from
 (its rig turned together), a shade and where it falls, where its rims and glows lean
-(`scene-directions.ts`), a tint over all its materials, and its materials'
+(`space/directions.ts`), a tint over all its materials, and its materials'
 settings by name (`MaterialSettings`, the same for any material, a planet's, a style's or the
 sky's: drawn or not, strength, blend, a tint, glow, spread, its pattern's size, cut, line width
-and softness; `material-settings.ts` says which do anything for a material). Tints blend by
-CSS's blend modes and the image editors' others (`scene-tints.ts`); heroes-capture's
+and softness; `materials/material-settings.ts` says which do anything for a material). Tints blend by
+CSS's blend modes and the image editors' others (`tints/tints.ts`); heroes-capture's
 `tuning` in a planet's file is the default where the data alone isn't right (Korhal's haze
 material at 0.42, its back light's crescent shaded; the nexus style's shield material). The
 design has three layers, each setting only what it changes: the game data with its tuning, the
 library (each asset's defaults, wherever it appears, the site's random sets too) and the scenes
-(`background-design.ts`). In the library a material has base settings of its own, wherever it is
+(`design/document/design.ts`). In the library a material has base settings of its own, wherever it is
 used; a planet, style or the sky using it can set it otherwise for itself, and a scene again.
 A scene is its planets (each where it is and how big, with its style, looks and moons), its sky,
-an id and a name (`scene-<n>`; `background-scene.ts`, `scene-bodies.ts`). Two are presets: the
+an id and a name (`scene-<n>`; `design/document/scene-settings.ts`, `design/document/scene-bodies.ts`). Two are presets: the
 random sets (`''`: a set drawn with each page; its sky set as any scene's) and the game's own Play
 screen (`play-screen`: its three planets where the game puts them, its small one a moon of its
 medium one on the orbit that puts it there (`playScreenBodies`, `orbitTo`), set as any scene's). Scenes
 kept with one planet before scenes had several open as that planet in the middle of the view.
 The colour over the whole picture is the scenes'. What the site shows is the
 published design, a global store kept in `localStorage` (`PublishedDesignStore`, provided as the
-design in effect by the `BACKGROUND_DESIGN` token's root default). The Background page is an
+design in effect by the `DESIGN_SOURCE` token's root default). The Background page is an
 editor of a draft of it: the page provides `DraftDesignStore` (kept between visits) as the design
 for everything under it, so its background shows the draft while the rest of the site shows what
 is published; Save publishes the draft and Discard takes it back (what is selected, taken away
@@ -271,18 +281,18 @@ controls. A double-click (or Enter) opens it in the editor, which deep links
 `/edit-background/scene/random-sets`, a material under what it was opened from), a step of its own
 (Back: the library, showing it): the left panel shows its tree (the arrows move through it too),
 with a way back to the library (on its kind, it shown), and the right panel
-the properties of what is selected in it (`pages/play-background/editor/`, built of the
-compact rows in `properties/`). A material's properties show the textures it reads: where the
+the properties of what is selected in it (`packages/aether-forge`, built of the
+compact rows in `controls/rows/`). A material's properties show the textures it reads: where the
 site has each, and where the game data has it (the export says; a baked one, the texture it was
 baked from). A scene opens in `SceneEditorStore`, an asset in `AssetEditorStore`, each provided as
-the abstract `Editor` token the layout, tree and panels use and as the `BACKGROUND_SCENE` the
+the abstract `Editor` token the layout, tree and panels use and as the `SCENE_SOURCE` the
 background shows. A scene's tree is its sky and its materials, then each planet with its
 parts, lights and overlay (as above) and its moons, moons of moons; its own properties are its name, its deletion, the
 colour, and an Add planet button (a flyout of the planets, filtered). A planet's properties have
 its place (across, up, distance) and size; a body's, an Add moon button (the same flyout). A moon
 is any planet on an orbit about its parent: radius, tilt, turn, a progress round it and its size;
 one hidden behind a body is shown round its orbit while selected. Its Place section sets where it
-is any of the three ways anything placed about a body is set (`PlacementMode` in `placement.ts`,
+is any of the three ways anything placed about a body is set (`PlacementMode` in `space/placement.ts`,
 the `hrs-property-placement` control, shared by moons, point and spot lights and cameras): Free
 (across, towards the eye, up), Over a spot (a spot on the sphere, picked on the direction disc,
 and a Distance from the middle along the line through it) or Orbit (Distance, Progress, Tilt,
@@ -330,7 +340,7 @@ textures) and a Directional light to switch on (off by default) to show relief, 
 itself (`BUILT_IN_PLANETS`, ids starting `@`), with the material drawn over it on the parts of
 its own planet's file that draw it. Either editor's tree ends with one more aid, the reference:
 a picture chosen from this computer (a screenshot of the game's own screen, to compare with),
-kept in this browser's IndexedDB (`reference-image.ts`), laid over the view (`ReferenceOverlay`)
+kept in this browser's IndexedDB (`aids/reference-image.ts`), laid over the view (`ReferenceOverlay`)
 split past a line or faded, as tall as the view (the camera keeps its height's angle, so a
 screenshot fits by its height) and nudged to fit. A particle system's material
 takes only whether it is drawn and its strength (the particles' own settings aren't editable
@@ -353,7 +363,7 @@ it the direction as two angles whatever the view, its Turn round the planet, 0°
 with Shift it closes on the cursor instead of following it, faster the further the cursor is, a
 fine drag; with Ctrl or ⌘ it snaps to the disc's eight cuts and its middle, shown while it does);
 colour sections are "Colour", a material's compositing "Surface",
-its pattern's size "Scale". Materials show by readable names (`material-names.ts`: their part's
+its pattern's size "Scale". Materials show by readable names (`materials/material-names.ts`: their part's
 role, a shield's grid or a ring; else their own name where it says something; else their main
 texture's), the game data's name beside them; a body's are grouped by whose they are, its own and
 its style's (which says it comes from that style, and for which body). A setting
@@ -369,14 +379,14 @@ of a size, width and softness, crisp at any size), as many round the part as the
 for has (its `across`, counted in the texture, times the texture's tiling), so a material's Size
 means the same drawn or textured (2: twice as big) and its Draw as shows it either way, the game's
 texture or the pattern, to compare them. Each planet loads the first time a set has
-it (`PlanetLoader`); the layout is `planet-sets.ts` (a set from a number, the same number
+it (`PlanetLoader`); the layout is `design/sets/planet-sets.ts` (a set from a number, the same number
 the same set). What glows past the light's bloom threshold (in the scene's tone data) blooms: blurred
 small and added back, as the game's HDR does, which spreads the flyby planets' atmospheres into
 soft coronas (how far and how strongly isn't in the data: measured against the tutorial's own shots,
 got from a recording of it, as were the lights' reading and each world's moment). A new set is flown to while the background animates: the camera turns, the planets
 slide out and the new ones in, the stars streak (1.6 s); where it doesn't, the picture cross-fades.
 
-Overlays (styles; `overlays.ts`, `created-overlays.ts`, `sky-overlays.ts`) are what a body or the
+Overlays (styles; `design/overlays/overlays.ts`, `design/overlays/created-overlays.ts`, `sky/sky-overlays.ts`) are what a body or the
 sky wears over its own, several at once, the later drawn over the earlier (`overlays` on a scene's
 body or moon, and on a sky; one kept before, a single `style`, is read as the list of it,
 `chosenOverlays`). An overlay is shared: the library has its settings once (`library.styles`),
@@ -454,7 +464,7 @@ panel's Add part section offers the shapes, an Existing
 list of the data's parts, and Save as overlay: the parts added at the level edited become a new
 overlay made in the editor (`settingsAsOverlay` keeps what was set for them as the overlay's); a
 scene's body or a sky then wears it in their place, a library planet keeps them (it wears what
-its data says). The editors change such parts through one interface (`part-hosts.ts`: an
+its data says). The editors change such parts through one interface (`editing/part-hosts.ts`: an
 overlay's, or a body's or a sky's).
 
 Groups are scenes within scenes (`group: true` on a scene's choices, ids `group-<n>`, listed in
@@ -485,7 +495,7 @@ data's). Add camera (From the view)
 adds one where the view looks from. The editor's view looks through the editor's own camera (where
 the primary is when a scene opens; not saved, not undone), or through one of the scene's (the Look
 through picker in the view, `look`), and moving the view moves the camera looked through
-(`CameraDrag`, `scene-camera.ts`): a drag orbits round the scene's middle, Shift, the right or the
+(`CameraDrag`, `camera/camera.ts`): a drag orbits round the scene's middle, Shift, the right or the
 middle button pans across, the wheel moves in and out, Alt with the wheel widens or narrows the
 field of view; a drag is not a click, so it picks nothing. The editor's camera moved, a button puts
 it back where the primary is. Where the editor's view draws a scene smaller to keep it in view, it
@@ -501,7 +511,7 @@ comes from (one from all round on the body's middle, several side by side; `view
 not to get in the light's way; the selected one shows its icon and name, its line to its body
 (a spot's along its aim to the middle of its light circle) and, a spot's, the edges of its cone
 as seen (`coneEdges`), and the outline of where the light falls on the body's sphere
-(`LightOutline`, `scene-beams.ts`, `lightAids`; drawn by the renderer's outline program on a
+(`LightOutline`, `aids/beams.ts`, `lightAids`; drawn by the renderer's outline program on a
 square about the body, the sphere found under each pixel): the line where it stops reaching (a
 directional or point light's terminator, a hemisphere's divide), a spot's cone edge and, fainter,
 where its fade starts, a point's Reach ring (fainter), the ring where the sky round the body

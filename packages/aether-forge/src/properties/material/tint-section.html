@@ -1,0 +1,32 @@
+@let t = tint();
+<forge-property-section
+  [title]="title()"
+  [changed]="set() !== undefined"
+  (resetRequested)="clear.emit()"
+>
+  <forge-property-colour
+    label="Colour"
+    [value]="t.colour"
+    [changed]="isSet('colour')"
+    (resetRequested)="reset('colour')"
+    (valueChange)="change({ colour: $event })"
+  />
+  <forge-property-select
+    label="Blend"
+    [value]="t.blend"
+    [options]="blends"
+    [changed]="isSet('blend')"
+    (resetRequested)="reset('blend')"
+    (valueChange)="blend($event)"
+  />
+  <forge-property-number
+    label="Strength"
+    [value]="t.strength"
+    [min]="0"
+    [max]="1"
+    [step]="0.01"
+    [changed]="isSet('strength')"
+    (resetRequested)="reset('strength')"
+    (valueChange)="change({ strength: $event })"
+  />
+</forge-property-section>

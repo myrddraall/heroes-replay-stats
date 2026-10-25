@@ -13,7 +13,9 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { map } from 'rxjs';
 import { ReplayImportJobStore } from '../data/import/replay-import-job.store';
 import { GraphicsStore } from '../data/settings/graphics.store';
-import { PlayBackground } from '../scenes/play-background/play-background';
+// Not in Aether's root entry, which the app loads at once: the shell loads the view deferred.
+import { SceneView } from "@myrddraall/heroes-replay-stats-aether/view";
+import { BACKGROUND_EDITOR_PATH } from '../site-background/background-editor';
 import { injectPlatform } from '../platform/platform';
 
 export interface NavItem {
@@ -36,7 +38,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { path: '/maps', label: 'Maps', icon: 'map' },
   { path: '/import', label: 'Import', icon: 'upload_file' },
   { path: '/theme-preview', label: 'Theme preview', icon: 'palette' },
-  { path: '/edit-background', label: 'Background', icon: 'wallpaper' },
+  { path: `/${BACKGROUND_EDITOR_PATH}`, label: 'Background', icon: 'wallpaper' },
   { path: '/settings', label: 'Settings', icon: 'settings' },
 ];
 
@@ -60,7 +62,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
     RouterOutlet,
     RouterLink,
     RouterLinkActive,
-    PlayBackground,
+    SceneView,
   ],
   templateUrl: './shell.html',
   styleUrl: './shell.scss',

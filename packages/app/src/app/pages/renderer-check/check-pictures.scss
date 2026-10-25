@@ -19,7 +19,7 @@ figure {
   aspect-ratio: 16 / 9;
   background: #000;
 
-  ::ng-deep hrs-play-background,
+  ::ng-deep aether-scene-view,
   ::ng-deep canvas {
     position: absolute;
     inset: 0;

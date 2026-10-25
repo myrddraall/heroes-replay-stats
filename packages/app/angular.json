@@ -36,6 +36,11 @@
             "styles": [
               "src/styles.scss"
             ],
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                "src/theme"
+              ]
+            },
             "webWorkerTsConfig": "tsconfig.worker.json"
           },
           "configurations": {
@@ -90,7 +95,11 @@
             "port": 4200,
             "prebundle": {
               "exclude": [
-                "@myrddraall/heroes-replay-stats-map"
+                "@myrddraall/heroes-replay-stats-aether",
+                "@myrddraall/heroes-replay-stats-aether-forge",
+                "@myrddraall/heroes-replay-stats-map",
+                "@myrddraall/heroes-replay-stats-signals",
+                "@myrddraall/heroes-replay-stats-ui"
               ]
             }
           }

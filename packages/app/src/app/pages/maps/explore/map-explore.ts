@@ -3,7 +3,7 @@ import { MatIconButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { MatDrawer, MatDrawerContainer, MatDrawerContent } from '@angular/material/sidenav';
 import { MapViewer } from '@myrddraall/heroes-replay-stats-map';
-import { MapPanel } from '../panel/map-panel';
+import { SidePanel } from '@myrddraall/heroes-replay-stats-ui';
 import { MapExploreStore, type PanelMode, type PanelPosition } from './map-explore.store';
 import { MapFacts } from './map-facts';
 import { MapViewControls } from './map-view-controls';
@@ -24,7 +24,7 @@ import { PoiList } from './poi-list';
     MatIconButton,
     MatIcon,
     MapViewer,
-    MapPanel,
+    SidePanel,
     PoiDetails,
     PoiList,
     MapFacts,

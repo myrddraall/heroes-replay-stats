@@ -1,7 +1,8 @@
-import { provideRouter, UrlSegment } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { TestBed } from '@angular/core/testing';
+import { provideAether } from "@myrddraall/heroes-replay-stats-aether";
 import { describe, expect, it, beforeEach } from 'vitest';
-import { editBackgroundMatcher, routes } from './app.routes';
+import { routes } from './app.routes';
 import { REPLAY_DB, REPLAY_DB_FACTORY } from './data/import/provide-replay-db';
 import { PLATFORM, type Platform } from './platform/platform';
 import { ReplayImportJobStore } from './data/import/replay-import-job.store';
@@ -30,6 +31,7 @@ describe('App shell', () => {
       imports: [Shell],
       providers: [
         provideRouter(routes),
+        provideAether({ dataUrl: 'backgrounds/play/' }),
         { provide: PLATFORM, useValue: fakePlatform },
         {
           provide: REPLAY_DB_FACTORY,
@@ -85,26 +87,9 @@ describe('App shell', () => {
     expect(jobs.map((j) => j.fileName)).toEqual(['game.StormReplay']);
   });
 
-  it('puts the app pages in the shell and the Play screen background on a page of its own', () => {
+  it('puts the app pages in the shell, the background editor not among them', () => {
     const shell = routes.find((r) => r.component === Shell);
     expect(shell?.children?.map((r) => r.path)).toContain('replays');
-    expect(routes.some((r) => r.matcher === editBackgroundMatcher)).toBe(true);
     expect(shell?.children?.map((r) => r.path)).not.toContain('edit-background');
-  });
-
-  it('takes the Background page with what it has open in its path', () => {
-    const at = (path: string) =>
-      editBackgroundMatcher(path.split('/').map((p) => new UrlSegment(p, {})));
-    expect(at('edit-background')?.posParams).toBeUndefined();
-    expect(at('edit-background')?.consumed).toHaveLength(1);
-    const open = at('edit-background/material/edgeLight222-korhal')?.posParams;
-    expect([open?.['kind']?.path, open?.['id']?.path]).toEqual(['material', 'edgeLight222-korhal']);
-    expect(at('edit-background/planet')).toBeNull();
-    const library = at('edit-background/library/planets/korhal')?.posParams;
-    expect([library?.['library']?.path, library?.['item']?.path]).toEqual(['planets', 'korhal']);
-    expect(at('edit-background/library/planets')?.posParams?.['kind']).toBeUndefined();
-    expect(at('edit-background/library/planets/korhal/x')).toBeNull();
-    expect(at('play-background')).toBeNull();
-    expect(at('replays')).toBeNull();
   });
 });

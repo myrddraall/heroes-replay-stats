@@ -1,0 +1,307 @@
+@let entry = light();
+@let l = entry.light;
+@if (entry.addedIn) {
+  <p class="data-name">Added in {{ entry.addedIn }}</p>
+}
+<forge-property-section
+  title="General"
+  [changed]="isSet('name')"
+  (resetRequested)="clear.emit(['name'])"
+>
+  <forge-property-text
+    label="Name"
+    [value]="entry.removable ? l.name : (entry.set?.name ?? '')"
+    [placeholder]="entry.nameBelow"
+    [changed]="isSet('name')"
+    [origin]="entry.origins.name"
+
+    [overridden]="entry.overrides?.name"
+    (resetRequested)="clear.emit(['name'])"
+    (valueChange)="rename($event)"
+  />
+</forge-property-section>
+<forge-property-section title="Light" [changed]="changed()" (resetRequested)="clear.emit(lightKeys)">
+  <forge-property-select
+    label="Effect"
+    [value]="l.darkens ? 'darkens' : 'lights'"
+    [options]="effects"
+    [changed]="isSet('darkens')"
+    [origin]="entry.origins.darkens"
+
+    [overridden]="entry.overrides?.darkens"
+    (resetRequested)="clear.emit(['darkens'])"
+    (valueChange)="settingsChange.emit({ darkens: $event === 'darkens' })"
+  />
+  <forge-property-colour
+    label="Colour"
+    [value]="l.colour"
+    [changed]="isSet('colour')"
+    [origin]="entry.origins.colour"
+
+    [overridden]="entry.overrides?.colour"
+    (resetRequested)="clear.emit(['colour'])"
+    (valueChange)="settingsChange.emit({ colour: $event })"
+  />
+  <forge-property-number
+    label="Strength"
+    [value]="l.strength"
+    [min]="0"
+    [max]="l.darkens ? 1 : undefined"
+    [step]="0.01"
+    [changed]="isSet('strength')"
+    [origin]="entry.origins.strength"
+
+    [overridden]="entry.overrides?.strength"
+    (resetRequested)="clear.emit(['strength'])"
+    (valueChange)="settingsChange.emit({ strength: $event })"
+  />
+  @if (l.from; as from) {
+    <forge-property-direction
+      [label]="l.kind === 'hemisphere' ? 'Sky from' : l.kind === 'rim' ? 'Lean' : 'Light from'"
+      [sided]="l.kind !== 'rim'"
+      [value]="from"
+      [changed]="isSet('from')"
+      [origin]="entry.origins.from"
+
+      [overridden]="entry.overrides?.from"
+      (resetRequested)="clear.emit(['from'])"
+      (valueChange)="settingsChange.emit({ from: $event })"
+    />
+  }
+  @if (l.kind === 'hemisphere') {
+    <forge-property-colour
+      label="Ground colour"
+      [value]="l.ground ?? '#000000'"
+      [changed]="isSet('ground')"
+      [origin]="entry.origins.ground"
+
+      [overridden]="entry.overrides?.ground"
+      (resetRequested)="clear.emit(['ground'])"
+      (valueChange)="settingsChange.emit({ ground: $event })"
+    />
+  }
+  @if (l.position; as at) {
+    <forge-property-placement
+      [mode]="l.placement ?? 'free'"
+      [position]="at"
+      [turn]="l.orbitTurn ?? 0"
+      [changed]="isSet('position') || isSet('placement')"
+      [origin]="entry.origins.position"
+
+      [overridden]="entry.overrides?.position"
+      (resetRequested)="clear.emit(['position', 'placement', 'orbitTurn'])"
+      (placeChange)="place($event)"
+    />
+  }
+  @if (l.position || l.kind === 'environment' || l.kind === 'rim') {
+    <forge-property-number
+      [label]="l.kind === 'rim' ? 'Spread' : 'Reach'"
+      [value]="l.fade ?? (l.kind === 'environment' ? 1.5 : l.kind === 'rim' ? 0 : 3)"
+      [min]="l.kind === 'environment' || l.kind === 'rim' ? 0 : 0.1"
+      [max]="l.kind === 'rim' ? 1 : undefined"
+      [step]="l.kind === 'rim' ? 0.05 : 0.1"
+      [changed]="isSet('fade')"
+      [origin]="entry.origins.fade"
+
+      [overridden]="entry.overrides?.fade"
+      (resetRequested)="clear.emit(['fade'])"
+      (valueChange)="settingsChange.emit({ fade: $event })"
+    />
+  }
+  @if (l.kind === 'spot') {
+    <forge-property-select
+      label="Aim"
+      [value]="aimKind()"
+      [options]="aims"
+      [changed]="isSet('lookAt') || isSet('aim')"
+      [origin]="entry.origins.lookAt"
+
+      [overridden]="entry.overrides?.lookAt"
+      (resetRequested)="clear.emit(['lookAt', 'aim'])"
+      (valueChange)="chooseAim($event)"
+    />
+    @if (aimKind() === 'body') {
+      <forge-property-direction
+        label="Aim at"
+        [value]="aimedPoint()"
+        [changed]="isSet('lookAt')"
+        [origin]="entry.origins.lookAt"
+
+        [overridden]="entry.overrides?.lookAt"
+        (resetRequested)="clear.emit(['lookAt', 'aim'])"
+        (valueChange)="aimAt($event)"
+      />
+    } @else {
+      <forge-property-direction
+        label="Aim along"
+        [value]="aimDirection()"
+        [changed]="isSet('lookAt') || isSet('aim')"
+        [origin]="entry.origins.lookAt"
+
+        [overridden]="entry.overrides?.lookAt"
+        (resetRequested)="clear.emit(['lookAt', 'aim'])"
+        (valueChange)="aimAlong($event)"
+      />
+    }
+    <forge-property-number
+      label="Cone"
+      [value]="l.cone ?? 15"
+      [min]="1"
+      [max]="90"
+      [step]="1"
+      [changed]="isSet('cone')"
+      [origin]="entry.origins.cone"
+
+      [overridden]="entry.overrides?.cone"
+      (resetRequested)="clear.emit(['cone'])"
+      (valueChange)="settingsChange.emit({ cone: $event })"
+    />
+    <forge-property-number
+      label="Edge"
+      [value]="l.edge ?? 0.5"
+      [min]="0"
+      [max]="1"
+      [step]="0.05"
+      [changed]="isSet('edge')"
+      [origin]="entry.origins.edge"
+
+      [overridden]="entry.overrides?.edge"
+      (resetRequested)="clear.emit(['edge'])"
+      (valueChange)="settingsChange.emit({ edge: $event })"
+    />
+  }
+  @if (l.kind === 'directional' || l.position) {
+    <forge-property-number
+      label="Wrap"
+      [value]="l.wrap ?? 0"
+      [min]="0"
+      [max]="1"
+      [step]="0.01"
+      [changed]="isSet('wrap')"
+      [origin]="entry.origins.wrap"
+
+      [overridden]="entry.overrides?.wrap"
+      (resetRequested)="clear.emit(['wrap'])"
+      (valueChange)="settingsChange.emit({ wrap: $event })"
+    />
+  }
+  @if (sided()) {
+    <forge-property-number
+      label="Drop off"
+      [value]="l.softness ?? 1"
+      [min]="0.1"
+      [step]="0.05"
+      [changed]="isSet('softness')"
+      [origin]="entry.origins.softness"
+
+      [overridden]="entry.overrides?.softness"
+      (resetRequested)="clear.emit(['softness'])"
+      (valueChange)="settingsChange.emit({ softness: $event })"
+    />
+  }
+  @if (shiny() && !l.darkens) {
+    <forge-property-colour
+      label="Specular colour"
+      [value]="l.specular ?? '#ffffff'"
+      [changed]="isSet('specular')"
+      [origin]="entry.origins.specular"
+
+      [overridden]="entry.overrides?.specular"
+      (resetRequested)="clear.emit(['specular'])"
+      (valueChange)="settingsChange.emit({ specular: $event })"
+    />
+    <forge-property-number
+      label="Specular strength"
+      [value]="l.specularStrength ?? 0"
+      [min]="0"
+      [step]="0.1"
+      [changed]="isSet('specularStrength')"
+      [origin]="entry.origins.specularStrength"
+
+      [overridden]="entry.overrides?.specularStrength"
+      (resetRequested)="clear.emit(['specularStrength'])"
+      (valueChange)="settingsChange.emit({ specularStrength: $event })"
+    />
+  }
+</forge-property-section>
+@if (entry.receivers.length) {
+  <forge-property-section
+    title="Linking"
+    [changed]="isSet('reach') || isSet('moons')"
+    (resetRequested)="unset(['reach', 'moons'])"
+  >
+    <forge-property-select
+      label="Reaches"
+      [value]="reachMode()"
+      [options]="reachModes"
+      [changed]="isSet('reach')"
+      [origin]="entry.origins.reach"
+
+      [overridden]="entry.overrides?.reach"
+      (resetRequested)="unset(['reach'])"
+      (valueChange)="chooseReach($event)"
+    />
+    @if (reachMode() !== 'all') {
+      @for (item of entry.receivers; track item.receiver) {
+        <forge-property-check
+          [class.receiver--material]="item.material"
+          [label]="item.label"
+          [checked]="entry.reach?.receivers?.includes(item.receiver) ?? false"
+          (checkedChange)="checkReceiver(item.receiver, $event)"
+        />
+      }
+    }
+    @if (entry.canReachMoons) {
+      <forge-property-check
+        label="Reaches its moons"
+        [checked]="entry.moons"
+        [changed]="isSet('moons')"
+        [origin]="entry.origins.moons"
+
+        [overridden]="entry.overrides?.moons"
+        (resetRequested)="unset(['moons'])"
+        (checkedChange)="settingsChange.emit({ moons: $event })"
+      />
+    }
+  </forge-property-section>
+}
+@if (onShield()) {
+  @let s = shield();
+  <forge-property-section
+    title="Shield"
+    [changed]="isSet('shield')"
+    (resetRequested)="unset(['shield'])"
+  >
+    <forge-property-check
+      label="Reveals"
+      [checked]="s.reveals"
+      (checkedChange)="shieldChange({ reveals: $event })"
+    />
+    <forge-property-check
+      label="Activates"
+      [checked]="s.activates"
+      (checkedChange)="shieldChange({ activates: $event })"
+    />
+    @if (s.activates) {
+      <forge-property-number
+        label="Energizes"
+        [value]="s.energizes"
+        [min]="0"
+        [step]="0.05"
+        (valueChange)="shieldChange({ energizes: $event })"
+      />
+      <forge-property-number
+        label="Glow"
+        [value]="s.glow"
+        [min]="0"
+        [step]="0.05"
+        (valueChange)="shieldChange({ glow: $event })"
+      />
+    }
+  </forge-property-section>
+}
+@if (entry.removable) {
+  <div class="buttons">
+    <button type="button" class="button" (click)="removed.emit()">Remove light</button>
+  </div>
+}

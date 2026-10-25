@@ -14,7 +14,7 @@
   />
   @if (check.test() || check.warmingUp()) {
     <hrs-check-pictures [test]="check.test()" [warmingUp]="check.warmingUp()" [webgpuCanvas]="check.canvas">
-      <hrs-play-background />
+      <aether-scene-view />
     </hrs-check-pictures>
   }
   @for (table of check.tables(); track table.title) {

@@ -1,8 +1,7 @@
 import { computed, inject } from '@angular/core';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
-import type { BackgroundRendererFactory } from '../../scenes/play-background/background-renderer';
-import { BackgroundStore } from '../../scenes/play-background/background.store';
-import { coldShaders } from '../../scenes/play-background/three/cold-shaders';
+import { ViewStore } from "@myrddraall/heroes-replay-stats-aether";
+import { coldShaders, type RendererFactory } from "@myrddraall/heroes-replay-stats-aether/render";
 import type { CheckTable } from './check-table';
 import { compare, type Difference } from './compare';
 import { CompileTimeline, type PageCosts, type PipelineRecord, type ProgramRecord } from './compile-timeline';
@@ -149,7 +148,7 @@ export const RendererCheckStore = signalStore(
     failures: [],
   }),
   withProps(() => ({
-    background: inject(BackgroundStore),
+    background: inject(ViewStore),
     /** The canvas three.js on WebGPU draws into where both draw, shown beside the background's. */
     canvas: document.createElement('canvas'),
     _run: {
@@ -199,7 +198,7 @@ export const RendererCheckStore = signalStore(
         throw e;
       }
       return run.dual;
-    }) satisfies BackgroundRendererFactory,
+    }) satisfies RendererFactory,
   })),
   withComputed((store) => ({
     /** Every result, as tables. */

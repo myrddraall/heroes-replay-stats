@@ -1,7 +1,0 @@
-@use 'flyout';
-
-.flyout {
-  @include flyout.panel;
-}
-
-@include flyout.parts;

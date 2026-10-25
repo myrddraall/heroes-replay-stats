@@ -1,0 +1,103 @@
+@use '../controls/rows/property-row';
+
+:host {
+  display: grid;
+  padding: 4px 0;
+}
+
+// One thing's row: the thing, and a button for its action where it has one; the selected
+// (shown) one marked along its whole width, action and all.
+.row {
+  display: flex;
+  align-items: center;
+
+  &--selected {
+    background: rgb(var(--hrs-glass-edge) / 0.18);
+    box-shadow: inset 2px 0 0 var(--mat-sys-primary);
+  }
+}
+
+.items {
+  margin: 0 0 4px;
+  padding: 0;
+  list-style: none;
+}
+
+// One thing: its name, and under it where it is used; the open one marked along its width.
+.item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  min-height: 24px;
+  padding: 2px 6px;
+  border: none;
+  background: none;
+  color: inherit;
+  font: var(--mat-sys-body-small);
+  text-align: start;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: -2px;
+  }
+
+  &__icon {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+    opacity: 0.8;
+  }
+
+  &__text {
+    display: grid;
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__label,
+  &__caption {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__caption {
+    font-size: 0.85em;
+    opacity: 0.75;
+  }
+}
+
+.empty {
+  padding: 2px 6px;
+  font: var(--mat-sys-body-small);
+  opacity: 0.7;
+}
+
+// An item's action (the random sets' next set): a plain icon button after it.
+.action {
+  @include property-row.reset;
+  flex: none;
+  margin-inline-end: 4px;
+}
+
+// Not saved yet: a small dot after the name.
+.unsaved {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--mat-sys-primary);
+}
+
+// A group's heading, quieter than what is under it.
+.group {
+  padding: 8px 6px 2px;
+  font: var(--mat-sys-label-small);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}

@@ -5,7 +5,7 @@ import {
   type GraphicsSettings,
   type Quality,
 } from '../../data/settings/graphics.store';
-import { PRESETS } from '../../scenes/play-background/tint-presets';
+import { PRESETS } from '../../site-background/tint-presets';
 import {
   defaultParallelImports,
   deviceCores,

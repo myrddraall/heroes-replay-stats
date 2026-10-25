@@ -1,11 +1,9 @@
-import type { BackgroundRenderer } from '../../scenes/play-background/background-renderer';
-import type { LoadedPlayScene, SceneCameraSet } from '../../scenes/play-background/play-scene';
-import type { EditingAid } from '../../scenes/play-background/scene-beams';
-import type { AddedLight } from '../../scenes/play-background/scene-lights';
-import type { SkySettings } from '../../scenes/play-background/scene-planets';
-import type { Backdrop, PlanetPlacement } from '../../scenes/play-background/scene-space';
-import { NO_TINT, type Tint } from '../../scenes/play-background/scene-tints';
-import { ThreeSceneRenderer } from '../../scenes/play-background/three/three-scene-renderer';
+import type { EditingAid } from "@myrddraall/heroes-replay-stats-aether/aids";
+import type { LoadedPlayScene, SceneCameraSet, SkySettings } from "@myrddraall/heroes-replay-stats-aether/formats";
+import type { AddedLight } from "@myrddraall/heroes-replay-stats-aether/lights";
+import { type Renderer, ThreeRenderer } from "@myrddraall/heroes-replay-stats-aether/render";
+import type { Backdrop, PlanetPlacement } from "@myrddraall/heroes-replay-stats-aether/space";
+import { NO_TINT, type Tint } from "@myrddraall/heroes-replay-stats-aether/tints";
 
 type Vec3 = readonly [number, number, number];
 
@@ -17,7 +15,7 @@ export const SLOT_LABELS = { webgpu: 'three.js on WebGPU', webgl: 'three.js on W
 
 /** One of the check's renderers, and its times (from when the check's renderers were made, ms). */
 export interface CheckSlot {
-  readonly renderer: ThreeSceneRenderer;
+  readonly renderer: ThreeRenderer;
   /** Its first frame drawn (perhaps the sky alone, the planets still compiling). */
   first: number | null;
   /** Its whole picture: its first frame with every body up drawn (every program compiled, every bake whole). */
@@ -28,7 +26,7 @@ export interface CheckSlot {
   failure: string | null;
 }
 
-const slot = (renderer: ThreeSceneRenderer): CheckSlot => ({ renderer, first: null, whole: null, gpuDone: null, failure: null });
+const slot = (renderer: ThreeRenderer): CheckSlot => ({ renderer, first: null, whole: null, gpuDone: null, failure: null });
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 /**
@@ -37,14 +35,14 @@ const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
  * page's); every call to each, so each frame is the same scene at the same time. While `holding`,
  * no frame is drawn (the pictures stay as they are, to be compared).
  */
-export class DualRenderer implements BackgroundRenderer {
+export class DualRenderer implements Renderer {
   readonly webgpu: CheckSlot | null;
   readonly webgl: CheckSlot | null;
   /** The scene canvas (the one renderer's where one draws, the WebGL 2 one's where both do). */
   private readonly canvas: HTMLCanvasElement;
   /** Every slot, the scene canvas's first. */
   private readonly slots: CheckSlot[];
-  private readonly all: ThreeSceneRenderer[];
+  private readonly all: ThreeRenderer[];
   holding = false;
   /** When it was made (`performance.now`): the slots' times are from then, ms. */
   readonly made = performance.now();
@@ -55,14 +53,14 @@ export class DualRenderer implements BackgroundRenderer {
     this.canvas = canvas;
     // Each canvas keeps one kind of context across tests: the page's WebGPU, the scene's whichever
     // its test draws with (a new scene canvas each test).
-    this.webgl = mode === 'webgpu' ? null : slot(new ThreeSceneRenderer(canvas, loaded, { forceWebGL: true }));
+    this.webgl = mode === 'webgpu' ? null : slot(new ThreeRenderer(canvas, loaded, { forceWebGL: true }));
     this.webgpu =
-      mode === 'webgl' ? null : slot(new ThreeSceneRenderer(mode === 'both' ? pageCanvas : canvas, loaded));
+      mode === 'webgl' ? null : slot(new ThreeRenderer(mode === 'both' ? pageCanvas : canvas, loaded));
     this.slots = [this.webgl, this.webgpu].filter((s): s is CheckSlot => s !== null);
     this.all = this.slots.map((s) => s.renderer);
   }
 
-  private get first(): ThreeSceneRenderer {
+  private get first(): ThreeRenderer {
     return this.all[0]!;
   }
   get timing(): boolean {

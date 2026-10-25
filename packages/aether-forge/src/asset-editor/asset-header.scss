@@ -1,0 +1,22 @@
+@use '../controls/rows/property-row';
+
+.button {
+  @include property-row.button;
+
+  &[aria-pressed='true'] {
+    border-color: var(--mat-sys-primary);
+    color: var(--mat-sys-primary);
+  }
+}
+
+.shown {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font: var(--mat-sys-body-small);
+}
+
+.shown__label {
+  flex: 1;
+  opacity: 0.85;
+}

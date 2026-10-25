@@ -1,0 +1,2196 @@
+import { alongToSphere, AXIS_NAMES_PAST, axisEnds, type AxisLine, coneEdges, type LightAid, type LightOutline } from "@myrddraall/heroes-replay-stats-aether/aids";
+import { type BodyPath, type BodySettings, type BodyValues, createdSkyFile, DEFAULT_ORBIT, HALO_MARGIN, legacyShadow, type LibraryState, type MoonChoices, type Orbit, ORBIT_KEYS, overlayName, overlayOn, type SetPlanet, type SkyChoices, type SourceLookup, type Variant, type Vec3, withLightSetting, withLightSwitched, without, withoutLightSetting, wornKey } from "@myrddraall/heroes-replay-stats-aether/design";
+import { type BodyPart, DEFAULT_SHADE, drawOrder, haloLike, type LayerSettings, type LayerSlot, layerSlots, type MaterialDepth, type MaterialSettings, type MaterialSettingsMap, type MaterialTint, mergePartSettings, overlayPartKey, ownPartKey, type PartKey, type PartRole, type PartSettings, type PartSettingsMap, type PlanetFile, type PlanetIndex, type PlayScene, poleOf, reordered, type SceneMaterial, type SceneTexture, type SkyAnchor, type SkyOverlayFile, wearOf, withLayer, withMasks, wornParts } from "@myrddraall/heroes-replay-stats-aether/formats";
+import { addedLight, type AddedLight, type BodyLight, bodyLights, knownLights, type LightId, type LightKind, type LightReach, type LightSettings, type LightSettingsMap, lightsForMoons, mergeLightSettings, type NewLightKind, type PartMaterials, placedLight, reachesReceiver, type Receiver, rgbOf, tunedRig, withReceiver } from "@myrddraall/heroes-replay-stats-aether/lights";
+import { MATERIAL_DEFAULTS, type MaterialControls, materialControls, materialKey, materialLabel, type MaterialValues, materialValues, mergeMaterialSettings, mergeSettings, NO_MATERIAL_TINT, originsOf, type SettingOrigins, textureLabel } from "@myrddraall/heroes-replay-stats-aether/materials";
+import { LIGHT_KINDS } from "@myrddraall/heroes-replay-stats-aether/render";
+import { DEFAULT_SKY_ANCHOR, skyDepths } from "@myrddraall/heroes-replay-stats-aether/sky";
+import { aimOf, bodyFrame, bodyTransform, DEFAULT_ORIENTATION, type DrawTurn, drawTurnOf, keyLightFrom, type LookAt, NO_QUAT, type Orientation, placementFrame, pointToLocal, pointToWorld, poseKept, TOWARDS_EYE, turn, type Viewpoint, viewUp } from "@myrddraall/heroes-replay-stats-aether/space";
+import type { PickChoice } from '../controls/pick-list';
+import type { SceneMarker } from '../viewport/scene-markers';
+import { REFERENCE_KEY } from '../aids/editing-aids.store';
+import type { TreeRow } from '../tree/scene-tree';
+/**
+ * What an editor of the background's design shows, whichever layer it edits (a scene, over the
+ * library; the library, over the game data): a body's and a material's values through the layers,
+ * and what is set in the layer edited.
+ */
+
+/** What a tree row is, for the properties shown when it is selected. */
+export type TargetKind =
+  | 'scene'
+  | 'sky'
+  | 'sky-material'
+  | 'body'
+  | 'material'
+  | 'particle'
+  | 'backdrop'
+  | 'stand-in'
+  | 'reference'
+  | 'group'
+  /** A group put in a scene. */
+  | 'placement'
+  /** A scene's cameras (their group), and one of them. */
+  | 'cameras'
+  | 'camera'
+  | 'part'
+  | 'light'
+  /** What of a material a row shows: one of its layers, its shield shader, one of that's lights. */
+  | 'layer'
+  | 'shader'
+  | 'gridLight';
+
+/**
+ * An overlay a body wears, as an editor has it: which, its settings under the layer edited (the
+ * library's: the overlay's own, as it is wherever it is worn), its file once loaded.
+ */
+export interface WornOverlay {
+  readonly id: string;
+  /** Its name as made, where it was made in the editor (else its id is its name). */
+  readonly name?: string;
+  readonly below?: BodySettings;
+  readonly file?: PlanetFile;
+}
+
+/** A level of a body's settings as an editor names it (as its origins say it) and what it sets. */
+export interface SettingsLevel {
+  readonly name: string;
+  readonly settings: BodySettings | undefined;
+}
+
+/**
+ * A body as an editor has it: which planet (or overlay), the overlays it wears, its settings in
+ * the layer edited and those under it, its files once loaded.
+ */
+export interface BodyInfo {
+  /** How the editor names it (its row's key). */
+  readonly key: string;
+  readonly id: string;
+  /** Its name as made, where it is an overlay made in the editor (else its id is its name). */
+  readonly name?: string;
+  /** The overlays it wears, the later over the earlier. */
+  readonly overlays: readonly WornOverlay[];
+  /** Whether what it wears is chosen in the layer edited (else what is under it). */
+  readonly overlaysSet: boolean;
+  /** Its settings in the layer edited. */
+  readonly settings: BodySettings;
+  /** Its own defaults, under the layer edited (the library's, under a scene). */
+  readonly below?: BodySettings;
+  /**
+   * Its variants that are on under the level edited, the lowest first: a scene's planet, all of
+   * them; one of its variants edited, its data's settings for it and those on before it.
+   */
+  readonly variantsBelow?: readonly SettingsLevel[];
+  /**
+   * What is set over the level edited, the lowest first (the planet open: its variants on, those
+   * after one edited): what wins over what is set there.
+   */
+  readonly above?: readonly SettingsLevel[];
+  /** Its own variants (its data's, then the library's), where it is a planet. */
+  readonly variants?: readonly Variant[];
+  /** Which of its variants are on where it is (a scene's body: as the scene and its variants have them). */
+  readonly variantsOn?: readonly string[];
+  /** The materials' base settings (the library's), under its own. */
+  readonly materialBase?: MaterialSettingsMap;
+  readonly file?: PlanetFile;
+  /** Its orbit, where it is a moon in a scene. */
+  readonly orbit?: Orbit;
+  /** Where it is and how big, where it is one of a scene's planets. */
+  readonly place?: { readonly position: Vec3; readonly radius: number };
+  readonly moons: readonly MoonChoices[];
+  /** One of its planet's own moons (the library's): as the planet has it, under what the scene sets. */
+  readonly inherited?: MoonChoices;
+}
+
+/** A body as its properties show it. */
+export interface BodyView {
+  readonly info: BodyInfo;
+  readonly values: BodyValues;
+  /** Whether anything of it is set in the layer edited. */
+  readonly changed: boolean;
+  /** Its tint under the layer edited. */
+  readonly baseTint: MaterialTint;
+  readonly focused: boolean;
+  /** Whether moons can be put about it (a scene's bodies, but for its planets' own moons). */
+  readonly canHaveMoons: boolean;
+  /** Whether it is one of its planet's own moons (switched off in a scene, never taken out). */
+  readonly inherited: boolean;
+  /** Its orbit under the level edited: its planet's for its own moon, else a new moon's. */
+  readonly orbitBase: Orbit;
+  /** Whether its lights are set here (a library planet's own moon's are its own planet's: not here). */
+  readonly lights: boolean;
+  /** Whether the overlays it wears are chosen here (a scene's bodies, a library planet's own moons). */
+  readonly styled: boolean;
+  /** Whether the view can be centred on it (a scene's moons). */
+  readonly focusable: boolean;
+  /** Which level under the one edited sets each of its settings, where one does. */
+  readonly origins: SettingOrigins<keyof BodySettings>;
+  /** Which level over the one edited wins for each of its settings, where one sets it (see `BodyInfo.above`). */
+  readonly overrides: SettingOrigins<keyof BodySettings>;
+  /** Its name as shown, and as the levels under the one edited have it. */
+  readonly label: string;
+  readonly labelBelow: string;
+}
+
+/** A texture a material's layer reads: which layer, where the site has it, where the game data has it. */
+export interface TextureEntry {
+  readonly layer: string;
+  /** Its file in the game data the site serves (under `DATA_URL`). */
+  readonly file: string;
+  /** Its path in the game data, where the export says. */
+  readonly source?: string;
+  readonly baked: boolean;
+  readonly width: number;
+  readonly height: number;
+}
+
+/** A material as its properties show it: its settings as shown, what is set in the layer edited, which controls do anything, the textures it reads. */
+export interface MaterialEntry {
+  /** Which level over the one edited wins for each of its settings, where one sets it (see `BodyInfo.above`). */
+  readonly overrides?: SettingOrigins<keyof MaterialSettings>;
+  /** Its name in the game data (what its base settings are kept by). */
+  readonly name: string;
+  /** What its settings are kept by (an overlay's: by the overlay too; see `materialKey`). */
+  readonly key: string;
+  /** Its priority in the data (where it is drawn, its draw order not set). */
+  readonly priority?: number;
+  /** Its name as shown: as renamed (the level edited's, else under it), else `materialLabel`. */
+  readonly label: string;
+  /** Its name as the levels under the one edited have it (what clearing a rename here gives). */
+  readonly labelBelow: string;
+  /** Whose it is: the body's own, or an overlay's it wears (`overlay`: which). */
+  readonly from: 'own' | 'style';
+  readonly overlay?: string;
+  /** Where it comes from, in words, where it isn't the body's own (an overlay's: which, and for whom). */
+  readonly origin?: string;
+  /** Which level under the one edited sets each of its settings, where one does. */
+  readonly origins: SettingOrigins<keyof MaterialSettings>;
+  readonly values: MaterialValues;
+  /** Whether its body's own turn (its Axis and Turn) turns it (a halo left square to the camera: not; see `DrawTurn`). */
+  readonly turned?: boolean;
+  /** Whether it is drawn as the levels under the one edited have it (switched so here: nothing set). */
+  readonly enabledBelow: boolean;
+  readonly controls: MaterialControls;
+  readonly set: MaterialSettings | undefined;
+  readonly baseTint: MaterialTint;
+  /** Its layers: each one's texture and how it lies on it. */
+  readonly layers: readonly LayerEntry[];
+  /** Whether it is drawn by a part added onto its owner (a sky's: listed with that part). */
+  readonly added?: boolean;
+}
+
+/** A layer's texture and how it lies on its material, as in effect (the data's where nothing is set). */
+export interface LayerValues {
+  readonly texture: string | undefined;
+  readonly offset: readonly [number, number];
+  /** Degrees. */
+  readonly rotation: number;
+  readonly tiling: readonly [number, number];
+  /** Texture widths a second. */
+  readonly scroll: readonly [number, number];
+  readonly wrap: readonly [boolean, boolean];
+}
+
+/** A texture a layer may read instead: its key and its name as people read it. */
+export interface TextureChoice {
+  readonly key: string;
+  readonly label: string;
+}
+
+/** A material's layer as its properties show it. */
+export interface LayerEntry {
+  /** Which level over the one edited wins for each of its settings, where one sets it. */
+  readonly overrides?: SettingOrigins<keyof LayerSettings>;
+  readonly slot: LayerSlot;
+  /** Its name: as renamed, else Diffuse, Emissive, Mask (Mask 1, Mask 2 where there are two). */
+  readonly label: string;
+  /** Its name as the levels under the one edited have it. */
+  readonly labelBelow: string;
+  readonly values: LayerValues;
+  /** What of it is set in the layer edited. */
+  readonly set: LayerSettings | undefined;
+  /** Which level under the one edited sets each of its settings, where one does. */
+  readonly origins: SettingOrigins<keyof LayerSettings>;
+  /** The texture it reads as set, where the site and the game data have it. */
+  readonly texture?: TextureEntry;
+  /** The textures it may read: those loaded with what it is drawn on, by name (its own among them). */
+  readonly choices: readonly TextureChoice[];
+}
+
+/**
+ * A material's layers as shown: each layer's data (`material`, its masks as worn) under its
+ * settings (`settings`, merged through every level; `set`, the level edited's; `levels`, the
+ * levels under it by name, for where each comes from), and the textures it may read instead
+ * (`choices`: by key, those of what it is drawn on and the sky's).
+ */
+export function layersOf(
+  material: SceneMaterial,
+  settings: MaterialSettings | undefined,
+  set: MaterialSettings | undefined,
+  levels: readonly (readonly [string, MaterialSettings | undefined])[],
+  textures: Readonly<Record<string, SceneTexture>>,
+  /** What is set over the level edited (see `BodyInfo.above`): what wins over it. */
+  above: readonly (readonly [string, MaterialSettings | undefined])[] = [],
+): LayerEntry[] {
+  const slots = layerSlots(material);
+  const masks = slots.filter(([slot]) => slot.startsWith('mask')).length;
+  const choices = textureChoices(textures);
+  return slots.map(([slot, data]) => {
+    const own = settings?.layers?.[slot];
+    const layer = withLayer(data, own);
+    const scroll = layer.scroll;
+    const key = layer.texture;
+    const info = key ? textures[key] : undefined;
+    const named =
+      LAYER_NAMES[slot] + (slot.startsWith('mask') && masks > 1 ? ` ${slot.slice(4)}` : '');
+    const below =
+      levels
+        .map(([, l]) => l?.layers?.[slot]?.label)
+        .filter((l) => l !== undefined)
+        .at(-1) ?? named;
+    return {
+      slot,
+      label: own?.label ?? below,
+      labelBelow: below,
+      values: {
+        texture: key,
+        offset: layer.offset ?? [0, 0],
+        rotation: own?.rotation ?? ((layer.angle ?? 0) * 180) / Math.PI,
+        tiling: layer.tiling ?? [1, 1],
+        scroll: scroll ? [scroll.by[0] / scroll.seconds, scroll.by[1] / scroll.seconds] : [0, 0],
+        wrap: layer.wrap ?? [true, true],
+      },
+      set: set?.layers?.[slot],
+      origins: originsOf(levels.map(([name, l]) => [name, l?.layers?.[slot]] as const)),
+      overrides: originsOf(above.map(([name, l]) => [name, l?.layers?.[slot]] as const)),
+      texture: info && key ? textureEntry(LAYER_NAMES[slot], info) : undefined,
+      choices:
+        key && !choices.some((c) => c.key === key)
+          ? [{ key, label: textureLabel(key, info) }, ...choices]
+          : choices,
+    };
+  });
+}
+
+const LAYER_NAMES: Record<LayerSlot, string> = {
+  diffuse: 'Diffuse',
+  emissive: 'Emissive',
+  mask1: 'Mask',
+  mask2: 'Mask',
+};
+
+/**
+ * Textures to choose from, by their names as people read them: one the exporter baked onto its
+ * planet's mapping says so; any two that still read alike, told apart by key.
+ */
+function textureChoices(textures: Readonly<Record<string, SceneTexture>>): TextureChoice[] {
+  const named = Object.entries(textures).map(([key, t]) => ({
+    key,
+    label: textureLabel(key, t) + (t.baked ? ' (baked)' : ''),
+  }));
+  const count = new Map<string, number>();
+  for (const c of named) count.set(c.label, (count.get(c.label) ?? 0) + 1);
+  return named
+    .map((c) => ((count.get(c.label) ?? 0) > 1 ? { ...c, label: `${c.label} (${c.key})` } : c))
+    .sort((a, b) => a.label.localeCompare(b.label));
+}
+
+/** A texture as its properties show it: where the site and the game data have it, and its size. */
+function textureEntry(layer: string, texture: SceneTexture): TextureEntry {
+  return {
+    layer,
+    file: texture.file,
+    source: texture.source,
+    baked: texture.baked ?? false,
+    width: texture.width,
+    height: texture.height,
+  };
+}
+
+/** The textures a material's layers read, in its layers' order. */
+export function texturesOf(
+  material: SceneMaterial,
+  textures: Readonly<Record<string, SceneTexture>>,
+): TextureEntry[] {
+  const layers = [
+    ['Diffuse', material.diffuse],
+    ['Emissive', material.emissive],
+    ...material.alphaMasks.map(
+      (m, i) => [material.alphaMasks.length > 1 ? `Mask ${i + 1}` : 'Mask', m] as const,
+    ),
+  ] as const;
+  const out: TextureEntry[] = [];
+  for (const [layer, l] of layers) {
+    const texture = l?.texture ? textures[l.texture] : undefined;
+    if (texture) out.push(textureEntry(layer, texture));
+  }
+  return out;
+}
+
+/**
+ * A material of a planet's (or overlay's) parts: whether a pattern is drawn for it, and its part's
+ * role, where it says what the material is (not a part made in the editor's: it draws any).
+ */
+export interface PartMaterial {
+  readonly name: string;
+  readonly material: SceneMaterial;
+  readonly pattern: boolean;
+  readonly role?: PartRole;
+}
+
+/** A planet's (or style's) materials, in its parts' order, each once (with its first part's role). */
+export function partMaterials(file: PlanetFile): PartMaterial[] {
+  const out: PartMaterial[] = [];
+  for (const part of file.parts)
+    for (const name of part.materials) {
+      const material = file.materials[name];
+      if (material && !out.some((m) => m.name === name))
+        out.push({
+          name,
+          material,
+          pattern: part.pattern !== undefined,
+          ...(part.id ? {} : { role: part.role }),
+        });
+    }
+  return out;
+}
+
+/** The material a row names, by what its settings are kept by (two may share a name: see `materialKey`). */
+export const materialAt = (list: readonly MaterialEntry[], key: string) =>
+  list.find((m) => m.key === key);
+
+/** The ids of the overlays a body wears. */
+export const wornIds = (b: BodyInfo) => b.overlays.map((o) => o.id);
+/** The key a body's settings are kept by for what it wears (see `wornKey`). */
+export const wornKeyOf = (b: BodyInfo) => wornKey(wornIds(b));
+/** An overlay's name: as renamed in the library, else its id. */
+export const overlayLabel = (o: WornOverlay) => o.below?.label ?? o.name ?? o.id;
+/** The last of some values that is set (the later over the earlier). */
+const latest = <T>(values: readonly (T | undefined)[]): T | undefined =>
+  values.filter((v) => v !== undefined).at(-1);
+
+/**
+ * A body's own levels under the level edited, the lowest first: its own defaults (the library's),
+ * then its variants on under it (over the overlays it wears, which are shared).
+ */
+export const ownLevels = (b: BodyInfo): readonly SettingsLevel[] => [
+  { name: 'the library (planet)', settings: b.below },
+  ...(b.variantsBelow ?? []),
+];
+/** A setting as the nearest of a body's own levels under the level edited sets it. */
+const ownSetting = <K extends keyof BodySettings>(b: BodyInfo, k: K): BodySettings[K] =>
+  latest(ownLevels(b).map((l) => l.settings?.[k]));
+/** A body's own levels under the level edited, the nearest first (as `overlayOn` reads levels). */
+const ownNearestFirst = (b: BodyInfo) => [...ownLevels(b)].reverse().map((l) => l.settings);
+
+/**
+ * Which level over the one edited wins for each of a body's settings, where one sets it (the
+ * topmost), by `pick`: what of each level is weighed (its settings, one material's, one part's).
+ */
+function overridesOf<T>(
+  b: BodyInfo,
+  pick: (s: BodySettings | undefined) => T | undefined,
+): SettingOrigins<keyof T & string> {
+  return originsOf((b.above ?? []).map((l) => [l.name, pick(l.settings)] as const));
+}
+
+/** A body's parts' settings in effect: those under the layer edited (its own, its overlays'), then the layer edited's. */
+const partSettingsOf = (b: BodyInfo): PartSettingsMap =>
+  mergePartSettings(
+    ...b.overlays.map((o) => o.below?.parts),
+    ...ownLevels(b).map((l) => l.settings?.parts),
+    b.settings.parts,
+  );
+
+/**
+ * A body's materials, its own then each overlay's, as shown: each through its file's tuning (and
+ * how the body wears its overlays), the defaults under the layer edited, and the layer edited.
+ */
+export function materialsOf(
+  b: BodyInfo,
+  sky: Readonly<Record<string, SceneTexture>> = {},
+): MaterialEntry[] {
+  const chosen = b.settings.materials;
+  // An overlay opened on its own: its materials are an overlay's (as kept for all wearing it).
+  const opened = b.file?.kind === 'style' ? b.id : undefined;
+  const owners: [PlanetFile | undefined, WornOverlay | undefined][] = [
+    [b.file, undefined],
+    ...b.overlays.map((o): [PlanetFile | undefined, WornOverlay] => [o.file, o]),
+  ];
+  const textures = Object.assign({}, ...b.overlays.map((o) => o.file?.textures)) as Readonly<
+    Record<string, SceneTexture>
+  >;
+  const entries = owners.flatMap(([owner, overlay]) =>
+    owner
+      ? partMaterials(owner).map(({ name, material, pattern, role }) => {
+          const from = overlay ? ('style' as const) : ('own' as const);
+          const key = materialKey(name, overlay?.id ?? opened);
+          // Its levels under the one edited: an overlay's through its tuning, how the body
+          // wears it, its base settings, the overlay's own and the body's for it.
+          const levels: (readonly [string, MaterialSettings | undefined])[] = overlay
+            ? [
+                [`the ${overlayLabel(overlay)} overlay`, owner.tuning?.materials?.[name]],
+                [
+                  `${b.id}'s tuning for ${overlayLabel(overlay)}`,
+                  wearOf(b.file, overlay.id)?.materials?.[name],
+                ],
+                ['the library (material)', b.materialBase?.[name]],
+                [`the library (${overlayLabel(overlay)})`, overlay.below?.materials?.[key]],
+                ...ownLevels(b).map((l): readonly [string, MaterialSettings | undefined] => [
+                  l.name,
+                  l.settings?.materials?.[key],
+                ]),
+              ]
+            : [
+                ['its tuning', owner.tuning?.materials?.[name]],
+                ['the library (material)', b.materialBase?.[name]],
+                // What the overlays it wears set for its own materials (the later over the
+                // earlier), under its own.
+                ...drawnOverlays(b).map(
+                  (o): readonly [string, MaterialSettings | undefined] => [
+                    `the library (${overlayLabel(o)})`,
+                    o.below?.materials?.[key],
+                  ],
+                ),
+                ...ownLevels(b).map((l): readonly [string, MaterialSettings | undefined] => [
+                  l.name,
+                  l.settings?.materials?.[key],
+                ]),
+              ];
+          const under = mergeSettings(...levels.map(([, l]) => l));
+          const settings = mergeSettings(under, chosen?.[key]);
+          // Which way it is turned: its own say, else its part's, else a halo square to the
+          // camera, else its body's; and where that is said, where it isn't its own.
+          const part = (overlay ? wornParts(b.file, overlay.id, owner.parts) : owner.parts).find((p) =>
+            p.materials.includes(name),
+          );
+          const partKey = part && (overlay || opened ? overlayPartKey(overlay?.id ?? opened!, part) : ownPartKey(part));
+          const drawn = part && partKey ? partTurnOf(b, owner, part, partKey, settings?.orientation) : undefined;
+          const values = {
+            ...materialValues(material, settings),
+            orientation: drawn?.orientation ?? settings?.orientation ?? bodyOrientation(b),
+          };
+          const origins = originsOf(levels);
+          const above = (b.above ?? []).map(
+            (l): readonly [string, MaterialSettings | undefined] => [l.name, l.settings?.materials?.[key]],
+          );
+          const turnOrigin = settings?.orientation === undefined ? drawn?.origin : undefined;
+          const named = under?.label ?? materialLabel(name, material, owner.textures, role);
+          return {
+            name,
+            key,
+            ...(material.priority !== undefined ? { priority: material.priority } : {}),
+            label: settings?.label ?? named,
+            labelBelow: named,
+            from,
+            ...(overlay ? { overlay: overlay.id } : {}),
+            origin: overlay
+              ? `From the ${overlayLabel(overlay)} overlay, set for ${b.id}`
+              : undefined,
+            origins: turnOrigin ? { ...origins, orientation: turnOrigin } : origins,
+            overrides: originsOf(above),
+            values,
+            turned: drawn?.turned ?? true,
+            enabledBelow: under?.enabled ?? MATERIAL_DEFAULTS.enabled,
+            controls: materialControls(material, { pattern, drawAs: values.drawAs }),
+            set: chosen?.[key],
+            baseTint: under?.tint ?? NO_MATERIAL_TINT,
+            // Its layers as worn here (a body's own masks on an overlay's material); any texture
+            // of the body's, its overlays' or the sky's to read instead.
+            layers: layersOf(
+              withMasks(material, settings?.masks),
+              settings,
+              chosen?.[key],
+              levels,
+              { ...sky, ...textures, ...owner.textures, ...b.file?.textures },
+              above,
+            ),
+          };
+        })
+      : [],
+  );
+  // In the order they are drawn (the tree's order): the level edited's, else what is under it.
+  const orders = b.overlays.flatMap((o) => (o.below?.order ? [o.below.order] : []));
+  const order = b.settings.order ?? ownSetting(b, 'order') ?? (orders.length ? orders.flat() : undefined);
+  return inDrawOrder(entries, order);
+}
+
+/**
+ * A body's materials' draw order (by key) with one moved to just before (or after) another drawn
+ * on the same part (a material isn't moved to another part: none).
+ */
+export function movedInPart(
+  b: BodyInfo,
+  all: readonly MaterialEntry[],
+  from: string,
+  to: string,
+  after: boolean,
+): string[] | undefined {
+  const { own, overlays } = partNodes(b, all);
+  const node = [...own, ...overlays.flatMap((o) => o.nodes)].find((n) =>
+    n.materials.some((m) => m.key === to),
+  );
+  const group = node?.materials.map((m) => m.key);
+  if (!group?.includes(from)) return undefined;
+  return reordered(
+    all.map((m) => m.key),
+    group,
+    from,
+    to,
+    after,
+  );
+}
+
+/** The light a body is lit by: its overlays' (the first of them that has one), else its own. */
+export const rigOf = (b: BodyInfo) =>
+  b.overlays.find((o) => o.file?.light)?.file?.light ?? b.file?.light;
+
+/** How a body's overlays shade it, each setting the later's over the earlier's. */
+function overlayShades(b: BodyInfo) {
+  const wear = (o: WornOverlay) => wearOf(b.file, o.id)?.shade;
+  return {
+    strength: {
+      styled: latest(b.overlays.map((o) => o.below?.shade)),
+      wear: latest(b.overlays.map((o) => wear(o)?.strength)),
+      style: latest(b.overlays.map((o) => o.file?.shade?.strength)),
+    },
+    direction: {
+      styled: latest(b.overlays.map((o) => o.below?.shadeTowards)),
+      wear: latest(b.overlays.map((o) => wear(o)?.direction)),
+      style: latest(b.overlays.map((o) => o.file?.shade?.direction)),
+    },
+  };
+}
+
+/** The overlays a body wears that are drawn (those switched off set nothing), the later over the earlier. */
+const drawnOverlays = (b: BodyInfo) =>
+  b.overlays.filter((o) => overlayOn(o.id, b.settings, ...ownNearestFirst(b)) !== false);
+
+/**
+ * A setting of a body as its levels stack, where one sets it: the layer edited, over its own
+ * levels (its variants on under it, its own defaults), over what the overlays it wears set
+ * (shared: the later over the earlier).
+ */
+export function stackedSetting<K extends keyof BodySettings>(b: BodyInfo, k: K): BodySettings[K] {
+  return b.settings[k] ?? ownSetting(b, k) ?? latest(drawnOverlays(b).map((o) => o.below?.[k]));
+}
+
+/** A body's own settings as shown: the layer edited, over those under it (its overlays' shade over its own), over its files' tuning, over the defaults. */
+export function valuesOf(b: BodyInfo): BodyValues {
+  const tuning = b.file?.tuning;
+  const s = b.settings;
+  const { strength, direction } = overlayShades(b);
+  const at = <K extends keyof BodySettings>(k: K) => stackedSetting(b, k);
+  return {
+    overlays: wornIds(b),
+    lighting: at('lighting') ?? tuning?.lighting ?? 1,
+    // Its own shade, else as an overlay it wears shades it (as it wears it).
+    shade:
+      s.shade ??
+      ownSetting(b, 'shade') ??
+      strength.styled ??
+      strength.wear ??
+      strength.style ??
+      tuning?.shade?.strength ??
+      DEFAULT_SHADE.strength,
+    tint: at('tint') ?? tuning?.tint ?? NO_MATERIAL_TINT,
+    lightFrom: at('lightFrom') ?? tuning?.lightFrom ?? keyLightFrom(rigOf(b)),
+    shadeTowards:
+      s.shadeTowards ??
+      ownSetting(b, 'shadeTowards') ??
+      direction.styled ??
+      direction.wear ??
+      direction.style ??
+      tuning?.shade?.direction ??
+      DEFAULT_SHADE.direction,
+    rim: at('rim') ?? tuning?.rim ?? TOWARDS_EYE,
+    glowMargin: at('glowMargin') ?? HALO_MARGIN,
+    orientation: bodyOrientation(b),
+    // As its data has them unless set: its textures' pole, no turn about it.
+    axis: at('axis') ?? tuning?.axis ?? poleOf(b.file?.parts ?? []),
+    turn: at('turn') ?? tuning?.turn ?? 0,
+    baseTurn: at('baseTurn') ?? tuning?.baseTurn ?? NO_QUAT,
+  };
+}
+
+/** Which way a body's surfaces are turned where its parts and materials don't say, where any of its levels says: as they stack (see `stackedSetting`), its tuning. */
+const bodySays = (b: BodyInfo): Orientation | undefined =>
+  stackedSetting(b, 'orientation') ?? b.file?.tuning?.orientation;
+/** That, else facing the camera. */
+const bodyOrientation = (b: BodyInfo): Orientation => bodySays(b) ?? DEFAULT_ORIENTATION;
+
+/**
+ * Which way a draw of a body's part is turned (`drawTurnOf`): its material's say (`material`),
+ * its part's (through the levels, the one edited too), the part as a halo, its body's. And where
+ * that is said, as an origin shows it, where it is neither the material's nor the part's own: its
+ * part's name (it set it, or is a halo), or its body's.
+ */
+function partTurnOf(
+  b: BodyInfo,
+  owner: PlanetFile,
+  part: BodyPart,
+  key: PartKey,
+  material?: Orientation,
+): DrawTurn & { readonly origin?: string } {
+  const set = partSettingsOf(b)[key];
+  const halo = haloLike(part, owner.materials);
+  const drawn = drawTurnOf(material, set?.orientation, halo, bodySays(b));
+  const partSays = set?.orientation !== undefined || halo;
+  const origin = partSays ? (set?.label ?? partLabelOf(part)) : bodySays(b) ? bodyLabel(b) : undefined;
+  return origin ? { ...drawn, origin } : drawn;
+}
+
+/** A part's shape and how its textures lie on it, as in effect (its own where nothing is set). */
+export interface PartValues {
+  readonly size: number;
+  readonly turn: number;
+  readonly tilt: number;
+  readonly width: number;
+  readonly height: number;
+  readonly depth: number;
+  readonly mid: number;
+  readonly keepToLimb: boolean;
+  readonly flip: boolean;
+  /** A tube's or a cone's side: its outside, or its inside. */
+  readonly side: 'near' | 'far';
+  readonly from: number;
+  readonly repeat: number;
+  /** Which way it is turned: its own, else its body's (a sky's part: always as the sky is). */
+  readonly orientation: Orientation;
+}
+
+/** A body's part as its properties show it. */
+export interface PartEntry {
+  /** Which level over the one edited wins for each of its settings, where one sets it. */
+  readonly overrides?: SettingOrigins<keyof PartSettings>;
+  readonly key: PartKey;
+  /** Its name: as renamed (the level edited's, else under it), else its role's (Surface, Shell, Ring…). */
+  readonly label: string;
+  /** Its name as the levels under the one edited have it. */
+  readonly labelBelow: string;
+  /** Whose it is: the body's own, or an overlay's (an overlay opened on its own: its own, kept as an overlay's). */
+  readonly from: 'own' | 'style';
+  /** Its shape: a body's sphere, ring, tube, cone or disc, or a sky overlay's part about the eye. */
+  readonly kind: 'sphere' | 'ring' | 'tube' | 'cone' | 'disc' | 'capsule' | 'plane' | 'sky';
+  /** Whether it is a band (a sky overlay's part made in the editor: it has a width). */
+  readonly band?: boolean;
+  readonly values: PartValues;
+  /** What of it is set in the layer edited. */
+  readonly set: PartSettings | undefined;
+  /** Which level under the one edited sets each of its settings, where one does. */
+  readonly origins: SettingOrigins<keyof PartSettings>;
+  /** A ring modelled to keep to its body's limb (it may be let go of it). */
+  readonly canKeepToLimb: boolean;
+  /** The materials drawn on it, by name. */
+  readonly materials: readonly string[];
+  /** Whether it is drawn (its materials with it), and whether it is under the level edited. */
+  readonly enabled: boolean;
+  readonly enabledBelow: boolean;
+  /** The overlay the body wears it comes with, by id (none: the body's own). */
+  readonly overlay?: string;
+  /** That overlay's name, where it is one worn (not the overlay open itself). */
+  readonly overlayName?: string;
+  /** Whether it was added onto its owner at the level edited (it can be taken off, its materials picked). */
+  readonly added?: boolean;
+}
+
+/** A part as the tree shows it: with the materials drawn on it, in the order they are drawn. */
+export interface PartNode {
+  readonly part: PartEntry;
+  readonly materials: readonly MaterialEntry[];
+}
+
+/** A body's parts with their materials: its own, and each overlay's it wears. */
+export function partNodes(
+  b: BodyInfo,
+  materials: readonly MaterialEntry[],
+): { own: PartNode[]; overlays: { overlay: WornOverlay; nodes: PartNode[] }[] } {
+  const nodes = partsOfBody(b).map((part) => ({
+    part,
+    materials: materials.filter(
+      (m) => part.materials.includes(m.name) && (m.overlay ?? null) === (part.overlay ?? null),
+    ),
+  }));
+  return {
+    own: nodes.filter((n) => !n.part.overlay),
+    overlays: b.overlays.map((overlay) => ({
+      overlay,
+      nodes: nodes.filter((n) => n.part.overlay === overlay.id),
+    })),
+  };
+}
+
+/** Whether a body is drawn (a scene's; its moons with it). */
+/** Whether a body is drawn: as set at the level edited, else under it (a planet's own moon may be off there). */
+export const bodyEnabled = (b: BodyInfo) => b.settings.enabled ?? b.below?.enabled ?? true;
+
+/** Whether an overlay a body wears is drawn, as set and under the level edited. */
+export const overlayEnabled = (b: BodyInfo, id: string) =>
+  overlayOn(id, b.settings) ?? overlayEnabledBelow(b, id);
+export const overlayEnabledBelow = (b: BodyInfo, id: string) => overlayOn(id, ...ownNearestFirst(b)) ?? true;
+
+/** Each part's icon in the tree: a sphere, or a ring. */
+export const partIcon = (p: PartEntry) => PART_ICONS[p.kind];
+
+/** Each shape's icon in the tree (and where parts are added). */
+export const PART_ICONS: Record<PartEntry['kind'], string> = {
+  sphere: 'circle',
+  ring: 'radio_button_unchecked',
+  tube: 'crop_portrait',
+  cone: 'change_history',
+  disc: 'album',
+  capsule: 'pill',
+  plane: 'rectangle',
+  sky: 'panorama_horizontal',
+};
+
+const PART_NAMES: Record<PartRole, string> = {
+  surface: 'Surface',
+  layer: 'Layer',
+  shell: 'Shell',
+  ring: 'Ring',
+  shield: 'Shield',
+  sphere: 'Sphere',
+  band: 'Band',
+  tube: 'Tube',
+  cone: 'Cone',
+  disc: 'Disc',
+  capsule: 'Capsule',
+  plane: 'Plane',
+};
+
+/** A part's name unless renamed: made from its id where it has one, else its role's. */
+const partLabelOf = (part: { readonly id?: string; readonly role: PartRole }) =>
+  part.id ? idLabel(part.id) : PART_NAMES[part.role];
+
+/** A part of the game data's name: its role's (Surface, Shell, Ring…). */
+export const partName = (part: { readonly role: PartRole }) => PART_NAMES[part.role];
+
+/** A part's name made from its id, where it has one (an overlay's made in the editor: `ring-2`, Ring 2). */
+const idLabel = (id: string) => {
+  const [shape, n] = id.split('-');
+  return `${(shape ?? id).charAt(0).toUpperCase()}${(shape ?? id).slice(1)}${n ? ` ${n}` : ''}`;
+};
+
+/**
+ * A body's parts as shown, its own then each overlay's as it wears them: each one's settings in
+ * effect (those under the layer edited, then the layer edited's) over its own shape and mapping.
+ */
+export function partsOfBody(b: BodyInfo): PartEntry[] {
+  const overlayNamed = (id: string) => {
+    const o = b.overlays.find((x) => x.id === id);
+    return o ? overlayLabel(o) : id;
+  };
+  // An overlay opened on its own: its parts are an overlay's (as kept for every planet wearing it).
+  const opened = b.file?.kind === 'style';
+  const owners: [readonly BodyPart[], string | undefined, PlanetFile | undefined][] = [
+    [b.file?.parts ?? [], undefined, b.file],
+    ...b.overlays.map((o): [readonly BodyPart[], string, PlanetFile | undefined] => [
+      o.file ? wornParts(b.file, o.id, o.file.parts) : [],
+      o.id,
+      o.file,
+    ]),
+  ];
+  // The overlays' (shared, the later over the earlier), then its own.
+  const levels: [string, PartSettingsMap | undefined][] = [
+    ...b.overlays.map((o): [string, PartSettingsMap | undefined] => [
+      `the library (${overlayLabel(o)})`,
+      o.below?.parts,
+    ]),
+    ...ownLevels(b).map((l): [string, PartSettingsMap | undefined] => [l.name, l.settings?.parts]),
+  ];
+  return owners.flatMap(([parts, overlay, owner]) =>
+    parts.map((part): PartEntry => {
+      const from = overlay || opened ? 'style' : 'own';
+      const key = overlay
+        ? overlayPartKey(overlay, part)
+        : opened
+          ? overlayPartKey(b.id, part)
+          : ownPartKey(part);
+      const set = b.settings.parts?.[key];
+      const settings = mergePartSettings(...levels.map(([, l]) => l), b.settings.parts)[key];
+      const { shape, mapping } = part;
+      const below = mergePartSettings(...levels.map(([, l]) => l))[key];
+      const named = below?.label ?? partLabelOf(part);
+      return {
+        key,
+        label: settings?.label ?? named,
+        labelBelow: named,
+        from,
+        kind: shape.kind,
+        values: {
+          size: settings?.size ?? 1,
+          turn: settings?.turn ?? 0,
+          tilt: settings?.tilt ?? 0,
+          width: settings?.width ?? 1,
+          height: settings?.height ?? 1,
+          depth: settings?.depth ?? (shape.kind === 'ring' ? shape.depth : 0),
+          mid: settings?.mid ?? (mapping.kind === 'ring' ? (mapping.mid ?? 0.5) : 0.5),
+          keepToLimb: settings?.keepToLimb ?? (shape.kind === 'ring' && shape.seen !== undefined),
+          flip:
+            settings?.flip ??
+            ((mapping.kind === 'sphere' || mapping.kind === 'round') && mapping.flip),
+          side: settings?.side ?? ('side' in shape ? shape.side : 'near'),
+          from:
+            settings?.from ??
+            (mapping.kind === 'ring' ? Math.round(((mapping.from * 180) / Math.PI) * 10) / 10 : 0),
+          repeat:
+            settings?.repeat ??
+            (mapping.kind === 'ring'
+              ? mapping.uMax
+              : mapping.kind === 'round'
+                ? mapping.repeat
+                : 1),
+          orientation: drawTurnOf(undefined, settings?.orientation, !!owner && haloLike(part, owner.materials), bodySays(b))
+            .orientation,
+        },
+        set,
+        overrides: overridesOf(b, (s) => s?.parts?.[key]),
+        origins: {
+          ...originsOf(levels.map(([name, l]) => [name, l?.[key]] as const)),
+          // Its body's say, where it is neither its own nor it a halo.
+          ...(settings?.orientation === undefined && !(owner && haloLike(part, owner.materials)) && bodySays(b)
+            ? { orientation: bodyLabel(b) }
+            : {}),
+        },
+        canKeepToLimb: shape.kind === 'ring' && shape.seen !== undefined,
+        materials: part.materials,
+        enabled: settings?.enabled ?? true,
+        enabledBelow: below?.enabled ?? true,
+        ...(overlay ? { overlay, overlayName: overlayNamed(overlay) } : {}),
+        ...(!overlay && part.id && b.settings.addedParts?.some((a) => a.id === part.id)
+          ? { added: true }
+          : {}),
+      };
+    }),
+  );
+}
+
+/** Each kind of light's icon (an antilight's: any light that darkens). */
+export const LIGHT_ICONS: Record<NewLightKind, string> = {
+  ambient: 'brightness_low',
+  directional: 'wb_sunny',
+  antilight: 'contrast',
+  point: 'flare',
+  spot: 'highlight',
+  hemisphere: 'wb_twilight',
+  environment: 'lens_blur',
+  rim: 'blur_circular',
+};
+
+/** A light's icon in the tree: by its kind, or an antilight's where it darkens. */
+export const lightIcon = (l: { readonly kind: LightKind; readonly darkens?: boolean }): string =>
+  l.darkens ? LIGHT_ICONS.antilight : LIGHT_ICONS[l.kind];
+
+/** A body's light as its properties show it. */
+export interface LightEntry {
+  /** Which level over the one edited wins for each of its settings, where one sets it. */
+  readonly overrides?: SettingOrigins<keyof LightSettings>;
+  readonly light: BodyLight;
+  /** Its name as the levels under the one edited have it (one added here: its own). */
+  readonly nameBelow: string;
+  /**
+   * Whether it is on as the levels under the one edited have it (one added here: on), so switched
+   * so here is nothing set.
+   */
+  readonly enabledBelow: boolean;
+  /** What of it is set in the layer edited (the shadow's, as set before lights were objects too). */
+  readonly set: LightSettings | undefined;
+  /** Which level under the one edited sets each of its settings, where one does. */
+  readonly origins: SettingOrigins<keyof LightSettings>;
+  /** Whether it was added at the level edited (so it can be taken out there; its settings are its own). */
+  readonly removable: boolean;
+  /** Where it was added, where that is a level under the one edited (an overlay's, the library's). */
+  readonly addedIn?: string;
+  /** The overlay the body wears it is of, by id (shown under the overlay); none: the body's. */
+  readonly overlay?: string;
+  /** What of its body it may reach (none: a scene's, reaching every body), and what it reaches. */
+  readonly receivers: readonly ReceiverEntry[];
+  readonly reach?: LightReach;
+  /** Whether it reaches its body's moons too, and whether it can (one added to a body). */
+  readonly moons: boolean;
+  readonly canReachMoons: boolean;
+}
+
+/** A part or material a body's light may reach, as its Reaches list shows it (a part, its materials under it). */
+export interface ReceiverEntry {
+  readonly receiver: Receiver;
+  readonly label: string;
+  readonly material: boolean;
+}
+
+/** What a body's lights may reach: its parts, each with the materials drawn on it (its overlays' named so). */
+function receiversOf(b: BodyInfo): ReceiverEntry[] {
+  const nodes = partNodes(b, materialsOf(b));
+  const named = (id: string | undefined) => {
+    const o = b.overlays.find((x) => x.id === id);
+    return o ? ` (${overlayLabel(o)})` : '';
+  };
+  return [...nodes.own, ...nodes.overlays.flatMap((o) => o.nodes)].flatMap(
+    ({ part, materials }) => [
+      {
+        receiver: `part:${part.key}` as const,
+        label: part.label + named(part.overlay),
+        material: false,
+      },
+      ...materials.map((m) => ({
+        receiver: `material:${m.key}` as const,
+        label: m.label,
+        material: true,
+      })),
+    ],
+  );
+}
+
+/**
+ * A body's lights as shown (see `bodyLights`): its rig as it is turned (Light from) with each
+ * light's settings in effect over it, and its shadow as its shade comes to; what the layer edited
+ * sets of each, and which level under it sets the rest.
+ */
+export function lightsOfBody(b: BodyInfo): LightEntry[] {
+  const values = valuesOf(b);
+  const rig = rigOf(b);
+  // Its lights as they start: its rig as tuned (turned and made stronger together).
+  const turned = rig && tunedRig(rig, values.lighting, values.lightFrom ?? undefined);
+  const softness = b.overlays.reduce(
+    (a, o) => ({ ...a, ...o.file?.shade, ...wearOf(b.file, o.id)?.shade }),
+    { ...DEFAULT_SHADE, ...b.file?.tuning?.shade },
+  ).softness;
+  const shade = { strength: values.shade, direction: values.shadeTowards, softness };
+  // The overlays' (shared, the later over the earlier), then its own.
+  const levels: [string, LightSettingsMap | undefined][] = [
+    ...b.overlays.map((o): [string, LightSettingsMap | undefined] => [
+      `the library (${overlayLabel(o)})`,
+      o.below?.lights,
+    ]),
+    ...ownLevels(b).map((l): [string, LightSettingsMap | undefined] => [l.name, l.settings?.lights]),
+  ];
+  const settings = mergeLightSettings(...levels.map(([, l]) => l), b.settings.lights);
+  const under = mergeLightSettings(...levels.map(([, l]) => l));
+  const lightsBelow = new Map(bodyLights(turned, shade, under).map((l) => [l.id, l]));
+  const body = bodyOrigins(b);
+  // The lights added to it: under the level edited (the library's for the planet, its overlay's),
+  // then the level edited's own (its settings are its own: nothing over them here).
+  const below: [string, readonly AddedLight[] | undefined, string | undefined][] = [
+    ...ownLevels(b).map((l): [string, readonly AddedLight[] | undefined, undefined] => [
+      l.name,
+      l.settings?.added,
+      undefined,
+    ]),
+    ...b.overlays.map((o): [string, readonly AddedLight[] | undefined, string] => [
+      `the ${overlayLabel(o)} overlay`,
+      o.below?.added,
+      o.id,
+    ]),
+  ];
+  const added: Omit<LightEntry, 'receivers' | 'moons' | 'canReachMoons'>[] = [
+    ...below.flatMap(([name, list, overlay]) =>
+      knownLights(list ?? []).map((l) => ({
+        ...(overlay ? { overlay } : {}),
+        light: addedLight(l, settings[l.id]),
+        nameBelow: addedLight(l, under[l.id]).name,
+        enabledBelow: addedLight(l, under[l.id]).enabled,
+        set: b.settings.lights?.[l.id],
+        origins: originsOf(levels.map(([level, s]) => [level, s?.[l.id]] as const)),
+        overrides: overridesOf(b, (s) => s?.lights?.[l.id]),
+        removable: false,
+        addedIn: name,
+      })),
+    ),
+    ...knownLights(b.settings.added ?? []).map((l) => ({
+      light: addedLight(l),
+      nameBelow: l.name,
+      enabledBelow: true,
+      set: undefined,
+      origins: {},
+      overrides: overridesOf(b, (s) => s?.lights?.[l.id]),
+      removable: true,
+    })),
+  ];
+  // What each reaches (as set over an added light's own), and whether it reaches the moons.
+  const receivers = receiversOf(b);
+  const addedById = new Map(
+    [...addedBelowOf(b), ...(b.settings.added ?? [])].map((l) => [l.id, l] as const),
+  );
+  return [...rigEntries(), ...added].map((e) => {
+    const own = addedById.get(e.light.id as `added-${string}`);
+    const merged = { ...own, ...settings[e.light.id] };
+    return {
+      ...e,
+      receivers,
+      reach: merged.reach,
+      moons: merged.moons ?? false,
+      canReachMoons: own !== undefined,
+    };
+  });
+
+  function rigEntries(): Omit<LightEntry, 'receivers' | 'moons' | 'canReachMoons'>[] {
+    return bodyLights(turned, shade, settings).map((light) => {
+      const shadow = light.id === 'shadow';
+      const own = b.settings.lights?.[light.id];
+      const set = shadow ? { ...legacyShadow(b.settings), ...own } : own;
+      const origins = originsOf(levels.map(([name, l]) => [name, l?.[light.id]] as const));
+      return {
+        light,
+        nameBelow: lightsBelow.get(light.id)?.name ?? light.name,
+        enabledBelow: lightsBelow.get(light.id)?.enabled ?? true,
+        set: set && Object.keys(set).length ? set : undefined,
+        origins: shadow ? { strength: body.shade, from: body.shadeTowards, ...origins } : origins,
+        overrides: overridesOf(b, (s) => s?.lights?.[light.id]),
+        removable: false,
+      };
+    });
+  }
+}
+
+/**
+ * The lights added to a body (the library's, its overlay's, its own) that reach its moons, as set
+ * (`lightsForMoons`).
+ */
+export function moonLightsOf(b: BodyInfo): AddedLight[] {
+  return lightsForMoons(
+    [...addedBelowOf(b), ...(b.settings.added ?? [])],
+    mergeLightSettings(lightsBelowOf(b), b.settings.lights),
+  );
+}
+
+/** The lights added to a body under the level edited: the library's for it, then its overlays'. */
+const addedBelowOf = (b: BodyInfo): AddedLight[] => [
+  ...ownLevels(b).flatMap((l) => l.settings?.added ?? []),
+  ...b.overlays.flatMap((o) => o.below?.added ?? []),
+];
+/** What is set for a body's lights under the level edited: its overlays', then the library's for it. */
+const lightsBelowOf = (b: BodyInfo) =>
+  mergeLightSettings(
+    ...b.overlays.map((o) => o.below?.lights),
+    ...ownLevels(b).map((l) => l.settings?.lights),
+  );
+
+/** A scene's own lights as shown: each added to the scene (its settings its own). */
+export function sceneLightsOf(lights: readonly AddedLight[] | undefined): LightEntry[] {
+  return knownLights(lights ?? []).map((l) => ({
+    light: addedLight(l),
+    nameBelow: l.name,
+    enabledBelow: true,
+    set: undefined,
+    origins: {},
+    receivers: [],
+    moons: false,
+    canReachMoons: false,
+    removable: true,
+  }));
+}
+
+/**
+ * A light from beyond a body that lights it too (its scene's, a planet's it is a moon of), and
+ * whose it is (the scene, or the planet: its path, and whether its overlay's).
+ */
+export interface OuterLight {
+  readonly light: AddedLight;
+  readonly owner: BodyPath | 'scene';
+  /** The overlay of the planet it is of, by id, where it is an overlay's. */
+  readonly overlay?: string;
+}
+
+/** A light that may light what is selected (a body, a part, a material), as its Lit by list shows it. */
+export interface LitByEntry {
+  readonly id: LightId;
+  readonly kind: LightKind;
+  readonly name: string;
+  /** Whether it lights it (a body: whether it is on for it). */
+  readonly reaches: boolean;
+  /** Whether it is on as the levels under the one edited have it. */
+  readonly enabledBelow: boolean;
+  /** What of the body it reaches, as in effect and as under the level edited. */
+  readonly reach?: LightReach;
+  readonly reachBelow?: LightReach;
+  /**
+   * Whose it is, to find it in the tree: the body's own (none), the scene's, or a planet's it is a
+   * moon of (its path); and the overlay it is of, where it is one's (shown under the overlay).
+   */
+  readonly owner?: BodyPath | 'scene';
+  readonly overlay?: string;
+  /** Whether it was added at the level edited, to the body (it can be taken out here). */
+  readonly removable?: boolean;
+}
+
+/** Whether a body's files are loaded (its overlays' too). */
+export const filesLoaded = (b: BodyInfo) => !!b.file && b.overlays.every((o) => !!o.file);
+
+/** A body's parts' materials (by `materialKey`), by part (its overlays' too). */
+function partMaterialsOf(b: BodyInfo): PartMaterials {
+  const opened = b.file?.kind === 'style' ? b.id : undefined;
+  return new Map(
+    partsOfBody(b).map((p) => [
+      p.key as string,
+      p.materials.map((name) => materialKey(name, p.overlay ?? opened)),
+    ]),
+  );
+}
+
+/**
+ * What lights a body (`receiver` none), one of its parts or one of its materials: each of its
+ * lights (its own, its overlay's, the library's) and those from beyond it (`outer`) of a kind that
+ * acts on what of it is selected (ambient, directional and shadow lights on a lit material; reveal
+ * and activation lights on a grid). A body's list has each whether on or off for it; a part's or
+ * material's, each on, and whether it reaches it.
+ */
+export function litByOf(
+  b: BodyInfo,
+  receiver: Receiver | null,
+  outer: readonly OuterLight[] = [],
+): LitByEntry[] {
+  const materials = materialsOf(b);
+  const parts = partMaterialsOf(b);
+  const shown = materials.filter((m) =>
+    receiver === null
+      ? true
+      : receiver.startsWith('part:')
+        ? (parts.get(receiver.slice(5)) ?? []).includes(m.key)
+        : receiver === `material:${m.key}`,
+  );
+  // Lights light a lit material; one that darkens darkens any of a body's.
+  const acts = (light: { readonly darkens: boolean }) =>
+    light.darkens || shown.some((m) => m.values.lit);
+  const under = lightsBelowOf(b);
+  const addedBelow = new Map(addedBelowOf(b).map((l) => [l.id, l] as const));
+  const lights = [
+    ...lightsOfBody(b).map((e) => ({
+      light: e.light,
+      reach: e.reach,
+      reachBelow: e.removable
+        ? undefined
+        : (under[e.light.id]?.reach ?? addedBelow.get(e.light.id as `added-${string}`)?.reach),
+      enabledBelow: e.enabledBelow,
+      owner: undefined,
+      overlay: e.overlay,
+      removable: e.removable,
+    })),
+    ...outer.map(({ light, owner, overlay }) => {
+      const set = b.settings.lights?.[light.id];
+      return {
+        light: addedLight(light, set),
+        reach: set?.reach ?? light.reach,
+        reachBelow: light.reach,
+        enabledBelow: true,
+        owner,
+        overlay,
+        removable: false,
+      };
+    }),
+  ];
+  // (A body's list keeps the lights added to it here, acting or not: they can be taken out there.)
+  return lights
+    .filter(
+      ({ light, removable }) =>
+        (acts(light) || (receiver === null && removable)) && (receiver === null || light.enabled),
+    )
+    .map(({ light, ...l }) => ({
+      id: light.id,
+      kind: light.kind,
+      name: light.name,
+      reaches: receiver === null ? light.enabled : reachesReceiver(l.reach, receiver, parts),
+      enabledBelow: l.enabledBelow,
+      ...(l.reach ? { reach: l.reach } : {}),
+      ...(l.reachBelow ? { reachBelow: l.reachBelow } : {}),
+      ...(l.owner !== undefined ? { owner: l.owner } : {}),
+      ...(l.overlay ? { overlay: l.overlay } : {}),
+      ...(l.removable ? { removable: true } : {}),
+    }));
+}
+
+/**
+ * A body's settings at the level edited with a light taken in or left out by what is selected: a
+ * body, switched on or off for it; a part or material, in or out of what it reaches (the reach
+ * set here, unless it comes to what is under this level; a light added here, its own).
+ */
+export function withLitBy(
+  s: BodySettings,
+  b: BodyInfo,
+  light: LitByEntry,
+  receiver: Receiver | null,
+  on: boolean,
+): BodySettings | undefined {
+  const id = light.id;
+  if (receiver === null) return withLightSwitched(s, id, on, light.enabledBelow);
+  const reach = withReceiver(light.reach, receiver, on, partMaterialsOf(b));
+  if (s.added?.some((l) => l.id === id))
+    return {
+      ...s,
+      added: s.added.map((l) =>
+        l.id !== id ? l : reach ? { ...l, reach } : (without(l, ['reach']) ?? l),
+      ),
+    };
+  if (sameReach(reach, light.reachBelow)) return withoutLightSetting(s, id, ['reach']);
+  // Reaching everything over a reach under it: said so.
+  return withLightSetting(s, id, { reach: reach ?? { mode: 'except', receivers: [] } });
+}
+
+const sameReach = (a: LightReach | undefined, b: LightReach | undefined) => {
+  const key = (r: LightReach | undefined) =>
+    r && (r.mode === 'only' || r.receivers.length)
+      ? `${r.mode}:${[...r.receivers].sort().join(',')}`
+      : 'all';
+  return key(a) === key(b);
+};
+
+/**
+ * Which level under the one edited sets each of a body's settings, as `valuesOf` resolves them:
+ * the first that sets it, from the nearest down (a style it wears over its own, as it shades).
+ */
+export function bodyOrigins(b: BodyInfo): SettingOrigins<keyof BodySettings> {
+  const tuning = b.file?.tuning;
+  const first = (...levels: [string, unknown][]) => levels.find(([, v]) => v !== undefined)?.[0];
+  // Its own levels, the nearest first: its variants on under the level edited, its own defaults.
+  const mine = (k: keyof BodySettings) =>
+    [...ownLevels(b)].reverse().map((l): [string, unknown] => [l.name, l.settings?.[k]]);
+  // Each overlay's say, the later's first (as it shades over the earlier's).
+  const latestFirst = [...b.overlays].reverse();
+  const libraryStyle = (k: 'shade' | 'shadeTowards') =>
+    latestFirst.map((o): [string, unknown] => [`the library (${overlayLabel(o)})`, o.below?.[k]]);
+  const worn = (k: 'strength' | 'direction') =>
+    latestFirst.map((o): [string, unknown] => [
+      `its tuning for ${overlayLabel(o)}`,
+      wearOf(b.file, o.id)?.shade?.[k],
+    ]);
+  const styleOwn = (k: 'strength' | 'direction') =>
+    latestFirst.map((o): [string, unknown] => [
+      `the ${overlayLabel(o)} overlay`,
+      o.file?.shade?.[k],
+    ]);
+  // Its own levels, then what the overlays it wears set (those drawn, the later first).
+  const drawnLatestFirst = [...drawnOverlays(b)].reverse();
+  const stack = (k: keyof BodySettings): [string, unknown][] => [
+    ...mine(k),
+    ...drawnLatestFirst.map((o): [string, unknown] => [`the ${overlayLabel(o)} overlay`, o.below?.[k]]),
+  ];
+  const out: SettingOrigins<keyof BodySettings> = {
+    lighting: first(...stack('lighting'), ['its tuning', tuning?.lighting]),
+    shade: first(
+      ...mine('shade'),
+      ...libraryStyle('shade'),
+      ...worn('strength'),
+      ...styleOwn('strength'),
+      ['its tuning', tuning?.shade?.strength],
+    ),
+    tint: first(...stack('tint'), ['its tuning', tuning?.tint]),
+    lightFrom: first(...stack('lightFrom'), ['its tuning', tuning?.lightFrom]),
+    shadeTowards: first(
+      ...mine('shadeTowards'),
+      ...libraryStyle('shadeTowards'),
+      ...worn('direction'),
+      ...styleOwn('direction'),
+      ['its tuning', tuning?.shade?.direction],
+    ),
+    rim: first(...stack('rim'), ['its tuning', tuning?.rim]),
+    glowMargin: first(...stack('glowMargin')),
+    orientation: first(...stack('orientation'), ['its tuning', tuning?.orientation]),
+    axis: first(...stack('axis'), ['its tuning', tuning?.axis]),
+    turn: first(...stack('turn'), ['its tuning', tuning?.turn]),
+    baseTurn: first(...stack('baseTurn'), ['its tuning', tuning?.baseTurn]),
+  };
+  return Object.fromEntries(Object.entries(out).filter(([, v]) => v)) as SettingOrigins<
+    keyof BodySettings
+  >;
+}
+
+/** A body as its properties show it, for an editor. */
+export function bodyView(
+  b: BodyInfo,
+  focused: boolean,
+  canHaveMoons: boolean,
+  /** One of a library planet's own moons, edited there: its orbit and what it wears; its lights its own planet's. */
+  libraryMoon = false,
+): BodyView {
+  return {
+    info: b,
+    values: valuesOf(b),
+    changed: Object.keys(b.settings).length > 0 || inheritedChanged(b),
+    inherited: !!b.inherited,
+    orbitBase: b.inherited?.orbit ?? DEFAULT_ORBIT,
+    lights: !libraryMoon,
+    styled: canHaveMoons || libraryMoon,
+    focusable: !libraryMoon,
+    baseTint: ownSetting(b, 'tint') ?? b.file?.tuning?.tint ?? NO_MATERIAL_TINT,
+    overrides: overridesOf(b, (s) => s),
+    focused,
+    canHaveMoons,
+    origins: {
+      ...bodyOrigins(b),
+      label: b.below?.label !== undefined ? 'the library (planet)' : undefined,
+    },
+    label: bodyLabel(b),
+    labelBelow: bodyLabelBelow(b),
+  };
+}
+
+/** Whether a scene sets one of its planet's own moons otherwise than the planet has it: its orbit, what it wears. */
+function inheritedChanged(b: BodyInfo): boolean {
+  const base = b.inherited;
+  if (!base || !b.orbit) return false;
+  const worn = b.overlaysSet ? b.overlays.map((o) => o.id) : undefined;
+  const base_ = base.overlays;
+  const wears =
+    worn !== undefined &&
+    (worn.length !== (base_?.length ?? -1) || worn.some((id, i) => id !== base_?.[i]));
+  return wears || ORBIT_KEYS.some((k) => b.orbit![k] !== base.orbit[k]);
+}
+
+/**
+ * The way a light comes from (`from`, in its body's frame as `layout` sees it), out of the body,
+ * in the scene: a unit vector. `layout` is the view the body's lights are placed from
+ * (`lightsView`): the scene's own camera for a body fixed in the world (the light fixed there,
+ * whatever camera the editor looks through), the editor's for one facing the camera.
+ */
+export function wayOut(from: Vec3, body: SetPlanet, layout: Viewpoint): Vec3 {
+  const way = turn(bodyTransform(body, layout).rotation, from);
+  const length = Math.hypot(...way) || 1;
+  return way.map((v) => v / length) as unknown as Vec3;
+}
+
+/** A place near a body (in its placement frame, in its radii: see `wayOut`), in the scene. */
+export function placeOut(at: Vec3, body: SetPlanet, layout: Viewpoint): Vec3 {
+  return pointToWorld(bodyTransform(body, layout), at);
+}
+
+/**
+ * A light's marker about its body: one from all round on the body's middle; one from a side out
+ * from the body on that side, a line to it from the surface; one from a point where it is, a
+ * line to the nearest of the surface (the middle of what it lights); a spot where it is, a line
+ * along its aim to where it meets the body (the middle of its light circle; past the body, to
+ * its nearest point). `at` and, where a line is drawn, where it starts.
+ */
+export function lightMarkerAt(
+  light: {
+    readonly kind?: LightKind;
+    readonly from?: Vec3;
+    readonly position?: Vec3;
+    readonly lookAt?: LookAt;
+    readonly aim?: Vec3;
+  },
+  body: SetPlanet,
+  layout: Viewpoint,
+): { readonly at: Vec3; readonly from?: Vec3 } | null {
+  const along = (way: Vec3, radii: number) =>
+    body.position.map((v, k) => v + way[k]! * body.radius * radii) as unknown as Vec3;
+  if (light.position) {
+    const at = placeOut(light.position, body, layout);
+    if (light.kind === 'spot') {
+      const p = light.position;
+      const aim = aimOf(p, light.lookAt, light.aim);
+      const t = alongToSphere(p, aim);
+      return {
+        at,
+        from: placeOut([p[0] + aim[0] * t, p[1] + aim[1] * t, p[2] + aim[2] * t], body, layout),
+      };
+    }
+    const way = wayOut(light.position, body, layout);
+    return { at, from: along(way, 1.05) };
+  }
+  if (light.from) {
+    const way = wayOut(light.from, body, layout);
+    return { at: along(way, 1.8), from: along(way, 1.05) };
+  }
+  return null;
+}
+
+/**
+ * The edges of a spot light's cone as seen from `eye` (the camera the editor looks through), from
+ * the spot to the body (none for any other light, or with the eye inside the cone), in the scene:
+ * drawn with its marker when it is selected. The cone is where the renderer puts it, in the body's
+ * placement frame (`layout`: see `wayOut`).
+ */
+export function spotEdges(
+  light: BodyLight,
+  body: SetPlanet,
+  layout: Viewpoint,
+  eye: Vec3,
+): readonly (readonly [Vec3, Vec3])[] {
+  const placed = placedLight(light);
+  if (placed?.kind !== 'spot' || !placed.position || !placed.aim) return [];
+  const frame = bodyTransform(body, layout);
+  return coneEdges(placed.position, placed.aim, placed.cone ?? 90, pointToLocal(frame, eye)).map(
+    ([a, b]) => [pointToWorld(frame, a), pointToWorld(frame, b)] as const,
+  );
+}
+
+/**
+ * What the view shows of a light selected, about a body it lights (placed in the body's placement
+ * frame, `layout`: see `wayOut`): the outline of where it falls on the body's sphere (any light but
+ * one from all round), and a directional light's beam out of the body the way it comes from. None
+ * of a light switched off.
+ */
+export function lightAids(light: BodyLight, body: SetPlanet, layout: Viewpoint): LightAid[] {
+  if (!light.enabled) return [];
+  const placed = placedLight(light);
+  if (!placed) return [];
+  const colour = rgbOf(light.colour, 1);
+  const axes = Float32Array.from(bodyTransform(body, layout).rotation);
+  const outline: LightOutline = {
+    shape: 'outline',
+    centre: body.position,
+    radius: body.radius,
+    axes,
+    kind: placed.kind ? LIGHT_KINDS[placed.kind] : 0,
+    direction: placed.direction,
+    position: placed.position ?? [0, 0, 0],
+    aim: placed.aim ?? [0, 0, 1],
+    fade: placed.fade ?? 1,
+    cone: placed.cone ?? 90,
+    edge: placed.edge ?? 0,
+    colour,
+    darkens: light.darkens,
+  };
+  const from = placed.kind ? null : lightWay(light, body, layout);
+  return from
+    ? [
+        {
+          shape: 'beam',
+          centre: body.position,
+          radius: body.radius,
+          from,
+          colour,
+          darkens: light.darkens,
+        },
+        outline,
+      ]
+    : [outline];
+}
+
+/** The way a light comes from, out of its body (see `wayOut`): a side's, or a point's or spot's place. */
+export function lightWay(
+  light: { readonly from?: Vec3; readonly position?: Vec3 },
+  body: SetPlanet,
+  layout: Viewpoint,
+): Vec3 | null {
+  const way = light.position ?? light.from;
+  return way ? wayOut(way, body, layout) : null;
+}
+
+/** How a planet's axis shows (see `axisAids`): how far out from its middle both ways (its radii), how thick (pixels), its halves' colours. */
+const AXIS_LINE = {
+  reach: 1.4,
+  pixels: 2.5,
+  north: [1, 0.1, 0.05] as Vec3,
+  south: [0.15, 0.45, 1] as Vec3,
+  strength: 1,
+};
+
+/**
+ * What the view shows of a planet selected: its axis, a line through its poles as far past each
+ * (its north one where its Axis points). One for each frame its surfaces are drawn in (as the
+ * renderer draws them, `surfaceFrame`): fixed in the world (its placement frame, from the scene's
+ * own camera, `layout`), or facing the camera the editor looks through (`view`). A halo left
+ * square to the camera has none.
+ */
+export function axisAids(b: BodyInfo, body: SetPlanet, layout: Viewpoint, view: Viewpoint): AxisLine[] {
+  const { axis } = valuesOf(b);
+  const l = Math.hypot(...axis) || 1;
+  const north: Vec3 = [axis[0] / l, axis[1] / l, axis[2] / l];
+  const ways = new Set(materialsOf(b).filter((m) => m.turned).map((m) => m.values.orientation));
+  return [...ways].map((orientation) => ({
+    shape: 'axis',
+    centre: body.position,
+    radius: body.radius,
+    // (Its Turn turns about it: where it points is the same turned or not.)
+    way: turn(axisFrame(orientation, body, layout, view), north),
+    ...AXIS_LINE,
+    orientation,
+  }));
+}
+
+/**
+ * A body's Axis (in `frame`, the frame its axis is in: `axisFrame`) with its north pole (or its
+ * south, `north` false) dragged to under a ray (see `axisDraggedTo`), and where the pole is now.
+ */
+export function poleDragged(
+  line: AxisLine,
+  north: boolean,
+  eye: Vec3,
+  ray: Vec3,
+  previous: Vec3,
+  frame: ArrayLike<number>,
+): { readonly axis: Vec3; readonly at: Vec3 } {
+  const at = axisDraggedTo(line, eye, ray, previous);
+  const way = at.map((v, k) => (v - line.centre[k]!) * (north ? 1 : -1));
+  const l = Math.hypot(...way) || 1;
+  const world: Vec3 = [way[0]! / l, way[1]! / l, way[2]! / l];
+  // Into its frame (its axes' transpose), kept to a few places as settings are.
+  const axis = [0, 3, 6].map(
+    (c) => Math.round((frame[c]! * world[0] + frame[c + 1]! * world[1] + frame[c + 2]! * world[2]) * 1e5) / 1e5,
+  ) as unknown as Vec3;
+  return { axis, at };
+}
+
+/** Where a pole of an axis is, as its name is put (see `poleMarkers`). */
+export const poleAt = (line: AxisLine, north: boolean): Vec3 => {
+  const ends = axisEnds(line, AXIS_NAMES_PAST);
+  return north ? ends.north : ends.south;
+};
+
+/** The frame a body's Axis is in for its surfaces turned so (see `axisAids`). */
+export const axisFrame = (orientation: Orientation, body: SetPlanet, layout: Viewpoint, view: Viewpoint) =>
+  orientation === 'world' ? placementFrame(body.position, layout) : facingFrame(body, view);
+
+/**
+ * Where a pole of an axis dragged in the view goes: the point of a sphere about the body's middle
+ * through where the pole was (`previous`) under the pointer, its ray from `eye` the way `ray`
+ * goes. Of the two points the ray meets, the near one, or the far one where the pole was taken
+ * round behind; past the sphere's outline, round over its edge and on behind it the further the
+ * pointer goes (a quarter turn at most), so a pole can be taken round to the far side and back.
+ */
+export function axisDraggedTo(line: AxisLine, eye: Vec3, ray: Vec3, previous: Vec3): Vec3 {
+  const c = line.centre;
+  const to = (p: Vec3): Vec3 => [p[0] - c[0], p[1] - c[1], p[2] - c[2]];
+  const dot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const o = to(eye);
+  const r = Math.hypot(...to(previous));
+  const b = dot(ray, o);
+  const disc = b * b - (dot(o, o) - r * r);
+  const at = (t: number): Vec3 => [eye[0] + ray[0] * t, eye[1] + ray[1] * t, eye[2] + ray[2] * t];
+  if (disc >= 0) {
+    // On the near side, unless it was taken round behind (past the outline, then back in).
+    const behind = dot(to(previous), o) / Math.hypot(...o) < -0.15 * r;
+    return at(-b + (behind ? 1 : -1) * Math.sqrt(disc));
+  }
+  // Past the outline: on its edge, then round behind it.
+  const q = to(at(-b));
+  const ql = Math.hypot(...q);
+  const n: Vec3 = [q[0] / ql, q[1] / ql, q[2] / ql];
+  const ol = Math.hypot(...o);
+  const e: Vec3 = [o[0] / ol, o[1] / ol, o[2] / ol];
+  const en = dot(e, n);
+  const away = [-(e[0] - en * n[0]), -(e[1] - en * n[1]), -(e[2] - en * n[2])];
+  const al = Math.hypot(...away) || 1;
+  const beyond = Math.min(Math.PI / 2, ((ql - r) / r) * (Math.PI / 2));
+  return [0, 1, 2].map((k) => c[k]! + r * (Math.cos(beyond) * n[k]! + Math.sin(beyond) * (away[k]! / al))) as unknown as Vec3;
+}
+
+/** An axis's poles' names (N, S) as markers, a little past its ends; `key` the row they are of (its body's), `n` which of its axes. */
+export function poleMarkers(line: AxisLine, key: string, n = 0): SceneMarker[] {
+  const { north, south } = axisEnds(line, AXIS_NAMES_PAST);
+  return (
+    [
+      ['N', north],
+      ['S', south],
+    ] as const
+  ).map(([name, at]) => ({
+    id: `${key}@pole-${name}-${n}`,
+    key,
+    kind: 'pole',
+    label: name,
+    icon: '',
+    at,
+    selected: true,
+    pole: { north: name === 'N', axis: n },
+  }));
+}
+
+/**
+ * A body's settings at the level edited after a change there (`next`, the change touching
+ * `touched`), its base turn changed with its Axis where the change sets or resets the Axis but not
+ * the base turn itself (the Orientation section's reset clears all three, back as the data has
+ * it): so the body stays as it is, and only what its Turn turns about moves (`poseKept`). A Turn
+ * changed or reset turns it from its base turn (reset: back to it).
+ */
+export function keepingPose(
+  b: BodyInfo,
+  next: BodySettings,
+  touched: readonly (keyof BodySettings)[],
+): BodySettings {
+  if (!touched.includes('axis') || touched.includes('baseTurn')) return next;
+  const before = valuesOf(b);
+  const after = valuesOf({ ...b, settings: next });
+  const baseTurn = poseKept(
+    poleOf(b.file?.parts ?? []),
+    { axis: before.axis, turn: before.turn, base: before.baseTurn },
+    { axis: after.axis, turn: after.turn },
+  );
+  const rest = without(next, ['baseTurn']) ?? {};
+  if (baseTurn) return { ...rest, baseTurn };
+  // None: none set here, unless a level under this one sets one (then none, said here).
+  const [x, y, z] = valuesOf({ ...b, settings: rest }).baseTurn;
+  return x || y || z ? { ...rest, baseTurn: NO_QUAT } : rest;
+}
+
+/** A body's frame facing the eye of `view` (its billboards' and their lights'). */
+const facingFrame = (body: SetPlanet, view: Viewpoint) =>
+  bodyFrame(body.position, body.radius, view.eye, viewUp(view)).axes;
+
+/**
+ * The view a body's lights are placed from, as the renderer lights it (see `wayOut`): the scene's
+ * own camera (`layout`) for a body fixed in the world, its lights fixed there too; the camera the
+ * editor looks through (`view`) for one facing the camera, its lights kept to the eye.
+ */
+export const lightsView = (b: BodyInfo | null | undefined, layout: Viewpoint, view: Viewpoint): Viewpoint =>
+  b && valuesOf(b).orientation === 'world' ? layout : view;
+
+/**
+ * A shield's lights as lights to mark (their rows' keys under its material's, `base`): each as it
+ * is set, white.
+ */
+export function shieldLightsOf(
+  base: string,
+  lights: readonly AddedLight[],
+): { readonly key: string; readonly light: LightEntry['light'] }[] {
+  return lights.map((l) => ({
+    key: viewKey(base, { kind: 'gridLight', id: l.id }),
+    light: addedLight(l),
+  }));
+}
+
+/** The shield among a part's materials: the grid, drawn with the shield shader (none: no shield). */
+export const shieldOf = (materials: readonly MaterialEntry[]) =>
+  materials.find((m) => m.controls.colours);
+
+/**
+ * A body's shields' lights as lights to mark, with the body's own: each part's shield's (its own
+ * parts' first, then each overlay's it wears), their rows' keys as the tree keys them (`keyOf`:
+ * a material's row by its name and, an overlay's, the overlay; a material drawn on several parts
+ * under each part).
+ */
+export function shieldLightsOfBody(
+  b: BodyInfo,
+  materials: readonly MaterialEntry[],
+  keyOf: (name: string, overlay?: string) => string,
+): { readonly key: string; readonly light: LightEntry['light'] }[] {
+  const nodes = partNodes(b, materials);
+  const lightsOf = (list: readonly PartNode[], overlay?: string) => {
+    const shared = sharedMaterials(list);
+    return list.flatMap(({ part, materials }) => {
+      const grid = shieldOf(materials);
+      return grid
+        ? shieldLightsOf(
+            onPart(keyOf(grid.name, overlay), shared.has(grid.name) ? part.key : undefined),
+            grid.values.gridLights,
+          )
+        : [];
+    });
+  };
+  return [
+    ...lightsOf(nodes.own),
+    ...nodes.overlays.flatMap((o) => lightsOf(o.nodes, o.overlay.id)),
+  ];
+}
+
+/** A body's name as shown: as renamed (the level edited's, else the library's), else its id. */
+export const bodyLabel = (b: BodyInfo) => b.settings.label ?? bodyLabelBelow(b);
+export const bodyLabelBelow = (b: BodyInfo) => b.below?.label ?? b.name ?? b.id;
+/**
+ * The overlays a body may wear, by name: the game data's (the index's styles), and those made in
+ * the editor (the library's), each as renamed in the library.
+ */
+export function overlayChoices(index: PlanetIndex | null, library: LibraryState): PickChoice[] {
+  const ids = [
+    ...(index?.styles.map((s) => s.id) ?? []),
+    ...Object.entries(library.created ?? {})
+      .filter(([, o]) => o.kind === 'planet')
+      .map(([id]) => id),
+  ];
+  return ids.map((id) => ({ value: id, label: overlayName(library, id) }));
+}
+
+/**
+ * A body's materials' draw order with its overlays' in the order it wears them (`worn`): its own
+ * first, then each overlay's, each keeping the order they are drawn in now.
+ */
+export function overlayOrder(
+  materials: readonly MaterialEntry[],
+  worn: readonly string[],
+): string[] {
+  return [
+    ...materials.filter((m) => !m.overlay).map((m) => m.key),
+    ...worn.flatMap((id) => materials.filter((m) => m.overlay === id).map((m) => m.key)),
+  ];
+}
+
+/** A body's name with the overlays it wears. */
+export const wornLabel = (b: BodyInfo) =>
+  b.overlays.length
+    ? `${bodyLabel(b)} · ${b.overlays.map(overlayLabel).join(' + ')}`
+    : bodyLabel(b);
+
+/** The sky's materials as shown: the scene file's, through what is under the layer edited and the layer edited. */
+export function skyMaterialsOf(
+  scene: PlayScene,
+  below: SkyChoices | undefined,
+  edited: SkyChoices | undefined,
+  base?: MaterialSettingsMap,
+  overlays: readonly SkyOverlayInfo[] = [],
+): MaterialEntry[] {
+  const out: MaterialEntry[] = [];
+  // Each material anchored as the sky is, where none of its levels says otherwise.
+  const anchor = skyAnchorView(below, edited).value;
+  const meshes = Object.values(scene.meshes)
+    .filter((mesh) => !mesh.planet) // the scene's own planets are placed planets
+    .flatMap((mesh) => mesh.materials.map((name) => ({ name, particles: false })));
+  const particles = scene.particles.map((p) => ({ name: p.material, particles: true }));
+  for (const { name, particles: drawn } of [...meshes, ...particles]) {
+    const material = scene.materials[name];
+    if (!material || out.some((m) => m.name === name)) continue;
+    const under = mergeMaterialSettings(base, below?.materials)[name];
+    const named = under?.label ?? materialLabel(name, material, scene.textures);
+    out.push({
+      name,
+      key: name,
+      ...(material.priority !== undefined ? { priority: material.priority } : {}),
+      label: edited?.materials?.[name]?.label ?? named,
+      labelBelow: named,
+      from: 'own',
+      origins: originsOf([
+        ['the library (material)', base?.[name]],
+        ['the library (sky)', below?.materials?.[name]],
+      ]),
+      values: materialValues(
+        material,
+        mergeMaterialSettings(base, below?.materials, edited?.materials)[name],
+        skyDepths(scene)[name],
+        anchor,
+      ),
+      enabledBelow: under?.enabled ?? MATERIAL_DEFAULTS.enabled,
+      controls: materialControls(material, { particles: drawn, sky: true }),
+      set: edited?.materials?.[name],
+      baseTint: under?.tint ?? NO_MATERIAL_TINT,
+      layers: layersOf(
+        material,
+        mergeMaterialSettings(base, below?.materials, edited?.materials)[name],
+        edited?.materials?.[name],
+        [
+          ['the library (material)', base?.[name]],
+          ['the library (sky)', below?.materials?.[name]],
+        ],
+        scene.textures,
+      ),
+    });
+  }
+  // The overlays' it wears: each drawn as the sky's are, its settings the overlay's (the library's
+  // for it) under the sky's. Its own parts (added onto it: the overlay with no id) draw its own.
+  for (const o of overlays)
+    for (const part of o.file?.parts ?? [])
+      for (const name of part.materials) {
+        const material = o.file?.materials[name];
+        const key = materialKey(name, o.id || undefined);
+        if (!material || out.some((m) => m.key === key)) continue;
+        const levels = [
+          ['the library (material)', base?.[name]],
+          [`the library (${skyOverlayLabel(o)})`, o.below?.materials?.[key]],
+          ['the library (sky)', below?.materials?.[key]],
+        ] as const;
+        const under = mergeSettings(...levels.map(([, l]) => l));
+        const settings = mergeSettings(under, edited?.materials?.[key]);
+        const textures = { ...scene.textures, ...o.file?.textures };
+        const named = under?.label ?? materialLabel(name, material, textures);
+        out.push({
+          name,
+          key,
+          ...(material.priority !== undefined ? { priority: material.priority } : {}),
+          label: edited?.materials?.[key]?.label ?? named,
+          labelBelow: named,
+          ...(o.id
+            ? { from: 'style' as const, overlay: o.id }
+            : { from: 'own' as const, added: true }),
+          origins: originsOf(levels),
+          values: materialValues(material, settings, skyDepths(scene)[name], anchor),
+          enabledBelow: under?.enabled ?? MATERIAL_DEFAULTS.enabled,
+          controls: materialControls(material, { particles: false, sky: true }),
+          set: edited?.materials?.[key],
+          baseTint: under?.tint ?? NO_MATERIAL_TINT,
+          layers: layersOf(material, settings, edited?.materials?.[key], levels, textures),
+        });
+      }
+  return inDrawOrder(out, edited?.order ?? below?.order);
+}
+
+/**
+ * An overlay a sky wears, as an editor has it: which, its name (as made, or as the data names it),
+ * its settings under the level edited (the library's for it), and its file.
+ */
+export interface SkyOverlayInfo {
+  readonly id: string;
+  readonly name?: string;
+  readonly below?: BodySettings;
+  readonly file?: SkyOverlayFile;
+}
+
+/**
+ * The overlays a sky wears (by id, in order) as an editor has them: each one's file, the data's or
+ * made (its materials found by `lookup`).
+ */
+export function skyOverlayInfos(
+  scene: PlayScene | null,
+  library: LibraryState,
+  worn: readonly string[],
+  lookup: SourceLookup,
+): SkyOverlayInfo[] {
+  return worn.map((id) => {
+    const made = library.created?.[id];
+    const file = made?.kind === 'sky' ? createdSkyFile(made, lookup) : scene?.overlays?.[id];
+    const name = made?.label ?? file?.label;
+    return {
+      id,
+      ...(name ? { name } : {}),
+      below: library.styles[id],
+      ...(file ? { file } : {}),
+    };
+  });
+}
+
+/** The overlays a sky may wear, by name: the game data's (the scene's), and those made in the editor for skies. */
+export function skyOverlayChoices(scene: PlayScene | null, library: LibraryState): PickChoice[] {
+  return [
+    ...Object.entries(scene?.overlays ?? {}).map(([id, file]) => ({
+      value: id,
+      label: library.styles[id]?.label ?? file.label ?? id,
+    })),
+    ...Object.entries(library.created ?? {})
+      .filter(([, o]) => o.kind === 'sky')
+      .map(([id]) => ({ value: id, label: overlayName(library, id) })),
+  ];
+}
+
+/** A sky overlay's name: as renamed in the library, else as made or as its data names it, else its id. */
+export const skyOverlayLabel = (o: SkyOverlayInfo) => o.below?.label ?? o.name ?? o.id;
+
+/**
+ * A sky overlay's parts as shown: each one's settings in effect (the overlay's own, the library
+ * sky's for it, `below`; then the level edited's) about the eye. One made in the editor is a band
+ * named by its id; the data's, by the overlay's name.
+ */
+export function skyPartsOf(
+  o: SkyOverlayInfo,
+  below: PartSettingsMap | undefined,
+  edited: PartSettingsMap | undefined,
+  /** Whether the overlay is the one open (its parts are its own, not another's it wears). */
+  own = false,
+  /** The parts added at the level edited, by id (the sky's own: `o` with no id). */
+  addedHere: readonly string[] = [],
+): PartEntry[] {
+  const levels: [string, PartSettingsMap | undefined][] = [
+    [`the library (${skyOverlayLabel(o)})`, o.below?.parts],
+    ['the library (sky)', below],
+  ];
+  const parts = o.file?.parts ?? [];
+  return parts.map((part): PartEntry => {
+    const key: PartKey = o.id
+      ? overlayPartKey(o.id, { id: part.id, role: 'band' })
+      : `own:${part.id}`;
+    const under = mergePartSettings(...levels.map(([, l]) => l))[key];
+    const settings = mergePartSettings(...levels.map(([, l]) => l), edited)[key];
+    const band = part.shape.kind === 'band';
+    const named = under?.label ?? (band || !o.id ? idLabel(part.id) : skyOverlayLabel(o));
+    return {
+      key,
+      label: settings?.label ?? named,
+      labelBelow: named,
+      from: 'style',
+      kind: 'sky',
+      band,
+      values: {
+        size: settings?.size ?? 1,
+        turn: settings?.turn ?? 0,
+        tilt: settings?.tilt ?? 0,
+        width: settings?.width ?? 1,
+        height: settings?.height ?? 1,
+        depth: 0,
+        mid: 0.5,
+        keepToLimb: false,
+        flip: false,
+        side: 'near',
+        from: 0,
+        repeat: 1,
+        orientation: DEFAULT_ORIENTATION,
+      },
+      set: edited?.[key],
+      origins: originsOf(levels.map(([name, l]) => [name, l?.[key]] as const)),
+      canKeepToLimb: false,
+      materials: part.materials,
+      enabled: settings?.enabled ?? true,
+      enabledBelow: under?.enabled ?? true,
+      ...(o.id ? { overlay: o.id } : {}),
+      ...(own || !o.id ? {} : { overlayName: skyOverlayLabel(o) }),
+      ...(!o.id && addedHere.includes(part.id) ? { added: true } : {}),
+    };
+  });
+}
+
+/** A sky's own parts (added onto it), as the overlays it wears are had: one with no id. */
+export const ownSkyInfo = (file: SkyOverlayFile | undefined): SkyOverlayInfo => ({
+  id: '',
+  ...(file ? { file } : {}),
+});
+
+/** Materials as shown, in the order they are drawn (see `drawOrder`). */
+function inDrawOrder(
+  entries: readonly MaterialEntry[],
+  order: readonly string[] | undefined,
+): MaterialEntry[] {
+  const keys = drawOrder(
+    entries.map((m) => ({ name: m.key, blend: m.values.blend, priority: m.priority })),
+    order,
+  );
+  return [...entries].sort((a, b) => keys.indexOf(a.key) - keys.indexOf(b.key));
+}
+
+/**
+ * A material on its own, as its base settings show it: the data's, through the tuning of the
+ * asset it is shown from, under its base settings.
+ */
+export function baseMaterialOf(
+  name: string,
+  material: SceneMaterial,
+  textures: Readonly<Record<string, SceneTexture>>,
+  pattern: boolean,
+  tuning: MaterialSettingsMap | undefined,
+  base: MaterialSettingsMap | undefined,
+  particles = false,
+  role?: PartRole,
+  skyDepth?: MaterialDepth,
+): MaterialEntry {
+  const values = materialValues(material, mergeMaterialSettings(tuning, base)[name], skyDepth);
+  const sky = skyDepth !== undefined;
+  const named = tuning?.[name]?.label ?? materialLabel(name, material, textures, role);
+  return {
+    name,
+    key: name,
+    label: base?.[name]?.label ?? named,
+    labelBelow: named,
+    from: 'own',
+    origins: originsOf([['its tuning', tuning?.[name]]]),
+    values,
+    enabledBelow: tuning?.[name]?.enabled ?? MATERIAL_DEFAULTS.enabled,
+    controls: materialControls(material, { pattern, particles, drawAs: values.drawAs, sky }),
+    set: base?.[name],
+    baseTint: tuning?.[name]?.tint ?? NO_MATERIAL_TINT,
+    layers: layersOf(
+      material,
+      mergeMaterialSettings(tuning, base)[name],
+      base?.[name],
+      [['its tuning', tuning?.[name]]],
+      textures,
+    ),
+  };
+}
+
+/** A sky's materials' groups in its tree, by where each is drawn among the scene's objects. */
+export const DEPTH_GROUPS: readonly {
+  readonly depth: MaterialDepth;
+  readonly label: string;
+  readonly icon: string;
+}[] = [
+  { depth: 'background', label: 'Background', icon: 'flip_to_back' },
+  { depth: 'scene', label: 'Midground', icon: 'vertical_align_center' },
+  { depth: 'foreground', label: 'Foreground', icon: 'flip_to_front' },
+];
+
+/** The ways a body's surfaces can be turned, as the editor offers them. */
+export const ORIENTATION_CHOICES: readonly { readonly value: Orientation; readonly label: string }[] = [
+  { value: 'camera', label: 'Camera' },
+  { value: 'world', label: 'World' },
+];
+
+/** The anchors a sky or its material may be given, as their choices show them. */
+export const SKY_ANCHOR_CHOICES: readonly { readonly value: SkyAnchor; readonly label: string }[] = [
+  { value: 'world', label: 'World' },
+  { value: 'position', label: 'Camera position' },
+  { value: 'camera', label: 'Camera' },
+];
+
+/**
+ * How a sky is anchored against the camera, as its panel shows it: its anchor, what the layer
+ * edited sets (none: nothing), and which level under it sets it, where one does.
+ */
+export interface SkyAnchorView {
+  readonly value: SkyAnchor;
+  readonly set?: SkyAnchor;
+  readonly origin?: string;
+}
+
+/** A sky's anchor as shown: the layer edited's, over the level under it (`belowName`), over the world. */
+export function skyAnchorView(
+  below: SkyChoices | undefined,
+  edited: SkyChoices | undefined,
+  belowName = 'the library (sky)',
+): SkyAnchorView {
+  const set = edited?.anchor;
+  const under = below?.anchor;
+  return {
+    value: set ?? under ?? DEFAULT_SKY_ANCHOR,
+    ...(set ? { set } : {}),
+    ...(under ? { origin: belowName } : {}),
+  };
+}
+
+/** A sky's materials by their depth as set (else as the data puts them), in its groups' order; empty groups left out. */
+export function byDepth(materials: readonly MaterialEntry[]): {
+  readonly depth: MaterialDepth;
+  readonly label: string;
+  readonly icon: string;
+  readonly materials: MaterialEntry[];
+}[] {
+  return DEPTH_GROUPS.map((g) => ({
+    ...g,
+    materials: materials.filter((m) => m.values.depth === g.depth),
+  })).filter((g) => g.materials.length);
+}
+
+/** The reference image's row: an editing aid, after what is edited, in either editor's tree. */
+export const referenceRow = (): TreeRow => ({
+  key: REFERENCE_KEY,
+  label: 'Reference',
+  icon: 'compare',
+  depth: 0,
+  expandable: false,
+  expanded: false,
+  aid: true,
+});
+
+/**
+ * What of a material a row shows, where it isn't the material itself: one of its layers; the
+ * shield shader it is drawn with (its pattern); one of that shader's lights (by its id).
+ */
+export type MaterialView =
+  | { readonly kind: 'layer'; readonly slot: LayerSlot }
+  | { readonly kind: 'shader' }
+  | { readonly kind: 'gridLight'; readonly id: AddedLight['id'] };
+
+const VIEW = '::';
+
+/** A row's key for what of a material it shows (its own key and the view after `::`). */
+export function viewKey(materialKey: string, view: MaterialView): string {
+  const what =
+    view.kind === 'layer'
+      ? `layer:${view.slot}`
+      : view.kind === 'gridLight'
+        ? `light:${view.id}`
+        : 'shader';
+  return `${materialKey}${VIEW}${what}`;
+}
+
+/** A shield shader's groups' keys (they only fold): its materials, its lights. */
+export const shaderGroupKey = (materialKey: string, group: 'materials' | 'lights') =>
+  `${materialKey}${VIEW}group:${group}`;
+
+/**
+ * A row's key split into its material's and what of it it shows; a shader's group's into its
+ * material's and `group`; none where it is a material's own (or not a material's at all).
+ */
+export function splitViewKey(
+  key: string,
+): { readonly base: string; readonly view: MaterialView | 'group' } | null {
+  const at = key.lastIndexOf(VIEW);
+  if (at < 0) return null;
+  const base = key.slice(0, at);
+  const what = key.slice(at + VIEW.length);
+  if (what === 'shader') return { base, view: { kind: 'shader' } };
+  if (what.startsWith('group:')) return { base, view: 'group' };
+  if (what.startsWith('light:'))
+    return { base, view: { kind: 'gridLight', id: what.slice(6) as AddedLight['id'] } };
+  if (what.startsWith('layer:')) {
+    const slot = what.slice(6) as LayerSlot;
+    return LAYER_SLOTS.includes(slot) ? { base, view: { kind: 'layer', slot } } : null;
+  }
+  return null;
+}
+
+const LAYER_SLOTS: readonly LayerSlot[] = ['diffuse', 'emissive', 'mask1', 'mask2'];
+
+/** A view's title: its shader, its light, or its layer (by the material's own name for it, where given). */
+export function viewTitle(view: MaterialView, m?: MaterialEntry): string {
+  if (view.kind === 'shader') return 'Shield shader';
+  if (view.kind === 'gridLight')
+    return m?.values.gridLights.find((l) => l.id === view.id)?.name ?? 'Light';
+  const layer = m?.layers.find((l) => l.slot === view.slot)?.label ?? LAYER_NAMES[view.slot];
+  return m ? `${m.label} · ${layer}` : layer;
+}
+
+/** A material's layers as rows under its own (each showing that layer). */
+export function layerRows(materialKey: string, m: MaterialEntry, depth: number): TreeRow[] {
+  return m.layers.map((l) => ({
+    key: viewKey(materialKey, { kind: 'layer', slot: l.slot }),
+    label: l.label,
+    icon: 'layers',
+    depth,
+    expandable: false,
+    expanded: false,
+  }));
+}
+
+/**
+ * A material's row key with the part it is drawn on after it (`#`), where the same material is
+ * drawn on more than one of a list's parts (each its own row; its settings, by name, still shared).
+ */
+export const onPart = (key: string, part?: string) => (part ? `${key}#${part}` : key);
+
+/** A material's name from its row key's (the part it is on, where given, left off). */
+export const offPart = (name: string) => name.split('#')[0] ?? name;
+
+/** The materials drawn on more than one of these parts (their rows told apart by part). */
+export function sharedMaterials(
+  list: readonly { readonly materials: readonly { readonly name: string }[] }[],
+): ReadonlySet<string> {
+  const seen = new Set<string>();
+  const shared = new Set<string>();
+  for (const { materials } of list)
+    for (const name of new Set(materials.map((m) => m.name)))
+      (seen.has(name) ? shared : seen).add(name);
+  return shared;
+}
+
+/**
+ * A part's materials as rows under it: a shield's (a grid's) under its shader, the shader's
+ * materials and its lights (where it shows, where it is active) under that, each its own row
+ * (open unless folded: their keys among those kept mean folded); any other part's materials
+ * right under it. Each material's row is the editor's own (`material`, at a depth), its layers
+ * under it.
+ */
+export function partMaterialRows(
+  materials: readonly MaterialEntry[],
+  depth: number,
+  open: ReadonlySet<string>,
+  keyOf: (name: string) => string,
+  material: (key: string, m: MaterialEntry, depth: number) => void,
+  push: (row: TreeRow) => void,
+): void {
+  const grid = shieldOf(materials);
+  if (!grid) {
+    for (const m of materials) material(keyOf(m.name), m, depth);
+    return;
+  }
+  const base = keyOf(grid.name);
+  const shader = viewKey(base, { kind: 'shader' });
+  push({
+    key: shader,
+    label: 'Shield shader',
+    icon: 'hexagon',
+    depth,
+    expandable: true,
+    expanded: !open.has(shader),
+  });
+  if (open.has(shader)) return;
+  const group = (which: 'materials' | 'lights', label: string, icon: string) => {
+    const key = shaderGroupKey(base, which);
+    push({
+      key,
+      label,
+      icon,
+      depth: depth + 1,
+      expandable: true,
+      expanded: !open.has(key),
+      group: true,
+    });
+    return !open.has(key);
+  };
+  if (group('materials', 'Materials', 'texture'))
+    for (const m of materials) material(keyOf(m.name), m, depth + 2);
+  if (group('lights', 'Lights', 'lightbulb'))
+    for (const l of grid.values.gridLights)
+      push({
+        key: viewKey(base, { kind: 'gridLight', id: l.id }),
+        label: l.name,
+        icon: lightIcon(l),
+        depth: depth + 2,
+        expandable: false,
+        expanded: false,
+        enabled: l.enabled ?? true,
+      });
+}

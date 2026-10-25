@@ -1,0 +1,80 @@
+@use '../controls/rows/property-row';
+
+// A properties panel's sections (pods), one under another.
+:host {
+  display: grid;
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 10px;
+}
+
+.button {
+  @include property-row.button;
+}
+
+// The textures a material reads: each layer's, its path on the site (opens it), in the game data, its size.
+.textures {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.texture {
+  display: grid;
+  gap: 1px;
+  font: var(--mat-sys-body-small);
+
+  &__layer {
+    opacity: 0.85;
+  }
+
+  &__path,
+  &__source {
+    overflow-wrap: anywhere;
+    font-family: var(--mat-sys-body-small-font), monospace;
+    font-size: 0.85em;
+  }
+
+  &__path {
+    color: var(--mat-sys-primary);
+  }
+
+  &__source,
+  &__size {
+    opacity: 0.75;
+  }
+
+  &__size {
+    font-size: 0.85em;
+  }
+}
+
+.hint {
+  margin: 0;
+  font: var(--mat-sys-body-small);
+  opacity: 0.75;
+}
+
+// A material's name in the game data, under its readable one (the panel's title).
+.data-name {
+  margin: 0 0 10px;
+  font: var(--mat-sys-body-small);
+  opacity: 0.7;
+
+  &__value {
+    font-family: var(--mat-sys-body-small-font), monospace;
+    font-size: 0.9em;
+    overflow-wrap: anywhere;
+  }
+}
+
+// A material in a light's Reaches list, under its part.
+.receiver--material {
+  padding-inline-start: 14px;
+}

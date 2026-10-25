@@ -8,12 +8,12 @@
     [opened]="store.infoOpened()"
     (openedChange)="store.setPanelOpened('info', $event)"
   >
-    <hrs-map-panel
+    <ui-side-panel
       [title]="store.facts()?.name ?? 'Map'"
       (closeRequested)="store.setPanelOpened('info', false)"
     >
       <hrs-map-view-controls
-        hrsMapPanelPinned
+        uiSidePanelPinned
         [arenas]="store.arenas()"
         [arena]="store.arena()"
         [hasTeamColour]="store.hasTeamColour()"
@@ -27,7 +27,7 @@
         [extra]="store.extra()"
         [extraLoading]="store.extraLoading()"
       />
-    </hrs-map-panel>
+    </ui-side-panel>
   </mat-drawer>
   <mat-drawer
     id="map-explore-details"
@@ -38,12 +38,12 @@
     [opened]="store.detailsOpened()"
     (openedChange)="store.setPanelOpened('details', $event)"
   >
-    <hrs-map-panel
+    <ui-side-panel
       title="Points of interest"
       (closeRequested)="store.setPanelOpened('details', false)"
     >
       <hrs-poi-details
-        hrsMapPanelPinned
+        uiSidePanelPinned
         [poi]="store.selectedPoi()"
         (stateChange)="store.setSelectedState($event)"
       />
@@ -54,7 +54,7 @@
         (poiSelect)="store.select($event, true)"
         (stateToggle)="store.cycleElement($event)"
       />
-    </hrs-map-panel>
+    </ui-side-panel>
   </mat-drawer>
   <mat-drawer-content class="explore__content">
     <hrs-map-viewer

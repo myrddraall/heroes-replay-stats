@@ -1,0 +1,62 @@
+{
+  "name": "@myrddraall/heroes-replay-stats-aether",
+  "version": "0.0.0-MAIN",
+  "private": true,
+  "description": "Aether: the 3D engine. Scene data and the game's file formats, how settings stack, the three.js renderer and the Angular view that shows a scene",
+  "types": "./src/index.ts",
+  "sideEffects": false,
+  "scripts": {
+    "format": "prettier --write \"src/**/*.{ts,html,scss}\"",
+    "github.actions.test": "pnpm test",
+    "lint": "eslint src",
+    "test": "ng test --watch=false",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@myrddraall/heroes-replay-stats-signals": "workspace:*",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^22.1.8",
+    "@angular/cli": "^22.1.8",
+    "@angular/common": "^22.1.0",
+    "@angular/compiler": "^22.1.0",
+    "@angular/compiler-cli": "^22.1.0",
+    "@angular/core": "^22.1.0",
+    "@angular/platform-browser": "^22.1.0",
+    "@eslint/js": "^10.0.1",
+    "@ngrx/signals": "^22.0.1",
+    "@types/three": "^0.186.0",
+    "angular-eslint": "^22.5.0",
+    "eslint": "^10.9.1",
+    "jsdom": "^28.0.0",
+    "prettier": "^3.8.1",
+    "rxjs": "^7.8.0",
+    "three": "^0.186.1",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "^8.69.0",
+    "vitest": "^4.0.8"
+  },
+  "peerDependencies": {
+    "@angular/common": "^22.1.0",
+    "@angular/core": "^22.1.0",
+    "@ngrx/signals": "^22.0.1",
+    "three": "^0.186.1"
+  },
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts",
+    "./aids": "./src/aids/index.ts",
+    "./camera": "./src/camera/index.ts",
+    "./design": "./src/design/index.ts",
+    "./formats": "./src/formats/index.ts",
+    "./lights": "./src/lights/index.ts",
+    "./materials": "./src/materials/index.ts",
+    "./render": "./src/render/index.ts",
+    "./sky": "./src/sky/index.ts",
+    "./space": "./src/space/index.ts",
+    "./tints": "./src/tints/index.ts",
+    "./view": "./src/view/index.ts"
+  },
+  "type": "module"
+}

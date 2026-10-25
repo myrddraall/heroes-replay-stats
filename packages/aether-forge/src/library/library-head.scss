@@ -1,0 +1,57 @@
+@use '../controls/rows/property-row';
+
+:host {
+  display: grid;
+  gap: 6px;
+  padding-bottom: 8px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.search {
+  @include property-row.field;
+  width: 100%;
+}
+
+.button {
+  @include property-row.button;
+  gap: 4px;
+
+  mat-icon {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+  }
+}
+
+// Which type is listed: its label, its list as wide as the row leaves it, the view's menu; 1em
+// between each as seen (the menu's icon sits 6px inside its button: the list's edge and the row's
+// end give that back, so the icon lines up with the search's end).
+$icon-inset: 6px;
+
+.type {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+  margin-inline-end: -$icon-inset;
+
+  &__label {
+    @include property-row.label;
+  }
+
+  &__select {
+    @include property-row.field;
+    flex: 1;
+    min-width: 0;
+    margin-inline-end: -$icon-inset;
+
+    option {
+      background: rgb(var(--hrs-glass-tint));
+      color: inherit;
+    }
+  }
+}

@@ -8,8 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSliderModule } from '@angular/material/slider';
-import { BackgroundStore } from '../../scenes/play-background/background.store';
-
+import { ViewStore } from "@myrddraall/heroes-replay-stats-aether";
 /** The glass opacity below which muted text loses WCAG AA contrast over the background's brightest sky. */
 export const GLASS_ALPHA_FLOOR = 0.06;
 /** How much the glass blurs what is behind it, when it does. */
@@ -62,7 +61,7 @@ export class ThemePreviewPage {
   protected readonly blur = signal(false);
   /** Whether the background is tinted blue (the vs A.I. blue, multiplied). */
   protected readonly blueTint = signal(false);
-  private readonly background = inject(BackgroundStore);
+  private readonly background = inject(ViewStore);
   private readonly root = inject(DOCUMENT).documentElement;
   /** Whether the page's neutral is the Nexus one (blue and cyan) rather than the purple. */
   protected readonly nexus = signal(false);

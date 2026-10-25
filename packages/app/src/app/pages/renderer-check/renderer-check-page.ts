@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { DevReports } from '../../platform/dev-reports';
-import { BACKGROUND_RENDERER } from '../../scenes/play-background/background-renderer';
-import { PlayBackground } from '../../scenes/play-background/play-background';
+import { RENDERER } from "@myrddraall/heroes-replay-stats-aether/render";
+import { SceneView } from "@myrddraall/heroes-replay-stats-aether/view";
 import { CheckControls } from './check-controls';
 import { CheckDifference } from './check-difference';
 import { CheckPictures } from './check-pictures';
@@ -17,13 +17,13 @@ import { RendererCheckStore } from './renderer-check.store';
  */
 @Component({
   selector: 'hrs-renderer-check-page',
-  imports: [PlayBackground, CheckControls, CheckPictures, CheckTableView, CheckDifference],
+  imports: [SceneView, CheckControls, CheckPictures, CheckTableView, CheckDifference],
   templateUrl: './renderer-check-page.html',
   styleUrl: './renderer-check-page.scss',
   providers: [
     RendererCheckStore,
     {
-      provide: BACKGROUND_RENDERER,
+      provide: RENDERER,
       useFactory: (check: InstanceType<typeof RendererCheckStore>) => computed(() => check.factory),
       deps: [RendererCheckStore],
     },

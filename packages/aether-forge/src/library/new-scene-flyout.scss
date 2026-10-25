@@ -1,0 +1,25 @@
+@use '../controls/flyout';
+@use '../controls/rows/property-row';
+
+.flyout {
+  @include flyout.panel;
+}
+
+@include flyout.parts;
+
+.name {
+  display: grid;
+  flex: none;
+  grid-template-columns: 56px minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+
+  &__label {
+    @include property-row.label;
+  }
+
+  &__field {
+    @include property-row.field;
+    width: 100%;
+  }
+}

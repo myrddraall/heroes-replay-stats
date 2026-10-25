@@ -1,7 +1,7 @@
 import { computed, inject } from '@angular/core';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withState } from '@ngrx/signals';
-import { DEFAULT_DRAWING } from '../../scenes/play-background/background.store';
-import { PRESETS } from '../../scenes/play-background/tint-presets';
+import { DEFAULT_DRAWING } from "@myrddraall/heroes-replay-stats-aether";
+import { PRESETS } from '../../site-background/tint-presets';
 import { HARDWARE_ACCELERATION } from './hardware-acceleration';
 
 /** Where the look's settings the user chose are kept, as JSON. */

@@ -15,7 +15,7 @@
 }
 
 .explore__drawer {
-  width: var(--hrs-map-panel-width, min(360px, 90vw));
+  width: var(--ui-side-panel-width, min(360px, 90vw));
   overflow: hidden;
   // Material rounds a side drawer's inner corners; these run the full height, flush with the map.
   border-radius: 0;
