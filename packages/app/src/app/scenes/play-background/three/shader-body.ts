@@ -39,7 +39,11 @@ import { cold } from './cold-shaders';
 
 /**
  * A planet's body part drawn in three.js's shading language: on a square facing the eye, its shape
- * found under each pixel and shaded as the material says. One shader for every part: its shape (`uShape`: a sphere's near side 0 or far side 1, a ring
+ * found under each pixel and shaded as the material says. The square is in the body's frame facing
+ * the eye (`uAxes`); the shape is in its surface's frame (`uFrame`): the square's frame for a part
+ * facing the camera, its placement frame for one fixed in the world, either turned by the body's
+ * own turn, its Axis and Turn (`uSurface` turns the square's points into it). Everything the shading reads (the eye, the view's right and
+ * up, the lights) comes in the surface's frame. One shader for every part: its shape (`uShape`: a sphere's near side 0 or far side 1, a ring
  * 2, a frustum's near wall 3 or far wall 4, a disc 5, a plane 6, a capsule's outside 7 or inside 8)
  * is a branch on its uniforms. The shape is found once, for both the colour and the depth (written
  * as the colour is worked out); see `shader-material.ts` for how it is kept small.
@@ -67,6 +71,8 @@ export function bodyNodes(
   const viewProjection = u.mat4('uViewProjection');
   const centre = u.vec3('uCentre');
   const axes = u.mat3('uAxes');
+  const frame = u.mat3('uFrame');
+  const surface = u.mat3('uSurface');
   const radius = u.float('uRadius', 1);
   const extent = u.float('uExtent', 1);
   const quad = positionGeometry.xy.mul(extent);
@@ -84,9 +90,10 @@ export function bodyNodes(
   const shapeUp = u.vec3('uShapeUp');
   const span = u.vec4('uShapeSpan');
 
-  /** Where the eye's ray meets the part: p (its frame), n, how far across a ring, coverage, depth. */
+  /** Where the eye's ray meets the part: p (its surface's frame), n, how far across a ring, coverage, depth. */
   const hit = () => {
-    const d = normalize(vec3(vQuad.x, 0, vQuad.y).div(radius).sub(eye)).toVar();
+    // The square's point, in the surface's frame (no turn for a part facing the camera).
+    const d = normalize(surface.mul(vec3(vQuad.x, 0, vQuad.y)).div(radius).sub(eye)).toVar();
     const p = vec3(0).toVar();
     const n = vec3(0, 0, 1).toVar();
     const across = float(0).toVar();
@@ -103,7 +110,9 @@ export function bodyNodes(
       const from = eye.sub(shapeCentre).toVar();
       const b = dot(from, d).toVar();
       const disc = b.mul(b).sub(dot(from, from)).add(r.mul(r)).toVar();
-      const tRing = params.z.sub(eye.y).div(d.y).toVar();
+      // (A ring fixed in the world may be seen edge on: its plane never met, not met at infinity.)
+      const dy = select(abs(d.y).lessThan(1e-7), select(d.y.lessThan(0), float(-1e-7), float(1e-7)), d.y);
+      const tRing = params.z.sub(eye.y).div(dy).toVar();
       const rr = length(eye.add(d.mul(tRing)).xz).toVar();
       const inside = select(sphere, disc, min(rr.sub(params.x), params.y.sub(rr))).toVar();
       coverage.assign(clamp(inside.div(max(fwidth(inside), 1e-6)).add(0.5), 0, 1));
@@ -118,7 +127,8 @@ export function bodyNodes(
       }).Else(() => {
         missedRay.assign(tRing.lessThanEqual(0));
         p.assign(eye.add(d.mul(tRing)));
-        n.assign(vec3(0, -1, 0));
+        // (Facing the eye: a ring fixed in the world may be seen from its far side.)
+        n.assign(select(eye.y.lessThan(params.z), vec3(0, -1, 0), vec3(0, 1, 0)));
         across.assign(length(p.xz).sub(params.x).div(max(1e-5, params.y.sub(params.x))));
       });
       world.assign(p);
@@ -225,8 +235,8 @@ export function bodyNodes(
       // one is between it and the eye (its edge smoothed over a pixel), or it is inside one. (A
       // pixel's size is taken before the loop: derivatives in it aren't to be relied on.)
       const at = eye.add(d.mul(abs(t))).toVar();
-      const from = centre.add(axes.mul(eye.mul(radius))).toVar();
-      const ray = centre.add(axes.mul(at.mul(radius))).sub(from).toVar();
+      const from = centre.add(frame.mul(eye.mul(radius))).toVar();
+      const ray = centre.add(frame.mul(at.mul(radius))).sub(from).toVar();
       const farOf = max(length(ray), 1e-6).toVar();
       const dir = ray.div(farOf).toVar();
       const pixel = max(length(fwidth(dir)), 1e-7).toVar();
@@ -258,10 +268,10 @@ export function bodyNodes(
         });
       world.assign(p.add(shapeCentre));
     });
-    // (A ring's point is in the body's frame already, found from the eye itself; every other
+    // (A ring's point is in the surface's frame already, found from the eye itself; every other
     // shape's is about the shape's centre.)
     const at = select(uShape.equal(2), p, p.add(shapeCentre)).toVar();
-    const clip = viewProjection.mul(vec4(centre.add(axes.mul(at.mul(radius))), 1)).toVar();
+    const clip = viewProjection.mul(vec4(centre.add(frame.mul(at.mul(radius))), 1)).toVar();
     const depthOf = clip.z.div(clip.w).mul(0.5).add(0.5).toVar();
     return { p, n, across, coverage, pastOutline, missedRay, world, depthOf };
   };

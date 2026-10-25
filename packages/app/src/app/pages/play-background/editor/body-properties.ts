@@ -20,12 +20,17 @@ import { PickList, type PickChoice } from './pick-list';
 import { PropertyNumber } from '../properties/property-number';
 import { type PlacementChange, PropertyPlacement } from '../properties/property-placement';
 import { PropertyText } from '../properties/property-text';
+import { PropertySelect } from '../properties/property-select';
+import type { Orientation } from '../../../scenes/play-background/scene-graph';
+import { ORIENTATION_CHOICES } from './editor-model';
 
 /**
  * A body's properties (presentational): the overlays the planet or moon wears, its lights as a whole
  * (how strongly they light it, and all of them turned together; each light, its shadow too, is a
  * row of its own in the tree), the lean of its rims, a tint over all its materials; a moon's orbit about its
- * parent, or a scene's planet's place and size; its Moons section given (`[moonsPod]`: adding
+ * parent, or a scene's planet's place and size; which way its surfaces are turned (facing the
+ * camera, or fixed in the world), where its poles point and its turn about them (which side of it
+ * shows); its Moons section given (`[moonsPod]`: adding
  * one, those it has), and its Lights section (`[lightAdd]`: adding one, what lights it).
  */
 @Component({
@@ -38,6 +43,7 @@ import { PropertyText } from '../properties/property-text';
     PropertyDirection,
     PropertyText,
     PropertyPlacement,
+    PropertySelect,
   ],
   templateUrl: './body-properties.html',
   styleUrl: './properties-panel.scss',
@@ -87,6 +93,7 @@ export class BodyProperties {
   /** Its name as shown, and as the levels under the one edited have it. */
   readonly label = input('');
   readonly labelBelow = input('');
+  protected readonly orientations = ORIENTATION_CHOICES;
   /** An overlay put on it (over what it wears), or taken off. */
   readonly overlayAdd = output<string>();
   readonly overlayRemove = output<string>();
@@ -160,6 +167,11 @@ export class BodyProperties {
   /** A point on the face mirrored through its centre, on the same side: a lean and the side it is bright on. */
   protected mirrored(d: readonly [number, number, number]): [number, number, number] {
     return [-d[0], d[1], -d[2]];
+  }
+
+  protected orient(value: string): void {
+    const found = ORIENTATION_CHOICES.find((o) => o.value === value);
+    if (found) this.settingsChange.emit({ orientation: found.value satisfies Orientation });
   }
 
   /** Renamed here; left empty, back to its name under the level edited. */

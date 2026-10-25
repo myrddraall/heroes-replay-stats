@@ -1,4 +1,5 @@
 import { normalized, type Vec3 } from './scene-directions';
+import type { Orientation } from './scene-graph';
 
 /**
  * A light's beam, as the editor shows a directional light selected (an editing aid, never part
@@ -31,7 +32,10 @@ export interface LightOutline {
   /** The body's middle and radius, in the scene. */
   readonly centre: Vec3;
   readonly radius: number;
-  /** The body's frame: its axes in the scene, column by column (x across, y away from the eye, z up). */
+  /**
+   * The body's placement frame (what its lights are set in): its axes in the scene, column by
+   * column (x across, y away from the scene's own camera, z up).
+   */
   readonly axes: Float32Array;
   /** The light's kind as the shaders number it (0 from a side, 1 a point, 2 a spot, 3 a hemisphere, 4 the sky round the body). */
   readonly kind: number;
@@ -50,6 +54,43 @@ export interface LightOutline {
 
 /** What the editor shows of the light selected over the picture: its beam, the outline of where it falls. */
 export type LightAid = LightBeam | LightOutline;
+
+/**
+ * A planet's axis, as the editor shows the planet selected (an editing aid, never part of the
+ * design): a line through its poles, `reach` of its radii out from its middle both ways (the
+ * sphere hides what is inside it or behind it), `pixels` thick on the screen, as strong all
+ * along, its north half (from the middle to its north end) in one colour, its south half in
+ * another; drawn as a light's beam is.
+ */
+export interface AxisLine {
+  readonly shape: 'axis';
+  /** The body's middle and radius, in the scene. */
+  readonly centre: Vec3;
+  readonly radius: number;
+  /** Its north pole's way out of the body (its Axis), in the scene (unit). */
+  readonly way: Vec3;
+  readonly reach: number;
+  readonly pixels: number;
+  /** Its halves' colours, each channel 0 to 1, and how strongly it shows. */
+  readonly north: Vec3;
+  readonly south: Vec3;
+  readonly strength: number;
+  /** The frame its Axis is in: its body's placement frame (`world`), or its frame facing the eye (`camera`). */
+  readonly orientation: Orientation;
+}
+
+/** How far past an axis's ends its poles' names are (its radii). */
+export const AXIS_NAMES_PAST = 0.12;
+
+/** Where an axis's ends are, in the scene: its north one (the way it points) and its south one. */
+export function axisEnds(line: AxisLine, past = 0): { readonly north: Vec3; readonly south: Vec3 } {
+  const at = (sign: number) =>
+    line.centre.map((c, k) => c + sign * line.way[k]! * (line.reach + past) * line.radius) as unknown as Vec3;
+  return { north: at(1), south: at(-1) };
+}
+
+/** What the editor shows over the picture: a light's aids, a planet's axis. */
+export type EditingAid = LightAid | AxisLine;
 
 /** How far a square facing the eye reaches from a body's middle, in its radii, to cover its sphere's outline from any distance the editor looks from. */
 export const OUTLINE_EXTENT = 1.15;

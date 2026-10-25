@@ -51,9 +51,9 @@ import {
   fieldOfView,
   forwardOf,
 } from '../../../scenes/play-background/scene-camera';
-import type { LightAid } from '../../../scenes/play-background/scene-beams';
+import type { EditingAid } from '../../../scenes/play-background/scene-beams';
 import type { CameraPlaced, CameraPlanet, CameraValues } from './camera-properties';
-import type { SceneMarker } from './scene-markers';
+import type { PoleDrag, SceneMarker } from './scene-markers';
 import type { AddedItem, AddedLists } from './added-list';
 import {
   canPutGroup,
@@ -112,7 +112,14 @@ import {
   byDepth,
   filesLoaded,
   layerRows,
+  axisAids,
+  axisFrame,
+  keepingPose,
+  poleAt,
+  poleDragged,
   lightAids,
+  lightsView,
+  poleMarkers,
   type LightEntry,
   lightIcon,
   lightMarkerAt,
@@ -1520,6 +1527,10 @@ export const SceneEditorStore = signalStore(
             tint: s.tint,
             lightFrom: s.lightFrom,
             rim: s.rim,
+            ...(s.orientation ? { orientation: s.orientation } : {}),
+            ...(s.axis ? { axis: s.axis } : {}),
+            ...(s.turn !== undefined ? { turn: s.turn } : {}),
+            ...(s.baseTurn ? { baseTurn: s.baseTurn } : {}),
           });
         }
       }
@@ -1533,6 +1544,8 @@ export const SceneEditorStore = signalStore(
   withComputed((store) => ({
     /** The scene's bodies placed for the background (null: the random sets', or loading). */
     scenePlanets: computed(() => store._placed()?.planets ?? null),
+    /** A drag in the view orbits round what it looks at (the scene's middle as far ahead). */
+    orbitAbout: computed((): Vec3 | null => null),
     /**
      * What the view marks where it is: the scene's cameras (not the one looked through), each
      * with what it sees outlined; the groups put in it; the lights of what is selected (a body's
@@ -1583,7 +1596,10 @@ export const SceneEditorStore = signalStore(
         lights: readonly { readonly key: string; readonly light: LightEntry['light'] }[],
         body: SetPlanet,
         i: number,
+        b: BodyInfo | undefined,
       ) => {
+        // Where the renderer puts them: as the body is lit (fixed in the world, or kept to the eye).
+        const from = lightsView(b, scene.camera, view);
         const round = lights.filter(
           ({ light }) =>
             light.kind === 'ambient' ||
@@ -1604,12 +1620,12 @@ export const SceneEditorStore = signalStore(
           out.push({ ...marker(key, light, body.position), nudge: n - (round.length - 1) / 2 }),
         );
         for (const { key, light } of lights) {
-          const at = lightMarkerAt(light, body, view);
+          const at = lightMarkerAt(light, body, from);
           if (at)
             out.push({
               ...marker(key, light, at.at),
               from: at.from,
-              lines: spotEdges(light, body, view),
+              lines: spotEdges(light, body, from, view.eye),
             });
         }
       };
@@ -1624,6 +1640,7 @@ export const SceneEditorStore = signalStore(
             })),
             body,
             i,
+            store.bodyByKey().get(pick),
           );
         });
       } else if (
@@ -1637,7 +1654,7 @@ export const SceneEditorStore = signalStore(
         const i = placed.picks.indexOf(key);
         const body = placed.planets[i];
         const m = b && materialAt(materialsOf(b), t.key);
-        if (m && body && split) lit(shieldLightsOf(split.base, m.values.gridLights), body, i);
+        if (m && body && split) lit(shieldLightsOf(split.base, m.values.gridLights), body, i, b);
       } else if ('path' in t && t.path.length) {
         const key = bodyKey(t.path);
         const b = store.bodyByKey().get(key);
@@ -1657,28 +1674,42 @@ export const SceneEditorStore = signalStore(
             ],
             body,
             i,
+            b,
           );
+        // A body selected: its poles named at its axis's ends.
+        if (b && body && t.kind === 'body')
+          axisAids(b, body, scene.camera, view).forEach((line, n) => out.push(...poleMarkers(line, key, n)));
       }
       return out;
     }),
     /**
      * What the view shows of the light selected, on each body it lights (the scene's: each of
-     * its planets): the outline of where it falls, a directional light's beam.
+     * its planets): the outline of where it falls, a directional light's beam. Of a body
+     * selected: its axis.
      */
-    beams: computed((): readonly LightAid[] => {
-      const view = store.camera();
+    beams: computed((): readonly EditingAid[] => {
+      const scene = store._sceneFile.hasValue() ? store._sceneFile.value() : null;
       const placed = store._placed();
       const t = store.target();
-      if (!view || !placed) return [];
-      const beam = (light: LightEntry['light'], body: SetPlanet): LightAid[] =>
-        lightAids(light, body, view);
+      if (!scene || !placed) return [];
+      const view = store.camera();
+      if (!view) return [];
+      if (t.kind === 'body') {
+        const key = bodyKey(t.path);
+        const b = store.bodyByKey().get(key);
+        const body = placed.planets[placed.picks.indexOf(key)];
+        return b && body ? axisAids(b, body, scene.camera, view) : [];
+      }
+      // Placed as each body is lit (fixed in the world, or kept to the eye: see `lightsView`).
+      const beam = (light: LightEntry['light'], body: SetPlanet, b: BodyInfo | undefined): EditingAid[] =>
+        lightAids(light, body, lightsView(b, scene.camera, view));
       if (t.kind === 'scene-light') {
         const light = sceneLightsOf(store.sceneLights()).find((l) => l.light.id === t.id)?.light;
         if (!light) return [];
         return placed.picks.flatMap((pick, i) => {
           const body = placed.planets[i];
           return body && pick.startsWith('body:') && pathOf(pick.slice(5)).length === 1
-            ? beam(light, body)
+            ? beam(light, body, store.bodyByKey().get(pick))
             : [];
         });
       }
@@ -1690,14 +1721,14 @@ export const SceneEditorStore = signalStore(
         const m = b && materialAt(materialsOf(b), t.key);
         const light =
           m && shieldLightsOf('', m.values.gridLights).find((l) => l.light.id === (id as string));
-        return light && body ? beam(light.light, body) : [];
+        return light && body ? beam(light.light, body, b) : [];
       }
       if (t.kind !== 'light') return [];
       const key = bodyKey(t.path);
       const b = store.bodyByKey().get(key);
       const body = placed.planets[placed.picks.indexOf(key)];
       const light = b && lightsOfBody(b).find((l) => l.light.id === t.id)?.light;
-      return light && body ? beam(light, body) : [];
+      return light && body ? beam(light, body, b) : [];
     }),
   })),
   withMethods((store) => {
@@ -1719,6 +1750,14 @@ export const SceneEditorStore = signalStore(
     };
     const settings = (path: BodyPath, change: (s: BodySettings) => BodySettings | undefined) =>
       edit((b) => changeSettings(b, path, wornAt(path), change));
+    /** Where the pole being dragged is (see `dragPole`). */
+    let poleDragAt: Vec3 | null = null;
+    /** A body's settings after a change, kept where it is as its Axis moves (see `keepingPose`). */
+    const posed = (path: BodyPath, next: BodySettings, touched: readonly (keyof BodySettings)[]) => {
+      const b = store.bodyByKey().get(bodyKey(path));
+      const kept = b ? keepingPose(b, next, touched) : next;
+      return Object.keys(kept).length ? kept : undefined;
+    };
     /** What the selected body wears changed (the later over the earlier). */
     const wear = (change: (worn: readonly string[]) => readonly string[]) => {
       const path = selectedPath();
@@ -2240,13 +2279,37 @@ export const SceneEditorStore = signalStore(
       resetSkyOverlays(): void {
         d.setSkyOverlays(store.scene(), undefined);
       },
+      /** A pole of the selected body's axis dragged in the view: its Axis moved, the body kept as it is. */
+      dragPole(drag: PoleDrag): void {
+        const path = selectedPath();
+        const scene = store._sceneFile.hasValue() ? store._sceneFile.value() : null;
+        const placed = store._placed();
+        const view = store.camera();
+        if (!path || !scene || !placed || !view) return;
+        const key = bodyKey(path);
+        const b = store.bodyByKey().get(key);
+        const body = placed.planets[placed.picks.indexOf(key)];
+        const line = b && body ? axisAids(b, body, scene.camera, view)[drag.axis] : undefined;
+        if (!line || !body || drag.phase === 'end') {
+          poleDragAt = null;
+          return;
+        }
+        if (drag.phase === 'start' || !poleDragAt) {
+          poleDragAt = poleAt(line, drag.north);
+          return;
+        }
+        const frame = axisFrame(line.orientation, body, scene.camera, view);
+        const { axis, at } = poleDragged(line, drag.north, view.eye, drag.ray, poleDragAt, frame);
+        poleDragAt = at;
+        settings(path, (s) => posed(path, { ...s, axis }, ['axis']));
+      },
       setBody(change: Partial<BodySettings>): void {
         const path = selectedPath();
-        if (path) settings(path, (s) => ({ ...s, ...change }));
+        if (path) settings(path, (s) => posed(path, { ...s, ...change }, Object.keys(change) as (keyof BodySettings)[]));
       },
       clearBody(keys: readonly (keyof BodySettings)[]): void {
         const path = selectedPath();
-        if (path) settings(path, (s) => without(s, keys));
+        if (path) settings(path, (s) => posed(path, without(s, keys) ?? {}, keys));
       },
       resetBody(): void {
         const path = selectedPath();

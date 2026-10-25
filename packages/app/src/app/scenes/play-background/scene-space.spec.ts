@@ -10,6 +10,7 @@ import {
   viewUp,
 } from './scene-space';
 import type { BodyPart } from './scene-planets';
+import { placementFrame } from './scene-graph';
 
 /** A point through a column-major matrix, divided by w: normalized device coordinates. */
 function transform(m: Float32Array, [x, y, z]: [number, number, number]): [number, number, number] {
@@ -184,5 +185,23 @@ describe('partsExtent', () => {
     const limb = (d: number) => 1 / Math.sqrt(d * d - 1); // the limb's tangent from d
     const asModelled = 0.92 / (4.33 - 0.67) / limb(4.33); // the ring's edge against the limb
     expect(partsExtent(1, [ring(4.33)], far) / far / limb(far)).toBeCloseTo(asModelled, 3);
+  });
+  it('takes a ring fixed in the world as the sphere it turns within', () => {
+    const r = ring();
+    // Out to its outer edge, its plane's depth off the centre: a sphere seen from 4.33.
+    const sphere = Math.hypot(0.92, 0.67);
+    expect(partsExtent(1, [body, r], 4.33, new Set([r]))).toBeCloseTo(bodyExtent(1, sphere, 4.33), 9);
+    // Only the ring given counts so; another stays flat.
+    expect(partsExtent(1, [body, r], 4.33, new Set([ring()]))).toBe(partsExtent(1, [body, r], 4.33));
+  });
+});
+
+describe('placementFrame', () => {
+  it("is the body's billboard frame as the scene's own camera sees it, whatever its radius", () => {
+    const layout = { eye: [-0.0018, -41.1988, 5.6051], forward: [1.9e-5, 0.999687, -0.025004], up: [0, 0, 1] } as const;
+    for (const radius of [1, 9.037, 27.25])
+      expect(Array.from(placementFrame([37.282, 64.892, 14.189], layout))).toEqual(
+        Array.from(bodyFrame([37.282, 64.892, 14.189], radius, layout.eye, viewUp(layout)).axes),
+      );
   });
 });

@@ -8,6 +8,7 @@ import type {
 } from './scene-planets';
 import type { AddedLight, LightSettingsMap } from './scene-lights';
 import type { AddedPart } from './created-overlays';
+import type { Orientation, Quat } from './scene-graph';
 
 /** A planet in a set: which, where (the scene's units), and its body's radius there. */
 export interface SetPlanet {
@@ -48,6 +49,13 @@ export interface SetPlanet {
   readonly lighting?: number;
   /** A shade from a side, over its style's (what is given here; the rest the style's or DEFAULT_SHADE). */
   readonly shade?: Partial<BodyShade>;
+  /** Which way its surfaces are turned, over its tuning's (see `Orientation`). */
+  readonly orientation?: Orientation;
+  /** Where its poles point (its frame), and its turn about them (degrees), over its tuning's (see `bodyTurn`). */
+  readonly axis?: readonly [number, number, number];
+  readonly turn?: number;
+  /** Its base turn, over its tuning's (see `bodyTurn`). */
+  readonly baseTurn?: Quat;
 }
 
 /** A set of planets to put up, largest first: each takes the tint channel of its place. */

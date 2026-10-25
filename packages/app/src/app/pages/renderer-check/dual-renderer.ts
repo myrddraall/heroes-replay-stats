@@ -1,6 +1,6 @@
 import type { BackgroundRenderer } from '../../scenes/play-background/background-renderer';
 import type { LoadedPlayScene, SceneCameraSet } from '../../scenes/play-background/play-scene';
-import type { LightAid } from '../../scenes/play-background/scene-beams';
+import type { EditingAid } from '../../scenes/play-background/scene-beams';
 import type { AddedLight } from '../../scenes/play-background/scene-lights';
 import type { SkySettings } from '../../scenes/play-background/scene-planets';
 import type { Backdrop, PlanetPlacement } from '../../scenes/play-background/scene-space';
@@ -185,7 +185,7 @@ export class DualRenderer implements BackgroundRenderer {
   setBackdrop(backdrop: Backdrop | null): void {
     for (const r of this.all) r.setBackdrop(backdrop);
   }
-  setBeams(beams: readonly LightAid[]): void {
+  setBeams(beams: readonly EditingAid[]): void {
     for (const r of this.all) r.setBeams(beams);
   }
   resize(width: number, height: number): void {

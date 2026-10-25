@@ -399,7 +399,8 @@ const meets = (eye: Node<'vec3'>, sphere: Node<'vec4'>, d: Node<'vec3'>) => {
 /**
  * A light's beam, over the picture as shown; hidden where the
  * frame's depth is nearer, behind or inside a body, and over its own body. `kind`: a light's (its
- * colour added), a darkening one's (taken away), or a darkening one's edges.
+ * colour added), a darkening one's (taken away), or a darkening one's edges. A planet's axis is
+ * drawn as a light's, not fading (`uFade` 0) and not hidden over its body (`uBody` none).
  */
 export function beamMaterial(
   u: ShaderUniforms,
@@ -445,7 +446,8 @@ export function beamMaterial(
     });
     const facing = abs(dot(normalize(vNormal), normalize(eye.sub(vAt))));
     const shape = kind === 'edge' ? pow(facing.oneMinus(), 8) : facing;
-    const a = alpha.mul(shape).mul(vAlong.oneMinus()).toVar();
+    // Fading as it goes (`uFade` 1: a light's beam), or as strong all along (0: a planet's axis).
+    const a = alpha.mul(shape).mul(vAlong.mul(u.float('uFade', 1)).oneMinus()).toVar();
     return cold(vec4(colour.mul(a), a));
   })();
   coldVertex(m);
@@ -469,6 +471,8 @@ export function outlineMaterial(u: ShaderUniforms, frameDepth: Texture, toClip: 
   m.vertexNode = Fn(() => toClip(viewProjection.mul(vec4(atOf, 1))))();
   const eye = u.vec3('uEye');
   const radius = u.float('uRadius', 1);
+  // The body's placement frame, the light's (its square faces the eye: `uAxes`).
+  const lightAxes = u.mat3('uLightAxes');
   const count = u.int('uSphereCount');
   const kind = u.int('uKind');
   const dir = u.vec3('uDir');
@@ -496,7 +500,7 @@ export function outlineMaterial(u: ShaderUniforms, frameDepth: Texture, toClip: 
     const clip = viewProjection.mul(vec4(hit, 1)).toVar();
     const depth = clip.z.div(clip.w).mul(0.5).add(0.5);
     gone.assign(gone.or(depth.greaterThan(textureLoad(frameDepth, pixel()).x.add(2e-4))));
-    const n = normalize(transpose(axes).mul(hit.sub(centre))).toVar();
+    const n = normalize(transpose(lightAxes).mul(hit.sub(centre))).toVar();
     const main = float(1).toVar();
     const faint = float(1).toVar();
     If(kind.equal(0).or(kind.equal(3)), () => {
@@ -515,7 +519,7 @@ export function outlineMaterial(u: ShaderUniforms, frameDepth: Texture, toClip: 
         faint.assign(along.sub(cosFade));
       })
       .Else(() => {
-        const look = transpose(axes).mul(eye.sub(centre));
+        const look = transpose(lightAxes).mul(eye.sub(centre));
         main.assign(float(0.5).sub(dot(n, normalize(look))));
       });
     const a = max(line(main), line(faint).mul(0.45)).mul(alpha).toVar();

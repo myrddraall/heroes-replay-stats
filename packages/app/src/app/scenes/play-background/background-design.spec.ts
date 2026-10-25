@@ -17,6 +17,20 @@ describe('withLibrary', () => {
     expect(withLibrary(korhal, EMPTY_LIBRARY)).toBe(korhal);
   });
 
+  it("turns a planet as the scene says, over the library's, its axis likewise", () => {
+    const library: LibraryState = {
+      ...EMPTY_LIBRARY,
+      planets: { korhal: { orientation: 'world', axis: [0, 0.2, 1] } },
+    };
+    expect(withLibrary(korhal, library)).toMatchObject({ orientation: 'world', axis: [0, 0.2, 1] });
+    const set = withLibrary({ ...korhal, orientation: 'camera', axis: [1, 0, 0] }, library);
+    expect(set).toMatchObject({ orientation: 'camera', axis: [1, 0, 0] });
+    // Set nowhere: not given at all (the renderer's default, facing the camera).
+    const none = withLibrary(korhal, { ...EMPTY_LIBRARY, planets: { korhal: { tint: red } } });
+    expect(none).not.toHaveProperty('orientation');
+    expect(none).not.toHaveProperty('axis');
+  });
+
   it("puts the planet's and its style's defaults under what is set for it", () => {
     const library: LibraryState = {
       planets: {

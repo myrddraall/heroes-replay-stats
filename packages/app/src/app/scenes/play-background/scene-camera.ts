@@ -65,6 +65,33 @@ export function orbit(
   return kept(along(pivot, forward, -distance), forward);
 }
 
+/** A camera's axes looking `forward` (its up the world's): across to the right, up the view, ahead. */
+function viewAxes(forward: Vec3): [Vec3, Vec3, Vec3] {
+  const l = Math.hypot(...forward) || 1;
+  const f: Vec3 = [forward[0] / l, forward[1] / l, forward[2] / l];
+  const rl = Math.hypot(f[1], f[0]) || 1;
+  const r: Vec3 = [f[1] / rl, -f[0] / rl, 0];
+  const u: Vec3 = [r[1] * f[2] - r[2] * f[1], r[2] * f[0] - r[0] * f[2], r[0] * f[1] - r[1] * f[0]];
+  return [r, u, f];
+}
+
+/**
+ * The camera orbited round a point (`pivot`, a planet it is about), turned round the up by `turn`
+ * degrees and tilted by `tilt` as `orbit` turns it, carried round with its way of looking as one:
+ * the point stays where it is in the view, wherever that is (it needn't be the view's middle).
+ */
+export function orbitAround(camera: SceneCamera, pivot: Vec3, turn: number, tilt: number): SceneCameraSet {
+  const angles = cameraAngles(camera.forward);
+  const forward = forwardOf(angles.turn + turn, Math.max(-89, Math.min(89, angles.tilt + tilt)));
+  const [r0, u0, f0] = viewAxes(camera.forward);
+  const [r1, u1, f1] = viewAxes(forward);
+  const d: Vec3 = [camera.eye[0] - pivot[0], camera.eye[1] - pivot[1], camera.eye[2] - pivot[2]];
+  const dot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const [a, b, c] = [dot(d, r0), dot(d, u0), dot(d, f0)];
+  const eye = [0, 1, 2].map((k) => pivot[k]! + a * r1[k]! + b * u1[k]! + c * f1[k]!) as unknown as Vec3;
+  return kept(eye, forward);
+}
+
 /** The camera moved across the view: `right` and `up` (in the scene's units), the way it looks kept. */
 export function pan(camera: SceneCamera, right: number, up: number): SceneCameraSet {
   const f = camera.forward;
@@ -133,6 +160,17 @@ export interface ViewPoint {
 function onView(camera: Lens, aspect: number, [x, y, z]: Vec3): ViewPoint {
   const t = 1 / Math.tan((camera.fovY * Math.PI) / 360);
   return { x: (1 + (t * x) / (aspect * z)) / 2, y: (1 - (t * y) / z) / 2, depth: z };
+}
+
+/** The way from a camera's eye through a point of its view (`x`, `y`: shares of its width and height from its top left), `aspect` wide: a unit vector. */
+export function viewRay(camera: Lens, aspect: number, x: number, y: number): Vec3 {
+  const { f, r, u } = axesOf(camera);
+  const t = Math.tan((camera.fovY * Math.PI) / 360);
+  const a = (2 * x - 1) * aspect * t;
+  const b = (1 - 2 * y) * t;
+  const d = [0, 1, 2].map((k) => r[k]! * a + u[k]! * b + f[k]!);
+  const l = Math.hypot(...d);
+  return d.map((v) => v / l) as unknown as Vec3;
 }
 
 /** Where a point shows in a view through a camera, `aspect` wide; none where it is behind it. */

@@ -1,4 +1,17 @@
 import { bodyFrame, viewUp, type Viewpoint } from '../../../scenes/play-background/scene-space';
+import {
+  bodyTransform,
+  DEFAULT_ORIENTATION,
+  drawTurnOf,
+  type DrawTurn,
+  type Orientation,
+  placementFrame,
+  pointToLocal,
+  NO_QUAT,
+  pointToWorld,
+  poseKept,
+  turn,
+} from '../../../scenes/play-background/scene-graph';
 import type { SetPlanet } from '../../../scenes/play-background/planet-sets';
 import {
   MATERIAL_DEFAULTS,
@@ -36,6 +49,9 @@ import {
 import { keyLightFrom, TOWARDS_EYE } from '../../../scenes/play-background/scene-directions';
 import {
   alongToSphere,
+  AXIS_NAMES_PAST,
+  axisEnds,
+  type AxisLine,
   coneEdges,
   type LightAid,
   type LightOutline,
@@ -81,6 +97,7 @@ import {
 } from '../../../scenes/play-background/created-overlays';
 import type { PlanetIndex } from '../../../scenes/play-background/scene-planets';
 import type { PickChoice } from './pick-list';
+import type { SceneMarker } from './scene-markers';
 import { REFERENCE_KEY } from './editing-aids.store';
 import type { TreeRow } from './scene-tree';
 import {
@@ -99,6 +116,8 @@ import {
   wearOf,
   wornParts,
   type BodyPart,
+  haloLike,
+  poleOf,
   mergePartSettings,
   ownPartKey,
   overlayPartKey,
@@ -243,6 +262,8 @@ export interface MaterialEntry {
   /** Which level under the one edited sets each of its settings, where one does. */
   readonly origins: SettingOrigins<keyof MaterialSettings>;
   readonly values: MaterialValues;
+  /** Whether its body's own turn (its Axis and Turn) turns it (a halo left square to the camera: not; see `DrawTurn`). */
+  readonly turned?: boolean;
   /** Whether it is drawn as the levels under the one edited have it (switched so here: nothing set). */
   readonly enabledBelow: boolean;
   readonly controls: MaterialControls;
@@ -439,6 +460,10 @@ export const overlayLabel = (o: WornOverlay) => o.below?.label ?? o.name ?? o.id
 const latest = <T>(values: readonly (T | undefined)[]): T | undefined =>
   values.filter((v) => v !== undefined).at(-1);
 
+/** A body's parts' settings in effect: those under the layer edited (its own, its overlays'), then the layer edited's. */
+const partSettingsOf = (b: BodyInfo): PartSettingsMap =>
+  mergePartSettings(b.below?.parts, ...b.overlays.map((o) => o.below?.parts), b.settings.parts);
+
 /**
  * A body's materials, its own then each overlay's, as shown: each through its file's tuning (and
  * how the body wears its overlays), the defaults under the layer edited, and the layer edited.
@@ -482,7 +507,19 @@ export function materialsOf(
               ];
           const under = mergeSettings(...levels.map(([, l]) => l));
           const settings = mergeSettings(under, chosen?.[key]);
-          const values = materialValues(material, settings);
+          // Which way it is turned: its own say, else its part's, else a halo square to the
+          // camera, else its body's; and where that is said, where it isn't its own.
+          const part = (overlay ? wornParts(b.file, overlay.id, owner.parts) : owner.parts).find((p) =>
+            p.materials.includes(name),
+          );
+          const partKey = part && (overlay || opened ? overlayPartKey(overlay?.id ?? opened!, part) : ownPartKey(part));
+          const drawn = part && partKey ? partTurnOf(b, owner, part, partKey, settings?.orientation) : undefined;
+          const values = {
+            ...materialValues(material, settings),
+            orientation: drawn?.orientation ?? settings?.orientation ?? bodyOrientation(b),
+          };
+          const origins = originsOf(levels);
+          const turnOrigin = settings?.orientation === undefined ? drawn?.origin : undefined;
           const named = under?.label ?? materialLabel(name, material, owner.textures, role);
           return {
             name,
@@ -495,8 +532,9 @@ export function materialsOf(
             origin: overlay
               ? `From the ${overlayLabel(overlay)} overlay, set for ${b.id}`
               : undefined,
-            origins: originsOf(levels),
+            origins: turnOrigin ? { ...origins, orientation: turnOrigin } : origins,
             values,
+            turned: drawn?.turned ?? true,
             enabledBelow: under?.enabled ?? MATERIAL_DEFAULTS.enabled,
             controls: materialControls(material, { pattern, drawAs: values.drawAs }),
             set: chosen?.[key],
@@ -597,7 +635,39 @@ export function valuesOf(b: BodyInfo): BodyValues {
       DEFAULT_SHADE.direction,
     rim: s.rim ?? own?.rim ?? tuning?.rim ?? TOWARDS_EYE,
     glowMargin: s.glowMargin ?? own?.glowMargin ?? HALO_MARGIN,
+    orientation: bodyOrientation(b),
+    // As its data has them unless set: its textures' pole, no turn about it.
+    axis: s.axis ?? own?.axis ?? tuning?.axis ?? poleOf(b.file?.parts ?? []),
+    turn: s.turn ?? own?.turn ?? tuning?.turn ?? 0,
+    baseTurn: s.baseTurn ?? own?.baseTurn ?? tuning?.baseTurn ?? NO_QUAT,
   };
+}
+
+/** Which way a body's surfaces are turned where its parts and materials don't say, where any of its levels says: the layer edited, those under it, its tuning. */
+const bodySays = (b: BodyInfo): Orientation | undefined =>
+  b.settings.orientation ?? b.below?.orientation ?? b.file?.tuning?.orientation;
+/** That, else facing the camera. */
+const bodyOrientation = (b: BodyInfo): Orientation => bodySays(b) ?? DEFAULT_ORIENTATION;
+
+/**
+ * Which way a draw of a body's part is turned (`drawTurnOf`): its material's say (`material`),
+ * its part's (through the levels, the one edited too), the part as a halo, its body's. And where
+ * that is said, as an origin shows it, where it is neither the material's nor the part's own: its
+ * part's name (it set it, or is a halo), or its body's.
+ */
+function partTurnOf(
+  b: BodyInfo,
+  owner: PlanetFile,
+  part: BodyPart,
+  key: PartKey,
+  material?: Orientation,
+): DrawTurn & { readonly origin?: string } {
+  const set = partSettingsOf(b)[key];
+  const halo = haloLike(part, owner.materials);
+  const drawn = drawTurnOf(material, set?.orientation, halo, bodySays(b));
+  const partSays = set?.orientation !== undefined || halo;
+  const origin = partSays ? (set?.label ?? partLabelOf(part)) : bodySays(b) ? bodyLabel(b) : undefined;
+  return origin ? { ...drawn, origin } : drawn;
 }
 
 /** A part's shape and how its textures lie on it, as in effect (its own where nothing is set). */
@@ -615,6 +685,8 @@ export interface PartValues {
   readonly side: 'near' | 'far';
   readonly from: number;
   readonly repeat: number;
+  /** Which way it is turned: its own, else its body's (a sky's part: always as the sky is). */
+  readonly orientation: Orientation;
 }
 
 /** A body's part as its properties show it. */
@@ -715,6 +787,10 @@ const PART_NAMES: Record<PartRole, string> = {
   plane: 'Plane',
 };
 
+/** A part's name unless renamed: made from its id where it has one, else its role's. */
+const partLabelOf = (part: { readonly id?: string; readonly role: PartRole }) =>
+  part.id ? idLabel(part.id) : PART_NAMES[part.role];
+
 /** A part of the game data's name: its role's (Surface, Shell, Ring…). */
 export const partName = (part: { readonly role: PartRole }) => PART_NAMES[part.role];
 
@@ -735,11 +811,12 @@ export function partsOfBody(b: BodyInfo): PartEntry[] {
   };
   // An overlay opened on its own: its parts are an overlay's (as kept for every planet wearing it).
   const opened = b.file?.kind === 'style';
-  const owners: [readonly BodyPart[], string | undefined][] = [
-    [b.file?.parts ?? [], undefined],
-    ...b.overlays.map((o): [readonly BodyPart[], string] => [
+  const owners: [readonly BodyPart[], string | undefined, PlanetFile | undefined][] = [
+    [b.file?.parts ?? [], undefined, b.file],
+    ...b.overlays.map((o): [readonly BodyPart[], string, PlanetFile | undefined] => [
       o.file ? wornParts(b.file, o.id, o.file.parts) : [],
       o.id,
+      o.file,
     ]),
   ];
   const levels: [string, PartSettingsMap | undefined][] = [
@@ -749,7 +826,7 @@ export function partsOfBody(b: BodyInfo): PartEntry[] {
       o.below?.parts,
     ]),
   ];
-  return owners.flatMap(([parts, overlay]) =>
+  return owners.flatMap(([parts, overlay, owner]) =>
     parts.map((part): PartEntry => {
       const from = overlay || opened ? 'style' : 'own';
       const key = overlay
@@ -761,7 +838,7 @@ export function partsOfBody(b: BodyInfo): PartEntry[] {
       const settings = mergePartSettings(...levels.map(([, l]) => l), b.settings.parts)[key];
       const { shape, mapping } = part;
       const below = mergePartSettings(...levels.map(([, l]) => l))[key];
-      const named = below?.label ?? (part.id ? idLabel(part.id) : PART_NAMES[part.role]);
+      const named = below?.label ?? partLabelOf(part);
       return {
         key,
         label: settings?.label ?? named,
@@ -791,9 +868,17 @@ export function partsOfBody(b: BodyInfo): PartEntry[] {
               : mapping.kind === 'round'
                 ? mapping.repeat
                 : 1),
+          orientation: drawTurnOf(undefined, settings?.orientation, !!owner && haloLike(part, owner.materials), bodySays(b))
+            .orientation,
         },
         set,
-        origins: originsOf(levels.map(([name, l]) => [name, l?.[key]] as const)),
+        origins: {
+          ...originsOf(levels.map(([name, l]) => [name, l?.[key]] as const)),
+          // Its body's say, where it is neither its own nor it a halo.
+          ...(settings?.orientation === undefined && !(owner && haloLike(part, owner.materials)) && bodySays(b)
+            ? { orientation: bodyLabel(b) }
+            : {}),
+        },
         canKeepToLimb: shape.kind === 'ring' && shape.seen !== undefined,
         materials: part.materials,
         enabled: settings?.enabled ?? true,
@@ -1205,6 +1290,10 @@ export function bodyOrigins(b: BodyInfo): SettingOrigins<keyof BodySettings> {
     ),
     rim: first([library, own?.rim], ['its tuning', tuning?.rim]),
     glowMargin: first([library, own?.glowMargin]),
+    orientation: first([library, own?.orientation], ['its tuning', tuning?.orientation]),
+    axis: first([library, own?.axis], ['its tuning', tuning?.axis]),
+    turn: first([library, own?.turn], ['its tuning', tuning?.turn]),
+    baseTurn: first([library, own?.baseTurn], ['its tuning', tuning?.baseTurn]),
   };
   return Object.fromEntries(Object.entries(out).filter(([, v]) => v)) as SettingOrigins<
     keyof BodySettings
@@ -1253,26 +1342,20 @@ function inheritedChanged(b: BodyInfo): boolean {
 }
 
 /**
- * The way a light comes from (`from`, in its body's frame), out of the body as seen from
- * `view`, in the scene: a unit vector.
+ * The way a light comes from (`from`, in its body's frame as `layout` sees it), out of the body,
+ * in the scene: a unit vector. `layout` is the view the body's lights are placed from
+ * (`lightsView`): the scene's own camera for a body fixed in the world (the light fixed there,
+ * whatever camera the editor looks through), the editor's for one facing the camera.
  */
-export function wayOut(from: Vec3, body: SetPlanet, view: Viewpoint): Vec3 {
-  const { axes } = bodyFrame(body.position, body.radius, view.eye, viewUp(view));
-  const way = [0, 1, 2].map(
-    (k) => from[0] * axes[k]! + from[1] * axes[3 + k]! + from[2] * axes[6 + k]!,
-  );
+export function wayOut(from: Vec3, body: SetPlanet, layout: Viewpoint): Vec3 {
+  const way = turn(bodyTransform(body, layout).rotation, from);
   const length = Math.hypot(...way) || 1;
   return way.map((v) => v / length) as unknown as Vec3;
 }
 
-/** A place near a body (in its frame, in its radii) as seen from `view`, in the scene. */
-export function placeOut(at: Vec3, body: SetPlanet, view: Viewpoint): Vec3 {
-  const { axes } = bodyFrame(body.position, body.radius, view.eye, viewUp(view));
-  return [0, 1, 2].map(
-    (k) =>
-      body.position[k]! +
-      (at[0] * axes[k]! + at[1] * axes[3 + k]! + at[2] * axes[6 + k]!) * body.radius,
-  ) as unknown as Vec3;
+/** A place near a body (in its placement frame, in its radii: see `wayOut`), in the scene. */
+export function placeOut(at: Vec3, body: SetPlanet, layout: Viewpoint): Vec3 {
+  return pointToWorld(bodyTransform(body, layout), at);
 }
 
 /**
@@ -1291,60 +1374,63 @@ export function lightMarkerAt(
     readonly aim?: Vec3;
   },
   body: SetPlanet,
-  view: Viewpoint,
+  layout: Viewpoint,
 ): { readonly at: Vec3; readonly from?: Vec3 } | null {
   const along = (way: Vec3, radii: number) =>
     body.position.map((v, k) => v + way[k]! * body.radius * radii) as unknown as Vec3;
   if (light.position) {
-    const at = placeOut(light.position, body, view);
+    const at = placeOut(light.position, body, layout);
     if (light.kind === 'spot') {
       const p = light.position;
       const aim = aimOf(p, light.lookAt, light.aim);
       const t = alongToSphere(p, aim);
       return {
         at,
-        from: placeOut([p[0] + aim[0] * t, p[1] + aim[1] * t, p[2] + aim[2] * t], body, view),
+        from: placeOut([p[0] + aim[0] * t, p[1] + aim[1] * t, p[2] + aim[2] * t], body, layout),
       };
     }
-    const way = wayOut(light.position, body, view);
+    const way = wayOut(light.position, body, layout);
     return { at, from: along(way, 1.05) };
   }
   if (light.from) {
-    const way = wayOut(light.from, body, view);
+    const way = wayOut(light.from, body, layout);
     return { at: along(way, 1.8), from: along(way, 1.05) };
   }
   return null;
 }
 
 /**
- * The edges of a spot light's cone as seen from `view`, from the spot to the body (none for any
- * other light, or with the eye inside the cone), in the scene: drawn with its marker when it is
- * selected.
+ * The edges of a spot light's cone as seen from `eye` (the camera the editor looks through), from
+ * the spot to the body (none for any other light, or with the eye inside the cone), in the scene:
+ * drawn with its marker when it is selected. The cone is where the renderer puts it, in the body's
+ * placement frame (`layout`: see `wayOut`).
  */
 export function spotEdges(
   light: BodyLight,
   body: SetPlanet,
-  view: Viewpoint,
+  layout: Viewpoint,
+  eye: Vec3,
 ): readonly (readonly [Vec3, Vec3])[] {
   const placed = placedLight(light);
   if (placed?.kind !== 'spot' || !placed.position || !placed.aim) return [];
-  const frame = bodyFrame(body.position, body.radius, view.eye, viewUp(view));
-  return coneEdges(placed.position, placed.aim, placed.cone ?? 90, frame.eye).map(
-    ([a, b]) => [placeOut(a, body, view), placeOut(b, body, view)] as const,
+  const frame = bodyTransform(body, layout);
+  return coneEdges(placed.position, placed.aim, placed.cone ?? 90, pointToLocal(frame, eye)).map(
+    ([a, b]) => [pointToWorld(frame, a), pointToWorld(frame, b)] as const,
   );
 }
 
 /**
- * What the view shows of a light selected, about a body it lights, seen from `view`: the outline
- * of where it falls on the body's sphere (any light but one from all round), and a directional
- * light's beam out of the body the way it comes from. None of a light switched off.
+ * What the view shows of a light selected, about a body it lights (placed in the body's placement
+ * frame, `layout`: see `wayOut`): the outline of where it falls on the body's sphere (any light but
+ * one from all round), and a directional light's beam out of the body the way it comes from. None
+ * of a light switched off.
  */
-export function lightAids(light: BodyLight, body: SetPlanet, view: Viewpoint): LightAid[] {
+export function lightAids(light: BodyLight, body: SetPlanet, layout: Viewpoint): LightAid[] {
   if (!light.enabled) return [];
   const placed = placedLight(light);
   if (!placed) return [];
   const colour = rgbOf(light.colour, 1);
-  const { axes } = bodyFrame(body.position, body.radius, view.eye, viewUp(view));
+  const axes = Float32Array.from(bodyTransform(body, layout).rotation);
   const outline: LightOutline = {
     shape: 'outline',
     centre: body.position,
@@ -1360,7 +1446,7 @@ export function lightAids(light: BodyLight, body: SetPlanet, view: Viewpoint): L
     colour,
     darkens: light.darkens,
   };
-  const from = placed.kind ? null : lightWay(light, body, view);
+  const from = placed.kind ? null : lightWay(light, body, layout);
   return from
     ? [
         {
@@ -1376,15 +1462,173 @@ export function lightAids(light: BodyLight, body: SetPlanet, view: Viewpoint): L
     : [outline];
 }
 
-/** The way a light comes from, out of its body as seen from `view`: a side's, or a point's or spot's place. */
+/** The way a light comes from, out of its body (see `wayOut`): a side's, or a point's or spot's place. */
 export function lightWay(
   light: { readonly from?: Vec3; readonly position?: Vec3 },
   body: SetPlanet,
-  view: Viewpoint,
+  layout: Viewpoint,
 ): Vec3 | null {
   const way = light.position ?? light.from;
-  return way ? wayOut(way, body, view) : null;
+  return way ? wayOut(way, body, layout) : null;
 }
+
+/** How a planet's axis shows (see `axisAids`): how far out from its middle both ways (its radii), how thick (pixels), its halves' colours. */
+const AXIS_LINE = {
+  reach: 1.4,
+  pixels: 2.5,
+  north: [1, 0.1, 0.05] as Vec3,
+  south: [0.15, 0.45, 1] as Vec3,
+  strength: 1,
+};
+
+/**
+ * What the view shows of a planet selected: its axis, a line through its poles as far past each
+ * (its north one where its Axis points). One for each frame its surfaces are drawn in (as the
+ * renderer draws them, `surfaceFrame`): fixed in the world (its placement frame, from the scene's
+ * own camera, `layout`), or facing the camera the editor looks through (`view`). A halo left
+ * square to the camera has none.
+ */
+export function axisAids(b: BodyInfo, body: SetPlanet, layout: Viewpoint, view: Viewpoint): AxisLine[] {
+  const { axis } = valuesOf(b);
+  const l = Math.hypot(...axis) || 1;
+  const north: Vec3 = [axis[0] / l, axis[1] / l, axis[2] / l];
+  const ways = new Set(materialsOf(b).filter((m) => m.turned).map((m) => m.values.orientation));
+  return [...ways].map((orientation) => ({
+    shape: 'axis',
+    centre: body.position,
+    radius: body.radius,
+    // (Its Turn turns about it: where it points is the same turned or not.)
+    way: turn(axisFrame(orientation, body, layout, view), north),
+    ...AXIS_LINE,
+    orientation,
+  }));
+}
+
+/**
+ * A body's Axis (in `frame`, the frame its axis is in: `axisFrame`) with its north pole (or its
+ * south, `north` false) dragged to under a ray (see `axisDraggedTo`), and where the pole is now.
+ */
+export function poleDragged(
+  line: AxisLine,
+  north: boolean,
+  eye: Vec3,
+  ray: Vec3,
+  previous: Vec3,
+  frame: ArrayLike<number>,
+): { readonly axis: Vec3; readonly at: Vec3 } {
+  const at = axisDraggedTo(line, eye, ray, previous);
+  const way = at.map((v, k) => (v - line.centre[k]!) * (north ? 1 : -1));
+  const l = Math.hypot(...way) || 1;
+  const world: Vec3 = [way[0]! / l, way[1]! / l, way[2]! / l];
+  // Into its frame (its axes' transpose), kept to a few places as settings are.
+  const axis = [0, 3, 6].map(
+    (c) => Math.round((frame[c]! * world[0] + frame[c + 1]! * world[1] + frame[c + 2]! * world[2]) * 1e5) / 1e5,
+  ) as unknown as Vec3;
+  return { axis, at };
+}
+
+/** Where a pole of an axis is, as its name is put (see `poleMarkers`). */
+export const poleAt = (line: AxisLine, north: boolean): Vec3 => {
+  const ends = axisEnds(line, AXIS_NAMES_PAST);
+  return north ? ends.north : ends.south;
+};
+
+/** The frame a body's Axis is in for its surfaces turned so (see `axisAids`). */
+export const axisFrame = (orientation: Orientation, body: SetPlanet, layout: Viewpoint, view: Viewpoint) =>
+  orientation === 'world' ? placementFrame(body.position, layout) : facingFrame(body, view);
+
+/**
+ * Where a pole of an axis dragged in the view goes: the point of a sphere about the body's middle
+ * through where the pole was (`previous`) under the pointer, its ray from `eye` the way `ray`
+ * goes. Of the two points the ray meets, the near one, or the far one where the pole was taken
+ * round behind; past the sphere's outline, round over its edge and on behind it the further the
+ * pointer goes (a quarter turn at most), so a pole can be taken round to the far side and back.
+ */
+export function axisDraggedTo(line: AxisLine, eye: Vec3, ray: Vec3, previous: Vec3): Vec3 {
+  const c = line.centre;
+  const to = (p: Vec3): Vec3 => [p[0] - c[0], p[1] - c[1], p[2] - c[2]];
+  const dot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const o = to(eye);
+  const r = Math.hypot(...to(previous));
+  const b = dot(ray, o);
+  const disc = b * b - (dot(o, o) - r * r);
+  const at = (t: number): Vec3 => [eye[0] + ray[0] * t, eye[1] + ray[1] * t, eye[2] + ray[2] * t];
+  if (disc >= 0) {
+    // On the near side, unless it was taken round behind (past the outline, then back in).
+    const behind = dot(to(previous), o) / Math.hypot(...o) < -0.15 * r;
+    return at(-b + (behind ? 1 : -1) * Math.sqrt(disc));
+  }
+  // Past the outline: on its edge, then round behind it.
+  const q = to(at(-b));
+  const ql = Math.hypot(...q);
+  const n: Vec3 = [q[0] / ql, q[1] / ql, q[2] / ql];
+  const ol = Math.hypot(...o);
+  const e: Vec3 = [o[0] / ol, o[1] / ol, o[2] / ol];
+  const en = dot(e, n);
+  const away = [-(e[0] - en * n[0]), -(e[1] - en * n[1]), -(e[2] - en * n[2])];
+  const al = Math.hypot(...away) || 1;
+  const beyond = Math.min(Math.PI / 2, ((ql - r) / r) * (Math.PI / 2));
+  return [0, 1, 2].map((k) => c[k]! + r * (Math.cos(beyond) * n[k]! + Math.sin(beyond) * (away[k]! / al))) as unknown as Vec3;
+}
+
+/** An axis's poles' names (N, S) as markers, a little past its ends; `key` the row they are of (its body's), `n` which of its axes. */
+export function poleMarkers(line: AxisLine, key: string, n = 0): SceneMarker[] {
+  const { north, south } = axisEnds(line, AXIS_NAMES_PAST);
+  return (
+    [
+      ['N', north],
+      ['S', south],
+    ] as const
+  ).map(([name, at]) => ({
+    id: `${key}@pole-${name}-${n}`,
+    key,
+    kind: 'pole',
+    label: name,
+    icon: '',
+    at,
+    selected: true,
+    pole: { north: name === 'N', axis: n },
+  }));
+}
+
+/**
+ * A body's settings at the level edited after a change there (`next`, the change touching
+ * `touched`), its base turn changed with its Axis where the change sets or resets the Axis but not
+ * the base turn itself (the Orientation section's reset clears all three, back as the data has
+ * it): so the body stays as it is, and only what its Turn turns about moves (`poseKept`). A Turn
+ * changed or reset turns it from its base turn (reset: back to it).
+ */
+export function keepingPose(
+  b: BodyInfo,
+  next: BodySettings,
+  touched: readonly (keyof BodySettings)[],
+): BodySettings {
+  if (!touched.includes('axis') || touched.includes('baseTurn')) return next;
+  const before = valuesOf(b);
+  const after = valuesOf({ ...b, settings: next });
+  const baseTurn = poseKept(
+    poleOf(b.file?.parts ?? []),
+    { axis: before.axis, turn: before.turn, base: before.baseTurn },
+    { axis: after.axis, turn: after.turn },
+  );
+  const rest = without(next, ['baseTurn']) ?? {};
+  if (baseTurn) return { ...rest, baseTurn };
+  // None: none set here, unless a level under this one sets one (then none, said here).
+  const [x, y, z] = valuesOf({ ...b, settings: rest }).baseTurn;
+  return x || y || z ? { ...rest, baseTurn: NO_QUAT } : rest;
+}
+
+/** A body's frame facing the eye of `view` (its billboards' and their lights'). */
+const facingFrame = (body: SetPlanet, view: Viewpoint) =>
+  bodyFrame(body.position, body.radius, view.eye, viewUp(view)).axes;
+
+/**
+ * The view a body's lights are placed from, as the renderer lights it (see `wayOut`): the scene's
+ * own camera (`layout`) for a body fixed in the world, its lights fixed there too; the camera the
+ * editor looks through (`view`) for one facing the camera, its lights kept to the eye.
+ */
+export const lightsView = (b: BodyInfo | null | undefined, layout: Viewpoint, view: Viewpoint): Viewpoint =>
+  b && valuesOf(b).orientation === 'world' ? layout : view;
 
 /**
  * A shield's lights as lights to mark (their rows' keys under its material's, `base`): each as it
@@ -1659,6 +1903,7 @@ export function skyPartsOf(
         side: 'near',
         from: 0,
         repeat: 1,
+        orientation: DEFAULT_ORIENTATION,
       },
       set: edited?.[key],
       origins: originsOf(levels.map(([name, l]) => [name, l?.[key]] as const)),
@@ -1740,6 +1985,12 @@ export const DEPTH_GROUPS: readonly {
   { depth: 'background', label: 'Background', icon: 'flip_to_back' },
   { depth: 'scene', label: 'Midground', icon: 'vertical_align_center' },
   { depth: 'foreground', label: 'Foreground', icon: 'flip_to_front' },
+];
+
+/** The ways a body's surfaces can be turned, as the editor offers them. */
+export const ORIENTATION_CHOICES: readonly { readonly value: Orientation; readonly label: string }[] = [
+  { value: 'camera', label: 'Camera' },
+  { value: 'world', label: 'World' },
 ];
 
 /** The anchors a sky or its material may be given, as their choices show them. */

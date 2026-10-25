@@ -34,7 +34,7 @@ import { SelectionPanel } from './selection-panel';
 import { EditingAidsStore } from './editing-aids.store';
 import { ReferenceOverlay } from './reference-overlay';
 import { LookThrough } from './look-through';
-import { SceneMarkers } from './scene-markers';
+import { type PoleDrag, SceneMarkers } from './scene-markers';
 import { FrameStatsReadout } from './frame-stats-readout';
 
 /**
@@ -115,6 +115,13 @@ export class EditorLayout {
   }
 
   /** A planet clicked in the view: selected in the editor (from the library: what it shows, opened). */
+  /** A planet's pole dragged in the view: its axis moved, the whole drag one step. */
+  protected poleDrag(drag: PoleDrag): void {
+    if (drag.phase === 'start') this.draft.holdHistory();
+    this.editor.dragPole(drag);
+    if (drag.phase === 'end') this.draft.releaseHistory();
+  }
+
   protected pick(index: number): void {
     if (this.editor.selectPlaced(index) && this.ui.browsing()) this.ui.open(this.editor.opened());
   }

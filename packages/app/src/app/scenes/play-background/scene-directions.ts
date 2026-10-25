@@ -1,7 +1,8 @@
 import type { PlanetDirectionalLight, PlanetLight } from './scene-planets';
 
 /**
- * Directions about a planet, in its body's frame (x to the right, y away from the eye, z up), as
+ * Directions about a planet, in its body's placement frame (x to the right, y away from the scene's
+ * own camera, z up: fixed in the world, see `scene-graph.ts`), as
  * the Background page's direction controls set them: where its key light comes from (its lights
  * turned together), where its shade darkens it, and where its rims and glows lean.
  */

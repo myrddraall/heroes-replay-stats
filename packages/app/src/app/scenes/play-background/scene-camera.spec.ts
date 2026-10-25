@@ -7,6 +7,7 @@ import {
   fieldOfView,
   forwardOf,
   orbit,
+  orbitAround,
   pan,
   viewLine,
   viewPoint,
@@ -22,6 +23,19 @@ const camera: SceneCamera = {
 };
 
 describe('a scene’s camera', () => {
+  it('orbits round a planet off its middle, the planet kept where it is in the view', () => {
+    // The game's camera, looking a little under the planet it is about.
+    const game: SceneCamera = { ...camera, eye: [-0.0018, -41.1988, 5.6051], forward: [1.9e-5, 0.999687, -0.025004], fovY: 43 };
+    const planet = [0, 65, 4] as const;
+    const at = viewPoint(game, 0.85, planet)!;
+    for (const [turn, tilt] of [[20, 0], [-35, 10], [5, -25]] as const) {
+      const moved = { ...game, ...orbitAround(game, planet, turn, tilt) };
+      const now = viewPoint(moved, 0.85, planet)!;
+      expect(now.x).toBeCloseTo(at.x, 4);
+      expect(now.y).toBeCloseTo(at.y, 4);
+    }
+  });
+
   it('turns and tilts the way it looks, and back', () => {
     expect(cameraAngles([0, 1, 0])).toEqual({ turn: 0, tilt: 0 });
     expect(cameraAngles([1, 0, 0]).turn).toBeCloseTo(90);

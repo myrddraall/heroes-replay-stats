@@ -33,8 +33,8 @@
 </hrs-property-section>
 <hrs-property-section
   title="Surface"
-  [changed]="anySet(['strength', 'blend', 'depth', 'anchor'])"
-  (resetRequested)="clear.emit(['strength', 'blend', 'depth', 'anchor'])"
+  [changed]="anySet(surfaceKeys)"
+  (resetRequested)="clear.emit(surfaceKeys)"
 >
   @if (c.strength) {
     <hrs-property-number
@@ -80,6 +80,17 @@
       [origin]="origins()?.depth"
       (resetRequested)="clear.emit(['depth'])"
       (valueChange)="depth($event)"
+    />
+  }
+  @if (c.orientation) {
+    <hrs-property-select
+      label="Orientation"
+      [value]="v.orientation"
+      [options]="orientations"
+      [changed]="isSet('orientation')"
+      [origin]="origins()?.orientation"
+      (resetRequested)="clear.emit(['orientation'])"
+      (valueChange)="orient($event)"
     />
   }
 </hrs-property-section>

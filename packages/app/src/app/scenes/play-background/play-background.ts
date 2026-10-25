@@ -368,6 +368,10 @@ export class PlayBackground {
           rim: p.rim,
           lighting: p.lighting,
           shade: p.shade,
+          ...(p.orientation ? { orientation: p.orientation } : {}),
+          ...(p.axis ? { axis: p.axis } : {}),
+          ...(p.turn !== undefined ? { turn: p.turn } : {}),
+          ...(p.baseTurn ? { baseTurn: p.baseTurn } : {}),
         });
       }
       // Each body as it was where it hasn't changed: only a changed one is drawn again.

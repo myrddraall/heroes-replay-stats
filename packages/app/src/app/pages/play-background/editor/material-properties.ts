@@ -14,7 +14,7 @@ import type {
   MaterialTint,
   SkyAnchor,
 } from '../../../scenes/play-background/scene-planets';
-import { SKY_ANCHOR_CHOICES } from './editor-model';
+import { ORIENTATION_CHOICES, SKY_ANCHOR_CHOICES } from './editor-model';
 import { PropertyCheck } from '../properties/property-check';
 import { PropertySection } from '../properties/property-section';
 import { TintSection } from './tint-section';
@@ -78,6 +78,15 @@ export class MaterialProperties {
   protected readonly anchoredDepthOptions = this.depthOptions.filter((o) => o.value !== 'scene');
   protected readonly anchorOptions: readonly { value: SkyAnchor; label: string }[] =
     SKY_ANCHOR_CHOICES;
+  protected readonly orientations = ORIENTATION_CHOICES;
+  /** The Surface section's settings (its reset takes them all back). */
+  protected readonly surfaceKeys: readonly (keyof MaterialSettings)[] = [
+    'strength',
+    'blend',
+    'depth',
+    'anchor',
+    'orientation',
+  ];
 
   protected blend(blend: string): void {
     if (MATERIAL_BLENDS.includes(blend as SceneBlend))
@@ -87,6 +96,11 @@ export class MaterialProperties {
   protected depth(value: string): void {
     const found = this.depthOptions.find((o) => o.value === value);
     if (found) this.settingsChange.emit({ depth: found.value });
+  }
+
+  protected orient(value: string): void {
+    const found = ORIENTATION_CHOICES.find((o) => o.value === value);
+    if (found) this.settingsChange.emit({ orientation: found.value });
   }
 
   protected anchor(value: string): void {

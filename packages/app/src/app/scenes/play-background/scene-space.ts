@@ -1,4 +1,5 @@
 import type { AddedLight, LightSettingsMap } from './scene-lights';
+import type { Orientation, Quat } from './scene-graph';
 import {
   shapeReach,
   type BodyPart,
@@ -190,6 +191,13 @@ export interface PlanetPlacement {
   readonly lighting?: number;
   /** A shade from a side, over its overlays'. */
   readonly shade?: Partial<BodyShade>;
+  /** Which way its surfaces are turned, over its tuning's (its parts and materials may set their own). */
+  readonly orientation?: Orientation;
+  /** Where its poles point (its frame), and its turn about them (degrees), over its tuning's (see `bodyTurn`). */
+  readonly axis?: Vec3;
+  readonly turn?: number;
+  /** Its base turn, over its tuning's (see `bodyTurn`). */
+  readonly baseTurn?: Quat;
   readonly position: Vec3;
   /** Its body's radius in the scene's units. */
   readonly radius: number;
@@ -208,11 +216,13 @@ const squareTo = (v: Vec3): Vec3 =>
 /**
  * A planet's body's frame, as the game's billboards turn to face the eye: about its centre, y
  * away from the eye, z as near the view's up (`viewUp`: up on the screen) as it can be, x to the
- * right; and the eye in that frame, in units of the body's radius. Turned with the camera, so a
- * body (with its moons and its lights, placed in its frame) keeps its way up on the screen however
- * the camera turns or tilts, straight down or up as well: the view's up is square to the way the
- * camera looks, so for anything in view it is never along the way to it. (The eye at the body's
- * centre, there is no way to face: it faces any way square to the view's up.)
+ * right; and the eye in that frame, in units of the body's radius. From the camera drawing it,
+ * turned with the camera, it is the frame a billboard surface is drawn in (it keeps its way up on
+ * the screen however the camera turns or tilts, straight down or up as well: the view's up is
+ * square to the way the camera looks, so for anything in view it is never along the way to it).
+ * From the scene's own camera it is the body's placement frame (`placementFrame`), fixed in the
+ * world, which its moons and lights are placed in. (The eye at the body's centre, there is no way
+ * to face: it faces any way square to the view's up.)
  */
 export function bodyFrame(position: Vec3, radius: number, eye: Vec3, viewUp: Vec3): BodyFrame {
   const to: Vec3 = [eye[0] - position[0], eye[1] - position[1], eye[2] - position[2]];
@@ -260,16 +270,22 @@ export function bodyExtent(radius: number, reachOf: number, eyeDistance: number)
  * The half-side of the square a body's parts are drawn on (see `bodyExtent`), from all of them:
  * its spheres widened for perspective, and its rings (flat, facing the eye, `depth` from its
  * centre: one nearer the eye shows wider on the square, by d over its plane's distance), sized
- * as seen from there.
+ * as seen from there. A ring fixed in the world (among `standing`: tilted any way as the eye goes
+ * round) is taken as the sphere it turns within (as far out as its outer edge, its plane's depth
+ * off the centre).
  */
 export function partsExtent(
   radius: number,
   parts: readonly BodyPart[],
   eyeDistance: number,
+  standing: ReadonlySet<BodyPart> = new Set(),
 ): number {
   const d = eyeDistance / radius;
-  let out = bodyExtent(radius, reach(parts.filter((p) => p.shape.kind !== 'ring')), eyeDistance);
-  for (const { shape } of parts) {
+  const flat = (p: BodyPart) => p.shape.kind === 'ring' && !standing.has(p);
+  const sphereOf = (p: BodyPart) =>
+    p.shape.kind === 'ring' ? Math.hypot(p.shape.outer * ringScale(p.shape, d), p.shape.depth) : shapeReach(p.shape);
+  let out = bodyExtent(radius, Math.max(1, ...parts.filter((p) => !flat(p)).map(sphereOf)), eyeDistance);
+  for (const { shape } of parts.filter(flat)) {
     if (shape.kind !== 'ring') continue;
     const plane = d + shape.depth;
     if (plane > 0) out = Math.max(out, (radius * shape.outer * ringScale(shape, d) * d) / plane);

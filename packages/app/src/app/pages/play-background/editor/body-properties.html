@@ -110,6 +110,40 @@
     />
   </hrs-property-section>
 }
+@if (!overlay()) {
+  <hrs-property-section
+    title="Orientation"
+    [changed]="isSet('orientation') || isSet('axis') || isSet('turn') || isSet('baseTurn')"
+    (resetRequested)="clear.emit(['orientation', 'axis', 'turn', 'baseTurn'])"
+  >
+    <hrs-property-select
+      label="Orientation"
+      [value]="v.orientation"
+      [options]="orientations"
+      [changed]="isSet('orientation')"
+      [origin]="origins()?.orientation"
+      (resetRequested)="clear.emit(['orientation'])"
+      (valueChange)="orient($event)"
+    />
+    <hrs-property-direction
+      label="Axis"
+      [value]="v.axis"
+      [changed]="isSet('axis')"
+      [origin]="origins()?.axis"
+      (resetRequested)="clear.emit(['axis'])"
+      (valueChange)="settingsChange.emit({ axis: $event })"
+    />
+    <hrs-property-number
+      label="Turn"
+      [value]="v.turn"
+      [step]="1"
+      [changed]="isSet('turn')"
+      [origin]="origins()?.turn"
+      (resetRequested)="clear.emit(['turn'])"
+      (valueChange)="settingsChange.emit({ turn: $event })"
+    />
+  </hrs-property-section>
+}
 @if (moons()) {
   <ng-content select="[moonsPod]" />
 }

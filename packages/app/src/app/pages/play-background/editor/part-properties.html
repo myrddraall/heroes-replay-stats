@@ -23,6 +23,23 @@
     </div>
   }
 </hrs-property-section>
+@if (p.kind !== 'sky') {
+  <hrs-property-section
+    title="Orientation"
+    [changed]="isSet('orientation')"
+    (resetRequested)="clear.emit(['orientation'])"
+  >
+    <hrs-property-select
+      label="Orientation"
+      [value]="v.orientation"
+      [options]="orientations"
+      [changed]="isSet('orientation')"
+      [origin]="p.origins.orientation"
+      (resetRequested)="clear.emit(['orientation'])"
+      (valueChange)="orient($event)"
+    />
+  </hrs-property-section>
+}
 <hrs-property-section title="Shape" [changed]="changed()" (resetRequested)="clear.emit(shapeKeys)">
   <hrs-property-number
     label="Size"

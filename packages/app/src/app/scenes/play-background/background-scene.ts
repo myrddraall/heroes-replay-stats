@@ -7,7 +7,8 @@ import type {
 import type { AddedLight, LightSettingsMap } from './scene-lights';
 import type { AddedPart } from './created-overlays';
 import type { SceneCameraSet } from './play-scene';
-import { bodyFrame, viewUp, type Viewpoint } from './scene-space';
+import type { Viewpoint } from './scene-space';
+import { bodyTransform, type Orientation, placementFrame, pointToLocal, pointToWorld, type Quat } from './scene-graph';
 import { orbitOffset, orbitThrough, type OrbitPlace, type PlacementMode } from './placement';
 
 /**
@@ -19,9 +20,9 @@ import { orbitOffset, orbitThrough, type OrbitPlace, type PlacementMode } from '
 export type Vec3 = readonly [number, number, number];
 
 /**
- * A moon's orbit about its parent, in the parent's frame as the eye sees it (x to the right, y
- * away from the eye, z up): its place on it (`OrbitPlace`), its own radius `size` times its
- * parent's, and how its place is set in the editor (`mode`; none: on its orbit). Whichever way it
+ * A moon's orbit about its parent, in the parent's placement frame (as the scene's own camera sees
+ * it: x to the right, y away from that eye, z up): its place on it (`OrbitPlace`), its own radius
+ * `size` times its parent's, and how its place is set in the editor (`mode`; none: on its orbit). Whichever way it
  * is set, its place is kept as an orbit.
  */
 export interface Orbit extends OrbitPlace {
@@ -68,6 +69,17 @@ export interface BodySettings {
    * reach (`HALO_MARGIN` unless set).
    */
   readonly glowMargin?: number;
+  /**
+   * Which way its surfaces are turned (see `Orientation`; its parts and materials may set their
+   * own); where its poles point (its frame: its placement frame for a surface fixed in the world,
+   * its frame facing the eye for a billboard; none: as its data has them) and its turn about them
+   * (degrees; none: 0), which side of it is seen; and its base turn, its pose before its Turn, kept
+   * so its Axis can change without turning it (none: none; see `bodyTurn`).
+   */
+  readonly orientation?: Orientation;
+  readonly axis?: Vec3;
+  readonly turn?: number;
+  readonly baseTurn?: Quat;
   /** (See `lighting`.) Where its shade darkens it and its rims and glows lean (its frame). */
   readonly lightFrom?: Vec3;
   readonly shadeTowards?: Vec3;
@@ -193,20 +205,15 @@ export function placeBodies(
   overrides: ProgressOverrides = new Map(),
 ): PlacedBody[] {
   const out: PlacedBody[] = [{ path: [], position: root.position, radius: root.radius }];
-  const up = viewUp(layoutView);
   const place = (parent: PlacedBody, list: readonly MoonChoices[]) => {
-    const { axes } = bodyFrame(parent.position, parent.radius, layoutView.eye, up);
+    // Its moons hang from it: each one's orbit is its place in the parent's placement frame, in
+    // the parent's radii; its size times the parent's.
+    const world = bodyTransform(parent, layoutView);
     list.forEach((moon, i) => {
       const path = [...parent.path, i];
       const progress = overrides.get(pathKey(path)) ?? moon.orbit.progress;
-      const [ox, oy, oz] = orbitOffset({ ...moon.orbit, progress });
-      const r = parent.radius;
-      const position: Vec3 = [
-        parent.position[0] + (axes[0]! * ox + axes[3]! * oy + axes[6]! * oz) * r,
-        parent.position[1] + (axes[1]! * ox + axes[4]! * oy + axes[7]! * oz) * r,
-        parent.position[2] + (axes[2]! * ox + axes[5]! * oy + axes[8]! * oz) * r,
-      ];
-      const placed: PlacedBody = { path, position, radius: r * moon.orbit.size };
+      const position = pointToWorld(world, orbitOffset({ ...moon.orbit, progress }));
+      const placed: PlacedBody = { path, position, radius: world.scale * moon.orbit.size };
       out.push(placed);
       place(placed, moon.moons ?? []);
     });
@@ -226,11 +233,8 @@ export function orbitTo(
   body: { readonly position: Vec3; readonly radius: number },
   layoutView: Viewpoint,
 ): Orbit {
-  const { axes } = bodyFrame(parent.position, parent.radius, layoutView.eye, viewUp(layoutView));
-  const d = sub(body.position, parent.position);
-  const at = [0, 3, 6].map(
-    (k) => (axes[k]! * d[0] + axes[k + 1]! * d[1] + axes[k + 2]! * d[2]) / parent.radius,
-  ) as unknown as Vec3;
+  // The body's place taken back into the parent's placement frame, in its radii.
+  const at = pointToLocal(bodyTransform(parent, layoutView), body.position);
   return { ...orbitThrough(at, 0), size: body.radius / parent.radius };
 }
 
@@ -248,6 +252,12 @@ export interface BodyValues {
   readonly shadeTowards: Vec3;
   readonly rim: Vec3;
   readonly glowMargin: number;
+  /** Which way its surfaces are turned (unless its parts or materials say), where its poles point (its frame) and its turn about them (degrees). */
+  readonly orientation: Orientation;
+  readonly axis: Vec3;
+  readonly turn: number;
+  /** Its base turn (its pose before its Turn; see `bodyTurn`). */
+  readonly baseTurn: Quat;
 }
 
 /** How far the view reaches either way from its middle: the tangents of its half-angles. */
@@ -277,7 +287,7 @@ export function fitRadius(
   extent: (path: BodyPath) => number = () => 1,
 ): number {
   const unit = placeBodies({ position: root.position, radius: 1 }, moons, layoutView, overrides);
-  const { axes } = bodyFrame(root.position, 1, layoutView.eye, viewUp(layoutView));
+  const axes = placementFrame(root.position, layoutView);
   const along = (o: Vec3, k: number) => o[0] * axes[k]! + o[1] * axes[k + 1]! + o[2] * axes[k + 2]!;
   const d = length(sub(root.position, layoutView.eye));
   let radius = root.radius;

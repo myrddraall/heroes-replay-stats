@@ -90,6 +90,7 @@ describe('materials’ settings', () => {
       anchor: false,
       lit: true,
       specular: false,
+      orientation: true,
     });
     const emissive = material({
       emissive: { texture: 'grid', brightMult: 1, fresnel: fresnel(0) },
@@ -107,6 +108,7 @@ describe('materials’ settings', () => {
       anchor: false,
       lit: true,
       specular: false,
+      orientation: true,
     });
     // A specular layer: its shine is set.
     expect(
@@ -141,6 +143,7 @@ describe('materials’ settings', () => {
       anchor: true,
       lit: false,
       specular: false,
+      orientation: false,
     });
   });
 

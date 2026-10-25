@@ -12,7 +12,7 @@ import {
   type SkySettings,
 } from './scene-planets';
 import type { Backdrop } from './scene-space';
-import type { LightAid } from './scene-beams';
+import type { EditingAid } from './scene-beams';
 import type { SceneCameraSet } from './play-scene';
 import { type TintSettings, UNTINTED } from './tint-settings';
 
@@ -102,7 +102,7 @@ export interface BackgroundSceneSource {
   /** An editing aid shown in place of the sky (none: the sky); never part of the design. */
   readonly backdrop?: Signal<Backdrop | null>;
   /** Lights' beams shown over it (an editing aid: the light selected); never part of the design. */
-  readonly beams?: Signal<readonly LightAid[]>;
+  readonly beams?: Signal<readonly EditingAid[]>;
   /** Where it puts the camera, over the game's (none: the game's). */
   readonly camera?: Signal<SceneCameraSet | undefined>;
   /**
@@ -122,6 +122,25 @@ export function shadeOf(settings: BodySettings | undefined): Partial<BodyShade> 
   return {
     ...(settings?.shade !== undefined ? { strength: settings.shade } : {}),
     ...(settings?.shadeTowards ? { direction: settings.shadeTowards } : {}),
+  };
+}
+
+/** A body's orientation, axis, turn and base turn, the scene's over the library's, each where set. */
+function orientationOf(
+  set: SetPlanet,
+  own:
+    | Pick<SetPlanet, 'orientation' | 'axis' | 'turn' | 'baseTurn'>
+    | undefined,
+): Pick<SetPlanet, 'orientation' | 'axis' | 'turn' | 'baseTurn'> {
+  const orientation = set.orientation ?? own?.orientation;
+  const axis = set.axis ?? own?.axis;
+  const turn = set.turn ?? own?.turn;
+  const baseTurn = set.baseTurn ?? own?.baseTurn;
+  return {
+    ...(orientation ? { orientation } : {}),
+    ...(axis ? { axis } : {}),
+    ...(turn !== undefined ? { turn } : {}),
+    ...(baseTurn ? { baseTurn } : {}),
   };
 }
 
@@ -167,6 +186,7 @@ export function withLibrary(set: SetPlanet, library: LibraryState): SetPlanet {
     tint: planet.tint ?? own?.tint,
     lightFrom: planet.lightFrom ?? own?.lightFrom,
     rim: planet.rim ?? own?.rim,
+    ...orientationOf(planet, own),
     shade: {
       ...shadeOf(own),
       ...styles.reduce((a: Partial<BodyShade>, s) => ({ ...a, ...shadeOf(s) }), {}),

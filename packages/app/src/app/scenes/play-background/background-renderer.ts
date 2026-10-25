@@ -1,7 +1,7 @@
 import { computed, inject, InjectionToken, type Signal } from '@angular/core';
 import { GraphicsStore } from '../../data/settings/graphics.store';
 import type { LoadedPlayScene, SceneCameraSet } from './play-scene';
-import type { LightAid } from './scene-beams';
+import type { EditingAid } from './scene-beams';
 import type { AddedLight } from './scene-lights';
 import type { SkySettings } from './scene-planets';
 import type { Backdrop, PlanetPlacement } from './scene-space';
@@ -37,7 +37,7 @@ export interface BackgroundRenderer {
   setSky(settings: SkySettings): void;
   setSceneLights(lights: readonly AddedLight[]): void;
   setBackdrop(backdrop: Backdrop | null): void;
-  setBeams(beams: readonly LightAid[]): void;
+  setBeams(beams: readonly EditingAid[]): void;
   resize(width: number, height: number): void;
   dispose(): void;
 }

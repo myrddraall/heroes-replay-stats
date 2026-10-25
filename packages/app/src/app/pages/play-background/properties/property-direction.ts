@@ -1,7 +1,7 @@
 import { Component, computed, input, output, signal } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 
-/** A direction in a planet's frame: x to the right, y away from the eye, z up. */
+/** A direction in a planet's placement frame: x to the right, y away from the scene's own camera, z up. */
 export type Direction = readonly [number, number, number];
 
 /** The sides the disc shows the planet from: the eye's (front), the opposite, or across or over it. */

@@ -232,6 +232,14 @@ export const DraftDesignStore = signalStore(
       clearLibraryBody(kind: LibraryKind, id: string, keys: readonly (keyof BodySettings)[]): void {
         updateLibraryBody(kind, id, (s) => without(s, keys));
       },
+      /** A library body's defaults changed as a whole, in one step (none left: none kept). */
+      changeLibraryBody(
+        kind: LibraryKind,
+        id: string,
+        change: (s: BodySettings) => BodySettings | undefined,
+      ): void {
+        updateLibraryBody(kind, id, change);
+      },
       resetLibraryBody(kind: LibraryKind, id: string): void {
         updateLibraryBody(kind, id, () => undefined);
       },

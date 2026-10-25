@@ -45,7 +45,7 @@ import {
 import { INSTANCE_FLOATS, ParticleSystem } from '../scene-particles';
 import { DEFAULT_ACTIVE, gridFields, MATERIAL_DEFAULTS, materialKey, materialValues, mergeSettings } from '../material-settings';
 import { rimTurn } from '../scene-directions';
-import { BEAM_LENGTH, beamAcross, beamTube, type LightAid, type LightOutline, OUTLINE_EXTENT } from '../scene-beams';
+import { AXIS_NAMES_PAST, axisEnds, BEAM_LENGTH, beamAcross, beamTube, type EditingAid, type LightOutline, OUTLINE_EXTENT } from '../scene-beams';
 import { fitTube, type Tube, tubeCover } from '../scene-tubes';
 import { overlayOfFile } from '../overlays';
 import { skyOverlayParts } from '../sky-overlays';
@@ -68,7 +68,9 @@ import {
   type LoadedPlanet,
   type MaterialDepth,
   type MaterialSettings,
+  haloLike,
   ownPartKey,
+  poleOf,
   overlayOfPartKey,
   overlayPartKey,
   type PartKey,
@@ -109,7 +111,22 @@ import {
   reach,
   viewMatrix,
   viewUp,
+  type Viewpoint,
 } from '../scene-space';
+import {
+  bodyTurn,
+  DEFAULT_ORIENTATION,
+  type DrawFrames,
+  drawFrames,
+  drawTurnOf,
+  IDENTITY,
+  isIdentity,
+  type Mat3,
+  type Orientation,
+  placementFrame,
+  surfaceFrame,
+} from '../scene-graph';
+import { type BodyLeans, setBodyFrames } from './body-frames';
 import { bodyNodes } from './shader-body';
 import { meshNodes } from './shader-mesh';
 import { type Slot, SLOTS, TextureSlots } from './shader-material';
@@ -221,15 +238,6 @@ function turnAbout(v: Vec3, axis: Vec3, angle: number): Vec3 {
   return [v[0] * c + k[0] * s + axis[0] * d, v[1] * c + k[1] * s + axis[1] * d, v[2] * c + k[2] * s + axis[2] * d];
 }
 
-/** A vector in a body's frame (its axes column-major), from the world. */
-function intoFrame(axes: Float32Array, v: Vec3): Vec3 {
-  return [
-    axes[0]! * v[0] + axes[1]! * v[1] + axes[2]! * v[2],
-    axes[3]! * v[0] + axes[4]! * v[1] + axes[5]! * v[2],
-    axes[6]! * v[0] + axes[7]! * v[1] + axes[8]! * v[2],
-  ];
-}
-
 /**
  * How big a flat ring at `depth` (towards the eye, negative) must be to lie on a body's limb seen
  * from `d` (both in the body's radii), but for a factor: the limb's tangent (1 over the root of
@@ -282,11 +290,17 @@ interface MeshDraw {
   readonly id: string;
 }
 
-/** A placement with its body's frame as last placed. */
+/** A placement with its body's frames as last placed. */
 interface Placed {
   readonly id: number;
   placement: PlanetPlacement;
-  frame: BodyFrame;
+  /** Its frame facing the eye that draws it (turned with the camera): its squares', and its surfaces' that face the camera. */
+  quad: BodyFrame;
+  /**
+   * Its placement frame (as the scene's own camera sees it, fixed in the world): what the lights
+   * of its surfaces fixed in the world are set in, and those surfaces are turned from.
+   */
+  placementFrame: Mat3;
   /** The half-side of the square its parts are drawn on, in the scene's units: its widest part. */
   extent: number;
   /** Its draws as drawn, in drawing order. */
@@ -323,6 +337,12 @@ interface DrawState {
   readonly scrolls: readonly { readonly slot: number; readonly layer: SceneLayer }[];
   /** A body's part as set: its shape, its mappings. */
   readonly part?: BodyPart;
+  /** Which way a body's part is turned: facing the camera, or fixed in the world (see `Orientation`). */
+  readonly orientation?: Orientation;
+  /** Whether its body's own turn (its Axis and Turn) turns it (see `DrawTurn`). */
+  readonly turned?: boolean;
+  /** A body's draw's leans, set where its lights are (turned into the view as it is baked). */
+  readonly leans?: BodyLeans;
   /** What it was worked out from (the sky's draws: whether they have to be drawn again). */
   readonly signature: string;
 }
@@ -432,14 +452,32 @@ const wearsIn = (placement: PlanetPlacement) =>
 const overlayParts = (placement: PlanetPlacement, overlay: LoadedPlanet): readonly BodyPart[] =>
   wornParts(placement.planet.planet, overlayOfFile(overlay.id), overlay.planet.parts);
 
-function partsOf(placement: PlanetPlacement): readonly BodyPart[] {
+/** A placement's parts as set (`part`), each with the part it is of (`source`, as its draws have it). */
+function partsOf(placement: PlanetPlacement): readonly { readonly source: BodyPart; readonly part: BodyPart }[] {
   return [
-    ...placement.planet.planet.parts.map((p) => withPart(p, placement.parts?.[ownPartKey(p)])),
+    ...placement.planet.planet.parts.map((p) => ({ source: p, part: withPart(p, placement.parts?.[ownPartKey(p)]) })),
     ...overlaysOf(placement).flatMap((o) =>
-      overlayParts(placement, o).map((p) => withPart(p, placement.parts?.[overlayPartKey(overlayOfFile(o.id), p)])),
+      overlayParts(placement, o).map((p) => ({
+        source: p,
+        part: withPart(p, placement.parts?.[overlayPartKey(overlayOfFile(o.id), p)]),
+      })),
     ),
   ];
 }
+
+/** A placement's own turn (`bodyTurn`): its base turn, then about its Axis by its Turn; each its own, else its tuning's. */
+function bodyTurnOf(placement: PlanetPlacement): Mat3 {
+  const { planet } = placement.planet;
+  return bodyTurn(
+    poleOf(planet.parts),
+    placement.axis ?? planet.tuning?.axis,
+    placement.turn ?? planet.tuning?.turn,
+    placement.baseTurn ?? planet.tuning?.baseTurn,
+  );
+}
+
+/** The body's own turn as a draw of it takes it (a halo left square to the camera: none). */
+const turnFor = (s: { readonly turned?: boolean }, bodyTurned: Mat3): Mat3 => (s.turned ? bodyTurned : IDENTITY);
 
 function sorted<T extends { readonly draw: MeshDraw; readonly blend: SceneBlend }>(
   draws: readonly T[],
@@ -627,7 +665,7 @@ export class ThreeSceneRenderer {
   private viewVersion = 0;
   private surfaces: number[][] = [];
   private surfacesKey = '';
-  private beams: readonly LightAid[] = [];
+  private beams: readonly EditingAid[] = [];
   /** The editor's aids' draws by kind, made as more are wanted and kept (one of each made and compiled at the start). */
   private readonly aidPool = new Map<AidKind, { mesh: Mesh; uniforms: ShaderUniforms }[]>();
   private readonly beamGeometry: BufferGeometry;
@@ -657,6 +695,12 @@ export class ThreeSceneRenderer {
   private skyFollow: SceneCameraSet | null = null;
   /** The scene's own camera's view (its file's): where an anchored sky is for it, whatever its anchor. */
   private readonly referenceView: Float32Array;
+  /**
+   * The scene's own camera (its file's): what the bodies' placement frames are turned to (as it
+   * sees them), whatever camera draws them, so the lights of their surfaces fixed in the world
+   * stay put.
+   */
+  private readonly layout: Viewpoint;
 
   /** Throws when the browser has neither WebGPU nor WebGL 2. */
   constructor(
@@ -714,6 +758,7 @@ export class ThreeSceneRenderer {
     for (const [key, image] of Object.entries(loaded.images)) this.textures.set(key, image);
     const { scene } = loaded;
     this.referenceView = viewMatrix(scene.camera.eye, scene.camera.forward, scene.camera.up);
+    this.layout = { eye: scene.camera.eye, forward: scene.camera.forward, up: scene.camera.up };
     for (const [name, mesh] of Object.entries(scene.meshes)) {
       if (!mesh.materials.length) continue;
       if (mesh.planet) continue;
@@ -827,7 +872,8 @@ export class ThreeSceneRenderer {
       const placed: Placed = {
         id: keep?.id ?? nextPlacedId++,
         placement,
-        frame: bodyFrame(placement.position, placement.radius, eye, up),
+        quad: bodyFrame(placement.position, placement.radius, eye, up),
+        placementFrame: placementFrame(placement.position, this.layout),
         extent: 0,
         states: [],
         version: keep?.version ?? 0,
@@ -835,8 +881,9 @@ export class ThreeSceneRenderer {
         hasShapes: false,
         bake: keep?.bake ?? null,
       };
-      this.measure(placed);
+      // (Measured once its draws are worked out: how far a part reaches depends on which way it is turned.)
       this.resolveBody(placed);
+      this.measure(placed);
       return placed;
     });
     for (const gone of previous) if (!kept.has(gone)) this.forget(gone);
@@ -858,8 +905,16 @@ export class ThreeSceneRenderer {
 
   private measure(placed: Placed): void {
     const { position, radius } = placed.placement;
-    const parts = partsOf(placed.placement);
-    placed.extent = partsExtent(radius, parts, distance(position, this.camera.eye));
+    const list = partsOf(placed.placement);
+    const parts = list.map((p) => p.part);
+    // Its parts not square to the eye (any of their materials fixed in the world, or turned by
+    // the body's own turn): a ring of them tilts.
+    const turned = !isIdentity(bodyTurnOf(placed.placement));
+    const world = new Set(
+      placed.states.filter((s) => s.orientation === 'world' || (turned && s.turned)).map((s) => s.draw.part),
+    );
+    const standing = new Set(list.filter((p) => world.has(p.source)).map((p) => p.part));
+    placed.extent = partsExtent(radius, parts, distance(position, this.camera.eye), standing);
     placed.reachOf = reach(parts) * radius;
     placed.hasShapes = parts.some((p) => p.shape.kind !== 'sphere' && p.shape.kind !== 'ring');
   }
@@ -972,6 +1027,17 @@ export class ThreeSceneRenderer {
     tintUniforms(u, 'uBodyTint', placement.tint ?? tuning?.tint);
     const rim = placement.rim ?? tuning?.rim;
     u.v2('uRimTurn', rim ? rimTurn(rim) : [0, 0]);
+    // Which way it is turned: its material's say, else its part's, else a halo square to the
+    // camera, else its body's, else its tuning's (each level over the one under it as merged),
+    // else facing the camera.
+    const { orientation, turned: takesTurn } = drawTurnOf(
+      settings?.orientation,
+      draw.partKey ? placement.parts?.[draw.partKey]?.orientation : undefined,
+      !!draw.owner && haloLike(draw.part, draw.owner.planet.materials),
+      placement.orientation,
+      tuning?.orientation,
+    );
+    const leans: BodyLeans = { ...(rim ? { rim } : {}), ...(settings?.spreadFrom ? { spreadFrom: settings.spreadFrom } : {}) };
     const darkenings = bodyDarkenings(
       draw.light && tunedRig(draw.light, placement.lighting ?? tuning?.lighting, placement.lightFrom ?? tuning?.lightFrom),
       shade,
@@ -999,7 +1065,7 @@ export class ThreeSceneRenderer {
     const round = pattern?.across ? pattern.across * (material.emissive?.tiling?.[0] ?? 1) : HEX_ROUND;
     u.i1('uPattern', drawn ? 1 : 0);
     u.f3('uPatternParams', round / scale, settings?.width ?? MATERIAL_DEFAULTS.width, settings?.soft ?? MATERIAL_DEFAULTS.soft);
-    return { ...base, part, signature: '' };
+    return { ...base, part, orientation, turned: takesTurn, leans, signature: '' };
   }
 
   // --- The GPU side of draws ----------------------------------------------------------------
@@ -1327,7 +1393,8 @@ export class ThreeSceneRenderer {
 
   /**
    * Where each placed planet shows in the view, for labels: its centre (`x`, `y`) and its top
-   * (`top`), as shares of the view's width and height from the top left; none for one behind the eye.
+   * (`top`: over its axis's poles' names too, where its axis is shown), as shares of the view's
+   * width and height from the top left; none for one behind the eye.
    */
   anchors(): { id: string; x: number; y: number; top: number }[] {
     const m = multiply(this.projection, this.view);
@@ -1339,13 +1406,19 @@ export class ThreeSceneRenderer {
       return [(x + 1) / 2, (1 - y) / 2];
     };
     const out: { id: string; x: number; y: number; top: number }[] = [];
-    for (const { placement, frame } of this.placed) {
+    for (const { placement, quad } of this.placed) {
       const { position, radius } = placement;
       const centre = project(position);
-      // Its top as drawn: up its frame (turned to the view's up), not the world's.
-      const z = frame.axes.subarray(6, 9);
+      // Its top on the screen: up its frame facing the eye (turned to the view's up), not the world's.
+      const z = quad.axes.subarray(6, 9);
       const top = project([position[0] + z[0]! * radius, position[1] + z[1]! * radius, position[2] + z[2]! * radius]);
-      if (centre && top) out.push({ id: placement.planet.label ?? placement.planet.id, x: centre[0], y: centre[1], top: top[1] });
+      // Over its axis's poles' names too, where its axis is shown (not to sit on them).
+      const names = this.beams
+        .filter((a) => a.shape === 'axis' && a.centre.every((c, k) => c === position[k]))
+        .flatMap((a) => (a.shape === 'axis' ? Object.values(axisEnds(a, AXIS_NAMES_PAST)) : []))
+        .map((p) => project(p)?.[1] ?? 1);
+      if (centre && top)
+        out.push({ id: placement.planet.label ?? placement.planet.id, x: centre[0], y: centre[1], top: Math.min(top[1], ...names) });
     }
     return out;
   }
@@ -1363,7 +1436,8 @@ export class ThreeSceneRenderer {
       const was = placed.placement;
       if (position === was.position && radius === was.radius && seen) return;
       placed.placement = { ...was, position, radius };
-      placed.frame = bodyFrame(position, radius, eye, up);
+      placed.quad = bodyFrame(position, radius, eye, up);
+      if (position !== was.position) placed.placementFrame = placementFrame(position, this.layout);
       this.measure(placed);
       placed.version++;
     });
@@ -2064,7 +2138,8 @@ export class ThreeSceneRenderer {
     if (!whole) return;
     const { width, height } = this.canvas;
     const { position } = body.placement;
-    const { axes } = body.frame;
+    // (Its square faces the eye, whichever way its surfaces are turned.)
+    const { axes } = body.quad;
     const e = body.extent;
     const corners: Vec3[] = [-1, 1].flatMap((sx) =>
       [-1, 1].map((sz): Vec3 => [
@@ -2098,10 +2173,32 @@ export class ThreeSceneRenderer {
     ]);
     const bakeViewProjection = multiply(onBake, viewProjection);
     const v = this.view;
-    const right = intoFrame(axes, [v[0]!, v[4]!, v[8]!]);
-    const up = intoFrame(axes, [v[1]!, v[5]!, v[9]!]);
-    const eyeDistance = Math.hypot(...body.frame.eye);
+    const eyeDistance = Math.hypot(...body.quad.eye);
     const radius = body.placement.radius;
+    // Each draw's frames, by which way it is turned and whether its body's own turn turns it (a
+    // few at most for a body: see `drawFrames`).
+    const bodyTurned = bodyTurnOf(body.placement);
+    const frames = new Map<string, DrawFrames>();
+    const framesOf = (orientation: Orientation, turned: boolean) => {
+      const key = `${orientation}:${turned}`;
+      let f = frames.get(key);
+      if (!f)
+        frames.set(
+          key,
+          (f = drawFrames({
+            placement: body.placementFrame,
+            quad: body.quad,
+            centre: position,
+            radius,
+            eye: this.camera.eye,
+            viewRight: [v[0]!, v[4]!, v[8]!],
+            viewUp: [v[1]!, v[5]!, v[9]!],
+            orientation,
+            turn: turned ? bodyTurned : IDENTITY,
+          })),
+        );
+      return f;
+    };
     const pixel = (2 * eyeDistance * radius * Math.tan((this.camera.fovY * Math.PI) / 360)) / height;
     const spot = frameSpot(position, radius, [v[0]!, v[4]!, v[8]!], viewProjection, width, height);
     // (The sky light is read from the top left: its spot's height and up turned over.)
@@ -2125,15 +2222,14 @@ export class ThreeSceneRenderer {
       u.set('uSmear', 0);
       u.set('uSceneThreshold', this.sceneThreshold());
       u.set('uCentre', position);
-      u.set('uAxes', axes);
       u.set('uRadius', radius);
-      u.set('uEye', body.frame.eye);
-      u.set('uRight', right);
-      u.set('uUp', up);
+      const orientation = s.orientation ?? DEFAULT_ORIENTATION;
+      setBodyFrames(u, framesOf(orientation, !!s.turned), s.leans ?? {});
       u.set('uSkyAt', skyAt);
       u.apply(surfaces);
       for (const { slot, layer } of s.scrolls) u.set(`uLayers[${slot}].offset`, layerOffset(layer, seconds));
-      const reachOf = partsExtent(radius, [s.part], eyeDistance * radius) + 2 * pixel;
+      const standing = orientation === 'world' || (s.turned && !isIdentity(bodyTurned)) ? new Set([s.part]) : undefined;
+      const reachOf = partsExtent(radius, [s.part], eyeDistance * radius, standing) + 2 * pixel;
       u.set('uExtent', Math.min(e, reachOf));
       const shape = s.part.shape;
       if (shape.kind === 'ring') {
@@ -2276,7 +2372,7 @@ export class ThreeSceneRenderer {
   }
 
   /** Beams to show over the picture (none: none); drawn at the next frame. */
-  setBeams(beams: readonly LightAid[]): void {
+  setBeams(beams: readonly EditingAid[]): void {
     if (beams === this.beams) return;
     this.beams = beams;
     this.changed = true;
@@ -2329,7 +2425,9 @@ export class ThreeSceneRenderer {
         outlines.push(mesh);
         uniforms.apply(shared);
         uniforms.set('uCentre', o.centre);
-        uniforms.set('uAxes', o.axes);
+        // Its square facing the eye; the light it outlines placed as its body is lit (`o.axes`).
+        uniforms.set('uAxes', bodyFrame(o.centre, o.radius, eye, this.viewUpNow()).axes);
+        uniforms.set('uLightAxes', o.axes);
         uniforms.set('uRadius', o.radius);
         uniforms.set('uExtent', o.radius * OUTLINE_EXTENT);
         uniforms.set('uKind', o.kind);
@@ -2341,6 +2439,31 @@ export class ThreeSceneRenderer {
         uniforms.set('uCosFade', Math.cos(o.cone * (1 - o.edge) * rad));
         uniforms.set('uColor', o.darkens ? [1, 1, 1] : o.colour);
         uniforms.set('uAlpha', OUTLINE_ALPHA);
+        continue;
+      }
+      if (aid.shape === 'axis') {
+        // A planet's axis: each half a thin beam (a light's beam's program) from its middle out
+        // to its end, as strong all along, as many pixels thick wherever it is, hidden by its own
+        // sphere only where the sphere is in front of it (among `uSurfaces`), not wherever it is
+        // over the sphere as a light's beam is (`uBody` none).
+        const pixel = (2 * distance(aid.centre, eye) * Math.tan((this.camera.fovY * Math.PI) / 360)) / this.canvas.height;
+        for (const [sign, colour] of [[1, aid.north], [-1, aid.south]] as const) {
+          const way = normalize(aid.way.map((v) => v * sign) as unknown as Vec3);
+          const [across, up] = beamAcross(way);
+          const { mesh, uniforms } = next('light');
+          beams.push(mesh);
+          uniforms.apply(shared);
+          uniforms.set('uCentre', aid.centre);
+          uniforms.set('uBody', [...aid.centre, 0]);
+          uniforms.set('uWay', way);
+          uniforms.set('uAcross', across);
+          uniforms.set('uUp', up);
+          uniforms.set('uRadius', (aid.pixels / 2) * pixel);
+          uniforms.set('uLength', aid.reach * aid.radius);
+          uniforms.set('uColor', colour);
+          uniforms.set('uAlpha', aid.strength);
+          uniforms.set('uFade', 0);
+        }
         continue;
       }
       const way = normalize(aid.from);
@@ -2359,6 +2482,7 @@ export class ThreeSceneRenderer {
         uniforms.set('uLength', aid.radius * BEAM_LENGTH);
         uniforms.set('uColor', kind === 'edge' ? [1, 1, 1] : aid.colour);
         uniforms.set('uAlpha', kind === 'dark' ? DARK_BEAM_ALPHA : kind === 'edge' ? BEAM_EDGE_ALPHA : BEAM_ALPHA);
+        uniforms.set('uFade', 1);
       }
     }
     // Outlines first, then the beams over them.
@@ -2414,7 +2538,14 @@ export class ThreeSceneRenderer {
         const { shape } = part;
         const { position, radius } = placed.placement;
         const [x, y, z] = (shape.centre ?? [0, 0, 0]).map((c) => c * radius) as [number, number, number];
-        const a = placed.frame.axes;
+        // Its centre off the body's as its surface is turned (facing the eye, or fixed in the world;
+        // by the body's own turn where it takes it).
+        const a = surfaceFrame(
+          placed.placementFrame,
+          placed.quad.axes,
+          s.orientation ?? DEFAULT_ORIENTATION,
+          turnFor(s, bodyTurnOf(placed.placement)),
+        );
         surfaces.push([
           position[0] + a[0]! * x + a[3]! * y + a[6]! * z,
           position[1] + a[1]! * x + a[4]! * y + a[7]! * z,

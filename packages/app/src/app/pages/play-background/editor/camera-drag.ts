@@ -8,12 +8,14 @@ import {
   output,
 } from '@angular/core';
 import type { SceneCamera, SceneCameraSet } from '../../../scenes/play-background/play-scene';
+import type { Vec3 } from '../../../scenes/play-background/background-scene';
 import { SCENE_CENTRE } from '../../../scenes/play-background/scene-bodies';
 import {
   distanceAhead,
   dolly,
   fieldOfView,
   orbit,
+  orbitAround,
   pan,
 } from '../../../scenes/play-background/scene-camera';
 
@@ -24,10 +26,10 @@ const ORBIT_SPEED = 0.25;
 
 /**
  * Moves a scene's camera by dragging and scrolling over the view it is on (`camera`: the camera
- * now, none: nothing to move): a drag orbits round what it looks at (the scene's middle as far
- * ahead), Shift (or the right or middle button) pans across, the wheel moves in and out, Alt with
- * the wheel widens or narrows its field of view. Each move is given (`cameraMove`); a drag is
- * not a click.
+ * now, none: nothing to move): a drag orbits round what the view is about (`about`: a planet open,
+ * kept where it is in the view; none: what it looks at, the scene's middle as far ahead), Shift
+ * (or the right or middle button) pans across, the wheel moves in and out, Alt with the wheel
+ * widens or narrows its field of view. Each move is given (`cameraMove`); a drag is not a click.
  */
 @Directive({
   selector: '[hrsCameraDrag]',
@@ -42,6 +44,7 @@ const ORBIT_SPEED = 0.25;
 })
 export class CameraDrag {
   readonly camera = input<SceneCamera | null>(null, { alias: 'hrsCameraDrag' });
+  readonly about = input<Vec3 | null>(null, { alias: 'hrsCameraDragAbout' });
   readonly cameraMove = output<SceneCameraSet>();
   /** A drag begun and ended (what it moves taken as one change between). */
   readonly cameraMoveStart = output<void>();
@@ -81,7 +84,7 @@ export class CameraDrag {
       y: event.clientY,
       panning: event.shiftKey || event.button === 1 || event.button === 2,
       from: camera,
-      distance: distanceAhead(camera, SCENE_CENTRE.position, 5),
+      distance: distanceAhead(camera, this.about() ?? SCENE_CENTRE.position, 5),
       dragging: false,
     };
   }
@@ -107,7 +110,12 @@ export class CameraDrag {
       const unit = (2 * press.distance * Math.tan((press.from.fovY * Math.PI) / 360)) / height;
       this.cameraMove.emit(pan(press.from, -dx * unit, dy * unit));
     } else {
-      this.cameraMove.emit(orbit(press.from, press.distance, -dx * ORBIT_SPEED, dy * ORBIT_SPEED));
+      const about = this.about();
+      this.cameraMove.emit(
+        about
+          ? orbitAround(press.from, about, -dx * ORBIT_SPEED, dy * ORBIT_SPEED)
+          : orbit(press.from, press.distance, -dx * ORBIT_SPEED, dy * ORBIT_SPEED),
+      );
     }
   }
 
@@ -129,7 +137,7 @@ export class CameraDrag {
       this.cameraMove.emit({ fovY: fieldOfView(camera.fovY * Math.exp(event.deltaY * 0.001)) });
       return;
     }
-    const distance = distanceAhead(camera, SCENE_CENTRE.position, 5);
+    const distance = distanceAhead(camera, this.about() ?? SCENE_CENTRE.position, 5);
     this.cameraMove.emit(dolly(camera, distance, -event.deltaY * distance * 0.001));
   }
 

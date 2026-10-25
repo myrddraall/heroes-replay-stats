@@ -61,7 +61,7 @@ import {
   type SceneCamera,
   type SceneCameraSet,
 } from '../../../scenes/play-background/play-scene';
-import type { LightAid } from '../../../scenes/play-background/scene-beams';
+import type { EditingAid } from '../../../scenes/play-background/scene-beams';
 import {
   type MaterialSettings,
   type MaterialTint,
@@ -82,7 +82,14 @@ import {
   byDepth,
   filesLoaded,
   layerRows,
+  axisAids,
+  axisFrame,
+  keepingPose,
+  poleAt,
+  poleDragged,
   lightAids,
+  lightsView,
+  poleMarkers,
   type LightEntry,
   lightIcon,
   lightMarkerAt,
@@ -149,7 +156,7 @@ import type { PickChoice } from './pick-list';
 import { EditorUiStore } from './editor-ui.store';
 import type { AssetKind, AssetTarget, OpenTarget } from './open-target';
 import type { TreeMove, TreeRow } from './scene-tree';
-import type { SceneMarker } from './scene-markers';
+import type { PoleDrag, SceneMarker } from './scene-markers';
 import type { AddedLists } from './added-list';
 import {
   STAND_IN_MATERIAL,
@@ -919,6 +926,8 @@ export const AssetEditorStore = signalStore(
     const litBody = computed(
       (): {
         readonly body: SetPlanet;
+        /** What the body is as the editor has it, where it is the asset (not the stand-in): how it is lit. */
+        readonly info?: BodyInfo;
         readonly lights: readonly { readonly key: string; readonly light: LightEntry['light'] }[];
       } | null => {
         const body = store.stagePlanets()[0];
@@ -941,13 +950,15 @@ export const AssetEditorStore = signalStore(
               : t.kind === 'material'
                 ? materialAt(store._ownMaterials(), t.key)
                 : undefined;
-          return m && base ? { body, lights: shieldLightsOf(base, m.values.gridLights) } : null;
+          const info = store._body() ?? undefined;
+          return m && base ? { body, ...(info ? { info } : {}), lights: shieldLightsOf(base, m.values.gridLights) } : null;
         }
         const b = store._body();
         if (!b || t.kind === 'backdrop' || t.kind === 'reference' || t.kind === 'sky') return null;
         // The asset's lights, and its shields' (the stand-in wears an overlay open).
         return {
           body,
+          info: b,
           lights: [
             ...lightsOfBody(b).map(({ light }) => ({ key: assetLightKey(light.id), light })),
             ...shieldLightsOfBody(b, store._ownMaterials(), (name, overlay) =>
@@ -959,6 +970,8 @@ export const AssetEditorStore = signalStore(
     );
     return {
       /** Where the view puts the camera, for the background (none: the game's). */
+      /** A drag in the view orbits round the stage's planet, kept where it is in the view. */
+      orbitAbout: computed((): Vec3 | null => store.stagePlanets()[0]?.position ?? null),
       viewCamera: computed((): SceneCameraSet | undefined => {
         const c = store.camera();
         return c ? { eye: c.eye, forward: c.forward, fovY: c.fovY } : undefined;
@@ -970,10 +983,13 @@ export const AssetEditorStore = signalStore(
        */
       markers: computed((): readonly SceneMarker[] => {
         const view = store.camera();
+        const scene = store._sceneFile.hasValue() ? store._sceneFile.value() : null;
         const lit = litBody();
-        if (!view || !lit) return [];
+        if (!view || !scene || !lit) return [];
         const { body, lights } = lit;
         const out: SceneMarker[] = [];
+        // Where the renderer puts them: as the body is lit (fixed in the world, or kept to the eye).
+        const from = lightsView(lit.info, scene.camera, view);
         const marker = (key: string, light: LightEntry['light'], at: Vec3) => ({
           id: key,
           key,
@@ -994,22 +1010,31 @@ export const AssetEditorStore = signalStore(
           out.push({ ...marker(key, light, body.position), nudge: n - (round.length - 1) / 2 }),
         );
         for (const { key, light } of lights) {
-          const at = lightMarkerAt(light, body, view);
+          const at = lightMarkerAt(light, body, from);
           if (at)
             out.push({
               ...marker(key, light, at.at),
               from: at.from,
-              lines: spotEdges(light, body, view),
+              lines: spotEdges(light, body, from, view.eye),
             });
         }
+        // The planet open selected: its poles named at its axis's ends.
+        if (store.target().kind === 'body' && lit.info && lit.info.file?.kind !== 'style')
+          axisAids(lit.info, body, scene.camera, view).forEach((line, n) => out.push(...poleMarkers(line, ASSET, n)));
         return out;
       }),
-      /** What the view shows of the light selected on the stage's body: the outline of where it falls, a directional light's beam. */
-      beams: computed((): readonly LightAid[] => {
-        const view = store.camera();
+      /**
+       * What the view shows of the light selected on the stage's body: the outline of where it
+       * falls, a directional light's beam. Of the planet open selected: its axis.
+       */
+      beams: computed((): readonly EditingAid[] => {
+        const scene = store._sceneFile.hasValue() ? store._sceneFile.value() : null;
         const lit = litBody();
         const t = store.target();
-        if (!view || !lit) return [];
+        const view = store.camera();
+        if (!scene || !lit || !view) return [];
+        if (t.kind === 'body')
+          return lit.info && lit.info.file?.kind !== 'style' ? axisAids(lit.info, lit.body, scene.camera, view) : [];
         const id =
           t.kind === 'light' || t.kind === 'stand-in-light'
             ? t.id
@@ -1017,7 +1042,7 @@ export const AssetEditorStore = signalStore(
               ? t.view.id
               : null;
         const light = id && lit.lights.find(({ light }) => light.id === (id as string))?.light;
-        return light ? lightAids(light, lit.body, view) : [];
+        return light ? lightAids(light, lit.body, lightsView(lit.info, scene.camera, view)) : [];
       }),
     };
   }),
@@ -1648,6 +1673,13 @@ export const AssetEditorStore = signalStore(
       return t.kind === 'sky' || t.kind === 'sky-material' ? t : null;
     };
     const body = () => libraryKind(asset().kind);
+    /** Where the pole being dragged is (see `dragPole`). */
+    let poleDragAt: Vec3 | null = null;
+    /** The asset's settings after a change, kept where it is as its Axis moves (see `keepingPose`). */
+    const posed = (next: BodySettings, touched: readonly (keyof BodySettings)[]) => {
+      const b = store._body();
+      return b ? keepingPose(b, next, touched) : next;
+    };
     /** One of the stand-in's lights changed (an editing aid's: kept with the aids). */
     const standInLightChange = (
       id: LightId,
@@ -1912,6 +1944,27 @@ export const AssetEditorStore = signalStore(
       clearMaterial(keys?: readonly (keyof MaterialSettings)[]): void {
         materialClear(store.target(), keys);
       },
+      /** A pole of the planet open's axis dragged in the view: its Axis moved, the planet kept as it is. */
+      dragPole(drag: PoleDrag): void {
+        const scene = store._sceneFile.hasValue() ? store._sceneFile.value() : null;
+        const b = store._body();
+        const body = store.stagePlanets()[0];
+        const view = store.camera();
+        const kind = body && scene && view && b ? libraryKind(asset().kind) : null;
+        const line = kind && b && body && scene && view ? axisAids(b, body, scene.camera, view)[drag.axis] : undefined;
+        if (!line || !kind || !body || !scene || !view || drag.phase === 'end') {
+          poleDragAt = null;
+          return;
+        }
+        if (drag.phase === 'start' || !poleDragAt) {
+          poleDragAt = poleAt(line, drag.north);
+          return;
+        }
+        const frame = axisFrame(line.orientation, body, scene.camera, view);
+        const { axis, at } = poleDragged(line, drag.north, view.eye, drag.ray, poleDragAt, frame);
+        poleDragAt = at;
+        d.changeLibraryBody(kind, asset().id, (s) => posed({ ...s, axis }, ['axis']));
+      },
       setBody(change: Partial<BodySettings>): void {
         const t = store.target();
         if (t.kind === 'moon') {
@@ -1919,7 +1972,8 @@ export const AssetEditorStore = signalStore(
           return;
         }
         const kind = body();
-        if (kind) d.setLibraryBody(kind, asset().id, change);
+        // Its Axis moved: its base turn with it, so it stays as it is (see `keepingPose`).
+        if (kind) d.changeLibraryBody(kind, asset().id, (s) => posed({ ...s, ...change }, Object.keys(change) as (keyof BodySettings)[]));
       },
       clearBody(keys: readonly (keyof BodySettings)[]): void {
         const t = store.target();
@@ -1928,7 +1982,7 @@ export const AssetEditorStore = signalStore(
           return;
         }
         const kind = body();
-        if (kind) d.clearLibraryBody(kind, asset().id, keys);
+        if (kind) d.changeLibraryBody(kind, asset().id, (s) => posed(without(s, keys) ?? {}, keys));
       },
       setPart(change: Partial<PartSettings>): void {
         const kind = body();

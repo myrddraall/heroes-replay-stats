@@ -117,7 +117,7 @@ export interface LightSettings {
    */
   readonly specular?: string;
   readonly specularStrength?: number;
-  /** A point or spot light's place, in its body's frame, in its radii (x across, y away from the eye, z up). */
+  /** A point or spot light's place, in its body's placement frame, in its radii (x across, y away from the scene's camera, z up). */
   readonly position?: Vec3;
   /**
    * How a point or spot light's place is set in the editor (none: free), and the turn of the

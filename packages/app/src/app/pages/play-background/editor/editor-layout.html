@@ -86,6 +86,7 @@
       [names]="ui.names() && !ui.screenshot()"
       [pickable]="!ui.screenshot()"
       [hrsCameraDrag]="ui.screenshot() || ui.browsing() ? null : editor.camera()"
+      [hrsCameraDragAbout]="editor.orbitAbout()"
       (cameraMove)="editor.moveCamera($event)"
       (cameraMoveStart)="draft.holdHistory()"
       (cameraMoveEnd)="draft.releaseHistory()"
@@ -102,6 +103,7 @@
           [camera]="camera"
           [aspect]="ui.aspect()"
           (picked)="editor.showMarker($event)"
+          (poleDrag)="poleDrag($event)"
         />
       }
     }

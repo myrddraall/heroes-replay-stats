@@ -18,6 +18,7 @@ import type {
   SkyAnchor,
 } from './scene-planets';
 import { anchoredDepth, skyAnchorOf } from './sky-anchors';
+import { DEFAULT_ORIENTATION, type Orientation } from './scene-graph';
 
 /**
  * Materials' settings as the renderer and the Background page's panel read them: what a
@@ -60,6 +61,11 @@ export interface MaterialValues {
   readonly active: string;
   /** A grid's lights (lights with a `shield` effect): as set, else those of before, else its rim alone. */
   readonly gridLights: readonly AddedLight[];
+  /**
+   * Which way a body's material is turned, as its own settings say (facing the camera where none
+   * do); its part's and its body's under it are the editor's to add (`materialsOf`).
+   */
+  readonly orientation: Orientation;
 }
 
 /**
@@ -277,6 +283,8 @@ export interface MaterialControls {
   readonly lit: boolean;
   /** A body's material with a specular layer shines where its lights' specular says. */
   readonly specular: boolean;
+  /** A body's material is turned facing the camera or fixed in the world (the sky and particles aren't). */
+  readonly orientation: boolean;
 }
 
 /** What a material is used as, for which of its controls do anything. */
@@ -428,6 +436,7 @@ export function materialValues(
     inactive: settings?.inactive ?? ownInactive(material),
     active: settings?.active ?? DEFAULT_ACTIVE,
     gridLights: gridLightsOf(settings),
+    orientation: settings?.orientation ?? DEFAULT_ORIENTATION,
   };
 }
 
@@ -455,6 +464,7 @@ export function materialControls(
       anchor: sky,
       lit: false,
       specular: false,
+      orientation: false,
     };
   const layers = [material.diffuse, material.emissive, ...material.alphaMasks];
   const drawn = pattern && drawAs === 'pattern';
@@ -473,6 +483,7 @@ export function materialControls(
     // (A grid is an unlit energy field: its own lights say where it shows.)
     lit: !sky && !pattern,
     specular: !sky && !pattern && material.specular !== undefined,
+    orientation: !sky,
   };
 }
 

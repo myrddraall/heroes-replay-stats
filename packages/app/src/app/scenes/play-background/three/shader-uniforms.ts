@@ -17,6 +17,7 @@ import {
 } from 'three/webgpu';
 import { int, ivec2, textureLoad, uniform } from 'three/tsl';
 import type { UniformSet } from '../scene-uniforms';
+import { rimTurn } from '../scene-directions';
 import { MAX_FIELDS, MAX_LIGHTS, MAX_SHADES, MAX_SURFACES, V_SAMPLES } from '../scene-limits';
 
 /**
@@ -371,6 +372,26 @@ const DERIVED = new Map<string, (v: DrawValues) => Given>(
 
 /** The values that turn the reaches' views (`turnReaches`). */
 const TURNS_FROM = new Set(['uRight', 'uUp', 'uRimTurn', 'uRevealed']);
+/**
+ * The values that turn the reaches into the frame the draw is shaded in (`frameReaches`): the
+ * turn of its lights' directions and places, and of its leans (into the view), from the body's
+ * placement frame they are set in. Not the shader's: worked out here, into the rows it reads.
+ */
+const FRAMES_FROM = new Set(['uLightTurn', 'uLeanTurn']);
+
+/** Whether a turn (a mat3's numbers by column) is none at all, number for number; none given: none. */
+const noTurn = (m: ArrayLike<number>) =>
+  m.length === 0 || (m[0] === 1 && m[1] === 0 && m[2] === 0 && m[3] === 0 && m[4] === 1 && m[5] === 0 && m[6] === 0 && m[7] === 0 && m[8] === 1);
+
+/** A vector turned by a mat3 (its numbers by column). */
+const turned = (m: ArrayLike<number>, x: number, y: number, z: number): [number, number, number] => [
+  m[0]! * x + m[3]! * y + m[6]! * z,
+  m[1]! * x + m[4]! * y + m[7]! * z,
+  m[2]! * x + m[5]! * y + m[8]! * z,
+];
+
+/** How many floats a body's list of reaches takes. */
+const REACH_FLOATS = MAX_REACHES * REACH_ROWS * 4;
 
 /**
  * A draw's values for its shader, by uniform name, and its textures by the names its shader reads
@@ -380,6 +401,13 @@ const TURNS_FROM = new Set(['uRight', 'uUp', 'uRimTurn', 'uRevealed']);
 export class DrawValues {
   private readonly values = new Map<string, Given>();
   private tableOf: { texture: DataTexture; data: Float32Array<ArrayBuffer> } | null = null;
+  /**
+   * Its reaches as packed (`packReaches`), as set: in the body's placement frame. Turned into
+   * the frame it is shaded in as they go into the table (`frameReaches`).
+   */
+  private sourceOf: Float32Array | null = null;
+  /** Whether the reaches are to be turned into the table again (see `frameReaches`). */
+  private framesStale = true;
   /** Whether the reaches' turns of the view are to be worked out again (see `turnReaches`). */
   private turnsStale = true;
 
@@ -402,14 +430,16 @@ export class DrawValues {
   set(name: string, value: Given): void {
     this.values.set(name, value);
     if (TURNS_FROM.has(name)) this.turnsStale = true;
+    if (FRAMES_FROM.has(name)) this.framesStale = true;
   }
 
   private get table(): { texture: DataTexture; data: Float32Array<ArrayBuffer> } {
     return (this.tableOf ??= newTable());
   }
 
-  /** Its table as drawn: the reaches' turns of the view brought up to date first. */
+  /** Its table as drawn: its reaches turned into its frame, and their turns of the view, brought up to date first. */
   get tableTexture(): DataTexture {
+    if (this.framesStale) this.frameReaches();
     if (this.turnsStale) this.turnReaches();
     return this.table.texture;
   }
@@ -442,11 +472,59 @@ export class DrawValues {
     }
     // A body's set (with any of the counts: an unlit one has no lights, but may have shades and a grid).
     if (REACH_COUNTS.some((name) => set.values.has(name))) {
-      if (packReaches(set, this.table.data, PACK_START.start.reaches * 4)) changed = true;
+      packReaches(set, (this.sourceOf ??= new Float32Array(REACH_FLOATS)), 0);
       this.set('uReachCount', reachCount(set));
+      this.framesStale = true;
       this.turnsStale = true;
     }
     if (changed) this.table.texture.needsUpdate = true;
+  }
+
+  /**
+   * The reaches into the table, from the body's placement frame (as set) into the frame the draw
+   * is shaded in: each one's direction, place and aim (rows 0, 3, 4; their fourth numbers kept)
+   * turned by `uLightTurn`; a rim's aim (its lean's turn of the view, row 4) worked out again from
+   * its lean (the way it comes from: its row 0 the other way) turned into the view by `uLeanTurn`.
+   * A turn that is none copies the rows as they are, number for number.
+   */
+  private frameReaches(): void {
+    this.framesStale = false;
+    this.turnsStale = true;
+    const source = this.sourceOf;
+    if (!source) return;
+    const { data, texture } = this.table;
+    const lightTurn = this.vector('uLightTurn');
+    const leanTurn = this.vector('uLeanTurn');
+    const lights = !noTurn(lightTurn);
+    const leans = !noTurn(leanTurn);
+    const start = PACK_START.start.reaches * 4;
+    let changed = false;
+    const put = (at: number, v: number) => {
+      const f = Math.fround(v);
+      if (data[at] !== f) {
+        data[at] = f;
+        changed = true;
+      }
+    };
+    for (let i = 0; i < this.scalar('uReachCount'); i++) {
+      const from = i * REACH_ROWS * 4;
+      const to = start + from;
+      for (let k = 0; k < 8 * 4; k++) put(to + k, source[from + k]!);
+      const rim = source[from + 4 + 3] === RIM;
+      if (lights)
+        for (const row of rim ? [0, 3] : [0, 3, 4]) {
+          const at = from + row * 4;
+          const v = turned(lightTurn, source[at]!, source[at + 1]!, source[at + 2]!);
+          for (let c = 0; c < 3; c++) put(to + row * 4 + c, v[c]!);
+        }
+      if (rim && leans) {
+        const lean = turned(leanTurn, -source[from]!, -source[from + 1]!, -source[from + 2]!);
+        const [yaw, pitch] = rimTurn(lean);
+        put(to + 16, -yaw);
+        put(to + 17, -pitch);
+      }
+    }
+    if (changed) texture.needsUpdate = true;
   }
 
   /**
@@ -499,7 +577,8 @@ function reachCount(set: UniformSet): number {
 
 /**
  * A body's lights, shades, reveals and activations, from their own arrays into the one list of
- * reaches (rows as `REACH_ROWS` says), at `start` (a float index) of the table's data; whether any
+ * reaches (rows as `REACH_ROWS` says), at `start` (a float index) of `data` (the draw's reaches as
+ * set, in the body's placement frame: `frameReaches` turns them into the table); whether any
  * number changed.
  */
 function packReaches(set: UniformSet, data: Float32Array, start: number): boolean {

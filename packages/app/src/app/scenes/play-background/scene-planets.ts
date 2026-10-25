@@ -10,6 +10,7 @@ import type { TintBlend } from './scene-tints';
 import type { AddedLight, LightKind } from './scene-lights';
 import { BUILT_IN_PREFIX, type BuiltInPlanets } from './built-in-planets';
 import type { AddedPart } from './created-overlays';
+import type { Orientation, Quat } from './scene-graph';
 
 /**
  * The planets heroes-capture exports beside the Play screen's scene (`heroes-capture ui
@@ -336,6 +337,8 @@ export interface PartSettings {
   readonly from?: number;
   /** How many times a ring's texture goes round it (its u at its greatest), in place of its own. */
   readonly repeat?: number;
+  /** Which way it is turned, over its body's (see `Orientation`): its materials' unless they set their own. */
+  readonly orientation?: Orientation;
 }
 
 /** Parts' settings by part. */
@@ -596,6 +599,8 @@ export interface MaterialSettings {
    * on, as a light comes from one (unset: each layer's own turn).
    */
   readonly spreadFrom?: Vec3;
+  /** Which way a body's material is turned (each its own draw), over its part's and its body's (see `Orientation`). */
+  readonly orientation?: Orientation;
   /**
    * How sharply its layers' fresnel (the kind strongest edge-on) rises toward the edge: the
    * formula to this power (2, as measured on the Play screen planets' grid, unless set).
@@ -813,6 +818,36 @@ export interface BodyPart {
 }
 
 /**
+ * Where a body's textures' poles are as its data has them, in its frame: its surface's uv
+ * sphere's pole (else the first uv sphere's of its parts); straight up where it has none. Its
+ * Axis is this unless set (see `bodyTurn`).
+ */
+export function poleOf(parts: readonly BodyPart[]): Vec3 {
+  const sphere = (p: BodyPart) => p.mapping.kind === 'sphere';
+  const part = parts.find((p) => p.role === 'surface' && sphere(p)) ?? parts.find(sphere);
+  return part?.mapping.kind === 'sphere' ? part.mapping.pole : [0, 0, 1];
+}
+
+/**
+ * Whether a part is a halo about its body, by its data: what the game draws to be seen round the
+ * body's outline from the eye, never turned with the body. A ring (a flat ring in the plane facing
+ * the eye, lying on the limb: the nexus style's atmosphere), a sphere seen from its far side (an
+ * atmosphere shell, showing past the limb), or a part all of whose materials are an unshaded glow
+ * added over what is behind it (blend add or alphaAdd: the nexus style's shield, Korhal's edge
+ * light). It faces the camera square on unless its part or its material says otherwise (see
+ * `drawTurnOf`).
+ */
+export function haloLike(part: BodyPart, materials: Readonly<Record<string, SceneMaterial>>): boolean {
+  const { shape } = part;
+  if (shape.kind === 'ring' || (shape.kind === 'sphere' && shape.side === 'far')) return true;
+  const own = part.materials.map((m) => materials[m]);
+  return (
+    own.length > 0 &&
+    own.every((m) => !!m && m.unshaded && (m.blend === 'add' || m.blend === 'alphaAdd'))
+  );
+}
+
+/**
  * A darkening of a body from a side, apart from its lights: where the surface faces `direction`
  * (in the body's frame) its colour is cut by `strength` (0 to 1), coming on as the facing to the
  * power `softness` (1: as a light would; higher: more gradually). Its lights and emissive layers
@@ -862,6 +897,13 @@ export interface PlanetTuning {
   readonly lightFrom?: Vec3;
   /** Where its rims and glows lean: a point on its face (body frame). */
   readonly rim?: Vec3;
+  /** Which way its surfaces are turned unless set otherwise (see `Orientation`; unset: facing the camera). */
+  readonly orientation?: Orientation;
+  /** Where its poles point (its frame; unset: its data's pole, `poleOf`), and its turn about them (degrees; unset: 0): see `bodyTurn`. */
+  readonly axis?: Vec3;
+  readonly turn?: number;
+  /** Its base turn (see `bodyTurn`; unset: none). */
+  readonly baseTurn?: Quat;
 }
 
 /** A style's part as a body wears it: its shape and mapping in place of the style's. */

@@ -1,5 +1,5 @@
 import type { Signal } from '@angular/core';
-import type { BodySettings, Orbit } from '../../../scenes/play-background/background-scene';
+import type { BodySettings, Orbit, Vec3 } from '../../../scenes/play-background/background-scene';
 import type {
   MaterialSettings,
   MaterialTint,
@@ -26,7 +26,7 @@ import type {
 } from '../../../scenes/play-background/scene-lights';
 import type { AssetTarget, OpenTarget } from './open-target';
 import type { TreeMove, TreeRow } from './scene-tree';
-import type { SceneMarker } from './scene-markers';
+import type { PoleDrag, SceneMarker } from './scene-markers';
 import type { AddedLists } from './added-list';
 
 /**
@@ -160,6 +160,10 @@ export abstract class Editor {
   abstract readonly camera: Signal<SceneCamera | null>;
   /** The camera the view looks through moved (dragged in the view). */
   abstract moveCamera(set: SceneCameraSet): void;
+  /** A planet's pole dragged in the view (the selected body's): its Axis moved, the planet kept as it is. */
+  abstract dragPole(drag: PoleDrag): void;
+  /** What a drag in the view orbits round, kept where it is in the view (a planet open); none: what the view looks at. */
+  abstract readonly orbitAbout: Signal<Vec3 | null>;
   /** What the view may look through (the editor's camera, a scene's cameras), by id; none: no choice. */
   abstract readonly lookOptions: Signal<readonly { readonly id: string; readonly label: string }[]>;
   abstract readonly look: Signal<string>;

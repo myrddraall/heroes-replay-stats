@@ -32,6 +32,7 @@ import {
 } from './scene-planets';
 import { wornKey } from './overlays';
 import { reach, type Viewpoint } from './scene-space';
+import { compose, pointToWorld, type Transform } from './scene-graph';
 import type { AddedLight, LightId, LightSettings } from './scene-lights';
 import type { PlanetSet, SetPlanet } from './planet-sets';
 
@@ -69,54 +70,58 @@ export interface GroupBody {
   readonly lights: readonly AddedLight[];
 }
 
-/** A point of a group put where a placement puts it: about its middle, sized and turned, then moved. */
-function placed(p: Vec3, placement: GroupPlacement): Vec3 {
-  const size = placement.size ?? 1;
+/**
+ * A group's transform in what it is put in: its middle (`SCENE_CENTRE` in its own space) put at the
+ * placement's position, turned about the up through it (to the right seen from the eye), sized.
+ * What is in a group is placed relative to its middle (`inGroup`).
+ */
+export function groupTransform(placement: GroupPlacement): Transform {
   const a = ((placement.turn ?? 0) * Math.PI) / 180;
-  const centre = SCENE_CENTRE.position;
-  const [x, y, z] = [p[0] - centre[0], p[1] - centre[1], p[2] - centre[2]];
-  // Turned about the up (z) through its middle, to the right seen from the eye.
-  const rx = x * Math.cos(a) + y * Math.sin(a);
-  const ry = -x * Math.sin(a) + y * Math.cos(a);
-  return [
-    placement.position[0] + rx * size,
-    placement.position[1] + ry * size,
-    placement.position[2] + z * size,
-  ];
+  const c = Math.cos(a);
+  const s = Math.sin(a);
+  return { position: placement.position, rotation: [c, -s, 0, s, c, 0, 0, 0, 1], scale: placement.size ?? 1 };
 }
+
+/** A place in a group's own space, relative to its middle (the local position its group's transform takes). */
+const inGroup = (p: Vec3): Vec3 => {
+  const centre = SCENE_CENTRE.position;
+  return [p[0] - centre[0], p[1] - centre[1], p[2] - centre[2]];
+};
 
 /**
  * The planets of the groups put in a scene (or a group), where they are put: each group's own, and
  * those of the groups put in it, in turn; those switched off left out. `groups` finds a group by
- * its id. One put in itself (or round about) stops where it would go round again.
+ * its id. One put in itself (or round about) stops where it would go round again. Each group
+ * hangs from what it is put in (`parent`: the world transform of the group it is in; none: the scene), each planet from its group; a
+ * group's turn moves where its planets are, not the way they face (each faces as its placement
+ * frame has it, wherever it ends up).
  */
 export function groupBodies(
   placements: readonly GroupPlacement[] | undefined,
   groups: (id: string) => PlanetChoices | undefined,
   within: readonly string[] = [],
+  parent?: Transform,
 ): GroupBody[] {
   if (within.length >= GROUP_DEPTH) return [];
   return (placements ?? []).flatMap((placement, i) => {
     const group = groups(placement.group);
     if (!group || placement.enabled === false || within.includes(placement.group)) return [];
     const lights = group.lights ?? [];
-    const size = placement.size ?? 1;
+    // Put in the scene, its transform is its world one (the scene's places are the world's); put
+    // in a group, its place is relative to that group's middle.
+    const local = groupTransform(placement);
+    const world = parent ? compose(parent, { ...local, position: inGroup(local.position) }) : local;
     const own = (group.bodies ?? []).map((body, index): GroupBody => ({
       placement: [i],
       index,
       group: placement.group,
-      body: { ...body, position: placed(body.position, placement), radius: body.radius * size },
+      body: { ...body, position: pointToWorld(world, inGroup(body.position)), radius: body.radius * world.scale },
       lights,
     }));
-    const inner = groupBodies(group.groups, groups, [...within, placement.group]).map(
+    const inner = groupBodies(group.groups, groups, [...within, placement.group], world).map(
       (g): GroupBody => ({
         ...g,
         placement: [i, ...g.placement],
-        body: {
-          ...g.body,
-          position: placed(g.body.position, placement),
-          radius: g.body.radius * size,
-        },
         lights: [...g.lights, ...lights],
       }),
     );
