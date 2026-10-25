@@ -43,6 +43,8 @@ const FLY_YAW = 0.11;
 /** How far the sky's layers smear across at the fly's middle, of the way round the sky (0.014: about 5 degrees, near the camera's turn). */
 const FLY_SMEAR = 0.014;
 const FLY_CLEARANCE = 1.3;
+/** How long the editor's aids (beams, markers) take to fade in once the planets are where they are going, in seconds. */
+const AID_FADE_SECONDS = 0.3;
 
 /** What the running scene is told of a change of its inputs. */
 interface Running {
@@ -180,6 +182,11 @@ export class SceneCanvas {
 
   /** Whether a frame has been drawn: the picture fades in then. */
   protected readonly drawn = signal(false);
+  /**
+   * How far the editor's aids (its beams, and the markers over the view) show, 0 to 1: none till
+   * the planets are where they are going (drawn, and not flying in), then faded in.
+   */
+  readonly aidsShown = signal(0);
   private readonly canvas = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
   /** The last picture, over the new one as it fades away. */
   private readonly previous = viewChild.required<ElementRef<HTMLCanvasElement>>('previous');
@@ -302,8 +309,14 @@ export class SceneCanvas {
         draw();
       });
     };
+    /** The aids shown so far (the beams drawn so, the markers told). */
+    const showAids = (amount: number) => {
+      renderer.aidFade = amount;
+      if (this.aidsShown() !== amount) this.aidsShown.set(amount);
+    };
     const draw = () => {
       settle();
+      if (!frame && !fly && renderer.aidFade < 1) showAids(1); // nothing animating: shown at once
       const timed = this.frameStats.watching();
       renderer.timing = timed;
       const start = timed ? performance.now() : 0;
@@ -382,7 +395,7 @@ export class SceneCanvas {
     };
     const tick = (now: number) => {
       frame = requestAnimationFrame(tick);
-      const fading = renderer.fade < 1 || fly !== undefined;
+      const fading = renderer.fade < 1 || fly !== undefined || renderer.aidFade < 1;
       const fps = fading ? this.fadeFps() : this.fps();
       if (last !== undefined && (fps <= 0 || now - last < 1000 / fps - FRAME_SLACK_MS)) return;
       const step = last === undefined ? 0 : Math.min(MAX_STEP, (now - last) / 1000);
@@ -392,6 +405,7 @@ export class SceneCanvas {
       if (!fading && !renderer.needsFrame(clock)) return;
       if (renderer.fade < 1) renderer.fade = Math.min(1, renderer.fade + step / FADE_SECONDS);
       flyOn(step);
+      if (!fly && this.drawn() && renderer.aidFade < 1) showAids(Math.min(1, renderer.aidFade + step / AID_FADE_SECONDS));
       draw();
     };
     const play = () => {
@@ -402,7 +416,7 @@ export class SceneCanvas {
       } else if (!animate && frame) {
         cancelAnimationFrame(frame);
         frame = 0;
-        if (renderer.fade < 1 || fly) {
+        if (renderer.fade < 1 || fly || renderer.aidFade < 1) {
           renderer.fade = 1; // a fade stopped part way shows where it was going
           if (fly) {
             renderer.setPlanets(fly.to);
@@ -518,6 +532,7 @@ export class SceneCanvas {
         } else if (frame) {
           const direction = flights++ % 2 ? -1 : 1;
           fly = { from: before, to: placements, direction, t: 0 };
+          showAids(0);
           renderer.setPlanets([...before, ...placements]);
           flyOn(0);
         } else {
@@ -526,6 +541,7 @@ export class SceneCanvas {
       },
     };
     renderer.tint = NO_TINT; // always shown untinted first
+    renderer.aidFade = 0;
     renderer.setSky(this.sky());
     renderer.setSceneLights(this.lights());
     renderer.setBackdrop(this.backdrop());

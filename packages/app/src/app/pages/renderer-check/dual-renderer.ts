@@ -101,6 +101,12 @@ export class DualRenderer implements BackgroundRenderer {
   set fade(v: number) {
     for (const r of this.all) r.fade = v;
   }
+  get aidFade(): number {
+    return this.first.aidFade;
+  }
+  set aidFade(v: number) {
+    for (const r of this.all) r.aidFade = v;
+  }
   get settling(): boolean {
     return this.all.some((r) => r.settling);
   }

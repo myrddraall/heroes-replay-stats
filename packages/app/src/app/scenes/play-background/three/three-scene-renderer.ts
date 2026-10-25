@@ -682,6 +682,8 @@ export class ThreeSceneRenderer {
   /** The tint the picture fades from, and how far it is from it to `tint` (1: all the way). */
   fadingFrom: Tint = NO_TINT;
   fade = 1;
+  /** How strongly the editor's beams and outlines show, 0 to 1 (faded in once the planets are where they are going). */
+  aidFade = 1;
   private sky: SkySettings = {};
   private backdrop: Backdrop | null = null;
   private sceneLights: readonly AddedLight[] = [];
@@ -2398,7 +2400,7 @@ export class ThreeSceneRenderer {
    * adds its colour, one that darkens takes it away.
    */
   private drawBeams(viewProjection: Float32Array): void {
-    if (!this.beams.length || !this.frame || !this.aidsReady) return;
+    if (!this.beams.length || !this.frame || !this.aidsReady || this.aidFade <= 0) return;
     const eye = this.camera.eye;
     const spheres = this.placed
       .map(({ placement: { position, radius } }) => [...position, radius] as const)
@@ -2438,7 +2440,7 @@ export class ThreeSceneRenderer {
         uniforms.set('uCosCone', Math.cos(o.cone * rad));
         uniforms.set('uCosFade', Math.cos(o.cone * (1 - o.edge) * rad));
         uniforms.set('uColor', o.darkens ? [1, 1, 1] : o.colour);
-        uniforms.set('uAlpha', OUTLINE_ALPHA);
+        uniforms.set('uAlpha', OUTLINE_ALPHA * this.aidFade);
         continue;
       }
       if (aid.shape === 'axis') {
@@ -2461,7 +2463,7 @@ export class ThreeSceneRenderer {
           uniforms.set('uRadius', (aid.pixels / 2) * pixel);
           uniforms.set('uLength', aid.reach * aid.radius);
           uniforms.set('uColor', colour);
-          uniforms.set('uAlpha', aid.strength);
+          uniforms.set('uAlpha', aid.strength * this.aidFade);
           uniforms.set('uFade', 0);
         }
         continue;
@@ -2481,7 +2483,7 @@ export class ThreeSceneRenderer {
         uniforms.set('uRadius', aid.radius);
         uniforms.set('uLength', aid.radius * BEAM_LENGTH);
         uniforms.set('uColor', kind === 'edge' ? [1, 1, 1] : aid.colour);
-        uniforms.set('uAlpha', kind === 'dark' ? DARK_BEAM_ALPHA : kind === 'edge' ? BEAM_EDGE_ALPHA : BEAM_ALPHA);
+        uniforms.set('uAlpha', (kind === 'dark' ? DARK_BEAM_ALPHA : kind === 'edge' ? BEAM_EDGE_ALPHA : BEAM_ALPHA) * this.aidFade);
         uniforms.set('uFade', 1);
       }
     }

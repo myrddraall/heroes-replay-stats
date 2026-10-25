@@ -32,8 +32,8 @@ import { SceneHeader } from './scene-header';
           camera: store.viewCamera,
           // An anchored sky moves with the view's camera, or (not following it) with the scene's.
           skyFollow: computed(() => (ui.skyFollows() ? null : store.sceneCamera())),
-          // The light selected's beams, with the markers (none in a screenshot).
-          beams: computed(() => (ui.markers() !== 'none' && !ui.screenshot() ? store.beams() : [])),
+          // The light selected's beams, with the markers (none in a screenshot or the library's preview).
+          beams: computed(() => (ui.markers() !== 'none' && !ui.screenshot() && !ui.browsing() ? store.beams() : [])),
         };
       },
     },

@@ -7,6 +7,7 @@ import {
   output,
   resource,
   untracked,
+  viewChild,
 } from '@angular/core';
 import { BACKGROUND_DESIGN, BACKGROUND_SCENE } from './background-design.tokens';
 import { BUILT_IN_PLANETS } from './built-in-planets';
@@ -87,6 +88,9 @@ export class PlayBackground {
   /** Whether a planet can be picked by a click (an editor's): `planetPick` gives its index in the set shown. */
   readonly pickable = input(false);
   readonly planetPick = output<number>();
+  private readonly canvas = viewChild(SceneCanvas);
+  /** How far the editor's aids show over it, 0 to 1 (see `SceneCanvas.aidsShown`): for markers laid over it. */
+  readonly aidsShown = computed(() => this.canvas()?.aidsShown() ?? 0);
 
   protected readonly store = inject(BackgroundStore);
   private readonly design = inject(BACKGROUND_DESIGN);

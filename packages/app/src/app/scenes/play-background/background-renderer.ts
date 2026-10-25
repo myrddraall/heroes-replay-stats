@@ -18,6 +18,8 @@ export interface BackgroundRenderer {
   tint: Tint;
   fadingFrom: Tint;
   fade: number;
+  /** How strongly the editor's beams and outlines show, 0 to 1. */
+  aidFade: number;
   /** Whether it is still compiling or baking: a frame drawn now isn't the whole picture yet. */
   readonly settling: boolean;
   draw(seconds: number): boolean;
