@@ -54,10 +54,10 @@
     <span>Screenshot mode</span>
   </button>
   @if (openSettings; as open) {
-    <button mat-menu-item type="button" (click)="open()">
-      <mat-icon class="material-symbols-outlined" aria-hidden="true">tune</mat-icon>
-      <span>Settings…</span>
-    </button>
+  <button mat-menu-item type="button" (click)="open()">
+    <mat-icon class="material-symbols-outlined" aria-hidden="true">tune</mat-icon>
+    <span>Settings…</span>
+  </button>
   }
   <button mat-menu-item type="button" (click)="ui.confirmReset(true)">
     <mat-icon class="material-symbols-outlined" aria-hidden="true">restart_alt</mat-icon>
@@ -70,17 +70,17 @@
 </mat-menu>
 <mat-menu #markersMenu="matMenu">
   @for (m of markerModes; track m.id) {
-    <button
-      mat-menu-item
-      type="button"
-      role="menuitemradio"
-      [attr.aria-checked]="ui.markers() === m.id"
-      (click)="ui.setMarkers(m.id)"
-    >
-      <mat-icon class="material-symbols-outlined" aria-hidden="true">
-        {{ ui.markers() === m.id ? 'radio_button_checked' : 'radio_button_unchecked' }}
-      </mat-icon>
-      <span>{{ m.label }}</span>
-    </button>
+  <button
+    mat-menu-item
+    type="button"
+    role="menuitemradio"
+    [attr.aria-checked]="ui.markers() === m.id"
+    (click)="ui.setMarkers(m.id)"
+  >
+    <mat-icon class="material-symbols-outlined" aria-hidden="true">
+      {{ ui.markers() === m.id ? 'radio_button_checked' : 'radio_button_unchecked' }}
+    </mat-icon>
+    <span>{{ m.label }}</span>
+  </button>
   }
 </mat-menu>

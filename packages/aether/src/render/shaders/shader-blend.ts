@@ -94,7 +94,9 @@ const softLight = Fn(([b, s]: [V3, V3]) => {
 });
 
 const colorBurn = Fn(([b, s]: [V3, V3]) => {
-  const burnt = vec3(1).sub(min(vec3(1), b.oneMinus().div(max(s, vec3(1e-5))))).toVar();
+  const burnt = vec3(1)
+    .sub(min(vec3(1), b.oneMinus().div(max(s, vec3(1e-5)))))
+    .toVar();
   return mix(mix(burnt, vec3(0), step(s, vec3(0))), vec3(1), step(1, b));
 }).setLayout({
   name: 'blendColorBurn',
@@ -148,7 +150,13 @@ export const blend = Fn(([b, s, mode]: [V3, V3, Node<'int'>]) => {
       const vivid = mode.equal(17).toVar();
       const burnt = colorBurn(b, select(vivid, s.mul(2), s)).toVar();
       const dodged = colorDodge(b, select(vivid, s.mul(2).sub(1), s)).toVar();
-      out.assign(select(mode.equal(5), burnt, select(mode.equal(10), dodged, mix(burnt, dodged, step(0.5, s)))));
+      out.assign(
+        select(
+          mode.equal(5),
+          burnt,
+          select(mode.equal(10), dodged, mix(burnt, dodged, step(0.5, s))),
+        ),
+      );
     })
     .ElseIf(mode.equal(4), () => {
       out.assign(softLight(b, s));

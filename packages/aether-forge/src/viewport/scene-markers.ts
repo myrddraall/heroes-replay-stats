@@ -1,8 +1,13 @@
 import { Component, computed, ElementRef, inject, input, output } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
-import { cameraOutline, viewLine, viewPoint, viewRay } from "@myrddraall/heroes-replay-stats-aether/camera";
-import type { Vec3 } from "@myrddraall/heroes-replay-stats-aether/design";
-import type { SceneCamera } from "@myrddraall/heroes-replay-stats-aether/formats";
+import {
+  cameraOutline,
+  viewLine,
+  viewPoint,
+  viewRay,
+} from '@myrddraall/heroes-replay-stats-aether/camera';
+import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/design';
+import type { SceneCamera } from '@myrddraall/heroes-replay-stats-aether/formats';
 import type { MarkerMode } from '../layout/editor-ui.store';
 
 /**
@@ -90,7 +95,12 @@ export class SceneMarkers {
   /** The way from the eye through a point of the page, as the view shows it. */
   private rayAt(event: PointerEvent) {
     const r = this.host.getBoundingClientRect();
-    return viewRay(this.camera(), this.aspect(), (event.clientX - r.left) / (r.width || 1), (event.clientY - r.top) / (r.height || 1));
+    return viewRay(
+      this.camera(),
+      this.aspect(),
+      (event.clientX - r.left) / (r.width || 1),
+      (event.clientY - r.top) / (r.height || 1),
+    );
   }
 
   protected poleDown(event: PointerEvent, m: SceneMarker): void {
@@ -103,7 +113,8 @@ export class SceneMarkers {
 
   protected poleMove(event: PointerEvent): void {
     const d = this.dragging;
-    if (d && event.pointerId === d.id) this.poleDrag.emit({ phase: 'move', north: d.north, axis: d.axis, ray: this.rayAt(event) });
+    if (d && event.pointerId === d.id)
+      this.poleDrag.emit({ phase: 'move', north: d.north, axis: d.axis, ray: this.rayAt(event) });
   }
 
   protected poleUp(event: PointerEvent): void {

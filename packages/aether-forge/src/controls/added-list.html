@@ -1,49 +1,44 @@
 @if (items().length) {
-  <forge-property-section [title]="title()">
-    @for (item of items(); track item.key) {
-      <div class="item">
-        <mat-icon class="material-symbols-outlined icon" aria-hidden="true">{{
-          item.icon
-        }}</mat-icon>
-        @if (linkable()) {
-          <button type="button" class="name" (click)="itemShow.emit(item.key)">
-            {{ item.label }}
-            @if (item.detail) {
-              <span class="detail">{{ item.detail }}</span>
-            }
-          </button>
-          <button
-            type="button"
-            class="action"
-            [attr.aria-label]="linkLabel() + ': ' + item.label"
-            [title]="linkLabel()"
-            (click)="itemShow.emit(item.key)"
-          >
-            <mat-icon class="material-symbols-outlined" aria-hidden="true">arrow_outward</mat-icon>
-          </button>
-        } @else {
-          <span class="name">
-            {{ item.label }}
-            @if (item.detail) {
-              <span class="detail">{{ item.detail }}</span>
-            }
-          </span>
-          <span></span>
-        }
-        @if (item.removable) {
-          <button
-            type="button"
-            class="action"
-            [attr.aria-label]="removeLabel() + ' ' + item.label"
-            [title]="removeLabel()"
-            (click)="itemRemove.emit(item.key)"
-          >
-            <mat-icon class="material-symbols-outlined" aria-hidden="true">delete</mat-icon>
-          </button>
-        } @else {
-          <span></span>
-        }
-      </div>
+<forge-property-section [title]="title()">
+  @for (item of items(); track item.key) {
+  <div class="item">
+    <mat-icon class="material-symbols-outlined icon" aria-hidden="true">{{ item.icon }}</mat-icon>
+    @if (linkable()) {
+    <button type="button" class="name" (click)="itemShow.emit(item.key)">
+      {{ item.label }} @if (item.detail) {
+      <span class="detail">{{ item.detail }}</span>
+      }
+    </button>
+    <button
+      type="button"
+      class="action"
+      [attr.aria-label]="linkLabel() + ': ' + item.label"
+      [title]="linkLabel()"
+      (click)="itemShow.emit(item.key)"
+    >
+      <mat-icon class="material-symbols-outlined" aria-hidden="true">arrow_outward</mat-icon>
+    </button>
+    } @else {
+    <span class="name">
+      {{ item.label }} @if (item.detail) {
+      <span class="detail">{{ item.detail }}</span>
+      }
+    </span>
+    <span></span>
+    } @if (item.removable) {
+    <button
+      type="button"
+      class="action"
+      [attr.aria-label]="removeLabel() + ' ' + item.label"
+      [title]="removeLabel()"
+      (click)="itemRemove.emit(item.key)"
+    >
+      <mat-icon class="material-symbols-outlined" aria-hidden="true">delete</mat-icon>
+    </button>
+    } @else {
+    <span></span>
     }
-  </forge-property-section>
+  </div>
+  }
+</forge-property-section>
 }

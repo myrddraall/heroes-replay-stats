@@ -30,5 +30,4 @@ export class ViewMenu {
     { id: 'selected', label: 'Selected' },
     { id: 'none', label: 'None' },
   ];
-
 }

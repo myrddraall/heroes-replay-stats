@@ -14,20 +14,20 @@
   </button>
   <span class="reset-slot">
     @if (changed()) {
-      <button
-        type="button"
-        class="reset"
-        [attr.aria-label]="'Reset ' + title()"
-        title="Reset all"
-        (click)="resetRequested.emit()"
-      >
-        <mat-icon class="material-symbols-outlined" aria-hidden="true">restart_alt</mat-icon>
-      </button>
+    <button
+      type="button"
+      class="reset"
+      [attr.aria-label]="'Reset ' + title()"
+      title="Reset all"
+      (click)="resetRequested.emit()"
+    >
+      <mat-icon class="material-symbols-outlined" aria-hidden="true">restart_alt</mat-icon>
+    </button>
     }
   </span>
 </div>
 @if (isOpen()) {
-  <div class="rows" [id]="id">
-    <ng-content />
-  </div>
+<div class="rows" [id]="id">
+  <ng-content />
+</div>
 }

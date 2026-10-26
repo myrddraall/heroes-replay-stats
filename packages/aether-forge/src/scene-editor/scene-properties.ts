@@ -1,5 +1,10 @@
 import { Component, input, output } from '@angular/core';
-import { BLEND_GROUPS, BLENDS, type PartTint, type TintBlend } from "@myrddraall/heroes-replay-stats-aether/tints";
+import {
+  BLEND_GROUPS,
+  BLENDS,
+  type PartTint,
+  type TintBlend,
+} from '@myrddraall/heroes-replay-stats-aether/tints';
 import { PropertyColour } from '../controls/rows/property-colour';
 import { PropertySection } from '../controls/property-section';
 import { PropertyText } from '../controls/rows/property-text';

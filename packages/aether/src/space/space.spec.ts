@@ -1,15 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { layerBrightness } from '../render/draw-uniforms';
 import { forwardOf } from '../camera/camera';
-import {
-  bodyExtent,
-  bodyFrame,
-  partsExtent,
-  projectionMatrix,
-  viewMatrix,
-  viewUp,
-} from './space';
-import type { BodyPart } from '../formats/planets';
+import { bodyExtent, bodyFrame, partsExtent, projectionMatrix, viewMatrix, viewUp } from './space';
+import type { BodyPart } from '../formats/planet-files';
 import { placementFrame } from './graph';
 
 /** A point through a column-major matrix, divided by w: normalized device coordinates. */
@@ -57,16 +50,24 @@ describe('a body\u2019s frame', () => {
     const l = Math.hypot(...a);
     return [a[0] / l, a[1] / l, a[2] / l];
   };
-  const off = (v: V, y: V): V => unit(sub(v, [y[0] * dot(v, y), y[1] * dot(v, y), y[2] * dot(v, y)]));
-  const axis = (axes: Float32Array, k: number): V => [axes[3 * k]!, axes[3 * k + 1]!, axes[3 * k + 2]!];
+  const off = (v: V, y: V): V =>
+    unit(sub(v, [y[0] * dot(v, y), y[1] * dot(v, y), y[2] * dot(v, y)]));
+  const axis = (axes: Float32Array, k: number): V => [
+    axes[3 * k]!,
+    axes[3 * k + 1]!,
+    axes[3 * k + 2]!,
+  ];
   /** A point `ahead` along a camera's look, `right` and `up` of it in its view. */
   const inViewOf = (eye: V, forward: V, ahead: number, right: number, up: number): V => {
     const view = viewMatrix(eye, forward, UP);
     const r: V = [view[0]!, view[4]!, view[8]!];
     const u: V = [view[1]!, view[5]!, view[9]!];
-    return [0, 1, 2].map((k) => eye[k]! + forward[k]! * ahead + r[k]! * right + u[k]! * up) as unknown as V;
+    return [0, 1, 2].map(
+      (k) => eye[k]! + forward[k]! * ahead + r[k]! * right + u[k]! * up,
+    ) as unknown as V;
   };
-  const apart = (a: Float32Array, b: Float32Array) => Math.max(...a.map((v, i) => Math.abs(v - b[i]!)));
+  const apart = (a: Float32Array, b: Float32Array) =>
+    Math.max(...a.map((v, i) => Math.abs(v - b[i]!)));
 
   it('turns its z to the view\u2019s up, square to the way to the body, y away from the eye, x to the right', () => {
     const eye: V = [3, -20, 7];
@@ -96,7 +97,12 @@ describe('a body\u2019s frame', () => {
     for (const tilt of [-89.9, -60, 0, 45, 89.9]) {
       const forward = forwardOf(30, tilt);
       const view = viewMatrix(eye, forward, UP);
-      const { axes } = bodyFrame(inViewOf(eye, forward, 50, 0, 0), 1, eye, viewUp({ forward, up: UP }));
+      const { axes } = bodyFrame(
+        inViewOf(eye, forward, 50, 0, 0),
+        1,
+        eye,
+        viewUp({ forward, up: UP }),
+      );
       [view[0]!, view[4]!, view[8]!].forEach((v, k) => expect(axes[k]).toBeCloseTo(v, 5));
       [view[1]!, view[5]!, view[9]!].forEach((v, k) => expect(axes[6 + k]).toBeCloseTo(v, 5));
     }
@@ -190,15 +196,24 @@ describe('partsExtent', () => {
     const r = ring();
     // Out to its outer edge, its plane's depth off the centre: a sphere seen from 4.33.
     const sphere = Math.hypot(0.92, 0.67);
-    expect(partsExtent(1, [body, r], 4.33, new Set([r]))).toBeCloseTo(bodyExtent(1, sphere, 4.33), 9);
+    expect(partsExtent(1, [body, r], 4.33, new Set([r]))).toBeCloseTo(
+      bodyExtent(1, sphere, 4.33),
+      9,
+    );
     // Only the ring given counts so; another stays flat.
-    expect(partsExtent(1, [body, r], 4.33, new Set([ring()]))).toBe(partsExtent(1, [body, r], 4.33));
+    expect(partsExtent(1, [body, r], 4.33, new Set([ring()]))).toBe(
+      partsExtent(1, [body, r], 4.33),
+    );
   });
 });
 
 describe('placementFrame', () => {
   it("is the body's billboard frame as the scene's own camera sees it, whatever its radius", () => {
-    const layout = { eye: [-0.0018, -41.1988, 5.6051], forward: [1.9e-5, 0.999687, -0.025004], up: [0, 0, 1] } as const;
+    const layout = {
+      eye: [-0.0018, -41.1988, 5.6051],
+      forward: [1.9e-5, 0.999687, -0.025004],
+      up: [0, 0, 1],
+    } as const;
     for (const radius of [1, 9.037, 27.25])
       expect(Array.from(placementFrame([37.282, 64.892, 14.189], layout))).toEqual(
         Array.from(bodyFrame([37.282, 64.892, 14.189], radius, layout.eye, viewUp(layout)).axes),

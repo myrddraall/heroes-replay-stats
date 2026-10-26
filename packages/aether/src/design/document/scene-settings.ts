@@ -4,13 +4,25 @@ import type {
   MaterialTint,
   PartSettingsMap,
   SkyAnchor,
-} from '../../formats/planets';
+} from '../../formats/settings-types';
 import type { AddedLight, LightSettingsMap } from '../../lights/lights';
 import type { AddedPart } from '../overlays/created-overlays';
 import type { SceneCameraSet } from '../../formats/play-scene';
 import type { Viewpoint } from '../../space/space';
-import { bodyTransform, type Orientation, placementFrame, pointToLocal, pointToWorld, type Quat } from '../../space/graph';
-import { orbitOffset, orbitThrough, type OrbitPlace, type PlacementMode } from '../../space/placement';
+import {
+  bodyTransform,
+  type Orientation,
+  placementFrame,
+  pointToLocal,
+  pointToWorld,
+  type Quat,
+} from '../../space/graph';
+import {
+  orbitOffset,
+  orbitThrough,
+  type OrbitPlace,
+  type PlacementMode,
+} from '../../space/placement';
 
 /**
  * The Background page's scene: its planets, each with its moons (and theirs), under the sky. A

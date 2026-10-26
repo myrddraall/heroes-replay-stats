@@ -11,7 +11,11 @@ import {
   variantsOnOf,
 } from './variants';
 
-const painted = { id: 'painted', name: 'Painted', settings: { materials: { surface: { lit: false } } } };
+const painted = {
+  id: 'painted',
+  name: 'Painted',
+  settings: { materials: { surface: { lit: false } } },
+};
 
 describe('variants', () => {
   it("are a body's data's (with the library's changes to them), then those made in the editor", () => {
@@ -36,7 +40,7 @@ describe('variants', () => {
     ]);
   });
 
-  it('are on as the nearest level says, and switched on or off by a scene\'s variants that are on, in order', () => {
+  it("are on as the nearest level says, and switched on or off by a scene's variants that are on, in order", () => {
     expect(variantsOnOf({ variantsOn: ['a'] }, { variantsOn: ['b'] })).toEqual(['a']);
     expect(variantsOnOf(undefined, { variantsOn: ['b'] })).toEqual(['b']);
     expect(variantsOnOf({}, undefined)).toEqual([]);
@@ -44,13 +48,19 @@ describe('variants', () => {
     const scene: PlanetChoices = {
       sceneVariants: [
         { id: 's1', name: 'Preview', switches: { '0': { lit: false, painted: true } } },
-        { id: 's2', name: 'Shields', switches: { '0': { painted: false, shield: true }, '1': { shield: true } } },
+        {
+          id: 's2',
+          name: 'Shields',
+          switches: { '0': { painted: false, shield: true }, '1': { shield: true } },
+        },
       ],
       sceneVariantsOn: ['s1'],
     };
     expect(sceneSwitched(scene, '0', ['lit'])).toEqual(['painted']);
     expect(sceneSwitched(scene, '1', [])).toEqual([]); // s2 is off
-    expect(sceneSwitched({ ...scene, sceneVariantsOn: ['s1', 's2'] }, '0', ['lit'])).toEqual(['shield']);
+    expect(sceneSwitched({ ...scene, sceneVariantsOn: ['s1', 's2'] }, '0', ['lit'])).toEqual([
+      'shield',
+    ]);
   });
 
   it("stack over a planet's own settings and under a scene's when it is drawn, and may switch its overlays", () => {
@@ -62,7 +72,13 @@ describe('variants', () => {
           shade: 0.5,
           turn: 10,
           overlaysEnabled: { nexus: false },
-          variants: [{ id: 'variant-1', name: 'Shield', settings: { overlaysEnabled: { nexus: true }, turn: 20 } }],
+          variants: [
+            {
+              id: 'variant-1',
+              name: 'Shield',
+              settings: { overlaysEnabled: { nexus: true }, turn: 20 },
+            },
+          ],
           variantsOn: [],
         },
       },
@@ -71,13 +87,18 @@ describe('variants', () => {
     const plain = withLibrary(korhal, library, [painted]);
     expect(plain.overlays).toEqual([]); // the shield off, as the planet has it
     expect(plain.turn).toBe(10);
-    const shielded = withLibrary({ ...korhal, variantsOn: ['variant-1', 'painted'] }, library, [painted]);
+    const shielded = withLibrary({ ...korhal, variantsOn: ['variant-1', 'painted'] }, library, [
+      painted,
+    ]);
     expect(shielded.overlays).toEqual(['nexus']); // switched on by its variant
     expect(shielded.turn).toBe(20); // the variant's over its own
     expect(shielded.shade).toEqual({ strength: 0.5 }); // its own over the overlay's
     expect(shielded.materials?.['surface']).toEqual({ lit: false }); // the data's variant
     // On by default in the library; a scene's setting over all.
-    const byDefault = { ...library, planets: { korhal: { ...library.planets['korhal'], variantsOn: ['variant-1'] } } };
+    const byDefault = {
+      ...library,
+      planets: { korhal: { ...library.planets['korhal'], variantsOn: ['variant-1'] } },
+    };
     expect(withLibrary(korhal, byDefault).turn).toBe(20);
     expect(withLibrary({ ...korhal, variantsOn: ['variant-1'], turn: 5 }, library).turn).toBe(5);
   });
@@ -92,8 +113,17 @@ describe('variants', () => {
       shade: 0.4,
       materials: { clouds: { glow: 2 } },
     });
-    expect(variant).toEqual({ overlaysEnabled: { nexus: false }, shade: 0.4, materials: { clouds: { glow: 2 } } });
-    expect(kept).toEqual({ label: 'Home', enabled: true, overlays: ['nexus'], variantsOn: ['painted'] });
+    expect(variant).toEqual({
+      overlaysEnabled: { nexus: false },
+      shade: 0.4,
+      materials: { clouds: { glow: 2 } },
+    });
+    expect(kept).toEqual({
+      label: 'Home',
+      enabled: true,
+      overlays: ['nexus'],
+      variantsOn: ['painted'],
+    });
     expect(variantSettingsOf({ shade: 0.4 }).kept).toBeUndefined();
   });
 });

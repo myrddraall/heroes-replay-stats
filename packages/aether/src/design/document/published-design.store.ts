@@ -1,4 +1,11 @@
-import { patchState, signalStore, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
+import {
+  patchState,
+  signalStore,
+  withHooks,
+  withMethods,
+  withProps,
+  withState,
+} from '@ngrx/signals';
 import { withLocalStorage } from '@myrddraall/heroes-replay-stats-signals';
 import { type Design, EMPTY_LIBRARY, EMPTY_SCENES, type ScenesState } from './design';
 import type { PlanetChoices } from './scene-settings';

@@ -1,8 +1,20 @@
 import { MatIcon } from '@angular/material/icon';
 import { Component, input, output } from '@angular/core';
-import type { MaterialDepth, MaterialSettings, MaterialTint, SceneBlend, SkyAnchor } from "@myrddraall/heroes-replay-stats-aether/formats";
-import { MATERIAL_BLENDS, type MaterialControls, type MaterialValues, NO_MATERIAL_TINT, type SettingOrigins } from "@myrddraall/heroes-replay-stats-aether/materials";
-import { ORIENTATION_CHOICES, SKY_ANCHOR_CHOICES } from '../../editing/editor-model';
+import type {
+  MaterialDepth,
+  MaterialSettings,
+  MaterialTint,
+  SceneBlend,
+  SkyAnchor,
+} from '@myrddraall/heroes-replay-stats-aether/formats';
+import {
+  MATERIAL_BLENDS,
+  type MaterialControls,
+  type MaterialValues,
+  NO_MATERIAL_TINT,
+  type SettingOrigins,
+} from '@myrddraall/heroes-replay-stats-aether/materials';
+import { ORIENTATION_CHOICES, SKY_ANCHOR_CHOICES } from '../../editing/model/sky';
 import { PropertyCheck } from '../../controls/rows/property-check';
 import { PropertySection } from '../../controls/property-section';
 import { TintSection } from './tint-section';

@@ -35,11 +35,7 @@ describe('open-target', () => {
   });
 
   it('lists a kind in the library, by its plural, one of them shown behind', () => {
-    expect(libraryPath('planet', 'korhal')).toEqual([
-      'library',
-      'planets',
-      'korhal',
-    ]);
+    expect(libraryPath('planet', 'korhal')).toEqual(['library', 'planets', 'korhal']);
     expect(libraryPath('style')).toEqual(['library', 'overlays']);
     expect(libraryKindOf('overlays')).toBe('style');
     expect(libraryKindOf('moons')).toBeUndefined();
@@ -49,10 +45,7 @@ describe('open-target', () => {
   });
 
   it('calls styles overlays in the URL, and still reads them as styles', () => {
-    expect(openPath({ kind: 'style', id: 'nexus' })).toEqual([
-      'overlay',
-      'nexus',
-    ]);
+    expect(openPath({ kind: 'style', id: 'nexus' })).toEqual(['overlay', 'nexus']);
     expect(openOf('overlay', 'nexus')).toEqual({ kind: 'style', id: 'nexus' });
     expect(openOf('style', 'nexus')).toEqual({ kind: 'style', id: 'nexus' });
   });
@@ -63,12 +56,7 @@ describe('open-target', () => {
       id: 'skyLights',
       on: { kind: 'planet', id: 'korhal' },
     } as const;
-    expect(openPath(fromKorhal)).toEqual([
-      'planet',
-      'korhal',
-      'material',
-      'skyLights',
-    ]);
+    expect(openPath(fromKorhal)).toEqual(['planet', 'korhal', 'material', 'skyLights']);
     expect(openOf('material', 'skyLights', 'planet', 'korhal')).toEqual(fromKorhal);
     expect(openOf('material', 'grid', 'overlay', 'nexus')).toEqual({
       kind: 'material',

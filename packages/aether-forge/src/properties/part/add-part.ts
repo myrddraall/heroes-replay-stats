@@ -1,5 +1,5 @@
 import { Component, computed, input, output } from '@angular/core';
-import type { CreatedShape } from "@myrddraall/heroes-replay-stats-aether/design";
+import type { CreatedShape } from '@myrddraall/heroes-replay-stats-aether/design';
 import type { PickChoice } from '../../controls/pick-list';
 import { SplitButton, type SplitOption } from '../../controls/split-button';
 

@@ -1,6 +1,10 @@
 import { Component, input, output } from '@angular/core';
-import { MaterialDrawAs, MaterialSettings } from "@myrddraall/heroes-replay-stats-aether/formats";
-import { MaterialControls, MaterialValues, SettingOrigins } from "@myrddraall/heroes-replay-stats-aether/materials";
+import { MaterialDrawAs, MaterialSettings } from '@myrddraall/heroes-replay-stats-aether/formats';
+import {
+  MaterialControls,
+  MaterialValues,
+  SettingOrigins,
+} from '@myrddraall/heroes-replay-stats-aether/materials';
 import { PropertyColour } from '../../controls/rows/property-colour';
 import { PropertyNumber } from '../../controls/rows/property-number';
 import { PropertySection } from '../../controls/property-section';

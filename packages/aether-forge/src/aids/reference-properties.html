@@ -1,5 +1,4 @@
-@let v = values();
-@let c = changed();
+@let v = values(); @let c = changed();
 <forge-property-section
   title="Reference"
   [changed]="layChanged()"
@@ -12,7 +11,7 @@
         {{ hasImage() ? 'Change…' : 'Choose…' }}
       </button>
       @if (hasImage()) {
-        <span class="image__name" [title]="name()">{{ name() }}</span>
+      <span class="image__name" [title]="name()">{{ name() }}</span>
       }
     </span>
     <input
@@ -26,66 +25,66 @@
     />
   </div>
   @if (hasImage()) {
-    <forge-property-check
-      label="Show"
-      [checked]="v.shown"
-      [changed]="c.shown"
-      (resetRequested)="clear.emit(['shown'])"
-      (checkedChange)="valuesChange.emit({ shown: $event })"
-    />
-    <forge-property-select
-      label="Mode"
-      [value]="v.mode"
-      [options]="modes"
-      [changed]="c.mode"
-      (resetRequested)="clear.emit(['mode'])"
-      (valueChange)="mode($event)"
-    />
-    <forge-property-number
-      [label]="amountLabel()"
-      [value]="v.amount"
-      [min]="0"
-      [max]="1"
-      [step]="0.01"
-      [changed]="c.amount"
-      (resetRequested)="clear.emit(['amount'])"
-      (valueChange)="valuesChange.emit({ amount: $event })"
-    />
+  <forge-property-check
+    label="Show"
+    [checked]="v.shown"
+    [changed]="c.shown"
+    (resetRequested)="clear.emit(['shown'])"
+    (checkedChange)="valuesChange.emit({ shown: $event })"
+  />
+  <forge-property-select
+    label="Mode"
+    [value]="v.mode"
+    [options]="modes"
+    [changed]="c.mode"
+    (resetRequested)="clear.emit(['mode'])"
+    (valueChange)="mode($event)"
+  />
+  <forge-property-number
+    [label]="amountLabel()"
+    [value]="v.amount"
+    [min]="0"
+    [max]="1"
+    [step]="0.01"
+    [changed]="c.amount"
+    (resetRequested)="clear.emit(['amount'])"
+    (valueChange)="valuesChange.emit({ amount: $event })"
+  />
   }
 </forge-property-section>
 @if (hasImage()) {
-  <forge-property-section
-    title="Fit"
-    [changed]="fitChanged()"
-    (resetRequested)="clear.emit(['scale', 'across', 'up'])"
-  >
-    <forge-property-number
-      label="Size"
-      [value]="v.scale"
-      [min]="0.01"
-      [step]="0.005"
-      [changed]="c.scale"
-      (resetRequested)="clear.emit(['scale'])"
-      (valueChange)="valuesChange.emit({ scale: $event })"
-    />
-    <forge-property-number
-      label="Across"
-      [value]="v.across"
-      [step]="0.001"
-      [changed]="c.across"
-      (resetRequested)="clear.emit(['across'])"
-      (valueChange)="valuesChange.emit({ across: $event })"
-    />
-    <forge-property-number
-      label="Up"
-      [value]="v.up"
-      [step]="0.001"
-      [changed]="c.up"
-      (resetRequested)="clear.emit(['up'])"
-      (valueChange)="valuesChange.emit({ up: $event })"
-    />
-  </forge-property-section>
-  <div class="buttons">
-    <button type="button" class="button" (click)="imageRemoved.emit()">Remove image</button>
-  </div>
+<forge-property-section
+  title="Fit"
+  [changed]="fitChanged()"
+  (resetRequested)="clear.emit(['scale', 'across', 'up'])"
+>
+  <forge-property-number
+    label="Size"
+    [value]="v.scale"
+    [min]="0.01"
+    [step]="0.005"
+    [changed]="c.scale"
+    (resetRequested)="clear.emit(['scale'])"
+    (valueChange)="valuesChange.emit({ scale: $event })"
+  />
+  <forge-property-number
+    label="Across"
+    [value]="v.across"
+    [step]="0.001"
+    [changed]="c.across"
+    (resetRequested)="clear.emit(['across'])"
+    (valueChange)="valuesChange.emit({ across: $event })"
+  />
+  <forge-property-number
+    label="Up"
+    [value]="v.up"
+    [step]="0.001"
+    [changed]="c.up"
+    (resetRequested)="clear.emit(['up'])"
+    (valueChange)="valuesChange.emit({ up: $event })"
+  />
+</forge-property-section>
+<div class="buttons">
+  <button type="button" class="button" (click)="imageRemoved.emit()">Remove image</button>
+</div>
 }

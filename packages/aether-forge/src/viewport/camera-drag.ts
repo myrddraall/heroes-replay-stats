@@ -7,9 +7,16 @@ import {
   input,
   output,
 } from '@angular/core';
-import { distanceAhead, dolly, fieldOfView, orbit, orbitAround, pan } from "@myrddraall/heroes-replay-stats-aether/camera";
-import { SCENE_CENTRE, type Vec3 } from "@myrddraall/heroes-replay-stats-aether/design";
-import type { SceneCamera, SceneCameraSet } from "@myrddraall/heroes-replay-stats-aether/formats";
+import {
+  distanceAhead,
+  dolly,
+  fieldOfView,
+  orbit,
+  orbitAround,
+  pan,
+} from '@myrddraall/heroes-replay-stats-aether/camera';
+import { SCENE_CENTRE, type Vec3 } from '@myrddraall/heroes-replay-stats-aether/design';
+import type { SceneCamera, SceneCameraSet } from '@myrddraall/heroes-replay-stats-aether/formats';
 
 /** How far a press must move before it is a drag (not a click that picks a planet), in pixels. */
 const DRAG_FROM = 4;

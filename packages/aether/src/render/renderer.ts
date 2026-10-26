@@ -3,7 +3,7 @@ import { RENDER_API } from './render-api';
 import type { LoadedPlayScene, SceneCameraSet } from '../formats/play-scene';
 import type { EditingAid } from '../aids/beams';
 import type { AddedLight } from '../lights/lights';
-import type { SkySettings } from '../formats/planets';
+import type { SkySettings } from '../formats/settings-types';
 import type { Backdrop, PlanetPlacement } from '../space/space';
 import { ThreeRenderer } from './three-renderer';
 import type { Tint } from '../tints/tints';

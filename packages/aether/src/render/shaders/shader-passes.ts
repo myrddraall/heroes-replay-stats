@@ -63,7 +63,9 @@ import { cold, coldDepth, coldVertex } from './cold-shaders';
  */
 const fullscreen = (): Node<'vec4'> => {
   const at = (values: number[]) =>
-    (array(values as never) as unknown as { element(i: Node<'uint'>): Node<'float'> }).element(vertexIndex as Node<'uint'>);
+    (array(values as never) as unknown as { element(i: Node<'uint'>): Node<'float'> }).element(
+      vertexIndex as Node<'uint'>,
+    );
   return vec4(at([-1.0, -1.0, 3.0]), at([3.0, -1.0, -1.0]), 0.0, 1.0);
 };
 
@@ -348,7 +350,12 @@ export function toneMaterial(u: ShaderUniforms, scene: Texture, bloom: Texture):
  * The particles: each a square facing the camera, streaked
  * as the view sweeps; light added, hidden behind what is opaque at its depth.
  */
-export function particleMaterial(u: ShaderUniforms, tex: Texture, toClip: ToClip, depthTest: boolean): NodeMaterial {
+export function particleMaterial(
+  u: ShaderUniforms,
+  tex: Texture,
+  toClip: ToClip,
+  depthTest: boolean,
+): NodeMaterial {
   const m = new NodeMaterial();
   m.name = 'particle';
   setBlend(m, 'add');
@@ -374,7 +381,11 @@ export function particleMaterial(u: ShaderUniforms, tex: Texture, toClip: ToClip
   m.fragmentNode = Fn(() => {
     const tt = texture(tex, vUv).toVar();
     const ch = u.int('uChannel');
-    const one = select(ch.equal(2), tt.a, select(ch.equal(3), tt.r, select(ch.equal(4), tt.g, tt.b)));
+    const one = select(
+      ch.equal(2),
+      tt.a,
+      select(ch.equal(3), tt.r, select(ch.equal(4), tt.g, tt.b)),
+    );
     const c = select(ch.lessThanEqual(1), tt.rgb, vec3(one));
     const star = tintBy(
       c.mul(u.float('uBright')).mul(vColor.rgb),
@@ -392,7 +403,10 @@ export function particleMaterial(u: ShaderUniforms, tex: Texture, toClip: ToClip
 const meets = (eye: Node<'vec3'>, sphere: Node<'vec4'>, d: Node<'vec3'>) => {
   const oc = eye.sub(sphere.xyz).toVar();
   const b = dot(oc, d).toVar();
-  const disc = b.mul(b).sub(dot(oc, oc).sub(sphere.w.mul(sphere.w))).toVar();
+  const disc = b
+    .mul(b)
+    .sub(dot(oc, oc).sub(sphere.w.mul(sphere.w)))
+    .toVar();
   return select(disc.greaterThan(0), b.negate().sub(sqrt(max(disc, 0))), float(-1)).toVar();
 };
 
@@ -416,7 +430,10 @@ export function beamMaterial(
   const across = u.vec3('uAcross');
   const upOf = u.vec3('uUp');
   const normalOf = across.mul(tube.x).add(upOf.mul(tube.y));
-  const atOf = u.vec3('uCentre').add(normalOf.mul(u.float('uRadius'))).add(u.vec3('uWay').mul(tube.z).mul(u.float('uLength')));
+  const atOf = u
+    .vec3('uCentre')
+    .add(normalOf.mul(u.float('uRadius')))
+    .add(u.vec3('uWay').mul(tube.z).mul(u.float('uLength')));
   const vAt = varying(atOf);
   const vNormal = varying(normalOf);
   const vAlong = varying(tube.z);
@@ -432,7 +449,10 @@ export function beamMaterial(
     const ray = vAt.sub(eye).toVar();
     const far = length(ray).toVar();
     const d = ray.div(far).toVar();
-    const hidden = depth.greaterThan(textureLoad(frameDepth, pixel()).x).or(meets(eye, body, d).greaterThan(0)).toVar();
+    const hidden = depth
+      .greaterThan(textureLoad(frameDepth, pixel()).x)
+      .or(meets(eye, body, d).greaterThan(0))
+      .toVar();
     Loop(MAX_BEAM_SPHERES, ({ i }) => {
       If(i.lessThan(count), () => {
         const near = meets(eye, u.row('surfaces', i, 0), d);
@@ -447,7 +467,10 @@ export function beamMaterial(
     const facing = abs(dot(normalize(vNormal), normalize(eye.sub(vAt))));
     const shape = kind === 'edge' ? pow(facing.oneMinus(), 8) : facing;
     // Fading as it goes (`uFade` 1: a light's beam), or as strong all along (0: a planet's axis).
-    const a = alpha.mul(shape).mul(vAlong.mul(u.float('uFade', 1)).oneMinus()).toVar();
+    const a = alpha
+      .mul(shape)
+      .mul(vAlong.mul(u.float('uFade', 1)).oneMinus())
+      .toVar();
     return cold(vec4(colour.mul(a), a));
   })();
   coldVertex(m);
@@ -458,7 +481,11 @@ export function beamMaterial(
  * A light's outline on its body's sphere: lines where its reach crosses its
  * edges; none where the frame has something nearer, nor behind another body's sphere.
  */
-export function outlineMaterial(u: ShaderUniforms, frameDepth: Texture, toClip: ToClip): NodeMaterial {
+export function outlineMaterial(
+  u: ShaderUniforms,
+  frameDepth: Texture,
+  toClip: ToClip,
+): NodeMaterial {
   const m = overlay(new NodeMaterial());
   m.name = 'outline';
   setBlend(m, 'add');
@@ -466,7 +493,9 @@ export function outlineMaterial(u: ShaderUniforms, frameDepth: Texture, toClip: 
   const centre = u.vec3('uCentre');
   const axes = u.mat3('uAxes');
   const extent = u.float('uExtent', 1);
-  const atOf = centre.add(axes.mul(vec3(positionGeometry.x.mul(extent), 0, positionGeometry.y.mul(extent))));
+  const atOf = centre.add(
+    axes.mul(vec3(positionGeometry.x.mul(extent), 0, positionGeometry.y.mul(extent))),
+  );
   const vAt = varying(atOf);
   m.vertexNode = Fn(() => toClip(viewProjection.mul(vec4(atOf, 1))))();
   const eye = u.vec3('uEye');
@@ -483,7 +512,8 @@ export function outlineMaterial(u: ShaderUniforms, frameDepth: Texture, toClip: 
   const cosFade = u.float('uCosFade');
   const alpha = u.float('uAlpha');
   const colour = u.vec3('uColor');
-  const line = (fv: Node<'float'>) => smoothstep(0, 1.5, abs(fv).div(max(fwidth(fv), 1e-6))).oneMinus();
+  const line = (fv: Node<'float'>) =>
+    smoothstep(0, 1.5, abs(fv).div(max(fwidth(fv), 1e-6))).oneMinus();
   m.fragmentNode = Fn(() => {
     const d = normalize(vAt.sub(eye)).toVar();
     const t = meets(eye, vec4(centre, radius), d);

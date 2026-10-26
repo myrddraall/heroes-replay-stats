@@ -1,4 +1,9 @@
-import { type EnvironmentProviders, makeEnvironmentProviders, type Signal, signal } from '@angular/core';
+import {
+  type EnvironmentProviders,
+  makeEnvironmentProviders,
+  type Signal,
+  signal,
+} from '@angular/core';
 import { ROUTES } from '@angular/router';
 import { FORGE_OPTIONS, type ForgeOptions } from './forge-options';
 import { forgeMatcher } from './page/forge-matcher';

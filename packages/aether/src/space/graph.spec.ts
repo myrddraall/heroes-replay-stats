@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { type MoonChoices, orbitOffset, orbitTo, placeBodies, type PlanetChoices } from '../design/document/scene-settings';
+import {
+  type MoonChoices,
+  orbitOffset,
+  orbitTo,
+  placeBodies,
+  type PlanetChoices,
+} from '../design/document/scene-settings';
 import { groupBodies, groupTransform, SCENE_CENTRE } from '../design/document/scene-bodies';
 import {
   about as aboutBy,
@@ -30,7 +36,11 @@ import {
 import { bodyFrame, viewMatrix, viewUp, type Viewpoint } from './space';
 
 /** The game's camera, as the Play scene's file has it: the scene's own. */
-const LAYOUT: Viewpoint = { eye: [-0.0018, -41.1988, 5.6051], forward: [1.9e-5, 0.999687, -0.025004], up: [0, 0, 1] };
+const LAYOUT: Viewpoint = {
+  eye: [-0.0018, -41.1988, 5.6051],
+  forward: [1.9e-5, 0.999687, -0.025004],
+  up: [0, 0, 1],
+};
 /** Another camera, off to the side and above. */
 const OTHER: Viewpoint = { eye: [60, 10, 40], forward: [-0.55, 0.6, -0.35], up: [0, 0, 1] };
 
@@ -46,14 +56,28 @@ function about(axis: Vec3, angle: number) {
   const [x, y, z] = axis;
   const k = 1 - c;
   return transpose([
-    c + x * x * k, x * y * k - z * s, x * z * k + y * s,
-    y * x * k + z * s, c + y * y * k, y * z * k - x * s,
-    z * x * k - y * s, z * y * k + x * s, c + z * z * k,
+    c + x * x * k,
+    x * y * k - z * s,
+    x * z * k + y * s,
+    y * x * k + z * s,
+    c + y * y * k,
+    y * z * k - x * s,
+    z * x * k - y * s,
+    z * y * k + x * s,
+    c + z * z * k,
   ]);
 }
 
-const PARENT: Transform = { position: [3, -2, 7], rotation: about([0.48, 0.6, 0.64], 0.9), scale: 2.5 };
-const LOCAL: Transform = { position: [-1, 0.5, 2], rotation: about([0, 0.6, 0.8], -0.4), scale: 0.3 };
+const PARENT: Transform = {
+  position: [3, -2, 7],
+  rotation: about([0.48, 0.6, 0.64], 0.9),
+  scale: 2.5,
+};
+const LOCAL: Transform = {
+  position: [-1, 0.5, 2],
+  rotation: about([0, 0.6, 0.8], -0.4),
+  scale: 0.3,
+};
 
 describe('the scene graph', () => {
   it("composes a thing's local transform with its parent's, and undoes it", () => {
@@ -83,7 +107,7 @@ describe('the scene graph', () => {
     expectNear(turn(b, turn(t, v)), turn(a, v), 6);
   });
 
-  it("turns a body about its Axis by its Turn: no Turn exactly no turn, whatever its Axis", () => {
+  it('turns a body about its Axis by its Turn: no Turn exactly no turn, whatever its Axis', () => {
     // Azeroth's textures' pole, 31° off straight up.
     const pole: Vec3 = [-0.51721, 0.00045, 0.85586];
     expect(bodyTurn(pole)).toBe(IDENTITY);
@@ -111,7 +135,11 @@ describe('the scene graph', () => {
       const base = poseKept(pole, before, { axis: b, turn: turnBy });
       expectNear(bodyTurn(pole, b, turnBy, base), bodyTurn(pole, a, turnBy), 12);
       // From there its Turn turns about the new Axis.
-      expectNear(bodyTurn(pole, b, turnBy + 30, base), multiply(aboutBy(b, 30), bodyTurn(pole, a, turnBy)), 12);
+      expectNear(
+        bodyTurn(pole, b, turnBy + 30, base),
+        multiply(aboutBy(b, 30), bodyTurn(pole, a, turnBy)),
+        12,
+      );
       // And again: an Axis moved twice keeps it still.
       const again = poseKept(pole, { axis: b, turn: turnBy, base }, { axis: pole, turn: turnBy });
       expectNear(bodyTurn(pole, undefined, turnBy, again), bodyTurn(pole, a, turnBy), 12);
@@ -124,8 +152,13 @@ describe('the scene graph', () => {
   });
 
   it("puts a group's planets and their moons where the scene's builders put them, number for number", () => {
-    const moons: MoonChoices[] = [{ id: 'moon', orbit: { radius: 2.4, tilt: 12, turn: 30, progress: 0.9, size: 0.27 } }];
-    const group: PlanetChoices = { group: true, bodies: [{ id: 'a', position: [10, 75, -3], radius: 6, moons }] };
+    const moons: MoonChoices[] = [
+      { id: 'moon', orbit: { radius: 2.4, tilt: 12, turn: 30, progress: 0.9, size: 0.27 } },
+    ];
+    const group: PlanetChoices = {
+      group: true,
+      bodies: [{ id: 'a', position: [10, 75, -3], radius: 6, moons }],
+    };
     const placement = { group: 'group-1', position: [-20, 90, 8] as Vec3, size: 1.5, turn: 35 };
     const [built] = groupBodies([placement], () => group);
     const nodes: SceneNode[] = [
@@ -136,31 +169,56 @@ describe('the scene graph', () => {
         parent: 'group',
         local: {
           // In a group, relative to its middle.
-          position: [10 - SCENE_CENTRE.position[0], 75 - SCENE_CENTRE.position[1], -3 - SCENE_CENTRE.position[2]],
+          position: [
+            10 - SCENE_CENTRE.position[0],
+            75 - SCENE_CENTRE.position[1],
+            -3 - SCENE_CENTRE.position[2],
+          ],
           rotation: 'layout',
           scale: 6,
         },
       },
-      { id: 'moon', kind: 'moon', parent: 'a', local: { position: orbitOffset(moons[0]!.orbit), rotation: 'layout', scale: 0.27 } },
+      {
+        id: 'moon',
+        kind: 'moon',
+        parent: 'a',
+        local: { position: orbitOffset(moons[0]!.orbit), rotation: 'layout', scale: 0.27 },
+      },
     ];
     const world = resolveWorld(nodes, LAYOUT);
     const planet = world.get('a')!;
     expect(planet.position).toEqual(built!.body.position);
     expect(planet.scale).toBe(built!.body.radius);
     // Its turn is its placement frame where it ends up: the group's turn moves it, never turns it.
-    expect(Array.from(planet.rotation)).toEqual(Array.from(placementFrame(planet.position, LAYOUT)));
-    const [, moon] = placeBodies({ position: planet.position, radius: planet.scale }, moons, LAYOUT);
+    expect(Array.from(planet.rotation)).toEqual(
+      Array.from(placementFrame(planet.position, LAYOUT)),
+    );
+    const [, moon] = placeBodies(
+      { position: planet.position, radius: planet.scale },
+      moons,
+      LAYOUT,
+    );
     expect(world.get('moon')!.position).toEqual(moon!.position);
     expect(world.get('moon')!.scale).toBe(moon!.radius);
   });
 
   it('nests groups as the builder does (within rounding)', () => {
-    const inner: PlanetChoices = { group: true, bodies: [{ id: 'b', position: [5, 70, 0], radius: 3 }] };
-    const outer: PlanetChoices = { group: true, groups: [{ group: 'inner', position: [8, 60, 2], size: 0.5, turn: -20 }] };
+    const inner: PlanetChoices = {
+      group: true,
+      bodies: [{ id: 'b', position: [5, 70, 0], radius: 3 }],
+    };
+    const outer: PlanetChoices = {
+      group: true,
+      groups: [{ group: 'inner', position: [8, 60, 2], size: 0.5, turn: -20 }],
+    };
     const groups = (id: string) => (id === 'inner' ? inner : outer);
     const [b] = groupBodies([{ group: 'outer', position: [0, 80, 10], size: 2, turn: 45 }], groups);
     // By hand: the inner group's placement within the outer's, then the outer's in the scene.
-    const inGroup = (p: Vec3): Vec3 => [p[0] - SCENE_CENTRE.position[0], p[1] - SCENE_CENTRE.position[1], p[2] - SCENE_CENTRE.position[2]];
+    const inGroup = (p: Vec3): Vec3 => [
+      p[0] - SCENE_CENTRE.position[0],
+      p[1] - SCENE_CENTRE.position[1],
+      p[2] - SCENE_CENTRE.position[2],
+    ];
     const outerT = groupTransform({ group: 'outer', position: [0, 80, 10], size: 2, turn: 45 });
     const innerT = groupTransform({ group: 'inner', position: [8, 60, 2], size: 0.5, turn: -20 });
     const want = pointToWorld(outerT, inGroup(pointToWorld(innerT, inGroup([5, 70, 0]))));
@@ -199,7 +257,7 @@ describe('the scene graph', () => {
     }
   });
 
-  it("lights a world draw fixed in the world, a billboard kept to the eye, from another camera", () => {
+  it('lights a world draw fixed in the world, a billboard kept to the eye, from another camera', () => {
     const position: Vec3 = [22, 70, 9];
     const placement = placementFrame(position, LAYOUT);
     const frames = (camera: Viewpoint, orientation: 'camera' | 'world') => {
@@ -223,8 +281,12 @@ describe('the scene graph', () => {
     const camera = frames(OTHER, 'camera');
     expectNear(turn(camera.frame, turn(camera.lightTurn, light)), turn(camera.quad, light), 6);
     expect(camera.leanTurn).toBe(IDENTITY);
-    expect(Array.from(frames(OTHER, 'world').frame)).toEqual(Array.from(frames(LAYOUT, 'world').frame));
-    expect(Array.from(frames(OTHER, 'camera').frame)).not.toEqual(Array.from(frames(LAYOUT, 'camera').frame));
+    expect(Array.from(frames(OTHER, 'world').frame)).toEqual(
+      Array.from(frames(LAYOUT, 'world').frame),
+    );
+    expect(Array.from(frames(OTHER, 'camera').frame)).not.toEqual(
+      Array.from(frames(LAYOUT, 'camera').frame),
+    );
   });
 
   it("turns a draw by its body's own turn, as a billboard from the eye that draws it, or fixed in the world", () => {
@@ -253,15 +315,30 @@ describe('the scene graph', () => {
     }
   });
 
-  it("leaves a halo square to the camera unless its part or material says otherwise", () => {
-    expect(drawTurnOf(undefined, undefined, true, 'world')).toEqual({ orientation: 'camera', turned: false });
-    expect(drawTurnOf(undefined, undefined, false, 'world')).toEqual({ orientation: 'world', turned: true });
-    expect(drawTurnOf(undefined, 'world', true, 'camera')).toEqual({ orientation: 'world', turned: true });
-    expect(drawTurnOf('camera', 'world', true, 'world')).toEqual({ orientation: 'camera', turned: true });
-    expect(drawTurnOf(undefined, undefined, false)).toEqual({ orientation: 'camera', turned: true });
+  it('leaves a halo square to the camera unless its part or material says otherwise', () => {
+    expect(drawTurnOf(undefined, undefined, true, 'world')).toEqual({
+      orientation: 'camera',
+      turned: false,
+    });
+    expect(drawTurnOf(undefined, undefined, false, 'world')).toEqual({
+      orientation: 'world',
+      turned: true,
+    });
+    expect(drawTurnOf(undefined, 'world', true, 'camera')).toEqual({
+      orientation: 'world',
+      turned: true,
+    });
+    expect(drawTurnOf('camera', 'world', true, 'world')).toEqual({
+      orientation: 'camera',
+      turned: true,
+    });
+    expect(drawTurnOf(undefined, undefined, false)).toEqual({
+      orientation: 'camera',
+      turned: true,
+    });
   });
 
-  it("turns each draw as its material says, else its part, else its body, else its tuning, else facing the camera", () => {
+  it('turns each draw as its material says, else its part, else its body, else its tuning, else facing the camera', () => {
     expect(orientationOf()).toBe('camera');
     expect(orientationOf(undefined, undefined, undefined, 'world')).toBe('world');
     expect(orientationOf(undefined, undefined, 'world', 'camera')).toBe('world');

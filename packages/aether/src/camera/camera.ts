@@ -80,7 +80,12 @@ function viewAxes(forward: Vec3): [Vec3, Vec3, Vec3] {
  * degrees and tilted by `tilt` as `orbit` turns it, carried round with its way of looking as one:
  * the point stays where it is in the view, wherever that is (it needn't be the view's middle).
  */
-export function orbitAround(camera: SceneCamera, pivot: Vec3, turn: number, tilt: number): SceneCameraSet {
+export function orbitAround(
+  camera: SceneCamera,
+  pivot: Vec3,
+  turn: number,
+  tilt: number,
+): SceneCameraSet {
   const angles = cameraAngles(camera.forward);
   const forward = forwardOf(angles.turn + turn, Math.max(-89, Math.min(89, angles.tilt + tilt)));
   const [r0, u0, f0] = viewAxes(camera.forward);
@@ -88,7 +93,9 @@ export function orbitAround(camera: SceneCamera, pivot: Vec3, turn: number, tilt
   const d: Vec3 = [camera.eye[0] - pivot[0], camera.eye[1] - pivot[1], camera.eye[2] - pivot[2]];
   const dot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
   const [a, b, c] = [dot(d, r0), dot(d, u0), dot(d, f0)];
-  const eye = [0, 1, 2].map((k) => pivot[k]! + a * r1[k]! + b * u1[k]! + c * f1[k]!) as unknown as Vec3;
+  const eye = [0, 1, 2].map(
+    (k) => pivot[k]! + a * r1[k]! + b * u1[k]! + c * f1[k]!,
+  ) as unknown as Vec3;
   return kept(eye, forward);
 }
 

@@ -1,12 +1,11 @@
 import { Component, computed, input, output } from '@angular/core';
-import type { LayerSettings } from "@myrddraall/heroes-replay-stats-aether/formats";
+import type { LayerSettings } from '@myrddraall/heroes-replay-stats-aether/formats';
 import { PropertyCheck } from '../../controls/rows/property-check';
 import { PropertyNumber } from '../../controls/rows/property-number';
 import { PropertySection } from '../../controls/property-section';
 import { PropertyText } from '../../controls/rows/property-text';
 import { type PropertyOption, PropertySelect } from '../../controls/rows/property-select';
-import type { LayerEntry } from '../../editing/editor-model';
-
+import type { LayerEntry } from '../../editing/model/materials';
 /** A pair's two halves, as their rows name them. */
 const HALVES = ['U', 'V'] as const;
 

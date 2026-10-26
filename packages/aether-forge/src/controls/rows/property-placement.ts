@@ -1,5 +1,14 @@
 import { Component, computed, input, output } from '@angular/core';
-import { atLeast, orbitOffset, type OrbitPlace, orbitThrough, overOf, overOffset, PLACEMENT_MODES, type PlacementMode } from "@myrddraall/heroes-replay-stats-aether/space";
+import {
+  atLeast,
+  orbitOffset,
+  type OrbitPlace,
+  orbitThrough,
+  overOf,
+  overOffset,
+  PLACEMENT_MODES,
+  type PlacementMode,
+} from '@myrddraall/heroes-replay-stats-aether/space';
 import { type Direction, PropertyDirection } from './property-direction';
 import { PropertyNumber } from './property-number';
 import { PropertySelect } from './property-select';

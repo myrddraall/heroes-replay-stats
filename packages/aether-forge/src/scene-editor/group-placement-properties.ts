@@ -1,5 +1,5 @@
 import { Component, input, output } from '@angular/core';
-import type { GroupPlacement, Vec3 } from "@myrddraall/heroes-replay-stats-aether/design";
+import type { GroupPlacement, Vec3 } from '@myrddraall/heroes-replay-stats-aether/design';
 import { PropertyNumber } from '../controls/rows/property-number';
 import { PropertySection } from '../controls/property-section';
 import { PropertyText } from '../controls/rows/property-text';

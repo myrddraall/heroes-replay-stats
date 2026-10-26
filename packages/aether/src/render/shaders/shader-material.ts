@@ -91,7 +91,10 @@ export class TextureSlots {
   readonly skyLight: TextureNode;
 
   constructor(u: ShaderUniforms, placeholders: Readonly<Record<Slot, Texture>>, skyLight: Texture) {
-    this.nodes = Object.fromEntries(SLOTS.map((s) => [s, u.texture(s, placeholders[s])])) as Record<Slot, TextureNode>;
+    this.nodes = Object.fromEntries(SLOTS.map((s) => [s, u.texture(s, placeholders[s])])) as Record<
+      Slot,
+      TextureNode
+    >;
     this.skyLight = texture(skyLight) as unknown as TextureNode;
   }
 }
@@ -143,12 +146,20 @@ function changeOf(uv: Node<'vec2'>, dFdx: Derivative, dFdy: Derivative) {
   const elsewhere = uv.add(0.5).fract().toVar();
   const dxb = dFdx(elsewhere).toVar();
   const dyb = dFdy(elsewhere).toVar();
-  const wrapped = dot(dxb, dxb).add(dot(dyb, dyb)).lessThan(dot(dx, dx).add(dot(dy, dy))).toVar();
+  const wrapped = dot(dxb, dxb)
+    .add(dot(dyb, dyb))
+    .lessThan(dot(dx, dx).add(dot(dy, dy)))
+    .toVar();
   return { dx: select(wrapped, dxb, dx).toVar(), dy: select(wrapped, dyb, dy).toVar() };
 }
 
 /** Both sets of coordinates' change across the pixel: taken where the shader runs no loop (see `UvChange`). */
-export function uvChange(uv: Node<'vec2'>, uv2: Node<'vec2'>, dFdx: Derivative, dFdy: Derivative): UvChange {
+export function uvChange(
+  uv: Node<'vec2'>,
+  uv2: Node<'vec2'>,
+  dFdx: Derivative,
+  dFdy: Derivative,
+): UvChange {
   const a = changeOf(uv, dFdx, dFdy);
   const b = changeOf(uv2, dFdx, dFdy);
   return { uvDx: a.dx, uvDy: a.dy, uv2Dx: b.dx, uv2Dy: b.dy };
@@ -181,7 +192,11 @@ type Layer = ReturnType<typeof layer>;
 
 /** A texel's channel: its colour (0, alpha 1), all of it (1), or one of its alpha, red, green, blue (2 to 5) in every component. */
 function channelOf(texel: Node<'vec4'>, c: Node<'int'>): Node<'vec4'> {
-  const one = select(c.equal(2), texel.a, select(c.equal(3), texel.r, select(c.equal(4), texel.g, texel.b)));
+  const one = select(
+    c.equal(2),
+    texel.a,
+    select(c.equal(3), texel.r, select(c.equal(4), texel.g, texel.b)),
+  );
   return select(c.equal(0), vec4(texel.rgb, 1), select(c.equal(1), texel, vec4(one))).toVar();
 }
 
@@ -190,7 +205,13 @@ const midtone = (v: Node<'vec4'>, m: Node<'float'>) =>
   select(m.greaterThan(0), pow(v, vec4(m.add(1).reciprocal())), v).toVar();
 
 /** The material shaded at a surface: its colour, its glow, and whether it is cut out. */
-export function shadeMaterial(u: ShaderUniforms, t: TextureSlots, kind: MaterialKind, s: Surface, change: UvChange): Shaded {
+export function shadeMaterial(
+  u: ShaderUniforms,
+  t: TextureSlots,
+  kind: MaterialKind,
+  s: Surface,
+  change: UvChange,
+): Shaded {
   const body = kind === 'body';
   const layers = [0, 1, 2, 3, 4].map((i) => layer(u, i)) as [Layer, Layer, Layer, Layer, Layer];
   const [L0, L1, L2, L3, L4] = layers;
@@ -209,7 +230,9 @@ export function shadeMaterial(u: ShaderUniforms, t: TextureSlots, kind: Material
     const base = select(l.uvSet.equal(2), s.uv2, s.uv);
     const tt = base.add(vec2(du, 0)).sub(0.5).sub(l.offset).mul(l.tiling).toVar();
     const { c, sn } = turnOf(l);
-    return vec2(c.mul(tt.x).sub(sn.mul(tt.y)), sn.mul(tt.x).add(c.mul(tt.y))).add(0.5).toVar();
+    return vec2(c.mul(tt.x).sub(sn.mul(tt.y)), sn.mul(tt.x).add(c.mul(tt.y)))
+      .add(0.5)
+      .toVar();
   };
   /** A layer's coordinates' change along a change of the mesh's (through its tiling and its turn). */
   const layerChange = (l: Layer, d: Node<'vec2'>) => {
@@ -220,8 +243,16 @@ export function shadeMaterial(u: ShaderUniforms, t: TextureSlots, kind: Material
   /** A layer's texel at uv, read at the pixel's change (one read: past the outline, at its coarsest). */
   const sampled = (slot: Slot, l: Layer, uv: Node<'vec2'>) => {
     const second = l.uvSet.equal(2).toVar();
-    const gx = select(s.pastOutline, vec2(1, 0), layerChange(l, select(second, change.uv2Dx, change.uvDx))).toVar();
-    const gy = select(s.pastOutline, vec2(0, 1), layerChange(l, select(second, change.uv2Dy, change.uvDy))).toVar();
+    const gx = select(
+      s.pastOutline,
+      vec2(1, 0),
+      layerChange(l, select(second, change.uv2Dx, change.uvDx)),
+    ).toVar();
+    const gy = select(
+      s.pastOutline,
+      vec2(0, 1),
+      layerChange(l, select(second, change.uv2Dy, change.uvDy)),
+    ).toVar();
     return t.nodes[slot].sample(uv).grad(gx, gy).toVar();
   };
   /**
@@ -248,13 +279,28 @@ export function shadeMaterial(u: ShaderUniforms, t: TextureSlots, kind: Material
    * flyby's city lights stay in view in the tutorial's shots). Spread, where set, stands in for the
    * layer's minimum, so what shows at the limb shows across the face; 0 is nothing but the limb.
    */
-  const fresnelWith = (l: Layer, view: Node<'vec3'>, spreadOf: Node<'float'>, type: Node<'int'>) => {
+  const fresnelWith = (
+    l: Layer,
+    view: Node<'vec3'>,
+    spreadOf: Node<'float'>,
+    type: Node<'int'>,
+  ) => {
     const facing = clamp(dot(n, view), 0, 1).toVar();
     const low = select(spreadOf.lessThan(0), l.fMin, spreadOf.mul(l.fMax));
-    return mix(low, l.fMax, pow(select(type.equal(2), facing, facing.oneMinus()), l.fExponent)).toVar();
+    return mix(
+      low,
+      l.fMax,
+      pow(select(type.equal(2), facing, facing.oneMinus()), l.fExponent),
+    ).toVar();
   };
   /** A colour layer's fresnel as the game shows it (squared, type 1 with the gain), to a falloff. */
-  const fresnelTo = (l: Layer, view: Node<'vec3'>, spreadOf: Node<'float'>, fall: Node<'float'>, type: Node<'int'>) => {
+  const fresnelTo = (
+    l: Layer,
+    view: Node<'vec3'>,
+    spreadOf: Node<'float'>,
+    fall: Node<'float'>,
+    type: Node<'int'>,
+  ) => {
     const w = fresnelWith(l, view, spreadOf, type);
     return select(type.equal(2), w.mul(w), pow(w, fall).mul(FRESNEL_GAIN)).toVar();
   };
@@ -284,7 +330,11 @@ export function shadeMaterial(u: ShaderUniforms, t: TextureSlots, kind: Material
     // (Fully born: nothing cut out.)
     const born = opaque.and(l.midtone.greaterThanEqual(1));
     If(l.used.equal(1).and(born.not()), () => {
-      const v = clamp(channelOf(sampled(slot, l, layerUvFrom(l, 0)), l.channel).a.mul(l.bright), 0, 1);
+      const v = clamp(
+        channelOf(sampled(slot, l, layerUvFrom(l, 0)), l.channel).a.mul(l.bright),
+        0,
+        1,
+      );
       const m = midtone(vec4(v), l.midtone).a.toVar();
       If(l.fresnel.notEqual(0), () => {
         m.mulAssign(clamp(fresnelWith(l, l.view.mul(toEye), spread, l.fresnel), 0, 1));
@@ -429,8 +479,21 @@ export function shadeMaterial(u: ShaderUniforms, t: TextureSlots, kind: Material
       const to = vec3(0).toVar();
       If(role.equal(0).or(k.notEqual(0)).or(dot(r0.xyz, r0.xyz).notEqual(0)), () => {
         // (A rim's turn of the view: rows 8 to 10, its matrix's.)
-        const rimTurned = () => vec3(dot(row(8).xyz, toEye), dot(row(9).xyz, toEye), dot(row(10).xyz, toEye));
-        const r = reachOf(k, r0.xyz, r3.xyz, r2.w, r4.xyz, row(6), r0.w, r3.w, n, rimTurned, edge).toVar();
+        const rimTurned = () =>
+          vec3(dot(row(8).xyz, toEye), dot(row(9).xyz, toEye), dot(row(10).xyz, toEye));
+        const r = reachOf(
+          k,
+          r0.xyz,
+          r3.xyz,
+          r2.w,
+          r4.xyz,
+          row(6),
+          r0.w,
+          r3.w,
+          n,
+          rimTurned,
+          edge,
+        ).toVar();
         reach.assign(r.w);
         to.assign(r.xyz);
       });
@@ -490,7 +553,9 @@ export function shadeMaterial(u: ShaderUniforms, t: TextureSlots, kind: Material
     });
     // A grid's colour, from inactive (its own) towards active where its activation reaches.
     If(u.int('uActivationCount').greaterThan(0), () => {
-      diffuse.assign(vec4(mix(diffuse.rgb, u.vec3('uActiveColor').mul(L0.bright), active), diffuse.a));
+      diffuse.assign(
+        vec4(mix(diffuse.rgb, u.vec3('uActiveColor').mul(L0.bright), active), diffuse.a),
+      );
     });
   }
 
@@ -513,10 +578,18 @@ export function shadeMaterial(u: ShaderUniforms, t: TextureSlots, kind: Material
         const q = select(dot(a, a).lessThan(dot(b, b)), a, b).toVar();
         const c = abs(q).toVar();
         const slanted = dot(c, side).greaterThan(c.x).toVar();
-        const edge = float(0.5).sub(select(slanted, dot(c, side), c.x)).toVar();
+        const edge = float(0.5)
+          .sub(select(slanted, dot(c, side), c.x))
+          .toVar();
         // (The edge falls one for one with p across the nearer side: its gradient that side's normal.)
-        const grad = q.sign().negate().mul(select(slanted, side, vec2(1, 0))).toVar();
-        const aa = abs(dot(grad, px)).add(abs(dot(grad, py))).toVar();
+        const grad = q
+          .sign()
+          .negate()
+          .mul(select(slanted, side, vec2(1, 0)))
+          .toVar();
+        const aa = abs(dot(grad, px))
+          .add(abs(dot(grad, py)))
+          .toVar();
         const width = params.y;
         const line = smoothstep(width.sub(aa), width.add(aa), edge).oneMinus();
         const halo = params.z.mul(exp(max(edge.sub(width), 0).mul(-6)));

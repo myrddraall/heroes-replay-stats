@@ -1,6 +1,6 @@
 import { Component, computed, input, output } from '@angular/core';
-import type { CameraPlacement, Vec3 } from "@myrddraall/heroes-replay-stats-aether/design";
-import { atLeast } from "@myrddraall/heroes-replay-stats-aether/space";
+import type { CameraPlacement, Vec3 } from '@myrddraall/heroes-replay-stats-aether/design';
+import { atLeast } from '@myrddraall/heroes-replay-stats-aether/space';
 import { PropertyNumber } from '../../controls/rows/property-number';
 import { type PlacementChange, PropertyPlacement } from '../../controls/rows/property-placement';
 import { type PropertyOption, PropertySelect } from '../../controls/rows/property-select';

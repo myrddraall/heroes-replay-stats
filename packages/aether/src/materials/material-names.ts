@@ -1,6 +1,5 @@
 import type { SceneMaterial, SceneTexture } from '../formats/play-scene';
-import type { PartRole } from '../formats/planets';
-
+import type { PartRole } from '../formats/part-shapes';
 /**
  * Materials' names as people read them. The game data's names are an artist's working names
  * ("Material #10", "Planet~DUP", their exported keys `material10-play-large`, `planetDUP-play-medium`);

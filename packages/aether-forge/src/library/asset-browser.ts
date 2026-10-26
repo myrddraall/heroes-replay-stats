@@ -1,5 +1,5 @@
 import { Component, computed, inject } from '@angular/core';
-import { overlayName, RANDOM_SCENE } from "@myrddraall/heroes-replay-stats-aether/design";
+import { overlayName, RANDOM_SCENE } from '@myrddraall/heroes-replay-stats-aether/design';
 import { DraftDesignStore } from '../draft/draft-design.store';
 import { AssetCatalogStore } from './asset-catalog.store';
 import { AssetList, type BrowserItem } from './asset-list';

@@ -95,7 +95,10 @@ describe('the sky’s anchor, level over level', () => {
 describe('the sky’s place for a camera', () => {
   it('undoes a view to the world and finds its eye', () => {
     for (const v of cameras) {
-      expectClose(multiplyMatrices(v, rigidInverse(v)), [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+      expectClose(
+        multiplyMatrices(v, rigidInverse(v)),
+        [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+      );
       expectClose(apply(v, eyeOf(v)), [0, 0, 0]);
     }
     expectClose(eyeOf(reference), [0, -41.2, 5.6]);
@@ -103,7 +106,10 @@ describe('the sky’s place for a camera', () => {
 
   it('leaves a sky fixed in the world where it is', () => {
     for (const v of cameras) {
-      expectClose(skyTransform('world', v, reference), [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+      expectClose(
+        skyTransform('world', v, reference),
+        [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+      );
       expect(anchoredView('world', v, v, reference)).toBe(v);
     }
   });
@@ -116,14 +122,20 @@ describe('the sky’s place for a camera', () => {
     for (const v of cameras) {
       const m = skyTransform('position', v, reference);
       // No turn: its directions are the world's.
-      expectClose([m[0]!, m[1]!, m[2]!, m[4]!, m[5]!, m[6]!, m[8]!, m[9]!, m[10]!], [1, 0, 0, 0, 1, 0, 0, 0, 1]);
+      expectClose(
+        [m[0]!, m[1]!, m[2]!, m[4]!, m[5]!, m[6]!, m[8]!, m[9]!, m[10]!],
+        [1, 0, 0, 0, 1, 0, 0, 0, 1],
+      );
       const [fx, fy, fz] = eyeOf(v);
       const [lx, ly, lz] = eyeOf(reference);
       expectClose([m[12]!, m[13]!, m[14]!], [fx - lx, fy - ly, fz - lz]);
       // Seen from the scene's camera's eye, turned as the camera is.
       const seen = anchoredView('position', v, v, reference);
       expectClose(eyeOf(seen), [lx, ly, lz]);
-      expectClose([seen[0]!, seen[1]!, seen[2]!, seen[4]!, seen[5]!, seen[6]!], [v[0]!, v[1]!, v[2]!, v[4]!, v[5]!, v[6]!]);
+      expectClose(
+        [seen[0]!, seen[1]!, seen[2]!, seen[4]!, seen[5]!, seen[6]!],
+        [v[0]!, v[1]!, v[2]!, v[4]!, v[5]!, v[6]!],
+      );
     }
   });
 
@@ -134,7 +146,10 @@ describe('the sky’s place for a camera', () => {
       // The followed camera sees each of its points where the scene's camera sees them unmoved...
       expectClose(apply(follow, apply(placed, p)), apply(reference, p));
       // ...and the camera that draws sees them there in the world.
-      expectClose(apply(anchoredView('camera', drawing, follow, reference), p), apply(drawing, apply(placed, p)));
+      expectClose(
+        apply(anchoredView('camera', drawing, follow, reference), p),
+        apply(drawing, apply(placed, p)),
+      );
     }
     const moved = skyTransform('position', follow, reference);
     for (const p of points) {

@@ -1,8 +1,18 @@
 import { Component, computed, input, output } from '@angular/core';
-import { type BodySettings, type BodyValues, DEFAULT_ORBIT, type Orbit, ORBIT_KEYS, type Vec3 } from "@myrddraall/heroes-replay-stats-aether/design";
-import type { MaterialTint } from "@myrddraall/heroes-replay-stats-aether/formats";
-import { NO_MATERIAL_TINT, type SettingOrigins } from "@myrddraall/heroes-replay-stats-aether/materials";
-import { orbitOffset, type Orientation } from "@myrddraall/heroes-replay-stats-aether/space";
+import {
+  type BodySettings,
+  type BodyValues,
+  DEFAULT_ORBIT,
+  type Orbit,
+  ORBIT_KEYS,
+  type Vec3,
+} from '@myrddraall/heroes-replay-stats-aether/design';
+import type { MaterialTint } from '@myrddraall/heroes-replay-stats-aether/formats';
+import {
+  NO_MATERIAL_TINT,
+  type SettingOrigins,
+} from '@myrddraall/heroes-replay-stats-aether/materials';
+import { orbitOffset, type Orientation } from '@myrddraall/heroes-replay-stats-aether/space';
 import { PropertyDirection } from '../../controls/rows/property-direction';
 import { PropertySection } from '../../controls/property-section';
 import { TintSection } from '../material/tint-section';
@@ -11,7 +21,7 @@ import { PropertyNumber } from '../../controls/rows/property-number';
 import { type PlacementChange, PropertyPlacement } from '../../controls/rows/property-placement';
 import { PropertyText } from '../../controls/rows/property-text';
 import { PropertySelect } from '../../controls/rows/property-select';
-import { ORIENTATION_CHOICES } from '../../editing/editor-model';
+import { ORIENTATION_CHOICES } from '../../editing/model/sky';
 
 /**
  * A body's properties (presentational): the overlays the planet or moon wears, its lights as a whole

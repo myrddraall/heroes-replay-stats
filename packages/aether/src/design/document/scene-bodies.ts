@@ -21,15 +21,13 @@ import {
 import {
   type MaterialSettings,
   mergePartSettings,
-  ownPartKey,
-  overlayPartKey,
-  type PartKey,
   type PartSettings,
   type PartSettingsMap,
-  type PlanetFile,
-  withPart,
-  wornParts,
-} from '../../formats/planets';
+} from '../../formats/settings-types';
+import { ownPartKey, overlayPartKey, type PartKey } from '../../formats/part-keys';
+import type { PlanetFile } from '../../formats/planet-files';
+import { withPart } from '../../formats/part-shapes';
+import { wornParts } from '../../formats/wear';
 import { reach, type Viewpoint } from '../../space/space';
 import { compose, pointToWorld, type Transform } from '../../space/graph';
 import type { AddedLight, LightId, LightSettings } from '../../lights/lights';
@@ -78,7 +76,11 @@ export function groupTransform(placement: GroupPlacement): Transform {
   const a = ((placement.turn ?? 0) * Math.PI) / 180;
   const c = Math.cos(a);
   const s = Math.sin(a);
-  return { position: placement.position, rotation: [c, -s, 0, s, c, 0, 0, 0, 1], scale: placement.size ?? 1 };
+  return {
+    position: placement.position,
+    rotation: [c, -s, 0, s, c, 0, 0, 0, 1],
+    scale: placement.size ?? 1,
+  };
 }
 
 /** A place in a group's own space, relative to its middle (the local position its group's transform takes). */
@@ -114,7 +116,11 @@ export function groupBodies(
       placement: [i],
       index,
       group: placement.group,
-      body: { ...body, position: pointToWorld(world, inGroup(body.position)), radius: body.radius * world.scale },
+      body: {
+        ...body,
+        position: pointToWorld(world, inGroup(body.position)),
+        radius: body.radius * world.scale,
+      },
       lights,
     }));
     const inner = groupBodies(group.groups, groups, [...within, placement.group], world).map(

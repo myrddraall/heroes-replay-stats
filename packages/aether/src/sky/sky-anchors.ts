@@ -1,4 +1,4 @@
-import type { MaterialDepth, MaterialSettings, SkyAnchor } from '../formats/planets';
+import type { MaterialDepth, MaterialSettings, SkyAnchor } from '../formats/settings-types';
 import { eyeOf, multiplyMatrices, rigidInverse } from '../space/space';
 
 /**

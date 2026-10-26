@@ -1,11 +1,10 @@
 import type { SceneCamera } from '../../formats/play-scene';
+import type { BodyShade, PlanetIndex } from '../../formats/planet-files';
 import type {
-  BodyShade,
   MaterialSettingsMap,
   MaterialTint,
   PartSettingsMap,
-  PlanetIndex,
-} from '../../formats/planets';
+} from '../../formats/settings-types';
 import type { AddedLight, LightSettingsMap } from '../../lights/lights';
 import type { AddedPart } from '../overlays/created-overlays';
 import type { Orientation, Quat } from '../../space/graph';
@@ -114,7 +113,10 @@ const TRIES = 40;
  * What a planet wears unless told otherwise (the index's style), as a set's planet takes it: its
  * own (the library's choice for it worn in its place, where it makes one).
  */
-function ownStyle(index: PlanetIndex, id: string): { overlays?: readonly string[]; ownOverlays: true } {
+function ownStyle(
+  index: PlanetIndex,
+  id: string,
+): { overlays?: readonly string[]; ownOverlays: true } {
   const style = index.planets.find((p) => p.id === id)?.style;
   return { ...(style ? { overlays: [style] } : {}), ownOverlays: true };
 }

@@ -81,7 +81,11 @@ describe('scene bodies', () => {
 });
 
 describe('the Play screen’s planets', () => {
-  const view = { eye: [-0.0018, -41.1988, 5.6051], forward: [0, 0.9997, -0.025], up: [0, 0, 1] } as const;
+  const view = {
+    eye: [-0.0018, -41.1988, 5.6051],
+    forward: [0, 0.9997, -0.025],
+    up: [0, 0, 1],
+  } as const;
   const set = [
     { id: 'play-large', position: [-48.249, 64.647, 25.444], radius: 27.25 },
     { id: 'play-medium', position: [37.282, 64.892, 14.189], radius: 9.037 },
@@ -158,7 +162,11 @@ describe('the overlays a body wears', () => {
       { ...korhal, style: 'nexus', variants: { nexus: { lighting: 2 }, '': { shade: 1 } } },
     ];
     bodies = setOverlays(bodies, [0], ['nexus', 'clouds'], 'nexus');
-    expect(bodies[0]).toEqual({ ...korhal, overlays: ['nexus', 'clouds'], settings: { lighting: 2 } });
+    expect(bodies[0]).toEqual({
+      ...korhal,
+      overlays: ['nexus', 'clouds'],
+      settings: { lighting: 2 },
+    });
     // What it wears back as its own: its settings kept, nothing chosen.
     bodies = resetOverlays(bodies, [0], 'nexus+clouds', []);
     expect(bodies[0]).toEqual({ ...korhal, settings: { lighting: 2 } });
@@ -169,8 +177,14 @@ describe('the overlays a body wears', () => {
     expect(planetSettingsOf(kept, 'nexus')).toEqual({ lighting: 2 });
     expect(planetSettingsOf(kept, '')).toEqual({ shade: 1 });
     // Changed: set once, the old sets gone; the same whatever it wears from then on.
-    const [changed] = changeSettings([kept], [0], '', (s) => ({ ...s, tint: { colour: '#ff0000', blend: 'multiply', strength: 1 } }));
-    expect(changed).toEqual({ ...korhal, settings: { shade: 1, tint: { colour: '#ff0000', blend: 'multiply', strength: 1 } } });
+    const [changed] = changeSettings([kept], [0], '', (s) => ({
+      ...s,
+      tint: { colour: '#ff0000', blend: 'multiply', strength: 1 },
+    }));
+    expect(changed).toEqual({
+      ...korhal,
+      settings: { shade: 1, tint: { colour: '#ff0000', blend: 'multiply', strength: 1 } },
+    });
     expect(planetSettingsOf(changed!, 'nexus')).toEqual(changed!.settings);
     // Nothing left set: none.
     expect(changeSettings([changed!], [0], 'nexus', () => ({}))[0]).toEqual(korhal);

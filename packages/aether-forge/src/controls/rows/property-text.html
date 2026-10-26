@@ -1,20 +1,18 @@
 <label class="label" [class.label--changed]="changed()" [for]="id"
-  >{{ label() }}
-  @if (origin() && !changed()) {
-    <span class="origin" [title]="'Set in ' + origin()"
-      ><span class="origin__text">, set in {{ origin() }}</span></span
-    >
-  }
-  @if (overridden(); as by) {
-    <button
-      type="button"
-      class="overridden"
-      [title]="'Overridden by ' + by"
-      [attr.aria-label]="'Overridden by ' + by"
-      (click)="$event.preventDefault(); showOverride?.(by)"
-    >
-      <mat-icon class="material-symbols-outlined" aria-hidden="true">layers</mat-icon>
-    </button>
+  >{{ label() }} @if (origin() && !changed()) {
+  <span class="origin" [title]="'Set in ' + origin()"
+    ><span class="origin__text">, set in {{ origin() }}</span></span
+  >
+  } @if (overridden(); as by) {
+  <button
+    type="button"
+    class="overridden"
+    [title]="'Overridden by ' + by"
+    [attr.aria-label]="'Overridden by ' + by"
+    (click)="$event.preventDefault(); showOverride?.(by)"
+  >
+    <mat-icon class="material-symbols-outlined" aria-hidden="true">layers</mat-icon>
+  </button>
   }
 </label>
 <input
@@ -27,14 +25,14 @@
 />
 <span class="reset-slot">
   @if (changed()) {
-    <button
-      type="button"
-      class="reset"
-      [attr.aria-label]="'Reset ' + label()"
-      title="Reset"
-      (click)="resetRequested.emit()"
-    >
-      <mat-icon class="material-symbols-outlined" aria-hidden="true">restart_alt</mat-icon>
-    </button>
+  <button
+    type="button"
+    class="reset"
+    [attr.aria-label]="'Reset ' + label()"
+    title="Reset"
+    (click)="resetRequested.emit()"
+  >
+    <mat-icon class="material-symbols-outlined" aria-hidden="true">restart_alt</mat-icon>
+  </button>
   }
 </span>

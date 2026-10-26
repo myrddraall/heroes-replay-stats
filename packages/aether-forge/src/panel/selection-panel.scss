@@ -1,26 +1,9 @@
-@use '../controls/rows/property-row';
+@use 'panel-parts';
 
 // The properties: one column of pods the panel's full width (the panel's own padding is all it has).
 :host {
   display: grid;
   padding: 4px 0 12px;
-}
-
-.buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding-top: 4px;
-}
-
-.button {
-  @include property-row.button;
-}
-
-.hint {
-  margin: 0;
-  font: var(--mat-sys-body-small);
-  opacity: 0.75;
 }
 
 // The level what is set goes into (a planet's own settings or one of its variants; a scene or one

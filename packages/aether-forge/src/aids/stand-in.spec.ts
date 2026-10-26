@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { PlanetFile } from "@myrddraall/heroes-replay-stats-aether/formats";
+import type { PlanetFile } from '@myrddraall/heroes-replay-stats-aether/formats';
 import {
   buildStandIn,
   parseStandIn,

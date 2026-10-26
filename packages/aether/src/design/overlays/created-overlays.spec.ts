@@ -8,8 +8,7 @@ import {
   withUnused,
 } from './created-overlays';
 import type { PlayScene, SceneMaterial } from '../../formats/play-scene';
-import type { PlanetFile } from '../../formats/planets';
-
+import type { PlanetFile } from '../../formats/planet-files';
 const material = (texture: string) =>
   ({ diffuse: { texture }, alphaMasks: [] }) as unknown as SceneMaterial;
 

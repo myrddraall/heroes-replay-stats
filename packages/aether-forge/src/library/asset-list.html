@@ -1,48 +1,46 @@
 <ul class="items">
-  @for (item of items(); track item.key) {
-    @if (item.group && item.group !== items()[$index - 1]?.group) {
-      <li class="group" role="presentation">{{ item.group }}</li>
-    }
-    <li class="row" [class.row--selected]="item.key === selected()">
-      <button
-        type="button"
-        class="item"
-        [attr.aria-pressed]="item.key === selected()"
-        aria-description="Double-click or press Enter to open"
-        title="Double-click to open"
-        (click)="itemClick.emit(item.key)"
-        (keydown.enter)="enter($event, item.key)"
-        (keydown.arrowdown)="move($event, $index, 1)"
-        (keydown.arrowup)="move($event, $index, -1)"
+  @for (item of items(); track item.key) { @if (item.group && item.group !== items()[$index -
+  1]?.group) {
+  <li class="group" role="presentation">{{ item.group }}</li>
+  }
+  <li class="row" [class.row--selected]="item.key === selected()">
+    <button
+      type="button"
+      class="item"
+      [attr.aria-pressed]="item.key === selected()"
+      aria-description="Double-click or press Enter to open"
+      title="Double-click to open"
+      (click)="itemClick.emit(item.key)"
+      (keydown.enter)="enter($event, item.key)"
+      (keydown.arrowdown)="move($event, $index, 1)"
+      (keydown.arrowup)="move($event, $index, -1)"
+    >
+      <mat-icon class="material-symbols-outlined item__icon" aria-hidden="true"
+        >{{ icon() }}</mat-icon
       >
-        <mat-icon class="material-symbols-outlined item__icon" aria-hidden="true">{{
-          icon()
-        }}</mat-icon>
-        <span class="item__text">
-          <span class="item__label">{{ item.label }}</span>
-          @if (item.caption) {
-            <span class="item__caption">{{ item.caption }}</span>
-          }
-        </span>
-        @if (item.unsaved) {
-          <span class="unsaved" title="Not saved yet" aria-label="not saved yet"></span>
+      <span class="item__text">
+        <span class="item__label">{{ item.label }}</span>
+        @if (item.caption) {
+        <span class="item__caption">{{ item.caption }}</span>
         }
-      </button>
-      @if (item.action; as action) {
-        <button
-          type="button"
-          class="action"
-          [attr.aria-label]="action.label + ': ' + item.label"
-          [title]="action.label"
-          (click)="itemAction.emit(item.key)"
-        >
-          <mat-icon class="material-symbols-outlined" aria-hidden="true">{{
-            action.icon
-          }}</mat-icon>
-        </button>
+      </span>
+      @if (item.unsaved) {
+      <span class="unsaved" title="Not saved yet" aria-label="not saved yet"></span>
       }
-    </li>
+    </button>
+    @if (item.action; as action) {
+    <button
+      type="button"
+      class="action"
+      [attr.aria-label]="action.label + ': ' + item.label"
+      [title]="action.label"
+      (click)="itemAction.emit(item.key)"
+    >
+      <mat-icon class="material-symbols-outlined" aria-hidden="true">{{ action.icon }}</mat-icon>
+    </button>
+    }
+  </li>
   } @empty {
-    <li class="empty">Nothing found</li>
+  <li class="empty">Nothing found</li>
   }
 </ul>

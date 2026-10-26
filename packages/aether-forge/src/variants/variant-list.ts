@@ -21,7 +21,11 @@ export interface VariantRow {
   selector: 'forge-variant-list',
   imports: [MatIcon, PropertySection, PropertyText],
   templateUrl: './variant-list.html',
-  styleUrls: ['../panel/properties-panel.scss', '../controls/added-list.scss', './variant-list.scss'],
+  styleUrls: [
+    '../panel/properties-panel.scss',
+    '../controls/added-list.scss',
+    './variant-list.scss',
+  ],
 })
 export class VariantList {
   readonly title = input('Variants');

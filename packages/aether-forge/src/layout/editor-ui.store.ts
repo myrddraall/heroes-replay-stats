@@ -1,5 +1,5 @@
 import { FORGE_OPTIONS } from '../forge-options';
-import { storageKey } from "@myrddraall/heroes-replay-stats-aether";
+import { storageKey } from '@myrddraall/heroes-replay-stats-aether';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import {

@@ -86,7 +86,9 @@ const PACK_START = (() => {
 /** Each packed uniform array's pack, by its name. */
 const PACKED = new Map<string, { pack: PackName; row: number; offset: number; width: number }>(
   (Object.entries(PACKS) as [PackName, Pack][]).flatMap(([pack, { fields }]) =>
-    Object.entries(fields).map(([name, [row, offset, width]]) => [name, { pack, row, offset, width }] as const),
+    Object.entries(fields).map(
+      ([name, [row, offset, width]]) => [name, { pack, row, offset, width }] as const,
+    ),
   ),
 );
 
@@ -126,7 +128,12 @@ class DrawTexture extends TextureNode {
   flips = false;
   pick: ((frame: NodeFrame) => Texture) | null = null;
 
-  constructor(value?: Texture, uvNode?: Node | null, levelNode?: Node | null, biasNode?: Node | null) {
+  constructor(
+    value?: Texture,
+    uvNode?: Node | null,
+    levelNode?: Node | null,
+    biasNode?: Node | null,
+  ) {
     super(value, uvNode, levelNode, biasNode);
     // Read where it is asked, never through a texture's uv matrix (three.js gives a node made
     // without coordinates one, and `textureLoad` clones it so: a uniform and a multiply each read).
@@ -146,7 +153,9 @@ class DrawTexture extends TextureNode {
   /** (three.js's own, which on WebGL turns every read over or not by a uniform, kept only where it `flips`.) */
   setupUV(builder: NodeBuilder, uvNode: Node): Node {
     if (!this.base.flips) return uvNode;
-    return (TextureNode.prototype as unknown as { setupUV(b: NodeBuilder, uv: Node): Node }).setupUV.call(this, builder, uvNode);
+    return (
+      TextureNode.prototype as unknown as { setupUV(b: NodeBuilder, uv: Node): Node }
+    ).setupUV.call(this, builder, uvNode);
   }
 
   override update(frame: NodeFrame): boolean | undefined {
@@ -183,7 +192,9 @@ export class ShaderUniforms {
     if (!entry) {
       const read = this.read;
       if (kind === 'int' || kind === 'float') {
-        const node = (kind === 'int' ? uniform(fallback, 'int') : uniform(fallback)) as unknown as Updated<number>;
+        const node = (kind === 'int'
+          ? uniform(fallback, 'int')
+          : uniform(fallback)) as unknown as Updated<number>;
         node.onObjectUpdate((frame) => {
           const v = read(frame).get(name);
           return v === undefined ? fallback : typeof v === 'number' ? v : (v[0] ?? fallback);
@@ -204,7 +215,8 @@ export class ShaderUniforms {
       }
       this.entries.set(name, entry);
     }
-    if (entry.kind !== kind) throw new Error(`uniform ${name} read as ${kind}, made as ${entry.kind}`);
+    if (entry.kind !== kind)
+      throw new Error(`uniform ${name} read as ${kind}, made as ${entry.kind}`);
     return entry.node as Node<K>;
   }
 
@@ -271,7 +283,8 @@ export class ShaderUniforms {
 
   /** Its one draw's values (a shared material's are each draw's: `withValues`). */
   get values(): DrawValues {
-    if (!this.own) throw new Error('a shared material takes its values from each draw (`withValues`)');
+    if (!this.own)
+      throw new Error('a shared material takes its values from each draw (`withValues`)');
     return this.own;
   }
 
@@ -301,7 +314,10 @@ function newTable(): { texture: DataTexture; data: Float32Array<ArrayBuffer> } {
 /** The values an object drawn with a shared material gives its shader (see `withValues`). */
 function valuesOf(object: Object3D | null): DrawValues {
   const values = object?.userData['values'] as DrawValues | undefined;
-  if (!values) throw new Error(`${object?.name || 'an object'} is drawn with a shared material but has no values`);
+  if (!values)
+    throw new Error(
+      `${object?.name || 'an object'} is drawn with a shared material but has no values`,
+    );
   return values;
 }
 
@@ -334,14 +350,30 @@ function turning(axis: ArrayLike<number>, angle: number): number[] {
   const s = Math.sin(angle);
   const k = 1 - c;
   return [
-    c + x * x * k, x * y * k - z * s, x * z * k + y * s,
-    y * x * k + z * s, c + y * y * k, y * z * k - x * s,
-    z * x * k - y * s, z * y * k + x * s, c + z * z * k,
+    c + x * x * k,
+    x * y * k - z * s,
+    x * z * k + y * s,
+    y * x * k + z * s,
+    c + y * y * k,
+    y * z * k - x * s,
+    z * x * k - y * s,
+    z * y * k + x * s,
+    c + z * z * k,
   ];
 }
 
 /** A matrix's rows by its columns (as a mat3 uniform takes it). */
-const byColumn = (m: readonly number[]) => [m[0]!, m[3]!, m[6]!, m[1]!, m[4]!, m[7]!, m[2]!, m[5]!, m[8]!];
+const byColumn = (m: readonly number[]) => [
+  m[0]!,
+  m[3]!,
+  m[6]!,
+  m[1]!,
+  m[4]!,
+  m[7]!,
+  m[2]!,
+  m[5]!,
+  m[8]!,
+];
 
 const LAYERS = [0, 1, 2, 3, 4];
 /**
@@ -363,7 +395,12 @@ const DERIVED = new Map<string, (v: DrawValues) => Given>(
         const lean = v.vector(`uLayers[${i}].fTurn`);
         const rim = v.vector('uRimTurn');
         return byColumn(
-          viewTurn(v.vector('uRight'), v.vector('uUp'), (lean[0] ?? 0) + (rim[0] ?? 0), (lean[1] ?? 0) + (rim[1] ?? 0)),
+          viewTurn(
+            v.vector('uRight'),
+            v.vector('uUp'),
+            (lean[0] ?? 0) + (rim[0] ?? 0),
+            (lean[1] ?? 0) + (rim[1] ?? 0),
+          ),
         );
       },
     ],
@@ -381,10 +418,24 @@ const FRAMES_FROM = new Set(['uLightTurn', 'uLeanTurn']);
 
 /** Whether a turn (a mat3's numbers by column) is none at all, number for number; none given: none. */
 const noTurn = (m: ArrayLike<number>) =>
-  m.length === 0 || (m[0] === 1 && m[1] === 0 && m[2] === 0 && m[3] === 0 && m[4] === 1 && m[5] === 0 && m[6] === 0 && m[7] === 0 && m[8] === 1);
+  m.length === 0 ||
+  (m[0] === 1 &&
+    m[1] === 0 &&
+    m[2] === 0 &&
+    m[3] === 0 &&
+    m[4] === 1 &&
+    m[5] === 0 &&
+    m[6] === 0 &&
+    m[7] === 0 &&
+    m[8] === 1);
 
 /** A vector turned by a mat3 (its numbers by column). */
-const turned = (m: ArrayLike<number>, x: number, y: number, z: number): [number, number, number] => [
+const turned = (
+  m: ArrayLike<number>,
+  x: number,
+  y: number,
+  z: number,
+): [number, number, number] => [
   m[0]! * x + m[3]! * y + m[6]! * z,
   m[1]! * x + m[4]! * y + m[7]! * z,
   m[2]! * x + m[5]! * y + m[8]! * z,
@@ -572,7 +623,12 @@ const scalar = (set: UniformSet, name: string) => valueOf(set, name)?.[0] ?? 0;
 function reachCount(set: UniformSet): number {
   const count = (name: string, max: number) => Math.min(max, Math.max(0, scalar(set, name)));
   const reveals = scalar(set, 'uRevealed') === 1 ? count('uRevealCount', MAX_FIELDS) : 0;
-  return count('uLightCount', MAX_LIGHTS) + count('uShadeCount', MAX_SHADES) + reveals + count('uActivationCount', MAX_FIELDS);
+  return (
+    count('uLightCount', MAX_LIGHTS) +
+    count('uShadeCount', MAX_SHADES) +
+    reveals +
+    count('uActivationCount', MAX_FIELDS)
+  );
 }
 
 /**
@@ -599,7 +655,23 @@ function packReaches(set: UniformSet, data: Float32Array, start: number): boolea
   const add = (
     role: number,
     i: number,
-    p: { dir: string; dirSign: number; softness: string; color?: string; kind: string; specular?: string; fade: string; pos: string; wrap: string; aim: string; ground?: string; cone: string; strength?: string; energy?: string; glow?: string },
+    p: {
+      dir: string;
+      dirSign: number;
+      softness: string;
+      color?: string;
+      kind: string;
+      specular?: string;
+      fade: string;
+      pos: string;
+      wrap: string;
+      aim: string;
+      ground?: string;
+      cone: string;
+      strength?: string;
+      energy?: string;
+      glow?: string;
+    },
   ) => {
     put(0, 0, [...of(p.dir, i, 3, p.dirSign), ...of(p.softness, i, 1)]);
     put(1, 0, [...(p.color ? of(p.color, i, 3) : [0, 0, 0]), ...of(p.kind, i, 1)]);

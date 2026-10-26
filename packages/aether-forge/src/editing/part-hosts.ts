@@ -1,6 +1,20 @@
-import { type AddedPart, addedSourced, addedWithUnused, type CreatedOverlay, type CreatedShape, type MaterialSource, nextPartId, type OverlayKind, without } from "@myrddraall/heroes-replay-stats-aether/design";
-import type { MaterialSettings, MaterialSettingsMap, PartSettingsMap } from "@myrddraall/heroes-replay-stats-aether/formats";
-import { materialKey } from "@myrddraall/heroes-replay-stats-aether/materials";
+import {
+  type AddedPart,
+  addedSourced,
+  addedWithUnused,
+  type CreatedOverlay,
+  type CreatedShape,
+  type MaterialSource,
+  nextPartId,
+  type OverlayKind,
+  without,
+} from '@myrddraall/heroes-replay-stats-aether/design';
+import type {
+  MaterialSettings,
+  MaterialSettingsMap,
+  PartSettingsMap,
+} from '@myrddraall/heroes-replay-stats-aether/formats';
+import { materialKey } from '@myrddraall/heroes-replay-stats-aether/materials';
 
 /**
  * Where parts made in the editor are kept at the level edited, as an editor changes them: an

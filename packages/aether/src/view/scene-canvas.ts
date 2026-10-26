@@ -16,7 +16,7 @@ import {
 import { DEFAULT_DRAWING } from './view.store';
 import { beyondEdge } from '../design/sets/planet-sets';
 import type { LoadedPlayScene, SceneCameraSet } from '../formats/play-scene';
-import type { SkySettings } from '../formats/planets';
+import type { SkySettings } from '../formats/settings-types';
 import type { Backdrop, PlanetPlacement } from '../space/space';
 import { RENDERER, type Renderer, type RendererFactory } from '../render/renderer';
 import { NO_TINT, sameTint, type Tint } from '../tints/tints';
@@ -405,7 +405,8 @@ export class SceneCanvas {
       if (!fading && !renderer.needsFrame(clock)) return;
       if (renderer.fade < 1) renderer.fade = Math.min(1, renderer.fade + step / FADE_SECONDS);
       flyOn(step);
-      if (!fly && this.drawn() && renderer.aidFade < 1) showAids(Math.min(1, renderer.aidFade + step / AID_FADE_SECONDS));
+      if (!fly && this.drawn() && renderer.aidFade < 1)
+        showAids(Math.min(1, renderer.aidFade + step / AID_FADE_SECONDS));
       draw();
     };
     const play = () => {

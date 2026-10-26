@@ -10,7 +10,11 @@ type Vec3 = readonly [number, number, number];
 function turnAbout(v: Vec3, axis: Vec3, angle: number): Vec3 {
   const c = Math.cos(angle);
   const s = Math.sin(angle);
-  const k = [axis[1] * v[2] - axis[2] * v[1], axis[2] * v[0] - axis[0] * v[2], axis[0] * v[1] - axis[1] * v[0]];
+  const k = [
+    axis[1] * v[2] - axis[2] * v[1],
+    axis[2] * v[0] - axis[0] * v[2],
+    axis[0] * v[1] - axis[1] * v[0],
+  ];
   const d = (axis[0] * v[0] + axis[1] * v[1] + axis[2] * v[2]) * (1 - c);
   return [0, 1, 2].map((i) => v[i]! * c + k[i]! * s + axis[i]! * d) as unknown as Vec3;
 }
@@ -35,7 +39,9 @@ describe('DrawValues', () => {
     d.set('uLayers[1].fTurn', [0.5, 0.1]);
     const m = d.get('uLayers[1].view') as readonly number[];
     // (By column, as a mat3 uniform takes it.)
-    const turned = [0, 1, 2].map((r) => m[r]! * toEye[0] + m[3 + r]! * toEye[1] + m[6 + r]! * toEye[2]);
+    const turned = [0, 1, 2].map(
+      (r) => m[r]! * toEye[0] + m[3 + r]! * toEye[1] + m[6 + r]! * toEye[2],
+    );
     expectClose(turned, turnAbout(turnAbout(toEye, up, 0.7), right, -0.2));
   });
 
@@ -92,7 +98,8 @@ describe('DrawValues', () => {
       return set;
     };
     const table = (d: DrawValues) => (d.tableTexture as DataTexture).image.data as Float32Array;
-    const row = (data: Float32Array, i: number, r: number) => Array.from(data.subarray((i * 11 + r) * 4, (i * 11 + r) * 4 + 4));
+    const row = (data: Float32Array, i: number, r: number) =>
+      Array.from(data.subarray((i * 11 + r) * 4, (i * 11 + r) * 4 + 4));
 
     it('copies them as they are where the turn is none', () => {
       const plain = new DrawValues();
@@ -101,7 +108,9 @@ describe('DrawValues', () => {
       none.apply(reaches());
       none.set('uLightTurn', [1, 0, 0, 0, 1, 0, 0, 0, 1]);
       none.set('uLeanTurn', [1, 0, 0, 0, 1, 0, 0, 0, 1]);
-      expect(Array.from(table(none).subarray(0, 88))).toEqual(Array.from(table(plain).subarray(0, 88)));
+      expect(Array.from(table(none).subarray(0, 88))).toEqual(
+        Array.from(table(plain).subarray(0, 88)),
+      );
     });
 
     it("turns a light's direction, place and aim, its fourth numbers kept", () => {

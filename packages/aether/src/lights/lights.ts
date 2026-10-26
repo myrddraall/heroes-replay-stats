@@ -3,8 +3,8 @@ import type { PlacementMode } from '../space/placement';
 import { lightFrom, normalized, rimTurn, type Vec3 } from '../space/directions';
 
 export { aimAtMiddle } from '../space/look-at';
-import type { BodyShade, PlanetDirectionalLight, PlanetLight } from '../formats/planets';
 
+import type { BodyShade, PlanetDirectionalLight, PlanetLight } from '../formats/planet-files';
 /**
  * A body's lights as objects: its light rig from the game data (an ambient light, and its
  * directional lights, named by how bright they are: its key, fill and back), and its shadow (a

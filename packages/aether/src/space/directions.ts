@@ -1,5 +1,4 @@
-import type { PlanetDirectionalLight, PlanetLight } from '../formats/planets';
-
+import type { PlanetDirectionalLight, PlanetLight } from '../formats/planet-files';
 /**
  * Directions about a planet, in its body's placement frame (x to the right, y away from the scene's
  * own camera, z up: fixed in the world, see `scene-graph.ts`), as

@@ -1,19 +1,31 @@
 import type { VariantRow } from '../variants/variant-list';
 import type { Signal } from '@angular/core';
-import { BodySettings, CreatedShape, Orbit, Vec3 } from "@myrddraall/heroes-replay-stats-aether/design";
-import { MaterialSettings, MaterialTint, PartSettings, SceneCamera, SceneCameraSet, SkyAnchor } from "@myrddraall/heroes-replay-stats-aether/formats";
-import { LightId, LightSettings, NewLightKind } from "@myrddraall/heroes-replay-stats-aether/lights";
+import {
+  BodySettings,
+  CreatedShape,
+  Orbit,
+  Vec3,
+} from '@myrddraall/heroes-replay-stats-aether/design';
+import {
+  MaterialSettings,
+  MaterialTint,
+  PartSettings,
+  SceneCamera,
+  SceneCameraSet,
+  SkyAnchor,
+} from '@myrddraall/heroes-replay-stats-aether/formats';
+import {
+  LightId,
+  LightSettings,
+  NewLightKind,
+} from '@myrddraall/heroes-replay-stats-aether/lights';
 import type { PickChoice } from '../controls/pick-list';
-import type {
-  BodyView,
-  LightEntry,
-  LitByEntry,
-  MaterialEntry,
-  MaterialView,
-  PartEntry,
-  SkyAnchorView,
-  TargetKind,
-} from './editor-model';
+import type { BodyView, TargetKind } from './model/body';
+import type { LightEntry, LitByEntry } from './model/lights';
+import type { MaterialEntry } from './model/materials';
+import type { MaterialView } from './model/views';
+import type { PartEntry } from './model/parts';
+import type { SkyAnchorView } from './model/sky';
 import type { AssetTarget, OpenTarget } from '../layout/open-target';
 import type { TreeMove, TreeRow } from '../tree/scene-tree';
 import type { PoleDrag, SceneMarker } from '../viewport/scene-markers';
@@ -218,6 +230,8 @@ export abstract class Editor {
   abstract readonly sets: Signal<boolean>;
   abstract anotherSet(): void;
   abstract setOrbit(change: Partial<Orbit>): void;
+  /** The selected planet moved or sized (a scene's planet: an asset has no place). */
+  abstract setPlace(change: { readonly position?: Vec3; readonly radius?: number }): void;
   abstract addMoon(moon: string): void;
   abstract removeMoon(): void;
   abstract toggleFocus(): void;

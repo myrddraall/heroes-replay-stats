@@ -85,7 +85,9 @@ export const AXIS_NAMES_PAST = 0.12;
 /** Where an axis's ends are, in the scene: its north one (the way it points) and its south one. */
 export function axisEnds(line: AxisLine, past = 0): { readonly north: Vec3; readonly south: Vec3 } {
   const at = (sign: number) =>
-    line.centre.map((c, k) => c + sign * line.way[k]! * (line.reach + past) * line.radius) as unknown as Vec3;
+    line.centre.map(
+      (c, k) => c + sign * line.way[k]! * (line.reach + past) * line.radius,
+    ) as unknown as Vec3;
   return { north: at(1), south: at(-1) };
 }
 

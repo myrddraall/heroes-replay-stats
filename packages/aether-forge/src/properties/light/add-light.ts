@@ -1,6 +1,6 @@
 import { Component, output } from '@angular/core';
-import type { NewLightKind } from "@myrddraall/heroes-replay-stats-aether/lights";
-import { LIGHT_ICONS } from '../../editing/editor-model';
+import type { NewLightKind } from '@myrddraall/heroes-replay-stats-aether/lights';
+import { LIGHT_ICONS } from '../../editing/model/lights';
 import { SplitButton, type SplitOption } from '../../controls/split-button';
 
 /** A light of each kind there is, as offered to add. */

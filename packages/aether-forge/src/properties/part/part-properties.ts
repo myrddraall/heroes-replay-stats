@@ -1,12 +1,12 @@
 import { Component, computed, input, output } from '@angular/core';
-import type { PartSettings } from "@myrddraall/heroes-replay-stats-aether/formats";
+import type { PartSettings } from '@myrddraall/heroes-replay-stats-aether/formats';
 import { PropertyCheck } from '../../controls/rows/property-check';
 import { PropertyNumber } from '../../controls/rows/property-number';
 import { PropertySection } from '../../controls/property-section';
 import { PropertyText } from '../../controls/rows/property-text';
 import { type PropertyOption, PropertySelect } from '../../controls/rows/property-select';
-import { ORIENTATION_CHOICES, type PartEntry } from '../../editing/editor-model';
-
+import { ORIENTATION_CHOICES } from '../../editing/model/sky';
+import type { PartEntry } from '../../editing/model/parts';
 /** A part's shape's settings (its name and its switch are apart). */
 const SHAPE_KEYS: readonly (keyof PartSettings)[] = [
   'size',

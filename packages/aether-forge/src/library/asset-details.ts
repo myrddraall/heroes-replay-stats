@@ -1,5 +1,5 @@
 import { Component, input } from '@angular/core';
-import type { TextureEntry } from '../editing/editor-model';
+import type { TextureEntry } from '../editing/model/materials';
 
 /** What the library says of one thing: facts, lists of names, the textures it reads. */
 export interface AssetDetails {

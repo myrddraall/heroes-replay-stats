@@ -1,6 +1,6 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { DESIGN_SOURCE } from "@myrddraall/heroes-replay-stats-aether/design";
-import { BUILT_IN_PLANETS } from "@myrddraall/heroes-replay-stats-aether/formats";
+import { DESIGN_SOURCE } from '@myrddraall/heroes-replay-stats-aether/design';
+import { BUILT_IN_PLANETS } from '@myrddraall/heroes-replay-stats-aether/formats';
 import { DraftDesignStore } from '../draft/draft-design.store';
 import { AssetCatalogStore } from '../library/asset-catalog.store';
 import { AssetEditor } from '../asset-editor/asset-editor';

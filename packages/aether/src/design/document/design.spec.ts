@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  EMPTY_LIBRARY,
-  type LibraryState,
-  skyWithLibrary,
-  skyWornOf,
-  withLibrary,
-} from './design';
+import { EMPTY_LIBRARY, type LibraryState, skyWithLibrary, skyWornOf, withLibrary } from './design';
 import type { SetPlanet } from '../sets/planet-sets';
 
 const korhal: SetPlanet = { id: 'korhal', position: [0, 0, 0], radius: 1 };
@@ -79,7 +73,9 @@ describe('withLibrary', () => {
       strength: 0.3,
     });
     // Where the planet sets none: the style's.
-    expect(withLibrary({ ...korhal, overlays: ['nexus'] }, { ...library, planets: {} }).shade).toEqual({
+    expect(
+      withLibrary({ ...korhal, overlays: ['nexus'] }, { ...library, planets: {} }).shade,
+    ).toEqual({
       strength: 0.8,
     });
   });
@@ -107,7 +103,7 @@ describe('withLibrary', () => {
     expect(scene.shade).toEqual({ strength: 0.2 });
   });
 
-  it('lets an overlay set any of a planet\'s settings under its own, the later over the earlier, the scene over all', () => {
+  it("lets an overlay set any of a planet's settings under its own, the later over the earlier, the scene over all", () => {
     const library: LibraryState = {
       ...EMPTY_LIBRARY,
       planets: { korhal: { tint: red, rim: [1, 0, 0], turn: 10 } },
@@ -122,7 +118,10 @@ describe('withLibrary', () => {
     expect(worn.orientation).toBe('world'); // an overlay's where the planet sets none
     expect(worn.axis).toEqual([0, 0.5, 1]);
     expect(worn.turn).toBe(10); // the planet's own over both
-    const bare = withLibrary({ ...korhal, overlays: ['warm', 'tilted'] }, { ...library, planets: {} });
+    const bare = withLibrary(
+      { ...korhal, overlays: ['warm', 'tilted'] },
+      { ...library, planets: {} },
+    );
     expect(bare.turn).toBe(45); // the later overlay's over the earlier's
     expect(withLibrary({ ...korhal, overlays: ['warm', 'tilted'], turn: 5 }, library).turn).toBe(5); // the scene's
   });

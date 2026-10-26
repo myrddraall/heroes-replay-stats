@@ -1,9 +1,8 @@
 import { Component, input, output } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
-import type { LightId } from "@myrddraall/heroes-replay-stats-aether/lights";
+import type { LightId } from '@myrddraall/heroes-replay-stats-aether/lights';
 import { PropertySection } from '../../controls/property-section';
-import type { LitByEntry } from '../../editing/editor-model';
-
+import type { LitByEntry } from '../../editing/model/lights';
 let next = 0;
 
 /**

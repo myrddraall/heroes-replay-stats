@@ -6,12 +6,12 @@ import { type CreatedOverlay, mergeAddedParts } from '../overlays/created-overla
 import { createdOverlay, overlayOn } from '../overlays/overlays';
 import { type BodyVariant, variantLayersOf, variantsOf, variantsOnOf } from '../variants/variants';
 import type { SetPlanet } from '../sets/planet-sets';
+import type { BodyShade } from '../../formats/planet-files';
 import {
-  type BodyShade,
   type MaterialSettingsMap,
   mergePartSettings,
   type SkySettings,
-} from '../../formats/planets';
+} from '../../formats/settings-types';
 import type { Backdrop } from '../../space/space';
 import type { EditingAid } from '../../aids/beams';
 import type { SceneCameraSet } from '../../formats/play-scene';
@@ -129,9 +129,7 @@ export function shadeOf(settings: BodySettings | undefined): Partial<BodyShade> 
 /** A body's orientation, axis, turn and base turn, the scene's over the library's, each where set. */
 function orientationOf(
   set: SetPlanet,
-  own:
-    | Pick<SetPlanet, 'orientation' | 'axis' | 'turn' | 'baseTurn'>
-    | undefined,
+  own: Pick<SetPlanet, 'orientation' | 'axis' | 'turn' | 'baseTurn'> | undefined,
 ): Pick<SetPlanet, 'orientation' | 'axis' | 'turn' | 'baseTurn'> {
   const orientation = set.orientation ?? own?.orientation;
   const axis = set.axis ?? own?.axis;
@@ -171,7 +169,10 @@ export function withLibrary(
 ): SetPlanet {
   const own = library.planets[set.id];
   // Its own levels, the lowest first: its own defaults, then its variants that are on.
-  const mine = [own, ...variantLayersOf(variantsOf(data, own), set.variantsOn ?? variantsOnOf(own))];
+  const mine = [
+    own,
+    ...variantLayersOf(variantsOf(data, own), set.variantsOn ?? variantsOnOf(own)),
+  ];
   const nearestFirst = [...mine].reverse();
   // Each overlay switched off (by the scene, else a variant, else the library): drawn as if it
   // didn't wear it; one made in the editor that is no longer there, as if it never was.
@@ -199,7 +200,11 @@ export function withLibrary(
       planet.materials,
     ),
     ...(base ? { base } : {}),
-    parts: mergePartSettings(...styles.map((s) => s.parts), ...mine.map((s) => s?.parts), planet.parts),
+    parts: mergePartSettings(
+      ...styles.map((s) => s.parts),
+      ...mine.map((s) => s?.parts),
+      planet.parts,
+    ),
     addedParts: mergeAddedParts(own?.addedParts, planet.addedParts),
     // (Its own levels' order, the nearest that sets one; else its overlays' joined.)
     order:

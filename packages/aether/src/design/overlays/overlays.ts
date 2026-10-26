@@ -10,8 +10,7 @@ import type { CreatedOverlay } from './created-overlays';
 import { materialKey } from '../../materials/material-settings';
 
 import type { AddedLight, LightReach, LightSettingsMap, Receiver } from '../../lights/lights';
-import type { MaterialSettingsMap, PartSettingsMap } from '../../formats/planets';
-
+import type { MaterialSettingsMap, PartSettingsMap } from '../../formats/settings-types';
 /**
  * Overlays: what a body (or the sky) wears over its own, several at once, the later over the
  * earlier. An overlay is the game data's (a style's file, `style-<id>`), or one made in the

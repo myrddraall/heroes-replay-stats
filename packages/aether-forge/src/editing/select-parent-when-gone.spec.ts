@@ -2,7 +2,7 @@ import { Injector, runInInjectionContext, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { describe, expect, it } from 'vitest';
 import type { Editor } from './editor';
-import type { TargetKind } from './editor-model';
+import type { TargetKind } from './model/body';
 import type { TreeRow } from '../tree/scene-tree';
 import { selectParentWhenGone } from './select-parent-when-gone';
 

@@ -10,13 +10,10 @@ import type {
 } from '../../formats/play-scene';
 import { BAND } from '../../sky/sky-overlays';
 import type { Vec3 } from '../../space/directions';
-import {
-  type BodyPart,
-  type LoadedPlanet,
-  partId,
-  type PlanetFile,
-  planeMapping,
-} from '../../formats/planets';
+import type { BodyPart, PlanetFile } from '../../formats/planet-files';
+import type { LoadedPlanet } from '../../formats/planet-loader';
+import { partId } from '../../formats/part-keys';
+import { planeMapping } from '../../formats/part-shapes';
 import { V_SAMPLES } from '../../render/limits';
 
 /**

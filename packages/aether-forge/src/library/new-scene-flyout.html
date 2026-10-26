@@ -36,21 +36,21 @@
   />
   <ul class="choices choices--scroll">
     @for (t of shown(); track t.id) {
-      <li>
-        <button type="button" class="choice" (click)="create.emit({ from: t.id, name: name() })">
-          <mat-icon class="material-symbols-outlined choice__icon" aria-hidden="true"
-            >landscape</mat-icon
-          >
-          <span class="choice__text">
-            <span class="choice__label">{{ t.label }}</span>
-            @if (t.shows !== t.label) {
-              <span class="choice__caption">{{ t.shows }}</span>
-            }
-          </span>
-        </button>
-      </li>
+    <li>
+      <button type="button" class="choice" (click)="create.emit({ from: t.id, name: name() })">
+        <mat-icon class="material-symbols-outlined choice__icon" aria-hidden="true"
+          >landscape</mat-icon
+        >
+        <span class="choice__text">
+          <span class="choice__label">{{ t.label }}</span>
+          @if (t.shows !== t.label) {
+          <span class="choice__caption">{{ t.shows }}</span>
+          }
+        </span>
+      </button>
+    </li>
     } @empty {
-      <li class="none">No scene matches</li>
+    <li class="none">No scene matches</li>
     }
   </ul>
 </div>

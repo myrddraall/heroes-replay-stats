@@ -1,6 +1,6 @@
 import { DecimalPipe } from '@angular/common';
 import { Component, DestroyRef, inject } from '@angular/core';
-import { FrameStats } from "@myrddraall/heroes-replay-stats-aether/view";
+import { FrameStats } from '@myrddraall/heroes-replay-stats-aether/view';
 
 /** The background's frame stats, small in a corner of the view: its frames are timed while it shows. */
 @Component({

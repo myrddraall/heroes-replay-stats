@@ -60,7 +60,11 @@ export function meshNodes(
     const a = dot(d.xy, d.xy).toVar();
     const b = dot(o, d.xy).toVar();
     const c = dot(o, o).sub(shape.z.mul(shape.z)).toVar();
-    const t = b.negate().add(sqrt(max(b.mul(b).sub(a.mul(c)), 0))).div(max(a, 1e-9)).toVar();
+    const t = b
+      .negate()
+      .add(sqrt(max(b.mul(b).sub(a.mul(c)), 0)))
+      .div(max(a, 1e-9))
+      .toVar();
     const at = eye.add(d.mul(t)).toVar();
     // Cut off at its ends, smoothed over a pixel (its cover reaches past them; worked out for every
     // pixel, as a derivative needs, used only for a tube).
@@ -79,7 +83,15 @@ export function meshNodes(
       u,
       textures,
       'mesh',
-      { uv, uv2, normal, world, color: iColor, coverage, pastOutline: vec2(0).x.greaterThan(1).toVar() },
+      {
+        uv,
+        uv2,
+        normal,
+        world,
+        color: iColor,
+        coverage,
+        pastOutline: vec2(0).x.greaterThan(1).toVar(),
+      },
       change,
     );
     If(shaded.cut, () => {

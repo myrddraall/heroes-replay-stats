@@ -62,7 +62,10 @@ function passOf(device: GPUDevice): Promise<Pass> {
         fragment: { module, entryPoint: 'fragment', targets: [{ format: 'rgba8unorm' }] },
         primitive: { topology: 'triangle-list' },
       })
-      .then((pipeline) => ({ pipeline, sampler: device.createSampler({ minFilter: 'linear', magFilter: 'linear' }) }));
+      .then((pipeline) => ({
+        pipeline,
+        sampler: device.createSampler({ minFilter: 'linear', magFilter: 'linear' }),
+      }));
     passes.set(device, pass);
   }
   return pass;
@@ -86,10 +89,20 @@ export async function mipChain(device: GPUDevice, image: ImageBitmap): Promise<I
   });
   try {
     // (As three.js uploads it.)
-    device.queue.copyExternalImageToTexture({ source: image, flipY: false }, { texture, premultipliedAlpha: false }, [width, height]);
+    device.queue.copyExternalImageToTexture(
+      { source: image, flipY: false },
+      { texture, premultipliedAlpha: false },
+      [width, height],
+    );
     const { pipeline, sampler } = await passOf(device);
     // Each level below the image, its rows 256 bytes apart at the least, one after another in one buffer.
-    const levels: { level: number; width: number; height: number; offset: number; stride: number }[] = [];
+    const levels: {
+      level: number;
+      width: number;
+      height: number;
+      offset: number;
+      stride: number;
+    }[] = [];
     let size = 0;
     for (let level = 1; level < count; level++) {
       const w = Math.max(1, width >> level);
@@ -104,7 +117,11 @@ export async function mipChain(device: GPUDevice, image: ImageBitmap): Promise<I
       for (const { level, width: w, height: h, offset, stride } of levels) {
         const pass = encoder.beginRenderPass({
           colorAttachments: [
-            { view: texture.createView({ baseMipLevel: level, mipLevelCount: 1 }), loadOp: 'clear', storeOp: 'store' },
+            {
+              view: texture.createView({ baseMipLevel: level, mipLevelCount: 1 }),
+              loadOp: 'clear',
+              storeOp: 'store',
+            },
           ],
         });
         pass.setPipeline(pipeline);
@@ -113,14 +130,21 @@ export async function mipChain(device: GPUDevice, image: ImageBitmap): Promise<I
           device.createBindGroup({
             layout: pipeline.getBindGroupLayout(0),
             entries: [
-              { binding: 0, resource: texture.createView({ baseMipLevel: level - 1, mipLevelCount: 1 }) },
+              {
+                binding: 0,
+                resource: texture.createView({ baseMipLevel: level - 1, mipLevelCount: 1 }),
+              },
               { binding: 1, resource: sampler },
             ],
           }),
         );
         pass.draw(3);
         pass.end();
-        encoder.copyTextureToBuffer({ texture, mipLevel: level }, { buffer, offset, bytesPerRow: stride }, [w, h]);
+        encoder.copyTextureToBuffer(
+          { texture, mipLevel: level },
+          { buffer, offset, bytesPerRow: stride },
+          [w, h],
+        );
       }
       device.queue.submit([encoder.finish()]);
       await buffer.mapAsync(MAP_READ);
@@ -128,12 +152,15 @@ export async function mipChain(device: GPUDevice, image: ImageBitmap): Promise<I
       const data = levels.map(({ width: w, height: h, offset, stride }) => {
         const row = w * 4;
         const pixels = new Uint8ClampedArray(row * h);
-        for (let y = 0; y < h; y++) pixels.set(read.subarray(offset + y * stride, offset + y * stride + row), y * row);
+        for (let y = 0; y < h; y++)
+          pixels.set(read.subarray(offset + y * stride, offset + y * stride + row), y * row);
         return new ImageData(pixels, w, h);
       });
       buffer.unmap();
       const bitmaps = await Promise.all(
-        data.map((d) => createImageBitmap(d, { premultiplyAlpha: 'none', colorSpaceConversion: 'none' })),
+        data.map((d) =>
+          createImageBitmap(d, { premultiplyAlpha: 'none', colorSpaceConversion: 'none' }),
+        ),
       );
       return [image, ...bitmaps];
     } finally {

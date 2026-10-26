@@ -14,7 +14,8 @@ import { createdFiles, lookupIn, sourceFiles } from '../overlays/created-overlay
 import { createdOverlay } from '../overlays/overlays';
 import { loadPlaySceneFile } from '../../formats/play-scene';
 import { DATA_URL } from '../../formats/data-url';
-import { loadPlanetFile, type PlanetFile } from '../../formats/planets';
+import { loadPlanetFile } from '../../formats/planet-loader';
+import type { PlanetFile } from '../../formats/planet-files';
 
 export interface PlanetFilesState {
   /** The planets' and styles' files loaded so far, by id. */

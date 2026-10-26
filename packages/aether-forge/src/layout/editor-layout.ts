@@ -17,7 +17,7 @@ import { MatDrawer, MatDrawerContainer, MatDrawerContent } from '@angular/materi
 import { MatTooltip } from '@angular/material/tooltip';
 import { Router } from '@angular/router';
 import { FORGE_OPTIONS } from '../forge-options';
-import { SceneView } from "@myrddraall/heroes-replay-stats-aether/view";
+import { SceneView } from '@myrddraall/heroes-replay-stats-aether/view';
 import { SidePanel } from '@myrddraall/heroes-replay-stats-ui';
 import { AssetBrowser } from '../library/asset-browser';
 import { AssetCatalogStore } from '../library/asset-catalog.store';

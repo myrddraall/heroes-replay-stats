@@ -8,13 +8,9 @@ import {
 import type { GridField } from '../materials/material-settings';
 import { rimTurn } from '../space/directions';
 import { type Darkening, rgbOf } from '../lights/lights';
-import {
-  axisOf,
-  type BodyPart,
-  type MaterialTint,
-  type PartMapping,
-  type PlanetLight,
-} from '../formats/planets';
+import { axisOf, type PartMapping } from '../formats/part-shapes';
+import type { BodyPart, PlanetLight } from '../formats/planet-files';
+import type { MaterialTint } from '../formats/settings-types';
 import { MAX_FIELDS, MAX_LIGHTS, MAX_SHADES, V_SAMPLES } from './limits';
 import { BLEND_MODES, parseCanvasColour } from '../tints/tints';
 import type { UniformSet } from './uniforms';

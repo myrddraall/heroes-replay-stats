@@ -1,61 +1,57 @@
-@let t = tint();
-@if (own()) {
-  <forge-property-section
-    [title]="group() ? 'Group' : 'Scene'"
+@let t = tint(); @if (own()) {
+<forge-property-section
+  [title]="group() ? 'Group' : 'Scene'"
+  [changed]="!!name()"
+  (resetRequested)="nameChange.emit('')"
+>
+  <forge-property-text
+    label="Name"
+    [value]="name()"
+    [placeholder]="planet()"
     [changed]="!!name()"
     (resetRequested)="nameChange.emit('')"
-  >
-    <forge-property-text
-      label="Name"
-      [value]="name()"
-      [placeholder]="planet()"
-      [changed]="!!name()"
-      (resetRequested)="nameChange.emit('')"
-      (valueChange)="nameChange.emit($event)"
-    />
-    <div class="buttons">
-      <button type="button" class="button" (click)="deleteRequested.emit()">
-        {{ group() ? 'Delete group' : 'Delete scene' }}
-      </button>
-    </div>
-  </forge-property-section>
-}
-@if (planets()) {
-  <ng-content select="[planetsPod]" />
-}
-@if (!group()) {
-  <forge-property-section
-    title="Colour"
+    (valueChange)="nameChange.emit($event)"
+  />
+  <div class="buttons">
+    <button type="button" class="button" (click)="deleteRequested.emit()">
+      {{ group() ? 'Delete group' : 'Delete scene' }}
+    </button>
+  </div>
+</forge-property-section>
+} @if (planets()) {
+<ng-content select="[planetsPod]" />
+} @if (!group()) {
+<forge-property-section
+  title="Colour"
+  [changed]="tinted()"
+  (resetRequested)="presetChange.emit(none())"
+>
+  <forge-property-select
+    label="Tint"
     [changed]="tinted()"
     (resetRequested)="presetChange.emit(none())"
-  >
-    <forge-property-select
-      label="Tint"
-      [changed]="tinted()"
-      (resetRequested)="presetChange.emit(none())"
-      [value]="preset()"
-      [options]="presetOptions()"
-      (valueChange)="presetChange.emit($event)"
-    />
-    @if (custom()) {
-      <forge-property-colour
-        label="Colour"
-        [value]="t.colour"
-        (valueChange)="tintChange.emit({ colour: $event })"
-      />
-      <forge-property-select
-        label="Blend"
-        [value]="t.blend"
-        [options]="blends"
-        (valueChange)="blend($event)"
-      />
-    }
-  </forge-property-section>
-}
-@if (sets()) {
-  <forge-property-section title="Sets">
-    <div class="buttons">
-      <button type="button" class="button" (click)="anotherSet.emit()">Another set</button>
-    </div>
-  </forge-property-section>
+    [value]="preset()"
+    [options]="presetOptions()"
+    (valueChange)="presetChange.emit($event)"
+  />
+  @if (custom()) {
+  <forge-property-colour
+    label="Colour"
+    [value]="t.colour"
+    (valueChange)="tintChange.emit({ colour: $event })"
+  />
+  <forge-property-select
+    label="Blend"
+    [value]="t.blend"
+    [options]="blends"
+    (valueChange)="blend($event)"
+  />
+  }
+</forge-property-section>
+} @if (sets()) {
+<forge-property-section title="Sets">
+  <div class="buttons">
+    <button type="button" class="button" (click)="anotherSet.emit()">Another set</button>
+  </div>
+</forge-property-section>
 }

@@ -2,13 +2,11 @@
 <span class="control">
   <input type="checkbox" class="check" [id]="id" [checked]="checked()" (change)="update($event)" />
   <label class="text" [class.label--changed]="changed()" [for]="id"
-    >{{ label() }}
-    @if (origin() && !changed()) {
-      <span class="origin" [title]="'Set in ' + origin()"
-        ><span class="origin__text">, set in {{ origin() }}</span></span
-      >
-    }
-    @if (overridden(); as by) {
+    >{{ label() }} @if (origin() && !changed()) {
+    <span class="origin" [title]="'Set in ' + origin()"
+      ><span class="origin__text">, set in {{ origin() }}</span></span
+    >
+    } @if (overridden(); as by) {
     <button
       type="button"
       class="overridden"
@@ -18,19 +16,19 @@
     >
       <mat-icon class="material-symbols-outlined" aria-hidden="true">layers</mat-icon>
     </button>
-  }
-</label>
+    }
+  </label>
 </span>
 <span class="reset-slot">
   @if (changed()) {
-    <button
-      type="button"
-      class="reset"
-      [attr.aria-label]="'Reset ' + label()"
-      title="Reset"
-      (click)="resetRequested.emit()"
-    >
-      <mat-icon class="material-symbols-outlined" aria-hidden="true">restart_alt</mat-icon>
-    </button>
+  <button
+    type="button"
+    class="reset"
+    [attr.aria-label]="'Reset ' + label()"
+    title="Reset"
+    (click)="resetRequested.emit()"
+  >
+    <mat-icon class="material-symbols-outlined" aria-hidden="true">restart_alt</mat-icon>
+  </button>
   }
 </span>

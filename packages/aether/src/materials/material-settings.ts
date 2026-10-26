@@ -16,7 +16,7 @@ import type {
   MaterialSettingsMap,
   MaterialTint,
   SkyAnchor,
-} from '../formats/planets';
+} from '../formats/settings-types';
 import { anchoredDepth, skyAnchorOf } from '../sky/sky-anchors';
 import { DEFAULT_ORIENTATION, type Orientation } from '../space/graph';
 

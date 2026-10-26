@@ -39,9 +39,13 @@ export function setBodyFrames(u: DrawValues, frames: DrawFrames, leans: BodyLean
   u.set('uLightTurn', frames.lightTurn);
   u.set('uLeanTurn', frames.leanTurn);
   // (As 32-bit floats, as a uniform set holds them: the same numbers as worked out at first.)
-  u.set('uRimTurn', Float32Array.from(leans.rim ? rimTurn(intoView(frames.leanTurn, leans.rim)) : [0, 0]));
+  u.set(
+    'uRimTurn',
+    Float32Array.from(leans.rim ? rimTurn(intoView(frames.leanTurn, leans.rim)) : [0, 0]),
+  );
   if (!leans.spreadFrom) return;
   const [yaw, pitch] = rimTurn(intoView(frames.leanTurn, leans.spreadFrom));
   for (let i = 0; i < LAYERS; i++)
-    if (u.scalar(`uLayers[${i}].used`) === 1) u.set(`uLayers[${i}].fTurn`, Float32Array.of(-yaw, -pitch));
+    if (u.scalar(`uLayers[${i}].used`) === 1)
+      u.set(`uLayers[${i}].fTurn`, Float32Array.of(-yaw, -pitch));
 }

@@ -11,7 +11,12 @@ import {
 } from '@angular/core';
 import { DESIGN_SOURCE, SCENE_SOURCE } from '../design/document/design.tokens';
 import { BUILT_IN_PLANETS } from '../formats/built-in-planets';
-import { type LibraryState, skyOverlaysOf, skyWithLibrary, withLibrary } from '../design/document/design';
+import {
+  type LibraryState,
+  skyOverlaysOf,
+  skyWithLibrary,
+  withLibrary,
+} from '../design/document/design';
 import { ViewStore } from './view.store';
 import {
   type AddedPart,
@@ -32,13 +37,9 @@ import { playSet, randomSet, seeded, type SetPlanet } from '../design/sets/plane
 import { libraryMoonsOf, setWithMoons } from '../design/document/scene-bodies';
 import { DATA_URL } from '../formats/data-url';
 import { SceneCanvas } from './scene-canvas';
-import {
-  type LoadedPlanet,
-  loadPlanetIndex,
-  PlanetLoader,
-  type PlanetIndex,
-  type SkySettings,
-} from '../formats/planets';
+import { type LoadedPlanet, loadPlanetIndex, PlanetLoader } from '../formats/planet-loader';
+import type { PlanetIndex } from '../formats/planet-files';
+import type { SkySettings } from '../formats/settings-types';
 import type { PlanetPlacement } from '../space/space';
 import { keepUnchanged } from './stable-placements';
 import { browserColourParser, rendererTint } from '../tints/tints';
@@ -187,7 +188,9 @@ export class SceneView {
   private readonly dataVariants = computed(
     () =>
       new Map(
-        (this.index.hasValue() ? this.index.value().planets : []).map((p) => [p.id, p.variants] as const),
+        (this.index.hasValue() ? this.index.value().planets : []).map(
+          (p) => [p.id, p.variants] as const,
+        ),
       ),
   );
   private readonly planets = computed(

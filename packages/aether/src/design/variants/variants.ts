@@ -97,8 +97,10 @@ export const variantsOnOf = (...levels: readonly (BodySettings | undefined)[]): 
   levels.find((l) => l?.variantsOn !== undefined)?.variantsOn ?? [];
 
 /** The layers a body's variants that are on add, in its list's order. */
-export const variantLayersOf = (variants: readonly Variant[], on: readonly string[]): BodySettings[] =>
-  variants.filter((v) => on.includes(v.id)).flatMap((v) => v.layers);
+export const variantLayersOf = (
+  variants: readonly Variant[],
+  on: readonly string[],
+): BodySettings[] => variants.filter((v) => on.includes(v.id)).flatMap((v) => v.layers);
 
 /** Which variants are on after switches (each variant's id: on or off; one not named stays as it was). */
 export function switched(
@@ -107,7 +109,8 @@ export function switched(
 ): readonly string[] {
   if (!switches) return on;
   const out = on.filter((id) => switches[id] !== false);
-  for (const [id, turnOn] of Object.entries(switches)) if (turnOn && !out.includes(id)) out.push(id);
+  for (const [id, turnOn] of Object.entries(switches))
+    if (turnOn && !out.includes(id)) out.push(id);
   return out;
 }
 

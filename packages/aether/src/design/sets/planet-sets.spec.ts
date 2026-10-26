@@ -2,8 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { beyondEdge, playSet, randomSet, seeded } from './planet-sets';
 import { projectionMatrix, viewMatrix } from '../../space/space';
 import type { SceneCamera } from '../../formats/play-scene';
-import type { PlanetIndex } from '../../formats/planets';
-
+import type { PlanetIndex } from '../../formats/planet-files';
 const index: PlanetIndex = {
   planets: [
     { id: 'play-large', kind: 'play', style: 'nexus' },

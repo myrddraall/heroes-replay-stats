@@ -1,5 +1,4 @@
-@let v = values();
-@let c = changed();
+@let v = values(); @let c = changed();
 <forge-property-section
   [title]="title()"
   [changed]="c.fill || c.sky || c.colour || c.gridSize"
@@ -14,32 +13,30 @@
     (valueChange)="valuesChange.emit({ fill: $event })"
   />
   @if (v.fill === 'sky' && v.sky !== undefined) {
-    <forge-property-select
-      label="Sky"
-      [value]="v.sky"
-      [options]="skies()"
-      [changed]="c.sky"
-      (resetRequested)="clear.emit(['sky'])"
-      (valueChange)="valuesChange.emit({ sky: $event })"
-    />
-  }
-  @if (v.fill === 'colour') {
-    <forge-property-colour
-      label="Colour"
-      [value]="v.colour"
-      [changed]="c.colour"
-      (resetRequested)="clear.emit(['colour'])"
-      (valueChange)="valuesChange.emit({ colour: $event })"
-    />
-  }
-  @if (v.fill === 'grid') {
-    <forge-property-select
-      label="Squares"
-      [value]="v.gridSize"
-      [options]="sizes"
-      [changed]="c.gridSize"
-      (resetRequested)="clear.emit(['gridSize'])"
-      (valueChange)="valuesChange.emit({ gridSize: $event })"
-    />
+  <forge-property-select
+    label="Sky"
+    [value]="v.sky"
+    [options]="skies()"
+    [changed]="c.sky"
+    (resetRequested)="clear.emit(['sky'])"
+    (valueChange)="valuesChange.emit({ sky: $event })"
+  />
+  } @if (v.fill === 'colour') {
+  <forge-property-colour
+    label="Colour"
+    [value]="v.colour"
+    [changed]="c.colour"
+    (resetRequested)="clear.emit(['colour'])"
+    (valueChange)="valuesChange.emit({ colour: $event })"
+  />
+  } @if (v.fill === 'grid') {
+  <forge-property-select
+    label="Squares"
+    [value]="v.gridSize"
+    [options]="sizes"
+    [changed]="c.gridSize"
+    (resetRequested)="clear.emit(['gridSize'])"
+    (valueChange)="valuesChange.emit({ gridSize: $event })"
+  />
   }
 </forge-property-section>

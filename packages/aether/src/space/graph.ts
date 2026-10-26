@@ -118,7 +118,8 @@ export const isIdentity = isIdentityTurn;
 export function multiply(a: Mat3, b: Mat3): Mat3 {
   const out: number[] = [];
   for (let c = 0; c < 3; c++)
-    for (let r = 0; r < 3; r++) out.push(a[r]! * b[c * 3]! + a[3 + r]! * b[c * 3 + 1]! + a[6 + r]! * b[c * 3 + 2]!);
+    for (let r = 0; r < 3; r++)
+      out.push(a[r]! * b[c * 3]! + a[3 + r]! * b[c * 3 + 1]! + a[6 + r]! * b[c * 3 + 2]!);
   return out;
 }
 
@@ -160,7 +161,9 @@ export function pointToWorld(t: Transform, p: Vec3): Vec3 {
 export function pointToLocal(t: Transform, p: Vec3): Vec3 {
   const d: Vec3 = [p[0] - t.position[0], p[1] - t.position[1], p[2] - t.position[2]];
   const m = t.rotation;
-  return [0, 3, 6].map((k) => (m[k]! * d[0] + m[k + 1]! * d[1] + m[k + 2]! * d[2]) / t.scale) as unknown as Vec3;
+  return [0, 3, 6].map(
+    (k) => (m[k]! * d[0] + m[k + 1]! * d[1] + m[k + 2]! * d[2]) / t.scale,
+  ) as unknown as Vec3;
 }
 
 /** A way in a thing (its axes) as its parent has it: turned only. */
@@ -224,9 +227,15 @@ function aboutBy(k: Vec3, c: number, s: number): Mat3 {
   const t = 1 - c;
   // Column by column: the images of x, y and z.
   return [
-    c + k[0] * k[0] * t, k[1] * k[0] * t + k[2] * s, k[2] * k[0] * t - k[1] * s,
-    k[0] * k[1] * t - k[2] * s, c + k[1] * k[1] * t, k[2] * k[1] * t + k[0] * s,
-    k[0] * k[2] * t + k[1] * s, k[1] * k[2] * t - k[0] * s, c + k[2] * k[2] * t,
+    c + k[0] * k[0] * t,
+    k[1] * k[0] * t + k[2] * s,
+    k[2] * k[0] * t - k[1] * s,
+    k[0] * k[1] * t - k[2] * s,
+    c + k[1] * k[1] * t,
+    k[2] * k[1] * t + k[0] * s,
+    k[0] * k[2] * t + k[1] * s,
+    k[1] * k[2] * t - k[0] * s,
+    c + k[2] * k[2] * t,
   ];
 }
 
@@ -251,9 +260,15 @@ export function quatTurn(q: Quat): Mat3 {
   const [x, y, z, w] = [q[0] / l, q[1] / l, q[2] / l, q[3] / l];
   // Column by column: the images of x, y and z.
   return [
-    1 - 2 * (y * y + z * z), 2 * (x * y + z * w), 2 * (x * z - y * w),
-    2 * (x * y - z * w), 1 - 2 * (x * x + z * z), 2 * (y * z + x * w),
-    2 * (x * z + y * w), 2 * (y * z - x * w), 1 - 2 * (x * x + y * y),
+    1 - 2 * (y * y + z * z),
+    2 * (x * y + z * w),
+    2 * (x * z - y * w),
+    2 * (x * y - z * w),
+    1 - 2 * (x * x + z * z),
+    2 * (y * z + x * w),
+    2 * (x * z + y * w),
+    2 * (y * z - x * w),
+    1 - 2 * (x * x + y * y),
   ];
 }
 
@@ -313,19 +328,28 @@ export function poseKept(
  * local one; a `layout` turn is its placement frame where it ends up. Things whose parent isn't
  * among them hang from the world itself.
  */
-export function resolveWorld(nodes: readonly SceneNode[], layout: Viewpoint): Map<string, Transform> {
+export function resolveWorld(
+  nodes: readonly SceneNode[],
+  layout: Viewpoint,
+): Map<string, Transform> {
   const byId = new Map(nodes.map((n) => [n.id, n]));
   const out = new Map<string, Transform>();
   const resolve = (node: SceneNode, seen: ReadonlySet<string>): Transform => {
     const done = out.get(node.id);
     if (done) return done;
     const parentNode = node.parent === null ? undefined : byId.get(node.parent);
-    const parent = parentNode && !seen.has(parentNode.id) ? resolve(parentNode, new Set([...seen, node.id])) : IDENTITY_TRANSFORM;
+    const parent =
+      parentNode && !seen.has(parentNode.id)
+        ? resolve(parentNode, new Set([...seen, node.id]))
+        : IDENTITY_TRANSFORM;
     const { local } = node;
     const position = pointToWorld(parent, local.position);
     const world: Transform = {
       position,
-      rotation: local.rotation === 'layout' ? placementFrame(position, layout) : multiply(parent.rotation, local.rotation),
+      rotation:
+        local.rotation === 'layout'
+          ? placementFrame(position, layout)
+          : multiply(parent.rotation, local.rotation),
       scale: parent.scale * local.scale,
     };
     out.set(node.id, world);
@@ -336,8 +360,15 @@ export function resolveWorld(nodes: readonly SceneNode[], layout: Viewpoint): Ma
 }
 
 /** A body's world transform: where it is, its placement frame, its radius. */
-export function bodyTransform(body: { readonly position: Vec3; readonly radius: number }, layout: Viewpoint): Transform {
-  return { position: body.position, rotation: placementFrame(body.position, layout), scale: body.radius };
+export function bodyTransform(
+  body: { readonly position: Vec3; readonly radius: number },
+  layout: Viewpoint,
+): Transform {
+  return {
+    position: body.position,
+    rotation: placementFrame(body.position, layout),
+    scale: body.radius,
+  };
 }
 
 /**
@@ -387,7 +418,12 @@ export interface DrawFramesOf {
  * A body's surface frame for an orientation: the square's own facing the camera, else its
  * placement frame; turned by the body's own turn (`bodyTurn`) where it takes it.
  */
-export function surfaceFrame(placement: Mat3, quad: Mat3, orientation: Orientation, bodyTurned: Mat3 = IDENTITY): Mat3 {
+export function surfaceFrame(
+  placement: Mat3,
+  quad: Mat3,
+  orientation: Orientation,
+  bodyTurned: Mat3 = IDENTITY,
+): Mat3 {
   const base = orientation === 'camera' ? quad : placement;
   return bodyTurned === IDENTITY ? base : multiply(base, bodyTurned);
 }
@@ -401,7 +437,9 @@ export function drawFrames(o: DrawFramesOf): DrawFrames {
   const surface = turnInto(frame, quad);
   const to: Vec3 = [o.eye[0] - o.centre[0], o.eye[1] - o.centre[1], o.eye[2] - o.centre[2]];
   const eye =
-    surface === IDENTITY ? o.quad.eye : (turnBack(frame, to).map((v) => v / o.radius) as unknown as Vec3);
+    surface === IDENTITY
+      ? o.quad.eye
+      : (turnBack(frame, to).map((v) => v / o.radius) as unknown as Vec3);
   return {
     quad,
     frame,

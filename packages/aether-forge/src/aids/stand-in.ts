@@ -1,6 +1,21 @@
-import { type BodyPart, type BuiltInPlanet, DEFAULT_SHADE, type PartMapping, type PlanetFile, type PlanetLight, type SceneLayer, type SceneMaterial } from "@myrddraall/heroes-replay-stats-aether/formats";
-import { bodyLights, type LightId, type LightSettings, type LightSettingsMap, mergeLightSettings } from "@myrddraall/heroes-replay-stats-aether/lights";
-import type { LightEntry } from '../editing/editor-model';
+import {
+  type BodyPart,
+  type BuiltInPlanet,
+  DEFAULT_SHADE,
+  type PartMapping,
+  type PlanetFile,
+  type PlanetLight,
+  type SceneLayer,
+  type SceneMaterial,
+} from '@myrddraall/heroes-replay-stats-aether/formats';
+import {
+  bodyLights,
+  type LightId,
+  type LightSettings,
+  type LightSettingsMap,
+  mergeLightSettings,
+} from '@myrddraall/heroes-replay-stats-aether/lights';
+import type { LightEntry } from '../editing/model/lights';
 import { GRID_COLOURS, type StandInFill } from './editing-aids.store';
 
 /**

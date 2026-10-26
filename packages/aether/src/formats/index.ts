@@ -2,39 +2,33 @@ export { BUILT_IN_PLANETS, type BuiltInPlanet } from './built-in-planets';
 export {
   type BodyPart,
   DEFAULT_SHADE,
-  drawOrder,
   haloLike,
+  type PlanetFile,
+  type PlanetIndex,
+  type PlanetKind,
+  type PlanetLight,
+  poleOf,
+} from './planet-files';
+export { drawOrder, reordered, wearOf, withMasks, wornParts } from './wear';
+export {
   type LayerSettings,
   type LayerSlot,
   layerSlots,
-  loadPlanetIndex,
   type MaterialDepth,
   type MaterialDrawAs,
   type MaterialSettings,
   type MaterialSettingsMap,
   type MaterialTint,
   mergePartSettings,
-  overlayPartKey,
-  ownPartKey,
-  partId,
-  type PartKey,
-  type PartMapping,
-  type PartRole,
   type PartSettings,
   type PartSettingsMap,
-  type PlanetFile,
-  type PlanetIndex,
-  type PlanetKind,
-  type PlanetLight,
-  poleOf,
-  reordered,
   type SkyAnchor,
   type SkySettings,
-  wearOf,
   withLayer,
-  withMasks,
-  wornParts,
-} from './planets';
+} from './settings-types';
+export { loadPlanetIndex } from './planet-loader';
+export { overlayPartKey, ownPartKey, partId, type PartKey } from './part-keys';
+export type { PartMapping, PartRole } from './part-shapes';
 export {
   type LoadedPlayScene,
   loadPlaySceneFile,

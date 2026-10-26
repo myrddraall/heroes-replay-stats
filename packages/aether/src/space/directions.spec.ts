@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { keyLightFrom, lightFrom, rimTurn, TOWARDS_EYE } from './directions';
-import type { PlanetLight } from '../formats/planets';
-
+import type { PlanetLight } from '../formats/planet-files';
 const rig: PlanetLight = {
   ambient: [0, 0, 0],
   exposure: 1,

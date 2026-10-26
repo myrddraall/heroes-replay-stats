@@ -1,15 +1,9 @@
 import type { AddedLight, LightSettingsMap } from '../lights/lights';
 import type { Orientation, Quat } from './graph';
-import {
-  shapeReach,
-  type BodyPart,
-  type BodyShade,
-  type LoadedPlanet,
-  type MaterialSettingsMap,
-  type MaterialTint,
-  type PartSettingsMap,
-} from '../formats/planets';
-
+import { shapeReach } from '../formats/part-shapes';
+import type { BodyPart, BodyShade } from '../formats/planet-files';
+import type { LoadedPlanet } from '../formats/planet-loader';
+import type { MaterialSettingsMap, MaterialTint, PartSettingsMap } from '../formats/settings-types';
 /**
  * Where the scene's things are: the camera's matrices, a planet put up in it (its placement), its
  * body's frame and how far the square its parts are drawn on reaches, and the backdrop drawn in
@@ -226,7 +220,8 @@ const squareTo = (v: Vec3): Vec3 =>
  */
 export function bodyFrame(position: Vec3, radius: number, eye: Vec3, viewUp: Vec3): BodyFrame {
   const to: Vec3 = [eye[0] - position[0], eye[1] - position[1], eye[2] - position[2]];
-  const y = Math.hypot(...to) > 1e-9 ? normalize([-to[0], -to[1], -to[2]]) : squareTo(normalize(viewUp));
+  const y =
+    Math.hypot(...to) > 1e-9 ? normalize([-to[0], -to[1], -to[2]]) : squareTo(normalize(viewUp));
   const lean = dot(viewUp, y);
   const off: Vec3 = [viewUp[0] - lean * y[0], viewUp[1] - lean * y[1], viewUp[2] - lean * y[2]];
   const z = Math.hypot(...off) > 1e-9 ? normalize(off) : squareTo(y); // straight above or below on the screen: never in view
@@ -236,7 +231,6 @@ export function bodyFrame(position: Vec3, radius: number, eye: Vec3, viewUp: Vec
     eye: [dot(to, x) / radius, dot(to, y) / radius, dot(to, z) / radius],
   };
 }
-
 
 /**
  * How big a flat ring at `depth` (towards the eye, negative) must be to lie on a body's limb seen
@@ -283,8 +277,14 @@ export function partsExtent(
   const d = eyeDistance / radius;
   const flat = (p: BodyPart) => p.shape.kind === 'ring' && !standing.has(p);
   const sphereOf = (p: BodyPart) =>
-    p.shape.kind === 'ring' ? Math.hypot(p.shape.outer * ringScale(p.shape, d), p.shape.depth) : shapeReach(p.shape);
-  let out = bodyExtent(radius, Math.max(1, ...parts.filter((p) => !flat(p)).map(sphereOf)), eyeDistance);
+    p.shape.kind === 'ring'
+      ? Math.hypot(p.shape.outer * ringScale(p.shape, d), p.shape.depth)
+      : shapeReach(p.shape);
+  let out = bodyExtent(
+    radius,
+    Math.max(1, ...parts.filter((p) => !flat(p)).map(sphereOf)),
+    eyeDistance,
+  );
   for (const { shape } of parts.filter(flat)) {
     if (shape.kind !== 'ring') continue;
     const plane = d + shape.depth;

@@ -20,8 +20,7 @@ import {
   addedLight,
   placedLight,
 } from './lights';
-import { DEFAULT_SHADE, type PlanetLight } from '../formats/planets';
-
+import { DEFAULT_SHADE, type PlanetLight } from '../formats/planet-files';
 /** Sanctuary's rig as the data has it: a dim fill, a dimmer back, a bright key. */
 const rig: PlanetLight = {
   ambient: [0, 0, 0],

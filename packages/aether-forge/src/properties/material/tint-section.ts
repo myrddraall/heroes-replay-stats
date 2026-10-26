@@ -1,7 +1,7 @@
 import { Component, input, output } from '@angular/core';
-import type { MaterialTint } from "@myrddraall/heroes-replay-stats-aether/formats";
-import { NO_MATERIAL_TINT } from "@myrddraall/heroes-replay-stats-aether/materials";
-import { BLEND_GROUPS, BLENDS, type TintBlend } from "@myrddraall/heroes-replay-stats-aether/tints";
+import type { MaterialTint } from '@myrddraall/heroes-replay-stats-aether/formats';
+import { NO_MATERIAL_TINT } from '@myrddraall/heroes-replay-stats-aether/materials';
+import { BLEND_GROUPS, BLENDS, type TintBlend } from '@myrddraall/heroes-replay-stats-aether/tints';
 import { PropertyColour } from '../../controls/rows/property-colour';
 import { PropertySection } from '../../controls/property-section';
 import { grouped, PropertySelect } from '../../controls/rows/property-select';

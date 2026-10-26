@@ -1,6 +1,11 @@
-import type { Vec3 } from "@myrddraall/heroes-replay-stats-aether/design";
-import { type LightReach, type LightSettings, type Receiver, SHIELD_DEFAULTS } from "@myrddraall/heroes-replay-stats-aether/lights";
-import { aimedPoint, aimOf, type LookAt } from "@myrddraall/heroes-replay-stats-aether/space";
+import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/design';
+import {
+  type LightReach,
+  type LightSettings,
+  type Receiver,
+  SHIELD_DEFAULTS,
+} from '@myrddraall/heroes-replay-stats-aether/lights';
+import { aimedPoint, aimOf, type LookAt } from '@myrddraall/heroes-replay-stats-aether/space';
 import { Component, computed, input, output } from '@angular/core';
 import { PropertyCheck } from '../../controls/rows/property-check';
 import { PropertyColour } from '../../controls/rows/property-colour';
@@ -10,8 +15,7 @@ import { type PlacementChange, PropertyPlacement } from '../../controls/rows/pro
 import { type PropertyOption, PropertySelect } from '../../controls/rows/property-select';
 import { PropertySection } from '../../controls/property-section';
 import { PropertyText } from '../../controls/rows/property-text';
-import type { LightEntry } from '../../editing/editor-model';
-
+import type { LightEntry } from '../../editing/model/lights';
 /** A light's own settings (its name is apart, and its switch: the tree row's). */
 const LIGHT_KEYS: readonly (keyof LightSettings)[] = [
   'darkens',

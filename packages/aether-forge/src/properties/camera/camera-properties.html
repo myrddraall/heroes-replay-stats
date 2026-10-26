@@ -1,57 +1,53 @@
-@let c = values();
-@if (!game() || !primary() || !lookingThrough()) {
-  <forge-property-section title="General">
-    @if (!game()) {
-      <forge-property-text label="Name" [value]="name()" (valueChange)="nameChange.emit($event)" />
+@let c = values(); @if (!game() || !primary() || !lookingThrough()) {
+<forge-property-section title="General">
+  @if (!game()) {
+  <forge-property-text label="Name" [value]="name()" (valueChange)="nameChange.emit($event)" />
+  }
+  <div class="buttons">
+    @if (!primary()) {
+    <button type="button" class="button" (click)="primaryRequested.emit()">Make primary</button>
+    } @if (!lookingThrough()) {
+    <button type="button" class="button" (click)="lookRequested.emit()">Look through</button>
+    } @if (!game()) {
+    <button type="button" class="button" (click)="removeRequested.emit()">Remove camera</button>
     }
-    <div class="buttons">
-      @if (!primary()) {
-        <button type="button" class="button" (click)="primaryRequested.emit()">Make primary</button>
-      }
-      @if (!lookingThrough()) {
-        <button type="button" class="button" (click)="lookRequested.emit()">Look through</button>
-      }
-      @if (!game()) {
-        <button type="button" class="button" (click)="removeRequested.emit()">Remove camera</button>
-      }
-    </div>
-  </forge-property-section>
+  </div>
+</forge-property-section>
 }
 <forge-property-section title="Place">
   @if (planets().length) {
-    <forge-property-select
-      label="About"
-      [value]="aboutValue()"
-      [options]="aboutOptions()"
-      (valueChange)="chooseAbout($event)"
-    />
-  }
-  @if (about()) {
-    <forge-property-placement
-      [mode]="placement()!.mode"
-      [position]="fromPlanet()"
-      [turn]="placement()!.turn ?? 0"
-      (placeChange)="place($event)"
-    />
+  <forge-property-select
+    label="About"
+    [value]="aboutValue()"
+    [options]="aboutOptions()"
+    (valueChange)="chooseAbout($event)"
+  />
+  } @if (about()) {
+  <forge-property-placement
+    [mode]="placement()!.mode"
+    [position]="fromPlanet()"
+    [turn]="placement()!.turn ?? 0"
+    (placeChange)="place($event)"
+  />
   } @else {
-    <forge-property-number
-      label="Across"
-      [value]="c.eye[0]"
-      [step]="0.5"
-      (valueChange)="move(0, $event)"
-    />
-    <forge-property-number
-      label="Up"
-      [value]="c.eye[2]"
-      [step]="0.5"
-      (valueChange)="move(2, $event)"
-    />
-    <forge-property-number
-      label="Distance"
-      [value]="c.eye[1]"
-      [step]="0.5"
-      (valueChange)="move(1, $event)"
-    />
+  <forge-property-number
+    label="Across"
+    [value]="c.eye[0]"
+    [step]="0.5"
+    (valueChange)="move(0, $event)"
+  />
+  <forge-property-number
+    label="Up"
+    [value]="c.eye[2]"
+    [step]="0.5"
+    (valueChange)="move(2, $event)"
+  />
+  <forge-property-number
+    label="Distance"
+    [value]="c.eye[1]"
+    [step]="0.5"
+    (valueChange)="move(1, $event)"
+  />
   }
 </forge-property-section>
 <forge-property-section
@@ -82,6 +78,6 @@
     (valueChange)="cameraChange.emit({ fovY: $event })"
   />
   @if (lookingThrough()) {
-    <p class="hint">Drag the view to move round, Shift-drag to move across, scroll to move in.</p>
+  <p class="hint">Drag the view to move round, Shift-drag to move across, scroll to move in.</p>
   }
 </forge-property-section>

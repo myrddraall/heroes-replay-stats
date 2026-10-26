@@ -1,11 +1,5 @@
 import { computed } from '@angular/core';
-import {
-  patchState,
-  signalStore,
-  withComputed,
-  withMethods,
-  withState,
-} from '@ngrx/signals';
+import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { type ViewTints, type PartTint, NO_TINTS } from '../tints/tints';
 
 /** How the background is drawn: what it costs. */

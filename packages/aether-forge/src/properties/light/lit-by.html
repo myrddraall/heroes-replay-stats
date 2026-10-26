@@ -1,38 +1,38 @@
 <forge-property-section title="Lit by">
   @for (l of lights(); track l.id) {
-    <div class="light">
-      <input
-        type="checkbox"
-        class="check"
-        [id]="id + '-' + $index"
-        [checked]="l.reaches"
-        (change)="check(l.id, $event)"
-      />
-      <label class="name" [for]="id + '-' + $index">{{ l.name }}</label>
-      <button
-        type="button"
-        class="show"
-        [attr.aria-label]="'Select ' + l.name + ' in the tree'"
-        title="Select in the tree"
-        (click)="lightShow.emit(l.id)"
-      >
-        <mat-icon class="material-symbols-outlined" aria-hidden="true">arrow_outward</mat-icon>
-      </button>
-      @if (l.removable) {
-        <button
-          type="button"
-          class="show"
-          [attr.aria-label]="'Remove ' + l.name"
-          title="Remove"
-          (click)="lightRemove.emit(l.id)"
-        >
-          <mat-icon class="material-symbols-outlined" aria-hidden="true">delete</mat-icon>
-        </button>
-      } @else {
-        <span></span>
-      }
-    </div>
+  <div class="light">
+    <input
+      type="checkbox"
+      class="check"
+      [id]="id + '-' + $index"
+      [checked]="l.reaches"
+      (change)="check(l.id, $event)"
+    />
+    <label class="name" [for]="id + '-' + $index">{{ l.name }}</label>
+    <button
+      type="button"
+      class="show"
+      [attr.aria-label]="'Select ' + l.name + ' in the tree'"
+      title="Select in the tree"
+      (click)="lightShow.emit(l.id)"
+    >
+      <mat-icon class="material-symbols-outlined" aria-hidden="true">arrow_outward</mat-icon>
+    </button>
+    @if (l.removable) {
+    <button
+      type="button"
+      class="show"
+      [attr.aria-label]="'Remove ' + l.name"
+      title="Remove"
+      (click)="lightRemove.emit(l.id)"
+    >
+      <mat-icon class="material-symbols-outlined" aria-hidden="true">delete</mat-icon>
+    </button>
+    } @else {
+    <span></span>
+    }
+  </div>
   } @empty {
-    <p class="hint">Nothing lights it.</p>
+  <p class="hint">Nothing lights it.</p>
   }
 </forge-property-section>

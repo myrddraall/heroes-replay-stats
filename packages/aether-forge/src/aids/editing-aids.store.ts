@@ -1,6 +1,6 @@
-import { STORAGE_NAMES, storageKey } from "@myrddraall/heroes-replay-stats-aether";
-import type { LightSettingsMap } from "@myrddraall/heroes-replay-stats-aether/lights";
-import type { Backdrop } from "@myrddraall/heroes-replay-stats-aether/space";
+import { STORAGE_NAMES, storageKey } from '@myrddraall/heroes-replay-stats-aether';
+import type { LightSettingsMap } from '@myrddraall/heroes-replay-stats-aether/lights';
+import type { Backdrop } from '@myrddraall/heroes-replay-stats-aether/space';
 import { computed, inject } from '@angular/core';
 import {
   patchState,

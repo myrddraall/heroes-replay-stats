@@ -1,7 +1,13 @@
-import { type BodySettings, type LibraryState, withMaterial, without, withoutMaterial } from "@myrddraall/heroes-replay-stats-aether/design";
-import type { MaterialSettings } from "@myrddraall/heroes-replay-stats-aether/formats";
-import type { DraftDesignStore, LibraryKind } from '../draft/draft-design.store';
-
+import {
+  type BodySettings,
+  type LibraryState,
+  withMaterial,
+  without,
+  withoutMaterial,
+} from '@myrddraall/heroes-replay-stats-aether/design';
+import type { MaterialSettings } from '@myrddraall/heroes-replay-stats-aether/formats';
+import type { DraftDesignStore } from '../draft/draft-design.store';
+import type { LibraryKind } from '../draft/design-writes';
 type Draft = InstanceType<typeof DraftDesignStore>;
 
 /**
@@ -20,8 +26,11 @@ export function editingVariant(
     const v = variant();
     return kind === 'planets' && v && id === planet() ? v : null;
   };
-  const changeSettings = (id: string, v: string, change: (s: BodySettings) => BodySettings | undefined) =>
-    draft.changeVariant(id, v, (x) => ({ ...x, settings: change(x.settings ?? {}) }));
+  const changeSettings = (
+    id: string,
+    v: string,
+    change: (s: BodySettings) => BodySettings | undefined,
+  ) => draft.changeVariant(id, v, (x) => ({ ...x, settings: change(x.settings ?? {}) }));
   const overrides = {
     library: (): LibraryState => {
       const l = draft.library();

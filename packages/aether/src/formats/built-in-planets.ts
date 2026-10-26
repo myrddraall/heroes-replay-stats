@@ -1,6 +1,5 @@
 import { InjectionToken } from '@angular/core';
-import type { PlanetFile } from './planets';
-
+import type { PlanetFile } from './planet-files';
 /**
  * Planets the app makes itself rather than loading an exported file (an editor's stand-in): their
  * ids start with this, which no exported planet's does.

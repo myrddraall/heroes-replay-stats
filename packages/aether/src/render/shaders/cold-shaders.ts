@@ -35,7 +35,9 @@ export function coldDepth(d: Node<'float'>): Node<'float'> {
 export function coldVertex(material: NodeMaterial): void {
   const n = coldShaders.nonce;
   if (n === null) return;
-  const clip = (material.vertexNode as Node<'vec4'> | null) ?? (modelViewProjection as unknown as Node<'vec4'>);
+  const clip =
+    (material.vertexNode as Node<'vec4'> | null) ??
+    (modelViewProjection as unknown as Node<'vec4'>);
   material.vertexNode = Fn(() => {
     const c = vec4(clip).toVar();
     return select(c.x.add(c.w).lessThan(-1e30 * n), vec4(0), c);

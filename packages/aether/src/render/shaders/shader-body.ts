@@ -93,7 +93,12 @@ export function bodyNodes(
   /** Where the eye's ray meets the part: p (its surface's frame), n, how far across a ring, coverage, depth. */
   const hit = () => {
     // The square's point, in the surface's frame (no turn for a part facing the camera).
-    const d = normalize(surface.mul(vec3(vQuad.x, 0, vQuad.y)).div(radius).sub(eye)).toVar();
+    const d = normalize(
+      surface
+        .mul(vec3(vQuad.x, 0, vQuad.y))
+        .div(radius)
+        .sub(eye),
+    ).toVar();
     const p = vec3(0).toVar();
     const n = vec3(0, 0, 1).toVar();
     const across = float(0).toVar();
@@ -111,7 +116,11 @@ export function bodyNodes(
       const b = dot(from, d).toVar();
       const disc = b.mul(b).sub(dot(from, from)).add(r.mul(r)).toVar();
       // (A ring fixed in the world may be seen edge on: its plane never met, not met at infinity.)
-      const dy = select(abs(d.y).lessThan(1e-7), select(d.y.lessThan(0), float(-1e-7), float(1e-7)), d.y);
+      const dy = select(
+        abs(d.y).lessThan(1e-7),
+        select(d.y.lessThan(0), float(-1e-7), float(1e-7)),
+        d.y,
+      );
       const tRing = params.z.sub(eye.y).div(dy).toVar();
       const rr = length(eye.add(d.mul(tRing)).xz).toVar();
       const inside = select(sphere, disc, min(rr.sub(params.x), params.y.sub(rr))).toVar();
@@ -129,7 +138,11 @@ export function bodyNodes(
         p.assign(eye.add(d.mul(tRing)));
         // (Facing the eye: a ring fixed in the world may be seen from its far side.)
         n.assign(select(eye.y.lessThan(params.z), vec3(0, -1, 0), vec3(0, 1, 0)));
-        across.assign(length(p.xz).sub(params.x).div(max(1e-5, params.y.sub(params.x))));
+        across.assign(
+          length(p.xz)
+            .sub(params.x)
+            .div(max(1e-5, params.y.sub(params.x))),
+        );
       });
       world.assign(p);
     }).Else(() => {
@@ -143,11 +156,17 @@ export function bodyNodes(
         const dh = dot(d, axis).toVar();
         const oP = o.sub(axis.mul(oh)).toVar();
         const dP = d.sub(axis.mul(dh)).toVar();
-        const m = span.y.sub(span.x).div(max(span.w.sub(span.z), 1e-6)).toVar();
+        const m = span.y
+          .sub(span.x)
+          .div(max(span.w.sub(span.z), 1e-6))
+          .toVar();
         const ro = m.mul(oh.sub(span.z)).add(span.x).toVar();
         const a = dot(dP, dP).sub(m.mul(m).mul(dh).mul(dh)).toVar();
         const bb = dot(oP, dP).sub(m.mul(dh).mul(ro)).toVar();
-        const disc = bb.mul(bb).sub(a.mul(dot(oP, oP).sub(ro.mul(ro)))).toVar();
+        const disc = bb
+          .mul(bb)
+          .sub(a.mul(dot(oP, oP).sub(ro.mul(ro))))
+          .toVar();
         const sq = sqrt(max(disc, 0)).toVar();
         const t1 = bb.negate().sub(sq).div(a).toVar();
         const t2 = bb.negate().add(sq).div(a).toVar();
@@ -167,7 +186,13 @@ export function bodyNodes(
           const rightOf = cross(shapeUp, axis).toVar();
           t.assign(dot(shapeCentre.sub(eye), axis).div(dot(d, axis)));
           const q = eye.add(d.mul(t)).sub(shapeCentre).toVar();
-          edges.assign(vec3(1, span.x.mul(0.5).sub(abs(dot(q, rightOf))), span.y.mul(0.5).sub(abs(dot(q, shapeUp)))));
+          edges.assign(
+            vec3(
+              1,
+              span.x.mul(0.5).sub(abs(dot(q, rightOf))),
+              span.y.mul(0.5).sub(abs(dot(q, shapeUp))),
+            ),
+          );
         })
         .Else(() => {
           // A capsule: a tube closed by half spheres; its six crossings in one loop, the tube's two,
@@ -185,7 +210,11 @@ export function bodyNodes(
           const e = dot(seg, w0).toVar();
           const dd = dot(d, w0).toVar();
           const den = c.sub(b.mul(b)).toVar();
-          const sAt = clamp(select(den.greaterThan(1e-9), e.sub(b.mul(dd)).div(den), 0), 0, 1).toVar();
+          const sAt = clamp(
+            select(den.greaterThan(1e-9), e.sub(b.mul(dd)).div(den), 0),
+            0,
+            1,
+          ).toVar();
           const onAxis = a0.add(seg.mul(sAt)).toVar();
           const nearAt = dot(onAxis.sub(o), d).toVar();
           edges.assign(vec3(r.sub(length(o.add(d.mul(nearAt)).sub(onAxis))), 1, 1));
@@ -202,21 +231,38 @@ export function bodyNodes(
           // (A count from a uniform, not 6: a loop of a fixed length is unrolled.)
           const crossings = select(uShape.greaterThanEqual(7), int(6), int(0)).toVar();
           Loop(crossings, ({ i }) => {
-            const sign = select(i.equal(0).or(i.equal(2)).or(i.equal(4)), float(-1), float(1)).toVar();
+            const sign = select(
+              i.equal(0).or(i.equal(2)).or(i.equal(4)),
+              float(-1),
+              float(1),
+            ).toVar();
             const tk = float(0).toVar();
             const meets = vec2(0).x.greaterThan(1).toVar(); // false
             const normal = vec3(0, 0, 1).toVar();
             If(i.lessThan(2), () => {
-              tk.assign(qb.negate().add(sign.mul(sqrt(max(disc, 0)))).div(qa));
+              tk.assign(
+                qb
+                  .negate()
+                  .add(sign.mul(sqrt(max(disc, 0))))
+                  .div(qa),
+              );
               const h = oh.add(tk.mul(dh)).toVar();
-              meets.assign(tubeMeets.and(tk.greaterThan(0)).and(h.greaterThanEqual(span.z)).and(h.lessThanEqual(span.w)));
+              meets.assign(
+                tubeMeets
+                  .and(tk.greaterThan(0))
+                  .and(h.greaterThanEqual(span.z))
+                  .and(h.lessThanEqual(span.w)),
+              );
               const q = o.add(d.mul(tk)).toVar();
               normal.assign(normalize(q.sub(axis.mul(dot(q, axis)))));
             }).Else(() => {
               const first = i.lessThan(4).toVar();
               const oc = o.sub(select(first, a0, a1)).toVar();
               const cb = dot(oc, d).toVar();
-              const cd = cb.mul(cb).sub(dot(oc, oc).sub(r.mul(r))).toVar();
+              const cd = cb
+                .mul(cb)
+                .sub(dot(oc, oc).sub(r.mul(r)))
+                .toVar();
               tk.assign(cb.negate().add(sign.mul(sqrt(max(cd, 0)))));
               const h = dot(o.add(d.mul(tk)), axis).toVar();
               const beyond = select(first, h.lessThanEqual(span.z), h.greaterThanEqual(span.w));
@@ -236,7 +282,10 @@ export function bodyNodes(
       // pixel's size is taken before the loop: derivatives in it aren't to be relied on.)
       const at = eye.add(d.mul(abs(t))).toVar();
       const from = centre.add(frame.mul(eye.mul(radius))).toVar();
-      const ray = centre.add(frame.mul(at.mul(radius))).sub(from).toVar();
+      const ray = centre
+        .add(frame.mul(at.mul(radius)))
+        .sub(from)
+        .toVar();
       const farOf = max(length(ray), 1e-6).toVar();
       const dir = ray.div(farOf).toVar();
       const pixel = max(length(fwidth(dir)), 1e-7).toVar();
@@ -247,7 +296,9 @@ export function bodyNodes(
         const along = dot(to, dir).toVar();
         const edge = select(
           along.lessThan(farOf),
-          length(to.sub(dir.mul(along))).sub(sf.w).div(pixel.mul(max(along, 1e-6))),
+          length(to.sub(dir.mul(along)))
+            .sub(sf.w)
+            .div(pixel.mul(max(along, 1e-6))),
           length(to.sub(ray)).sub(sf.w).div(pixel.mul(farOf)),
         );
         seen.mulAssign(clamp(edge.add(0.5), 0, 1));
@@ -279,10 +330,15 @@ export function bodyNodes(
   /** A ring mapping's v: nothing at both edges, all at the circle mid of the way across (as the mesh has it). */
   const ringV = (midAt: Node<'float'>, acrossAt: Node<'float'>) => {
     const mid = clamp(midAt, 0.001, 0.999).toVar();
-    return select(acrossAt.lessThan(mid), acrossAt.div(mid), acrossAt.oneMinus().div(mid.oneMinus()));
+    return select(
+      acrossAt.lessThan(mid),
+      acrossAt.div(mid),
+      acrossAt.oneMinus().div(mid.oneMinus()),
+    );
   };
   /** A mapping's kind, if it is a ring's (the one that reads how far across the ring). */
-  const ringMapping = (kind: Node<'int'>) => kind.notEqual(0).and(kind.notEqual(1)).and(kind.notEqual(3));
+  const ringMapping = (kind: Node<'int'>) =>
+    kind.notEqual(0).and(kind.notEqual(1)).and(kind.notEqual(3));
   /** A point's texture coordinates by mapping m (0: uMap, 1: uMap2) (`mapped`), its v table the vTable's column. */
   const mapped = (m: Node<'int'>, p: Node<'vec3'>, acrossAt: Node<'float'>) => {
     const second = m.equal(1).toVar();
@@ -295,8 +351,12 @@ export function bodyNodes(
     If(kind.equal(0), () => {
       const un = normalize(p).toVar();
       const polar = acos(clamp(dot(un, pole), -1, 1));
-      const az = atan(dot(un, cross(pole, meridian)), dot(un, meridian)).div(2 * PI).toVar();
-      const at = clamp(polar.div(PI), 0, 1).mul(V_SAMPLES - 1).toVar();
+      const az = atan(dot(un, cross(pole, meridian)), dot(un, meridian))
+        .div(2 * PI)
+        .toVar();
+      const at = clamp(polar.div(PI), 0, 1)
+        .mul(V_SAMPLES - 1)
+        .toVar();
       // (At the far pole, k is the last but one and the mix all the way: the last value.)
       const kf = min(floor(at), V_SAMPLES - 2).toVar();
       const low = u.row('vTable', int(kf), 0).toVar();
@@ -312,9 +372,16 @@ export function bodyNodes(
         // Round an axis: u by the angle from the meridian, v along the axis or out from it.
         const h = dot(p, pole).toVar();
         const r = p.sub(pole.mul(h)).toVar();
-        const az = atan(dot(r, cross(pole, meridian)), dot(r, meridian)).div(2 * PI).toVar();
+        const az = atan(dot(r, cross(pole, meridian)), dot(r, meridian))
+          .div(2 * PI)
+          .toVar();
         const along = select(b.y.greaterThan(0.5), length(r), h);
-        uv.assign(vec2(a.y.add(select(a.x.greaterThan(0.5), az.negate(), az).mul(b.x)), along.sub(a.z).div(a.w.sub(a.z))));
+        uv.assign(
+          vec2(
+            a.y.add(select(a.x.greaterThan(0.5), az.negate(), az).mul(b.x)),
+            along.sub(a.z).div(a.w.sub(a.z)),
+          ),
+        );
       })
       .Else(() => {
         const az = abs(mod(atan(p.z, p.x).sub(a.x).add(PI), 2 * PI).sub(PI)).toVar();
@@ -327,7 +394,11 @@ export function bodyNodes(
     const h = hit();
     // The depth (WebGL's, 0 to 1): the shape's where it covers the pixel, else nothing in front.
     // (`depth.assign` makes the write; it is put into the shader where it is added, as three.js's own is.)
-    (depth.assign(select(h.coverage.greaterThan(0), h.depthOf, float(1))) as unknown as { toStack(): void }).toStack();
+    (
+      depth.assign(select(h.coverage.greaterThan(0), h.depthOf, float(1))) as unknown as {
+        toStack(): void;
+      }
+    ).toStack();
     // Both mappings, by the one `mapped` in a loop (uMaps: 2, a uniform: a loop of a fixed length
     // is unrolled), then the coordinates' change across the pixel (before the loop below).
     const uv = vec2(0).toVar();
@@ -358,7 +429,11 @@ export function bodyNodes(
       const uvAt = uv.toVar();
       const uv2At = uv2.toVar();
       If(ring, () => {
-        const a = clamp(h.across.add(width.mul(float(i).add(0.5).div(RING_SAMPLES).sub(0.5))), 0, 1).toVar();
+        const a = clamp(
+          h.across.add(width.mul(float(i).add(0.5).div(RING_SAMPLES).sub(0.5))),
+          0,
+          1,
+        ).toVar();
         If(firstRing, () => {
           uvAt.assign(vec2(uvAt.x, ringV(u.vec4('uMap.a').z, a)));
         });

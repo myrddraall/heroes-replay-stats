@@ -1,29 +1,31 @@
 import { describe, expect, it } from 'vitest';
-import type { BodyPart, PlanetFile, SceneMaterial } from "@myrddraall/heroes-replay-stats-aether/formats";
-import type { BodyLight } from "@myrddraall/heroes-replay-stats-aether/lights";
-import { bodyTurn, placementFrame, pointToWorld, turn } from "@myrddraall/heroes-replay-stats-aether/space";
+import type {
+  BodyPart,
+  PlanetFile,
+  SceneMaterial,
+} from '@myrddraall/heroes-replay-stats-aether/formats';
+import type { BodyLight } from '@myrddraall/heroes-replay-stats-aether/lights';
+import {
+  bodyTurn,
+  placementFrame,
+  pointToWorld,
+  turn,
+} from '@myrddraall/heroes-replay-stats-aether/space';
 import {
   axisAids,
-  type BodyInfo,
   keepingPose,
-  lightsView,
   poleAt,
   poleDragged,
   poleMarkers,
-  bodyView,
   lightAids,
   lightMarkerAt,
-  partsOfBody,
   spotEdges,
-  valuesOf,
-  materialAt,
-  materialsOf,
-  offPart,
-  onPart,
-  sharedMaterials,
-  shieldLightsOfBody,
-  skyAnchorView,
-} from './editor-model';
+} from './markers';
+import { type BodyInfo, bodyView, valuesOf } from './body';
+import { lightsView, shieldLightsOfBody } from './lights';
+import { partsOfBody } from './parts';
+import { materialAt, materialsOf, offPart, onPart, sharedMaterials } from './materials';
+import { skyAnchorView } from './sky';
 
 const material: SceneMaterial = {
   blend: 'alpha',
@@ -206,9 +208,14 @@ describe("a body's orientation", () => {
     expect(partsOfBody(below)[0]?.origins.orientation).toBe('korhal');
     expect(materialAt(materialsOf(below), 'clouds')?.origins.orientation).toBe('korhal');
     // A part set back to the camera: its materials with it, the overlay's (another part) not.
-    const part = korhal({ orientation: 'world', parts: { 'own:sphere-1': { orientation: 'camera' } } });
+    const part = korhal({
+      orientation: 'world',
+      parts: { 'own:sphere-1': { orientation: 'camera' } },
+    });
     expect(materialAt(materialsOf(part), 'clouds')?.values.orientation).toBe('camera');
-    expect(materialAt(materialsOf(part), 'style:@overlay-1:clouds')?.values.orientation).toBe('world');
+    expect(materialAt(materialsOf(part), 'style:@overlay-1:clouds')?.values.orientation).toBe(
+      'world',
+    );
     // A material's own say over its part's.
     const own = korhal({
       parts: { 'own:sphere-1': { orientation: 'camera' } },
@@ -223,11 +230,19 @@ describe("a body's orientation", () => {
     const data = tilted.file!;
     const withPole: BodyInfo = {
       ...tilted,
-      file: { ...data, parts: data.parts.map((p) => ({ ...p, mapping: { ...p.mapping, pole } }) as BodyPart) },
+      file: {
+        ...data,
+        parts: data.parts.map((p) => ({ ...p, mapping: { ...p.mapping, pole } }) as BodyPart),
+      },
     };
     expect(valuesOf(withPole)).toMatchObject({ axis: pole, turn: 0 });
-    expect(valuesOf({ ...withPole, below: { axis: [0, 0, 1], turn: 30 } })).toMatchObject({ axis: [0, 0, 1], turn: 30 });
-    expect(bodyView({ ...withPole, below: { turn: 30 } }, false, true).origins.turn).toBe('the library (planet)');
+    expect(valuesOf({ ...withPole, below: { axis: [0, 0, 1], turn: 30 } })).toMatchObject({
+      axis: [0, 0, 1],
+      turn: 30,
+    });
+    expect(bodyView({ ...withPole, below: { turn: 30 } }, false, true).origins.turn).toBe(
+      'the library (planet)',
+    );
   });
 
   it('leaves a halo facing the camera when only its body says World, unless set on it', () => {
@@ -240,10 +255,22 @@ describe("a body's orientation", () => {
     };
     expect(partsOfBody(halo)[0]?.values.orientation).toBe('camera');
     expect(partsOfBody(halo)[0]?.origins.orientation).toBeUndefined();
-    expect(materialAt(materialsOf(halo), 'clouds')).toMatchObject({ values: { orientation: 'camera' }, turned: false });
+    expect(materialAt(materialsOf(halo), 'clouds')).toMatchObject({
+      values: { orientation: 'camera' },
+      turned: false,
+    });
     expect(materialAt(materialsOf(halo), 'clouds')?.origins.orientation).toBe('Sphere 1');
-    const set = { ...halo, settings: { orientation: 'world' as const, parts: { 'own:sphere-1': { orientation: 'world' as const } } } };
-    expect(materialAt(materialsOf(set), 'clouds')).toMatchObject({ values: { orientation: 'world' }, turned: true });
+    const set = {
+      ...halo,
+      settings: {
+        orientation: 'world' as const,
+        parts: { 'own:sphere-1': { orientation: 'world' as const } },
+      },
+    };
+    expect(materialAt(materialsOf(set), 'clouds')).toMatchObject({
+      values: { orientation: 'world' },
+      turned: true,
+    });
   });
 });
 
@@ -257,19 +284,28 @@ describe("a planet's pose", () => {
     const moved = keepingPose(b, { ...b.settings, axis: [0.6, 0, 0.8] }, ['axis']);
     expect(moved.baseTurn).toBeDefined();
     Array.from(posed(moved)).forEach((v, i) => expect(v).toBeCloseTo(posed(b.settings)[i]!, 12));
-    const back = keepingPose({ ...b, settings: moved }, { turn: 40, baseTurn: moved.baseTurn }, ['axis']);
+    const back = keepingPose({ ...b, settings: moved }, { turn: 40, baseTurn: moved.baseTurn }, [
+      'axis',
+    ]);
     Array.from(posed(back)).forEach((v, i) => expect(v).toBeCloseTo(posed(b.settings)[i]!, 12));
     // A Turn reset: back to its base turn; the section's reset: nothing kept.
     expect(keepingPose(b, { axis: [0.6, 0, 0.8] }, ['turn'])).toEqual({ axis: [0.6, 0, 0.8] });
-    expect(keepingPose({ ...b, settings: moved }, {}, ['orientation', 'axis', 'turn', 'baseTurn'])).toEqual({});
+    expect(
+      keepingPose({ ...b, settings: moved }, {}, ['orientation', 'axis', 'turn', 'baseTurn']),
+    ).toEqual({});
   });
 });
 
 describe("a planet's axis marker", () => {
   const body = { id: 'b', position: [20, 70, 9] as const, radius: 7.5 };
-  const layout = { eye: [-0.0018, -41.1988, 5.6051], forward: [1.9e-5, 0.999687, -0.025004], up: [0, 0, 1] } as const;
+  const layout = {
+    eye: [-0.0018, -41.1988, 5.6051],
+    forward: [1.9e-5, 0.999687, -0.025004],
+    up: [0, 0, 1],
+  } as const;
   const other = { eye: [60, 10, 40], forward: [-0.55, 0.6, -0.35], up: [0, 0, 1] } as const;
-  const north = (b: BodyInfo, view: typeof layout | typeof other) => axisAids(b, body, layout, view)[0]!.way;
+  const north = (b: BodyInfo, view: typeof layout | typeof other) =>
+    axisAids(b, body, layout, view)[0]!.way;
 
   it('points along its Axis as its surfaces are drawn: fixed in the world, or turned with the eye', () => {
     const world = korhal({ orientation: 'world', axis: [0, 0.6, 0.8] });
@@ -279,7 +315,9 @@ describe("a planet's axis marker", () => {
     const billboard = korhal({ axis: [0, 0.6, 0.8] });
     expect(north(billboard, other)).not.toEqual(north(billboard, layout));
     // A Turn turns about it: the line stays.
-    expect(north(korhal({ orientation: 'world', axis: [0, 0.6, 0.8], turn: 90 }), other)).toEqual(north(world, other));
+    expect(north(korhal({ orientation: 'world', axis: [0, 0.6, 0.8], turn: 90 }), other)).toEqual(
+      north(world, other),
+    );
     // Its poles named at its ends, N where it points, as far past each.
     const [n, s] = poleMarkers(axisAids(world, body, layout, other)[0]!, 'body');
     expect([n?.label, s?.label]).toEqual(['N', 'S']);
@@ -293,18 +331,28 @@ describe("a planet's axis marker", () => {
     const frame = placementFrame(body.position, layout);
     const eye = other.eye as unknown as readonly [number, number, number];
     const unit = (v: readonly number[]) => v.map((x) => x / Math.hypot(...v));
-    const rayTo = (p: readonly number[]) => unit(p.map((v, k) => v - eye[k]!)) as unknown as [number, number, number];
+    const rayTo = (p: readonly number[]) =>
+      unit(p.map((v, k) => v - eye[k]!)) as unknown as [number, number, number];
     const from = poleAt(line!, true);
     // A point on the sphere through the pole, on the side facing the eye.
     const toEye = unit(eye.map((v, k) => v - body.position[k]!));
     const r = Math.hypot(...from.map((v, k) => v - body.position[k]!));
-    const target = body.position.map((v, k) => v + r * unit([toEye[0]! + 0.3, toEye[1]!, toEye[2]! + 0.4])[k]!);
+    const target = body.position.map(
+      (v, k) => v + r * unit([toEye[0]! + 0.3, toEye[1]!, toEye[2]! + 0.4])[k]!,
+    );
     const north = poleDragged(line!, true, eye, rayTo(target), from, frame);
     north.at.forEach((v, k) => expect(v).toBeCloseTo(target[k]!, 6));
     const way = unit(target.map((v, k) => v - body.position[k]!));
     turn(frame, north.axis).forEach((v, k) => expect(v).toBeCloseTo(way[k]!, 4));
     // The south pole dragged there (from near it): the Axis the other way.
-    const south = poleDragged(line!, false, eye, rayTo(target), target as unknown as typeof from, frame);
+    const south = poleDragged(
+      line!,
+      false,
+      eye,
+      rayTo(target),
+      target as unknown as typeof from,
+      frame,
+    );
     turn(frame, south.axis).forEach((v, k) => expect(v).toBeCloseTo(-way[k]!, 4));
     // Past the outline: on its edge, then behind (further from the eye than the middle).
     const side = body.position.map((v, k) => v + 3 * r * unit([toEye[1]!, -toEye[0]!, 0])[k]!);
@@ -322,7 +370,11 @@ describe("a planet's axis marker", () => {
 
 describe("a light's markers and aids", () => {
   const body = { id: 'b', position: [20, 70, 9] as const, radius: 7.5 };
-  const layout = { eye: [-0.0018, -41.1988, 5.6051], forward: [1.9e-5, 0.999687, -0.025004], up: [0, 0, 1] } as const;
+  const layout = {
+    eye: [-0.0018, -41.1988, 5.6051],
+    forward: [1.9e-5, 0.999687, -0.025004],
+    up: [0, 0, 1],
+  } as const;
   const spot: BodyLight = {
     id: 'added-spot',
     kind: 'spot',
@@ -339,15 +391,27 @@ describe("a light's markers and aids", () => {
   it("are placed in the body's placement frame, the scene's camera's, as the renderer lights it", () => {
     const frame = placementFrame(body.position, layout);
     expect(lightMarkerAt(spot, body, layout)!.at).toEqual(
-      pointToWorld({ position: body.position, rotation: frame, scale: body.radius }, [0.3, -2.4, 1.6]),
+      pointToWorld(
+        { position: body.position, rotation: frame, scale: body.radius },
+        [0.3, -2.4, 1.6],
+      ),
     );
     const [outline] = lightAids(spot, body, layout);
     expect(outline?.shape === 'outline' && Array.from(outline.axes)).toEqual(Array.from(frame));
-    const side: BodyLight = { ...spot, id: 'added-side', kind: 'directional', from: [-0.4, -0.6, 0.7], position: undefined };
+    const side: BodyLight = {
+      ...spot,
+      id: 'added-side',
+      kind: 'directional',
+      from: [-0.4, -0.6, 0.7],
+      position: undefined,
+    };
     const way = lightAids(side, body, layout)[0];
     const l = Math.hypot(-0.4, -0.6, 0.7);
     const want = turn(frame, [-0.4 / l, -0.6 / l, 0.7 / l]);
-    expect(way?.shape === 'beam' && way.from.map((v, k) => v - want[k]!).every((d) => Math.abs(d) < 1e-6)).toBe(true);
+    expect(
+      way?.shape === 'beam' &&
+        way.from.map((v, k) => v - want[k]!).every((d) => Math.abs(d) < 1e-6),
+    ).toBe(true);
   });
 
   it("show a spot's cone's edges as the eye looking sees them, the cone itself where it is", () => {
@@ -367,7 +431,9 @@ describe("a body's variants as its editor stacks them", () => {
     const scene: BodyInfo = {
       ...korhal({}),
       below: { turn: 10, materials: { clouds: { glow: 1 } } },
-      variantsBelow: [{ name: 'the Shield variant', settings: { turn: 20, materials: { clouds: { glow: 3 } } } }],
+      variantsBelow: [
+        { name: 'the Shield variant', settings: { turn: 20, materials: { clouds: { glow: 3 } } } },
+      ],
     };
     expect(valuesOf(scene).turn).toBe(20); // the variant's over its own
     expect(bodyView(scene, false, true).origins.turn).toBe('the Shield variant');
@@ -376,7 +442,9 @@ describe("a body's variants as its editor stacks them", () => {
     // Its own settings edited, a variant on over them: what the variant sets is marked overridden.
     const own: BodyInfo = {
       ...korhal({ turn: 5, materials: { clouds: { glow: 2 } } }),
-      above: [{ name: 'the Shield variant', settings: { turn: 20, materials: { clouds: { glow: 3 } } } }],
+      above: [
+        { name: 'the Shield variant', settings: { turn: 20, materials: { clouds: { glow: 3 } } } },
+      ],
     };
     expect(valuesOf(own).turn).toBe(5); // the value edited, as edited
     expect(bodyView(own, false, true).overrides.turn).toBe('the Shield variant');

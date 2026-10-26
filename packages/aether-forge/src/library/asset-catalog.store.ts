@@ -1,8 +1,34 @@
-import { storageKey, ViewStore } from "@myrddraall/heroes-replay-stats-aether";
-import { createdOverlay, isGroup, type MaterialSource, overlayFileFor, type OverlayKind, ownScene, PLAY_SCREEN_SCENE, playScreenBodies, playSet, RANDOM_SCENE, randomSet, sceneBodies, type SceneBody, seeded, withPlanetFiles } from "@myrddraall/heroes-replay-stats-aether/design";
-import { loadPlanetIndex, type MaterialDepth, type MaterialSettingsMap, partId, type PartRole, type PlanetFile, type PlanetKind, type SceneMaterial, type SceneTexture } from "@myrddraall/heroes-replay-stats-aether/formats";
-import { materialLabel } from "@myrddraall/heroes-replay-stats-aether/materials";
-import { skyDepths } from "@myrddraall/heroes-replay-stats-aether/sky";
+import { storageKey, ViewStore } from '@myrddraall/heroes-replay-stats-aether';
+import {
+  createdOverlay,
+  isGroup,
+  type MaterialSource,
+  overlayFileFor,
+  type OverlayKind,
+  ownScene,
+  PLAY_SCREEN_SCENE,
+  playScreenBodies,
+  playSet,
+  RANDOM_SCENE,
+  randomSet,
+  sceneBodies,
+  type SceneBody,
+  seeded,
+  withPlanetFiles,
+} from '@myrddraall/heroes-replay-stats-aether/design';
+import {
+  loadPlanetIndex,
+  type MaterialDepth,
+  type MaterialSettingsMap,
+  partId,
+  type PartRole,
+  type PlanetFile,
+  type PlanetKind,
+  type SceneMaterial,
+  type SceneTexture,
+} from '@myrddraall/heroes-replay-stats-aether/formats';
+import { materialLabel } from '@myrddraall/heroes-replay-stats-aether/materials';
+import { skyDepths } from '@myrddraall/heroes-replay-stats-aether/sky';
 import { computed, inject, resource } from '@angular/core';
 import {
   patchState,
@@ -16,7 +42,8 @@ import {
 } from '@ngrx/signals';
 import { withLocalStorage } from '@myrddraall/heroes-replay-stats-signals';
 import { DraftDesignStore } from '../draft/draft-design.store';
-import { partMaterials, partName } from '../editing/editor-model';
+import { partMaterials } from '../editing/model/materials';
+import { partName } from '../editing/model/parts';
 import type { ReusablePart } from '../editing/part-hosts';
 import type { PickChoice } from '../controls/pick-list';
 import { EditorUiStore } from '../layout/editor-ui.store';

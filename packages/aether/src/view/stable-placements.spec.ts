@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { LoadedPlanet } from '../formats/planets';
+import type { LoadedPlanet } from '../formats/planet-loader';
 import type { PlanetPlacement } from '../space/space';
 import { keepUnchanged, sameData, samePlacement } from './stable-placements';
 

@@ -2,9 +2,9 @@
   <label class="type__label" for="library-type">Type</label>
   <select id="library-type" class="type__select" (change)="typeChosen($event)">
     @for (type of types; track type.value) {
-      <option [value]="type.value" [selected]="type.value === catalog.type()">
-        {{ type.label }}
-      </option>
+    <option [value]="type.value" [selected]="type.value === catalog.type()">
+      {{ type.label }}
+    </option>
     }
   </select>
   <forge-view-menu />
@@ -18,55 +18,53 @@
   (input)="search($event)"
 />
 @if (catalog.type() === 'style') {
-  <div class="row">
-    <button type="button" class="button new" (click)="catalog.createOverlay('planet')">
-      <mat-icon class="material-symbols-outlined" aria-hidden="true">add</mat-icon>
-      <span>New planet overlay</span>
-    </button>
-    <button type="button" class="button new" (click)="catalog.createOverlay('sky')">
-      <mat-icon class="material-symbols-outlined" aria-hidden="true">add</mat-icon>
-      <span>New sky overlay</span>
-    </button>
-  </div>
-}
-@if (catalog.type() === 'group') {
-  <div class="row">
-    <button type="button" class="button new" (click)="catalog.createGroup()">
-      <mat-icon class="material-symbols-outlined" aria-hidden="true">add</mat-icon>
-      <span>New group</span>
-    </button>
-  </div>
-}
-@if (catalog.type() === 'scene') {
-  <div class="row">
-    <button
-      type="button"
-      class="button new"
-      cdkOverlayOrigin
-      #origin="cdkOverlayOrigin"
-      aria-haspopup="dialog"
-      [attr.aria-expanded]="flyout()"
-      (click)="flyout.set(!flyout())"
-    >
-      <mat-icon class="material-symbols-outlined" aria-hidden="true">add</mat-icon>
-      <span>New scene</span>
-    </button>
-    <ng-template
-      cdkConnectedOverlay
-      [cdkConnectedOverlayOrigin]="origin"
-      [cdkConnectedOverlayOpen]="flyout()"
-      [cdkConnectedOverlayPositions]="positions"
-      [cdkConnectedOverlayPanelClass]="options.panelClass()"
-      [cdkConnectedOverlayHasBackdrop]="true"
-      cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
-      (backdropClick)="flyout.set(false)"
-      (detach)="flyout.set(false)"
-    >
-      <forge-new-scene-flyout
-        [templates]="templates()"
-        (create)="create($event)"
-        (closed)="flyout.set(false)"
-      />
-    </ng-template>
-  </div>
+<div class="row">
+  <button type="button" class="button new" (click)="catalog.createOverlay('planet')">
+    <mat-icon class="material-symbols-outlined" aria-hidden="true">add</mat-icon>
+    <span>New planet overlay</span>
+  </button>
+  <button type="button" class="button new" (click)="catalog.createOverlay('sky')">
+    <mat-icon class="material-symbols-outlined" aria-hidden="true">add</mat-icon>
+    <span>New sky overlay</span>
+  </button>
+</div>
+} @if (catalog.type() === 'group') {
+<div class="row">
+  <button type="button" class="button new" (click)="catalog.createGroup()">
+    <mat-icon class="material-symbols-outlined" aria-hidden="true">add</mat-icon>
+    <span>New group</span>
+  </button>
+</div>
+} @if (catalog.type() === 'scene') {
+<div class="row">
+  <button
+    type="button"
+    class="button new"
+    cdkOverlayOrigin
+    #origin="cdkOverlayOrigin"
+    aria-haspopup="dialog"
+    [attr.aria-expanded]="flyout()"
+    (click)="flyout.set(!flyout())"
+  >
+    <mat-icon class="material-symbols-outlined" aria-hidden="true">add</mat-icon>
+    <span>New scene</span>
+  </button>
+  <ng-template
+    cdkConnectedOverlay
+    [cdkConnectedOverlayOrigin]="origin"
+    [cdkConnectedOverlayOpen]="flyout()"
+    [cdkConnectedOverlayPositions]="positions"
+    [cdkConnectedOverlayPanelClass]="options.panelClass()"
+    [cdkConnectedOverlayHasBackdrop]="true"
+    cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+    (backdropClick)="flyout.set(false)"
+    (detach)="flyout.set(false)"
+  >
+    <forge-new-scene-flyout
+      [templates]="templates()"
+      (create)="create($event)"
+      (closed)="flyout.set(false)"
+    />
+  </ng-template>
+</div>
 }

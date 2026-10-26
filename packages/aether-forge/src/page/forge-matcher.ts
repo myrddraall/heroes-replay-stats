@@ -13,7 +13,8 @@ export function forgeMatcher(path: string): UrlMatcher {
     if (segments[0]?.path !== path) return null;
     if (segments.length === 1) return { consumed: segments };
     if (segments[1]!.path === 'library') {
-      if (segments.length === 3) return { consumed: segments, posParams: { library: segments[2]! } };
+      if (segments.length === 3)
+        return { consumed: segments, posParams: { library: segments[2]! } };
       if (segments.length === 4)
         return { consumed: segments, posParams: { library: segments[2]!, item: segments[3]! } };
       return null;

@@ -1,0 +1,48 @@
+@switch (editor.kind()) { @case ('backdrop') {
+<forge-editing-aid-properties
+  title="Backdrop"
+  [fills]="backdropFills"
+  [skies]="skies()"
+  [values]="backdrop()"
+  [changed]="backdropChanged()"
+  (valuesChange)="setAid('backdrop', $event)"
+  (clear)="clearAid('backdrop', $event)"
+/>
+@if (aids.backdrop() === 'sky') {
+<forge-tint-section
+  [tint]="editor.skyTint()"
+  [set]="editor.skyTintSet()"
+  (tintChange)="editor.setSkyTint($event)"
+  (clear)="editor.clearSkyTint()"
+/>
+<div class="buttons">
+  <button
+    type="button"
+    class="button"
+    (click)="editor.resetSky()"
+    [disabled]="!editor.skyChanged()"
+  >
+    Reset sky
+  </button>
+</div>
+} } @case ('stand-in') {
+<forge-editing-aid-properties
+  title="Stand-in planet"
+  [fills]="standInFills"
+  [values]="standIn()"
+  [changed]="standInChanged()"
+  (valuesChange)="setAid('standIn', $event)"
+  (clear)="clearAid('standIn', $event)"
+/>
+} @case ('reference') {
+<forge-reference-properties
+  [name]="aids.referenceName()"
+  [hasImage]="aids.referenceUrl() !== null"
+  [values]="reference()"
+  [changed]="referenceChanged()"
+  (imageChosen)="aids.chooseReference($event, $event.name)"
+  (imageRemoved)="aids.clearReference()"
+  (valuesChange)="setReference($event)"
+  (clear)="clearReference($event)"
+/>
+} }

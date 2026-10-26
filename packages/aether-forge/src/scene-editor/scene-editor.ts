@@ -1,5 +1,5 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { SCENE_SOURCE } from "@myrddraall/heroes-replay-stats-aether/design";
+import { SCENE_SOURCE } from '@myrddraall/heroes-replay-stats-aether/design';
 import { Editor } from '../editing/editor';
 import { OVERRIDE_SHOWN } from '../controls/rows/override-shown';
 import { EditorLayout } from '../layout/editor-layout';
@@ -42,7 +42,9 @@ import { SceneHeader } from './scene-header';
           // An anchored sky moves with the view's camera, or (not following it) with the scene's.
           skyFollow: computed(() => (ui.skyFollows() ? null : store.sceneCamera())),
           // The light selected's beams, with the markers (none in a screenshot or the library's preview).
-          beams: computed(() => (ui.markers() !== 'none' && !ui.screenshot() && !ui.browsing() ? store.beams() : [])),
+          beams: computed(() =>
+            ui.markers() !== 'none' && !ui.screenshot() && !ui.browsing() ? store.beams() : [],
+          ),
         };
       },
     },
