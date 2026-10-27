@@ -20,7 +20,8 @@ import { SettingSlider } from './setting-slider';
 
 /** A setting set with a slider. */
 interface SliderSetting {
-  readonly key: 'idleFps' | 'animationFps' | 'interactingFps' | 'resolution' | 'glassAlpha' | 'frameAlpha';
+  readonly key:
+    'idleFps' | 'animationFps' | 'interactingFps' | 'resolution' | 'glassAlpha' | 'frameAlpha';
   readonly label: string;
   readonly range: { readonly min: number; readonly max: number };
   readonly step: number;

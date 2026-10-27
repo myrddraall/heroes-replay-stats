@@ -41,7 +41,9 @@ export class RendererCheckPage {
       const text = this.check.tables().map(tableText).join('\n\n');
       if (phase === 'idle') return;
       const status = phase === 'done' ? 'Done.' : `Running: ${step ?? 'the next step'}`;
-      untracked(() => this.reports.send('renderer-check', `${status}\n\n${text}`, phase === 'done'));
+      untracked(() =>
+        this.reports.send('renderer-check', `${status}\n\n${text}`, phase === 'done'),
+      );
     });
   }
 

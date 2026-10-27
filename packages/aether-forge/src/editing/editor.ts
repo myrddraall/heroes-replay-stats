@@ -1,31 +1,29 @@
 import type { VariantRow } from '../variants/variant-list';
 import type { Signal } from '@angular/core';
-import {
-  BodySettings,
-  CreatedShape,
-  Orbit,
-  Vec3,
-} from '@myrddraall/heroes-replay-stats-aether/design';
-import {
-  MaterialSettings,
-  MaterialTint,
+import type { CreatedShape } from '@myrddraall/heroes-replay-stats-aether/overlays';
+import type { BodySettings, Orbit, Vec3 } from '@myrddraall/heroes-replay-stats-aether/scenes';
+import type {
   PartSettings,
   SceneCamera,
   SceneCameraSet,
-  SkyAnchor,
 } from '@myrddraall/heroes-replay-stats-aether/formats';
-import {
+import type {
+  MaterialSettings,
+  MaterialTint,
+} from '@myrddraall/heroes-replay-stats-aether/materials';
+import type { SkyAnchor } from '@myrddraall/heroes-replay-stats-aether/sky';
+import type {
   LightId,
   LightSettings,
   NewLightKind,
 } from '@myrddraall/heroes-replay-stats-aether/lights';
 import type { PickChoice } from '../controls/pick-list';
-import type { BodyView, TargetKind } from './model/body';
-import type { LightEntry, LitByEntry } from './model/lights';
-import type { MaterialEntry } from './model/materials';
-import type { MaterialView } from './model/views';
-import type { PartEntry } from './model/parts';
-import type { SkyAnchorView } from './model/sky';
+import type { BodyView, TargetKind } from '../bodies/body';
+import type { LightEntry, LitByEntry } from '../lights/lights';
+import type { MaterialEntry } from '../materials/materials';
+import type { MaterialView } from '../materials/material-views';
+import type { PartEntry } from '../parts/parts';
+import type { SkyAnchorView } from '../sky/sky';
 import type { AssetTarget, OpenTarget } from '../layout/open-target';
 import type { TreeMove, TreeRow } from '../tree/scene-tree';
 import type { PoleDrag, SceneMarker } from '../viewport/scene-markers';

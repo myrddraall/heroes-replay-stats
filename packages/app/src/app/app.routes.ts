@@ -48,7 +48,8 @@ export const routes: Routes = [
   {
     path: 'renderer-check',
     title: 'Renderer check · Heroes Replay Stats',
-    loadComponent: () => import('./pages/renderer-check/renderer-check-page').then((m) => m.RendererCheckPage),
+    loadComponent: () =>
+      import('./pages/renderer-check/renderer-check-page').then((m) => m.RendererCheckPage),
   },
   { path: '', component: Shell, children: pages },
 ];

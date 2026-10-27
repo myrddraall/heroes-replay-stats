@@ -12,7 +12,7 @@ import {
   type WebGPURenderer,
 } from 'three/webgpu';
 import type { SceneBlend } from '../formats/play-scene';
-import type { MaterialDepth } from '../formats/settings-types';
+import type { MaterialDepth } from '../materials/material-settings';
 import {
   type DrawState,
   type GpuDraw,
@@ -22,13 +22,13 @@ import {
   sharedKey,
 } from './draw-types';
 import { freeGpu } from './gpu';
-import type { SceneTextures } from './scene-textures';
-import { coldVertex } from './shaders/cold-shaders';
-import { bodyNodes } from './shaders/shader-body';
-import { type Slot, SLOTS, TextureSlots } from './shaders/shader-material';
-import { meshNodes } from './shaders/shader-mesh';
-import { type PassQuad, setBlend, type ToClip } from './shaders/shader-passes';
-import { DrawValues, ShaderUniforms, withValues } from './shaders/shader-uniforms';
+import type { SceneTextures } from './textures/scene-textures';
+import { coldVertex } from './cold-shaders';
+import { bodyNodes } from './bodies/body-shader';
+import { type Slot, SLOTS, TextureSlots } from './materials/material-shader';
+import { meshNodes } from './meshes/mesh-shader';
+import { type PassQuad, setBlend, type ToClip } from './passes/pass-shaders';
+import { DrawValues, ShaderUniforms, withValues } from './uniforms/shader-uniforms';
 
 /** What the draws' GPU side needs of the renderer. */
 export interface GpuDrawsHost {

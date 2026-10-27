@@ -1,9 +1,6 @@
-import {
-  type Design,
-  EMPTY_LIBRARY,
-  EMPTY_SCENES,
-  PublishedDesignStore,
-} from '@myrddraall/heroes-replay-stats-aether/design';
+import { type Design, PublishedDesignStore } from '@myrddraall/heroes-replay-stats-aether/design';
+import { EMPTY_LIBRARY } from '@myrddraall/heroes-replay-stats-aether/library';
+import { EMPTY_SCENES } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import { computed, inject } from '@angular/core';
 import { patchState, signalStoreFeature, type, withComputed, withMethods } from '@ngrx/signals';
 import { differing, same } from './design-writes';

@@ -1,9 +1,9 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { SCENE_SOURCE } from '@myrddraall/heroes-replay-stats-aether/design';
+import { SCENE_SOURCE } from '@myrddraall/heroes-replay-stats-aether/view';
 import { Editor } from '../editing/editor';
 import { OVERRIDE_SHOWN } from '../controls/rows/override-shown';
 import { EditorLayout } from '../layout/editor-layout';
-import { selectParentWhenGone } from '../editing/select-parent-when-gone';
+import { selectParentWhenGone } from '../tree/select-parent-when-gone';
 import { EditorUiStore } from '../layout/editor-ui.store';
 import { SceneEditorStore } from './scene-editor.store';
 import { SceneHeader } from './scene-header';

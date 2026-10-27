@@ -1,5 +1,6 @@
 import type { BodyPart } from './planet-files';
-import type { PartSettings } from './settings-types';
+import type { Orientation } from '../space/graph';
+import type { PartKey } from './part-keys';
 
 export type Vec3 = readonly [number, number, number];
 
@@ -343,4 +344,54 @@ function withRoundPart(part: BodyPart, shape: RoundShape, settings: PartSettings
           }
         : mapping,
   };
+}
+
+/**
+ * A part's shape and how its textures lie on it, in place of its own (each where set), relative to
+ * its body (so a style's part fits any planet it is worn by): its size (times its own: a sphere's
+ * radius, a ring's radii); a sphere's textures turned about its pole (`turn`, degrees) and its pole
+ * tilted (`tilt`, degrees, its top towards the eye); a ring's width (times its own, about its middle
+ * circle), its plane's depth along the line of sight (body radii; negative: towards the eye), the
+ * circle across it its texture is brightest on (`mid`, 0 its inner edge to 1 its outer), and
+ * whether it keeps to its body's limb seen from wherever its body is (`keepToLimb`, where it was
+ * modelled to).
+ */
+export interface PartSettings {
+  /** Its name as shown, in place of its role's (Surface, Shield, Ring…). */
+  readonly label?: string;
+  /** Whether it is drawn (its materials with it). */
+  readonly enabled?: boolean;
+  readonly size?: number;
+  readonly turn?: number;
+  readonly tilt?: number;
+  readonly width?: number;
+  /** A sky's band's height, times its own, about its middle (up and down); a tube's or a cone's length, times its own. */
+  readonly height?: number;
+  /** A tube's or a cone's side: its outside (`near`) or its inside (`far`), in place of its own. */
+  readonly side?: 'near' | 'far';
+  readonly depth?: number;
+  readonly mid?: number;
+  readonly keepToLimb?: boolean;
+  /** A sphere's textures round it the other way (mirrored), in place of its own way. */
+  readonly flip?: boolean;
+  /** A ring's texture turned round it: where it is greatest (degrees round its plane), in place of its own. */
+  readonly from?: number;
+  /** How many times a ring's texture goes round it (its u at its greatest), in place of its own. */
+  readonly repeat?: number;
+  /** Which way it is turned, over its body's (see `Orientation`): its materials' unless they set their own. */
+  readonly orientation?: Orientation;
+}
+
+/** Parts' settings by part. */
+export type PartSettingsMap = Readonly<Partial<Record<PartKey, PartSettings>>>;
+
+/** Parts' settings from several levels, the later over the earlier, each setting its own. */
+export function mergePartSettings(
+  ...levels: readonly (PartSettingsMap | undefined)[]
+): PartSettingsMap {
+  const out: Partial<Record<PartKey, PartSettings>> = {};
+  for (const level of levels)
+    for (const [key, settings] of Object.entries(level ?? {}) as [PartKey, PartSettings][])
+      out[key] = { ...out[key], ...settings };
+  return out;
 }

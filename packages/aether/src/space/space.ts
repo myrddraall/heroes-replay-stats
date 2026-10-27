@@ -1,9 +1,9 @@
 import type { AddedLight, LightSettingsMap } from '../lights/lights';
 import type { Orientation, Quat } from './graph';
-import { shapeReach } from '../formats/part-shapes';
+import { type PartSettingsMap, shapeReach } from '../formats/part-shapes';
 import type { BodyPart, BodyShade } from '../formats/planet-files';
 import type { LoadedPlanet } from '../formats/planet-loader';
-import type { MaterialSettingsMap, MaterialTint, PartSettingsMap } from '../formats/settings-types';
+import type { MaterialSettingsMap, MaterialTint } from '../materials/material-settings';
 /**
  * Where the scene's things are: the camera's matrices, a planet put up in it (its placement), its
  * body's frame and how far the square its parts are drawn on reaches, and the backdrop drawn in

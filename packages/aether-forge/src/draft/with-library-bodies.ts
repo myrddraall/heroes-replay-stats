@@ -1,12 +1,12 @@
+import type { Design } from '@myrddraall/heroes-replay-stats-aether/design';
 import {
   type BodySettings,
-  type Design,
   type MoonChoices,
   withMaterial,
   without,
   withoutMaterial,
-} from '@myrddraall/heroes-replay-stats-aether/design';
-import type { MaterialSettings } from '@myrddraall/heroes-replay-stats-aether/formats';
+} from '@myrddraall/heroes-replay-stats-aether/scenes';
+import type { MaterialSettings } from '@myrddraall/heroes-replay-stats-aether/materials';
 import { signalStoreFeature, type, withMethods } from '@ngrx/signals';
 import { designWrites, type LibraryKind } from './design-writes';
 

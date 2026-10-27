@@ -5,9 +5,9 @@
   "description": "The map viewer: a heroes-capture map pack (heroes-maps) drawn by a viewer component and the layer directives placed in it",
   "types": "./src/index.ts",
   "scripts": {
-    "format": "prettier --write \"{src,test}/**/*.{ts,html,scss}\"",
+    "format": "prettier --write \"src/**/*.{ts,html,scss}\"",
     "github.actions.test": "pnpm test",
-    "lint": "eslint src test",
+    "lint": "eslint src",
     "test": "vitest run",
     "typecheck": "tsc --noEmit -p ."
   },

@@ -1,10 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
-import {
-  GAME_CAMERA,
-  primaryCameraOf,
-  PublishedDesignStore,
-} from '@myrddraall/heroes-replay-stats-aether/design';
+import { PublishedDesignStore } from '@myrddraall/heroes-replay-stats-aether/design';
+import { GAME_CAMERA, primaryCameraOf } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import { DraftDesignStore } from './draft-design.store';
 
 const red = { colour: '#ff0000', blend: 'color', strength: 1 } as const;

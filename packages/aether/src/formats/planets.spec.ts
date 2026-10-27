@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import type { SceneLayer, SceneMaterial } from './play-scene';
 import type { BodyPart } from './planet-files';
 import { drawOrder, type Ordered, reordered } from './wear';
-import { layerSlots, mergePartSettings, withLayer, withLayers } from './settings-types';
-import { withPart, shapeReach } from './part-shapes';
+import { layerSlots, withLayer, withLayers } from '../materials/material-settings';
+import { mergePartSettings, shapeReach, withPart } from './part-shapes';
 const layer = (texture: string): SceneLayer => ({
   texture,
   brightMult: 1,

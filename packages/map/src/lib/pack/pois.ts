@@ -37,7 +37,11 @@ export interface PoiTeam {
   readonly groups: readonly PoiGroup[];
 }
 
-const TEAM_LABEL: Record<PoiTeam['id'], string> = { order: 'Order', chaos: 'Chaos', neutral: 'Neutral' };
+const TEAM_LABEL: Record<PoiTeam['id'], string> = {
+  order: 'Order',
+  chaos: 'Chaos',
+  neutral: 'Neutral',
+};
 
 /** A structure's type name in words; a type not known is given as it is. */
 export function structureLabel(type: string): string {
@@ -119,7 +123,8 @@ function groupsOf(owner: PoiOwner, structures: readonly Poi[], camps: readonly P
   const own = structures.filter((p) => p.owner === owner);
   const groups: PoiGroup[] = [];
   const cores = own.filter((p) => p.core);
-  if (cores.length) groups.push({ id: `core-${owner ?? 'none'}`, label: 'Core', owner, pois: cores });
+  if (cores.length)
+    groups.push({ id: `core-${owner ?? 'none'}`, label: 'Core', owner, pois: cores });
   for (const town of numbers(own, (p) => p.town)) {
     const inTown = own.filter((p) => p.town === town && !p.core);
     const ring = inTown.filter((p) => p.outpost === null).sort(byRank);
@@ -130,7 +135,8 @@ function groupsOf(owner: PoiOwner, structures: readonly Poi[], camps: readonly P
     }
   }
   const loose = own.filter((p) => !p.core && p.town === null).sort(byRank);
-  if (loose.length) groups.push({ id: `other-${owner ?? 'none'}`, label: 'Other', owner, pois: loose });
+  if (loose.length)
+    groups.push({ id: `other-${owner ?? 'none'}`, label: 'Other', owner, pois: loose });
   if (owner === null && camps.length) {
     groups.push({ id: 'camps', label: 'Mercenary camps', owner, pois: camps });
   }

@@ -1,11 +1,11 @@
+import type { LibraryState } from '@myrddraall/heroes-replay-stats-aether/library';
 import {
   type BodySettings,
-  type LibraryState,
   withMaterial,
   without,
   withoutMaterial,
-} from '@myrddraall/heroes-replay-stats-aether/design';
-import type { MaterialSettings } from '@myrddraall/heroes-replay-stats-aether/formats';
+} from '@myrddraall/heroes-replay-stats-aether/scenes';
+import type { MaterialSettings } from '@myrddraall/heroes-replay-stats-aether/materials';
 import type { DraftDesignStore } from '../draft/draft-design.store';
 import type { LibraryKind } from '../draft/design-writes';
 type Draft = InstanceType<typeof DraftDesignStore>;

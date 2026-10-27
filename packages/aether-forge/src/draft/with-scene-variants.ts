@@ -1,9 +1,6 @@
-import {
-  type Design,
-  MADE_VARIANT,
-  type SceneVariant,
-  without,
-} from '@myrddraall/heroes-replay-stats-aether/design';
+import type { Design } from '@myrddraall/heroes-replay-stats-aether/design';
+import { without } from '@myrddraall/heroes-replay-stats-aether/scenes';
+import { MADE_VARIANT, type SceneVariant } from '@myrddraall/heroes-replay-stats-aether/variants';
 import { signalStoreFeature, type, withMethods } from '@ngrx/signals';
 import { designWrites } from './design-writes';
 

@@ -1,4 +1,4 @@
-import type { MaterialDepth, MaterialSettings, SkyAnchor } from '../formats/settings-types';
+import type { MaterialDepth, MaterialSettings } from '../materials/material-settings';
 import { eyeOf, multiplyMatrices, rigidInverse } from '../space/space';
 
 /**
@@ -72,3 +72,13 @@ export function anchoredView(
   if (anchor === 'world') return view;
   return multiplyMatrices(view, skyTransform(anchor, follow, reference));
 }
+
+/**
+ * How the sky is anchored against the camera that sees it: fixed in the world (`world`: moving or
+ * turning the camera shows it from elsewhere, nearer or past its edges), moved with the camera's
+ * place but keeping its directions in the world (`position`: as a skybox, looking round shows
+ * other parts of it, but it never comes nearer), or moved and turned with the camera (`camera`: a
+ * fixed backdrop, always as the scene's own camera sees it). Seen from the scene's own camera, all
+ * three look the same.
+ */
+export type SkyAnchor = 'world' | 'position' | 'camera';

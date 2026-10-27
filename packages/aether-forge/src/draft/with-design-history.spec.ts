@@ -1,11 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
 import { beforeEach, describe, expect, it } from 'vitest';
-import {
-  type Design,
-  EMPTY_LIBRARY,
-  EMPTY_SCENES,
-} from '@myrddraall/heroes-replay-stats-aether/design';
+import type { Design } from '@myrddraall/heroes-replay-stats-aether/design';
+import { EMPTY_LIBRARY } from '@myrddraall/heroes-replay-stats-aether/library';
+import { EMPTY_SCENES } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import { HISTORY_COALESCE, withDesignHistory } from './with-design-history';
 
 let clock = 0;

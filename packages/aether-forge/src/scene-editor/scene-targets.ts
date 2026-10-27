@@ -5,13 +5,13 @@ import {
   pathKey,
   pathOf,
   type SceneBody,
-} from '@myrddraall/heroes-replay-stats-aether/design';
-import { type PartKey, type SceneCameraSet } from '@myrddraall/heroes-replay-stats-aether/formats';
-import { type LightId, type Receiver } from '@myrddraall/heroes-replay-stats-aether/lights';
+} from '@myrddraall/heroes-replay-stats-aether/scenes';
+import type { PartKey, SceneCameraSet } from '@myrddraall/heroes-replay-stats-aether/formats';
+import type { LightId, Receiver } from '@myrddraall/heroes-replay-stats-aether/lights';
 import { materialKey } from '@myrddraall/heroes-replay-stats-aether/materials';
-import { type BodyInfo, stackedSetting } from '../editing/model/body';
-import { type MaterialView, splitViewKey } from '../editing/model/views';
-import { offPart } from '../editing/model/materials';
+import { type BodyInfo, stackedSetting } from '../bodies/body';
+import { type MaterialView, splitViewKey } from '../materials/material-views';
+import { offPart } from '../materials/materials';
 import { REFERENCE_KEY } from '../aids/editing-aids.store';
 /** The scene tree's rows by what they are. */
 export const SCENE = 'scene';

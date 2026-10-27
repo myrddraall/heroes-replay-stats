@@ -1,6 +1,6 @@
 import { storageKey, TINT_PRESETS, ViewStore } from '@myrddraall/heroes-replay-stats-aether';
-import { RANDOM_SCENE, withPlanetFiles } from '@myrddraall/heroes-replay-stats-aether/design';
-import { loadPlanetIndex } from '@myrddraall/heroes-replay-stats-aether/formats';
+import { loadPlanetIndex, withPlanetFiles } from '@myrddraall/heroes-replay-stats-aether/formats';
+import { RANDOM_SCENE } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import { effect, inject, resource, untracked } from '@angular/core';
 import {
   signalStore,
@@ -10,34 +10,28 @@ import {
   withProps,
   withState,
 } from '@ngrx/signals';
-import { withFolding } from '../editing/with-folding';
+import { withFolding } from '../tree/with-folding';
 import { withLocalStorage } from '@myrddraall/heroes-replay-stats-signals';
 import { DraftDesignStore } from '../draft/draft-design.store';
 import { AssetCatalogStore } from '../library/asset-catalog.store';
 import { EditorUiStore } from '../layout/editor-ui.store';
 import { RANDOM_SETS } from '../layout/open-target';
-import { sceneViews } from './store/scene';
-import { cameraViews } from './store/cameras';
-import { skyViews } from './store/sky';
-import { selectionViews } from './store/selection';
+import { sceneMethods, sceneViews } from './scene';
+import { cameraMethods, cameraViews } from './cameras';
+import { skyMethods, skyViews } from './sky';
+import { selectionMethods, selectionViews } from './selection';
 import type { StoreOf, WritableStoreOf } from '../editing/store-of';
 import { EDITOR_CAMERA, SCENE, type SceneEditorState, bodyKey } from './scene-targets';
-import { partHostViews } from './store/part-hosts';
-import { treeViews } from './store/tree';
-import { backgroundViews } from './store/background';
-import { variantViews } from './store/variants';
-import { sceneWrites } from './store/methods/scene-writes';
-import { selectionMethods } from './store/methods/selection';
-import { sceneMethods } from './store/methods/scene';
-import { cameraMethods } from './store/methods/cameras';
-import { groupMethods } from './store/methods/groups';
-import { lightMethods } from './store/methods/lights';
-import { materialMethods } from './store/methods/materials';
-import { partMethods } from './store/methods/parts';
-import { bodyMethods } from './store/methods/bodies';
-import { skyMethods } from './store/methods/sky';
-import { variantMethods } from './store/methods/variants';
-
+import { partHostViews } from './part-hosts';
+import { treeViews } from './tree';
+import { backgroundViews } from './background';
+import { variantMethods, variantViews } from './variants';
+import { sceneWrites } from './scene-writes';
+import { groupMethods } from './groups';
+import { lightMethods } from './lights';
+import { materialMethods } from './materials';
+import { partMethods } from './parts';
+import { bodyMethods } from './bodies';
 const sceneStoreBase = () =>
   signalStoreFeature(
     withState<SceneEditorState>({

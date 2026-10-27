@@ -15,7 +15,7 @@ import {
   type LightSettingsMap,
   mergeLightSettings,
 } from '@myrddraall/heroes-replay-stats-aether/lights';
-import type { LightEntry } from '../editing/model/lights';
+import type { LightEntry } from '../lights/lights';
 import { GRID_COLOURS, type StandInFill } from './editing-aids.store';
 
 /**

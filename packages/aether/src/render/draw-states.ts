@@ -1,12 +1,15 @@
-import type { BodyShade } from '../formats/planet-files';
+import { type BodyShade, haloLike } from '../formats/planet-files';
 import {
   DEFAULT_ACTIVE,
   gridFields,
   MATERIAL_DEFAULTS,
+  type MaterialDepth,
+  type MaterialSettings,
   materialValues,
+  withLayers,
 } from '../materials/material-settings';
 import { rimTurn } from '../space/directions';
-import { skyAnchorOf } from '../sky/sky-anchors';
+import { type SkyAnchor, skyAnchorOf } from '../sky/sky-anchors';
 import {
   type AddedLight,
   addedLighting,
@@ -16,17 +19,10 @@ import {
   withAddedLights,
   withLightSettings,
 } from '../lights/lights';
-import { haloLike } from '../formats/planet-files';
 import { withMasks } from '../formats/wear';
-import {
-  type MaterialDepth,
-  type MaterialSettings,
-  type SkyAnchor,
-  withLayers,
-} from '../formats/settings-types';
 import { withPart } from '../formats/part-shapes';
 import type { PlanetPlacement } from '../space/space';
-import { UniformSet } from './uniforms';
+import { UniformSet } from './uniforms/uniforms';
 import {
   gridUniforms,
   lightUniforms,
@@ -35,12 +31,12 @@ import {
   scrollingLayers,
   shadeUniforms,
   tintUniforms,
-} from './draw-uniforms';
+} from './uniforms/draw-uniforms';
 import { drawTurnOf } from '../space/graph';
-import type { BodyLeans } from './body-frames';
+import type { BodyLeans } from './bodies/body-frames';
 import type { DrawState, MeshDraw } from './draw-types';
 import { HEX_ROUND } from './tuning';
-import { moves, overlaysOf, shown } from './body-draws';
+import { moves, overlaysOf, shown } from './bodies/body-draws';
 
 /** What working a draw out reads of the scene it is in. */
 export interface DrawContext {

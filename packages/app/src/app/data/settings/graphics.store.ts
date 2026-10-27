@@ -1,5 +1,12 @@
 import { computed, inject } from '@angular/core';
-import { patchState, signalStore, withComputed, withHooks, withMethods, withState } from '@ngrx/signals';
+import {
+  patchState,
+  signalStore,
+  withComputed,
+  withHooks,
+  withMethods,
+  withState,
+} from '@ngrx/signals';
 import { DEFAULT_DRAWING } from "@myrddraall/heroes-replay-stats-aether";
 import { PRESETS } from '../../site-background/tint-presets';
 import { HARDWARE_ACCELERATION } from './hardware-acceleration';
@@ -64,11 +71,39 @@ export const QUALITY_LABELS: Readonly<Record<Quality, string>> = {
 
 /** The quality presets, as in a game's graphics settings: High is the default. */
 export const QUALITY_PRESETS: Readonly<Record<Quality, GraphicsQuality>> = {
-  low: { animate: false, idleFps: 12, animationFps: 30, interactingFps: 0, resolution: 0.5, blur: false },
-  medium: { animate: true, idleFps: 8, animationFps: 30, interactingFps: 0, resolution: 0.75, blur: false },
+  low: {
+    animate: false,
+    idleFps: 12,
+    animationFps: 30,
+    interactingFps: 0,
+    resolution: 0.5,
+    blur: false,
+  },
+  medium: {
+    animate: true,
+    idleFps: 8,
+    animationFps: 30,
+    interactingFps: 0,
+    resolution: 0.75,
+    blur: false,
+  },
   high: { ...DEFAULT_DRAWING, blur: false },
-  ultra: { animate: true, idleFps: 30, animationFps: 60, interactingFps: 15, resolution: 1, blur: true },
-  extreme: { animate: true, idleFps: 60, animationFps: 120, interactingFps: 60, resolution: 1, blur: true },
+  ultra: {
+    animate: true,
+    idleFps: 30,
+    animationFps: 60,
+    interactingFps: 15,
+    resolution: 1,
+    blur: true,
+  },
+  extreme: {
+    animate: true,
+    idleFps: 60,
+    animationFps: 120,
+    interactingFps: 60,
+    resolution: 1,
+    blur: true,
+  },
 };
 
 export const FPS_RANGE = { min: 1, max: 120 } as const;
@@ -98,7 +133,11 @@ export function qualityOf(settings: GraphicsQuality): Quality | 'custom' {
   );
 }
 
-function number(v: unknown, { min, max }: { min: number; max: number }, step: number): number | undefined {
+function number(
+  v: unknown,
+  { min, max }: { min: number; max: number },
+  step: number,
+): number | undefined {
   if (typeof v !== 'number' || !Number.isFinite(v)) return undefined;
   const perUnit = Math.round(1 / step); // dividing by it keeps 0.75 exact, as the presets have it
   return Math.min(max, Math.max(min, Math.round(v * perUnit) / perUnit));
@@ -119,7 +158,10 @@ function valid(saved: Partial<Record<keyof GraphicsSettings, unknown>>): Partial
     blur: typeof saved.blur === 'boolean' ? saved.blur : undefined,
     theme: oneOf(saved.theme, ['neutral', 'nexus'] as const),
     colourMode: oneOf(saved.colourMode, ['fixed', 'random', 'in-turn'] as const),
-    colour: oneOf(saved.colour, PRESETS.map((p) => p.id)),
+    colour: oneOf(
+      saved.colour,
+      PRESETS.map((p) => p.id),
+    ),
     glassAlpha: number(saved.glassAlpha, GLASS_ALPHA_RANGE, 0.01),
     frameAlpha: number(saved.frameAlpha, GLASS_ALPHA_RANGE, 0.01),
     api: oneOf(saved.api, GRAPHICS_APIS),
@@ -181,7 +223,9 @@ function saveQuality(values: GraphicsQuality): void {
 function loadLook(): Partial<GraphicsLook> {
   const saved = parse(read(GRAPHICS_STORAGE_KEY));
   if (typeof saved !== 'object' || saved === null) return {};
-  const kept: Partial<GraphicsSettings> = valid(saved as Partial<Record<keyof GraphicsSettings, unknown>>);
+  const kept: Partial<GraphicsSettings> = valid(
+    saved as Partial<Record<keyof GraphicsSettings, unknown>>,
+  );
   for (const k of QUALITY_KEYS) delete kept[k];
   return kept;
 }
@@ -203,16 +247,14 @@ export const GraphicsStore = signalStore(
     custom: null,
   }),
   withComputed((store) => {
-    const values = computed(
-      (): GraphicsQuality => ({
-        animate: store.animate(),
-        idleFps: store.idleFps(),
-        animationFps: store.animationFps(),
-        interactingFps: store.interactingFps(),
-        resolution: store.resolution(),
-        blur: store.blur(),
-      }),
-    );
+    const values = computed((): GraphicsQuality => ({
+      animate: store.animate(),
+      idleFps: store.idleFps(),
+      animationFps: store.animationFps(),
+      interactingFps: store.interactingFps(),
+      resolution: store.resolution(),
+      blur: store.blur(),
+    }));
     return {
       /** The quality's values as they are. */
       qualityValues: values,

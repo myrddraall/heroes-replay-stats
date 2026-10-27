@@ -1,6 +1,6 @@
 import type { PlayScene, SceneMesh } from '../formats/play-scene';
 import type { Vec3 } from '../space/directions';
-import type { MaterialDepth } from '../formats/settings-types';
+import type { MaterialDepth } from '../materials/material-settings';
 /** Where a planet is looked at: its middle, and most of the way to its edges up, down and across. */
 const LOOKS: readonly Vec3[] = [
   [0, 0, 0],

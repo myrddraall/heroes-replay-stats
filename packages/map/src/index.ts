@@ -58,11 +58,7 @@ export {
 export { frameContext, LAYER_STYLE } from './lib/viewer/canvas';
 export { MapFixedLayer } from './lib/layers/map-fixed-layer';
 export { MapTileLayer } from './lib/layers/map-tile-layer';
-export {
-  isAsShot,
-  swappedTeamColours,
-  type TeamColours,
-} from './lib/layers/team-colour';
+export { isAsShot, swappedTeamColours, type TeamColours } from './lib/layers/team-colour';
 export { MapElementsLayer } from './lib/layers/elements/map-elements-layer';
 export type {
   CampShown,

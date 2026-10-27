@@ -22,28 +22,29 @@ import {
   type SkyOverlayFile,
 } from '../formats/play-scene';
 import { INSTANCE_FLOATS, ParticleSystem } from '../effects/particles';
-import { MATERIAL_DEFAULTS, materialKey, mergeSettings } from '../materials/material-settings';
+import {
+  MATERIAL_DEFAULTS,
+  type MaterialDepth,
+  materialKey,
+  type MaterialSettings,
+  mergeSettings,
+} from '../materials/material-settings';
 import { AXIS_NAMES_PAST, axisEnds, type EditingAid } from '../aids/beams';
 import { fitTube, tubeCover } from '../sky/tubes';
-import { overlayOfFile } from '../design/overlays/overlays';
+import { overlayOfFile } from '../overlays/overlays';
 import { skyOverlayParts } from '../sky/sky-overlays';
 import { skyDepths } from '../sky/sky-depths';
-import { anchoredDepth, anchoredView, skyAnchorOf } from '../sky/sky-anchors';
+import { anchoredDepth, anchoredView, type SkyAnchor, skyAnchorOf } from '../sky/sky-anchors';
 import { type AddedLight } from '../lights/lights';
 import { type BodyShade, DEFAULT_SHADE } from '../formats/planet-files';
 import { wearOf } from '../formats/wear';
 import type { LoadedPlanet } from '../formats/planet-loader';
-import {
-  type MaterialDepth,
-  type MaterialSettings,
-  type SkyAnchor,
-  type SkySettings,
-} from '../formats/settings-types';
+import type { SkySettings } from '../sky/sky-settings';
 import { ownPartKey, overlayOfPartKey, overlayPartKey, type PartKey } from '../formats/part-keys';
 import { BLEND_MODES, NO_TINT, type Tint } from '../tints/tints';
-import { MAX_SURFACES } from './limits';
-import { UniformSet } from './uniforms';
-import { CHANNELS, layerBrightness, tintUniforms } from './draw-uniforms';
+import { MAX_SURFACES } from './uniforms/limits';
+import { UniformSet } from './uniforms/uniforms';
+import { CHANNELS, layerBrightness, tintUniforms } from './uniforms/draw-uniforms';
 import {
   type Backdrop,
   bodyFrame,
@@ -58,14 +59,15 @@ import {
   type Viewpoint,
 } from '../space/space';
 import { DEFAULT_ORIENTATION, isIdentity, placementFrame, surfaceFrame } from '../space/graph';
-import { particleMaterial, type ToClip } from './shaders/shader-passes';
-import { ShaderUniforms } from './shaders/shader-uniforms';
-import { prepareMipmaps } from './mipmaps';
-import { SceneTextures } from './scene-textures';
-import { EditingAids } from './editing-aids';
-import { PassChain } from './pass-chain';
+import { particleMaterial } from './particle-shader';
+import type { ToClip } from './passes/pass-shaders';
+import { ShaderUniforms } from './uniforms/shader-uniforms';
+import { prepareMipmaps } from './textures/mipmaps';
+import { SceneTextures } from './textures/scene-textures';
+import { EditingAids } from './aids/editing-aids';
+import { PassChain } from './passes/pass-chain';
 import { GpuDraws } from './gpu-draws';
-import { BodyBaker } from './body-baker';
+import { BodyBaker } from './bodies/body-baker';
 import { type DrawContext, drawStateOf } from './draw-states';
 import {
   BLEND_KINDS,
@@ -90,7 +92,7 @@ import {
   sorted,
   turnFor,
   wearsIn,
-} from './body-draws';
+} from './bodies/body-draws';
 
 let nextPlacedId = 0;
 

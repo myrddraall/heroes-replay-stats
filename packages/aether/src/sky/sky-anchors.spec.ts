@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EMPTY_LIBRARY, type LibraryState, skyWithLibrary } from '../design/document/design';
+import { EMPTY_LIBRARY, type LibraryState, skyWithLibrary } from '../library/library';
 import { materialValues } from '../materials/material-settings';
 import type { SceneMaterial } from '../formats/play-scene';
 import { eyeOf, multiplyMatrices, rigidInverse, viewMatrix } from '../space/space';

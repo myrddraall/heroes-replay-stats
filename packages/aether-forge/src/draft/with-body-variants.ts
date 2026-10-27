@@ -1,10 +1,6 @@
-import {
-  type BodySettings,
-  type BodyVariant,
-  type Design,
-  MADE_VARIANT,
-  without,
-} from '@myrddraall/heroes-replay-stats-aether/design';
+import type { Design } from '@myrddraall/heroes-replay-stats-aether/design';
+import { type BodySettings, without } from '@myrddraall/heroes-replay-stats-aether/scenes';
+import { type BodyVariant, MADE_VARIANT } from '@myrddraall/heroes-replay-stats-aether/variants';
 import { signalStoreFeature, type, withMethods } from '@ngrx/signals';
 import { designWrites } from './design-writes';
 

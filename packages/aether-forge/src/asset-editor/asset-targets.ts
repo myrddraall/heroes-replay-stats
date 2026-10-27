@@ -4,13 +4,13 @@ import {
   type MoonChoices,
   pathKey,
   pathOf,
-} from '@myrddraall/heroes-replay-stats-aether/design';
-import { type PartKey, type SceneCameraSet } from '@myrddraall/heroes-replay-stats-aether/formats';
-import { type LightId, type Receiver } from '@myrddraall/heroes-replay-stats-aether/lights';
+} from '@myrddraall/heroes-replay-stats-aether/scenes';
+import type { PartKey, SceneCameraSet } from '@myrddraall/heroes-replay-stats-aether/formats';
+import type { LightId, Receiver } from '@myrddraall/heroes-replay-stats-aether/lights';
 import { materialKey } from '@myrddraall/heroes-replay-stats-aether/materials';
 import type { LibraryKind } from '../draft/design-writes';
-import { offPart } from '../editing/model/materials';
-import { type MaterialView, splitViewKey } from '../editing/model/views';
+import { offPart } from '../materials/materials';
+import { type MaterialView, splitViewKey } from '../materials/material-views';
 import { REFERENCE_KEY } from '../aids/editing-aids.store';
 import type { AssetKind, AssetTarget } from '../layout/open-target';
 /** The planet a style, a material or the sky is shown on, until a planet has been opened. */

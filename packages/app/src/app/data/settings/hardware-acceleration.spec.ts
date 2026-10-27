@@ -2,7 +2,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { detectHardwareAcceleration } from './hardware-acceleration';
 
 /** WebGL 2 as a browser gives it: a context unless it would have a major performance caveat. */
-function browser({ caveat, renderer = 'ANGLE (NVIDIA GeForce RTX 4080)' }: { caveat: boolean; renderer?: string }) {
+function browser({
+  caveat,
+  renderer = 'ANGLE (NVIDIA GeForce RTX 4080)',
+}: {
+  caveat: boolean;
+  renderer?: string;
+}) {
   const gl = {
     RENDERER: 0x1f01,
     getExtension: (name: string) =>

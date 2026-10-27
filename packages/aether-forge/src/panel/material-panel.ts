@@ -1,6 +1,6 @@
 import { Component, computed, inject } from '@angular/core';
 import { DATA_URL } from '@myrddraall/heroes-replay-stats-aether';
-import type { LayerSettings, LayerSlot } from '@myrddraall/heroes-replay-stats-aether/formats';
+import type { LayerSettings, LayerSlot } from '@myrddraall/heroes-replay-stats-aether/materials';
 import {
   type AddedLight,
   addedLight,
@@ -13,16 +13,16 @@ import {
 import { type AddedItem, AddedList } from '../controls/added-list';
 import { PropertySection } from '../controls/property-section';
 import { Editor } from '../editing/editor';
-import { type LightEntry, lightIcon } from '../editing/model/lights';
-import type { LayerEntry, MaterialEntry } from '../editing/model/materials';
-import { splitViewKey, viewKey } from '../editing/model/views';
+import { type LightEntry, lightIcon } from '../lights/lights';
+import type { LayerEntry, MaterialEntry } from '../materials/materials';
+import { splitViewKey, viewKey } from '../materials/material-views';
 import { EditorUiStore } from '../layout/editor-ui.store';
-import { AddLight } from '../properties/light/add-light';
-import { LightProperties } from '../properties/light/light-properties';
-import { LitBy } from '../properties/light/lit-by';
-import { LayerProperties } from '../properties/material/layer-properties';
-import { MaterialProperties } from '../properties/material/material-properties';
-import { PatternProperties } from '../properties/material/pattern-properties';
+import { AddLight } from '../lights/add-light';
+import { LightProperties } from '../lights/light-properties';
+import { LitBy } from '../lights/lit-by';
+import { LayerProperties } from '../materials/layer-properties';
+import { MaterialProperties } from '../materials/material-properties';
+import { PatternProperties } from '../materials/pattern-properties';
 
 /**
  * A material's properties in the selection panel (container, on the `Editor` in effect): the

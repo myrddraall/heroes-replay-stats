@@ -1,10 +1,23 @@
 import { computed, inject } from '@angular/core';
-import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
+import {
+  patchState,
+  signalStore,
+  withComputed,
+  withHooks,
+  withMethods,
+  withProps,
+  withState,
+} from '@ngrx/signals';
 import { ViewStore } from "@myrddraall/heroes-replay-stats-aether";
 import { coldShaders, type RendererFactory } from "@myrddraall/heroes-replay-stats-aether/render";
 import type { CheckTable } from './check-table';
 import { compare, type Difference } from './compare';
-import { CompileTimeline, type PageCosts, type PipelineRecord, type ProgramRecord } from './compile-timeline';
+import {
+  CompileTimeline,
+  type PageCosts,
+  type PipelineRecord,
+  type ProgramRecord,
+} from './compile-timeline';
 import { type CheckMode, type CheckSlot, DualRenderer, SLOT_LABELS } from './dual-renderer';
 
 /** One of the check's tests drawing the background: which of three.js's backends draw. */
@@ -80,7 +93,8 @@ const TRIES = 2;
 const MIPMAP = /^mipmap-/;
 
 /** A pipeline's name as three.js labels it, without its prefix and its material's number (`renderPipeline_body:opaque_12`). */
-const pipelineName = (label: string) => label.replace(/^renderPipeline_/, '').replace(/_\d+$/, '') || '(no label)';
+const pipelineName = (label: string) =>
+  label.replace(/^renderPipeline_/, '').replace(/_\d+$/, '') || '(no label)';
 
 interface CheckState {
   readonly phase: 'idle' | 'running' | 'done';
@@ -98,7 +112,8 @@ interface CheckState {
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
-const ms = (n: number | null | undefined) => (n === null || n === undefined ? '' : String(Math.round(n)));
+const ms = (n: number | null | undefined) =>
+  n === null || n === undefined ? '' : String(Math.round(n));
 
 /** What the computer is, as the browser tells (WebGPU's adapter asked for later: see `adapterRow`). */
 function environment(): [string, string][] {
@@ -109,9 +124,15 @@ function environment(): [string, string][] {
   const gl = document.createElement('canvas').getContext('webgl2');
   if (gl) {
     const info = gl.getExtension('WEBGL_debug_renderer_info');
-    rows.push(['WebGL renderer', String(gl.getParameter(info ? info.UNMASKED_RENDERER_WEBGL : gl.RENDERER))]);
+    rows.push([
+      'WebGL renderer',
+      String(gl.getParameter(info ? info.UNMASKED_RENDERER_WEBGL : gl.RENDERER)),
+    ]);
     const has = (name: string) => (gl.getExtension(name) ? 'yes' : 'no');
-    rows.push(['Parallel compiling (KHR_parallel_shader_compile)', has('KHR_parallel_shader_compile')]);
+    rows.push([
+      'Parallel compiling (KHR_parallel_shader_compile)',
+      has('KHR_parallel_shader_compile'),
+    ]);
     rows.push(['Float targets (EXT_color_buffer_float)', has('EXT_color_buffer_float')]);
     rows.push(['Translated shaders shown (WEBGL_debug_shaders)', has('WEBGL_debug_shaders')]);
     gl.getExtension('WEBGL_lose_context')?.loseContext();
@@ -123,7 +144,10 @@ function environment(): [string, string][] {
 async function adapterRow(): Promise<[string, string]> {
   const adapter = navigator.gpu ? await navigator.gpu.requestAdapter() : null;
   const a = adapter?.info;
-  return ['WebGPU adapter', a ? [a.vendor, a.architecture, a.device, a.description].filter(Boolean).join(' / ') : 'none'];
+  return [
+    'WebGPU adapter',
+    a ? [a.vendor, a.architecture, a.device, a.description].filter(Boolean).join(' / ') : 'none',
+  ];
 }
 
 /**
@@ -205,27 +229,56 @@ export const RendererCheckStore = signalStore(
     tables: computed((): CheckTable[] => {
       const tables: CheckTable[] = [];
       if (store.failures().length)
-        tables.push({ title: 'Steps that failed (the others still ran)', columns: ['Step', 'Why'], rows: store.failures() });
+        tables.push({
+          title: 'Steps that failed (the others still ran)',
+          columns: ['Step', 'Why'],
+          rows: store.failures(),
+        });
       if (store.environment().length)
-        tables.push({ title: 'This computer', columns: ['What', 'Here'], rows: store.environment() });
+        tables.push({
+          title: 'This computer',
+          columns: ['What', 'Here'],
+          rows: store.environment(),
+        });
       const tests = store.tests();
       if (tests.length) {
         tables.push({
           title: 'Tests drawing the background (ms from when its renderers were made)',
-          columns: ['Test', 'Renderer', 'First frame', 'Whole picture', 'GPU done', 'Picture size', 'Outcome'],
+          columns: [
+            'Test',
+            'Renderer',
+            'First frame',
+            'Whole picture',
+            'GPU done',
+            'Picture size',
+            'Outcome',
+          ],
           rows: tests.flatMap((t) =>
-            (t.times.length ? t.times : [{ renderer: '', backend: null, first: null, whole: null, gpuDone: null }]).map((r) => [
+            (t.times.length
+              ? t.times
+              : [{ renderer: '', backend: null, first: null, whole: null, gpuDone: null }]
+            ).map((r) => [
               t.test.label,
               // What it drew with, where that isn't what was asked for (no WebGPU in the browser).
-              r.backend && !r.renderer.endsWith(r.backend) ? `${r.renderer} (drew with ${r.backend})` : r.renderer,
+              r.backend && !r.renderer.endsWith(r.backend)
+                ? `${r.renderer} (drew with ${r.backend})`
+                : r.renderer,
               ms(r.first),
               ms(r.whole),
               ms(r.gpuDone),
               t.width ? `${t.width} x ${t.height}` : '',
               [
-                t.again && t.test.warmUp ? 'run again (the page was hidden): not the first run in the page' : '',
-                t.hiddenMs > 0 ? `page hidden ${Math.round(t.hiddenMs / 1000)} s: times not to be trusted` : '',
-                t.outcome === 'failed' ? `failed: ${t.error ?? ''}` : t.outcome === 'too long' ? 'not done in 5 minutes' : '',
+                t.again && t.test.warmUp
+                  ? 'run again (the page was hidden): not the first run in the page'
+                  : '',
+                t.hiddenMs > 0
+                  ? `page hidden ${Math.round(t.hiddenMs / 1000)} s: times not to be trusted`
+                  : '',
+                t.outcome === 'failed'
+                  ? `failed: ${t.error ?? ''}`
+                  : t.outcome === 'too long'
+                    ? 'not done in 5 minutes'
+                    : '',
               ]
                 .filter(Boolean)
                 .join('; '),
@@ -269,7 +322,14 @@ export const RendererCheckStore = signalStore(
         if (compared.length)
           tables.push({
             title: 'Pictures compared',
-            columns: ['Test', 'Pixels over 2 levels', 'Pixels over 8 levels', 'Largest difference', 'Mean difference', 'Picture size'],
+            columns: [
+              'Test',
+              'Pixels over 2 levels',
+              'Pixels over 8 levels',
+              'Largest difference',
+              'Mean difference',
+              'Picture size',
+            ],
             rows: compared.map((t) => {
               const d = t.difference!;
               return [
@@ -319,12 +379,23 @@ export const RendererCheckStore = signalStore(
           });
         const ahead = tests.flatMap((t) => {
           const first = t.times.find((r) => r.renderer === SLOT_LABELS.webgpu)?.first ?? null;
-          return t.pipelines.filter((p) => p.kind === 'async').map((p) => [t.test.label, p, first] as const);
+          return t.pipelines
+            .filter((p) => p.kind === 'async')
+            .map((p) => [t.test.label, p, first] as const);
         });
         if (ahead.length)
           tables.push({
-            title: 'WebGPU pipelines made ahead in each test (ms from when its renderers were made)',
-            columns: ['Test', 'Pipeline', 'Asked at', 'Done at', 'Building', 'Done before the first frame', 'Shader code (bytes)'],
+            title:
+              'WebGPU pipelines made ahead in each test (ms from when its renderers were made)',
+            columns: [
+              'Test',
+              'Pipeline',
+              'Asked at',
+              'Done at',
+              'Building',
+              'Done before the first frame',
+              'Shader code (bytes)',
+            ],
             rows: ahead.map(([test, p, first]) => [
               test,
               pipelineName(p.label),
@@ -340,7 +411,8 @@ export const RendererCheckStore = signalStore(
         );
         if (atFirstDraw.length)
           tables.push({
-            title: 'WebGPU pipelines made at their first draw, not ahead (ms from when its renderers were made)',
+            title:
+              'WebGPU pipelines made at their first draw, not ahead (ms from when its renderers were made)',
             columns: ['Test', 'Pipeline', 'Made at', 'Built in (at most)', 'Shader code (bytes)'],
             rows: atFirstDraw.map(([test, p]) => [
               test,
@@ -365,7 +437,11 @@ export const RendererCheckStore = signalStore(
       patchState(store, { failures: [...store.failures(), [step, message(e)] as const] });
     /** How long the page was hidden between two times (`performance.now`). */
     const hiddenBetween = (from: number, to: number) =>
-      run.hidden.reduce((sum, h) => sum + Math.max(0, Math.min(to, h.to ?? performance.now()) - Math.max(from, h.from)), 0);
+      run.hidden.reduce(
+        (sum, h) =>
+          sum + Math.max(0, Math.min(to, h.to ?? performance.now()) - Math.max(from, h.from)),
+        0,
+      );
     const onVisibility = () => {
       const now = performance.now();
       if (document.hidden) run.hidden.push({ from: now, to: null });
@@ -419,7 +495,11 @@ export const RendererCheckStore = signalStore(
             firstDrawDoneAt: at(p.firstDrawDoneAt),
             flags: [...p.flags],
           })),
-          pipelines: taken.pipelines.map((p) => ({ ...p, requestedAt: p.requestedAt - origin, resolvedAt: at(p.resolvedAt) })),
+          pipelines: taken.pipelines.map((p) => ({
+            ...p,
+            requestedAt: p.requestedAt - origin,
+            resolvedAt: at(p.resolvedAt),
+          })),
           costs: { ...taken.costs },
         };
       };
@@ -439,10 +519,18 @@ export const RendererCheckStore = signalStore(
         const webgpu = await dual.webgpu.renderer.readPixels();
         const webgl = await dual.webgl.renderer.readPixels();
         if (webgpu.length !== webgl.length)
-          return { ...done, outcome: 'failed', error: `the pictures' sizes differ (${webgpu.length} and ${webgl.length} bytes)` };
+          return {
+            ...done,
+            outcome: 'failed',
+            error: `the pictures' sizes differ (${webgpu.length} and ${webgl.length} bytes)`,
+          };
         return { ...done, difference: compare(webgpu, webgl, done.width, done.height) };
       } catch (e) {
-        return { ...done, outcome: 'failed', error: `reading the pictures back failed: ${message(e)}` };
+        return {
+          ...done,
+          outcome: 'failed',
+          error: `reading the pictures back failed: ${message(e)}`,
+        };
       } finally {
         dual.holding = false;
       }
@@ -455,7 +543,10 @@ export const RendererCheckStore = signalStore(
         store.background.setPlanetSet(run.planetSet);
         run.timeline!.take(); // what came before isn't this test's
         const started = performance.now();
-        patchState(store, { current: index, step: attempt > 1 ? `${test.label} (again: the page was hidden)` : test.label });
+        patchState(store, {
+          current: index,
+          step: attempt > 1 ? `${test.label} (again: the page was hidden)` : test.label,
+        });
         let result: TestResult | null = null;
         try {
           while (!result && !run.stopped) {
@@ -478,9 +569,11 @@ export const RendererCheckStore = signalStore(
       run.warmedUp = false;
       patchState(store, { warmingUp: true, step: "Loading the scene's files" });
       const started = performance.now();
-      while (!run.warmedUp && !run.stopped && performance.now() - started < TEST_LIMIT_MS) await wait(POLL_MS);
+      while (!run.warmedUp && !run.stopped && performance.now() - started < TEST_LIMIT_MS)
+        await wait(POLL_MS);
       patchState(store, { warmingUp: false, step: 'The next step, shortly' });
-      if (!run.warmedUp && !run.stopped) fail("Loading the scene's files", 'they did not load in 5 minutes');
+      if (!run.warmedUp && !run.stopped)
+        fail("Loading the scene's files", 'they did not load in 5 minutes');
       await wait(PAUSE_MS);
       return run.warmedUp;
     };
@@ -514,7 +607,8 @@ export const RendererCheckStore = signalStore(
         run.timeline = new CompileTimeline();
         run.uninstall = run.timeline.install();
         try {
-          if (await loadScene()) for (let i = 0; i < CHECK_TESTS.length && !run.stopped; i++) await runTest(i);
+          if (await loadScene())
+            for (let i = 0; i < CHECK_TESTS.length && !run.stopped; i++) await runTest(i);
           if (!run.stopped) {
             try {
               patchState(store, { environment: [...store.environment(), await adapterRow()] });

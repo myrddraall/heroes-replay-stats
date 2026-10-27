@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { layerBrightness } from '../render/draw-uniforms';
+import { layerBrightness } from '../render/uniforms/draw-uniforms';
 import { forwardOf } from '../camera/camera';
 import { bodyExtent, bodyFrame, partsExtent, projectionMatrix, viewMatrix, viewUp } from './space';
 import type { BodyPart } from '../formats/planet-files';

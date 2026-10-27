@@ -9,7 +9,6 @@ import {
   withProps,
 } from '@ngrx/signals';
 import type { Design } from '@myrddraall/heroes-replay-stats-aether/design';
-
 /** How long after a change the next is taken as part of it (a drag, a scrub), in milliseconds. */
 export const HISTORY_COALESCE = 600;
 /** How many steps back are kept. */

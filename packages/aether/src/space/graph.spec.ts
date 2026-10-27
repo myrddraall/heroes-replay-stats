@@ -5,8 +5,8 @@ import {
   orbitTo,
   placeBodies,
   type PlanetChoices,
-} from '../design/document/scene-settings';
-import { groupBodies, groupTransform, SCENE_CENTRE } from '../design/document/scene-bodies';
+} from '../scenes/scene-settings';
+import { groupBodies, groupTransform, SCENE_CENTRE } from '../scenes/scene-bodies';
 import {
   about as aboutBy,
   bodyTurn,

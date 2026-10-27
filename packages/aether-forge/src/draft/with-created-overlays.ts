@@ -1,13 +1,13 @@
+import type { Design } from '@myrddraall/heroes-replay-stats-aether/design';
 import {
   type AddedPart,
   type CreatedOverlay,
-  type Design,
   nextOverlayId,
   type OverlayKind,
   sceneWithout,
-} from '@myrddraall/heroes-replay-stats-aether/design';
+} from '@myrddraall/heroes-replay-stats-aether/overlays';
 import { signalStoreFeature, type, withMethods } from '@ngrx/signals';
-import { withOverlayParts } from '../editing/part-hosts';
+import { withOverlayParts } from '../parts/part-hosts';
 import { designWrites } from './design-writes';
 
 /** Overlays made in the editor: made, changed, deleted (and taken off whatever wore them). */

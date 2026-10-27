@@ -21,7 +21,8 @@ import { environment } from '../environments/environment';
 
 /** Whether a route is the Background page's (its editor: whatever is open in it). */
 function onBackgroundPage(route: ActivatedRouteSnapshot | null): boolean {
-  for (let r = route; r; r = r.firstChild) if (r.url[0]?.path === BACKGROUND_EDITOR_PATH) return true;
+  for (let r = route; r; r = r.firstChild)
+    if (r.url[0]?.path === BACKGROUND_EDITOR_PATH) return true;
   return false;
 }
 

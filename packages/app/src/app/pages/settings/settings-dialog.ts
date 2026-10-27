@@ -9,7 +9,9 @@ import { SettingsPanel } from './settings-panel';
   imports: [MatButton, MatDialogActions, MatDialogClose, MatDialogContent, SettingsPanel],
   template: `
     <mat-dialog-content><hrs-settings-panel /></mat-dialog-content>
-    <mat-dialog-actions align="end"><button mat-button type="button" mat-dialog-close>Close</button></mat-dialog-actions>
+    <mat-dialog-actions align="end"
+      ><button mat-button type="button" mat-dialog-close>Close</button></mat-dialog-actions
+    >
   `,
 })
 export class SettingsDialog {}

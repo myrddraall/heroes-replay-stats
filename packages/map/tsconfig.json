@@ -15,7 +15,7 @@
     "noFallthroughCasesInSwitch": true,
     "isolatedModules": true
   },
-  "include": ["src/**/*.ts", "test/**/*.ts", "vitest.config.ts"],
+  "include": ["src/**/*.ts", "vitest.config.ts"],
   // Restated on purpose: the root config's `exclude` lists `packages`, which would
   // exclude this whole project if inherited.
   "exclude": ["node_modules"]

@@ -1,17 +1,16 @@
 import type { Signal } from '@angular/core';
 import { patchState, type WritableStateSource } from '@ngrx/signals';
+import type { Design } from '@myrddraall/heroes-replay-stats-aether/design';
+import type { LibraryState } from '@myrddraall/heroes-replay-stats-aether/library';
 import {
   type BodySettings,
-  type Design,
-  type LibraryState,
   ownScene,
   type PlanetChoices,
   type ScenesState,
   type SkyChoices,
   without,
-} from '@myrddraall/heroes-replay-stats-aether/design';
-import type { MaterialSettings } from '@myrddraall/heroes-replay-stats-aether/formats';
-
+} from '@myrddraall/heroes-replay-stats-aether/scenes';
+import type { MaterialSettings } from '@myrddraall/heroes-replay-stats-aether/materials';
 /** Which of the library's bodies: a planet's defaults, or a style's. */
 export type LibraryKind = 'planets' | 'styles';
 

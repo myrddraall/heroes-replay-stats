@@ -1,5 +1,5 @@
 import { presetColour, TINT_PRESETS } from '@myrddraall/heroes-replay-stats-aether';
-import { type Design } from '@myrddraall/heroes-replay-stats-aether/design';
+import type { Design } from '@myrddraall/heroes-replay-stats-aether/design';
 import { type PartTint, UNTINTED } from '@myrddraall/heroes-replay-stats-aether/tints';
 import { DOCUMENT } from '@angular/common';
 import { inject } from '@angular/core';

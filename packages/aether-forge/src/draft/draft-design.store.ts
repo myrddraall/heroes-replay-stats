@@ -1,9 +1,6 @@
 import { storageKey } from '@myrddraall/heroes-replay-stats-aether';
-import {
-  type Design,
-  migrateDesign,
-  PublishedDesignStore,
-} from '@myrddraall/heroes-replay-stats-aether/design';
+import { type Design, PublishedDesignStore } from '@myrddraall/heroes-replay-stats-aether/design';
+import { migrateDesign } from '@myrddraall/heroes-replay-stats-aether/overlays';
 import { inject } from '@angular/core';
 import {
   patchState,

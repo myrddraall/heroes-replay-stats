@@ -12,7 +12,11 @@ const flat = (s: string) => s.replace(/\s*[\t\r\n]+\s*/g, ' | ').trim();
 
 /** A check table as tab-separated text (its title, headings, rows), to paste anywhere. */
 export function tableText(table: CheckTable): string {
-  return [flat(table.title), table.columns.map(flat).join('\t'), ...table.rows.map((r) => r.map(flat).join('\t'))].join('\n');
+  return [
+    flat(table.title),
+    table.columns.map(flat).join('\t'),
+    ...table.rows.map((r) => r.map(flat).join('\t')),
+  ].join('\n');
 }
 
 /** One of the renderer check's tables (presentational). */

@@ -142,7 +142,8 @@ export class ElementImages {
     if (!whole) return undefined;
     const maskAtlas = this.atlases.get('masks');
     if (!maskAtlas || !masks.length) return whole;
-    const key = masks.map((m) => m.id).join(',') + (colours ? ` ${teamColoursKey(colours.wanted)}` : '');
+    const key =
+      masks.map((m) => m.id).join(',') + (colours ? ` ${teamColoursKey(colours.wanted)}` : '');
     const kept = this.composed.get(cut);
     if (kept?.key === key) return { source: kept.canvas, x: 0, y: 0, w, h };
     const canvas = new OffscreenCanvas(w, h);
@@ -174,7 +175,11 @@ export class ElementImages {
     const key = `${atlas} ${at.join(',')} ${teamColoursKey(colours.wanted)}`;
     let canvas = this.recoloured.get(key);
     if (!canvas) {
-      canvas = recolouredPicture({ ...picture, mask, maskX: at[0], maskY: at[1] }, colours.shot, colours.wanted);
+      canvas = recolouredPicture(
+        { ...picture, mask, maskX: at[0], maskY: at[1] },
+        colours.shot,
+        colours.wanted,
+      );
       this.recoloured.set(key, canvas);
     }
     return { source: canvas, x: 0, y: 0, w: picture.w, h: picture.h };

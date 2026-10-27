@@ -1,16 +1,16 @@
 import { DATA_URL } from '@myrddraall/heroes-replay-stats-aether';
+import { overlayFileFor } from '@myrddraall/heroes-replay-stats-aether/overlays';
 import {
   type MoonChoices,
-  overlayFileFor,
   PLAY_SCREEN_SCENE,
   RANDOM_SCENE,
-} from '@myrddraall/heroes-replay-stats-aether/design';
+} from '@myrddraall/heroes-replay-stats-aether/scenes';
 import { Component, computed, inject } from '@angular/core';
 import { DraftDesignStore } from '../draft/draft-design.store';
 import { AssetCatalogStore } from './asset-catalog.store';
 import { type AssetDetails, AssetDetailsView } from './asset-details';
 import { Editor } from '../editing/editor';
-import { partMaterials, texturesOf } from '../editing/model/materials';
+import { partMaterials, texturesOf } from '../materials/materials';
 const PLANET_KINDS: Readonly<Record<string, string>> = {
   play: 'Play screen planet',
   world: 'Flyby world',

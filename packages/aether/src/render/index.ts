@@ -1,4 +1,4 @@
-export { LIGHT_KINDS } from './draw-uniforms';
+export { coldShaders } from './cold-shaders';
 export { type Renderer, RENDERER, type RendererFactory } from './renderer';
-export { coldShaders } from './shaders/cold-shaders';
 export { ThreeRenderer } from './three-renderer';
+export { LIGHT_KINDS } from './uniforms/draw-uniforms';

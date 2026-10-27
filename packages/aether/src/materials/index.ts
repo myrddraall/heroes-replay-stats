@@ -1,10 +1,18 @@
 export { materialLabel, textureLabel } from './material-names';
 export {
+  type LayerSettings,
+  type LayerSlot,
+  layerSlots,
   MATERIAL_BLENDS,
   MATERIAL_DEFAULTS,
   type MaterialControls,
   materialControls,
+  type MaterialDepth,
+  type MaterialDrawAs,
   materialKey,
+  type MaterialSettings,
+  type MaterialSettingsMap,
+  type MaterialTint,
   type MaterialValues,
   materialValues,
   mergeMaterialSettings,
@@ -12,4 +20,5 @@ export {
   NO_MATERIAL_TINT,
   originsOf,
   type SettingOrigins,
+  withLayer,
 } from './material-settings';

@@ -1,6 +1,6 @@
+import { type Design, PublishedDesignStore } from '@myrddraall/heroes-replay-stats-aether/design';
 import {
   type AddedCamera,
-  type Design,
   GAME_CAMERA,
   GROUP_PREFIX,
   type GroupPlacement,
@@ -8,11 +8,10 @@ import {
   ownScene,
   placesOnly,
   type PlanetChoices,
-  PublishedDesignStore,
   sceneBodies,
   type SceneBody,
   without,
-} from '@myrddraall/heroes-replay-stats-aether/design';
+} from '@myrddraall/heroes-replay-stats-aether/scenes';
 import type { AddedLight } from '@myrddraall/heroes-replay-stats-aether/lights';
 import { inject } from '@angular/core';
 import { signalStoreFeature, type, withMethods } from '@ngrx/signals';

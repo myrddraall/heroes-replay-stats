@@ -20,7 +20,12 @@ export interface MapPackState {
   readonly teamColoursSwapped: boolean;
 }
 
-const INITIAL: MapPackState = { mapId: null, hiddenLayers: [], arena: 0, teamColoursSwapped: false };
+const INITIAL: MapPackState = {
+  mapId: null,
+  hiddenLayers: [],
+  arena: 0,
+  teamColoursSwapped: false,
+};
 
 /**
  * A component store's hook-up to the global {@link MapsStore} for one map: which map (`showMap`),
@@ -54,7 +59,11 @@ export function withMapPack() {
         /** Whether the map has team colour to show in other colours: a layer's or a structure's. */
         hasTeamColour: computed(() => {
           const p = pack();
-          return !!p && (p.layers.some((l) => l.kind !== 'fixed' && l.teamMask) || !!p.data.elements?.atlases.team);
+          return (
+            !!p &&
+            (p.layers.some((l) => l.kind !== 'fixed' && l.teamMask) ||
+              !!p.data.elements?.atlases.team)
+          );
         }),
         /** The colours the viewer shows the teams in; null: as the pack has them. */
         teamColours: computed((): TeamColours | null => {

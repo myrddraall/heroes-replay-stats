@@ -14,9 +14,9 @@ import {
   viewChild,
 } from '@angular/core';
 import { DEFAULT_DRAWING } from './view.store';
-import { beyondEdge } from '../design/sets/planet-sets';
+import { beyondEdge } from '../planet-sets/planet-sets';
 import type { LoadedPlayScene, SceneCameraSet } from '../formats/play-scene';
-import type { SkySettings } from '../formats/settings-types';
+import type { SkySettings } from '../sky/sky-settings';
 import type { Backdrop, PlanetPlacement } from '../space/space';
 import { RENDERER, type Renderer, type RendererFactory } from '../render/renderer';
 import { NO_TINT, sameTint, type Tint } from '../tints/tints';

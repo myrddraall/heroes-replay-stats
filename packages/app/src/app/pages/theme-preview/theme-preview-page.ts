@@ -100,7 +100,9 @@ export class ThemePreviewPage {
   constructor() {
     // While the page is open it holds the background's tints; leaving gives back the site's.
     effect(() => {
-      const blue = getComputedStyle(this.root).getPropertyValue('--hrs-background-tint-blue').trim();
+      const blue = getComputedStyle(this.root)
+        .getPropertyValue('--hrs-background-tint-blue')
+        .trim();
       this.background.setPageTints({
         background: this.blueTint() ? { colour: blue, blend: 'multiply' } : null,
       });

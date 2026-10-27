@@ -1,0 +1,28 @@
+export {
+  type AddedPart,
+  addedSourced,
+  addedWithUnused,
+  type CreatedOverlay,
+  type CreatedShape,
+  createdSkyFile,
+  type MaterialSource,
+  mergeAddedParts,
+  nextOverlayId,
+  nextPartId,
+  overlayFileFor,
+  type OverlayKind,
+  overlayName,
+  PART_SHAPES,
+  sourceFiles,
+  type SourceLookup,
+  withAddedParts,
+} from './created-overlays';
+export {
+  chosenOverlays,
+  createdOverlay,
+  migrateDesign,
+  overlayOn,
+  ownOverlays,
+  sceneWithout,
+  wornKey,
+} from './overlays';

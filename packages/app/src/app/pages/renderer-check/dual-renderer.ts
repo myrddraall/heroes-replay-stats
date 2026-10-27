@@ -1,10 +1,10 @@
 import type { EditingAid } from "@myrddraall/heroes-replay-stats-aether/aids";
-import type { LoadedPlayScene, SceneCameraSet, SkySettings } from "@myrddraall/heroes-replay-stats-aether/formats";
+import type { LoadedPlayScene, SceneCameraSet } from "@myrddraall/heroes-replay-stats-aether/formats";
+import type { SkySettings } from "@myrddraall/heroes-replay-stats-aether/sky";
 import type { AddedLight } from "@myrddraall/heroes-replay-stats-aether/lights";
 import { type Renderer, ThreeRenderer } from "@myrddraall/heroes-replay-stats-aether/render";
 import type { Backdrop, PlanetPlacement } from "@myrddraall/heroes-replay-stats-aether/space";
 import { NO_TINT, type Tint } from "@myrddraall/heroes-replay-stats-aether/tints";
-
 type Vec3 = readonly [number, number, number];
 
 /** Which of three.js's backends the check draws with: WebGPU, WebGL 2, or both at once. */
@@ -26,7 +26,13 @@ export interface CheckSlot {
   failure: string | null;
 }
 
-const slot = (renderer: ThreeRenderer): CheckSlot => ({ renderer, first: null, whole: null, gpuDone: null, failure: null });
+const slot = (renderer: ThreeRenderer): CheckSlot => ({
+  renderer,
+  first: null,
+  whole: null,
+  gpuDone: null,
+  failure: null,
+});
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 /**
@@ -49,13 +55,21 @@ export class DualRenderer implements Renderer {
   /** Whether the last frame drew in both (else they can't be compared). */
   bothDrew = false;
 
-  constructor(canvas: HTMLCanvasElement, loaded: LoadedPlayScene, pageCanvas: HTMLCanvasElement, mode: CheckMode) {
+  constructor(
+    canvas: HTMLCanvasElement,
+    loaded: LoadedPlayScene,
+    pageCanvas: HTMLCanvasElement,
+    mode: CheckMode,
+  ) {
     this.canvas = canvas;
     // Each canvas keeps one kind of context across tests: the page's WebGPU, the scene's whichever
     // its test draws with (a new scene canvas each test).
-    this.webgl = mode === 'webgpu' ? null : slot(new ThreeRenderer(canvas, loaded, { forceWebGL: true }));
+    this.webgl =
+      mode === 'webgpu' ? null : slot(new ThreeRenderer(canvas, loaded, { forceWebGL: true }));
     this.webgpu =
-      mode === 'webgl' ? null : slot(new ThreeRenderer(mode === 'both' ? pageCanvas : canvas, loaded));
+      mode === 'webgl'
+        ? null
+        : slot(new ThreeRenderer(mode === 'both' ? pageCanvas : canvas, loaded));
     this.slots = [this.webgl, this.webgpu].filter((s): s is CheckSlot => s !== null);
     this.all = this.slots.map((s) => s.renderer);
   }

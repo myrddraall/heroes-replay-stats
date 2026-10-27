@@ -55,7 +55,9 @@ describe("a map's art and what hero-data adds to it", () => {
     expect(extra.objectives.map((o) => o.title)).toEqual(['Altars']); // the untitled one is left out
     expect(extra.objectives[0].description).toBe('Capture altars to fire on the enemy core.');
     // The icon the pack has, by name (hero-data's PNG, the pack's game file); the one it hasn't left out.
-    expect(extra.objectives[0].icons.map((i) => i.src)).toEqual(['packs/images/loading-screen-icon-2.webp']);
+    expect(extra.objectives[0].icons.map((i) => i.src)).toEqual([
+      'packs/images/loading-screen-icon-2.webp',
+    ]);
   });
 
   it('gives nothing for a map it does not know, or while the data has not loaded', async () => {

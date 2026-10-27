@@ -115,9 +115,10 @@ describe('the list of points of interest', () => {
       'Outpost 1',
       'Mercenary camps',
     ]);
-    expect(
-      [...el.querySelectorAll('.pois__team--order h4')].map((h) => h.textContent),
-    ).toEqual(['Town 1', 'Outpost 1']);
+    expect([...el.querySelectorAll('.pois__team--order h4')].map((h) => h.textContent)).toEqual([
+      'Town 1',
+      'Outpost 1',
+    ]);
     const buttons = [...el.querySelectorAll<HTMLButtonElement>('button.poi')];
     expect(buttons.map((b) => b.querySelector('.poi__label')!.textContent)).toEqual([
       'Fort',

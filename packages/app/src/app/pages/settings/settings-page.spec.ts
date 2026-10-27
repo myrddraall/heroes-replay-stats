@@ -19,8 +19,9 @@ describe('SettingsPage graphics', () => {
     return fixture;
   }
 
-  const buttons = (el: HTMLElement, label: string) =>
-    [...el.querySelectorAll<HTMLButtonElement>(`[aria-labelledby="${label}"] button`)];
+  const buttons = (el: HTMLElement, label: string) => [
+    ...el.querySelectorAll<HTMLButtonElement>(`[aria-labelledby="${label}"] button`),
+  ];
 
   it('sets a quality preset, and shows when it is custom', async () => {
     const fixture = await render();

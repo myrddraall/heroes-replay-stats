@@ -5,9 +5,9 @@ import { PropertySection } from '../controls/property-section';
 import { type PropertyOption, PropertySelect } from '../controls/rows/property-select';
 import { DraftDesignStore } from '../draft/draft-design.store';
 import { Editor } from '../editing/editor';
-import { SKY_ANCHOR_CHOICES } from '../editing/model/sky';
-import { TintSection } from '../properties/material/tint-section';
-import { AddPart } from '../properties/part/add-part';
+import { SKY_ANCHOR_CHOICES } from '../sky/sky';
+import { TintSection } from '../materials/tint-section';
+import { AddPart } from '../parts/add-part';
 
 /**
  * A sky's properties in the selection panel (container, on the `Editor` in effect): a tint over all

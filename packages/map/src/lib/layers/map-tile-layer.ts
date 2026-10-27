@@ -79,7 +79,12 @@ export class MapTileLayer implements MapLayer {
       const masks = new Map(
         layers.flatMap((l) =>
           l.teamMask
-            ? [[l.id, this.loader.open({ ...l, ...l.teamMask }, map.assets.tiles(l.teamMask.file))] as const]
+            ? [
+                [
+                  l.id,
+                  this.loader.open({ ...l, ...l.teamMask }, map.assets.tiles(l.teamMask.file)),
+                ] as const,
+              ]
             : [],
         ),
       );
@@ -182,8 +187,20 @@ export class MapTileLayer implements MapLayer {
     }
     if (tile.recoloured?.key !== recolour.key) {
       const size = mask.layer.tileSize;
-      const picture = { source: tile.bitmap, x: 0, y: 0, w: size, h: size, mask: maskTile.bitmap, maskX: 0, maskY: 0 };
-      tile.recoloured = { key: recolour.key, canvas: recolouredPicture(picture, recolour.shot, recolour.wanted) };
+      const picture = {
+        source: tile.bitmap,
+        x: 0,
+        y: 0,
+        w: size,
+        h: size,
+        mask: maskTile.bitmap,
+        maskX: 0,
+        maskY: 0,
+      };
+      tile.recoloured = {
+        key: recolour.key,
+        canvas: recolouredPicture(picture, recolour.shot, recolour.wanted),
+      };
     }
     return { source: tile.recoloured.canvas, at: Math.max(tile.at, maskTile.at) };
   }

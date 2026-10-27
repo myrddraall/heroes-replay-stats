@@ -1,33 +1,35 @@
 import { storageKey, ViewStore } from '@myrddraall/heroes-replay-stats-aether';
 import {
-  createdOverlay,
-  isGroup,
-  type MaterialSource,
-  overlayFileFor,
-  type OverlayKind,
-  ownScene,
-  PLAY_SCREEN_SCENE,
-  playScreenBodies,
-  playSet,
-  RANDOM_SCENE,
-  randomSet,
-  sceneBodies,
-  type SceneBody,
-  seeded,
-  withPlanetFiles,
-} from '@myrddraall/heroes-replay-stats-aether/design';
-import {
   loadPlanetIndex,
-  type MaterialDepth,
-  type MaterialSettingsMap,
   partId,
   type PartRole,
   type PlanetFile,
   type PlanetKind,
   type SceneMaterial,
   type SceneTexture,
+  withPlanetFiles,
 } from '@myrddraall/heroes-replay-stats-aether/formats';
-import { materialLabel } from '@myrddraall/heroes-replay-stats-aether/materials';
+import {
+  type MaterialDepth,
+  materialLabel,
+  type MaterialSettingsMap,
+} from '@myrddraall/heroes-replay-stats-aether/materials';
+import {
+  createdOverlay,
+  type MaterialSource,
+  overlayFileFor,
+  type OverlayKind,
+} from '@myrddraall/heroes-replay-stats-aether/overlays';
+import { playSet, randomSet, seeded } from '@myrddraall/heroes-replay-stats-aether/planet-sets';
+import {
+  isGroup,
+  ownScene,
+  PLAY_SCREEN_SCENE,
+  playScreenBodies,
+  RANDOM_SCENE,
+  sceneBodies,
+  type SceneBody,
+} from '@myrddraall/heroes-replay-stats-aether/scenes';
 import { skyDepths } from '@myrddraall/heroes-replay-stats-aether/sky';
 import { computed, inject, resource } from '@angular/core';
 import {
@@ -42,9 +44,9 @@ import {
 } from '@ngrx/signals';
 import { withLocalStorage } from '@myrddraall/heroes-replay-stats-signals';
 import { DraftDesignStore } from '../draft/draft-design.store';
-import { partMaterials } from '../editing/model/materials';
-import { partName } from '../editing/model/parts';
-import type { ReusablePart } from '../editing/part-hosts';
+import { partMaterials } from '../materials/materials';
+import { partName } from '../parts/parts';
+import type { ReusablePart } from '../parts/part-hosts';
 import type { PickChoice } from '../controls/pick-list';
 import { EditorUiStore } from '../layout/editor-ui.store';
 import type { OpenKind } from '../layout/open-target';

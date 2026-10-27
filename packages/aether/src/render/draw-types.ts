@@ -11,14 +11,15 @@ import { ParticleSystem } from '../effects/particles';
 import { type Tube } from '../sky/tubes';
 import { type BodyPart, type PlanetLight } from '../formats/planet-files';
 import type { LoadedPlanet } from '../formats/planet-loader';
-import { type MaterialDepth, type SkyAnchor } from '../formats/settings-types';
+import type { MaterialDepth } from '../materials/material-settings';
+import type { SkyAnchor } from '../sky/sky-anchors';
 import { type PartKey } from '../formats/part-keys';
-import { UniformSet } from './uniforms';
-import { type PixelRect } from './body-bakes';
+import { UniformSet } from './uniforms/uniforms';
+import { type PixelRect } from './bodies/body-bakes';
 import { type BodyFrame, type PlanetPlacement } from '../space/space';
 import { type Mat3, type Orientation } from '../space/graph';
-import { type BodyLeans } from './body-frames';
-import { DrawValues } from './shaders/shader-uniforms';
+import { type BodyLeans } from './bodies/body-frames';
+import { DrawValues } from './uniforms/shader-uniforms';
 
 /** What the renderer keeps of each draw: its state, its GPU side, its passes and bakes. */
 

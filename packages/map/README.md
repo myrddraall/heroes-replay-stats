@@ -104,4 +104,4 @@ pack says of the map.
 
 `pnpm test` runs the plain logic (arenas, camera maths and projections, the layer stack, tile
 pyramids, element hit-testing and masks, element states) against two real `pack.json` files in
-`test/fixtures/`.
+`src/lib/pack/fixtures/` (each test beside the file it tests, `*.spec.ts`).

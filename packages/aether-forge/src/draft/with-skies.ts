@@ -1,16 +1,12 @@
-import {
-  type AddedPart,
-  type Design,
-  type SkyChoices,
-  without,
-} from '@myrddraall/heroes-replay-stats-aether/design';
+import type { Design } from '@myrddraall/heroes-replay-stats-aether/design';
+import type { AddedPart } from '@myrddraall/heroes-replay-stats-aether/overlays';
+import { type SkyChoices, without } from '@myrddraall/heroes-replay-stats-aether/scenes';
+import type { PartKey, PartSettings } from '@myrddraall/heroes-replay-stats-aether/formats';
 import type {
   MaterialSettings,
   MaterialTint,
-  PartKey,
-  PartSettings,
-  SkyAnchor,
-} from '@myrddraall/heroes-replay-stats-aether/formats';
+} from '@myrddraall/heroes-replay-stats-aether/materials';
+import type { SkyAnchor } from '@myrddraall/heroes-replay-stats-aether/sky';
 import { signalStoreFeature, type, withMethods } from '@ngrx/signals';
 import { designWrites, skyMaterial } from './design-writes';
 

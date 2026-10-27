@@ -12,7 +12,7 @@ import {
   RGBAFormat,
 } from 'three/webgpu';
 import { type SceneMesh } from '../formats/play-scene';
-import { DrawValues } from './shaders/shader-uniforms';
+import { DrawValues } from './uniforms/shader-uniforms';
 
 /** Render targets and GPU work the renderer waits for or frees. */
 

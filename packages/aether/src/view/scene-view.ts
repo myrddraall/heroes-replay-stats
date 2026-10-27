@@ -9,14 +9,9 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
-import { DESIGN_SOURCE, SCENE_SOURCE } from '../design/document/design.tokens';
+import { DESIGN_SOURCE, SCENE_SOURCE } from './sources';
 import { BUILT_IN_PLANETS } from '../formats/built-in-planets';
-import {
-  type LibraryState,
-  skyOverlaysOf,
-  skyWithLibrary,
-  withLibrary,
-} from '../design/document/design';
+import { type LibraryState, skyOverlaysOf, skyWithLibrary, withLibrary } from '../library/library';
 import { ViewStore } from './view.store';
 import {
   type AddedPart,
@@ -30,16 +25,16 @@ import {
   type Sourced,
   sourceFiles,
   withAddedParts,
-} from '../design/overlays/created-overlays';
-import { overlayOfFile } from '../design/overlays/overlays';
+} from '../overlays/created-overlays';
+import { overlayOfFile } from '../overlays/overlays';
 import { type LoadedPlayScene, loadPlayScene, type SkyOverlayFile } from '../formats/play-scene';
-import { playSet, randomSet, seeded, type SetPlanet } from '../design/sets/planet-sets';
-import { libraryMoonsOf, setWithMoons } from '../design/document/scene-bodies';
+import { playSet, randomSet, seeded, type SetPlanet } from '../planet-sets/planet-sets';
+import { libraryMoonsOf, setWithMoons } from '../scenes/scene-bodies';
 import { DATA_URL } from '../formats/data-url';
 import { SceneCanvas } from './scene-canvas';
 import { type LoadedPlanet, loadPlanetIndex, PlanetLoader } from '../formats/planet-loader';
 import type { PlanetIndex } from '../formats/planet-files';
-import type { SkySettings } from '../formats/settings-types';
+import type { SkySettings } from '../sky/sky-settings';
 import type { PlanetPlacement } from '../space/space';
 import { keepUnchanged } from './stable-placements';
 import { browserColourParser, rendererTint } from '../tints/tints';

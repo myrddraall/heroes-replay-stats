@@ -38,7 +38,15 @@ export interface ElementPiece {
 export function piecesOf(elements: PackElements): ElementPiece[] {
   const pieces: ElementPiece[] = [
     ...elements.structures.map((s) =>
-      piece('structure', `structure-${s.id}`, s.id, s.owner, s.cell, s.layer ?? elements.layer, s.states),
+      piece(
+        'structure',
+        `structure-${s.id}`,
+        s.id,
+        s.owner,
+        s.cell,
+        s.layer ?? elements.layer,
+        s.states,
+      ),
     ),
     ...elements.camps.map((c) =>
       piece('camp', `camp-${c.camp}`, null, null, c.cell, c.layer ?? elements.layer, c.states),

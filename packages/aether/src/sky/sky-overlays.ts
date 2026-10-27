@@ -6,7 +6,7 @@ import type {
   SkyShape,
 } from '../formats/play-scene';
 import { overlayPartKey, type PartKey } from '../formats/part-keys';
-import type { PartSettings, PartSettingsMap } from '../formats/settings-types';
+import type { PartSettings, PartSettingsMap } from '../formats/part-shapes';
 /**
  * A sky's overlays: parts about the eye (meshes as the sky's are, or bands), each drawing its
  * materials as the sky's are drawn. A sky has no radius to fit them to: a part is placed by the

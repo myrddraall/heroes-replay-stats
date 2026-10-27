@@ -50,7 +50,13 @@ export interface PageCosts {
   longestTaskMs: number;
 }
 
-const noCosts = (): PageCosts => ({ getContextMs: 0, gpuStartMs: 0, textureUploadMs: 0, longTasks: 0, longestTaskMs: 0 });
+const noCosts = (): PageCosts => ({
+  getContextMs: 0,
+  gpuStartMs: 0,
+  textureUploadMs: 0,
+  longTasks: 0,
+  longestTaskMs: 0,
+});
 
 /**
  * Every shader program the page compiles while it is installed, timed: WebGL programs from their
@@ -65,7 +71,10 @@ export class CompileTimeline {
   private programs: ProgramRecord[] = [];
   private pipelines: PipelineRecord[] = [];
   private costs: PageCosts = noCosts();
-  private readonly pending = new Map<WebGLProgram, { gl: WebGL2RenderingContext; record: ProgramRecord }>();
+  private readonly pending = new Map<
+    WebGLProgram,
+    { gl: WebGL2RenderingContext; record: ProgramRecord }
+  >();
   private readonly records = new WeakMap<WebGLProgram, ProgramRecord>();
   private readonly attached = new WeakMap<WebGLProgram, WebGLShader[]>();
   private readonly sources = new WeakMap<WebGLShader, string>();
@@ -94,7 +103,12 @@ export class CompileTimeline {
 
   /** The hooks put in; the originals back when the returned function is called. */
   install(): () => void {
-    const restores = [this.hookWebGl(), this.hookWebGpu(), this.hookCanvas(), this.observeLongTasks()];
+    const restores = [
+      this.hookWebGl(),
+      this.hookWebGpu(),
+      this.hookCanvas(),
+      this.observeLongTasks(),
+    ];
     return () => {
       clearInterval(this.timer);
       this.timer = 0;
@@ -119,11 +133,19 @@ export class CompileTimeline {
     };
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const timeline = this;
-    proto.shaderSource = function (this: WebGL2RenderingContext, shader: WebGLShader, source: string) {
+    proto.shaderSource = function (
+      this: WebGL2RenderingContext,
+      shader: WebGLShader,
+      source: string,
+    ) {
       timeline.sources.set(shader, source);
       saved.shaderSource.call(this, shader, source);
     };
-    proto.attachShader = function (this: WebGL2RenderingContext, program: WebGLProgram, shader: WebGLShader) {
+    proto.attachShader = function (
+      this: WebGL2RenderingContext,
+      program: WebGLProgram,
+      shader: WebGLShader,
+    ) {
       const list = timeline.attached.get(program) ?? [];
       list.push(shader);
       timeline.attached.set(program, list);
@@ -134,7 +156,11 @@ export class CompileTimeline {
       saved.linkProgram.call(this, program);
       timeline.linked(this, program, at, timeline.now() - at);
     };
-    proto.getProgramParameter = function (this: WebGL2RenderingContext, program: WebGLProgram, pname: GLenum) {
+    proto.getProgramParameter = function (
+      this: WebGL2RenderingContext,
+      program: WebGLProgram,
+      pname: GLenum,
+    ) {
       const waiting = pname === this.LINK_STATUS ? timeline.pending.get(program) : undefined;
       const at = timeline.now();
       const value: unknown = saved.getProgramParameter.call(this, program, pname);
@@ -165,7 +191,10 @@ export class CompileTimeline {
       };
       poll();
     };
-    proto.drawArrays = function (this: WebGL2RenderingContext, ...args: Parameters<typeof proto.drawArrays>) {
+    proto.drawArrays = function (
+      this: WebGL2RenderingContext,
+      ...args: Parameters<typeof proto.drawArrays>
+    ) {
       saved.drawArrays.apply(this, args);
       drawn(this);
     };
@@ -176,7 +205,10 @@ export class CompileTimeline {
       saved.drawArraysInstanced.apply(this, args);
       drawn(this);
     };
-    proto.drawElements = function (this: WebGL2RenderingContext, ...args: Parameters<typeof proto.drawElements>) {
+    proto.drawElements = function (
+      this: WebGL2RenderingContext,
+      ...args: Parameters<typeof proto.drawElements>
+    ) {
       saved.drawElements.apply(this, args);
       drawn(this);
     };
@@ -198,7 +230,12 @@ export class CompileTimeline {
     return () => Object.assign(proto, saved);
   }
 
-  private linked(gl: WebGL2RenderingContext, program: WebGLProgram, at: number, linkCallMs: number): void {
+  private linked(
+    gl: WebGL2RenderingContext,
+    program: WebGLProgram,
+    at: number,
+    linkCallMs: number,
+  ): void {
     const shaders = this.attached.get(program) ?? [];
     const vertexShader = shaders.find((s) => /gl_Position/.test(this.sources.get(s) ?? ''));
     const vertex = vertexShader ? (this.sources.get(vertexShader) ?? '') : '';
@@ -287,7 +324,13 @@ export class CompileTimeline {
       return module;
     };
     device.createRenderPipeline = function (this: GPUDevice, d: GPURenderPipelineDescriptor) {
-      const record: PipelineRecord = { kind: 'sync', label: d.label ?? '', requestedAt: timeline.now(), resolvedAt: null, codeBytes: codeBytes(d) };
+      const record: PipelineRecord = {
+        kind: 'sync',
+        label: d.label ?? '',
+        requestedAt: timeline.now(),
+        resolvedAt: null,
+        codeBytes: codeBytes(d),
+      };
       timeline.pipelines.push(record);
       // Made at once, it is built in the GPU process before anything after it: an error scope
       // around it settles once it is built (an upper bound on how long that took). Only
@@ -301,7 +344,13 @@ export class CompileTimeline {
       return pipeline;
     };
     device.createRenderPipelineAsync = function (this: GPUDevice, d: GPURenderPipelineDescriptor) {
-      const record: PipelineRecord = { kind: 'async', label: d.label ?? '', requestedAt: timeline.now(), resolvedAt: null, codeBytes: codeBytes(d) };
+      const record: PipelineRecord = {
+        kind: 'async',
+        label: d.label ?? '',
+        requestedAt: timeline.now(),
+        resolvedAt: null,
+        codeBytes: codeBytes(d),
+      };
       timeline.pipelines.push(record);
       return saved.createRenderPipelineAsync.call(this, d).then((p) => {
         record.resolvedAt = timeline.now();
@@ -320,7 +369,9 @@ export class CompileTimeline {
       function (this: unknown, ...args: Parameters<F>) {
         const at = performance.now();
         const done = () => (timeline.costs.gpuStartMs += performance.now() - at);
-        return (original as unknown as (...a: unknown[]) => Promise<unknown>).apply(this, args).finally(done);
+        return (original as unknown as (...a: unknown[]) => Promise<unknown>)
+          .apply(this, args)
+          .finally(done);
       } as unknown as F;
     gpu.requestAdapter = started(saved.requestAdapter);
     adapter.requestDevice = started(saved.requestDevice);
@@ -330,7 +381,10 @@ export class CompileTimeline {
         createRenderPipeline: saved.createRenderPipeline,
         createRenderPipelineAsync: saved.createRenderPipelineAsync,
       });
-      Object.assign(queue, { writeTexture: saved.writeTexture, copyExternalImageToTexture: saved.copyExternalImageToTexture });
+      Object.assign(queue, {
+        writeTexture: saved.writeTexture,
+        copyExternalImageToTexture: saved.copyExternalImageToTexture,
+      });
       gpu.requestAdapter = saved.requestAdapter;
       adapter.requestDevice = saved.requestDevice;
     };
@@ -344,7 +398,8 @@ export class CompileTimeline {
     proto.getContext = function (this: HTMLCanvasElement, ...args: unknown[]) {
       const at = performance.now();
       const context = (getContext as (...a: unknown[]) => unknown).apply(this, args);
-      if (args[0] === 'webgl2' || args[0] === 'webgpu') timeline.costs.getContextMs += performance.now() - at;
+      if (args[0] === 'webgl2' || args[0] === 'webgpu')
+        timeline.costs.getContextMs += performance.now() - at;
       return context;
     } as typeof proto.getContext;
     return () => {

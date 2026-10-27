@@ -3,10 +3,10 @@ import { AddedList } from '../controls/added-list';
 import { PropertySection } from '../controls/property-section';
 import { DraftDesignStore } from '../draft/draft-design.store';
 import { Editor } from '../editing/editor';
-import { BodyProperties } from '../properties/body/body-properties';
-import { AddLight } from '../properties/light/add-light';
-import { LitBy } from '../properties/light/lit-by';
-import { AddPart } from '../properties/part/add-part';
+import { BodyProperties } from '../bodies/body-properties';
+import { AddLight } from '../lights/add-light';
+import { LitBy } from '../lights/lit-by';
+import { AddPart } from '../parts/add-part';
 import { AddPlanet } from '../scene-editor/add-planet';
 import { VariantList } from '../variants/variant-list';
 

@@ -2,7 +2,7 @@ import { Component, computed, inject } from '@angular/core';
 import type { PropertyOption } from '../controls/rows/property-select';
 import { Editor } from '../editing/editor';
 import { AssetCatalogStore } from '../library/asset-catalog.store';
-import { TintSection } from '../properties/material/tint-section';
+import { TintSection } from '../materials/tint-section';
 import {
   EditingAidProperties,
   type EditingAidChanged,
