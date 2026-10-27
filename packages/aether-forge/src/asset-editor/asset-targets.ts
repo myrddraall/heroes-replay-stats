@@ -1,5 +1,6 @@
 import {
   type BodyPath,
+  siblingKey,
   moonAt,
   type MoonChoices,
   pathKey,
@@ -40,7 +41,10 @@ export const moonKey = (path: BodyPath) => `${ASSET}/moon/${pathKey(path)}`;
 
 /** The paths of moons (theirs after each), in the order they are placed. */
 export const moonPaths = (moons: readonly MoonChoices[], under: BodyPath = []): BodyPath[] =>
-  moons.flatMap((m, i) => [[...under, i], ...moonPaths(m.moons ?? [], [...under, i])]);
+  moons.flatMap((m, i) => {
+    const path = [...under, siblingKey(m, i)];
+    return [path, ...moonPaths(m.moons ?? [], path)];
+  });
 
 /** A key for a new moon among a planet's own: `moon-<n>`, past those there are. */
 export function nextMoonKey(moons: readonly MoonChoices[]): string {

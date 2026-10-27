@@ -47,10 +47,11 @@ describe("a planet's own moons", () => {
   it('keeps what a scene sets for each by its key, and nothing where it is as the planet has it', () => {
     const read = withLibraryMoons([{ ...korhal, moons: [own] }], library);
     expect(storedBodies(read, library)).toEqual([{ ...korhal, moons: [own] }]);
-    let bodies = setOrbit(read, [0, 0], { radius: 3 });
-    bodies = changeSettings(bodies, [0, 1], '', (s) => ({ ...s, enabled: false }));
-    bodies = setOverlays(bodies, [0, 0], [], '');
-    bodies = setOrbit(bodies, [0, 1, 0], { size: 0.5 });
+    // Each found by its key among its planet's own: where it is among the moons doesn't matter.
+    let bodies = setOrbit(read, ['0', 'moon-1'], { radius: 3 });
+    bodies = changeSettings(bodies, ['0', 'moon-2'], '', (s) => ({ ...s, enabled: false }));
+    bodies = setOverlays(bodies, ['0', 'moon-1'], [], '');
+    bodies = setOrbit(bodies, ['0', 'moon-2', 'moon-3'], { size: 0.5 });
     const stored = storedBodies(bodies, library);
     expect(stored[0]?.moons).toEqual([own]);
     expect(stored[0]?.moonsSet).toEqual({
@@ -63,7 +64,7 @@ describe("a planet's own moons", () => {
     expect(again.moons?.[0]).toMatchObject({ orbit: { radius: 3 }, overlays: [] });
     expect(again.moons?.[1]?.settings).toEqual({ enabled: false });
     const reset = storedBodies(
-      resetMoon(withLibraryMoons(stored, library), [0, 0], library),
+      resetMoon(withLibraryMoons(stored, library), ['0', 'moon-1'], library),
       library,
     );
     expect(reset[0]?.moonsSet).toEqual({

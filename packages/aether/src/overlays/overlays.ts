@@ -7,6 +7,7 @@ import { materialKey, type MaterialSettingsMap } from '../materials/material-set
 import type { AddedLight, LightReach, LightSettingsMap, Receiver } from '../lights/lights';
 import type { PartSettingsMap } from '../formats/part-shapes';
 import type { BodySettings } from '../bodies/body-settings';
+import { keyedScene } from '../scenes/scene-keys';
 
 /**
  * Overlays: what a body (or the sky) wears over its own, several at once, the later over the
@@ -339,7 +340,8 @@ export function sceneWithout(p: PlanetChoices, id: string): PlanetChoices {
  * A design as kept, read as it is now: what named an overlay's part by its role alone (before
  * bodies wore several overlays) named by the overlay it was set for; what was kept for an
  * overlay's materials by their names alone (before they were kept by the overlay too) by their
- * keys. A design kept since is as it is.
+ * keys; scenes' planets, moons and group placements given keys (`keyedScene`). A design kept
+ * since is as it is.
  */
 export function migrateDesign(design: Design): Design {
   const planets = design.scenes?.planets ?? {};
@@ -350,7 +352,10 @@ export function migrateDesign(design: Design): Design {
     scenes: {
       ...design.scenes,
       planets: Object.fromEntries(
-        Object.entries(planets).map(([k, p]) => [k, migrateScene(p, body, sky)]),
+        Object.entries(planets).map(([k, p]) => [
+          k,
+          keyedScene(migrateScene(p, body, sky), design.library),
+        ]),
       ),
     },
   };

@@ -42,7 +42,7 @@ export const partRowKey = (path: BodyPath, key: PartKey) => `${bodyKey(path)}/p/
 export const glowMarginOf = (b: BodyInfo) => stackedSetting(b, 'glowMargin');
 
 /** A group put in the scene, by its index there. */
-export const placementKey = (index: number) => `place/${index}`;
+export const placementKey = (key: string) => `place/${key}`;
 
 /** The scene's cameras, a group of their own; each by its id (the game's: `GAME_CAMERA`). */
 export const CAMERAS = 'cameras';
@@ -123,7 +123,7 @@ export type Target =
   /** The reference image laid over the view (an editing aid). */
   | { readonly kind: 'reference' }
   /** A group put in the scene, by its index there. */
-  | { readonly kind: 'placement'; readonly index: number }
+  | { readonly kind: 'placement'; readonly key: string }
   /** The scene's cameras (their group), and one of them by id. */
   | { readonly kind: 'cameras' }
   | { readonly kind: 'camera'; readonly id: string };
@@ -163,7 +163,7 @@ export function targetOf(key: string): Target {
   if (key === SCENE_LIGHTS) return { kind: 'group', path: [] };
   if (key.startsWith('scene-light/'))
     return { kind: 'scene-light', id: key.slice('scene-light/'.length) as LightId };
-  if (key.startsWith('place/')) return { kind: 'placement', index: Number(key.slice(6)) };
+  if (key.startsWith('place/')) return { kind: 'placement', key: key.slice(6) };
   if (key === CAMERAS) return { kind: 'cameras' };
   if (key.startsWith('camera/')) return { kind: 'camera', id: key.slice('camera/'.length) };
   if (!key.startsWith('body:')) return { kind: 'scene' };
@@ -206,6 +206,8 @@ export interface SceneEditorState {
    * `sceneVariantOpen`); none: into the scene's settings for the planet.
    */
   readonly sceneVariantEdited: string | null;
+  /** The scene just shown before its planets were there: its first planet is unfolded as they come. */
+  readonly opening: boolean;
 }
 
 /** One of a scene's cameras: its id, its name, where it puts the view (over the game's), whether it is the game's. */

@@ -2,6 +2,9 @@ import type { LibraryState } from '../library/library';
 import { ownScene } from './scenes';
 import {
   addMoon,
+  BODY_KEY,
+  indexOfKey,
+  newKey,
   type BodyPath,
   changeMoon,
   DEFAULT_ORBIT,
@@ -44,9 +47,14 @@ export function playScreenBodies(set: PlanetSet, layoutView: Viewpoint): SceneBo
   return set
     .filter((p) => !(medium && p === small))
     .map((p): SceneBody => {
-      const body = { id: p.id, position: p.position, radius: p.radius };
+      const body = { id: p.id, key: BODY_KEY + p.id, position: p.position, radius: p.radius };
       return p === medium && small
-        ? { ...body, moons: [{ id: small.id, orbit: orbitTo(medium, small, layoutView) }] }
+        ? {
+            ...body,
+            moons: [
+              { id: small.id, key: BODY_KEY + small.id, orbit: orbitTo(medium, small, layoutView) },
+            ],
+          }
         : body;
     });
 }
@@ -71,6 +79,7 @@ export function sceneBodies(
     return [
       {
         id: legacy,
+        key: `${BODY_KEY}1`,
         ...SCENE_CENTRE,
         style: choices?.style,
         variants: choices?.variants,
@@ -86,8 +95,8 @@ export function bodyAt(
   bodies: readonly SceneBody[],
   path: BodyPath,
 ): SceneBody | MoonChoices | undefined {
-  const [b, ...rest] = path;
-  const body = b === undefined ? undefined : bodies[b];
+  const [key, ...rest] = path;
+  const body = bodies[indexOfKey(bodies, key)];
   return body && rest.length ? moonAt(body.moons ?? [], rest) : body;
 }
 
@@ -100,8 +109,9 @@ export function changeAt(
   planet: (body: SceneBody) => SceneBody | null,
   moon: (moon: MoonChoices) => MoonChoices | null,
 ): readonly SceneBody[] {
-  const [b, ...rest] = path;
-  const body = b === undefined ? undefined : bodies[b];
+  const [key, ...rest] = path;
+  const b = indexOfKey(bodies, key);
+  const body = bodies[b];
   if (!body) return bodies;
   const changed = rest.length
     ? { ...body, moons: tidyMoons(changeMoon(body.moons ?? [], rest, moon)) }
@@ -171,13 +181,15 @@ export function addMoonAt(
   parent: BodyPath,
   id: string,
 ): { readonly bodies: readonly SceneBody[]; readonly path: BodyPath } {
-  const [b, ...rest] = parent;
-  const body = b === undefined ? undefined : bodies[b];
+  const b = indexOfKey(bodies, parent[0]);
+  const body = bodies[b];
   if (!body) return { bodies, path: parent };
-  const moons = body.moons ?? [];
-  const count = rest.length ? (moonAt(moons, rest)?.moons?.length ?? 0) : moons.length;
-  const next = { ...body, moons: addMoon(moons, rest, { id, orbit: DEFAULT_ORBIT }) };
-  return { bodies: bodies.map((x, i) => (i === b ? next : x)), path: [...parent, count] };
+  const key = newKey(BODY_KEY);
+  const next = {
+    ...body,
+    moons: addMoon(body.moons ?? [], parent.slice(1), { id, key, orbit: DEFAULT_ORBIT }),
+  };
+  return { bodies: bodies.map((x, i) => (i === b ? next : x)), path: [...parent, key] };
 }
 
 /** A body taken out: a planet with its moons, or a moon with its own. */
@@ -199,19 +211,26 @@ export function addPlanet(
   id: string,
 ): { readonly bodies: readonly SceneBody[]; readonly path: BodyPath } {
   const n = bodies.length;
+  const key = newKey(BODY_KEY);
   const { position, radius } = SCENE_CENTRE;
   const side = n % 2 ? 1 : -1;
   const step = Math.ceil(n / 2);
   const placed: SceneBody = n
     ? {
         id,
+        key,
         position: [position[0] + side * step * radius * 1.6, position[1], position[2]],
         radius: radius * 0.5,
       }
-    : { id, position, radius };
-  return { bodies: [...bodies, placed], path: [n] };
+    : { id, key, position, radius };
+  return { bodies: [...bodies, placed], path: [key] };
 }
 
 /** The planets as they are placed, all else they were set taken off (their styles, looks, moons). */
 export const placesOnly = (bodies: readonly SceneBody[]): readonly SceneBody[] =>
-  bodies.map((b) => ({ id: b.id, position: b.position, radius: b.radius }));
+  bodies.map((b) => ({
+    id: b.id,
+    ...(b.key ? { key: b.key } : {}),
+    position: b.position,
+    radius: b.radius,
+  }));

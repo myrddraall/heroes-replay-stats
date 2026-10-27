@@ -1,9 +1,10 @@
 import { storageKey, TINT_PRESETS, ViewStore } from '@myrddraall/heroes-replay-stats-aether';
 import { loadPlanetIndex } from '@myrddraall/heroes-replay-stats-aether/formats';
 import { withPlanetFiles } from '../library/with-planet-files';
-import { RANDOM_SCENE } from '@myrddraall/heroes-replay-stats-aether/scenes';
+import { RANDOM_SCENE, siblingKey } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import { effect, inject, resource, untracked } from '@angular/core';
 import {
+  patchState,
   signalStore,
   signalStoreFeature,
   withHooks,
@@ -22,7 +23,7 @@ import { cameraMethods, cameraViews } from './cameras';
 import { skyMethods, skyViews } from './sky';
 import { selectionMethods, selectionViews } from './selection';
 import type { StoreOf, WritableStoreOf } from '../editing/store-of';
-import { EDITOR_CAMERA, SCENE, type SceneEditorState, bodyKey } from './scene-targets';
+import { bodyKey, EDITOR_CAMERA, SCENE, type SceneEditorState } from './scene-targets';
 import { partHostViews } from './part-hosts';
 import { treeViews } from './tree';
 import { backgroundViews } from './background';
@@ -43,8 +44,9 @@ const sceneStoreBase = () =>
       look: EDITOR_CAMERA,
       editorCamera: null,
       sceneVariantEdited: null,
+      opening: false,
     }),
-    withFolding([SCENE, bodyKey([0])]),
+    withFolding([SCENE]),
     withLocalStorage<SceneEditorState & { expanded: readonly string[] }>(
       storageKey('scene-editor'),
       ['expanded'],
@@ -108,6 +110,16 @@ export const SceneEditorStore = signalStore(
   withHooks({
     onInit(store) {
       store.needFiles(store.neededFiles);
+      // A scene shown before its planets were there (a preset's, from the game's files): its
+      // first planet unfolded as they come.
+      effect(() => {
+        const first = store.sceneBodies()[0];
+        if (!first || !store.opening()) return;
+        untracked(() => {
+          store.expand(bodyKey([siblingKey(first, 0)]));
+          patchState(store, { opening: false });
+        });
+      });
       // A scene that isn't there any more: back to the scenes' list.
       effect(() => {
         if (!store.missing()) return;

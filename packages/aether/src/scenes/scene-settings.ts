@@ -48,7 +48,10 @@ export interface MoonOverride {
 export interface MoonChoices {
   readonly id: string;
   readonly orbit: Orbit;
-  /** Its key among its planet's own moons (the library's): what a scene sets for it is kept by it. */
+  /**
+   * Its key among its siblings (see `siblingKey`): a library moon's among its planet's own (what a
+   * scene sets for it is kept by it), a scene's own moon's its own (`BODY_KEY`).
+   */
   readonly key?: string;
   /**
    * Of a scene's body as read (`withLibraryMoons`): that it is one of its planet's own, by its
@@ -64,19 +67,41 @@ export interface MoonChoices {
   readonly moons?: readonly MoonChoices[];
 }
 
-/** Where a body is: in a scene, its planet's index then its moons' in turn; among moons, theirs alone. */
-export type BodyPath = readonly number[];
+/**
+ * Where a body is: in a scene, its planet's key then its moons' in turn; among moons, theirs alone
+ * (each its key among its siblings, see `siblingKey`).
+ */
+export type BodyPath = readonly string[];
 
-/** A path as a key: '' for the planet, else its indices joined by dots. */
+/** A path as a key: '' for the planet, else its keys joined by dots. */
 export const pathKey = (path: BodyPath) => path.join('.');
-export const pathOf = (key: string): BodyPath => (key ? key.split('.').map(Number) : []);
+export const pathOf = (key: string): BodyPath => (key ? key.split('.') : []);
+
+/** What the keys of a scene's planets and of its own moons start with. */
+export const BODY_KEY = 'body-';
+
+/** What the keys of the groups put in a scene start with. */
+export const PLACEMENT_KEY = 'place-';
+
+/** A new key for something put in a scene: never one taken before (as lights' and cameras' ids). */
+export const newKey = (prefix: string) => `${prefix}${Math.random().toString(36).slice(2, 10)}`;
+
+/**
+ * A planet's, moon's or group placement's key among its siblings: its own, else (one kept before
+ * they had keys, or a library moon without one) its index.
+ */
+export const siblingKey = (b: { readonly key?: string }, i: number) => b.key ?? String(i);
+
+/** The index of the one with a key among its siblings (-1: none has it). */
+export const indexOfKey = (list: readonly { readonly key?: string }[], key: string | undefined) =>
+  key === undefined ? -1 : list.findIndex((b, i) => siblingKey(b, i) === key);
 
 /** The moon at a path (none for the planet's path, or one that isn't there). */
 export function moonAt(moons: readonly MoonChoices[], path: BodyPath): MoonChoices | undefined {
   let list = moons;
   let moon: MoonChoices | undefined;
-  for (const i of path) {
-    moon = list[i];
+  for (const k of path) {
+    moon = list[indexOfKey(list, k)];
     if (!moon) return undefined;
     list = moon.moons ?? [];
   }
@@ -89,8 +114,8 @@ export function changeMoon(
   path: BodyPath,
   change: (moon: MoonChoices) => MoonChoices | null,
 ): readonly MoonChoices[] {
-  const [first, ...rest] = path;
-  if (first === undefined) return moons;
+  const [key, ...rest] = path;
+  const first = indexOfKey(moons, key);
   const moon = moons[first];
   if (!moon) return moons;
   const changed = rest.length
@@ -143,7 +168,7 @@ export function placeBodies(
     // the parent's radii; its size times the parent's.
     const world = bodyTransform(parent, layoutView);
     list.forEach((moon, i) => {
-      const path = [...parent.path, i];
+      const path = [...parent.path, siblingKey(moon, i)];
       const progress = overrides.get(pathKey(path)) ?? moon.orbit.progress;
       const position = pointToWorld(world, orbitOffset({ ...moon.orbit, progress }));
       const placed: PlacedBody = { path, position, radius: world.scale * moon.orbit.size };
@@ -293,6 +318,8 @@ export interface SkyChoices {
  */
 export interface SceneBody {
   readonly id: string;
+  /** Which of its scene's planets it is (two of the same planet told apart; see `siblingKey`). */
+  readonly key?: string;
   readonly position: Vec3;
   readonly radius: number;
   /** The overlays it wears, the later over the earlier (none given: its own; see `chosenOverlays`). */
@@ -321,6 +348,8 @@ export interface SceneBody {
  */
 export interface GroupPlacement {
   readonly group: string;
+  /** Which of its scene's group placements it is (see `siblingKey`). */
+  readonly key?: string;
   readonly position: Vec3;
   readonly size?: number;
   readonly turn?: number;
@@ -332,14 +361,13 @@ export interface GroupPlacement {
 export const GAME_CAMERA = 'game';
 
 /**
- * How a camera's place is set in the editor: about one of its scene's planets (by its place among
- * them), one way or another (`PlacementMode`, in the planet's radii, along the scene's axes: x
+ * How a camera's place is set in the editor: about one of its scene's planets (by its key), one way or another (`PlacementMode`, in the planet's radii, along the scene's axes: x
  * across, y away, z up), with the turn of the orbit it is on (none: 0). None: in the scene's own
  * space. Whichever way it is set, its place is kept as its eye: it stays where it is if the
  * planet moves.
  */
 export interface CameraPlacement {
-  readonly about: number;
+  readonly about: string;
   readonly mode: PlacementMode;
   readonly turn?: number;
 }

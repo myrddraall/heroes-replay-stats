@@ -1,6 +1,8 @@
 import type { LibraryState } from '../library/library';
 import {
   type BodyPath,
+  indexOfKey,
+  siblingKey,
   moonAt,
   ORBIT_KEYS,
   type MoonChoices,
@@ -14,9 +16,6 @@ import type { Viewpoint } from '../space/space';
 import type { SetPlanet } from '../planet-sets/planet-sets';
 import { bodyAt, changeAt } from './scene-bodies';
 
-/** A library moon's key among its planet's: as given, else its index. */
-const moonKeyOf = (m: MoonChoices, i: number) => m.key ?? String(i);
-
 /** One of a planet's own moons (the library's) by its key (nested: the keys joined by `/`). */
 export function libraryMoonAt(
   own: readonly MoonChoices[] | undefined,
@@ -25,7 +24,7 @@ export function libraryMoonAt(
   let list = own ?? [];
   let moon: MoonChoices | undefined;
   for (const k of key.split('/')) {
-    moon = list.find((m, i) => moonKeyOf(m, i) === k);
+    moon = list.find((m, i) => siblingKey(m, i) === k);
     if (!moon) return undefined;
     list = moon.moons ?? [];
   }
@@ -42,11 +41,12 @@ export function inheritedMoons(
   prefix = '',
 ): MoonChoices[] {
   return (own ?? []).map((m, i) => {
-    const key = prefix + moonKeyOf(m, i);
+    const key = prefix + siblingKey(m, i);
     const over = set?.[key];
     const overlays = over?.overlays ?? m.overlays;
     return {
       id: m.id,
+      key: siblingKey(m, i),
       inherited: key,
       orbit: { ...m.orbit, ...over?.orbit },
       ...(overlays ? { overlays } : {}),
@@ -136,7 +136,7 @@ export function resetMoon(
   path: BodyPath,
   library: LibraryState,
 ): readonly SceneBody[] {
-  const planet = bodies[path[0] ?? -1];
+  const planet = bodies[indexOfKey(bodies, path[0])];
   const read = planet && bodyAt(bodies, path);
   const base =
     read && 'inherited' in read && read.inherited !== undefined
@@ -149,6 +149,7 @@ export function resetMoon(
     (p) => p,
     (m) => ({
       id: m.id,
+      ...(m.key !== undefined ? { key: m.key } : {}),
       inherited: m.inherited,
       orbit: base.orbit,
       ...(base.overlays ? { overlays: base.overlays } : {}),

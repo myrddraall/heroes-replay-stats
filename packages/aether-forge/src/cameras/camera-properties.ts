@@ -17,6 +17,8 @@ export interface CameraValues {
 
 /** One of a scene's planets a camera may be placed about: its name, where it is, how big. */
 export interface CameraPlanet {
+  /** Its key among its scene's planets (what a camera is placed about). */
+  readonly key: string;
   readonly label: string;
   readonly position: Vec3;
   readonly radius: number;
@@ -70,14 +72,12 @@ export class CameraProperties {
   /** The planet it is placed about (none: in the scene's own space, or the planet is gone). */
   protected readonly about = computed(() => {
     const p = this.placement();
-    return p ? (this.planets()[p.about] ?? null) : null;
+    return p ? (this.planets().find((b) => b.key === p.about) ?? null) : null;
   });
-  protected readonly aboutValue = computed(() =>
-    this.about() ? String(this.placement()!.about) : SCENE,
-  );
+  protected readonly aboutValue = computed(() => this.about()?.key ?? SCENE);
   protected readonly aboutOptions = computed((): readonly PropertyOption[] => [
     { value: SCENE, label: 'Scene' },
-    ...this.planets().map((p, i) => ({ value: String(i), label: p.label })),
+    ...this.planets().map((p) => ({ value: p.key, label: p.label })),
   ]);
   /** Where it is from the planet it is placed about, in the planet's radii. */
   protected readonly fromPlanet = computed((): Vec3 => {
@@ -91,13 +91,13 @@ export class CameraProperties {
   /** Placed about a planet (over a spot on it, where it is, or no nearer than its surface), or in the scene's own space. */
   protected chooseAbout(value: string): void {
     const eye = this.values().eye;
-    const p = value === SCENE ? undefined : this.planets()[Number(value)];
+    const p = value === SCENE ? undefined : this.planets().find((b) => b.key === value);
     if (!p) {
       this.placementChange.emit({ eye });
       return;
     }
     const from = [0, 1, 2].map((k) => (eye[k]! - p.position[k]!) / p.radius) as unknown as Vec3;
-    const placement: CameraPlacement = { about: Number(value), mode: 'over' };
+    const placement: CameraPlacement = { about: p.key, mode: 'over' };
     this.placementChange.emit({ eye: this.inScene(p, atLeast(from, 1)), placement });
   }
 

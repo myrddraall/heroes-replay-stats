@@ -29,15 +29,15 @@ const moon = (id: string, progress: number, moons?: MoonChoices[]): MoonChoices 
 describe('the scene’s moons', () => {
   it('are found, changed, added and taken out by their path', () => {
     let moons: readonly MoonChoices[] = [moon('a', 0), moon('b', 0, [moon('c', 0)])];
-    expect(moonAt(moons, [1, 0])?.id).toBe('c');
+    expect(moonAt(moons, ['1', '0'])?.id).toBe('c');
     expect(moonAt(moons, [])).toBeUndefined();
-    moons = changeMoon(moons, [1, 0], (m) => ({ ...m, style: 'nexus' }));
-    expect(moonAt(moons, [1, 0])?.style).toBe('nexus');
-    moons = addMoon(moons, [0], moon('d', 0));
-    expect(moonAt(moons, [0, 0])?.id).toBe('d');
-    moons = changeMoon(moons, [1], () => null);
+    moons = changeMoon(moons, ['1', '0'], (m) => ({ ...m, style: 'nexus' }));
+    expect(moonAt(moons, ['1', '0'])?.style).toBe('nexus');
+    moons = addMoon(moons, ['0'], moon('d', 0));
+    expect(moonAt(moons, ['0', '0'])?.id).toBe('d');
+    moons = changeMoon(moons, ['1'], () => null);
     expect(moons.map((m) => m.id)).toEqual(['a']);
-    expect(pathOf(pathKey([1, 0, 2]))).toEqual([1, 0, 2]);
+    expect(pathOf(pathKey(['1', '0', '2']))).toEqual(['1', '0', '2']);
     expect(pathOf('')).toEqual([]);
   });
 

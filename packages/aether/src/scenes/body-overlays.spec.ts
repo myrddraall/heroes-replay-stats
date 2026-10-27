@@ -11,14 +11,14 @@ describe('the overlays a body wears', () => {
     let bodies: readonly SceneBody[] = [
       { ...korhal, style: 'nexus', variants: { nexus: { lighting: 2 }, '': { shade: 1 } } },
     ];
-    bodies = setOverlays(bodies, [0], ['nexus', 'clouds'], 'nexus');
+    bodies = setOverlays(bodies, ['0'], ['nexus', 'clouds'], 'nexus');
     expect(bodies[0]).toEqual({
       ...korhal,
       overlays: ['nexus', 'clouds'],
       settings: { lighting: 2 },
     });
     // What it wears back as its own: its settings kept, nothing chosen.
-    bodies = resetOverlays(bodies, [0], 'nexus+clouds', []);
+    bodies = resetOverlays(bodies, ['0'], 'nexus+clouds', []);
     expect(bodies[0]).toEqual({ ...korhal, settings: { lighting: 2 } });
   });
 
@@ -27,7 +27,7 @@ describe('the overlays a body wears', () => {
     expect(planetSettingsOf(kept, 'nexus')).toEqual({ lighting: 2 });
     expect(planetSettingsOf(kept, '')).toEqual({ shade: 1 });
     // Changed: set once, the old sets gone; the same whatever it wears from then on.
-    const [changed] = changeSettings([kept], [0], '', (s) => ({
+    const [changed] = changeSettings([kept], ['0'], '', (s) => ({
       ...s,
       tint: { colour: '#ff0000', blend: 'multiply', strength: 1 },
     }));
@@ -37,7 +37,7 @@ describe('the overlays a body wears', () => {
     });
     expect(planetSettingsOf(changed!, 'nexus')).toEqual(changed!.settings);
     // Nothing left set: none.
-    expect(changeSettings([changed!], [0], 'nexus', () => ({}))[0]).toEqual(korhal);
+    expect(changeSettings([changed!], ['0'], 'nexus', () => ({}))[0]).toEqual(korhal);
   });
 
   it('switches an overlay on or off at the level edited, nothing set where that is as under it', () => {

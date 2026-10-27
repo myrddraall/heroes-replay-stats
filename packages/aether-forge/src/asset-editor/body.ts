@@ -186,7 +186,7 @@ export function assetBodyMethods(store: AssetMethodsStore, w: AssetWrites) {
       const added = { id: moon, key: nextMoonKey(moons), orbit: DEFAULT_ORBIT };
       changeMoons(() => addMoonTo(moons, [], added));
       store.expand(ASSET);
-      patchState(store, { selected: moonKey([moons.length]) });
+      patchState(store, { selected: moonKey([added.key]) });
     },
     /** The selected moon taken out (with its own): the planet selected. */
     removeMoon(): void {

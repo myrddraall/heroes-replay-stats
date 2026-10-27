@@ -11,6 +11,7 @@ import {
   placeBodies,
   SCENE_CENTRE,
   visualExtent,
+  siblingKey,
 } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import type { AddedLight } from '@myrddraall/heroes-replay-stats-aether/lights';
 import { computed } from '@angular/core';
@@ -226,19 +227,19 @@ export function treeViews(store: WithPartHosts) {
             { movableOverlays: true },
           ),
         );
-        b.moons.forEach((_, i) => {
-          const child = store.bodyByKey().get(bodyKey([...path, i]));
+        b.moons.forEach((m, i) => {
+          const child = store.bodyByKey().get(bodyKey([...path, siblingKey(m, i)]));
           if (child) body(child, depth + 1);
         });
       };
-      store.sceneBodies().forEach((_, i) => {
-        const planet = store.bodyByKey().get(bodyKey([i]));
+      store.sceneBodies().forEach((p, i) => {
+        const planet = store.bodyByKey().get(bodyKey([siblingKey(p, i)]));
         if (planet) body(planet, 1);
       });
       // The groups put in it, each switched by its checkbox (what is in it is set in the group).
       store.placements().forEach((p, i) =>
         rows.push({
-          key: placementKey(i),
+          key: placementKey(siblingKey(p, i)),
           label: store.placementLabel()(p),
           detail: 'group',
           icon: 'workspaces',
@@ -297,15 +298,18 @@ export function treeViews(store: WithPartHosts) {
             },
           ]
         : [
-            ...planets.map((p, i): Root => ({
-              root: { position: p.position, radius: p.radius },
-              moons: p.moons ?? [],
-              // A scene of one planet is kept in view; several are where they are put.
-              fit: planets.length === 1 && !grouped.length,
-              chain: (path) => sceneChain([i, ...path]),
-              pick: (path) => bodyKey([i, ...path]),
-              lights: [],
-            })),
+            ...planets.map((p, i): Root => {
+              const key = siblingKey(p, i);
+              return {
+                root: { position: p.position, radius: p.radius },
+                moons: p.moons ?? [],
+                // A scene of one planet is kept in view; several are where they are put.
+                fit: planets.length === 1 && !grouped.length,
+                chain: (path) => sceneChain([key, ...path]),
+                pick: (path) => bodyKey([key, ...path]),
+                lights: [],
+              };
+            }),
             // The groups' planets where they are put: picked, the group put in it is selected.
             ...grouped.map((g, j): Root => ({
               root: { position: g.body.position, radius: g.body.radius },

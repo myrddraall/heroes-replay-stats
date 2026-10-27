@@ -4,6 +4,7 @@ import {
   changeSettings,
   storedBodies,
   without,
+  siblingKey,
 } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import {
   type CreatedShape,
@@ -117,9 +118,9 @@ export function partHostViews(store: WithSelection) {
       if (t.kind === 'scene')
         return {
           planets: [
-            ...store.sceneBodies().flatMap((_, i) => body([i], 'public')),
+            ...store.sceneBodies().flatMap((p, i) => body([siblingKey(p, i)], 'public')),
             ...store.placements().map((p, i) => ({
-              key: placementKey(i),
+              key: placementKey(siblingKey(p, i)),
               label: store.placementLabel()(p),
               icon: 'workspaces',
               detail: 'group',
@@ -138,7 +139,7 @@ export function partHostViews(store: WithSelection) {
         const b = byKey.get(bodyKey(t.path));
         if (!b) return {};
         return {
-          moons: b.moons.flatMap((_, i) => body([...t.path, i], 'brightness_1')),
+          moons: b.moons.flatMap((m, i) => body([...t.path, siblingKey(m, i)], 'brightness_1')),
           parts: parts(partsOfBody(b), (key) => partRowKey(t.path, key)),
         };
       }

@@ -67,3 +67,4 @@ export {
   RANDOM_SCENE,
   type ScenesState,
 } from './scenes';
+export { BODY_KEY, indexOfKey, siblingKey, newKey, PLACEMENT_KEY } from './scene-settings';

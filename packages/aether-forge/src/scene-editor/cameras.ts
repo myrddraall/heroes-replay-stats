@@ -8,6 +8,7 @@ import {
   cameraSetOf,
   GAME_CAMERA,
   without,
+  siblingKey,
 } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import type { SceneCamera, SceneCameraSet } from '@myrddraall/heroes-replay-stats-aether/formats';
 import { computed } from '@angular/core';
@@ -114,8 +115,9 @@ export function cameraViews(store: WithScene) {
     /** The scene's planets a camera may be placed about, in order: each named, where it is, how big. */
     cameraPlanets: computed((): readonly CameraPlanet[] =>
       sceneBodiesNow().map((p, i) => {
-        const b = bodyByKey().get(bodyKey([i]));
-        return { label: b ? bodyLabel(b) : p.id, position: p.position, radius: p.radius };
+        const key = siblingKey(p, i);
+        const b = bodyByKey().get(bodyKey([key]));
+        return { key, label: b ? bodyLabel(b) : p.id, position: p.position, radius: p.radius };
       }),
     ),
     /** The selected camera as its panel shows it: where it is, its turn and tilt, its field of view. */

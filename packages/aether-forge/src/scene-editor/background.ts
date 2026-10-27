@@ -1,7 +1,7 @@
 import type { EditingAid } from '@myrddraall/heroes-replay-stats-aether/aids';
 import { distanceAhead } from '@myrddraall/heroes-replay-stats-aether/camera';
 import type { SetPlanet } from '@myrddraall/heroes-replay-stats-aether/planet-sets';
-import { pathOf, SCENE_CENTRE } from '@myrddraall/heroes-replay-stats-aether/scenes';
+import { pathOf, SCENE_CENTRE, siblingKey } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import { computed } from '@angular/core';
 import type { SceneMarker } from '../viewport/scene-markers';
 import { type BodyInfo } from '../bodies/body';
@@ -64,13 +64,13 @@ export function backgroundViews(store: WithTree) {
       }
       store.placements().forEach((p, i) =>
         out.push({
-          id: placementKey(i),
-          key: placementKey(i),
+          id: placementKey(siblingKey(p, i)),
+          key: placementKey(siblingKey(p, i)),
           kind: 'group',
           label: store.placementLabel()(p),
           icon: 'workspaces',
           at: p.position,
-          selected: t.kind === 'placement' && t.index === i,
+          selected: t.kind === 'placement' && t.key === siblingKey(p, i),
           off: p.enabled === false,
         }),
       );

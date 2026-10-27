@@ -30,6 +30,7 @@ import {
   type SceneBody,
   storedBodies,
   withLibraryMoons,
+  siblingKey,
 } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import {
   sceneSwitched,
@@ -183,7 +184,7 @@ export function sceneViews(store: SceneStoreBase) {
     /** `planet`: the one the moons are about (its own moons, the library's, are among them). */
     const walk = (parent: BodyPath, list: readonly MoonChoices[], planet: string) =>
       list.forEach((moon, i) => {
-        const path = [...parent, i];
+        const path = [...parent, siblingKey(moon, i)];
         const chosen = chosenOverlays(moon);
         out.push(
           info(
@@ -203,11 +204,12 @@ export function sceneViews(store: SceneStoreBase) {
         walk(path, moon.moons ?? [], planet);
       });
     planets.forEach((planet, b) => {
+      const key = siblingKey(planet, b);
       const chosen = chosenOverlays(planet);
       const wears = worn(chosen, planet.id);
       out.push(
         info(
-          [b],
+          [key],
           planet.id,
           wears,
           chosen !== undefined,
@@ -217,7 +219,7 @@ export function sceneViews(store: SceneStoreBase) {
           { position: planet.position, radius: planet.radius },
         ),
       );
-      walk([b], planet.moons ?? [], planet.id);
+      walk([key], planet.moons ?? [], planet.id);
     });
     return out;
   };
@@ -347,9 +349,11 @@ export function sceneMethods(store: SceneMethodsStore, w: SceneWrites) {
       // Seen through the editor's camera, where the scene's primary is.
       patchState(store, { scene: id, focus: null, look: EDITOR_CAMERA, editorCamera: null });
       // Its first planet selected, where it has one (else the scene itself).
-      patchState(store, { selected: id && store.sceneBodies().length ? bodyKey([0]) : SCENE });
+      const first = store.sceneBodies()[0];
+      const planet = first ? bodyKey([siblingKey(first, 0)]) : SCENE;
+      patchState(store, { selected: id && first ? planet : SCENE, opening: !!id && !first });
       store._ui.confirmReset(false);
-      store.expand(SCENE, bodyKey([0]));
+      store.expand(SCENE, planet);
     }),
     rename(name: string): void {
       if (ownScene(store.scene())) d.renameScene(store.scene(), name);

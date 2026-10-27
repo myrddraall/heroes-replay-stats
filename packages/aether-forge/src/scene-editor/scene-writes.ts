@@ -14,6 +14,7 @@ import {
   withLightChange,
   withMaterial,
   without,
+  indexOfKey,
 } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import type { SceneCameraSet } from '@myrddraall/heroes-replay-stats-aether/formats';
 import type { MaterialSettings } from '@myrddraall/heroes-replay-stats-aether/materials';
@@ -82,8 +83,9 @@ export function sceneWrites(store: SceneMethodsStore) {
     else if (t.kind === 'light') settings(t.path, (s) => withLightChange(s, t.id, change));
   };
   /** A group put in the scene changed (a setting given as none: taken back). */
-  const changePlacement = (index: number, change: Partial<GroupPlacement>) => {
+  const changePlacement = (key: string, change: Partial<GroupPlacement>) => {
     const placements = store.placements();
+    const index = indexOfKey(placements, key);
     const p = placements[index];
     if (!p) return;
     const next = { ...p, ...change } as Record<string, unknown>;

@@ -1,4 +1,9 @@
-import type { GroupPlacement, PlanetChoices, SceneBody } from './scene-settings';
+import {
+  type GroupPlacement,
+  siblingKey,
+  type PlanetChoices,
+  type SceneBody,
+} from './scene-settings';
 import { compose, pointToWorld, type Transform } from '../space/graph';
 import type { AddedLight } from '../lights/lights';
 import type { Vec3 } from '../space/vectors';
@@ -13,11 +18,11 @@ export const isGroup = (id: string) => id.startsWith(GROUP_PREFIX);
 /** How deep groups are put in groups before the deeper are left out (one put in itself, or round about). */
 const GROUP_DEPTH = 6;
 
-/** A group's planet as put in a scene: which placement it comes from (by index, outermost first), and what it is there. */
+/** A group's planet as put in a scene: which placement it comes from (by key, outermost first), and what it is there. */
 export interface GroupBody {
-  readonly placement: readonly number[];
-  /** Its index among its group's own planets. */
-  readonly index: number;
+  readonly placement: readonly string[];
+  /** Its key among its group's own planets (see `siblingKey`). */
+  readonly key: string;
   /** The group it is a planet of (its settings are kept there). */
   readonly group: string;
   readonly body: SceneBody;
@@ -70,9 +75,10 @@ export function groupBodies(
     // in a group, its place is relative to that group's middle.
     const local = groupTransform(placement);
     const world = parent ? compose(parent, { ...local, position: inGroup(local.position) }) : local;
+    const at = siblingKey(placement, i);
     const own = (group.bodies ?? []).map((body, index): GroupBody => ({
-      placement: [i],
-      index,
+      placement: [at],
+      key: siblingKey(body, index),
       group: placement.group,
       body: {
         ...body,
@@ -84,7 +90,7 @@ export function groupBodies(
     const inner = groupBodies(group.groups, groups, [...within, placement.group], world).map(
       (g): GroupBody => ({
         ...g,
-        placement: [i, ...g.placement],
+        placement: [at, ...g.placement],
         lights: [...g.lights, ...lights],
       }),
     );

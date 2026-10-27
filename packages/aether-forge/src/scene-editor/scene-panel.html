@@ -65,8 +65,7 @@
     (itemRemove)="editor.removeAdded($event)"
   />
 </forge-property-section>
-} } @case ('placement') { @if (scene; as s) { @let t = s.target(); @if (t.kind === 'placement' &&
-s.placements()[t.index]; as p) {
+} } @case ('placement') { @if (scene; as s) { @if (s.selectedPlacement(); as p) {
 <forge-group-placement-properties
   [placement]="p"
   [groupName]="s.placementLabel()({ group: p.group, position: p.position })"

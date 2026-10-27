@@ -12,6 +12,8 @@ import {
   withoutPartSetting,
   withOverlaySwitched,
   withPartSetting,
+  indexOfKey,
+  siblingKey,
 } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import { knownLights, withLightChanged } from '@myrddraall/heroes-replay-stats-aether/lights';
 import { computed } from '@angular/core';
@@ -64,6 +66,11 @@ export function selectionViews(store: WithSky) {
     const t = target();
     return 'path' in t ? bodyByKey().get(bodyKey(t.path)) : undefined;
   });
+  /** The group put in the scene that is selected, where one is. */
+  const selectedPlacement = computed(() => {
+    const t = target();
+    return t.kind === 'placement' ? (placements()[indexOfKey(placements(), t.key)] ?? null) : null;
+  });
   /**
    * The lights from beyond the selected body that light it too: the scene's (those on), and
    * those of the planets it is a moon of that reach their moons.
@@ -99,6 +106,7 @@ export function selectionViews(store: WithSky) {
   });
   return {
     target,
+    selectedPlacement,
     focusPath,
     resetAllLabel: computed(() => 'Reset scene'),
     deletable: computed(() => false),
@@ -202,7 +210,7 @@ export function selectionViews(store: WithSky) {
         return choices().lights?.find((l) => l.id === t.id)?.name ?? 'Properties';
       if (t.kind === 'reference') return 'Reference';
       if (t.kind === 'placement') {
-        const p = placements()[t.index];
+        const p = selectedPlacement();
         return p ? `Group · ${p.label ?? groupOf(p.group)?.name ?? p.group}` : 'Group';
       }
       if (t.kind === 'cameras') return 'Cameras';
@@ -257,7 +265,7 @@ export function selectionMethods(store: SceneMethodsStore, w: SceneWrites) {
       else if (t.kind === 'placement') {
         d.setSceneGroups(
           store.scene(),
-          store.placements().filter((_, i) => i !== t.index),
+          store.placements().filter((p, i) => siblingKey(p, i) !== t.key),
         );
         if (store.selected() === key) patchState(store, { selected: SCENE });
       } else if (t.kind === 'camera') {
@@ -280,7 +288,7 @@ export function selectionMethods(store: SceneMethodsStore, w: SceneWrites) {
       const t = targetOf(change.key);
       const on = change.enabled;
       if (t.kind === 'placement') {
-        changePlacement(t.index, { enabled: on ? undefined : false });
+        changePlacement(t.key, { enabled: on ? undefined : false });
         return;
       }
       const b = 'path' in t ? store.bodyByKey().get(bodyKey(t.path)) : undefined;

@@ -50,9 +50,9 @@ describe('groups', () => {
   it('puts the groups in a group in too, and leaves out those switched off', () => {
     const bodies = groupBodies([{ group: 'group-2', position: [0, 65, 4] }], find);
     expect(bodies.map((b) => [b.body.id, b.placement])).toEqual([
-      ['azeroth', [0]],
-      ['korhal', [0, 0]],
-      ['sanctuary', [0, 0]],
+      ['azeroth', ['0']],
+      ['korhal', ['0', '0']],
+      ['sanctuary', ['0', '0']],
     ]);
     expect(groupBodies([{ group: 'group-2', position: [0, 65, 4], enabled: false }], find)).toEqual(
       [],
