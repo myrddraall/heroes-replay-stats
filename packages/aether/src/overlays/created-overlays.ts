@@ -1,5 +1,4 @@
 import type { LibraryState } from '../library/library';
-import { CREATED_OVERLAY, createdOverlay, overlayFile } from './overlays';
 import type {
   LoadedPlayScene,
   PlayScene,
@@ -9,12 +8,20 @@ import type {
   SkyPart,
 } from '../formats/play-scene';
 import { BAND } from '../sky/sky-overlays';
-import type { Vec3 } from '../space/directions';
 import type { BodyPart, PlanetFile } from '../formats/planet-files';
 import type { LoadedPlanet } from '../formats/planet-loader';
 import { partId } from '../formats/part-keys';
-import { planeMapping } from '../formats/part-shapes';
+import {
+  type AddedPart,
+  type CreatedPart,
+  type CreatedShape,
+  type MaterialSource,
+  type PartSource,
+  planeMapping,
+} from '../formats/part-shapes';
 import { V_SAMPLES } from '../render/uniforms/limits';
+import type { Vec3 } from '../space/vectors';
+import { CREATED_OVERLAY, createdOverlay, overlayFile } from '../formats/overlay-files';
 
 /**
  * Parts made in the editor: an overlay's (kept in the design's library, by an id starting
@@ -29,38 +36,8 @@ import { V_SAMPLES } from '../render/uniforms/limits';
 
 /** What an overlay is worn on: a planet (or moon), or the sky. */
 export type OverlayKind = 'planet' | 'sky';
-
-/** The shapes a new part can take: a sphere, a ring, a tube, a cone or a disc (a planet's), a band (the sky's). */
-export type CreatedShape =
-  'sphere' | 'ring' | 'tube' | 'cone' | 'disc' | 'capsule' | 'plane' | 'band';
-
-/**
- * Where a part is in the game data, to be reused: a planet's or a data overlay's (by its id, else
- * its role), or one of the sky's overlays' (by its id).
- */
-export type PartSource =
-  | { readonly kind: 'planet' | 'style'; readonly id: string; readonly part: string }
-  | { readonly kind: 'sky'; readonly overlay: string; readonly part: string };
-
-/**
- * A part made in the editor: which it is, its shape (a reused one's: the shape its data has, a sky's
- * being a mesh), the materials it draws, in order, and where it is in the game data, where reused.
- */
-export interface CreatedPart {
-  readonly id: string;
-  readonly shape: CreatedShape | 'mesh';
-  readonly materials: readonly string[];
-  readonly from?: PartSource;
-}
-
 /** Whether a part is a sky's (about the eye) rather than a planet's (about the body). */
 export const skyShape = (shape: CreatedPart['shape']) => shape === 'band' || shape === 'mesh';
-
-/** Where in the game data a material is: a planet's file, an overlay's (a style's), or the sky's. */
-export type MaterialSource =
-  | { readonly kind: 'planet'; readonly id: string }
-  | { readonly kind: 'style'; readonly id: string }
-  | { readonly kind: 'sky' };
 
 /** Parts made in the editor and where the materials they draw are in the game data, by name. */
 export interface Sourced {
@@ -73,14 +50,6 @@ export interface CreatedOverlay extends Sourced {
   readonly kind: OverlayKind;
   /** Its name as made (renamed: by its settings' `label`, as any overlay is). */
   readonly label: string;
-}
-
-/**
- * A part added straight onto a body or a sky (its own), with where the materials it draws are: it
- * stands on its own, wherever it is kept.
- */
-export interface AddedPart extends CreatedPart {
-  readonly sources: Readonly<Record<string, MaterialSource>>;
 }
 
 /** Parts added at several levels, the later over the earlier (one of the same id in its place). */

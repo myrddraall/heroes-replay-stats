@@ -1,13 +1,10 @@
 import { overlayOn, wornKey } from '@myrddraall/heroes-replay-stats-aether/overlays';
 import {
-  type BodySettings,
-  type BodyValues,
   DEFAULT_ORBIT,
   HALO_MARGIN,
   type MoonChoices,
   type Orbit,
   ORBIT_KEYS,
-  type Vec3,
 } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import type { Variant } from '@myrddraall/heroes-replay-stats-aether/variants';
 import {
@@ -20,16 +17,18 @@ import {
   type MaterialSettingsMap,
   type MaterialTint,
   NO_MATERIAL_TINT,
-  originsOf,
-  type SettingOrigins,
 } from '@myrddraall/heroes-replay-stats-aether/materials';
 import {
   DEFAULT_ORIENTATION,
   keyLightFrom,
   NO_QUAT,
   type Orientation,
+  type Quat,
   TOWARDS_EYE,
+  type Vec3,
 } from '@myrddraall/heroes-replay-stats-aether/space';
+import { originsOf, type SettingOrigins } from '../editing/setting-origins';
+import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies';
 /**
  * A body as an editor of the design shows it, whichever layer it edits (a scene, over the library;
  * the library, over the game data): its values through the layers, and what is set in the layer
@@ -394,3 +393,22 @@ function inheritedChanged(b: BodyInfo): boolean {
 export const bodyLabel = (b: BodyInfo) => b.settings.label ?? bodyLabelBelow(b);
 
 export const bodyLabelBelow = (b: BodyInfo) => b.below?.label ?? b.name ?? b.id;
+
+/** A body's own settings as shown: its own, over its style's, over its file's tuning, over the defaults. */
+export interface BodyValues {
+  readonly overlays: readonly string[];
+  readonly lighting: number;
+  readonly shade: number;
+  readonly tint: MaterialTint;
+  /** Where its key light comes from; none where it has no light. */
+  readonly lightFrom: Vec3 | null;
+  readonly shadeTowards: Vec3;
+  readonly rim: Vec3;
+  readonly glowMargin: number;
+  /** Which way its surfaces are turned (unless its parts or materials say), where its poles point (its frame) and its turn about them (degrees). */
+  readonly orientation: Orientation;
+  readonly axis: Vec3;
+  readonly turn: number;
+  /** Its base turn (its pose before its Turn; see `bodyTurn`). */
+  readonly baseTurn: Quat;
+}

@@ -1,18 +1,18 @@
 import { Component, computed, input, output } from '@angular/core';
 import {
-  type BodySettings,
-  type BodyValues,
   DEFAULT_ORBIT,
   type Orbit,
   ORBIT_KEYS,
-  type Vec3,
 } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import {
   type MaterialTint,
   NO_MATERIAL_TINT,
-  type SettingOrigins,
 } from '@myrddraall/heroes-replay-stats-aether/materials';
-import { orbitOffset, type Orientation } from '@myrddraall/heroes-replay-stats-aether/space';
+import {
+  orbitOffset,
+  type Orientation,
+  type Vec3,
+} from '@myrddraall/heroes-replay-stats-aether/space';
 import { PropertyDirection } from '../controls/rows/property-direction';
 import { PropertySection } from '../controls/property-section';
 import { TintSection } from '../materials/tint-section';
@@ -22,6 +22,9 @@ import { type PlacementChange, PropertyPlacement } from '../controls/rows/proper
 import { PropertyText } from '../controls/rows/property-text';
 import { PropertySelect } from '../controls/rows/property-select';
 import { ORIENTATION_CHOICES } from '../sky/sky';
+import type { BodyValues } from './body';
+import type { SettingOrigins } from '../editing/setting-origins';
+import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies';
 
 /**
  * A body's properties (presentational): the overlays the planet or moon wears, its lights as a whole

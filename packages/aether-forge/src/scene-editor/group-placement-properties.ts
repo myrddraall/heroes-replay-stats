@@ -1,8 +1,9 @@
 import { Component, input, output } from '@angular/core';
-import type { GroupPlacement, Vec3 } from '@myrddraall/heroes-replay-stats-aether/scenes';
+import type { GroupPlacement } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import { PropertyNumber } from '../controls/rows/property-number';
 import { PropertySection } from '../controls/property-section';
 import { PropertyText } from '../controls/rows/property-text';
+import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/space';
 
 /**
  * A group put in a scene, as its properties show it (presentational): its name there (the group's

@@ -7,15 +7,7 @@ import type {
 } from '../formats/play-scene';
 import { overlayPartKey, type PartKey } from '../formats/part-keys';
 import type { PartSettings, PartSettingsMap } from '../formats/part-shapes';
-/**
- * A sky's overlays: parts about the eye (meshes as the sky's are, or bands), each drawing its
- * materials as the sky's are drawn. A sky has no radius to fit them to: a part is placed by the
- * view of the scene's own camera (the scene file's, which the sky's meshes are placed for), about
- * its eye: made bigger or smaller (further or nearer, the same in view), turned round the eye, and
- * tilted up or down; then anchored against the camera that sees it as the rest of the sky is.
- */
-
-type Vec3 = readonly [number, number, number];
+import { type Vec3, cross, dot, normalized, sub } from '../space/vectors';
 
 /** A band part as it starts: well beyond the planets, low across the middle of the view. */
 export const BAND: Extract<SkyShape, { kind: 'band' }> = {
@@ -29,25 +21,13 @@ export const BAND: Extract<SkyShape, { kind: 'band' }> = {
 
 /** How many steps round a band's mesh takes (enough that it looks round wherever it is). */
 const BAND_STEPS = 64;
-
-const sub = (a: Vec3, b: Vec3): Vec3 => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
-const dot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-const cross = (a: Vec3, b: Vec3): Vec3 => [
-  a[1] * b[2] - a[2] * b[1],
-  a[2] * b[0] - a[0] * b[2],
-  a[0] * b[1] - a[1] * b[0],
-];
-const normalize = (a: Vec3): Vec3 => {
-  const l = Math.hypot(...a) || 1;
-  return [a[0] / l, a[1] / l, a[2] / l];
-};
 const rad = (degrees: number) => (degrees * Math.PI) / 180;
 
 /** The view's level directions: ahead (forward, level), to the right, and up. */
 function levelFrame(camera: SceneCamera): { ahead: Vec3; right: Vec3; up: Vec3 } {
   const up: Vec3 = [0, 0, 1];
   const f = camera.forward;
-  const ahead = normalize([f[0], f[1], 0]);
+  const ahead = normalized([f[0], f[1], 0]);
   return { ahead, right: cross(ahead, up), up };
 }
 

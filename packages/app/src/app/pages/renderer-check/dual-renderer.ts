@@ -1,11 +1,15 @@
-import type { EditingAid } from "@myrddraall/heroes-replay-stats-aether/aids";
-import type { LoadedPlayScene, SceneCameraSet } from "@myrddraall/heroes-replay-stats-aether/formats";
-import type { SkySettings } from "@myrddraall/heroes-replay-stats-aether/sky";
-import type { AddedLight } from "@myrddraall/heroes-replay-stats-aether/lights";
-import { type Renderer, ThreeRenderer } from "@myrddraall/heroes-replay-stats-aether/render";
-import type { Backdrop, PlanetPlacement } from "@myrddraall/heroes-replay-stats-aether/space";
-import { NO_TINT, type Tint } from "@myrddraall/heroes-replay-stats-aether/tints";
-type Vec3 = readonly [number, number, number];
+import type { EditingAid } from '@myrddraall/heroes-replay-stats-aether/aids';
+import type {
+  LoadedPlayScene,
+  SceneCameraSet,
+} from '@myrddraall/heroes-replay-stats-aether/formats';
+import type { DrawnSky } from '@myrddraall/heroes-replay-stats-aether/sky';
+import type { AddedLight } from '@myrddraall/heroes-replay-stats-aether/lights';
+import { type Renderer, ThreeRenderer } from '@myrddraall/heroes-replay-stats-aether/render';
+import type { Backdrop } from '@myrddraall/heroes-replay-stats-aether/space';
+import type { DrawnBody } from '@myrddraall/heroes-replay-stats-aether/bodies';
+import { NO_TINT, type Tint } from '@myrddraall/heroes-replay-stats-aether/tints';
+import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/space';
 
 /** Which of three.js's backends the check draws with: WebGPU, WebGL 2, or both at once. */
 export type CheckMode = 'webgpu' | 'webgl' | 'both';
@@ -179,8 +183,8 @@ export class DualRenderer implements Renderer {
   pick(x: number, y: number, aspect: number): number | null {
     return this.first.pick(x, y, aspect);
   }
-  setPlanets(placements: readonly PlanetPlacement[]): void {
-    for (const r of this.all) r.setPlanets(placements);
+  setBodies(bodies: readonly DrawnBody[]): void {
+    for (const r of this.all) r.setBodies(bodies);
   }
   placePlanets(positions: readonly Vec3[], radii?: readonly number[]): void {
     for (const r of this.all) r.placePlanets(positions, radii);
@@ -194,8 +198,8 @@ export class DualRenderer implements Renderer {
   setSkyFollow(set: SceneCameraSet | null): void {
     for (const r of this.all) r.setSkyFollow(set);
   }
-  setSky(settings: SkySettings): void {
-    for (const r of this.all) r.setSky(settings);
+  setSky(sky: DrawnSky): void {
+    for (const r of this.all) r.setSky(sky);
   }
   setSceneLights(lights: readonly AddedLight[]): void {
     for (const r of this.all) r.setSceneLights(lights);

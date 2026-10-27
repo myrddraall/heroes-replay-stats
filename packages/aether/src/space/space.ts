@@ -4,6 +4,8 @@ import { type PartSettingsMap, shapeReach } from '../formats/part-shapes';
 import type { BodyPart, BodyShade } from '../formats/planet-files';
 import type { LoadedPlanet } from '../formats/planet-loader';
 import type { MaterialSettingsMap, MaterialTint } from '../materials/material-settings';
+import { type Vec3, cross, dot, normalized } from './vectors';
+
 /**
  * Where the scene's things are: the camera's matrices, a planet put up in it (its placement), its
  * body's frame and how far the square its parts are drawn on reaches, and the backdrop drawn in
@@ -19,19 +21,6 @@ export type Backdrop =
   | { readonly kind: 'colour'; readonly colour: Vec3 }
   | { readonly kind: 'grid'; readonly size: number; readonly colours: readonly [Vec3, Vec3] };
 
-type Vec3 = readonly [number, number, number];
-
-const cross = (a: Vec3, b: Vec3): Vec3 => [
-  a[1] * b[2] - a[2] * b[1],
-  a[2] * b[0] - a[0] * b[2],
-  a[0] * b[1] - a[1] * b[0],
-];
-const dot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-const normalize = (a: Vec3): Vec3 => {
-  const l = Math.hypot(...a);
-  return [a[0] / l, a[1] / l, a[2] / l];
-};
-
 /**
  * A camera's axes as its view has them: the way it looks, to its right, and up on the screen (its
  * `up` made square to the way it looks). Looking straight along its up (no right to be had), the
@@ -39,9 +28,9 @@ const normalize = (a: Vec3): Vec3 => {
  * limit it comes to tilted there.
  */
 function viewAxes(forward: Vec3, up: Vec3): { f: Vec3; r: Vec3; u: Vec3 } {
-  const f = normalize(forward);
+  const f = normalized(forward);
   const across = cross(f, up);
-  const r = Math.hypot(...across) > 1e-9 ? normalize(across) : normalize(cross([0, 1, 0], up));
+  const r = Math.hypot(...across) > 1e-9 ? normalized(across) : normalized(cross([0, 1, 0], up));
   return { f, r, u: cross(r, f) };
 }
 
@@ -205,7 +194,7 @@ export interface BodyFrame {
 
 /** Some unit vector square to a unit one. */
 const squareTo = (v: Vec3): Vec3 =>
-  normalize(cross(v, Math.abs(v[0]) < 0.9 ? [1, 0, 0] : [0, 1, 0]));
+  normalized(cross(v, Math.abs(v[0]) < 0.9 ? [1, 0, 0] : [0, 1, 0]));
 
 /**
  * A planet's body's frame, as the game's billboards turn to face the eye: about its centre, y
@@ -221,10 +210,10 @@ const squareTo = (v: Vec3): Vec3 =>
 export function bodyFrame(position: Vec3, radius: number, eye: Vec3, viewUp: Vec3): BodyFrame {
   const to: Vec3 = [eye[0] - position[0], eye[1] - position[1], eye[2] - position[2]];
   const y =
-    Math.hypot(...to) > 1e-9 ? normalize([-to[0], -to[1], -to[2]]) : squareTo(normalize(viewUp));
+    Math.hypot(...to) > 1e-9 ? normalized([-to[0], -to[1], -to[2]]) : squareTo(normalized(viewUp));
   const lean = dot(viewUp, y);
   const off: Vec3 = [viewUp[0] - lean * y[0], viewUp[1] - lean * y[1], viewUp[2] - lean * y[2]];
-  const z = Math.hypot(...off) > 1e-9 ? normalize(off) : squareTo(y); // straight above or below on the screen: never in view
+  const z = Math.hypot(...off) > 1e-9 ? normalized(off) : squareTo(y); // straight above or below on the screen: never in view
   const x = cross(y, z);
   return {
     axes: new Float32Array([...x, ...y, ...z]),
@@ -244,8 +233,10 @@ const ringFit = (distance: number, depth: number) =>
     : 1; // from afar: the limb as far as the ring
 
 /** How much bigger a ring is drawn seen from `distance` (the body's radii) than as modelled. */
-const ringScale = (shape: { readonly depth: number; readonly seen?: number }, distance: number) =>
-  shape.seen ? ringFit(distance, shape.depth) / ringFit(shape.seen, shape.depth) : 1;
+export const ringScale = (
+  shape: { readonly depth: number; readonly seen?: number },
+  distance: number,
+) => (shape.seen ? ringFit(distance, shape.depth) / ringFit(shape.seen, shape.depth) : 1);
 
 /**
  * The half-side of the square a body's parts are drawn on, in the scene's units: as far as they

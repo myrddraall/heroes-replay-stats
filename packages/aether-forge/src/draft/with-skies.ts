@@ -1,7 +1,10 @@
 import type { Design } from '@myrddraall/heroes-replay-stats-aether/design';
-import type { AddedPart } from '@myrddraall/heroes-replay-stats-aether/overlays';
 import { type SkyChoices, without } from '@myrddraall/heroes-replay-stats-aether/scenes';
-import type { PartKey, PartSettings } from '@myrddraall/heroes-replay-stats-aether/formats';
+import type {
+  AddedPart,
+  PartKey,
+  PartSettings,
+} from '@myrddraall/heroes-replay-stats-aether/formats';
 import type {
   MaterialSettings,
   MaterialTint,

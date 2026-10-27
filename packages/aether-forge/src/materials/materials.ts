@@ -15,11 +15,8 @@ import {
   type LayerSlot,
   layerSlots,
   MATERIAL_DEFAULTS,
-  type MaterialControls,
-  materialControls,
   type MaterialDepth,
   materialKey,
-  materialLabel,
   type MaterialSettings,
   type MaterialSettingsMap,
   type MaterialTint,
@@ -28,9 +25,6 @@ import {
   mergeMaterialSettings,
   mergeSettings,
   NO_MATERIAL_TINT,
-  originsOf,
-  type SettingOrigins,
-  textureLabel,
   withLayer,
 } from '@myrddraall/heroes-replay-stats-aether/materials';
 import {
@@ -44,6 +38,9 @@ import {
 } from '../bodies/body';
 import { partNodes, partTurnOf } from '../parts/parts';
 import { inDrawOrder } from '../sky/sky';
+import { type MaterialControls, materialControls } from './material-controls';
+import { materialLabel, textureLabel } from './material-names';
+import { originsOf, type SettingOrigins } from '../editing/setting-origins';
 
 /** A body's materials as an editor shows them: their values through the layers, their layers and textures. */
 

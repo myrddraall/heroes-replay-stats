@@ -10,7 +10,6 @@ import {
   pathOf,
   placeBodies,
   SCENE_CENTRE,
-  type Vec3,
   visualExtent,
 } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import type { AddedLight } from '@myrddraall/heroes-replay-stats-aether/lights';
@@ -47,6 +46,7 @@ import {
 } from './scene-targets';
 import type { WithPartHosts } from './scene-editor.store';
 import { bodySubtreeRows, materialRows } from '../bodies/body-rows';
+import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/space';
 
 /** The scene's tree: its rows (the scene, its cameras, sky, groups and bodies, each body's parts, lights and overlays), and the bodies placed. */
 export function treeViews(store: WithPartHosts) {

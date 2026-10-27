@@ -1,8 +1,8 @@
 import type { VariantRow } from '../variants/variant-list';
 import type { Signal } from '@angular/core';
-import type { CreatedShape } from '@myrddraall/heroes-replay-stats-aether/overlays';
-import type { BodySettings, Orbit, Vec3 } from '@myrddraall/heroes-replay-stats-aether/scenes';
+import type { Orbit } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import type {
+  CreatedShape,
   PartSettings,
   SceneCamera,
   SceneCameraSet,
@@ -28,6 +28,8 @@ import type { AssetTarget, OpenTarget } from '../layout/open-target';
 import type { TreeMove, TreeRow } from '../tree/scene-tree';
 import type { PoleDrag, SceneMarker } from '../viewport/scene-markers';
 import type { AddedLists } from '../controls/added-list';
+import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/space';
+import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies';
 
 /**
  * An editor of the background's design, as the panels under it use one: provided by the scene

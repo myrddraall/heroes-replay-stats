@@ -1,12 +1,8 @@
-export { materialLabel, textureLabel } from './material-names';
 export {
   type LayerSettings,
   type LayerSlot,
   layerSlots,
-  MATERIAL_BLENDS,
   MATERIAL_DEFAULTS,
-  type MaterialControls,
-  materialControls,
   type MaterialDepth,
   type MaterialDrawAs,
   materialKey,
@@ -18,7 +14,5 @@ export {
   mergeMaterialSettings,
   mergeSettings,
   NO_MATERIAL_TINT,
-  originsOf,
-  type SettingOrigins,
   withLayer,
 } from './material-settings';

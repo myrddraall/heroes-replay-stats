@@ -1,15 +1,15 @@
 import { Component, input, output } from '@angular/core';
 import type {
-  MaterialControls,
   MaterialDrawAs,
   MaterialSettings,
   MaterialValues,
-  SettingOrigins,
 } from '@myrddraall/heroes-replay-stats-aether/materials';
 import { PropertyColour } from '../controls/rows/property-colour';
 import { PropertyNumber } from '../controls/rows/property-number';
 import { PropertySection } from '../controls/property-section';
 import { type PropertyOption, PropertySelect } from '../controls/rows/property-select';
+import { type MaterialControls } from './material-controls';
+import { type SettingOrigins } from '../editing/setting-origins';
 
 /**
  * A material's pattern (presentational): a shield's shader's (its cells, drawn or the game's

@@ -11,7 +11,6 @@ import {
   addPlanet,
   bodyAt,
   type BodyPath,
-  type BodySettings,
   canPutGroup,
   groupBodies,
   type GroupPlacement,
@@ -30,7 +29,6 @@ import {
   sceneBodies,
   type SceneBody,
   storedBodies,
-  type Vec3,
   withLibraryMoons,
 } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import {
@@ -52,6 +50,8 @@ import { bodyKey, EDITOR_CAMERA, groupBodyKey, ownPart, planetsIn, SCENE } from 
 import { patchState, signalMethod } from '@ngrx/signals';
 import { RANDOM_SETS } from '../layout/open-target';
 import type { SceneWrites } from './scene-writes';
+import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/space';
+import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies';
 
 /** The scene open: its entry in the draft and as published, its planets and groups, its name, tint and what of it is unsaved. */
 export function sceneViews(store: SceneStoreBase) {

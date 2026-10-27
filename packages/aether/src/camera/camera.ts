@@ -1,13 +1,5 @@
 import type { SceneCamera, SceneCameraSet } from '../formats/play-scene';
-
-/**
- * A scene's camera as it is set and moved: where it is (the scene's x across, y away, z up), the
- * way it looks as a turn (degrees round the up, to the right of looking along +y) and a tilt
- * (degrees up), and its field of view. Its up stays the world's (z). Moved in the view it orbits
- * round what it looks at, pans across, and moves in and out.
- */
-
-type Vec3 = readonly [number, number, number];
+import { type Vec3 } from '../space/vectors';
 
 const rad = (degrees: number) => (degrees * Math.PI) / 180;
 const deg = (radians: number) => (radians * 180) / Math.PI;

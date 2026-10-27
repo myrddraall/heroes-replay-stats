@@ -1,23 +1,5 @@
 import { type BodyFrame, bodyFrame, viewUp, type Viewpoint } from './space';
-
-/**
- * The scene as a tree of things, each placed in its parent: the scene holds groups and planets,
- * a group its planets (and groups), a planet its moons; a body's parts and lights hang from the
- * body, the scene's lights and cameras from the scene. Each thing has a local transform (where
- * it is in its parent, how it is turned, how big), and its place in the world is its parent's
- * world transform applied to it, up the chain. One world: the scene's units, z up.
- *
- * A body's own turn is its placement frame (`placementFrame`): turned as the scene's own camera
- * (the scene file's, `layout`) sees it from where it ends up, x across, y away from that eye, z
- * up. It is fixed in the world, whatever camera draws it: what is placed in a body (its moons, the
- * lights of its surfaces fixed in the world) stays where it is as any other camera goes round. A
- * body's surface may still be drawn facing the eye that draws it (its Orientation `camera`, the
- * game's billboards): that frame (`BodyFrame` from the live camera) is for drawing and for its
- * lighting (kept to the eye), never for placing. Either way the surface is turned by the body's
- * own turn (its Turn about its Axis, `bodyTurn`): in the world, or against the eye.
- */
-
-export type Vec3 = readonly [number, number, number];
+import { type Vec3 } from './vectors';
 
 /** A turn: its axes in its parent, column by column (x, y, z), as `BodyFrame.axes` has them. */
 export type Mat3 = ArrayLike<number>;

@@ -1,6 +1,6 @@
 import {
   BufferAttribute,
-  BufferGeometry,
+  type BufferGeometry,
   InstancedBufferGeometry,
   InstancedInterleavedBuffer,
   InterleavedBufferAttribute,
@@ -19,7 +19,6 @@ import {
   type SceneCamera,
   type SceneCameraSet,
   type SceneMaterial,
-  type SkyOverlayFile,
 } from '../formats/play-scene';
 import { INSTANCE_FLOATS, ParticleSystem } from '../effects/particles';
 import {
@@ -27,20 +26,16 @@ import {
   type MaterialDepth,
   materialKey,
   type MaterialSettings,
-  mergeSettings,
 } from '../materials/material-settings';
 import { AXIS_NAMES_PAST, axisEnds, type EditingAid } from '../aids/beams';
 import { fitTube, tubeCover } from '../sky/tubes';
-import { overlayOfFile } from '../overlays/overlays';
 import { skyOverlayParts } from '../sky/sky-overlays';
 import { skyDepths } from '../sky/sky-depths';
 import { anchoredDepth, anchoredView, type SkyAnchor, skyAnchorOf } from '../sky/sky-anchors';
-import { type AddedLight } from '../lights/lights';
-import { type BodyShade, DEFAULT_SHADE } from '../formats/planet-files';
-import { wearOf } from '../formats/wear';
+import type { AddedLight } from '../lights/lights';
 import type { LoadedPlanet } from '../formats/planet-loader';
-import type { SkySettings } from '../sky/sky-settings';
-import { ownPartKey, overlayOfPartKey, overlayPartKey, type PartKey } from '../formats/part-keys';
+import type { DrawnSky } from '../sky/drawn-sky';
+import { overlayOfPartKey, type PartKey } from '../formats/part-keys';
 import { BLEND_MODES, NO_TINT, type Tint } from '../tints/tints';
 import { MAX_SURFACES } from './uniforms/limits';
 import { UniformSet } from './uniforms/uniforms';
@@ -50,7 +45,6 @@ import {
   bodyFrame,
   eyeOf,
   multiplyMatrices as multiply,
-  type PlanetPlacement,
   partsExtent,
   projectionMatrix,
   reach,
@@ -78,22 +72,11 @@ import {
   type ParticleDraw,
   type Placed,
 } from './draw-types';
-import { type Vec3, distance, turnAbout } from './vectors';
 import { BLOOM_STRENGTH, DEFAULT_BLOOM_THRESHOLD } from './tuning';
 import { fenced, freeGpu, meshGeometry } from './gpu';
-import {
-  bodyTurnOf,
-  fileId,
-  moves,
-  overlayParts,
-  overlaysOf,
-  partsOf,
-  sameOverlays,
-  sorted,
-  turnFor,
-  wearsIn,
-} from './bodies/body-draws';
-
+import { fileId, moves, sorted, turnFor } from './bodies/body-draws';
+import { type Vec3, distance, turnAbout } from '../space/vectors';
+import type { DrawnBody } from '../bodies/drawn-body';
 let nextPlacedId = 0;
 
 /**
@@ -166,10 +149,9 @@ export class ThreeRenderer {
   private readonly drawContext: DrawContext = {
     settingsOf: (draw) => this.settingsOf(draw),
     hasTexture: (key) => this.textures.has(key),
-    addedTo: (placement) => this.addedTo(placement),
+    addedTo: (body) => this.addedTo(body),
     skyAnchor: () => this.sky.anchor,
     depthOf: (name, settings, placed) => this.depthOf(name, settings, placed),
-    shadeOf: (placement) => this.shadeOf(placement),
     exposure: () => this.loaded.scene.tone.exposure,
     sceneThreshold: () => this.sceneThreshold(),
   };
@@ -189,7 +171,7 @@ export class ThreeRenderer {
   fade = 1;
   /** How strongly the editor's beams and outlines show, 0 to 1 (faded in once the planets are where they are going). */
   aidFade = 1;
-  private sky: SkySettings = {};
+  private sky: DrawnSky = { worn: [], materials: {} };
   private backdrop: Backdrop | null = null;
   private sceneLights: readonly AddedLight[] = [];
   /** Where the bodies' frames were last turned to face from: the eye, and the view's up. */
@@ -395,12 +377,12 @@ export class ThreeRenderer {
    * time each planet is placed. A body put up as it was (the same placement) keeps what is worked
    * out and baked of it; only the others are worked out again.
    */
-  setPlanets(placements: readonly PlanetPlacement[]): void {
+  setBodies(bodies: readonly DrawnBody[]): void {
     const { eye } = this.camera;
     const up = this.viewUpNow();
     let loaded = false;
-    for (const placement of placements)
-      for (const planet of [placement.planet, ...overlaysOf(placement)]) {
+    for (const body of bodies)
+      for (const planet of body.files) {
         if (this.planetsLoaded.has(planet)) continue;
         for (const [key, image] of Object.entries(planet.images))
           if (!this.textures.has(key)) {
@@ -411,9 +393,9 @@ export class ThreeRenderer {
       }
     if (loaded) this.resolveSky();
     const previous = this.placed;
-    const before = new Map(previous.map((p) => [p.placement, p]));
+    const before = new Map(previous.map((p) => [p.body, p]));
     const kept = new Set<Placed>();
-    this.placed = placements.map((placement, i) => {
+    this.placed = bodies.map((body, i) => {
       // The same body: its placement, or (edited: a new placement) the same planet wearing the
       // same overlays, at the same place in the list, else anywhere in it not already taken (a fly
       // ending: the planets flown to were after those flown from, and moved, so new placements).
@@ -422,21 +404,21 @@ export class ThreeRenderer {
       const alike = (p: Placed | undefined) =>
         !!p &&
         !kept.has(p) &&
-        p.placement.planet === placement.planet &&
-        sameOverlays(p.placement, placement);
+        p.body.files.length === body.files.length &&
+        p.body.files.every((f, k) => f === body.files[k]);
       const at = previous[i];
-      const exact = before.get(placement);
+      const exact = before.get(body);
       const keep =
         (exact && !kept.has(exact) ? exact : undefined) ??
         (alike(at) ? at : undefined) ??
         previous.find(alike);
       if (keep) kept.add(keep);
-      if (keep && keep.placement === placement && !loaded) return keep;
+      if (keep && keep.body === body && !loaded) return keep;
       const placed: Placed = {
         id: keep?.id ?? nextPlacedId++,
-        placement,
-        quad: bodyFrame(placement.position, placement.radius, eye, up),
-        placementFrame: placementFrame(placement.position, this.layout),
+        body,
+        quad: bodyFrame(body.position, body.radius, eye, up),
+        placementFrame: placementFrame(body.position, this.layout),
         extent: 0,
         states: [],
         version: keep?.version ?? 0,
@@ -467,12 +449,12 @@ export class ThreeRenderer {
   }
 
   private measure(placed: Placed): void {
-    const { position, radius } = placed.placement;
-    const list = partsOf(placed.placement);
+    const { position, radius } = placed.body;
+    const list = placed.body.parts;
     const parts = list.map((p) => p.part);
     // Its parts not square to the eye (any of their materials fixed in the world, or turned by
     // the body's own turn): a ring of them tilts.
-    const turned = !isIdentity(bodyTurnOf(placed.placement));
+    const turned = !isIdentity(placed.body.turn);
     const world = new Set(
       placed.states
         .filter((s) => s.orientation === 'world' || (turned && s.turned))
@@ -485,37 +467,27 @@ export class ThreeRenderer {
   }
 
   private resolveBody(placed: Placed): void {
-    const { planet } = placed.placement;
-    const overlays = overlaysOf(placed.placement);
-    const light = overlays.find((o) => o.planet.light)?.planet.light ?? planet.planet.light;
-    const draws: MeshDraw[] = [];
-    for (const loaded of [planet, ...overlays]) {
-      const own = loaded === planet;
-      const parts = own ? loaded.planet.parts : overlayParts(placed.placement, loaded);
-      parts.forEach((part, i) => {
-        for (const m of part.materials) {
-          const material = this.material(m, `${loaded.id}/${i}`, loaded.planet.materials);
-          const overlay = own ? undefined : overlayOfFile(loaded.id);
-          const partKey = own ? ownPartKey(part) : overlayPartKey(overlayOfFile(loaded.id), part);
-          draws.push({
-            name: m,
-            key: materialKey(m, overlay),
-            ...(overlay ? { overlay } : {}),
-            material,
-            moving: moves(material),
-            placed,
-            owner: loaded,
-            part,
-            partKey,
-            light,
-            id: `body:${placed.id}:${loaded.id}:${i}:${m}`,
-          });
-        }
-      });
-    }
+    const { body } = placed;
+    const draws = body.draws.map((d): MeshDraw => {
+      const material = this.material(d.name, `${d.file.id}/${d.index}`, d.file.planet.materials);
+      return {
+        name: d.name,
+        key: d.key,
+        ...(d.overlay ? { overlay: d.overlay } : {}),
+        material,
+        moving: moves(material),
+        placed,
+        owner: d.file,
+        part: d.source,
+        partKey: d.partKey,
+        ...(body.rig ? { light: body.rig } : {}),
+        id: `body:${placed.id}:${d.file.id}:${d.index}:${d.name}`,
+        bodyDraw: d,
+      };
+    });
     placed.states = sorted(
       draws.map((d) => drawStateOf(d, this.drawContext)),
-      () => placed.placement.order,
+      () => placed.body.order,
     );
     placed.version++;
   }
@@ -587,9 +559,9 @@ export class ThreeRenderer {
       return [(px + 1) / 2, (1 - py) / 2, w];
     };
     let best: { index: number; depth: number } | null = null;
-    this.placed.forEach(({ placement }, index) => {
-      if (placement.hidden) return;
-      const { position, radius } = placement;
+    this.placed.forEach(({ body }, index) => {
+      if (body.hidden) return;
+      const { position, radius } = body;
       const centre = project(position);
       const top = project([position[0], position[1], position[2] + radius]);
       if (!centre || !top) return;
@@ -615,8 +587,8 @@ export class ThreeRenderer {
       return [(x + 1) / 2, (1 - y) / 2];
     };
     const out: { id: string; x: number; y: number; top: number }[] = [];
-    for (const { placement, quad } of this.placed) {
-      const { position, radius } = placement;
+    for (const { body, quad } of this.placed) {
+      const { position, radius } = body;
       const centre = project(position);
       // Its top on the screen: up its frame facing the eye (turned to the view's up), not the world's.
       const z = quad.axes.subarray(6, 9);
@@ -632,7 +604,7 @@ export class ThreeRenderer {
         .map((p) => project(p)?.[1] ?? 1);
       if (centre && top)
         out.push({
-          id: placement.planet.label ?? placement.planet.id,
+          id: body.label ?? body.id,
           x: centre[0],
           y: centre[1],
           top: Math.min(top[1], ...names),
@@ -649,11 +621,11 @@ export class ThreeRenderer {
     const from = this.placedFrom;
     const seen = from?.eye === eye && from.up.every((v, k) => v === up[k]);
     this.placed.forEach((placed, i) => {
-      const position = positions[i] ?? placed.placement.position;
-      const radius = radii?.[i] ?? placed.placement.radius;
-      const was = placed.placement;
+      const position = positions[i] ?? placed.body.position;
+      const radius = radii?.[i] ?? placed.body.radius;
+      const was = placed.body;
       if (position === was.position && radius === was.radius && seen) return;
-      placed.placement = { ...was, position, radius };
+      placed.body = { ...was, position, radius };
       placed.quad = bodyFrame(position, radius, eye, up);
       if (position !== was.position) placed.placementFrame = placementFrame(position, this.layout);
       this.measure(placed);
@@ -679,7 +651,7 @@ export class ThreeRenderer {
     this.view = this.viewNow();
     this.projection = this.projectionNow();
     this.placedFrom = undefined;
-    this.placePlanets(this.placed.map((p) => p.placement.position));
+    this.placePlanets(this.placed.map((p) => p.body.position));
     this.stillDirty = true;
     this.viewChanged();
   }
@@ -689,7 +661,7 @@ export class ThreeRenderer {
     if (yaw === this.yaw) return;
     this.yaw = yaw;
     this.view = this.viewNow();
-    this.placePlanets(this.placed.map((p) => p.placement.position)); // turned with the view
+    this.placePlanets(this.placed.map((p) => p.body.position)); // turned with the view
     this.stillDirty = true;
     this.viewChanged();
   }
@@ -844,35 +816,24 @@ export class ThreeRenderer {
     this.changed = true;
   }
 
-  private addedTo(placement: PlanetPlacement | undefined): readonly AddedLight[] {
-    if (!placement) return [];
-    return placement.added?.length ? [...placement.added, ...this.sceneLights] : this.sceneLights;
+  private addedTo(body: DrawnBody | undefined): readonly AddedLight[] {
+    if (!body) return [];
+    return body.added?.length ? [...body.added, ...this.sceneLights] : this.sceneLights;
   }
 
   /**
    * The sky shown as these settings say (materials not named, as the data has them), wearing the
    * overlays they say (none given: its data's), each part placed as its settings say.
    */
-  setSky(settings: SkySettings): void {
-    this.sky = settings;
+  setSky(sky: DrawnSky): void {
+    this.sky = sky;
     this.placeSkyOverlays();
     this.resolveSky();
   }
 
   private placeSkyOverlays(): void {
     const scene = this.loaded.scene;
-    const worn: {
-      id: string;
-      file: SkyOverlayFile;
-      images?: Readonly<Record<string, ImageBitmap>>;
-    }[] = [
-      ...(this.sky.own ? [{ id: '', ...this.sky.own }] : []),
-      ...(this.sky.overlays ?? scene.wears ?? []).flatMap((id) => {
-        const made = this.sky.made?.[id];
-        const file = made?.file ?? scene.overlays?.[id];
-        return file ? [{ id, file, images: made?.images }] : [];
-      }),
-    ];
+    const { worn } = this.sky;
     const key = JSON.stringify([
       worn.map(({ id, file }) => [id, fileId(file)]),
       this.sky.parts ?? null,
@@ -940,7 +901,7 @@ export class ThreeRenderer {
 
   /** How many bodies are up (not hidden), and how many of them are baked whole (the renderer check). */
   bodyCounts(): { placed: number; baked: number } {
-    const up = this.placed.filter((b) => !b.placement.hidden);
+    const up = this.placed.filter((b) => !b.body.hidden);
     return { placed: up.length, baked: up.filter((b) => b.bake?.complete).length };
   }
 
@@ -964,7 +925,7 @@ export class ThreeRenderer {
       !this.chain.passesReady ||
       this.gpu.compiling > 0 ||
       !this.skyReady() ||
-      this.placed.some((b) => !b.placement.hidden && (b.bake === null || !b.bake.complete))
+      this.placed.some((b) => !b.body.hidden && (b.bake === null || !b.bake.complete))
     );
   }
 
@@ -1028,9 +989,7 @@ export class ThreeRenderer {
       up: this.viewUpNow(),
       fovY: this.camera.fovY,
       height: this.canvas.height,
-      bodies: this.placed.map(
-        ({ placement: { position, radius } }) => [...position, radius] as const,
-      ),
+      bodies: this.placed.map(({ body: { position, radius } }) => [...position, radius] as const),
       fade: this.aidFade,
     });
     if (this.timing)
@@ -1040,7 +999,7 @@ export class ThreeRenderer {
     this.changed = false;
     this.drawnOnce = true;
     // (The editor's aids once the whole picture is up: see `EditingAids.compile`.)
-    if (!this.placed.some((b) => !b.placement.hidden && !b.bake?.complete)) this.aids.compile();
+    if (!this.placed.some((b) => !b.body.hidden && !b.bake?.complete)) this.aids.compile();
     return true;
   }
 
@@ -1187,18 +1146,7 @@ export class ThreeRenderer {
   }
 
   private settingsOf(draw: MeshDraw): MaterialSettings | undefined {
-    const placement = draw.placed?.placement;
-    if (!placement)
-      return draw.overlay
-        ? mergeSettings(this.sky.base?.[draw.name], this.sky.materials?.[draw.key])
-        : this.sky.materials?.[draw.key];
-    const wear = draw.overlay ? wearOf(placement.planet.planet, draw.overlay) : undefined;
-    return mergeSettings(
-      draw.owner?.planet.tuning?.materials?.[draw.name],
-      wear?.materials?.[draw.name],
-      draw.overlay ? placement.base?.[draw.name] : undefined,
-      placement.materials?.[draw.key],
-    );
+    return draw.placed ? draw.bodyDraw?.settings : this.sky.materials[draw.key];
   }
 
   private updateSurfaces(): void {
@@ -1212,7 +1160,7 @@ export class ThreeRenderer {
         if (seen.has(s.draw.partKey)) continue;
         seen.add(s.draw.partKey);
         const { shape } = part;
-        const { position, radius } = placed.placement;
+        const { position, radius } = placed.body;
         const [x, y, z] = (shape.centre ?? [0, 0, 0]).map((c) => c * radius) as [
           number,
           number,
@@ -1224,7 +1172,7 @@ export class ThreeRenderer {
           placed.placementFrame,
           placed.quad.axes,
           s.orientation ?? DEFAULT_ORIENTATION,
-          turnFor(s, bodyTurnOf(placed.placement)),
+          turnFor(s, placed.body.turn),
         );
         surfaces.push([
           position[0] + a[0]! * x + a[3]! * y + a[6]! * z,
@@ -1239,20 +1187,6 @@ export class ThreeRenderer {
       .sort((a, b) => distance(a as unknown as Vec3, eye) - distance(b as unknown as Vec3, eye))
       .slice(0, MAX_SURFACES);
     this.surfacesKey = JSON.stringify(this.surfaces);
-  }
-
-  private shadeOf(placement: PlanetPlacement): BodyShade {
-    const worn = overlaysOf(placement);
-    const wears = wearsIn(placement);
-    return {
-      ...DEFAULT_SHADE,
-      ...placement.planet.planet.tuning?.shade,
-      ...worn.reduce(
-        (a: Partial<BodyShade>, o, i) => ({ ...a, ...o.planet.shade, ...wears[i]?.shade }),
-        {},
-      ),
-      ...placement.shade,
-    };
   }
 
   private material(

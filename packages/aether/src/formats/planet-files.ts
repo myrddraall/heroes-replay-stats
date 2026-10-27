@@ -1,8 +1,10 @@
-import type { BodyVariant } from '../variants/variants';
 import type { SceneColor, SceneMaterial, SceneTexture } from './play-scene';
 import type { Orientation, Quat } from '../space/graph';
-import type { PartMapping, PartRole, PartShape, Vec3 } from './part-shapes';
+import type { PartMapping, PartRole, PartShape } from './part-shapes';
 import type { MaterialSettingsMap, MaterialTint } from '../materials/material-settings';
+import type { Vec3 } from '../space/vectors';
+import type { BodyVariant } from '../bodies/body-settings';
+
 /**
  * The planets heroes-capture exports beside the Play screen's scene (`heroes-capture ui
  * background`, planets/), for the background to put up in sets of its own: the Play screen's

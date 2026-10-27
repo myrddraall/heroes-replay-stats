@@ -3,21 +3,7 @@ import type { DataTexture } from 'three/webgpu';
 import { UniformSet } from './uniforms';
 import { DrawValues } from './shader-uniforms';
 import { rimTurn } from '../../space/directions';
-
-type Vec3 = readonly [number, number, number];
-
-/** A vector turned about an axis (unit) by an angle in radians, as the CPU's matrices must turn it. */
-function turnAbout(v: Vec3, axis: Vec3, angle: number): Vec3 {
-  const c = Math.cos(angle);
-  const s = Math.sin(angle);
-  const k = [
-    axis[1] * v[2] - axis[2] * v[1],
-    axis[2] * v[0] - axis[0] * v[2],
-    axis[0] * v[1] - axis[1] * v[0],
-  ];
-  const d = (axis[0] * v[0] + axis[1] * v[1] + axis[2] * v[2]) * (1 - c);
-  return [0, 1, 2].map((i) => v[i]! * c + k[i]! * s + axis[i]! * d) as unknown as Vec3;
-}
+import { type Vec3, turnAbout } from '../../space/vectors';
 
 const unit = (v: Vec3): Vec3 => {
   const l = Math.hypot(...v);

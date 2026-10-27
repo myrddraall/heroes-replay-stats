@@ -1,27 +1,8 @@
 import type { PlanetDirectionalLight, PlanetLight } from '../formats/planet-files';
-/**
- * Directions about a planet, in its body's placement frame (x to the right, y away from the scene's
- * own camera, z up: fixed in the world, see `scene-graph.ts`), as
- * the Background page's direction controls set them: where its key light comes from (its lights
- * turned together), where its shade darkens it, and where its rims and glows lean.
- */
-
-export type Vec3 = readonly [number, number, number];
+import { type Vec3, cross, dot, normalized } from './vectors';
 
 /** Straight at the eye: the middle of the planet's face. */
 export const TOWARDS_EYE: Vec3 = [0, -1, 0];
-
-const dot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-const cross = (a: Vec3, b: Vec3): Vec3 => [
-  a[1] * b[2] - a[2] * b[1],
-  a[2] * b[0] - a[0] * b[2],
-  a[0] * b[1] - a[1] * b[0],
-];
-export function normalized(v: Vec3): Vec3 {
-  const l = Math.hypot(v[0], v[1], v[2]) || 1;
-  return [v[0] / l, v[1] / l, v[2] / l];
-}
-
 /** A light's brightness, for which is the key: its colour's luminance. */
 const brightness = (l: PlanetDirectionalLight) =>
   0.2126 * l.color[0] + 0.7152 * l.color[1] + 0.0722 * l.color[2];

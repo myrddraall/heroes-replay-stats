@@ -1,23 +1,5 @@
-import type { BodySettings, PlanetChoices } from '../scenes/scene-settings';
-
-/**
- * Variants: a body's own variations of itself (not shared, as overlays are), each a set of changes
- * to its settings, named, switched on or off. Those on stack in the order of its list, over its own
- * settings and under a scene's. A variant may switch an overlay the body wears on or off
- * (`overlaysEnabled`), never put one on: what a body can wear is its own list.
- *
- * A planet's variants are its data's (the export's, in the planet index) and the library's: those
- * made in the editor, and the library's changes to the data's (by id). Which are on is a setting
- * like any other (`variantsOn`): the library's for the planet, a scene's for it there; and a
- * scene's own variants switch its planets' variants (`SceneVariant`).
- */
-
-/** A variant as kept: its id, name, and the changes it makes (a data variant's, changed: only the changes). */
-export interface BodyVariant {
-  readonly id: string;
-  readonly name?: string;
-  readonly settings?: BodySettings;
-}
+import type { PlanetChoices } from '../scenes/scene-settings';
+import type { BodyVariant, BodySettings } from '../bodies/body-settings';
 
 /** What the ids of variants made in the editor start with. */
 export const MADE_VARIANT = 'variant-';

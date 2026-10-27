@@ -1,8 +1,7 @@
 import { Component, computed, input, output } from '@angular/core';
-import type { CreatedShape } from '@myrddraall/heroes-replay-stats-aether/overlays';
 import type { PickChoice } from '../controls/pick-list';
 import { SplitButton, type SplitOption } from '../controls/split-button';
-
+import type { CreatedShape } from '@myrddraall/heroes-replay-stats-aether/formats';
 /** The option that reuses one of the game data's parts. */
 const EXISTING = 'existing';
 

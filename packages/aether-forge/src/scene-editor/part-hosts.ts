@@ -1,17 +1,21 @@
-import { type CreatedShape, PART_SHAPES } from '@myrddraall/heroes-replay-stats-aether/overlays';
+import { PART_SHAPES } from '@myrddraall/heroes-replay-stats-aether/overlays';
 import {
   type BodyPath,
   changeSettings,
   storedBodies,
   without,
 } from '@myrddraall/heroes-replay-stats-aether/scenes';
-import { partId, type PartKey } from '@myrddraall/heroes-replay-stats-aether/formats';
+import {
+  type CreatedShape,
+  partId,
+  type PartKey,
+} from '@myrddraall/heroes-replay-stats-aether/formats';
 import { computed } from '@angular/core';
 import type { AddedItem, AddedLists } from '../controls/added-list';
 import { bodyLabel, wornKeyOf } from '../bodies/body';
 import { lightIcon, sceneLightsOf } from '../lights/lights';
 import { type PartEntry, partIcon, partsOfBody } from '../parts/parts';
-import { type PartHost } from '../parts/part-hosts';
+import type { PartHost } from '../parts/part-hosts';
 import type { PickChoice } from '../controls/pick-list';
 import {
   bodyKey,

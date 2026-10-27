@@ -1,7 +1,7 @@
 import type { EditingAid } from '@myrddraall/heroes-replay-stats-aether/aids';
 import { distanceAhead } from '@myrddraall/heroes-replay-stats-aether/camera';
 import type { SetPlanet } from '@myrddraall/heroes-replay-stats-aether/planet-sets';
-import { pathOf, SCENE_CENTRE, type Vec3 } from '@myrddraall/heroes-replay-stats-aether/scenes';
+import { pathOf, SCENE_CENTRE } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import { computed } from '@angular/core';
 import type { SceneMarker } from '../viewport/scene-markers';
 import { type BodyInfo } from '../bodies/body';
@@ -26,6 +26,7 @@ import {
   sceneLightKey,
 } from './scene-targets';
 import type { WithTree } from './scene-editor.store';
+import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/space';
 
 /** What the background shows of the scene: its planets placed, what orbits are about, the markers over the view, the lights' beams. */
 export function backgroundViews(store: WithTree) {

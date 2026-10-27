@@ -13,18 +13,12 @@ import type { BodyPart, PlanetLight } from '../../formats/planet-files';
 import { MAX_FIELDS, MAX_LIGHTS, MAX_SHADES, V_SAMPLES } from './limits';
 import { BLEND_MODES, parseCanvasColour } from '../../tints/tints';
 import type { UniformSet } from './uniforms';
-
-type Vec3 = readonly [number, number, number];
+import { type Vec3, normalized } from '../../space/vectors';
 
 /** A layer's channel as the shaders number it. */
 export const CHANNELS: Record<LayerChannel, number> = { rgb: 0, rgba: 1, a: 2, r: 3, g: 4, b: 5 };
 /** A material's layer slots, in the shader's order, and their samplers. */
 export const SLOTS = ['uDiffuse', 'uEmissive', 'uMask0', 'uMask1', 'uSpecular'] as const;
-
-const normalize = (a: Vec3): Vec3 => {
-  const l = Math.hypot(...a);
-  return [a[0] / l, a[1] / l, a[2] / l];
-};
 
 /**
  * How strongly a layer's brightness multiplier acts: the data's value, squared. Measured, as the
@@ -192,7 +186,7 @@ export function shadeUniforms(u: UniformSet, darkenings: readonly Darkening[]): 
   u.i1('uShadeCount', shades.length);
   u.fv(
     'uShadeDir',
-    [...shades.flatMap((s) => (s.direction ? [...normalize(s.direction)] : [0, 0, 0])), ...pad(3)],
+    [...shades.flatMap((s) => (s.direction ? [...normalized(s.direction)] : [0, 0, 0])), ...pad(3)],
     '3fv',
   );
   u.fv('uShadeColor', [...shades.flatMap((s) => [...s.colour]), ...pad(3)], '3fv');
@@ -222,7 +216,7 @@ export function gridUniforms(
   ];
   const from = (list: readonly GridField[]) =>
     pad(
-      list.map((l) => (l.from ? [...normalize(l.from)] : [0, 0, 0])),
+      list.map((l) => (l.from ? [...normalized(l.from)] : [0, 0, 0])),
       [0, -1, 0],
     ).flat();
   const r = reveals.slice(0, MAX_FIELDS);
@@ -317,7 +311,7 @@ export function mappingUniforms(u: UniformSet, name: string, mapping: PartMappin
     u.fv(at('b'), mapping.v, '4fv');
   } else if (mapping.kind === 'round') {
     u.i1(at('kind'), 3);
-    u.v3(at('pole'), normalize(mapping.axis));
+    u.v3(at('pole'), normalized(mapping.axis));
     u.v3(at('meridian'), mapping.meridian);
     u.f4(at('a'), mapping.flip ? 1 : 0, mapping.u0, mapping.v0, mapping.v1);
     u.f4(at('b'), mapping.repeat, mapping.along === 'radius' ? 1 : 0, 0, 0);
@@ -340,13 +334,13 @@ export function partUniforms(u: UniformSet, part: BodyPart): void {
   } else if (shape.kind === 'capsule') {
     u.i1('uShape', shape.side === 'near' ? 7 : 8);
     u.f4('uShapeSpan', shape.radius, shape.radius, -shape.length / 2, shape.length / 2);
-    u.v3('uShapeAxis', normalize(axisOf(shape)));
+    u.v3('uShapeAxis', normalized(axisOf(shape)));
     u.v3('uShapeCentre', shape.centre ?? [0, 0, 0]);
   } else if (shape.kind === 'plane') {
     u.i1('uShape', 6);
     u.f4('uShapeSpan', shape.width, shape.height, 0, 0);
-    u.v3('uShapeAxis', normalize(axisOf(shape)));
-    u.v3('uShapeUp', normalize(shape.up ?? [0, 0, 1]));
+    u.v3('uShapeAxis', normalized(axisOf(shape)));
+    u.v3('uShapeUp', normalized(shape.up ?? [0, 0, 1]));
     u.v3('uShapeCentre', shape.centre ?? [0, 0, 0]);
   } else if (shape.kind === 'tube' || shape.kind === 'cone' || shape.kind === 'disc') {
     // A frustum (a tube: as wide at both ends) or a disc about its axis, from its centre.
@@ -359,7 +353,7 @@ export function partUniforms(u: UniformSet, part: BodyPart): void {
     const half = shape.kind === 'disc' ? 0 : shape.length / 2;
     u.i1('uShape', shape.kind === 'disc' ? 5 : shape.side === 'near' ? 3 : 4);
     u.f4('uShapeSpan', r0, r1, -half, half);
-    u.v3('uShapeAxis', normalize(axisOf(shape)));
+    u.v3('uShapeAxis', normalized(axisOf(shape)));
     u.v3('uShapeCentre', shape.centre ?? [0, 0, 0]);
   } else {
     u.i1('uShape', 2);

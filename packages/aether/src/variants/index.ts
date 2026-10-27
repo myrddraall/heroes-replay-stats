@@ -1,5 +1,4 @@
 export {
-  type BodyVariant,
   MADE_VARIANT,
   sceneSwitched,
   type SceneVariant,

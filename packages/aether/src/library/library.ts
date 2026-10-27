@@ -1,13 +1,15 @@
-import type { BodySettings, MoonChoices, SkyChoices } from '../scenes/scene-settings';
+import type { MoonChoices, SkyChoices } from '../scenes/scene-settings';
 import { type MaterialSettingsMap, mergeMaterialSettings } from '../materials/material-settings';
 import { mergeLightSettings } from '../lights/lights';
 import { type CreatedOverlay, mergeAddedParts } from '../overlays/created-overlays';
-import { createdOverlay, overlayOn } from '../overlays/overlays';
-import { type BodyVariant, variantLayersOf, variantsOf, variantsOnOf } from '../variants/variants';
+import { overlayOn } from '../overlays/overlays';
+import { variantLayersOf, variantsOf, variantsOnOf } from '../variants/variants';
 import type { SetPlanet } from '../planet-sets/planet-sets';
 import type { BodyShade } from '../formats/planet-files';
 import { mergePartSettings } from '../formats/part-shapes';
 import type { SkySettings } from '../sky/sky-settings';
+import type { BodySettings, BodyVariant } from '../bodies/body-settings';
+import { createdOverlay } from '../formats/overlay-files';
 
 /**
  * The background's design: how its assets show wherever they appear (the library), and the

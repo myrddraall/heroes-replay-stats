@@ -1,11 +1,10 @@
 export {
-  type AddedPart,
   addedSourced,
   addedWithUnused,
+  createdFiles,
   type CreatedOverlay,
-  type CreatedShape,
   createdSkyFile,
-  type MaterialSource,
+  lookupIn,
   mergeAddedParts,
   nextOverlayId,
   nextPartId,
@@ -17,9 +16,9 @@ export {
   type SourceLookup,
   withAddedParts,
 } from './created-overlays';
+
 export {
   chosenOverlays,
-  createdOverlay,
   migrateDesign,
   overlayOn,
   ownOverlays,

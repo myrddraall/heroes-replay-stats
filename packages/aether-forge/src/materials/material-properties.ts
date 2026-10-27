@@ -2,14 +2,11 @@ import { MatIcon } from '@angular/material/icon';
 import { Component, input, output } from '@angular/core';
 import type { SceneBlend } from '@myrddraall/heroes-replay-stats-aether/formats';
 import {
-  MATERIAL_BLENDS,
-  type MaterialControls,
   type MaterialDepth,
   type MaterialSettings,
   type MaterialTint,
   type MaterialValues,
   NO_MATERIAL_TINT,
-  type SettingOrigins,
 } from '@myrddraall/heroes-replay-stats-aether/materials';
 import type { SkyAnchor } from '@myrddraall/heroes-replay-stats-aether/sky';
 import { ORIENTATION_CHOICES, SKY_ANCHOR_CHOICES } from '../sky/sky';
@@ -20,6 +17,8 @@ import { PropertySelect } from '../controls/rows/property-select';
 import { PropertyNumber } from '../controls/rows/property-number';
 import { PropertyText } from '../controls/rows/property-text';
 import { PropertyDirection } from '../controls/rows/property-direction';
+import { MATERIAL_BLENDS, type MaterialControls } from './material-controls';
+import { type SettingOrigins } from '../editing/setting-origins';
 
 /**
  * A material's properties (presentational), in sections as a design tool shows them: how it is

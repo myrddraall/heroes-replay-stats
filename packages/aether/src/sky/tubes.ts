@@ -1,5 +1,5 @@
 import type { SceneMesh } from '../formats/play-scene';
-import type { Vec3 } from '../space/directions';
+import { type Vec3 } from '../space/vectors';
 
 /**
  * A sky mesh that is an upright tube (the game's star cylinder: a many-sided one about the eye),

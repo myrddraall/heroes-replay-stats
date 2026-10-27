@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { materialLabel, textureLabel, textureWords } from './material-names';
-import type { SceneMaterial } from '../formats/play-scene';
-
+import type { SceneMaterial } from '@myrddraall/heroes-replay-stats-aether/formats';
 const material = (texture: string): SceneMaterial => ({
   blend: 'alphaAdd',
   unshaded: true,

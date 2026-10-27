@@ -1,10 +1,10 @@
-import {
-  type CreatedOverlay,
-  type CreatedShape,
-  PART_SHAPES,
-} from '@myrddraall/heroes-replay-stats-aether/overlays';
+import { type CreatedOverlay, PART_SHAPES } from '@myrddraall/heroes-replay-stats-aether/overlays';
 import { PREVIEW_SCENE } from '@myrddraall/heroes-replay-stats-aether/scenes';
-import { partId, type PartKey } from '@myrddraall/heroes-replay-stats-aether/formats';
+import {
+  type CreatedShape,
+  partId,
+  type PartKey,
+} from '@myrddraall/heroes-replay-stats-aether/formats';
 import { computed } from '@angular/core';
 import { bodyLabel } from '../bodies/body';
 import { type PartEntry, partIcon, partsOfBody } from '../parts/parts';

@@ -1,6 +1,7 @@
 import { rimTurn } from '../../space/directions';
-import { type DrawFrames, IDENTITY, turn, type Vec3 } from '../../space/graph';
+import { type DrawFrames, IDENTITY, turn } from '../../space/graph';
 import type { DrawValues } from '../uniforms/shader-uniforms';
+import { type Vec3 } from '../../space/vectors';
 
 /**
  * A body's draw's frames as its shader takes them (set as it is baked: they change with the view):

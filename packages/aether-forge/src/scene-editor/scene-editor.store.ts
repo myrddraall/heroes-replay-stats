@@ -1,5 +1,6 @@
 import { storageKey, TINT_PRESETS, ViewStore } from '@myrddraall/heroes-replay-stats-aether';
-import { loadPlanetIndex, withPlanetFiles } from '@myrddraall/heroes-replay-stats-aether/formats';
+import { loadPlanetIndex } from '@myrddraall/heroes-replay-stats-aether/formats';
+import { withPlanetFiles } from '../library/with-planet-files';
 import { RANDOM_SCENE } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import { effect, inject, resource, untracked } from '@angular/core';
 import {
@@ -32,6 +33,7 @@ import { lightMethods } from './lights';
 import { materialMethods } from './materials';
 import { partMethods } from './parts';
 import { bodyMethods } from './bodies';
+
 const sceneStoreBase = () =>
   signalStoreFeature(
     withState<SceneEditorState>({

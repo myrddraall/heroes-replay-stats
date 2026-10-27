@@ -1,15 +1,17 @@
 import {
-  type AddedPart,
   addedSourced,
   addedWithUnused,
   type CreatedOverlay,
-  type CreatedShape,
-  type MaterialSource,
   nextPartId,
   type OverlayKind,
 } from '@myrddraall/heroes-replay-stats-aether/overlays';
 import { without } from '@myrddraall/heroes-replay-stats-aether/scenes';
-import type { PartSettingsMap } from '@myrddraall/heroes-replay-stats-aether/formats';
+import type {
+  AddedPart,
+  CreatedShape,
+  MaterialSource,
+  PartSettingsMap,
+} from '@myrddraall/heroes-replay-stats-aether/formats';
 import {
   materialKey,
   type MaterialSettings,

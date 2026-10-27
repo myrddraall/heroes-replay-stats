@@ -1,4 +1,4 @@
-import { normalized, type Vec3 } from './directions';
+import { type Vec3, normalized } from './vectors';
 
 /**
  * How something placed about a body (a light, a moon, a camera about a planet) is set: three ways
@@ -12,14 +12,6 @@ import { normalized, type Vec3 } from './directions';
  * Each is only a way of setting the place: switching between them keeps the thing where it is.
  */
 export type PlacementMode = 'free' | 'over' | 'orbit';
-
-/** Placement modes as a mode list offers them. */
-export const PLACEMENT_MODES: readonly { readonly value: PlacementMode; readonly label: string }[] =
-  [
-    { value: 'free', label: 'Free' },
-    { value: 'over', label: 'Over a spot' },
-    { value: 'orbit', label: 'Orbit' },
-  ];
 
 /**
  * A place on an orbit: a circle in the plane facing up, `radius` radii from the middle; tilted

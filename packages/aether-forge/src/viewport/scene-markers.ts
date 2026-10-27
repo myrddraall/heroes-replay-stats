@@ -6,9 +6,9 @@ import {
   viewPoint,
   viewRay,
 } from '@myrddraall/heroes-replay-stats-aether/camera';
-import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import type { SceneCamera } from '@myrddraall/heroes-replay-stats-aether/formats';
 import type { MarkerMode } from '../layout/editor-ui.store';
+import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/space';
 
 /**
  * Something of a scene marked in the view where it is: a camera (what it sees outlined), a group

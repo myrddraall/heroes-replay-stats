@@ -1,5 +1,5 @@
-import { normalized, type Vec3 } from '../space/directions';
 import type { Orientation } from '../space/graph';
+import { type Vec3, normalized } from '../space/vectors';
 
 /**
  * A light's beam, as the editor shows a directional light selected (an editing aid, never part

@@ -11,7 +11,6 @@ import {
   type PlanetFile,
   wornParts,
 } from '@myrddraall/heroes-replay-stats-aether/formats';
-import { originsOf, type SettingOrigins } from '@myrddraall/heroes-replay-stats-aether/materials';
 import {
   type DrawTurn,
   drawTurnOf,
@@ -27,6 +26,7 @@ import {
   ownLevels,
 } from '../bodies/body';
 import type { MaterialEntry } from '../materials/materials';
+import { originsOf, type SettingOrigins } from '../editing/setting-origins';
 
 /** A body's parts as an editor shows them: their values, icons and names, in the tree's order. */
 

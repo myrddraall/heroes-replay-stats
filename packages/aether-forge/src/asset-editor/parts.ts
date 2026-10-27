@@ -1,12 +1,10 @@
-import type { CreatedShape } from '@myrddraall/heroes-replay-stats-aether/overlays';
 import {
-  type BodySettings,
   PREVIEW_SCENE,
   without,
   withoutPartSetting,
   withPartSetting,
 } from '@myrddraall/heroes-replay-stats-aether/scenes';
-import type { PartSettings } from '@myrddraall/heroes-replay-stats-aether/formats';
+import type { CreatedShape, PartSettings } from '@myrddraall/heroes-replay-stats-aether/formats';
 import { patchState } from '@ngrx/signals';
 import {
   addMaterial,
@@ -19,6 +17,7 @@ import {
 import { ASSET, STAGE_SKY } from './asset-targets';
 import type { AssetMethodsStore } from './asset-editor.store';
 import type { AssetWrites } from './asset-writes';
+import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies';
 
 /** The asset's parts: their settings, those added, their materials, saved as an overlay. */
 export function assetPartMethods(store: AssetMethodsStore, w: AssetWrites) {

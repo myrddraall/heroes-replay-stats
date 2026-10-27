@@ -1,4 +1,4 @@
-import { type BodyShade, haloLike } from '../formats/planet-files';
+import { haloLike } from '../formats/planet-files';
 import {
   DEFAULT_ACTIVE,
   gridFields,
@@ -20,8 +20,7 @@ import {
   withLightSettings,
 } from '../lights/lights';
 import { withMasks } from '../formats/wear';
-import { withPart } from '../formats/part-shapes';
-import type { PlanetPlacement } from '../space/space';
+import type { DrawnBody } from '../bodies/drawn-body';
 import { UniformSet } from './uniforms/uniforms';
 import {
   gridUniforms,
@@ -36,7 +35,7 @@ import { drawTurnOf } from '../space/graph';
 import type { BodyLeans } from './bodies/body-frames';
 import type { DrawState, MeshDraw } from './draw-types';
 import { HEX_ROUND } from './tuning';
-import { moves, overlaysOf, shown } from './bodies/body-draws';
+import { moves, shown } from './bodies/body-draws';
 
 /** What working a draw out reads of the scene it is in. */
 export interface DrawContext {
@@ -44,13 +43,11 @@ export interface DrawContext {
   settingsOf(draw: MeshDraw): MaterialSettings | undefined;
   hasTexture(key: string): boolean;
   /** The lights added to a body (the scene's, and its own); none for the sky. */
-  addedTo(placement: PlanetPlacement | undefined): readonly AddedLight[];
+  addedTo(body: DrawnBody | undefined): readonly AddedLight[];
   /** How the sky is anchored where a material doesn't say. */
   skyAnchor(): SkyAnchor | undefined;
   /** Where a draw is drawn among the scene's objects. */
   depthOf(name: string, settings: MaterialSettings | undefined, placed: boolean): MaterialDepth;
-  /** A body's shade (its darkening). */
-  shadeOf(placement: PlanetPlacement): BodyShade;
   /** The scene's exposure and its bloom threshold. */
   exposure(): number;
   sceneThreshold(): number;
@@ -64,12 +61,12 @@ export function drawStateOf(draw: MeshDraw, ctx: DrawContext): DrawState {
   const settings = ctx.settingsOf(draw);
   const has = (texture: string) => ctx.hasTexture(texture);
   const layered = withLayers(withMasks(draw.material, settings?.masks), settings?.layers, has);
-  const placement = draw.placed?.placement;
+  const body = draw.placed?.body;
   const unshaded =
     !!draw.part &&
     (draw.part.pattern?.kind === 'hex' ||
       (settings?.lit !== undefined ? !settings.lit : layered.unshaded) ||
-      (!draw.light && !addedLighting(ctx.addedTo(placement), placement?.lights)));
+      (!draw.light && !addedLighting(ctx.addedTo(body), body?.lights)));
   const material = draw.part && unshaded !== layered.unshaded ? { ...layered, unshaded } : layered;
   const moving = draw.moving || (material !== draw.material && moves(material));
   const blend = settings?.blend ?? draw.material.blend;
@@ -103,7 +100,7 @@ export function drawStateOf(draw: MeshDraw, ctx: DrawContext): DrawState {
     uniforms: u,
     scrolls: scrollingLayers(material),
   };
-  if (!draw.part || !draw.placed || !placement) {
+  if (!draw.part || !draw.placed || !body || !draw.bodyDraw) {
     const tube = draw.tube;
     u.i1('uTube', tube ? 1 : 0);
     if (tube) {
@@ -116,16 +113,13 @@ export function drawStateOf(draw: MeshDraw, ctx: DrawContext): DrawState {
       signature: JSON.stringify([draw.key, settings ?? null, blend, depth, anchor, enabled]),
     };
   }
-  const part = withPart(draw.part, draw.partKey && placement.parts?.[draw.partKey]);
+  const { part } = draw.bodyDraw;
   partUniforms(u, part);
-  const tuning = placement.planet.planet.tuning;
   const rig = material.unshaded ? undefined : draw.light;
-  const turned =
-    rig &&
-    tunedRig(rig, placement.lighting ?? tuning?.lighting, placement.lightFrom ?? tuning?.lightFrom);
-  const added = ctx.addedTo(placement);
-  const linked = linkedSettings(placement.lights, added, draw.partKey, draw.key);
-  const shade = ctx.shadeOf(placement);
+  const turned = rig && tunedRig(rig, body.lighting, body.lightFrom);
+  const added = ctx.addedTo(body);
+  const linked = linkedSettings(body.lights, added, draw.partKey, draw.key);
+  const { shade } = body;
   const exposure = ctx.exposure();
   const light = material.unshaded
     ? undefined
@@ -134,30 +128,23 @@ export function drawStateOf(draw: MeshDraw, ctx: DrawContext): DrawState {
   const shine = materialValues(material, settings);
   u.f1('uSpecularMult', shine.specular);
   u.f1('uSpecularity', shine.glossiness);
-  tintUniforms(u, 'uBodyTint', placement.tint ?? tuning?.tint);
-  const rim = placement.rim ?? tuning?.rim;
+  tintUniforms(u, 'uBodyTint', body.tint);
+  const { rim } = body;
   u.v2('uRimTurn', rim ? rimTurn(rim) : [0, 0]);
   // Which way it is turned: its material's say, else its part's, else a halo square to the
-  // camera, else its body's, else its tuning's (each level over the one under it as merged),
-  // else facing the camera.
+  // camera, else its body's (its tuning's where it sets none), else facing the camera.
   const { orientation, turned: takesTurn } = drawTurnOf(
     settings?.orientation,
-    draw.partKey ? placement.parts?.[draw.partKey]?.orientation : undefined,
+    draw.bodyDraw.partOrientation,
     !!draw.owner && haloLike(draw.part, draw.owner.planet.materials),
-    placement.orientation,
-    tuning?.orientation,
+    body.orientation,
   );
   const leans: BodyLeans = {
     ...(rim ? { rim } : {}),
     ...(settings?.spreadFrom ? { spreadFrom: settings.spreadFrom } : {}),
   };
   const darkenings = bodyDarkenings(
-    draw.light &&
-      tunedRig(
-        draw.light,
-        placement.lighting ?? tuning?.lighting,
-        placement.lightFrom ?? tuning?.lightFrom,
-      ),
+    draw.light && tunedRig(draw.light, body.lighting, body.lightFrom),
     shade,
     added,
     linked,
@@ -175,11 +162,7 @@ export function drawStateOf(draw: MeshDraw, ctx: DrawContext): DrawState {
       material.emissive?.fresnel?.type ?? 1,
     );
   }
-  const worn = overlaysOf(placement);
-  const own = worn.length
-    ? worn.find((o) => o.planet.light)?.planet.light
-    : placement.planet.planet.light;
-  u.f1('uGlowThreshold', own?.bloomThreshold ?? ctx.sceneThreshold());
+  u.f1('uGlowThreshold', body.glowRig?.bloomThreshold ?? ctx.sceneThreshold());
   const pattern = draw.part.pattern;
   const drawn = pattern?.kind === 'hex' && settings?.drawAs !== 'texture';
   const round = pattern?.across

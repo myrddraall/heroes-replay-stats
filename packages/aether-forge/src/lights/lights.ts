@@ -1,6 +1,5 @@
 import {
   type BodyPath,
-  type BodySettings,
   legacyShadow,
   withLightSetting,
   withLightSwitched,
@@ -28,11 +27,7 @@ import {
   tunedRig,
   withReceiver,
 } from '@myrddraall/heroes-replay-stats-aether/lights';
-import {
-  materialKey,
-  originsOf,
-  type SettingOrigins,
-} from '@myrddraall/heroes-replay-stats-aether/materials';
+import { materialKey } from '@myrddraall/heroes-replay-stats-aether/materials';
 import type { Viewpoint } from '@myrddraall/heroes-replay-stats-aether/space';
 import {
   type BodyInfo,
@@ -46,6 +41,8 @@ import {
 import { type PartNode, partNodes, partsOfBody } from '../parts/parts';
 import { type MaterialEntry, materialsOf, onPart, sharedMaterials } from '../materials/materials';
 import { viewKey } from '../materials/material-views';
+import { originsOf, type SettingOrigins } from '../editing/setting-origins';
+import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies';
 /** A body's and a scene's lights as an editor shows them, what lights each body, and the shield's lights. */
 
 /** Each kind of light's icon (an antilight's: any light that darkens). */

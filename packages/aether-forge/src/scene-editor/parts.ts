@@ -1,6 +1,5 @@
-import type { CreatedShape } from '@myrddraall/heroes-replay-stats-aether/overlays';
 import { withoutPartSetting, withPartSetting } from '@myrddraall/heroes-replay-stats-aether/scenes';
-import type { PartSettings } from '@myrddraall/heroes-replay-stats-aether/formats';
+import type { CreatedShape, PartSettings } from '@myrddraall/heroes-replay-stats-aether/formats';
 import { patchState } from '@ngrx/signals';
 import {
   addMaterial,

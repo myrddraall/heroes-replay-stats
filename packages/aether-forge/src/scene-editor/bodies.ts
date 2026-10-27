@@ -1,14 +1,12 @@
 import { ownOverlays } from '@myrddraall/heroes-replay-stats-aether/overlays';
 import {
   addMoonAt,
-  type BodySettings,
   type Orbit,
   resetMoon,
   resetOverlays,
   setOrbit,
   setPlace,
   storedBodies,
-  type Vec3,
   without,
 } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import { patchState } from '@ngrx/signals';
@@ -18,6 +16,8 @@ import { axisAids, axisFrame, poleAt, poleDragged } from '../viewport/markers';
 import { SCENE, bodyKey, overlayKey } from './scene-targets';
 import type { SceneMethodsStore } from './scene-editor.store';
 import type { SceneWrites } from './scene-writes';
+import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/space';
+import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies';
 
 /** A body: its settings, poles, orbit, place, moons and the overlays it wears. */
 export function bodyMethods(store: SceneMethodsStore, w: SceneWrites) {

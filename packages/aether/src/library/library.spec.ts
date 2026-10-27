@@ -7,7 +7,7 @@ import {
   withLibrary,
 } from './library';
 import type { SetPlanet } from '../planet-sets/planet-sets';
-
+import { DEFAULT_SKY_ANCHOR, skyAnchorOf } from '../sky/sky-anchors';
 const korhal: SetPlanet = { id: 'korhal', position: [0, 0, 0], radius: 1 };
 const red = { colour: '#ff0000', blend: 'color', strength: 1 } as const;
 const blue = { colour: '#0000ff', blend: 'hue', strength: 0.5 } as const;
@@ -209,5 +209,33 @@ describe('skyWithLibrary', () => {
     expect(scene.materials).toEqual({ energy: { glow: 2 } }); // horizon's settings only where worn
     // One made in the editor that is no longer there: as if it never was.
     expect(skyWornOf({ overlays: ['@overlay-9', 'horizon'] }, library)).toEqual(['horizon']);
+  });
+});
+// The scene's own camera (the Play screen's), and others about the scene.
+describe('the sky’s anchor as the library sets it', () => {
+  it('is fixed in the world where nothing sets it', () => {
+    expect(DEFAULT_SKY_ANCHOR).toBe('world');
+    expect(skyAnchorOf(undefined, undefined)).toBe('world');
+    expect(skyAnchorOf(undefined, skyWithLibrary(undefined, EMPTY_LIBRARY).anchor)).toBe('world');
+  });
+
+  it('is the scene’s sky’s over the library’s', () => {
+    const library: LibraryState = { ...EMPTY_LIBRARY, sky: { anchor: 'position' } };
+    expect(skyWithLibrary(undefined, library).anchor).toBe('position');
+    expect(skyWithLibrary({ anchor: 'camera' }, library).anchor).toBe('camera');
+    expect(skyWithLibrary({ tint: undefined }, library).anchor).toBe('position');
+  });
+
+  it('is a material’s own over the sky’s, set at any level (the scene’s over the library’s)', () => {
+    const library: LibraryState = {
+      ...EMPTY_LIBRARY,
+      sky: { anchor: 'camera', materials: { streams: { anchor: 'world' } } },
+    };
+    const sky = skyWithLibrary({ materials: { nebula: { anchor: 'position' } } }, library);
+    expect(skyAnchorOf(sky.materials?.['streams'], sky.anchor)).toBe('world');
+    expect(skyAnchorOf(sky.materials?.['nebula'], sky.anchor)).toBe('position');
+    expect(skyAnchorOf(sky.materials?.['stars'], sky.anchor)).toBe('camera');
+    const scene = skyWithLibrary({ materials: { streams: { anchor: 'camera' } } }, library);
+    expect(skyAnchorOf(scene.materials?.['streams'], scene.anchor)).toBe('camera');
   });
 });

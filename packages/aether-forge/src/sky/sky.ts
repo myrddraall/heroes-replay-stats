@@ -4,7 +4,7 @@ import {
   overlayName,
   type SourceLookup,
 } from '@myrddraall/heroes-replay-stats-aether/overlays';
-import type { BodySettings, SkyChoices } from '@myrddraall/heroes-replay-stats-aether/scenes';
+import type { SkyChoices } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import {
   drawOrder,
   mergePartSettings,
@@ -16,16 +16,13 @@ import {
 } from '@myrddraall/heroes-replay-stats-aether/formats';
 import {
   MATERIAL_DEFAULTS,
-  materialControls,
   type MaterialDepth,
   materialKey,
-  materialLabel,
   type MaterialSettingsMap,
   materialValues,
   mergeMaterialSettings,
   mergeSettings,
   NO_MATERIAL_TINT,
-  originsOf,
 } from '@myrddraall/heroes-replay-stats-aether/materials';
 import {
   DEFAULT_SKY_ANCHOR,
@@ -39,6 +36,10 @@ import {
 import type { PickChoice } from '../controls/pick-list';
 import { type MaterialEntry, layersOf } from '../materials/materials';
 import { type PartEntry, idLabel } from '../parts/parts';
+import { materialControls } from '../materials/material-controls';
+import { materialLabel } from '../materials/material-names';
+import { originsOf } from '../editing/setting-origins';
+import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies';
 
 /** The sky as an editor shows it: its materials, overlays, parts, depths and anchoring. */
 

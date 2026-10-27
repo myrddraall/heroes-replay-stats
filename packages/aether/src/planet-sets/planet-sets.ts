@@ -1,9 +1,8 @@
 import type { SceneCamera } from '../formats/play-scene';
 import type { BodyShade, PlanetIndex } from '../formats/planet-files';
 import type { MaterialSettingsMap, MaterialTint } from '../materials/material-settings';
-import type { PartSettingsMap } from '../formats/part-shapes';
+import type { AddedPart, PartSettingsMap } from '../formats/part-shapes';
 import type { AddedLight, LightSettingsMap } from '../lights/lights';
-import type { AddedPart } from '../overlays/created-overlays';
 import type { Orientation, Quat } from '../space/graph';
 
 /** A planet in a set: which, where (the scene's units), and its body's radius there. */

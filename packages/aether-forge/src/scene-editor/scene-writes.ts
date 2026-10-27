@@ -1,6 +1,5 @@
 import {
   type BodyPath,
-  type BodySettings,
   type CameraPlacement,
   changedLight,
   changeSettings,
@@ -12,7 +11,6 @@ import {
   type SceneBody,
   setOverlays,
   storedBodies,
-  type Vec3,
   withLightChange,
   withMaterial,
   without,
@@ -40,6 +38,8 @@ import {
   targetOf,
 } from './scene-targets';
 import type { SceneMethodsStore } from './scene-editor.store';
+import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/space';
+import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies';
 
 /** What the scene editor's methods change the scene through: its bodies, a body's settings, its lights, groups and cameras, and what is selected. */
 export function sceneWrites(store: SceneMethodsStore) {

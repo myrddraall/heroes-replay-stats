@@ -3,12 +3,12 @@ import { RENDER_API } from './render-api';
 import type { LoadedPlayScene, SceneCameraSet } from '../formats/play-scene';
 import type { EditingAid } from '../aids/beams';
 import type { AddedLight } from '../lights/lights';
-import type { SkySettings } from '../sky/sky-settings';
-import type { Backdrop, PlanetPlacement } from '../space/space';
+import type { DrawnSky } from '../sky/drawn-sky';
+import type { Backdrop } from '../space/space';
+import type { DrawnBody } from '../bodies/drawn-body';
 import { ThreeRenderer } from './three-renderer';
 import type { Tint } from '../tints/tints';
-
-type Vec3 = readonly [number, number, number];
+import type { Vec3 } from '../space/vectors';
 
 /** What draws the Play screen's scene into a canvas, as the scene canvas drives it. */
 export interface Renderer {
@@ -27,7 +27,8 @@ export interface Renderer {
   gpuTimes(): number[];
   anchors(): { id: string; x: number; y: number; top: number }[];
   pick(x: number, y: number, aspect: number): number | null;
-  setPlanets(placements: readonly PlanetPlacement[]): void;
+  /** The bodies put up, each as drawn (see `drawnBody`). */
+  setBodies(bodies: readonly DrawnBody[]): void;
   placePlanets(positions: readonly Vec3[], radii?: readonly number[]): void;
   setYaw(yaw: number): void;
   setCamera(set: SceneCameraSet | undefined): void;
@@ -36,7 +37,8 @@ export interface Renderer {
    * says, over the game's (see `sky-anchors.ts`).
    */
   setSkyFollow(set: SceneCameraSet | null): void;
-  setSky(settings: SkySettings): void;
+  /** The sky shown, as drawn (see `drawnSky`). */
+  setSky(sky: DrawnSky): void;
   setSceneLights(lights: readonly AddedLight[]): void;
   setBackdrop(backdrop: Backdrop | null): void;
   setBeams(beams: readonly EditingAid[]): void;

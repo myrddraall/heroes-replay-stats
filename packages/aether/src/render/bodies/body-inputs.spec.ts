@@ -31,8 +31,7 @@ import {
 } from '../../space/graph';
 import { type BodyLeans, setBodyFrames } from './body-frames';
 import { DrawValues } from '../uniforms/shader-uniforms';
-
-type Vec3 = readonly [number, number, number];
+import { type Vec3 } from '../../space/vectors';
 
 /** The game's camera, as the Play scene's file has it. */
 const CAMERA: Viewpoint = {

@@ -5,7 +5,6 @@ import {
 } from '@myrddraall/heroes-replay-stats-aether/overlays';
 import {
   addMoon as addMoonTo,
-  type BodySettings,
   changeMoon,
   DEFAULT_ORBIT,
   moonAt,
@@ -21,6 +20,7 @@ import { patchState } from '@ngrx/signals';
 import { axisAids, axisFrame, poleAt, poleDragged } from '../viewport/markers';
 import type { PoleDrag } from '../viewport/scene-markers';
 import type { AssetWrites } from './asset-writes';
+import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies';
 
 /** The body open (a planet, or an overlay on the stand-in), its levels, and its moons. */
 export function assetBodyViews(store: WithStageSky) {

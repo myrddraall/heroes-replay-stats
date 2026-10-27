@@ -1,13 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { EMPTY_SCENES } from '../scenes/scenes';
-import {
-  chosenOverlays,
-  migrateDesign,
-  overlayFile,
-  overlayOfFile,
-  overlayOn,
-  wornKey,
-} from './overlays';
+import { chosenOverlays, migrateDesign, overlayOn, wornKey } from './overlays';
+import { overlayFile, overlayOfFile } from '../formats/overlay-files';
 
 describe('overlays', () => {
   it('reads what a body chose to wear, one kept before bodies wore several as the list of it', () => {

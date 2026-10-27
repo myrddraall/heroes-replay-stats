@@ -39,5 +39,14 @@ export default defineConfig([
     extends: [angular.configs.templateRecommended, angular.configs.templateAccessibility],
     rules: {},
   },
-  ...packageBoundaries({ allowed: ['@myrddraall/heroes-replay-stats-signals'] }),
+  ...packageBoundaries({
+    allowed: ['@myrddraall/heroes-replay-stats-signals'],
+    // Game data and maths, then the renderer, then the saved designs, then the view.
+    layers: [
+      ['formats', 'space', 'camera', 'materials', 'tints', 'lights', 'sky', 'effects', 'aids', 'storage'],
+      ['render'],
+      ['library', 'scenes', 'overlays', 'variants', 'planet-sets', 'design'],
+      ['view'],
+    ],
+  }),
 ]);

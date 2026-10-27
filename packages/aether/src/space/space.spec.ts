@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { layerBrightness } from '../render/uniforms/draw-uniforms';
 import { forwardOf } from '../camera/camera';
 import { bodyExtent, bodyFrame, partsExtent, projectionMatrix, viewMatrix, viewUp } from './space';
 import type { BodyPart } from '../formats/planet-files';
@@ -141,13 +140,6 @@ describe('a body\u2019s frame', () => {
   it('faces some way, the eye at its centre', () => {
     const { axes, eye } = bodyFrame([1, 2, 3], 1, [1, 2, 3], [0, 0, 1]);
     expect([...axes, ...eye].every(Number.isFinite)).toBe(true);
-  });
-});
-
-describe('layerBrightness', () => {
-  it('squares the data multiplier', () => {
-    expect(layerBrightness(0.3)).toBeCloseTo(0.09);
-    expect(layerBrightness(1)).toBe(1);
   });
 });
 

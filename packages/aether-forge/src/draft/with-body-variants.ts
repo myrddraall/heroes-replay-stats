@@ -1,8 +1,9 @@
 import type { Design } from '@myrddraall/heroes-replay-stats-aether/design';
-import { type BodySettings, without } from '@myrddraall/heroes-replay-stats-aether/scenes';
-import { type BodyVariant, MADE_VARIANT } from '@myrddraall/heroes-replay-stats-aether/variants';
+import { without } from '@myrddraall/heroes-replay-stats-aether/scenes';
+import { MADE_VARIANT } from '@myrddraall/heroes-replay-stats-aether/variants';
 import { signalStoreFeature, type, withMethods } from '@ngrx/signals';
 import { designWrites } from './design-writes';
+import type { BodySettings, BodyVariant } from '@myrddraall/heroes-replay-stats-aether/bodies';
 
 /** A planet's own variants (see `variants.ts`): made here, or changes to its data's. */
 export function withBodyVariants() {

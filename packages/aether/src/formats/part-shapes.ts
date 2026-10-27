@@ -1,8 +1,7 @@
 import type { BodyPart } from './planet-files';
 import type { Orientation } from '../space/graph';
 import type { PartKey } from './part-keys';
-
-export type Vec3 = readonly [number, number, number];
+import type { Vec3 } from '../space/vectors';
 
 /**
  * A part's shape, in units of the body's radius: a sphere seen from its near side (the body, an
@@ -394,4 +393,41 @@ export function mergePartSettings(
     for (const [key, settings] of Object.entries(level ?? {}) as [PartKey, PartSettings][])
       out[key] = { ...out[key], ...settings };
   return out;
+}
+
+/** The shapes a new part can take: a sphere, a ring, a tube, a cone or a disc (a planet's), a band (the sky's). */
+export type CreatedShape =
+  'sphere' | 'ring' | 'tube' | 'cone' | 'disc' | 'capsule' | 'plane' | 'band';
+
+/**
+ * Where a part is in the game data, to be reused: a planet's or a data overlay's (by its id, else
+ * its role), or one of the sky's overlays' (by its id).
+ */
+export type PartSource =
+  | { readonly kind: 'planet' | 'style'; readonly id: string; readonly part: string }
+  | { readonly kind: 'sky'; readonly overlay: string; readonly part: string };
+
+/**
+ * A part made in the editor: which it is, its shape (a reused one's: the shape its data has, a sky's
+ * being a mesh), the materials it draws, in order, and where it is in the game data, where reused.
+ */
+export interface CreatedPart {
+  readonly id: string;
+  readonly shape: CreatedShape | 'mesh';
+  readonly materials: readonly string[];
+  readonly from?: PartSource;
+}
+
+/** Where in the game data a material is: a planet's file, an overlay's (a style's), or the sky's. */
+export type MaterialSource =
+  | { readonly kind: 'planet'; readonly id: string }
+  | { readonly kind: 'style'; readonly id: string }
+  | { readonly kind: 'sky' };
+
+/**
+ * A part added straight onto a body or a sky (its own), with where the materials it draws are: it
+ * stands on its own, wherever it is kept.
+ */
+export interface AddedPart extends CreatedPart {
+  readonly sources: Readonly<Record<string, MaterialSource>>;
 }

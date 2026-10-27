@@ -1,4 +1,4 @@
-import { normalized, type Vec3 } from './directions';
+import { type Vec3, normalized } from './vectors';
 
 /**
  * What something that points (a spot light; a camera, later) looks at: its body (a spot on its

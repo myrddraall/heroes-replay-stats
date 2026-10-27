@@ -7,7 +7,6 @@ import {
   type AddedCamera,
   cameraSetOf,
   GAME_CAMERA,
-  type Vec3,
   without,
 } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import type { SceneCamera, SceneCameraSet } from '@myrddraall/heroes-replay-stats-aether/formats';
@@ -26,6 +25,7 @@ import {
 } from './scene-targets';
 import { patchState } from '@ngrx/signals';
 import type { SceneWrites } from './scene-writes';
+import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/space';
 
 /** The scene's cameras: the game's and those added, the one looked through, the editor's own, and the selected camera's values. */
 export function cameraViews(store: WithScene) {

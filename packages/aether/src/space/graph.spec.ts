@@ -1,13 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  type MoonChoices,
-  orbitOffset,
-  orbitTo,
-  placeBodies,
-  type PlanetChoices,
-} from '../scenes/scene-settings';
-import { groupBodies, groupTransform, SCENE_CENTRE } from '../scenes/scene-bodies';
-import {
   about as aboutBy,
   bodyTurn,
   compose,
@@ -24,16 +16,14 @@ import {
   placementFrame,
   pointToLocal,
   pointToWorld,
-  resolveWorld,
-  type SceneNode,
   toLocal,
   type Transform,
   transpose,
   turn,
   turnInto,
-  type Vec3,
 } from './graph';
 import { bodyFrame, viewMatrix, viewUp, type Viewpoint } from './space';
+import type { Vec3 } from './vectors';
 
 /** The game's camera, as the Play scene's file has it: the scene's own. */
 const LAYOUT: Viewpoint = {
@@ -149,92 +139,6 @@ describe('the scene graph', () => {
     // A turn and its quaternion, both ways.
     const m = aboutBy([0.2, 0.9, -0.3], 155);
     expectNear(quatTurn(turnQuat(m)), m, 12);
-  });
-
-  it("puts a group's planets and their moons where the scene's builders put them, number for number", () => {
-    const moons: MoonChoices[] = [
-      { id: 'moon', orbit: { radius: 2.4, tilt: 12, turn: 30, progress: 0.9, size: 0.27 } },
-    ];
-    const group: PlanetChoices = {
-      group: true,
-      bodies: [{ id: 'a', position: [10, 75, -3], radius: 6, moons }],
-    };
-    const placement = { group: 'group-1', position: [-20, 90, 8] as Vec3, size: 1.5, turn: 35 };
-    const [built] = groupBodies([placement], () => group);
-    const nodes: SceneNode[] = [
-      { id: 'group', kind: 'group', parent: null, local: groupTransform(placement) },
-      {
-        id: 'a',
-        kind: 'planet',
-        parent: 'group',
-        local: {
-          // In a group, relative to its middle.
-          position: [
-            10 - SCENE_CENTRE.position[0],
-            75 - SCENE_CENTRE.position[1],
-            -3 - SCENE_CENTRE.position[2],
-          ],
-          rotation: 'layout',
-          scale: 6,
-        },
-      },
-      {
-        id: 'moon',
-        kind: 'moon',
-        parent: 'a',
-        local: { position: orbitOffset(moons[0]!.orbit), rotation: 'layout', scale: 0.27 },
-      },
-    ];
-    const world = resolveWorld(nodes, LAYOUT);
-    const planet = world.get('a')!;
-    expect(planet.position).toEqual(built!.body.position);
-    expect(planet.scale).toBe(built!.body.radius);
-    // Its turn is its placement frame where it ends up: the group's turn moves it, never turns it.
-    expect(Array.from(planet.rotation)).toEqual(
-      Array.from(placementFrame(planet.position, LAYOUT)),
-    );
-    const [, moon] = placeBodies(
-      { position: planet.position, radius: planet.scale },
-      moons,
-      LAYOUT,
-    );
-    expect(world.get('moon')!.position).toEqual(moon!.position);
-    expect(world.get('moon')!.scale).toBe(moon!.radius);
-  });
-
-  it('nests groups as the builder does (within rounding)', () => {
-    const inner: PlanetChoices = {
-      group: true,
-      bodies: [{ id: 'b', position: [5, 70, 0], radius: 3 }],
-    };
-    const outer: PlanetChoices = {
-      group: true,
-      groups: [{ group: 'inner', position: [8, 60, 2], size: 0.5, turn: -20 }],
-    };
-    const groups = (id: string) => (id === 'inner' ? inner : outer);
-    const [b] = groupBodies([{ group: 'outer', position: [0, 80, 10], size: 2, turn: 45 }], groups);
-    // By hand: the inner group's placement within the outer's, then the outer's in the scene.
-    const inGroup = (p: Vec3): Vec3 => [
-      p[0] - SCENE_CENTRE.position[0],
-      p[1] - SCENE_CENTRE.position[1],
-      p[2] - SCENE_CENTRE.position[2],
-    ];
-    const outerT = groupTransform({ group: 'outer', position: [0, 80, 10], size: 2, turn: 45 });
-    const innerT = groupTransform({ group: 'inner', position: [8, 60, 2], size: 0.5, turn: -20 });
-    const want = pointToWorld(outerT, inGroup(pointToWorld(innerT, inGroup([5, 70, 0]))));
-    expectNear(b!.body.position, want);
-    expect(b!.body.radius).toBeCloseTo(3, 12);
-  });
-
-  it('finds the orbit back that places a moon where it is (untilted on the screen)', () => {
-    const root = { position: [12, 66, 3] as Vec3, radius: 9 };
-    const orbit = { radius: 2.2, tilt: 25, turn: 0, progress: 0.3, size: 0.2 };
-    const [, moon] = placeBodies(root, [{ id: 'm', orbit }], LAYOUT);
-    const found = orbitTo(root, moon!, LAYOUT);
-    const [, again] = placeBodies(root, [{ id: 'm', orbit: found }], LAYOUT);
-    // (Its frames are 32-bit floats.)
-    expectNear(again!.position, moon!.position, 5);
-    expect(found.size).toBeCloseTo(0.2, 12);
   });
 
   it("gives a draw's frames: from the scene's camera no turns at all, whichever way it is turned", () => {

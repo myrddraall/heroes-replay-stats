@@ -5,15 +5,16 @@ import {
   DEFAULT_ORBIT,
   fitRadius,
   fitScene,
-  type MoonChoices,
   moonAt,
+  type MoonChoices,
   orbitOffset,
   orbitTo,
   pathKey,
   pathOf,
   placeBodies,
-  type Vec3,
 } from './scene-settings';
+import type { Vec3 } from '../space/vectors';
+import type { Viewpoint } from '../space/space';
 
 const eye: Vec3 = [0, -41.2, 5.6];
 /** The Play screen's camera: looking along +y, tilted down a little, z up. */
@@ -130,5 +131,28 @@ describe('the scene fitted to the view', () => {
     // Its distance kept, the first still in the middle.
     expect(right!.position[1]).toBeCloseTo(100, 5);
     expect(fitted[0]!.position[0]).toBeCloseTo(0, 5);
+  });
+});
+
+/** The game's camera, as the Play scene's file has it: the scene's own. */
+const LAYOUT: Viewpoint = {
+  eye: [-0.0018, -41.1988, 5.6051],
+  forward: [1.9e-5, 0.999687, -0.025004],
+  up: [0, 0, 1],
+};
+const expectNear = (got: ArrayLike<number>, want: ArrayLike<number>, digits = 9) => {
+  expect(got.length).toBe(want.length);
+  for (let i = 0; i < want.length; i++) expect(got[i]).toBeCloseTo(want[i]!, digits);
+};
+describe("a moon's orbit", () => {
+  it('finds the orbit back that places a moon where it is (untilted on the screen)', () => {
+    const root = { position: [12, 66, 3] as Vec3, radius: 9 };
+    const orbit = { radius: 2.2, tilt: 25, turn: 0, progress: 0.3, size: 0.2 };
+    const [, moon] = placeBodies(root, [{ id: 'm', orbit }], LAYOUT);
+    const found = orbitTo(root, moon!, LAYOUT);
+    const [, again] = placeBodies(root, [{ id: 'm', orbit: found }], LAYOUT);
+    // (Its frames are 32-bit floats.)
+    expectNear(again!.position, moon!.position, 5);
+    expect(found.size).toBeCloseTo(0.2, 12);
   });
 });

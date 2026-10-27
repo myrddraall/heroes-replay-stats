@@ -1,28 +1,14 @@
-import type { BodyVariant, SceneVariant } from '../variants/variants';
+import type { SceneVariant } from '../variants/variants';
 import type { MaterialSettingsMap, MaterialTint } from '../materials/material-settings';
-import type { PartSettingsMap } from '../formats/part-shapes';
+import type { AddedPart, PartSettingsMap } from '../formats/part-shapes';
 import type { SkyAnchor } from '../sky/sky-anchors';
-import type { AddedLight, LightSettingsMap } from '../lights/lights';
-import type { AddedPart } from '../overlays/created-overlays';
+import type { AddedLight } from '../lights/lights';
 import type { SceneCameraSet } from '../formats/play-scene';
 import type { Viewpoint } from '../space/space';
-import {
-  bodyTransform,
-  type Orientation,
-  placementFrame,
-  pointToLocal,
-  pointToWorld,
-  type Quat,
-} from '../space/graph';
+import { bodyTransform, placementFrame, pointToLocal, pointToWorld } from '../space/graph';
 import { orbitOffset, orbitThrough, type OrbitPlace, type PlacementMode } from '../space/placement';
-
-/**
- * The Background page's scene: its planets, each with its moons (and theirs), under the sky. A
- * moon goes round its parent on an orbit: a circle of a radius about the parent, tilted and
- * turned, the moon a progress of the way round it. What is set here is kept as the page's choices.
- */
-
-export type Vec3 = readonly [number, number, number];
+import { type Vec3, length, sub } from '../space/vectors';
+import type { BodySettings } from '../bodies/body-settings';
 
 /**
  * A moon's orbit about its parent, in the parent's placement frame (as the scene's own camera sees
@@ -47,76 +33,6 @@ export const ORBIT_KEYS: readonly (keyof Orbit)[] = [
 
 /** A new moon's orbit: in front and to the right, a little tilted, about a quarter its parent's size. */
 export const DEFAULT_ORBIT: Orbit = { radius: 2.4, tilt: 12, turn: 0, progress: 0.9, size: 0.27 };
-
-/** A body's settings set on this page, each where set (else its own apply). */
-export interface BodySettings {
-  /** Its name as shown, in place of its id (a style's: the overlay's, wherever it is worn). */
-  readonly label?: string;
-  /** Whether it is drawn, its moons with it (a scene's). */
-  readonly enabled?: boolean;
-  /**
-   * Whether the overlays it wears are drawn: off, it is drawn as if it wore none of them (what it
-   * wears kept). Kept before bodies wore several; each one's own switch is `overlaysEnabled`.
-   */
-  readonly overlayEnabled?: boolean;
-  /** Whether each overlay it wears is drawn, by the overlay's id (off: as if it didn't wear it, kept). */
-  readonly overlaysEnabled?: Readonly<Record<string, boolean>>;
-  /**
-   * The overlays a planet wears wherever it is put and nothing chooses otherwise (a planet's, in
-   * the library), the later over the earlier; none: its data's.
-   */
-  readonly overlays?: readonly string[];
-  /**
-   * A planet's own variants (the library's: those made in the editor, and changes to its data's,
-   * by id; see `variantsOf`).
-   */
-  readonly variants?: readonly BodyVariant[];
-  /** Which of its variants are on, by id (the library's for a planet: by default; a scene's: there). */
-  readonly variantsOn?: readonly string[];
-  /**
-   * Its rig made stronger and turned together (`lighting`, `lightFrom`): kept from before lights
-   * were objects, folded into its lights as they start (`tunedRig`), no longer set.
-   */
-  readonly lighting?: number;
-  readonly shade?: number;
-  /** A tint over all its materials. */
-  readonly tint?: MaterialTint;
-  /**
-   * How much room its glow is given past its spheres where the view is fitted to it, times their
-   * reach (`HALO_MARGIN` unless set).
-   */
-  readonly glowMargin?: number;
-  /**
-   * Which way its surfaces are turned (see `Orientation`; its parts and materials may set their
-   * own); where its poles point (its frame: its placement frame for a surface fixed in the world,
-   * its frame facing the eye for a billboard; none: as its data has them) and its turn about them
-   * (degrees; none: 0), which side of it is seen; and its base turn, its pose before its Turn, kept
-   * so its Axis can change without turning it (none: none; see `bodyTurn`).
-   */
-  readonly orientation?: Orientation;
-  readonly axis?: Vec3;
-  readonly turn?: number;
-  readonly baseTurn?: Quat;
-  /** (See `lighting`.) Where its shade darkens it and its rims and glows lean (its frame). */
-  readonly lightFrom?: Vec3;
-  readonly shadeTowards?: Vec3;
-  readonly rim?: Vec3;
-  /** Its materials' settings: its own by name, its overlays' by `materialKey` (the overlay's and the name). */
-  readonly materials?: MaterialSettingsMap;
-  /** Its parts' settings, by part (its own and its style's). */
-  readonly parts?: PartSettingsMap;
-  /** Its lights' settings, by light (its rig's and its shadow, and any added under it). */
-  readonly lights?: LightSettingsMap;
-  /** Lights added to it (an overlay's: to the bodies wearing it). */
-  readonly added?: readonly AddedLight[];
-  /** Its materials' draw order, by `materialKey` (the later over the earlier; see `drawOrder`), where set. */
-  readonly order?: readonly string[];
-  /**
-   * Parts added onto it at this level (its own, as its data's are: keyed `own:<id>`, their
-   * materials by name), after those added under it.
-   */
-  readonly addedParts?: readonly AddedPart[];
-}
 
 /**
  * What a scene sets for one of its planet's own moons (the library's), over the planet's: its
@@ -253,28 +169,6 @@ export function orbitTo(
   // The body's place taken back into the parent's placement frame, in its radii.
   const at = pointToLocal(bodyTransform(parent, layoutView), body.position);
   return { ...orbitThrough(at, 0), size: body.radius / parent.radius };
-}
-
-const sub = (a: Vec3, b: Vec3): Vec3 => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
-const length = (a: Vec3) => Math.hypot(a[0], a[1], a[2]);
-
-/** A body's own settings as shown: its own, over its style's, over its file's tuning, over the defaults. */
-export interface BodyValues {
-  readonly overlays: readonly string[];
-  readonly lighting: number;
-  readonly shade: number;
-  readonly tint: MaterialTint;
-  /** Where its key light comes from; none where it has no light. */
-  readonly lightFrom: Vec3 | null;
-  readonly shadeTowards: Vec3;
-  readonly rim: Vec3;
-  readonly glowMargin: number;
-  /** Which way its surfaces are turned (unless its parts or materials say), where its poles point (its frame) and its turn about them (degrees). */
-  readonly orientation: Orientation;
-  readonly axis: Vec3;
-  readonly turn: number;
-  /** Its base turn (its pose before its Turn; see `bodyTurn`). */
-  readonly baseTurn: Quat;
 }
 
 /** How far the view reaches either way from its middle: the tangents of its half-angles. */

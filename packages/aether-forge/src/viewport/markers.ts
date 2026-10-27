@@ -8,11 +8,7 @@ import {
   type LightOutline,
 } from '@myrddraall/heroes-replay-stats-aether/aids';
 import type { SetPlanet } from '@myrddraall/heroes-replay-stats-aether/planet-sets';
-import {
-  type BodySettings,
-  type Vec3,
-  without,
-} from '@myrddraall/heroes-replay-stats-aether/scenes';
+import { without } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import { poleOf } from '@myrddraall/heroes-replay-stats-aether/formats';
 import {
   type BodyLight,
@@ -33,12 +29,14 @@ import {
   pointToWorld,
   poseKept,
   turn,
+  type Vec3,
   type Viewpoint,
   viewUp,
 } from '@myrddraall/heroes-replay-stats-aether/space';
 import type { SceneMarker } from './scene-markers';
 import { type BodyInfo, valuesOf } from '../bodies/body';
 import { materialsOf } from '../materials/materials';
+import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies';
 
 /** The markers an editor draws over the view (lights, axes, poles) and what dragging them changes. */
 

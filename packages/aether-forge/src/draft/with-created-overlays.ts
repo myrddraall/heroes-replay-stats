@@ -1,6 +1,5 @@
 import type { Design } from '@myrddraall/heroes-replay-stats-aether/design';
 import {
-  type AddedPart,
   type CreatedOverlay,
   nextOverlayId,
   type OverlayKind,
@@ -9,6 +8,7 @@ import {
 import { signalStoreFeature, type, withMethods } from '@ngrx/signals';
 import { withOverlayParts } from '../parts/part-hosts';
 import { designWrites } from './design-writes';
+import type { AddedPart } from '@myrddraall/heroes-replay-stats-aether/formats';
 
 /** Overlays made in the editor: made, changed, deleted (and taken off whatever wore them). */
 export function withCreatedOverlays() {

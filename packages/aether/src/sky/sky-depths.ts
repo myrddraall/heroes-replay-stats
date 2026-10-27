@@ -1,6 +1,7 @@
 import type { PlayScene, SceneMesh } from '../formats/play-scene';
-import type { Vec3 } from '../space/directions';
 import type { MaterialDepth } from '../materials/material-settings';
+import { type Vec3, add, cross, distance, dot, scale, sub } from '../space/vectors';
+
 /** Where a planet is looked at: its middle, and most of the way to its edges up, down and across. */
 const LOOKS: readonly Vec3[] = [
   [0, 0, 0],
@@ -62,16 +63,6 @@ function depthsOf(scene: PlayScene): Readonly<Record<string, MaterialDepth>> {
   return out;
 }
 
-const add = (a: Vec3, b: Vec3): Vec3 => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
-const sub = (a: Vec3, b: Vec3): Vec3 => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
-const scale = (a: Vec3, k: number): Vec3 => [a[0] * k, a[1] * k, a[2] * k];
-const dot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-const cross = (a: Vec3, b: Vec3): Vec3 => [
-  a[1] * b[2] - a[2] * b[1],
-  a[2] * b[0] - a[0] * b[2],
-  a[0] * b[1] - a[1] * b[0],
-];
-const distance = (a: Vec3, b: Vec3) => Math.hypot(...sub(a, b));
 const direction = (from: Vec3, to: Vec3): Vec3 => scale(sub(to, from), 1 / distance(from, to));
 
 /** A mesh's middle and how far it reaches from it (half its box's longest side). */

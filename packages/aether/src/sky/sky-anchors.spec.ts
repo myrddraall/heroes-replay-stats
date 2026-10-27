@@ -1,17 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { EMPTY_LIBRARY, type LibraryState, skyWithLibrary } from '../library/library';
 import { materialValues } from '../materials/material-settings';
 import type { SceneMaterial } from '../formats/play-scene';
 import { eyeOf, multiplyMatrices, rigidInverse, viewMatrix } from '../space/space';
-import {
-  anchoredDepth,
-  anchoredView,
-  DEFAULT_SKY_ANCHOR,
-  skyAnchorOf,
-  skyTransform,
-} from './sky-anchors';
-
-type Vec3 = readonly [number, number, number];
+import { anchoredDepth, anchoredView, skyTransform } from './sky-anchors';
+import type { Vec3 } from '../space/vectors';
 
 /** A point through a column-major matrix (no divide: these are turns and moves). */
 const apply = (m: Float32Array, [x, y, z]: Vec3): Vec3 => {
@@ -45,32 +37,6 @@ describe('the sky’s anchor, level over level', () => {
     alphaMasks: [],
     blend: 'add',
   } as unknown as SceneMaterial;
-
-  it('is fixed in the world where nothing sets it', () => {
-    expect(DEFAULT_SKY_ANCHOR).toBe('world');
-    expect(skyAnchorOf(undefined, undefined)).toBe('world');
-    expect(skyAnchorOf(undefined, skyWithLibrary(undefined, EMPTY_LIBRARY).anchor)).toBe('world');
-  });
-
-  it('is the scene’s sky’s over the library’s', () => {
-    const library: LibraryState = { ...EMPTY_LIBRARY, sky: { anchor: 'position' } };
-    expect(skyWithLibrary(undefined, library).anchor).toBe('position');
-    expect(skyWithLibrary({ anchor: 'camera' }, library).anchor).toBe('camera');
-    expect(skyWithLibrary({ tint: undefined }, library).anchor).toBe('position');
-  });
-
-  it('is a material’s own over the sky’s, set at any level (the scene’s over the library’s)', () => {
-    const library: LibraryState = {
-      ...EMPTY_LIBRARY,
-      sky: { anchor: 'camera', materials: { streams: { anchor: 'world' } } },
-    };
-    const sky = skyWithLibrary({ materials: { nebula: { anchor: 'position' } } }, library);
-    expect(skyAnchorOf(sky.materials?.['streams'], sky.anchor)).toBe('world');
-    expect(skyAnchorOf(sky.materials?.['nebula'], sky.anchor)).toBe('position');
-    expect(skyAnchorOf(sky.materials?.['stars'], sky.anchor)).toBe('camera');
-    const scene = skyWithLibrary({ materials: { streams: { anchor: 'camera' } } }, library);
-    expect(skyAnchorOf(scene.materials?.['streams'], scene.anchor)).toBe('camera');
-  });
 
   it('shows on a material as its own, else the sky’s; never among the objects where not fixed', () => {
     expect(materialValues(material, undefined).anchor).toBe('world');

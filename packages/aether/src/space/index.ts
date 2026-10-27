@@ -1,4 +1,5 @@
 export { keyLightFrom, TOWARDS_EYE } from './directions';
+
 export {
   bodyTransform,
   bodyTurn,
@@ -11,9 +12,12 @@ export {
   pointToLocal,
   pointToWorld,
   poseKept,
+  type Quat,
   turn,
 } from './graph';
+
 export { aimedPoint, aimOf, type LookAt } from './look-at';
+
 export {
   atLeast,
   orbitOffset,
@@ -21,7 +25,9 @@ export {
   orbitThrough,
   overOf,
   overOffset,
-  PLACEMENT_MODES,
   type PlacementMode,
 } from './placement';
-export { type Backdrop, bodyFrame, type PlanetPlacement, type Viewpoint, viewUp } from './space';
+
+export { type Backdrop, bodyFrame, type Viewpoint, viewUp } from './space';
+
+export { type Vec3 } from './vectors';

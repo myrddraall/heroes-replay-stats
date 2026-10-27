@@ -47,6 +47,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./aids": "./src/aids/index.ts",
+    "./bodies": "./src/bodies/index.ts",
     "./camera": "./src/camera/index.ts",
     "./design": "./src/design/index.ts",
     "./formats": "./src/formats/index.ts",

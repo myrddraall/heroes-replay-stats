@@ -1,6 +1,5 @@
 import type { Design } from '@myrddraall/heroes-replay-stats-aether/design';
 import {
-  type BodySettings,
   type MoonChoices,
   withMaterial,
   without,
@@ -9,6 +8,7 @@ import {
 import type { MaterialSettings } from '@myrddraall/heroes-replay-stats-aether/materials';
 import { signalStoreFeature, type, withMethods } from '@ngrx/signals';
 import { designWrites, type LibraryKind } from './design-writes';
+import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies';
 
 /** The library's bodies' defaults: a planet's or a style's settings, its moons and materials, and the materials' own base settings. */
 export function withLibraryBodies() {

@@ -1,6 +1,5 @@
 import type { LibraryState } from '@myrddraall/heroes-replay-stats-aether/library';
 import {
-  type BodySettings,
   withMaterial,
   without,
   withoutMaterial,
@@ -8,6 +7,7 @@ import {
 import type { MaterialSettings } from '@myrddraall/heroes-replay-stats-aether/materials';
 import type { DraftDesignStore } from '../draft/draft-design.store';
 import type { LibraryKind } from '../draft/design-writes';
+import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies';
 type Draft = InstanceType<typeof DraftDesignStore>;
 
 /**

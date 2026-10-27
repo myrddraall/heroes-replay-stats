@@ -1,11 +1,9 @@
 import {
   type BodyPath,
-  type BodySettings,
   changeMoon,
   type MoonChoices,
   pathKey,
   PREVIEW_SCENE,
-  type Vec3,
 } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import type { MaterialSettings } from '@myrddraall/heroes-replay-stats-aether/materials';
 import type { LightId, LightSettings } from '@myrddraall/heroes-replay-stats-aether/lights';
@@ -24,6 +22,8 @@ import {
   targetOf,
 } from './asset-targets';
 import type { AssetMethodsStore } from './asset-editor.store';
+import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/space';
+import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies';
 
 /** What the asset editor's methods change the library through: the asset's settings (or the variant edited), its materials, moons and lights, and the stage's sky. */
 export function assetWrites(store: AssetMethodsStore) {

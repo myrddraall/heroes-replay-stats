@@ -1,25 +1,21 @@
 import { storageKey, ViewStore } from '@myrddraall/heroes-replay-stats-aether';
 import {
+  createdOverlay,
   loadPlanetIndex,
+  type MaterialSource,
   partId,
   type PartRole,
   type PlanetFile,
   type PlanetKind,
   type SceneMaterial,
   type SceneTexture,
-  withPlanetFiles,
 } from '@myrddraall/heroes-replay-stats-aether/formats';
-import {
-  type MaterialDepth,
-  materialLabel,
-  type MaterialSettingsMap,
+import { withPlanetFiles } from './with-planet-files';
+import type {
+  MaterialDepth,
+  MaterialSettingsMap,
 } from '@myrddraall/heroes-replay-stats-aether/materials';
-import {
-  createdOverlay,
-  type MaterialSource,
-  overlayFileFor,
-  type OverlayKind,
-} from '@myrddraall/heroes-replay-stats-aether/overlays';
+import { overlayFileFor, type OverlayKind } from '@myrddraall/heroes-replay-stats-aether/overlays';
 import { playSet, randomSet, seeded } from '@myrddraall/heroes-replay-stats-aether/planet-sets';
 import {
   isGroup,
@@ -50,6 +46,7 @@ import type { ReusablePart } from '../parts/part-hosts';
 import type { PickChoice } from '../controls/pick-list';
 import { EditorUiStore } from '../layout/editor-ui.store';
 import type { OpenKind } from '../layout/open-target';
+import { materialLabel } from '../materials/material-names';
 
 /** The one sky there is (the Play screen's), as the lists name it. */
 export const PLAY_SKY = 'play';

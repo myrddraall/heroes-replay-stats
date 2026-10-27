@@ -1,6 +1,5 @@
 import type { EditingAid } from '@myrddraall/heroes-replay-stats-aether/aids';
 import type { SetPlanet } from '@myrddraall/heroes-replay-stats-aether/planet-sets';
-import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import type { SceneCameraSet } from '@myrddraall/heroes-replay-stats-aether/formats';
 import { computed } from '@angular/core';
 import { materialAt } from '../materials/materials';
@@ -25,6 +24,7 @@ import {
   standInLightKey,
 } from './asset-targets';
 import type { WithStage } from './asset-editor.store';
+import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/space';
 
 /** What the background shows of the stage: what orbits are about, the camera it is seen through, the markers over the view, the lights' beams. */
 export function assetBackgroundViews(store: WithStage) {

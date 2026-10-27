@@ -24,7 +24,7 @@ import { beamMaterial, outlineMaterial } from './aid-shaders';
 import type { ToClip } from '../passes/pass-shaders';
 import { ShaderUniforms } from '../uniforms/shader-uniforms';
 import { UniformSet } from '../uniforms/uniforms';
-import { type Vec3, distance, normalize } from '../vectors';
+import { type Vec3, distance, normalized } from '../../space/vectors';
 
 /** How strongly a beam shows down its middle, by its body: one that lights, one that darkens. */
 const BEAM_ALPHA = 0.35;
@@ -207,7 +207,7 @@ export class EditingAids {
           [1, aid.north],
           [-1, aid.south],
         ] as const) {
-          const way = normalize(aid.way.map((v) => v * sign) as unknown as Vec3);
+          const way = normalized(aid.way.map((v) => v * sign) as unknown as Vec3);
           const [across, up] = beamAcross(way);
           const { mesh, uniforms } = next('light');
           beams.push(mesh);
@@ -225,7 +225,7 @@ export class EditingAids {
         }
         continue;
       }
-      const way = normalize(aid.from);
+      const way = normalized(aid.from);
       const [across, up] = beamAcross(way);
       const kinds = aid.darkens ? (['dark', 'edge'] as const) : (['light'] as const);
       for (const kind of kinds) {

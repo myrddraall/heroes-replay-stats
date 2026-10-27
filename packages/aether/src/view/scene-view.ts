@@ -14,7 +14,6 @@ import { BUILT_IN_PLANETS } from '../formats/built-in-planets';
 import { type LibraryState, skyOverlaysOf, skyWithLibrary, withLibrary } from '../library/library';
 import { ViewStore } from './view.store';
 import {
-  type AddedPart,
   addedSourced,
   createdOf,
   createdPlanetFile,
@@ -26,10 +25,9 @@ import {
   sourceFiles,
   withAddedParts,
 } from '../overlays/created-overlays';
-import { overlayOfFile } from '../overlays/overlays';
 import { type LoadedPlayScene, loadPlayScene, type SkyOverlayFile } from '../formats/play-scene';
 import { playSet, randomSet, seeded, type SetPlanet } from '../planet-sets/planet-sets';
-import { libraryMoonsOf, setWithMoons } from '../scenes/scene-bodies';
+import { libraryMoonsOf, setWithMoons } from '../scenes/scene-moons';
 import { DATA_URL } from '../formats/data-url';
 import { SceneCanvas } from './scene-canvas';
 import { type LoadedPlanet, loadPlanetIndex, PlanetLoader } from '../formats/planet-loader';
@@ -39,6 +37,8 @@ import type { PlanetPlacement } from '../space/space';
 import { keepUnchanged } from './stable-placements';
 import { browserColourParser, rendererTint } from '../tints/tints';
 import { backgroundTints } from '../tints/tint-settings';
+import type { AddedPart } from '../formats/part-shapes';
+import { overlayOfFile } from '../formats/overlay-files';
 
 /** The images of the textures a file has, from those loaded. */
 const imagesOf = (

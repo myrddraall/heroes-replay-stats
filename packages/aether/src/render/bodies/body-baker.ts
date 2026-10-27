@@ -10,7 +10,7 @@ import {
   REBAKE_PIXELS,
   scrollPixels,
 } from './body-bakes';
-import { multiplyMatrices as multiply, partsExtent } from '../../space/space';
+import { multiplyMatrices as multiply, partsExtent, ringScale } from '../../space/space';
 import {
   DEFAULT_ORIENTATION,
   type DrawFrames,
@@ -23,8 +23,7 @@ import { setBodyFrames } from './body-frames';
 import { type Bake, type GpuDraw, OUTPUTS, type Output, type Placed } from '../draw-types';
 import type { GpuDraws } from '../gpu-draws';
 import type { PassChain } from '../passes/pass-chain';
-import { type Vec3, distance, ringScale } from '../vectors';
-import { bodyTurnOf } from './body-draws';
+import { type Vec3, distance } from '../../space/vectors';
 
 /** What the bakes need of the renderer. */
 export interface BodyBakerHost {
@@ -60,7 +59,7 @@ export class BodyBaker {
     return `${this.host.viewVersion()}:${this.host.skyVersion()}:${body.version}:${body.hasShapes ? this.host.surfacesKey() : ''}`;
   }
   bakeDue(body: Placed, seconds: number): boolean {
-    if (body.placement.hidden) return false;
+    if (body.body.hidden) return false;
     const b = body.bake;
     if (!b || !b.complete || b.key !== this.bakeKey(body)) return true;
     return b.scroll > 0 && Math.abs(seconds - b.at) * b.scroll >= REBAKE_PIXELS;
@@ -108,7 +107,7 @@ export class BodyBaker {
       if (s.enabled && s.part && !this.host.gpu.gpuOf(s)?.ready) whole = false;
     if (!whole) return;
     const { width, height } = this.host.canvas;
-    const { position } = body.placement;
+    const { position } = body.body;
     // (Its square faces the eye, whichever way its surfaces are turned.)
     const { axes } = body.quad;
     const e = body.extent;
@@ -157,10 +156,10 @@ export class BodyBaker {
     const bakeViewProjection = multiply(onBake, viewProjection);
     const v = this.host.view();
     const eyeDistance = Math.hypot(...body.quad.eye);
-    const radius = body.placement.radius;
+    const radius = body.body.radius;
     // Each draw's frames, by which way it is turned and whether its body's own turn turns it (a
     // few at most for a body: see `drawFrames`).
-    const bodyTurned = bodyTurnOf(body.placement);
+    const bodyTurned = body.body.turn;
     const frames = new Map<string, DrawFrames>();
     const framesOf = (orientation: Orientation, turned: boolean) => {
       const key = `${orientation}:${turned}`;
@@ -256,8 +255,8 @@ export class BodyBaker {
     const eye = this.host.camera().eye;
     const shownBodies = this.host
       .placed()
-      .filter((b) => !b.placement.hidden && b.bake?.complete && b.bake.rect && b.bake.pass)
-      .sort((a, b) => distance(b.placement.position, eye) - distance(a.placement.position, eye));
+      .filter((b) => !b.body.hidden && b.bake?.complete && b.bake.rect && b.bake.pass)
+      .sort((a, b) => distance(b.body.position, eye) - distance(a.body.position, eye));
     for (const body of shownBodies) {
       const bake = body.bake!;
       const r = bake.rect!;
@@ -279,7 +278,7 @@ export class BodyBaker {
     }
   }
   private frontDepth(body: Placed, viewProjection: Float32Array): number {
-    const { position } = body.placement;
+    const { position } = body.body;
     const eye = this.host.camera().eye;
     const d = distance(eye, position);
     if (d <= 0) return 0;

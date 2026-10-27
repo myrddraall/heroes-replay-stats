@@ -6,7 +6,6 @@ import {
   orbitThrough,
   overOf,
   overOffset,
-  PLACEMENT_MODES,
   type PlacementMode,
 } from '@myrddraall/heroes-replay-stats-aether/space';
 import { type Direction, PropertyDirection } from './property-direction';
@@ -109,3 +108,11 @@ export class PropertyPlacement {
     });
   }
 }
+
+/** Placement modes as a mode list offers them. */
+export const PLACEMENT_MODES: readonly { readonly value: PlacementMode; readonly label: string }[] =
+  [
+    { value: 'free', label: 'Free' },
+    { value: 'over', label: 'Over a spot' },
+    { value: 'orbit', label: 'Orbit' },
+  ];

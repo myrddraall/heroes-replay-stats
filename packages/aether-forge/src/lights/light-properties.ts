@@ -1,11 +1,15 @@
-import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import {
   type LightReach,
   type LightSettings,
   type Receiver,
   SHIELD_DEFAULTS,
 } from '@myrddraall/heroes-replay-stats-aether/lights';
-import { aimedPoint, aimOf, type LookAt } from '@myrddraall/heroes-replay-stats-aether/space';
+import {
+  aimedPoint,
+  aimOf,
+  type LookAt,
+  type Vec3,
+} from '@myrddraall/heroes-replay-stats-aether/space';
 import { Component, computed, input, output } from '@angular/core';
 import { PropertyCheck } from '../controls/rows/property-check';
 import { PropertyColour } from '../controls/rows/property-colour';

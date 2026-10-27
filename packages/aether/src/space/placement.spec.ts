@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { atLeast, orbitOffset, orbitThrough, overOf, overOffset } from './placement';
-
-type Vec3 = readonly [number, number, number];
+import { type Vec3 } from './vectors';
 
 const expectAt = (a: Vec3, b: Vec3) => a.forEach((v, i) => expect(v).toBeCloseTo(b[i]!, 9));
 

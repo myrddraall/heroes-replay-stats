@@ -1,3 +1,5 @@
+import { drawnBody } from '../bodies/drawn-body';
+import { drawnSky } from '../sky/drawn-sky';
 import type { AddedLight } from '../lights/lights';
 import type { EditingAid } from '../aids/beams';
 import { FrameStats } from './frame-stats';
@@ -20,6 +22,9 @@ import type { SkySettings } from '../sky/sky-settings';
 import type { Backdrop, PlanetPlacement } from '../space/space';
 import { RENDERER, type Renderer, type RendererFactory } from '../render/renderer';
 import { NO_TINT, sameTint, type Tint } from '../tints/tints';
+
+/** Placements as the renderer draws them. */
+const drawnBodies = (placements: readonly PlanetPlacement[]) => placements.map((p) => drawnBody(p));
 
 /** Device pixels per CSS pixel at most: past this the extra sharpness isn't worth the fill rate. */
 const MAX_PIXEL_RATIO = 2;
@@ -390,7 +395,7 @@ export class SceneCanvas {
         renderer.setYaw(0);
         renderer.streak = 0;
         renderer.smear = 0;
-        renderer.setPlanets(to);
+        renderer.setBodies(drawnBodies(to));
       }
     };
     const tick = (now: number) => {
@@ -420,7 +425,7 @@ export class SceneCanvas {
         if (renderer.fade < 1 || fly || renderer.aidFade < 1) {
           renderer.fade = 1; // a fade stopped part way shows where it was going
           if (fly) {
-            renderer.setPlanets(fly.to);
+            renderer.setBodies(drawnBodies(fly.to));
             renderer.setYaw(0);
             renderer.streak = 0;
             renderer.smear = 0;
@@ -472,7 +477,7 @@ export class SceneCanvas {
       },
       // The sky's materials changed in how they show: drawn again as they are.
       resky: (sky) => {
-        renderer.setSky(sky);
+        renderer.setSky(drawnSky(sky, loaded.scene));
         if (!frame) draw();
       },
       // The scene's lights changed: drawn again lit by them.
@@ -518,32 +523,32 @@ export class SceneCanvas {
         if (fly && sameBodies(fly.to, placements)) {
           // The planets being flown to, changed in how they show: the fly goes on, to them as they are now.
           fly = { ...fly, to: placements };
-          renderer.setPlanets([...fly.from, ...placements]);
+          renderer.setBodies(drawnBodies([...fly.from, ...placements]));
           flyOn(0);
         } else if (before.length && sameBodies(before, placements) && !fly) {
-          renderer.setPlanets(placements);
+          renderer.setBodies(drawnBodies(placements));
           if (!frame) draw();
         } else if (before.length && (sameScene || samePlanets(before, placements)) && !fly) {
           // The same scene edited (a planet or moon added or taken out, a style changed): faded to
           // where it is, not flown to.
-          crossFadeTo(() => renderer.setPlanets(placements));
+          crossFadeTo(() => renderer.setBodies(drawnBodies(placements)));
         } else if (!before.length || reducedMotion.matches) {
-          renderer.setPlanets(placements);
+          renderer.setBodies(drawnBodies(placements));
           if (!frame) draw();
         } else if (frame) {
           const direction = flights++ % 2 ? -1 : 1;
           fly = { from: before, to: placements, direction, t: 0 };
           showAids(0);
-          renderer.setPlanets([...before, ...placements]);
+          renderer.setBodies(drawnBodies([...before, ...placements]));
           flyOn(0);
         } else {
-          crossFadeTo(() => renderer.setPlanets(placements));
+          crossFadeTo(() => renderer.setBodies(drawnBodies(placements)));
         }
       },
     };
     renderer.tint = NO_TINT; // always shown untinted first
     renderer.aidFade = 0;
-    renderer.setSky(this.sky());
+    renderer.setSky(drawnSky(this.sky(), loaded.scene));
     renderer.setSceneLights(this.lights());
     renderer.setBackdrop(this.backdrop());
     renderer.setBeams(this.beams());

@@ -1,10 +1,4 @@
-import type {
-  BodySettings,
-  MoonChoices,
-  PlanetChoices,
-  SceneBody,
-  SkyChoices,
-} from '../scenes/scene-settings';
+import type { MoonChoices, PlanetChoices, SceneBody, SkyChoices } from '../scenes/scene-settings';
 import type { Design } from '../design/design';
 import type { LibraryState } from '../library/library';
 import type { CreatedOverlay } from './created-overlays';
@@ -12,6 +6,8 @@ import { materialKey, type MaterialSettingsMap } from '../materials/material-set
 
 import type { AddedLight, LightReach, LightSettingsMap, Receiver } from '../lights/lights';
 import type { PartSettingsMap } from '../formats/part-shapes';
+import type { BodySettings } from '../bodies/body-settings';
+
 /**
  * Overlays: what a body (or the sky) wears over its own, several at once, the later over the
  * earlier. An overlay is the game data's (a style's file, `style-<id>`), or one made in the
@@ -20,21 +16,6 @@ import type { PartSettingsMap } from '../formats/part-shapes';
 
 /** The overlay the design's settings meant before bodies wore several: the only one there was. */
 export const LEGACY_OVERLAY = 'nexus';
-/** What the ids of overlays made in the editor start with. */
-export const CREATED_OVERLAY = '@overlay-';
-/** Whether an overlay is one made in the editor. */
-export const createdOverlay = (id: string) => id.startsWith(CREATED_OVERLAY);
-
-/**
- * The file an overlay is loaded from: the game data's style file, or one made in the editor (its
- * own id; `revision` tells a changed one apart, so it is built again).
- */
-export const overlayFile = (id: string, revision?: string) =>
-  createdOverlay(id) ? (revision ? `${id}#${revision}` : id) : `style-${id}`;
-/** The overlay a loaded file is of (its file's id, as `overlayFile` makes it). */
-export const overlayOfFile = (file: string) =>
-  createdOverlay(file) ? file.split('#')[0]! : file.replace(/^style-/, '');
-
 /** The key a body's settings are kept by for what it wears: the overlays' ids joined ('' for none). */
 export const wornKey = (overlays: readonly string[]) => overlays.join('+');
 

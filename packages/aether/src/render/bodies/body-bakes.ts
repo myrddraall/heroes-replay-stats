@@ -1,4 +1,4 @@
-type Vec3 = readonly [number, number, number];
+import { type Vec3 } from '../../space/vectors';
 
 /** A rectangle of the frame in whole pixels, from its bottom left (GL's): x, y, width, height. */
 export interface PixelRect {

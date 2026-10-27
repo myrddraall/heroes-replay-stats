@@ -1,4 +1,4 @@
-import {
+import type {
   BufferGeometry,
   InstancedBufferGeometry,
   InstancedInterleavedBuffer,
@@ -6,20 +6,21 @@ import {
   RenderTarget,
   Scene,
 } from 'three/webgpu';
-import { type SceneBlend, type SceneLayer, type SceneMaterial } from '../formats/play-scene';
-import { ParticleSystem } from '../effects/particles';
-import { type Tube } from '../sky/tubes';
-import { type BodyPart, type PlanetLight } from '../formats/planet-files';
+import type { SceneBlend, SceneLayer, SceneMaterial } from '../formats/play-scene';
+import type { ParticleSystem } from '../effects/particles';
+import type { Tube } from '../sky/tubes';
+import type { BodyPart, PlanetLight } from '../formats/planet-files';
 import type { LoadedPlanet } from '../formats/planet-loader';
 import type { MaterialDepth } from '../materials/material-settings';
 import type { SkyAnchor } from '../sky/sky-anchors';
-import { type PartKey } from '../formats/part-keys';
-import { UniformSet } from './uniforms/uniforms';
-import { type PixelRect } from './bodies/body-bakes';
-import { type BodyFrame, type PlanetPlacement } from '../space/space';
-import { type Mat3, type Orientation } from '../space/graph';
-import { type BodyLeans } from './bodies/body-frames';
-import { DrawValues } from './uniforms/shader-uniforms';
+import type { PartKey } from '../formats/part-keys';
+import type { UniformSet } from './uniforms/uniforms';
+import type { PixelRect } from './bodies/body-bakes';
+import type { BodyFrame } from '../space/space';
+import type { BodyDraw, DrawnBody } from '../bodies/drawn-body';
+import type { Mat3, Orientation } from '../space/graph';
+import type { BodyLeans } from './bodies/body-frames';
+import type { DrawValues } from './uniforms/shader-uniforms';
 
 /** What the renderer keeps of each draw: its state, its GPU side, its passes and bakes. */
 
@@ -56,7 +57,7 @@ export interface MeshDraw {
   readonly moving: boolean;
   /** The planet it is part of (a placed one), whose frame places it; none: in world space as it is. */
   readonly placed?: Placed;
-  /** The planet or overlay the material is of, whose tuning is its settings' default; none: the sky's. */
+  /** The planet or overlay the material is of (its materials, for a halo's look); none: the sky's. */
   readonly owner?: LoadedPlanet;
   /** The part of the planet's body it is, drawn on the square instead of a mesh. */
   readonly part?: BodyPart;
@@ -68,12 +69,14 @@ export interface MeshDraw {
   readonly light?: PlanetLight;
   /** What its GPU draw is kept by, across the times it is worked out again. */
   readonly id: string;
+  /** The body draw it is, where it is a placed body's. */
+  readonly bodyDraw?: BodyDraw;
 }
 
-/** A placement with its body's frames as last placed. */
+/** A body put up, with its frames as last placed. */
 export interface Placed {
   readonly id: number;
-  placement: PlanetPlacement;
+  body: DrawnBody;
   /** Its frame facing the eye that draws it (turned with the camera): its squares', and its surfaces' that face the camera. */
   quad: BodyFrame;
   /**

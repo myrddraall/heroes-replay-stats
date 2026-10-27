@@ -1,8 +1,7 @@
 import type { SkyOverlayFile } from '../formats/play-scene';
-import type { AddedPart } from '../overlays/created-overlays';
 import type { MaterialSettingsMap, MaterialTint } from '../materials/material-settings';
 import type { SkyAnchor } from './sky-anchors';
-import type { PartSettingsMap } from '../formats/part-shapes';
+import type { AddedPart, PartSettingsMap } from '../formats/part-shapes';
 
 /**
  * How the sky shows: its materials' settings by key (`materialKey`), a tint over all of it

@@ -1,51 +1,43 @@
+export { HALO_MARGIN, visualExtent } from './body-extent';
+export {
+  changedLight,
+  legacyShadow,
+  withAddedLight,
+  withLightChange,
+  withLightSetting,
+  withLightSwitched,
+  withoutAddedLight,
+  withoutLightSetting,
+} from './body-lights';
+export { withMaterial, withMaterialSwitched, withoutMaterial } from './body-materials';
+export { resetOverlays, setOverlays, withOverlaySwitched } from './body-overlays';
+export { bodyParts, withoutPartSetting, withPartSetting } from './body-parts';
 export {
   addMoonAt,
   addPlanet,
   bodyAt,
-  bodyParts,
-  canPutGroup,
-  changedLight,
   changeSettings,
-  GROUP_PREFIX,
-  groupBodies,
-  HALO_MARGIN,
-  isGroup,
-  legacyShadow,
-  libraryMoonAt,
   placesOnly,
   planetSettingsOf,
   playScreenBodies,
   removeAt,
-  resetMoon,
-  resetOverlays,
   SCENE_CENTRE,
   sceneBodies,
   setOrbit,
-  setOverlays,
   setPlace,
+} from './scene-bodies';
+export { canPutGroup, GROUP_PREFIX, groupBodies, isGroup } from './scene-groups';
+export {
+  libraryMoonAt,
+  resetMoon,
   setWithMoons,
   storedBodies,
-  visualExtent,
-  withAddedLight,
   withLibraryMoons,
-  withLightChange,
-  withLightSetting,
-  withLightSwitched,
-  withMaterial,
-  withMaterialSwitched,
-  withoutAddedLight,
-  withoutLightSetting,
-  withoutMaterial,
-  withoutPartSetting,
-  withOverlaySwitched,
-  withPartSetting,
-} from './scene-bodies';
+} from './scene-moons';
 export {
   type AddedCamera,
   addMoon,
   type BodyPath,
-  type BodySettings,
-  type BodyValues,
   type CameraPlacement,
   cameraSetOf,
   changeMoon,
@@ -65,7 +57,6 @@ export {
   primaryCameraOf,
   type SceneBody,
   type SkyChoices,
-  type Vec3,
   without,
 } from './scene-settings';
 export {
