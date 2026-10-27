@@ -11,8 +11,9 @@ import { type PartEntry, partIcon, partsOfBody } from '../parts/parts';
 import { overlayParts, type PartHost, withOverlayParts } from '../parts/part-hosts';
 import type { PickChoice } from '../controls/pick-list';
 import type { AddedLists } from '../controls/added-list';
-import { ASSET, STAGE_SKY, assetPartKey } from './asset-targets';
+import { ASSET, STAGE_SKY, assetLightKey, assetPartKey, atBody } from './asset-targets';
 import type { WithBackground } from './asset-editor.store';
+import { lightItems } from '../lights/lights';
 
 /** The parts added onto the asset open (an overlay made here, a planet's own, the sky's), as the panels add, reuse and save them. */
 export function assetPartHostViews(store: WithBackground) {
@@ -53,7 +54,7 @@ export function assetPartHostViews(store: WithBackground) {
   const addHost = computed((): PartHost | null => {
     const t = store.target();
     const o = store._created();
-    if (t.kind === 'body') return o ? overlayHost(o) : planetHost();
+    if (atBody(t)) return o ? overlayHost(o) : planetHost();
     return t.kind === 'sky' ? skyHost(t.stage) : null;
   });
   /** The part selected and where it is kept, where it was made at the level edited. */
@@ -74,7 +75,7 @@ export function assetPartHostViews(store: WithBackground) {
     added: computed((): AddedLists => {
       const t = store.target();
       const host = addHost();
-      if (!host?.parts.length && t.kind !== 'body') return {};
+      if (!host?.parts.length && !atBody(t)) return {};
       const o = store._created();
       const listed = (
         entries: readonly PartEntry[],
@@ -92,7 +93,7 @@ export function assetPartHostViews(store: WithBackground) {
           };
         }),
       });
-      if (t.kind === 'body') {
+      if (atBody(t)) {
         const b = store._body();
         const infos = store._moonInfos();
         return {
@@ -101,6 +102,7 @@ export function assetPartHostViews(store: WithBackground) {
             (id) => (o ? `style:${asset().id}:${id}` : `own:${id}`) as PartKey,
             assetPartKey,
           ),
+          ...(b ? { lights: lightItems(b, assetLightKey) } : {}),
           // Its own moons, each taken out here where it was put.
           ...(infos.size
             ? {

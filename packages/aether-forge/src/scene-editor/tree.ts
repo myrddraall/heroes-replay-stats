@@ -240,6 +240,8 @@ export function treeViews(store: WithPartHosts) {
             },
             {
               movableOverlays: true,
+              // (One of a planet's own moons is the library's: nothing is put onto it here.)
+              adds: { shapes: !b.inherited, lights: true, overlays: true, moons: !b.inherited },
               variants: (b.variants ?? []).map((v) => ({
                 id: v.id,
                 name: v.name,

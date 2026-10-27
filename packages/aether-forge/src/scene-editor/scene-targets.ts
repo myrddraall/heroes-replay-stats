@@ -9,7 +9,7 @@ import {
 import type { PartKey, SceneCameraSet } from '@myrddraall/heroes-replay-stats-aether/formats';
 import type { LightId, Receiver } from '@myrddraall/heroes-replay-stats-aether/lights';
 import { materialKey } from '@myrddraall/heroes-replay-stats-aether/materials';
-import { type BodyInfo, stackedSetting } from '../bodies/body';
+import { BODY_CATEGORIES, BodyCategory, type BodyInfo, stackedSetting } from '../bodies/body';
 import { type MaterialView, splitViewKey } from '../materials/material-views';
 import { offPart } from '../materials/materials';
 import { REFERENCE_KEY } from '../aids/editing-aids.store';
@@ -102,7 +102,7 @@ export type Target =
   /** A part of an overlay the sky wears. */
   | { readonly kind: 'sky-part'; readonly key: PartKey }
   | { readonly kind: 'body'; readonly path: BodyPath }
-  /** A group of rows: a body's categories (its shapes, lights, overlays, moons), the sky's depths. */
+  /** A group of rows: the scene's lights, the sky's depths, an overlay the sky wears. */
   | {
       readonly kind: 'group';
       readonly path: BodyPath;
@@ -111,8 +111,8 @@ export type Target =
     }
   /** An overlay a body wears, by id. */
   | { readonly kind: 'overlay'; readonly path: BodyPath; readonly id: string }
-  /** A body's variants (what makes new ones, and the list), and one of them by id. */
-  | { readonly kind: 'variants'; readonly path: BodyPath }
+  /** One of a body's categories (what adds to it, and what is in it), and one of its variants by id. */
+  | { readonly kind: BodyCategory; readonly path: BodyPath }
   | { readonly kind: 'variant'; readonly path: BodyPath; readonly id: string }
   | {
       readonly kind: 'material';
@@ -136,6 +136,10 @@ export type Target =
   /** The scene's cameras (their group), and one of them by id. */
   | { readonly kind: 'cameras' }
   | { readonly kind: 'camera'; readonly id: string };
+
+/** Whether a target is a body itself or one of its categories: what is added there goes onto the body. */
+export const atBody = (t: Target): t is Extract<Target, { readonly kind: 'body' | BodyCategory }> =>
+  t.kind === 'body' || (BODY_CATEGORIES as readonly string[]).includes(t.kind);
 
 /** What of a body a target is, as a light reaches it: the body (none), a part or a material; not one (undefined). */
 export function receiverOf(t: Target): Receiver | null | undefined {
@@ -182,8 +186,8 @@ export function targetOf(key: string): Target {
   const tail = slash < 0 ? '' : rest.slice(slash);
   if (tail.startsWith('/overlay/')) return { kind: 'overlay', path, id: tail.slice(9) };
   if (tail.startsWith('/variant/')) return { kind: 'variant', path, id: tail.slice(9) };
-  if (tail === '/variants') return { kind: 'variants', path };
-  if (['/lights', '/shapes', '/overlays', '/moons'].includes(tail)) return { kind: 'group', path };
+  const category = BODY_CATEGORIES.find((c) => tail === `/${c}`);
+  if (category) return { kind: category, path };
   if (tail.startsWith('/l/')) return { kind: 'light', path, id: tail.slice(3) as LightId };
   if (tail.startsWith('/m/')) {
     const name = offPart(tail.slice(3));

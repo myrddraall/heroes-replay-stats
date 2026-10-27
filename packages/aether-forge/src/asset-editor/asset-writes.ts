@@ -16,6 +16,7 @@ import {
   ASSET,
   type Target,
   assetPartKey,
+  atBody,
   libraryKind,
   moonKey,
   skyRowKeys,
@@ -118,7 +119,7 @@ export function assetWrites(store: AssetMethodsStore) {
   /** What the planet open (its library's choice) or its moon selected wears changed. */
   const wears = (change: (worn: readonly string[]) => readonly string[]) => {
     const t = store.target();
-    if (t.kind === 'body' && asset().kind === 'planet') {
+    if (atBody(t) && asset().kind === 'planet') {
       const b = store._body();
       // (What it can wear is the planet's own, whatever is edited: a variant only switches it.)
       if (b)

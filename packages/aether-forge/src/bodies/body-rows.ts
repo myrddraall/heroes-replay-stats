@@ -2,7 +2,13 @@ import type { VariantRow } from '../variants/variant-list';
 import type { PartKey } from '@myrddraall/heroes-replay-stats-aether/formats';
 import type { LightId } from '@myrddraall/heroes-replay-stats-aether/lights';
 import type { TreeRow } from '../tree/scene-tree';
-import { type BodyInfo, overlayEnabled, overlayLabel } from './body';
+import {
+  type BodyCategory,
+  type BodyInfo,
+  CATEGORY_TITLES,
+  overlayEnabled,
+  overlayLabel,
+} from './body';
 import { lightIcon, lightsOfBody } from '../lights/lights';
 import { type MaterialEntry, materialsOf, onPart, sharedMaterials } from '../materials/materials';
 import { partIcon, type PartNode, partNodes } from '../parts/parts';
@@ -32,8 +38,11 @@ export interface BodyRowOptions {
   readonly moons?: (depth: number) => readonly TreeRow[];
   /** Its variants, each on or off where it is, and the one open to be edited. */
   readonly variants?: readonly VariantRow[];
-  /** Whether variants are made here (its Variants shown with none yet, to make the first). */
-  readonly variantsMade?: boolean;
+  /**
+   * Which of its categories can be added to here: each shown with nothing in it yet (to add the
+   * first), where the others are shown only with something in them.
+   */
+  readonly adds?: Partial<Record<BodyCategory, boolean>>;
   readonly variantEdited?: string | null;
 }
 
@@ -67,7 +76,8 @@ export function materialRows(
 }
 
 /**
- * A body's subtree, under its own row, in categories, each shown where it has anything in it:
+ * A body's subtree, under its own row, in categories, each shown where it has anything in it or
+ * where it can be added to (selected, a category shows what adds to it):
  * its Shapes (its parts, then those of each overlay it wears, marked with the overlay's name,
  * each with the materials drawn on it), its Lights (its own and its overlays', marked so), the
  * Overlays it wears (in the order worn: the later drawn over the earlier), its Variants, and its
@@ -83,9 +93,10 @@ export function bodySubtreeRows(
 ): TreeRow[] {
   const rows: TreeRow[] = [];
   const at = depth + 1;
-  /** A category's row: it only groups the rows under it. */
-  const category = (key: string, label: string, icon: string, expanded: boolean) =>
-    rows.push({ key, label, icon, depth: at, expandable: true, expanded, group: true });
+  /** A category's row (selected, it shows what adds to it): unfolding where it has rows under it. */
+  const category = (key: string, label: string, icon: string, expanded: boolean, has: boolean) =>
+    rows.push({ key, label, icon, depth: at, expandable: has, expanded: has && expanded });
+  const adds = options.adds ?? {};
   const material = (key: string, m: MaterialEntry, d: number) =>
     rows.push(...materialRows(key, m, d, open));
   const nodes = partNodes(b, materialsOf(b));
@@ -115,16 +126,23 @@ export function bodySubtreeRows(
         );
     }
   };
-  if (nodes.own.length || nodes.overlays.some((o) => o.nodes.length)) {
-    category(keys.shapes(), 'Shapes', 'shapes', !open.has(keys.shapes()));
+  const shapes = nodes.own.length > 0 || nodes.overlays.some((o) => o.nodes.length);
+  if (shapes || adds.shapes) {
+    category(keys.shapes(), CATEGORY_TITLES.shapes, 'shapes', !open.has(keys.shapes()), shapes);
     if (!open.has(keys.shapes())) {
       parts(nodes.own);
       for (const { overlay, nodes: list } of nodes.overlays) parts(list, overlay.id);
     }
   }
   const lights = lightsOfBody(b);
-  if (lights.length) {
-    category(keys.lights(), 'Lights', 'lightbulb', open.has(keys.lights()));
+  if (lights.length || adds.lights) {
+    category(
+      keys.lights(),
+      CATEGORY_TITLES.lights,
+      'lightbulb',
+      open.has(keys.lights()),
+      lights.length > 0,
+    );
     if (open.has(keys.lights()))
       for (const { light, overlay } of lights)
         rows.push({
@@ -138,8 +156,14 @@ export function bodySubtreeRows(
           enabled: light.enabled,
         });
   }
-  if (b.overlays.length) {
-    category(keys.overlays(), 'Overlays', 'style', !open.has(keys.overlays()));
+  if (b.overlays.length || adds.overlays) {
+    category(
+      keys.overlays(),
+      CATEGORY_TITLES.overlays,
+      'style',
+      !open.has(keys.overlays()),
+      b.overlays.length > 0,
+    );
     if (!open.has(keys.overlays()))
       for (const overlay of b.overlays)
         rows.push({
@@ -154,16 +178,14 @@ export function bodySubtreeRows(
         });
   }
   const variants = options.variants ?? [];
-  if (variants.length || options.variantsMade) {
-    // (Selected, it lists them with what makes new ones.)
-    rows.push({
-      key: keys.variants(),
-      label: 'Variants',
-      icon: 'layers',
-      depth: at,
-      expandable: variants.length > 0,
-      expanded: open.has(keys.variants()),
-    });
+  if (variants.length || adds.variants) {
+    category(
+      keys.variants(),
+      CATEGORY_TITLES.variants,
+      'layers',
+      open.has(keys.variants()),
+      variants.length > 0,
+    );
     if (open.has(keys.variants()))
       for (const v of variants)
         rows.push({
@@ -178,8 +200,14 @@ export function bodySubtreeRows(
         });
   }
   const moons = options.moons?.(at + 1) ?? [];
-  if (moons.length) {
-    category(keys.moons(), 'Moons', 'brightness_1', !open.has(keys.moons()));
+  if (moons.length || adds.moons) {
+    category(
+      keys.moons(),
+      CATEGORY_TITLES.moons,
+      'brightness_1',
+      !open.has(keys.moons()),
+      moons.length > 0,
+    );
     if (!open.has(keys.moons())) rows.push(...moons);
   }
   return rows;

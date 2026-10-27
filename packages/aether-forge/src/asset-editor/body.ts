@@ -14,7 +14,7 @@ import {
 } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import { computed } from '@angular/core';
 import type { BodyInfo } from '../bodies/body';
-import { ASSET, libraryKind, moonKey, moonPaths, nextMoonKey } from './asset-targets';
+import { ASSET, atBody, libraryKind, moonKey, moonPaths, nextMoonKey } from './asset-targets';
 import type { AssetMethodsStore, WithStageSky } from './asset-editor.store';
 import { patchState } from '@ngrx/signals';
 import { axisAids, axisFrame, poleAt, poleDragged } from '../viewport/markers';
@@ -181,7 +181,7 @@ export function assetBodyMethods(store: AssetMethodsStore, w: AssetWrites) {
     },
     /** A moon, by its planet's id, put about the planet open (none about a moon): shown and selected. */
     addMoon(moon: string): void {
-      if (store.asset().kind !== 'planet' || store.target().kind !== 'body') return;
+      if (store.asset().kind !== 'planet' || !atBody(store.target())) return;
       const moons = store._moons();
       const added = { id: moon, key: nextMoonKey(moons), orbit: DEFAULT_ORBIT };
       changeMoons(() => addMoonTo(moons, [], added));
@@ -211,7 +211,7 @@ export function assetBodyMethods(store: AssetMethodsStore, w: AssetWrites) {
       const t = store.target();
       if (t.kind === 'moon')
         changeMoons((moons) => changeMoon(moons, t.path, (m) => without(m, ['overlays']) ?? m));
-      else if (t.kind === 'body' && asset().kind === 'planet')
+      else if (atBody(t) && asset().kind === 'planet')
         draft.clearLibraryBody('planets', asset().id, ['overlays']);
     },
   };

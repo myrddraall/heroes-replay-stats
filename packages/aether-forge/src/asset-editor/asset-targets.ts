@@ -14,6 +14,7 @@ import { offPart } from '../materials/materials';
 import { type MaterialView, splitViewKey } from '../materials/material-views';
 import { REFERENCE_KEY } from '../aids/editing-aids.store';
 import type { AssetKind, AssetTarget } from '../layout/open-target';
+import { BodyCategory, BODY_CATEGORIES } from '../bodies/body';
 /** The planet a style, a material or the sky is shown on, until a planet has been opened. */
 export const DEFAULT_PREVIEW_PLANET = 'korhal';
 
@@ -111,8 +112,8 @@ export const KIND_TITLES: Readonly<Record<AssetKind, string>> = {
 /** What an asset tree row's key is, for the asset open. */
 export type Target =
   /**
-   * A group of rows: the asset open's categories (its shapes, lights, overlays, moons), a sky's
-   * depths, an overlay a sky wears (`skyOverlay`: which; the stage's sky's or the sky open's).
+   * A group of rows: a sky's depths, an overlay a sky wears (`skyOverlay`: which; the stage's
+   * sky's or the sky open's).
    */
   | {
       readonly kind: 'group';
@@ -121,8 +122,8 @@ export type Target =
     }
   /** An overlay the planet or overlay open wears, by id. */
   | { readonly kind: 'overlay'; readonly id: string }
-  /** The planet open's variants (what makes new ones, and the list), and one of them by id. */
-  | { readonly kind: 'variants' }
+  /** One of the asset open's categories (what adds to it, and what is in it), and one of its variants by id. */
+  | { readonly kind: BodyCategory }
   | { readonly kind: 'variant'; readonly id: string }
   /** The stage's sky, or the library's (the sky open). */
   | { readonly kind: 'sky'; readonly stage: boolean }
@@ -164,6 +165,10 @@ export type Target =
   /** One of the stand-in's lights (an editing aid's: kept with the aids, never in the design). */
   | { readonly kind: 'stand-in-light'; readonly id: LightId }
   | { readonly kind: 'reference' };
+
+/** Whether a target is the body open itself or one of its categories: what is added there goes onto it. */
+export const atBody = (t: Target) =>
+  t.kind === 'body' || (BODY_CATEGORIES as readonly string[]).includes(t.kind);
 
 /** What of the body open a target is, as a light reaches it: the body (none), a part or a material; not one (undefined). */
 export function receiverOf(t: Target): Receiver | null | undefined {
@@ -241,7 +246,8 @@ export function targetOf(key: string, asset: AssetTarget): Target {
     return { kind: 'overlay', id: key.slice(ASSET.length + 9) };
   if (key.startsWith(`${ASSET}/variant/`))
     return { kind: 'variant', id: key.slice(ASSET.length + 9) };
-  if (key === ASSET_VARIANTS) return { kind: 'variants' };
+  const category = BODY_CATEGORIES.find((c) => key === `${ASSET}/${c}`);
+  if (category) return { kind: category };
   return { kind: 'group' };
 }
 

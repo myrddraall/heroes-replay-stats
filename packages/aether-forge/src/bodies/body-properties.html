@@ -36,24 +36,7 @@
     }
   </div>
 </forge-property-section>
-@let v = values(); @if (styled()) {
-<forge-pick-list
-  title="Overlays"
-  addLabel="Add overlay"
-  removeLabel="Take off"
-  [picked]="v.overlays"
-  [choices]="overlayOptions()"
-  [changed]="overlaysSet()"
-  icon="style"
-  [linkable]="true"
-  newLabel="New overlay"
-  (added)="overlayAdd.emit($event)"
-  (removed)="overlayRemove.emit($event)"
-  (itemShow)="overlayShow.emit($event)"
-  (created)="overlayNew.emit()"
-  (resetRequested)="overlaysReset.emit()"
-/>
-} @if (orbit(); as o) {
+@let v = values(); @if (orbit(); as o) {
 <forge-property-section title="Place" [changed]="orbitSet()" (resetRequested)="resetOrbit()">
   <forge-property-placement
     [mode]="o.mode ?? 'orbit'"
@@ -139,8 +122,6 @@
     (valueChange)="settingsChange.emit({ turn: $event })"
   />
 </forge-property-section>
-} @if (moons()) {
-<ng-content select="[moonsPod]" />
 } @if (bodySettings()) {
 <forge-tint-section
   [tint]="v.tint"
@@ -181,5 +162,5 @@
   />
 </forge-property-section>
 } @if (lit()) {
-<ng-content select="[lightAdd]" />
+<ng-content select="[litBy]" />
 }

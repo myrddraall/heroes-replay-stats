@@ -29,6 +29,7 @@ import {
   SCENE_LIGHTS,
   SKY,
   type Target,
+  atBody,
   bodyKey,
   lightsKey,
   moonsKey,
@@ -185,7 +186,7 @@ export function sceneWrites(store: SceneMethodsStore) {
   /** A part just added onto the body or sky selected selected, its row shown. */
   const selectAdded = (id: string) => {
     const t = store.target();
-    if (t.kind === 'body') {
+    if (atBody(t)) {
       reveal(partRowKey(t.path, `own:${id}`));
     } else {
       store.expand(SKY);

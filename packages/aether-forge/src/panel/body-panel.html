@@ -1,9 +1,8 @@
-@let added = editor.added(); @if (editor.bodyView(); as b) {
+@if (editor.bodyView(); as b) {
 <forge-body-properties
   [values]="b.values"
   [origins]="b.origins"
   [overrides]="b.overrides"
-  [overlayOptions]="editor.overlayOptions()"
   [orbit]="b.info.orbit ?? null"
   [orbitBase]="b.orbitBase"
   [inherited]="b.inherited"
@@ -12,19 +11,11 @@
   [focused]="b.focused"
   [set]="b.info.settings"
   [baseTint]="b.baseTint"
-  [overlaysSet]="b.info.overlaysSet"
   [overlay]="b.info.file?.kind === 'style'"
   [bodySettings]="!editor.skyOverlayOpen()"
   [label]="b.label"
   [labelBelow]="b.labelBelow"
-  [styled]="b.styled"
   [focusable]="b.focusable"
-  [moons]="b.canHaveMoons"
-  (overlayAdd)="editor.addOverlay($event)"
-  (overlayShow)="editor.showOverlay($event)"
-  (overlayNew)="newOverlay()"
-  (overlayRemove)="editor.removeOverlay($event)"
-  (overlaysReset)="editor.resetOverlays()"
   (settingsChange)="editor.setBody($event)"
   (clear)="editor.clearBody($event)"
   (orbitChange)="editor.setOrbit($event)"
@@ -36,44 +27,14 @@
   [lit]="!editor.skyOverlayOpen() && b.lights"
   (deleteRequested)="editor.deleteAsset()"
 >
-  <forge-property-section moonsPod title="Moons">
-    <div class="buttons">
-      <forge-add-planet label="Add moon" (picked)="editor.addMoon($event)" />
-    </div>
-    <forge-added-list
-      title="Moons"
-      [items]="added.moons ?? []"
-      (itemShow)="editor.showAdded($event)"
-      (itemRemove)="editor.removeAdded($event)"
-    />
-  </forge-property-section>
-  <forge-property-section lightAdd title="Lights">
-    <forge-add-light (added)="editor.addLight($event)" />
-    @if (editor.litBy(); as lit) {
-    <forge-lit-by
-      [lights]="lit"
-      (litChange)="editor.setLitBy($event)"
-      (lightShow)="editor.showLight($event)"
-      (lightRemove)="editor.removeLight($event)"
-    />
-    }
-  </forge-property-section>
+  @if (editor.litBy(); as lit) {
+  <forge-lit-by
+    litBy
+    [lights]="lit"
+    (litChange)="editor.setLitBy($event)"
+    (lightShow)="editor.showLight($event)"
+    (lightRemove)="editor.removeLight($event)"
+  />
+  }
 </forge-body-properties>
-@if (editor.partShapes().length) {
-<forge-property-section title="Parts">
-  <forge-add-part
-    [shapes]="editor.partShapes()"
-    [existing]="editor.reusableParts()"
-    [savable]="editor.canSaveAsOverlay()"
-    (added)="editor.addPart($event)"
-    (reused)="editor.reusePart($event)"
-    (saved)="editor.saveAsOverlay()"
-  />
-  <forge-added-list
-    title="Parts"
-    [items]="added.parts ?? []"
-    (itemShow)="editor.showAdded($event)"
-    (itemRemove)="editor.removeAdded($event)"
-  />
-</forge-property-section>
-} }
+}

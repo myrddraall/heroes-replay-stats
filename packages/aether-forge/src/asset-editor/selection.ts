@@ -5,7 +5,13 @@ import {
 } from '@myrddraall/heroes-replay-stats-aether/materials';
 import { computed } from '@angular/core';
 import { baseMaterialOf, materialAt, type MaterialEntry } from '../materials/materials';
-import { bodyLabel, bodyView, type TargetKind } from '../bodies/body';
+import {
+  BodyCategory,
+  bodyLabel,
+  bodyView,
+  CATEGORY_TITLES,
+  type TargetKind,
+} from '../bodies/body';
 import { skyAnchorView } from '../sky/sky';
 import { type MaterialView, viewTitle } from '../materials/material-views';
 import { lightsOfBody } from '../lights/lights';
@@ -15,6 +21,7 @@ import { standInLights } from '../aids/stand-in';
 import {
   ASSET,
   ASSET_LIGHTS,
+  atBody,
   KIND_TITLES,
   moonKey,
   moonPaths,
@@ -28,6 +35,7 @@ import {
   PREVIEW_SCENE,
   withLightSwitched,
   without,
+  withoutAddedLight,
   withoutPartSetting,
   withOverlaySwitched,
   withPartSetting,
@@ -146,7 +154,7 @@ export function assetSelectionViews(store: WithOwn) {
       }
       const b = _body();
       // A planet can have moons of its own; an overlay none.
-      return t.kind === 'body' && b ? bodyView(b, false, asset().kind === 'planet') : null;
+      return atBody(t) && b ? bodyView(b, false, asset().kind === 'planet') : null;
     }),
     baseMaterial: computed((): MaterialEntry | undefined => {
       const use = _materialUse();
@@ -189,7 +197,7 @@ export function assetSelectionViews(store: WithOwn) {
         );
       if (t.kind === 'reference') return 'Reference';
       if (t.kind === 'overlay') return overlayViewOf(_body(), t.id)?.name ?? 'Overlay';
-      if (t.kind === 'variants') return 'Variants';
+      if (atBody(t) && t.kind !== 'body') return CATEGORY_TITLES[t.kind as BodyCategory];
       if (t.kind === 'variant')
         return store.variantRows().find((v) => v.id === t.id)?.name ?? 'Variant';
       if (t.kind === 'sky-material')
@@ -291,6 +299,12 @@ export function assetSelectionMethods(store: AssetMethodsStore, w: AssetWrites) 
       const t = targetOf(key, asset());
       if (t.kind === 'moon') {
         removeMoonAt(t.path);
+        return;
+      }
+      if (t.kind === 'light') {
+        const { id } = t;
+        w.lightChange((s) => withoutAddedLight(s, id) ?? {});
+        if (store.selected() === key) patchState(store, { selected: ASSET });
         return;
       }
       const host = store._addHost();

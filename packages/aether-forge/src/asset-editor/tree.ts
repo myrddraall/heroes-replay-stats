@@ -334,7 +334,13 @@ export function assetTreeViews(store: WithPartHosts) {
                 {
                   movableOverlays: false,
                   variants: store.variantRows(),
-                  variantsMade: store.variantsEditable(),
+                  adds: {
+                    shapes: store.partShapes().length > 0,
+                    lights: true,
+                    overlays: a.kind === 'planet',
+                    variants: store.variantsEditable(),
+                    moons: a.kind === 'planet',
+                  },
                   variantEdited: store.variantEdited(),
                   // Its own moons (a planet's), each switched by its checkbox.
                   moons: (at) =>

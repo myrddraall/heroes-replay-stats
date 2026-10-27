@@ -9,7 +9,7 @@ import {
   removePart,
   settingsAsOverlay,
 } from '../parts/part-hosts';
-import { SKY, bodyKey } from './scene-targets';
+import { SKY, atBody, bodyKey } from './scene-targets';
 import type { SceneMethodsStore } from './scene-editor.store';
 import type { SceneWrites } from './scene-writes';
 
@@ -65,7 +65,7 @@ export function partMethods(store: SceneMethodsStore, w: SceneWrites) {
       if (!host?.parts.length) return;
       const parts = host.parts;
       const id = d.createOverlay(host.kind, parts);
-      if (t.kind === 'body') {
+      if (atBody(t)) {
         settings(t.path, (s) => settingsAsOverlay(s, id, parts));
         wear((worn) => [...worn, id]);
       } else {

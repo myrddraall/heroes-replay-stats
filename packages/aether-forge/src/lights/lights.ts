@@ -42,6 +42,7 @@ import { type PartNode, partNodes, partsOfBody } from '../parts/parts';
 import { type MaterialEntry, materialsOf, onPart, sharedMaterials } from '../materials/materials';
 import { viewKey } from '../materials/material-views';
 import { originsOf, type SettingOrigins } from '../editing/setting-origins';
+import type { AddedItem } from '../controls/added-list';
 import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies';
 /** A body's and a scene's lights as an editor shows them, what lights each body, and the shield's lights. */
 
@@ -471,4 +472,21 @@ export function shieldLightsOfBody(
     ...lightsOf(nodes.own),
     ...nodes.overlays.flatMap((o) => lightsOf(o.nodes, o.overlay.id)),
   ];
+}
+
+/**
+ * A body's lights as its Lights list them: each with a way to it in the tree (its row's key, by
+ * `rowKey`), marked with the overlay it is of where it is one's, and taken out where it was added
+ * at the level edited.
+ */
+export function lightItems(b: BodyInfo, rowKey: (id: LightId) => string): AddedItem[] {
+  const names = new Map(b.overlays.map((o) => [o.id, overlayLabel(o)] as const));
+  const here = new Set<string>((b.settings.added ?? []).map((l) => l.id));
+  return lightsOfBody(b).map(({ light, overlay }) => ({
+    key: rowKey(light.id),
+    label: light.name,
+    icon: lightIcon(light),
+    ...(overlay ? { detail: names.get(overlay) ?? overlay } : {}),
+    removable: here.has(light.id),
+  }));
 }

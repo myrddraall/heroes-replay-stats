@@ -36,6 +36,20 @@ import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies
  */
 
 /** What a tree row is, for the properties shown when it is selected. */
+/** A body's categories in the tree: its shapes, its lights, the overlays it wears, its variants, its moons. */
+export const BODY_CATEGORIES = ['shapes', 'lights', 'overlays', 'variants', 'moons'] as const;
+
+export type BodyCategory = (typeof BODY_CATEGORIES)[number];
+
+/** Each category's name, as its row and its panel have it. */
+export const CATEGORY_TITLES: Readonly<Record<BodyCategory, string>> = {
+  shapes: 'Shapes',
+  lights: 'Lights',
+  overlays: 'Overlays',
+  variants: 'Variants',
+  moons: 'Moons',
+};
+
 export type TargetKind =
   | 'scene'
   | 'sky'
@@ -54,9 +68,9 @@ export type TargetKind =
   | 'camera'
   | 'part'
   | 'light'
-  /** An overlay a body wears; a body's variants (their list), and one of them. */
+  /** A body's categories (each shows what adds to it), an overlay it wears, and one of its variants. */
+  | BodyCategory
   | 'overlay'
-  | 'variants'
   | 'variant'
   /** What of a material a row shows: one of its layers, its shield shader, one of that's lights. */
   | 'layer'

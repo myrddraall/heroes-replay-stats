@@ -14,12 +14,14 @@ import {
   withPartSetting,
   indexOfKey,
   siblingKey,
+  withoutAddedLight,
 } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import { knownLights, withLightChanged } from '@myrddraall/heroes-replay-stats-aether/lights';
 import { computed } from '@angular/core';
 import {
   bodyLabel,
   bodyView,
+  CATEGORY_TITLES,
   filesLoaded,
   overlayEnabledBelow,
   type TargetKind,
@@ -37,7 +39,7 @@ import { materialAt, materialsOf } from '../materials/materials';
 import { partsOfBody } from '../parts/parts';
 import type { AssetTarget, OpenTarget } from '../layout/open-target';
 import type { SceneMethodsStore, WithSky } from './scene-editor.store';
-import { bodyKey, receiverOf, SCENE, targetOf } from './scene-targets';
+import { atBody, bodyKey, receiverOf, SCENE, targetOf } from './scene-targets';
 import { skyOverlayOn } from '@myrddraall/heroes-replay-stats-aether/library';
 import { patchState } from '@ngrx/signals';
 import { removePart } from '../parts/part-hosts';
@@ -219,7 +221,7 @@ export function selectionViews(store: WithSky) {
         return choices().lights?.find((l) => l.id === t.id)?.name ?? 'Properties';
       if (t.kind === 'reference') return 'Reference';
       if (t.kind === 'overlay') return overlayViewOf(body(), t.id)?.name ?? 'Overlay';
-      if (t.kind === 'variants') return 'Variants';
+      if (atBody(t) && t.kind !== 'body') return CATEGORY_TITLES[t.kind];
       if (t.kind === 'variant')
         return body()?.variants?.find((v) => v.id === t.id)?.name ?? 'Variant';
       if (t.kind === 'placement') {
@@ -275,7 +277,11 @@ export function selectionMethods(store: SceneMethodsStore, w: SceneWrites) {
     removeAdded(key: string): void {
       const t = targetOf(key);
       if (t.kind === 'body') removeBody(t.path);
-      else if (t.kind === 'placement') {
+      else if (t.kind === 'light') {
+        const { id } = t;
+        settings(t.path, (s) => withoutAddedLight(s, id));
+        if (store.selected() === key) patchState(store, { selected: bodyKey(t.path) });
+      } else if (t.kind === 'placement') {
         d.setSceneGroups(
           store.scene(),
           store.placements().filter((p, i) => siblingKey(p, i) !== t.key),

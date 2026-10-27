@@ -8,6 +8,7 @@ import { LitBy } from '../lights/lit-by';
 import { PartProperties } from '../parts/part-properties';
 import { ScenePanel } from '../scene-editor/scene-panel';
 import { BodyPanel } from './body-panel';
+import { CategoryPanel } from './category-panel';
 import { MaterialPanel } from './material-panel';
 import { OverlayPanel } from './overlay-panel';
 import { SkyPanel } from './sky-panel';
@@ -24,6 +25,7 @@ import { VariantPanel } from './variant-panel';
   imports: [
     AidsPanel,
     BodyPanel,
+    CategoryPanel,
     LightProperties,
     LitBy,
     MaterialPanel,

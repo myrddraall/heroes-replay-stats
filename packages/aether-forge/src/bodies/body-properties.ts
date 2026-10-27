@@ -16,7 +16,6 @@ import {
 import { PropertyDirection } from '../controls/rows/property-direction';
 import { PropertySection } from '../controls/property-section';
 import { TintSection } from '../materials/tint-section';
-import { PickList, type PickChoice } from '../controls/pick-list';
 import { PropertyNumber } from '../controls/rows/property-number';
 import { type PlacementChange, PropertyPlacement } from '../controls/rows/property-placement';
 import { PropertyText } from '../controls/rows/property-text';
@@ -27,13 +26,13 @@ import type { SettingOrigins } from '../editing/setting-origins';
 import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies';
 
 /**
- * A body's properties (presentational): the overlays the planet or moon wears, its lights as a whole
- * (how strongly they light it, and all of them turned together; each light, its shadow too, is a
- * row of its own in the tree), the lean of its rims, a tint over all its materials; a moon's orbit about its
- * parent, or a scene's planet's place and size; which way its surfaces are turned (facing the
- * camera, or fixed in the world), where its poles point and its turn about them (which side of it
- * shows); its Moons section given (`[moonsPod]`: adding
- * one, those it has), and its Lights section (`[lightAdd]`: adding one, what lights it).
+ * A body's properties (presentational): its lights as a whole (how strongly they light it, and all
+ * of them turned together; each light, its shadow too, is a row of its own in the tree), the lean
+ * of its rims, a tint over all its materials; a moon's orbit about its parent, or a scene's
+ * planet's place and size; which way its surfaces are turned (facing the camera, or fixed in the
+ * world), where its poles point and its turn about them (which side of it shows); and what lights
+ * it given (`[litBy]`). What it wears, its moons, parts and lights are added from its categories
+ * in the tree.
  */
 @Component({
   selector: 'forge-body-properties',
@@ -41,7 +40,6 @@ import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies
     TintSection,
     PropertySection,
     PropertyNumber,
-    PickList,
     PropertyDirection,
     PropertyText,
     PropertyPlacement,
@@ -61,8 +59,6 @@ export class BodyProperties {
    * is kept), as every direction here is a side something comes from.
    */
   protected readonly rimFrom = computed(() => this.mirrored(this.values().rim));
-  /** The overlays it may wear, by id and name. */
-  readonly overlayOptions = input.required<readonly PickChoice[]>();
   /** Its orbit, where it is a moon. */
   readonly orbit = input<Orbit | null>(null);
   /** Its orbit under the level edited (reset to; its planet's for a moon of its own, else a new moon's). */
@@ -77,17 +73,12 @@ export class BodyProperties {
   readonly changed = input(false);
   /** Whether the view is centred on it. */
   readonly focused = input(false);
-  /** Whether it can wear overlays, and have moons put about it (a scene's bodies; not the library's). */
-  readonly styled = input(true);
-  readonly moons = input(true);
   /** Whether lights can be added to it (not a sky's overlay: no light lights the sky). */
   readonly lit = input(true);
   /** What of it is set here (the rest is its own). */
   readonly set = input<BodySettings>({});
   /** Its tint where none is set here: its own (its file's), or none. */
   readonly baseTint = input<MaterialTint>(NO_MATERIAL_TINT);
-  /** Whether what it wears is chosen here (else its own). */
-  readonly overlaysSet = input(false);
   /**
    * Whether a body's own settings (its orientation, tint, rim, fit) are offered: not for an overlay
    * the sky wears (one open in the library). A planet's overlay offers them all: what it sets
@@ -100,13 +91,6 @@ export class BodyProperties {
   readonly label = input('');
   readonly labelBelow = input('');
   protected readonly orientations = ORIENTATION_CHOICES;
-  /** An overlay put on it (over what it wears), or taken off. */
-  readonly overlayAdd = output<string>();
-  readonly overlayRemove = output<string>();
-  /** An overlay it wears shown in the tree, its rows unfolded. */
-  readonly overlayShow = output<string>();
-  /** A new overlay made, and worn. */
-  readonly overlayNew = output<void>();
   readonly settingsChange = output<Partial<BodySettings>>();
   readonly orbitChange = output<Partial<Orbit>>();
   readonly placeChange = output<{ readonly position?: Vec3; readonly radius?: number }>();
@@ -118,8 +102,6 @@ export class BodyProperties {
   readonly resetRequested = output<void>();
   /** Settings set here to take back, so they are its own again. */
   readonly clear = output<readonly (keyof BodySettings)[]>();
-  /** What it wears back to its own. */
-  readonly overlaysReset = output<void>();
 
   protected isSet(key: keyof BodySettings): boolean {
     return this.set()[key] !== undefined;

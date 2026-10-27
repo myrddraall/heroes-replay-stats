@@ -14,13 +14,15 @@ import {
 import { computed } from '@angular/core';
 import type { AddedItem, AddedLists } from '../controls/added-list';
 import { bodyLabel, wornKeyOf } from '../bodies/body';
-import { lightIcon, sceneLightsOf } from '../lights/lights';
+import { lightIcon, lightItems, sceneLightsOf } from '../lights/lights';
 import { type PartEntry, partIcon, partsOfBody } from '../parts/parts';
 import type { PartHost } from '../parts/part-hosts';
 import type { PickChoice } from '../controls/pick-list';
 import {
+  atBody,
   bodyKey,
   cameraKey,
+  lightRowKey,
   partRowKey,
   placementKey,
   sceneLightKey,
@@ -64,7 +66,7 @@ export function partHostViews(store: WithSelection) {
   /** Where parts are added for what is selected: the body selected, or the sky. */
   const addHost = computed((): PartHost | null => {
     const t = store.target();
-    return t.kind === 'body' ? bodyHost(t.path) : t.kind === 'sky' ? skyHost() : null;
+    return atBody(t) ? bodyHost(t.path) : t.kind === 'sky' ? skyHost() : null;
   });
   /** The part selected and where it is kept, where it was added in the scene. */
   const partHost = computed((): { host: PartHost; id: string } | null => {
@@ -135,12 +137,13 @@ export function partHostViews(store: WithSelection) {
             removable: true,
           })),
         };
-      if (t.kind === 'body') {
+      if (atBody(t)) {
         const b = byKey.get(bodyKey(t.path));
         if (!b) return {};
         return {
           moons: b.moons.flatMap((m, i) => body([...t.path, siblingKey(m, i)], 'brightness_1')),
           parts: parts(partsOfBody(b), (key) => partRowKey(t.path, key)),
+          lights: lightItems(b, (id) => lightRowKey(t.path, id)),
         };
       }
       if (t.kind === 'sky') return { parts: parts(store.skyParts(), skyPartKey) };
