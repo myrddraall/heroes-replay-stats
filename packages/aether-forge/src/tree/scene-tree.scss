@@ -99,6 +99,13 @@
   opacity: 0.8;
 }
 
+// Drawn opaque: the same icon on a solid tile (it covers what is under it).
+.icon--opaque {
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 16px color-mix(in srgb, currentColor 35%, transparent);
+  opacity: 1;
+}
+
 .text {
   overflow: hidden;
   text-overflow: ellipsis;

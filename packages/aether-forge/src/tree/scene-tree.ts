@@ -27,6 +27,8 @@ export interface TreeRow {
   readonly aid?: boolean;
   /** Whether it can be moved among its siblings (a material, to change the order it is drawn in). */
   readonly movable?: boolean;
+  /** Whether it is drawn opaque (a material: its icon marked so; drawn before the blended ones). */
+  readonly opaque?: boolean;
 }
 
 /** A row moved to just before or after another (dragged there, or moved by Alt and an arrow). */

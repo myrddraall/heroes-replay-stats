@@ -1,6 +1,4 @@
-import { wornKey } from '@myrddraall/heroes-replay-stats-aether/overlays';
 import {
-  changeSettings,
   pathKey,
   setOverlays,
   withoutMaterial,
@@ -8,8 +6,7 @@ import {
 import { reordered } from '@myrddraall/heroes-replay-stats-aether/formats';
 import type { MaterialSettings } from '@myrddraall/heroes-replay-stats-aether/materials';
 import { wornIds, wornKeyOf } from '../bodies/body';
-import { materialAt, materialsOf, movedInPart } from '../materials/materials';
-import { overlayOrder } from '../overlays/overlays';
+import { materialAt, materialsOf, movedInPart, movedShape } from '../materials/materials';
 import type { TreeMove } from '../tree/scene-tree';
 import { bodyKey, targetOf } from './scene-targets';
 import type { SceneMethodsStore } from './scene-editor.store';
@@ -31,7 +28,8 @@ export function materialMethods(store: SceneMethodsStore, w: SceneWrites) {
         );
         return;
       }
-      // An overlay moved among those its body wears: worn in that order, drawn so.
+      // An overlay moved among those its body wears: worn in that order (its shapes stay where
+      // they are drawn: they are moved among the Shapes).
       if (
         from.kind === 'overlay' &&
         to.kind === 'overlay' &&
@@ -41,15 +39,7 @@ export function materialMethods(store: SceneMethodsStore, w: SceneWrites) {
         if (!b) return;
         const worn = wornIds(b);
         const next = reordered(worn, worn, from.id, to.id, move.after);
-        const order = overlayOrder(materialsOf(b), next);
-        edit((bodies) =>
-          changeSettings(
-            setOverlays(bodies, from.path, next, wornKeyOf(b)),
-            from.path,
-            wornKey(next),
-            (s) => ({ ...s, order }),
-          ),
-        );
+        edit((bodies) => setOverlays(bodies, from.path, next, wornKeyOf(b)));
         return;
       }
       if (from.kind === 'sky-material' && to.kind === 'sky-material') {
@@ -68,6 +58,15 @@ export function materialMethods(store: SceneMethodsStore, w: SceneWrites) {
         );
         if (moving.values.depth !== depth) d.setSkyMaterial(store.scene(), from.key, { depth });
         d.setSkyOrder(store.scene(), order);
+      } else if (
+        from.kind === 'part' &&
+        to.kind === 'part' &&
+        pathKey(from.path) === pathKey(to.path)
+      ) {
+        // A shape moved among its body's: its materials drawn where it is put.
+        const b = store.bodyByKey().get(bodyKey(from.path));
+        const order = b && movedShape(b, materialsOf(b), from.key, to.key, move.after);
+        if (order) settings(from.path, (s) => ({ ...s, order }));
       } else if (
         from.kind === 'material' &&
         to.kind === 'material' &&

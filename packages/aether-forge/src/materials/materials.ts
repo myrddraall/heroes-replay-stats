@@ -1,6 +1,7 @@
 import {
   overlayPartKey,
   ownPartKey,
+  PartKey,
   type PartRole,
   type PlanetFile,
   reordered,
@@ -36,7 +37,7 @@ import {
   ownLevels,
   ownSetting,
 } from '../bodies/body';
-import { partNodes, partTurnOf } from '../parts/parts';
+import { opaque, partNodes, partsInDrawOrder, partTurnOf, placingMaterials } from '../parts/parts';
 import { inDrawOrder } from '../sky/sky';
 import { type MaterialControls, materialControls } from './material-controls';
 import { materialLabel, textureLabel } from './material-names';
@@ -393,7 +394,8 @@ export function materialsOf(
 
 /**
  * A body's materials' draw order (by key) with one moved to just before (or after) another drawn
- * on the same part (a material isn't moved to another part: none).
+ * on the same part and drawn as it is, opaque or blended (a material isn't moved to another part,
+ * nor past the opaque/blended line: none).
  */
 export function movedInPart(
   b: BodyInfo,
@@ -406,7 +408,9 @@ export function movedInPart(
   const node = [...own, ...overlays.flatMap((o) => o.nodes)].find((n) =>
     n.materials.some((m) => m.key === to),
   );
-  const group = node?.materials.map((m) => m.key);
+  // (Among those drawn as it is: the opaque before the blended, whatever is moved.)
+  const target = node?.materials.find((m) => m.key === to);
+  const group = node?.materials.filter((m) => opaque(m) === opaque(target!)).map((m) => m.key);
   if (!group?.includes(from)) return undefined;
   return reordered(
     all.map((m) => m.key),
@@ -415,6 +419,36 @@ export function movedInPart(
     to,
     after,
   );
+}
+
+/**
+ * A body's materials' draw order (by key) with a part's moved to just before (or after) another
+ * part's: the materials that place it together (see `placingMaterials`), where the other's are
+ * (none: the two aren't drawn alike, opaque alone or not, or there is nothing to move).
+ */
+export function movedShape(
+  b: BodyInfo,
+  all: readonly MaterialEntry[],
+  from: PartKey,
+  to: PartKey,
+  after: boolean,
+): string[] | undefined {
+  const nodes = partsInDrawOrder(b, all);
+  const placing = (key: PartKey) => {
+    const node = nodes.find((n) => n.part.key === key);
+    return node ? placingMaterials(node) : [];
+  };
+  // (A part drawn opaque alone is moved among those like it: the opaque are drawn first.)
+  const from_ = placing(from);
+  const to_ = placing(to);
+  if (!from_.length || !to_.length || opaque(from_[0]!) !== opaque(to_[0]!)) return undefined;
+  const moving = from_.map((m) => m.key);
+  const target = to_.map((m) => m.key).filter((k) => !moving.includes(k));
+  if (!target.length || from === to) return undefined;
+  const order = all.map((m) => m.key).filter((k) => !moving.includes(k));
+  const at = after ? order.indexOf(target.at(-1)!) + 1 : order.indexOf(target[0]!);
+  order.splice(at, 0, ...moving);
+  return order;
 }
 
 /**

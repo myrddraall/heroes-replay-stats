@@ -1,5 +1,11 @@
 @let added = editor.added(); @switch (editor.kind()) { @case ('shapes') { @if
-(editor.partShapes().length) {
+(editor.bodyView()?.info?.settings?.order) {
+<forge-property-section
+  title="Draw order"
+  [changed]="true"
+  (resetRequested)="editor.clearBody(['order'])"
+/>
+} @if (editor.partShapes().length) {
 <forge-property-section title="Parts">
   <forge-add-part
     [shapes]="editor.partShapes()"

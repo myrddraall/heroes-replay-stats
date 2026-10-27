@@ -143,6 +143,36 @@ export function partNodes(
   };
 }
 
+/** Whether a material is drawn opaque: before every blended one, whatever order is set. */
+export const opaque = (m: MaterialEntry) => m.values.blend === 'opaque';
+
+/**
+ * The materials of a part that place it in the draw order: its blended ones, where it has any;
+ * else its opaque ones (a part drawn opaque alone is drawn before every part with blended ones).
+ */
+export const placingMaterials = (n: PartNode) =>
+  n.materials.some((m) => !opaque(m)) ? n.materials.filter((m) => !opaque(m)) : n.materials;
+
+/**
+ * A body's parts with their materials as they are drawn: its own and its overlays' in one list
+ * (`materials` in draw order), each where the first of its placing materials is drawn (see
+ * `placingMaterials`), those with none last.
+ */
+export function partsInDrawOrder(b: BodyInfo, materials: readonly MaterialEntry[]): PartNode[] {
+  const { own, overlays } = partNodes(b, materials);
+  const rank = (n: PartNode) =>
+    n.materials.length
+      ? Math.min(...placingMaterials(n).map((m) => materials.indexOf(m)))
+      : Infinity;
+  return [...own, ...overlays.flatMap((o) => o.nodes)]
+    .map((n, i) => ({ n, i, r: rank(n) }))
+    .sort((a, b) => a.r - b.r || a.i - b.i)
+    .map(({ n }) => n);
+}
+
+/** Whether a part can be moved in the draw order: it draws anything. */
+export const movableShape = (n: PartNode) => n.materials.length > 0;
+
 /** Each part's icon in the tree: a sphere, or a ring. */
 export const partIcon = (p: PartEntry) => PART_ICONS[p.kind];
 

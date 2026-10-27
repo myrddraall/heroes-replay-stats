@@ -1,7 +1,7 @@
 import { PREVIEW_SCENE } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import { reordered } from '@myrddraall/heroes-replay-stats-aether/formats';
 import type { MaterialSettings } from '@myrddraall/heroes-replay-stats-aether/materials';
-import { materialAt } from '../materials/materials';
+import { materialAt, movedInPart, movedShape } from '../materials/materials';
 import type { TreeMove } from '../tree/scene-tree';
 import { targetOf } from './asset-targets';
 import type { AssetMethodsStore } from './asset-editor.store';
@@ -46,26 +46,20 @@ export function assetMaterialMethods(store: AssetMethodsStore, w: AssetWrites) {
         if (moving.values.depth !== depth) materialChange(move.key, { depth });
         if (to.stage) d.setSkyOrder(PREVIEW_SCENE, order);
         else d.setLibrarySkyOrder(order);
-      } else if (from.kind === 'material' && to.kind === 'material') {
+      } else if (from.kind === 'part' && to.kind === 'part') {
+        // A shape moved among the body's: its materials drawn where it is put.
         const kind = body();
-        if (!kind) return;
-        const all = store._ownMaterials();
-        // Within the part they are drawn on (a material isn't moved to another part).
-        const part = store
-          ._ownParts()
-          .find((p) => all.some((m) => m.key === to.key && p.materials.includes(m.name)));
-        const group = all
-          .filter((m) => part?.materials.includes(m.name) && m.overlay === part.overlay)
-          .map((m) => m.key);
-        if (!group.includes(from.key)) return;
-        const order = reordered(
-          all.map((m) => m.key),
-          group,
-          from.key,
-          to.key,
-          move.after,
-        );
-        d.setLibraryBody(kind, asset().id, { order });
+        const b = store._body();
+        const order =
+          kind && b && movedShape(b, store._ownMaterials(), from.key, to.key, move.after);
+        if (kind && order) d.setLibraryBody(kind, asset().id, { order });
+      } else if (from.kind === 'material' && to.kind === 'material') {
+        // Within the part they are drawn on, among those drawn as it is (opaque or blended).
+        const kind = body();
+        const b = store._body();
+        const order =
+          kind && b && movedInPart(b, store._ownMaterials(), from.key, to.key, move.after);
+        if (kind && order) d.setLibraryBody(kind, asset().id, { order });
       }
     },
     setMaterial(change: Partial<MaterialSettings>): void {

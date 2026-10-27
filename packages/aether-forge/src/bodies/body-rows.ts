@@ -11,7 +11,7 @@ import {
 } from './body';
 import { lightIcon, lightsOfBody } from '../lights/lights';
 import { type MaterialEntry, materialsOf, onPart, sharedMaterials } from '../materials/materials';
-import { partIcon, type PartNode, partNodes } from '../parts/parts';
+import { movableShape, partIcon, type PartNode, partsInDrawOrder } from '../parts/parts';
 import { layerRows, partMaterialRows } from '../materials/material-views';
 
 /** How an editor keys the rows of a body's subtree (each editor's own scheme: see its targets). */
@@ -47,8 +47,8 @@ export interface BodyRowOptions {
 }
 
 /**
- * A material's row (movable, its draw order, unless opaque: drawn first wherever it is), its
- * layers under it while it is unfolded.
+ * A material's row (movable: its draw order, among those drawn as it is, opaque or blended; the
+ * opaque are drawn first), its layers under it while it is unfolded.
  */
 export function materialRows(
   key: string,
@@ -56,7 +56,7 @@ export function materialRows(
   depth: number,
   open: ReadonlySet<string>,
   unsaved?: boolean,
-  movable = m.values.blend !== 'opaque',
+  movable = true,
 ): TreeRow[] {
   return [
     {
@@ -64,6 +64,7 @@ export function materialRows(
       label: m.label,
       detail: m.name,
       icon: 'texture',
+      ...(m.values.blend === 'opaque' ? { opaque: true } : {}),
       depth,
       expandable: m.layers.length > 0,
       expanded: open.has(key),
@@ -78,9 +79,10 @@ export function materialRows(
 /**
  * A body's subtree, under its own row, in categories, each shown where it has anything in it or
  * where it can be added to (selected, a category shows what adds to it):
- * its Shapes (its parts, then those of each overlay it wears, marked with the overlay's name,
- * each with the materials drawn on it), its Lights (its own and its overlays', marked so), the
- * Overlays it wears (in the order worn: the later drawn over the earlier), its Variants, and its
+ * its Shapes (its parts and its overlays' in one list, in the order they are drawn, each of an
+ * overlay marked with its name and each with the materials drawn on it; moved to draw them in
+ * another order), its Lights (its own and its overlays', marked so), the Overlays it wears (in
+ * the order worn), its Variants, and its
  * Moons. Shapes, Overlays and Moons start unfolded (a key kept means folded), Lights and Variants
  * folded (a key kept means unfolded); a part is unfolded unless folded.
  */
@@ -99,40 +101,49 @@ export function bodySubtreeRows(
   const adds = options.adds ?? {};
   const material = (key: string, m: MaterialEntry, d: number) =>
     rows.push(...materialRows(key, m, d, open));
-  const nodes = partNodes(b, materialsOf(b));
+  const all = materialsOf(b);
+  const nodes = partsInDrawOrder(b, all);
   const labels = new Map(b.overlays.map((o) => [o.id, overlayLabel(o)] as const));
-  const parts = (list: readonly PartNode[], overlay?: string) => {
-    const shared = sharedMaterials(list);
-    for (const { part, materials } of list) {
-      const key = keys.part(part.key);
-      rows.push({
-        key,
-        label: part.label,
-        ...(overlay ? { detail: labels.get(overlay) ?? overlay } : {}),
-        icon: partIcon(part),
-        depth: at + 1,
-        expandable: materials.length > 0,
-        expanded: !open.has(key),
-        enabled: part.enabled,
-      });
-      if (!open.has(key))
-        partMaterialRows(
-          materials,
-          at + 2,
-          open,
-          (name) => onPart(keys.material(name, overlay), shared.has(name) ? part.key : undefined),
-          material,
-          (r) => rows.push(r),
-        );
-    }
-  };
-  const shapes = nodes.own.length > 0 || nodes.overlays.some((o) => o.nodes.length);
+  // (A material drawn on more than one of its owner's parts is told apart by the part too.)
+  const owners = new Map<string, PartNode[]>();
+  for (const n of nodes)
+    owners.set(n.part.overlay ?? '', [...(owners.get(n.part.overlay ?? '') ?? []), n]);
+  const shared = new Map([...owners].map(([owner, list]) => [owner, sharedMaterials(list)]));
+  const shapes = nodes.length > 0;
   if (shapes || adds.shapes) {
     category(keys.shapes(), CATEGORY_TITLES.shapes, 'shapes', !open.has(keys.shapes()), shapes);
-    if (!open.has(keys.shapes())) {
-      parts(nodes.own);
-      for (const { overlay, nodes: list } of nodes.overlays) parts(list, overlay.id);
-    }
+    if (!open.has(keys.shapes()))
+      // In the order they are drawn, the planet's own and its overlays' together (the later over
+      // the earlier), each marked with the overlay it is of.
+      for (const node of nodes) {
+        const { part, materials } = node;
+        const overlay = part.overlay;
+        const key = keys.part(part.key);
+        rows.push({
+          key,
+          label: part.label,
+          ...(overlay ? { detail: labels.get(overlay) ?? overlay } : {}),
+          icon: partIcon(part),
+          depth: at + 1,
+          expandable: materials.length > 0,
+          expanded: !open.has(key),
+          enabled: part.enabled,
+          movable: movableShape(node),
+        });
+        if (!open.has(key))
+          partMaterialRows(
+            materials,
+            at + 2,
+            open,
+            (name) =>
+              onPart(
+                keys.material(name, overlay),
+                shared.get(overlay ?? '')?.has(name) ? part.key : undefined,
+              ),
+            material,
+            (r) => rows.push(r),
+          );
+      }
   }
   const lights = lightsOfBody(b);
   if (lights.length || adds.lights) {

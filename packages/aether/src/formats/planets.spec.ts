@@ -157,6 +157,18 @@ describe('the order materials are drawn in', () => {
     ]);
   });
 
+  it('orders the opaque among themselves as an order sets, still before the rest', () => {
+    const two = [...materials, m('rock', 'opaque')];
+    expect(drawOrder(two)).toEqual(['surface', 'rock', 'ring', 'glow', 'grid']);
+    expect(drawOrder(two, ['glow', 'rock', 'surface'])).toEqual([
+      'rock',
+      'surface',
+      'glow',
+      'ring',
+      'grid',
+    ]);
+  });
+
   it('moves a material within its group, the other group’s places kept', () => {
     // A body's own (glow, ring) and its style's (grid, shield), drawn interleaved.
     const order = ['glow', 'grid', 'ring', 'shield'];

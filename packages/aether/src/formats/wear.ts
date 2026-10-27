@@ -35,10 +35,10 @@ export interface Ordered {
 }
 
 /**
- * Materials' names in the order they are drawn (the later over the earlier): the opaque ones first,
- * by priority (a surface under what glows over it); then the rest as `order` lists them
- * where it is given (those it leaves out after, in their own order), else by their priority,
- * highest first, ties as the data lists them.
+ * Materials' names in the order they are drawn (the later over the earlier): the opaque ones first
+ * (a surface under what glows over it), then the rest; each group as `order` lists them where it
+ * is given (those it leaves out after, in their own order), else by their priority, highest
+ * first, ties as the data lists them.
  */
 export function drawOrder(materials: readonly Ordered[], order?: readonly string[]): string[] {
   const byPriority = (a: { m: Ordered; i: number }, b: { m: Ordered; i: number }) =>
@@ -50,10 +50,9 @@ export function drawOrder(materials: readonly Ordered[], order?: readonly string
     const at = order?.indexOf(name) ?? -1;
     return at >= 0 ? at : (order?.length ?? 0) + fallback;
   };
-  const ordered = order
-    ? rest.map((x, i) => ({ ...x, r: rank(x.m.name, i) })).sort((a, b) => a.r - b.r)
-    : rest;
-  return [...new Set([...opaque, ...ordered].map(({ m }) => m.name))];
+  const ordered = (group: typeof byData) =>
+    order ? group.map((x, i) => ({ ...x, r: rank(x.m.name, i) })).sort((a, b) => a.r - b.r) : group;
+  return [...new Set([...ordered(opaque), ...ordered(rest)].map(({ m }) => m.name))];
 }
 
 /**
