@@ -87,6 +87,9 @@ const REACH_MODES: readonly PropertyOption[] = [
   styleUrl: '../panel/properties-panel.scss',
 })
 export class LightProperties {
+  /** The page of the panel shown (see `panelPagesOf`): its settings alone; none, all of them. */
+  readonly page = input('');
+
   readonly light = input.required<LightEntry>();
   /** Whether it is one of a shield's lights: what it does to the grid is shown (its Shield section). */
   readonly onShield = input(false);
@@ -208,5 +211,11 @@ export class LightProperties {
       ...(change.mode ? { placement: change.mode } : {}),
       ...(change.orbit.turn !== (l.orbitTurn ?? 0) ? { orbitTurn: change.orbit.turn } : {}),
     });
+  }
+
+  /** Whether a page's settings show: the page shown, or every page where none is. */
+  protected on(id: string): boolean {
+    const p = this.page();
+    return !p || p === id;
   }
 }

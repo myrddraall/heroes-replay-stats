@@ -49,6 +49,9 @@ import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies
   styleUrl: '../panel/properties-panel.scss',
 })
 export class BodyProperties {
+  /** The page of the panel shown (see `panelPagesOf`): its settings alone; none, all of them. */
+  readonly page = input('');
+
   readonly values = input.required<BodyValues>();
   /** Which level under the one edited sets each setting, where one does (shown by its row). */
   readonly origins = input<SettingOrigins<keyof BodySettings>>();
@@ -167,5 +170,11 @@ export class BodyProperties {
     const label = value.trim();
     if (label) this.settingsChange.emit({ label });
     else this.clear.emit(['label']);
+  }
+
+  /** Whether a page's settings show: the page shown, or every page where none is. */
+  protected on(id: string): boolean {
+    const p = this.page();
+    return !p || p === id;
   }
 }

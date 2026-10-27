@@ -41,6 +41,9 @@ import { type SettingOrigins } from '../editing/setting-origins';
   styleUrl: '../panel/properties-panel.scss',
 })
 export class MaterialProperties {
+  /** The page of the panel shown (see `panelPagesOf`): its settings alone; none, all of them. */
+  readonly page = input('');
+
   /** Its name in the game data (shown under its readable one, the panel's title). */
   readonly name = input<string>();
   /** Where it comes from, where it isn't its body's own (a style it wears). */
@@ -120,5 +123,11 @@ export class MaterialProperties {
 
   protected anySet(keys: readonly (keyof MaterialSettings)[]): boolean {
     return keys.some((k) => this.isSet(k));
+  }
+
+  /** Whether a page's settings show: the page shown, or every page where none is. */
+  protected on(id: string): boolean {
+    const p = this.page();
+    return !p || p === id;
   }
 }

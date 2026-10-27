@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { Editor } from '../editing/editor';
 import { BodyProperties } from '../bodies/body-properties';
 import { LitBy } from '../lights/lit-by';
+import { PanelPagesStore } from './panel-pages.store';
 
 /**
  * The selected body's properties (container, on the `Editor` in effect), and what lights it. What
@@ -15,4 +16,5 @@ import { LitBy } from '../lights/lit-by';
 })
 export class BodyPanel {
   protected readonly editor = inject(Editor);
+  protected readonly pages = inject(PanelPagesStore);
 }

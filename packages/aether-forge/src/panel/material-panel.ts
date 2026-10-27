@@ -13,6 +13,7 @@ import {
 import { type AddedItem, AddedList } from '../controls/added-list';
 import { PropertySection } from '../controls/property-section';
 import { Editor } from '../editing/editor';
+import { PanelPagesStore } from './panel-pages.store';
 import { type LightEntry, lightIcon } from '../lights/lights';
 import type { LayerEntry, MaterialEntry } from '../materials/materials';
 import { splitViewKey, viewKey } from '../materials/material-views';
@@ -46,6 +47,7 @@ import { PatternProperties } from '../materials/pattern-properties';
 })
 export class MaterialPanel {
   protected readonly editor = inject(Editor);
+  protected readonly pages = inject(PanelPagesStore);
   private readonly ui = inject(EditorUiStore);
   /** Where the game data is served (textures linked under it). */
   protected readonly dataUrl = inject(DATA_URL);

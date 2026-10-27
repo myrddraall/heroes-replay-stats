@@ -1,4 +1,4 @@
-@let v = values(); @let c = controls(); @if (origin(); as from) {
+@let v = values(); @let c = controls(); @if (on('material')) { @if (origin(); as from) {
 <p class="data-name">{{ from }}</p>
 } @if (name(); as data) {
 <p class="data-name">In the game data: <span class="data-name__value">{{ data }}</span></p>
@@ -91,7 +91,7 @@
   />
   }
 </forge-property-section>
-@if (!c.particles) {
+} @if (!c.particles) { @if (on('look')) {
 <forge-tint-section
   [tint]="v.tint"
   [base]="baseTint()"
@@ -99,6 +99,7 @@
   (tintChange)="settingsChange.emit({ tint: $event })"
   (clear)="clear.emit(['tint'])"
 />
+} @if (on('lighting')) {
 <forge-property-section
   title="Light"
   [changed]="anySet(['lit', 'glow', 'specular', 'glossiness'])"
@@ -151,7 +152,7 @@
   />
   }
 </forge-property-section>
-@if (c.spread) {
+} @if (c.spread && on('look')) {
 <forge-property-section
   title="Rim"
   [changed]="anySet(['spread', 'spreadFrom', 'falloff'])"

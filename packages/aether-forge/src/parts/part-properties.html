@@ -1,6 +1,6 @@
-@let p = part(); @let v = p.values; @if (p.overlayName) {
+@let p = part(); @let v = p.values; @if (p.overlayName && on('part')) {
 <p class="data-name">From the {{ p.overlayName }} overlay</p>
-}
+} @if (on('part')) {
 <forge-property-section
   title="General"
   [changed]="isSet('label')"
@@ -22,7 +22,7 @@
   </div>
   }
 </forge-property-section>
-@if (p.kind !== 'sky') {
+} @if (p.kind !== 'sky' && on('part')) {
 <forge-property-section
   title="Orientation"
   [changed]="isSet('orientation')"
@@ -39,7 +39,7 @@
     (valueChange)="orient($event)"
   />
 </forge-property-section>
-}
+} @if (on('shape')) {
 <forge-property-section
   title="Shape"
   [changed]="changed()"
@@ -316,3 +316,4 @@
   />
   } }
 </forge-property-section>
+}

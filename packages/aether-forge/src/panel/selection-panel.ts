@@ -11,6 +11,7 @@ import { BodyPanel } from './body-panel';
 import { CategoryPanel } from './category-panel';
 import { MaterialPanel } from './material-panel';
 import { OverlayPanel } from './overlay-panel';
+import { PanelPagesStore } from './panel-pages.store';
 import { SkyPanel } from './sky-panel';
 import { VariantPanel } from './variant-panel';
 
@@ -37,9 +38,11 @@ import { VariantPanel } from './variant-panel';
     SkyPanel,
     VariantPanel,
   ],
+  providers: [PanelPagesStore],
   templateUrl: './selection-panel.html',
   styleUrl: './selection-panel.scss',
 })
 export class SelectionPanel {
   protected readonly editor = inject(Editor);
+  protected readonly pages = inject(PanelPagesStore);
 }

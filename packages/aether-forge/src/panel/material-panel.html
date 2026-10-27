@@ -1,5 +1,6 @@
 @switch (editor.kind()) { @case ('material') { @if (editor.material(); as m) {
 <forge-material-properties
+  [page]="pages.page()"
   [shared]="editor.sharedMaterial() !== null"
   (sharedOpen)="openShared()"
   [name]="m.name"
@@ -16,7 +17,7 @@
   (clear)="editor.clearMaterial($event)"
   (resetRequested)="editor.clearMaterial()"
 />
-} @if (editor.litBy(); as lit) {
+} @if (pages.page() === 'lighting' && editor.litBy(); as lit) {
 <forge-lit-by
   [lights]="lit"
   (litChange)="editor.setLitBy($event)"
@@ -75,6 +76,7 @@
 />
 } } } @case ('sky-material') { @if (editor.material(); as m) {
 <forge-material-properties
+  [page]="pages.page()"
   [name]="m.name"
   [origins]="m.origins"
   [overrides]="m.overrides"

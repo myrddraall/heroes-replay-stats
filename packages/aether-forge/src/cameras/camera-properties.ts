@@ -47,6 +47,9 @@ const SCENE = 'scene';
   styleUrl: '../panel/properties-panel.scss',
 })
 export class CameraProperties {
+  /** The page of the panel shown (see `panelPagesOf`): its settings alone; none, all of them. */
+  readonly page = input('');
+
   readonly name = input.required<string>();
   readonly values = input.required<CameraValues>();
   /** Whether it is the game's camera (named so, not taken out; its place set over the data's). */
@@ -124,5 +127,11 @@ export class CameraProperties {
     const eye = [...this.values().eye] as [number, number, number];
     eye[axis] = value;
     this.cameraChange.emit({ eye });
+  }
+
+  /** Whether a page's settings show: the page shown, or every page where none is. */
+  protected on(id: string): boolean {
+    const p = this.page();
+    return !p || p === id;
   }
 }

@@ -7,6 +7,15 @@
     (valueChange)="editor.setLayer($event)"
   />
 </div>
+} @if (pages.pages().length > 1) {
+<div class="layer">
+  <forge-property-select
+    label="Page"
+    [value]="pages.page()"
+    [options]="pages.options()"
+    (valueChange)="pages.show($event)"
+  />
+</div>
 } @switch (editor.kind()) { @case ('scene') {
 <forge-scene-panel />
 } @case ('placement') {
@@ -35,6 +44,7 @@
 <forge-variant-panel />
 } @case ('light') { @if (editor.light(); as l) {
 <forge-light-properties
+  [page]="pages.page()"
   [light]="l"
   (settingsChange)="editor.setLight($event)"
   (clear)="editor.clearLight($event)"
@@ -42,13 +52,14 @@
 />
 } } @case ('part') { @if (editor.part(); as p) {
 <forge-part-properties
+  [page]="pages.page()"
   [part]="p"
   [removable]="editor.partMaterials() !== null"
   (settingsChange)="editor.setPart($event)"
   (clear)="editor.clearPart($event)"
   (removeRequested)="editor.removePart()"
 />
-} @if (editor.partMaterials(); as pm) {
+} @if (pages.page() === 'part' && editor.partMaterials(); as pm) {
 <forge-pick-list
   title="Materials"
   addLabel="Add material"
@@ -58,7 +69,7 @@
   (added)="editor.addPartMaterial($event)"
   (removed)="editor.removePartMaterial($event)"
 />
-} @if (editor.litBy(); as lit) {
+} @if (pages.page() === 'lighting' && editor.litBy(); as lit) {
 <forge-lit-by
   [lights]="lit"
   (litChange)="editor.setLitBy($event)"

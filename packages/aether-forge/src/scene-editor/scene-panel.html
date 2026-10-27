@@ -86,6 +86,7 @@
 } } @case ('camera') { @if (scene; as s) { @if (s.selectedCamera(); as c) { @if (s.cameraValues();
 as v) {
 <forge-camera-properties
+  [page]="pages.page()"
   [name]="c.name"
   [values]="v"
   [game]="c.game"

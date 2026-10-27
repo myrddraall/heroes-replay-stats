@@ -46,6 +46,9 @@ const SIDES: readonly PropertyOption[] = [
   styleUrl: '../panel/properties-panel.scss',
 })
 export class PartProperties {
+  /** The page of the panel shown (see `panelPagesOf`): its settings alone; none, all of them. */
+  readonly page = input('');
+
   readonly part = input.required<PartEntry>();
   /** Whether it can be taken out (a part of an overlay made in the editor). */
   readonly removable = input(false);
@@ -72,5 +75,11 @@ export class PartProperties {
 
   protected isSet(key: keyof PartSettings): boolean {
     return this.part().set?.[key] !== undefined;
+  }
+
+  /** Whether a page's settings show: the page shown, or every page where none is. */
+  protected on(id: string): boolean {
+    const p = this.page();
+    return !p || p === id;
   }
 }

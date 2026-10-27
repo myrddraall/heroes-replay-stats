@@ -49,6 +49,8 @@ interface EditorUiState {
   readonly confirmingClear: boolean;
   /** Whether the page shows nothing but the background, full screen (to take a screenshot). */
   readonly screenshot: boolean;
+  /** The page of the properties' panel last shown for each kind of thing selected, by kind. */
+  readonly panelPages: Readonly<Record<string, string>>;
 }
 
 /**
@@ -71,6 +73,7 @@ export const EditorUiStore = signalStore(
     confirmingReset: false,
     confirmingClear: false,
     screenshot: false,
+    panelPages: {},
   }),
   withLocalStorage<EditorUiState>(storageKey('editor'), [
     'names',
@@ -79,6 +82,7 @@ export const EditorUiStore = signalStore(
     'skyFollows',
     'left',
     'right',
+    'panelPages',
   ]),
   withProps(() => ({
     _router: inject(Router),
@@ -138,6 +142,10 @@ export const EditorUiStore = signalStore(
         const again = last.key === key && at - last.at <= DOUBLE_CLICK;
         store._lastClick = again ? { key: '', at: -Infinity } : { key, at };
         return again;
+      },
+      /** A page of the properties' panel shown for a kind of thing, and kept for it. */
+      showPanelPage(kind: string, page: string): void {
+        patchState(store, { panelPages: { ...store.panelPages(), [kind]: page } });
       },
       setNames(names: boolean): void {
         patchState(store, { names });

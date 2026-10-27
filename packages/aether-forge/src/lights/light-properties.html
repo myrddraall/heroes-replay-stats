@@ -1,6 +1,6 @@
-@let entry = light(); @let l = entry.light; @if (entry.addedIn) {
+@let entry = light(); @let l = entry.light; @if (entry.addedIn && on('light')) {
 <p class="data-name">Added in {{ entry.addedIn }}</p>
-}
+} @if (on('light')) {
 <forge-property-section
   title="General"
   [changed]="isSet('name')"
@@ -202,7 +202,7 @@
   />
   }
 </forge-property-section>
-@if (entry.receivers.length) {
+} @if (entry.receivers.length && on('linking')) {
 <forge-property-section
   title="Linking"
   [changed]="isSet('reach') || isSet('moons')"
@@ -270,7 +270,7 @@
   />
   }
 </forge-property-section>
-} @if (entry.removable) {
+} @if (entry.removable && on('light')) {
 <div class="buttons">
   <button type="button" class="button" (click)="removed.emit()">Remove light</button>
 </div>

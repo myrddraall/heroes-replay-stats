@@ -3,6 +3,7 @@ import { AddedList } from '../controls/added-list';
 import { PropertySection } from '../controls/property-section';
 import { DraftDesignStore } from '../draft/draft-design.store';
 import { Editor } from '../editing/editor';
+import { PanelPagesStore } from '../panel/panel-pages.store';
 import { AddCamera } from '../cameras/add-camera';
 import { CameraProperties } from '../cameras/camera-properties';
 import { AddLight } from '../lights/add-light';
@@ -35,6 +36,7 @@ import { SceneProperties } from './scene-properties';
 })
 export class ScenePanel {
   protected readonly editor = inject(Editor);
+  protected readonly pages = inject(PanelPagesStore);
   protected readonly scene = inject(SceneEditorStore);
   protected readonly draft = inject(DraftDesignStore);
 }

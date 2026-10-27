@@ -1,4 +1,4 @@
-@let c = values(); @if (!game() || !primary() || !lookingThrough()) {
+@let c = values(); @if ((!game() || !primary() || !lookingThrough()) && on('camera')) {
 <forge-property-section title="General">
   @if (!game()) {
   <forge-property-text label="Name" [value]="name()" (valueChange)="nameChange.emit($event)" />
@@ -13,7 +13,7 @@
     }
   </div>
 </forge-property-section>
-}
+} @if (on('place')) {
 <forge-property-section title="Place">
   @if (planets().length) {
   <forge-property-select
@@ -50,6 +50,7 @@
   />
   }
 </forge-property-section>
+} @if (on('camera')) {
 <forge-property-section
   title="Camera"
   [changed]="game() && changed()"
@@ -81,3 +82,4 @@
   <p class="hint">Drag the view to move round, Shift-drag to move across, scroll to move in.</p>
   }
 </forge-property-section>
+}
