@@ -111,6 +111,15 @@ describe('DraftDesignStore', () => {
     expect(draft.scenes().planets['play-screen']?.lights).toEqual([lamp]);
   });
 
+  it("keeps a scene's own variants when its planets change", () => {
+    const draft = TestBed.inject(DraftDesignStore);
+    const variant = draft.createSceneVariant('play-screen', 'Storm');
+    draft.setSceneBodies('play-screen', [{ id: 'korhal', position: [0, 0, 0], radius: 1 }]);
+    expect(draft.scenes().planets['play-screen']?.sceneVariants?.map((v) => v.id)).toEqual([
+      variant,
+    ]);
+  });
+
   it('keeps a group, and the groups put in a scene, when planets change or the scene is reset', () => {
     const draft = TestBed.inject(DraftDesignStore);
     const group = draft.createGroup();

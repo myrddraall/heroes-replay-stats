@@ -53,18 +53,14 @@ export function withScenes() {
         renameScene(id: string, name: string): void {
           setScene(id, (p) => ({ ...p, name: name.trim() || undefined }));
         },
-        /** A scene's planets as they are now (what kept them before scenes had several goes); its lights kept. */
+        /**
+         * A scene's planets as they are now: what kept its one planet before scenes had several
+         * goes, all else it sets kept (its lights, groups, cameras, sky, its own variants).
+         */
         setSceneBodies(id: string, bodies: readonly SceneBody[]): void {
           setScene(id, (p) => ({
+            ...(without(p, ['planet', 'style', 'variants', 'moons']) ?? {}),
             bodies,
-            name: p.name,
-            sky: p.sky,
-            lights: p.lights,
-            group: p.group,
-            groups: p.groups,
-            camera: p.camera,
-            cameras: p.cameras,
-            primaryCamera: p.primaryCamera,
           }));
         },
         /** A scene taken out (a preset's or the stage's is only reset). */
