@@ -27,9 +27,15 @@ export interface TreeRow {
   readonly aid?: boolean;
   /** Whether it can be moved among its siblings (a material, to change the order it is drawn in). */
   readonly movable?: boolean;
-  /** Whether it is drawn opaque (a material: its icon marked so; drawn before the blended ones). */
-  readonly opaque?: boolean;
 }
+
+/**
+ * The icons of something drawn see-through and of something drawn opaque (a material): a
+ * checkerboard, as image editors show what is behind, and a solid square; neither is in the icon
+ * font, so the tree draws them itself.
+ */
+export const SEE_THROUGH_ICON = 'checkerboard';
+export const OPAQUE_ICON = 'solid';
 
 /** A row moved to just before or after another (dragged there, or moved by Alt and an arrow). */
 export interface TreeMove {
@@ -52,6 +58,8 @@ export interface TreeMove {
   styleUrl: './scene-tree.scss',
 })
 export class SceneTree {
+  protected readonly seeThrough = SEE_THROUGH_ICON;
+  protected readonly opaque = OPAQUE_ICON;
   readonly rows = input.required<readonly TreeRow[]>();
   /** The selected row's key. */
   readonly selected = input<string>('');

@@ -1,7 +1,7 @@
 import type { VariantRow } from '../variants/variant-list';
 import type { PartKey } from '@myrddraall/heroes-replay-stats-aether/formats';
 import type { LightId } from '@myrddraall/heroes-replay-stats-aether/lights';
-import type { TreeRow } from '../tree/scene-tree';
+import { OPAQUE_ICON, SEE_THROUGH_ICON, type TreeRow } from '../tree/scene-tree';
 import {
   type BodyCategory,
   type BodyInfo,
@@ -63,8 +63,8 @@ export function materialRows(
       key,
       label: m.label,
       detail: m.name,
-      icon: 'texture',
-      ...(m.values.blend === 'opaque' ? { opaque: true } : {}),
+      // (Opaque: a solid square; see-through, a checkerboard.)
+      ...(m.values.blend === 'opaque' ? { icon: OPAQUE_ICON } : { icon: SEE_THROUGH_ICON }),
       depth,
       expandable: m.layers.length > 0,
       expanded: open.has(key),

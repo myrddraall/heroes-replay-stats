@@ -51,13 +51,13 @@
       (keydown.alt.arrowup)="moveBy($event, i, -1)"
       [attr.aria-keyshortcuts]="row.movable ? 'Alt+ArrowUp Alt+ArrowDown' : null"
     >
-      <mat-icon
-        class="material-symbols-outlined icon"
-        [class.icon--opaque]="row.opaque"
-        [attr.title]="row.opaque ? 'Opaque' : null"
-        aria-hidden="true"
-        >{{ row.icon }}</mat-icon
-      >
+      @if (row.icon === seeThrough) {
+      <span class="icon icon--checkerboard" title="See-through" aria-hidden="true"></span>
+      } @else if (row.icon === opaque) {
+      <span class="icon icon--solid" title="Opaque" aria-hidden="true"></span>
+      } @else {
+      <mat-icon class="material-symbols-outlined icon" aria-hidden="true">{{ row.icon }}</mat-icon>
+      }
       <span class="text">{{ row.label }}</span>
       @if (row.detail) {
       <span class="detail">{{ row.detail }}</span>

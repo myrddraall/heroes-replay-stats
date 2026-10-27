@@ -99,11 +99,31 @@
   opacity: 0.8;
 }
 
-// Drawn opaque: the same icon on a solid tile (it covers what is under it).
-.icon--opaque {
-  border-radius: 3px;
-  box-shadow: inset 0 0 0 16px color-mix(in srgb, currentColor 35%, transparent);
-  opacity: 1;
+// Something drawn opaque: a solid square the size of the icons' glyphs, in their colour.
+.icon--solid {
+  box-sizing: border-box;
+  // (As far out as the checkerboard's stroke: the two squares the same size.)
+  padding: 1px;
+  border-radius: 1px;
+  background: currentColor content-box;
+}
+
+// Something drawn see-through: a checkerboard the size of the icons' glyphs, in their colour,
+// with its edge stroked.
+.icon--checkerboard {
+  box-sizing: border-box;
+  padding: 2px;
+  border-radius: 1px;
+  background: conic-gradient(
+      currentColor 0 25%,
+      transparent 0 50%,
+      currentColor 0 75%,
+      transparent 0
+    )
+    0 0 / 6px 6px content-box;
+  // Its edge drawn round it, so the checks read as a square.
+  outline: 1px solid currentColor;
+  outline-offset: -2px;
 }
 
 .text {
