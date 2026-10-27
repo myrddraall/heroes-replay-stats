@@ -7,7 +7,6 @@ import {
   setOrbit,
   setPlace,
   storedBodies,
-  without,
 } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import type { PoleDrag } from '../viewport/scene-markers';
 import { wornKeyOf } from '../bodies/body';
@@ -17,10 +16,11 @@ import type { SceneMethodsStore } from './scene-editor.store';
 import type { SceneWrites } from './scene-writes';
 import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/space';
 import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies';
+import { bodyEdits } from '../editing/body-edits';
 
 /** A body: its settings, poles, orbit, place, moons and the overlays it wears. */
 export function bodyMethods(store: SceneMethodsStore, w: SceneWrites) {
-  const { d, edit, selectedPath, settings, posed, wear, removeBody, dragging } = w;
+  const { d, edit, selectedPath, settings, wear, removeBody, dragging, selectedLevel, levelAt } = w;
   return {
     /** A pole of the selected body's axis dragged in the view: its Axis moved, the body kept as it is. */
     dragPole(drag: PoleDrag): void {
@@ -44,18 +44,16 @@ export function bodyMethods(store: SceneMethodsStore, w: SceneWrites) {
       const frame = axisFrame(line.orientation, body, scene.camera, view);
       const { axis, at } = poleDragged(line, drag.north, view.eye, drag.ray, dragging.pole, frame);
       dragging.pole = at;
-      settings(path, (s) => posed(path, { ...s, axis }, ['axis']));
+      const level = levelAt(path);
+      if (level) bodyEdits.setBody(level, { axis });
     },
     setBody(change: Partial<BodySettings>): void {
-      const path = selectedPath();
-      if (path)
-        settings(path, (s) =>
-          posed(path, { ...s, ...change }, Object.keys(change) as (keyof BodySettings)[]),
-        );
+      const level = selectedLevel();
+      if (level) bodyEdits.setBody(level, change);
     },
     clearBody(keys: readonly (keyof BodySettings)[]): void {
-      const path = selectedPath();
-      if (path) settings(path, (s) => posed(path, without(s, keys) ?? {}, keys));
+      const level = selectedLevel();
+      if (level) bodyEdits.clearBody(level, keys);
     },
     resetBody(): void {
       const path = selectedPath();

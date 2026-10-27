@@ -9,7 +9,6 @@ import type { MaterialSettings } from '@myrddraall/heroes-replay-stats-aether/ma
 import type { LightId, LightSettings } from '@myrddraall/heroes-replay-stats-aether/lights';
 import { patchState } from '@ngrx/signals';
 import { materialAt } from '../materials/materials';
-import { keepingPose } from '../viewport/markers';
 import { editingVariant } from '../variants/editing-variant';
 import { withStandInLight } from '../aids/stand-in';
 import {
@@ -26,6 +25,7 @@ import type { AssetMethodsStore } from './asset-editor.store';
 import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/space';
 import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies';
 import { variantsOnOf } from '@myrddraall/heroes-replay-stats-aether/variants';
+import { bodyEdits, BodyLevel } from '../editing/body-edits';
 
 /** What the asset editor's methods change the library through: the asset's settings (or the variant edited), its materials, moons and lights, and the stage's sky. */
 export function assetWrites(store: AssetMethodsStore) {
@@ -40,21 +40,23 @@ export function assetWrites(store: AssetMethodsStore) {
   );
   const materialChange = (key: string, change: Partial<MaterialSettings>) => {
     const t = targetOf(key, asset());
-    const kind = libraryKind(asset().kind);
     if (t.kind === 'sky-material') {
       if (t.stage) d.setSkyMaterial(PREVIEW_SCENE, t.key, change);
       else d.setLibrarySkyMaterial(t.key, change);
-    } else if (t.kind === 'material' && kind) d.setLibraryMaterial(kind, asset().id, t.key, change);
-    else if (t.kind === 'base-material') d.setLibraryBaseMaterial(asset().id, change);
+    } else if (t.kind === 'material') {
+      const level = levelOf(t);
+      if (level) bodyEdits.setMaterial(level, t.key, change);
+    } else if (t.kind === 'base-material') d.setLibraryBaseMaterial(asset().id, change);
   };
   /** Settings of a material put back as the levels under it have them (all: none named). */
   const materialClear = (t: Target, keys?: readonly (keyof MaterialSettings)[]) => {
-    const kind = libraryKind(asset().kind);
     if (t.kind === 'sky-material') {
       if (t.stage) d.clearSkyMaterial(PREVIEW_SCENE, t.key, keys);
       else d.clearLibrarySkyMaterial(t.key, keys);
-    } else if (t.kind === 'material' && kind) d.clearLibraryMaterial(kind, asset().id, t.key, keys);
-    else if (t.kind === 'base-material') d.clearLibraryBaseMaterial(asset().id, keys);
+    } else if (t.kind === 'material') {
+      const level = levelOf(t);
+      if (level) bodyEdits.clearMaterial(level, t.key, keys);
+    } else if (t.kind === 'base-material') d.clearLibraryBaseMaterial(asset().id, keys);
   };
   /** Whether a material is drawn as the levels under the one edited have it. */
   const materialBelow = (t: Target): boolean => {
@@ -85,11 +87,6 @@ export function assetWrites(store: AssetMethodsStore) {
     return t.kind === 'sky' || t.kind === 'sky-material' ? t : null;
   };
   const body = () => libraryKind(asset().kind);
-  /** The asset's settings after a change, kept where it is as its Axis moves (see `keepingPose`). */
-  const posed = (next: BodySettings, touched: readonly (keyof BodySettings)[]) => {
-    const b = store._body();
-    return b ? keepingPose(b, next, touched) : next;
-  };
   /** One of the stand-in's lights changed (an editing aid's: kept with the aids). */
   const standInLightChange = (
     id: LightId,
@@ -140,24 +137,6 @@ export function assetWrites(store: AssetMethodsStore) {
     if (t.kind === 'moon' && pathKey(t.path).startsWith(pathKey(path)))
       patchState(store, { selected: ASSET });
   };
-  /**
-   * The library body's lights changed: what is left of them written back (none: taken back), and
-   * its shadow as set before lights were objects taken back once it is its shadow light's.
-   */
-  const lightChange = (change: (s: BodySettings) => BodySettings) => {
-    const kind = body();
-    if (!kind) return;
-    const now = d.library()[kind][asset().id] ?? {};
-    const next = change(now);
-    if (next.lights) d.setLibraryBody(kind, asset().id, { lights: next.lights });
-    else d.clearLibraryBody(kind, asset().id, ['lights']);
-    if (next.added) d.setLibraryBody(kind, asset().id, { added: next.added });
-    else if (now.added) d.clearLibraryBody(kind, asset().id, ['added']);
-    const gone = (['shade', 'shadeTowards'] as const).filter(
-      (k) => now[k] !== undefined && next[k] === undefined,
-    );
-    if (gone.length) d.clearLibraryBody(kind, asset().id, gone);
-  };
   /** One of the planet open's variants switched on or off by default (the last switched on over the others). */
   const variantOn = (id: string, on: boolean) => {
     const a = asset();
@@ -168,10 +147,28 @@ export function assetWrites(store: AssetMethodsStore) {
       on ? [...now.filter((v) => v !== id), id] : now.filter((v) => v !== id),
     );
   };
+  /**
+   * Where an edit of what is selected lands (see `BodyLevel`): one of the planet open's own moons,
+   * else the planet or overlay open (the variant of it edited, where one is).
+   */
+  const levelOf = (t: Target): BodyLevel | null => {
+    if (t.kind === 'moon') {
+      const moon = store._moonInfos().get(moonKey(t.path));
+      return moon ? { body: moon, change: (change) => moonSettings(t.path, change) } : null;
+    }
+    const kind = body();
+    const b = store._body();
+    return kind && b
+      ? { body: b, change: (change) => d.changeLibraryBody(kind, asset().id, change) }
+      : null;
+  };
+  const selectedLevel = () => levelOf(store.target());
   return {
     draft,
     asset,
     d,
+    levelOf,
+    selectedLevel,
     variantOn,
     materialChange,
     materialClear,
@@ -179,13 +176,11 @@ export function assetWrites(store: AssetMethodsStore) {
     selectAdded,
     selectedSky,
     body,
-    posed,
     standInLightChange,
     changeMoons,
     moonSettings,
     wears,
     removeMoonAt,
-    lightChange,
     dragging,
   };
 }

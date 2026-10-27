@@ -31,20 +31,13 @@ import {
 } from './asset-targets';
 import type { AssetMethodsStore, WithOwn } from './asset-editor.store';
 import { skyOverlayOn } from '@myrddraall/heroes-replay-stats-aether/library';
-import {
-  PREVIEW_SCENE,
-  withLightSwitched,
-  without,
-  withoutAddedLight,
-  withoutPartSetting,
-  withOverlaySwitched,
-  withPartSetting,
-} from '@myrddraall/heroes-replay-stats-aether/scenes';
+import { PREVIEW_SCENE, without } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import { withLightChanged } from '@myrddraall/heroes-replay-stats-aether/lights';
 import { patchState, signalMethod } from '@ngrx/signals';
 import { removePart } from '../parts/part-hosts';
 import type { AssetWrites } from './asset-writes';
 import { overlayViewOf } from '../overlays/overlays';
+import { bodyEdits } from '../editing/body-edits';
 
 /** What is selected in the tree: its target, the body, material or sky it is, how the panel heads it, and what can be done with it. */
 export function assetSelectionViews(store: WithOwn) {
@@ -249,7 +242,7 @@ export function assetSelectionMethods(store: AssetMethodsStore, w: AssetWrites) 
     standInLightChange,
     moonSettings,
     removeMoonAt,
-    lightChange,
+    levelOf,
   } = w;
   return {
     /** The asset the URL opens: its own row selected; a planet opened goes on the stage. */
@@ -302,8 +295,8 @@ export function assetSelectionMethods(store: AssetMethodsStore, w: AssetWrites) 
         return;
       }
       if (t.kind === 'light') {
-        const { id } = t;
-        w.lightChange((s) => withoutAddedLight(s, id) ?? {});
+        const level = levelOf(t);
+        if (level) bodyEdits.removeLight(level, t.id);
         if (store.selected() === key) patchState(store, { selected: ASSET });
         return;
       }
@@ -319,7 +312,7 @@ export function assetSelectionMethods(store: AssetMethodsStore, w: AssetWrites) 
     setEnabled(change: { key: string; enabled: boolean }): void {
       const t = targetOf(change.key, asset());
       const on = change.enabled;
-      const kind = body();
+      const level = levelOf(t);
       if (t.kind === 'stand-in-light') standInLightChange(t.id, { enabled: on });
       // One of the planet's own moons: on is as it starts, so not kept.
       else if (t.kind === 'moon')
@@ -335,28 +328,14 @@ export function assetSelectionMethods(store: AssetMethodsStore, w: AssetWrites) 
         else d.setSkyPart(scope, t.key, { enabled: on });
       }
       // Each back to what is under it where that is the same, else set here.
-      else if (t.kind === 'light') {
-        const b = store._body();
-        const below = (b && lightsOfBody(b).find((l) => l.light.id === t.id)?.enabledBelow) ?? true;
-        lightChange((s) => withLightSwitched(s, t.id, on, below) ?? {});
-      } else if (t.kind === 'part' && kind) {
-        const now = d.library()[kind][asset().id] ?? {};
-        const next = on
-          ? withoutPartSetting(now, t.key, ['enabled'])
-          : withPartSetting(now, t.key, { enabled: false });
-        if (next?.parts) d.setLibraryBody(kind, asset().id, { parts: next.parts });
-        else d.clearLibraryBody(kind, asset().id, ['parts']);
-      } else if (t.kind === 'variant') {
-        w.variantOn(t.id, on);
-      } else if (t.kind === 'overlay' && kind) {
-        const now = d.library()[kind][asset().id] ?? {};
-        const next = withOverlaySwitched(now, t.id, on, true);
-        if (next?.overlaysEnabled)
-          d.setLibraryBody(kind, asset().id, { overlaysEnabled: next.overlaysEnabled });
-        else d.clearLibraryBody(kind, asset().id, ['overlaysEnabled']);
-        if (now.overlayEnabled !== undefined)
-          d.clearLibraryBody(kind, asset().id, ['overlayEnabled']);
-      } else if ('view' in t && t.view?.kind === 'gridLight') {
+      else if (t.kind === 'light' && level) bodyEdits.switchLight(level, t.id, on);
+      else if (t.kind === 'part' && level) bodyEdits.switchPart(level, t.key, on);
+      else if (t.kind === 'variant') w.variantOn(t.id, on);
+      else if (t.kind === 'overlay' && level) bodyEdits.switchOverlay(level, t.id, on);
+      else if (t.kind === 'material' && t.view?.kind === 'gridLight' && level)
+        bodyEdits.switchShieldLight(level, t.key, t.view.id, on);
+      else if (t.kind === 'material' && level) bodyEdits.switchMaterial(level, t.key, on);
+      else if ('view' in t && t.view?.kind === 'gridLight') {
         // One of a shield's lights switched: the shield's lights set here.
         const m =
           t.kind === 'base-material'

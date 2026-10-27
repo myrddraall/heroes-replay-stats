@@ -1,16 +1,10 @@
 import {
-  withAddedLight,
-  withoutAddedLight,
-  withoutLightSetting,
-} from '@myrddraall/heroes-replay-stats-aether/scenes';
-import {
   type LightId,
   type LightSettings,
   newLight,
   type NewLightKind,
 } from '@myrddraall/heroes-replay-stats-aether/lights';
 import { patchState } from '@ngrx/signals';
-import { lightsOfBody, withLitBy } from '../lights/lights';
 import {
   SCENE,
   SCENE_LIGHTS,
@@ -22,10 +16,11 @@ import {
 } from './scene-targets';
 import type { SceneMethodsStore } from './scene-editor.store';
 import type { SceneWrites } from './scene-writes';
+import { bodyEdits } from '../editing/body-edits';
 
 /** The scene's lights and its bodies', and what lights each body. */
 export function lightMethods(store: SceneMethodsStore, w: SceneWrites) {
-  const { d, selectedPath, settings, lightChange } = w;
+  const { d, selectedPath, lightChange, levelAt } = w;
   return {
     setLight(change: Partial<LightSettings>): void {
       lightChange(store.target(), change);
@@ -48,24 +43,15 @@ export function lightMethods(store: SceneMethodsStore, w: SceneWrites) {
       const receiver = receiverOf(t);
       const light = store.litBy()?.find((l) => l.id === change.id);
       if (!light || receiver === undefined || !('path' in t)) return;
-      const b = store.bodyByKey().get(bodyKey(t.path));
-      if (!b) return;
-      settings(t.path, (s) => withLitBy(s, b, light, receiver, change.on));
+      const level = levelAt(t.path);
+      if (level) bodyEdits.setLitBy(level, light, receiver, change.on);
     },
     addLight(kind: NewLightKind): void {
       const t = store.target();
       const path = selectedPath();
-      if (path && t.kind !== 'scene-light') {
-        const b = store.bodyByKey().get(bodyKey(path));
-        const light = newLight(
-          kind,
-          b
-            ? lightsOfBody(b)
-                .map((l) => l.light)
-                .filter((l) => l.id.startsWith('added-'))
-            : [],
-        );
-        settings(path, (s) => withAddedLight(s, light));
+      const level = path && levelAt(path);
+      if (path && level && t.kind !== 'scene-light') {
+        const light = bodyEdits.addLight(level, kind);
         store.expand(bodyKey(path), lightsKey(path));
         patchState(store, { selected: lightRowKey(path, light.id) });
       } else {
@@ -78,7 +64,8 @@ export function lightMethods(store: SceneMethodsStore, w: SceneWrites) {
       const t = store.target();
       const path = selectedPath();
       if (id) {
-        if (path) settings(path, (s) => withoutAddedLight(s, id));
+        const level = path && levelAt(path);
+        if (level) bodyEdits.removeLight(level, id);
         return;
       }
       if (t.kind === 'scene-light') {
@@ -88,13 +75,15 @@ export function lightMethods(store: SceneMethodsStore, w: SceneWrites) {
         );
         patchState(store, { selected: SCENE });
       } else if (t.kind === 'light') {
-        settings(t.path, (s) => withoutAddedLight(s, t.id));
+        const level = levelAt(t.path);
+        if (level) bodyEdits.removeLight(level, t.id);
         patchState(store, { selected: bodyKey(t.path) });
       }
     },
     clearLight(keys?: readonly (keyof LightSettings)[]): void {
       const t = store.target();
-      if (t.kind === 'light') settings(t.path, (s) => withoutLightSetting(s, t.id, keys));
+      const level = t.kind === 'light' && levelAt(t.path);
+      if (t.kind === 'light' && level) bodyEdits.clearLight(level, t.id, keys);
     },
   };
 }

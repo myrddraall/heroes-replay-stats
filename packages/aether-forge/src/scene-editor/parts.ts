@@ -1,4 +1,3 @@
-import { withoutPartSetting, withPartSetting } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import type { CreatedShape, PartSettings } from '@myrddraall/heroes-replay-stats-aether/formats';
 import { patchState } from '@ngrx/signals';
 import {
@@ -12,20 +11,27 @@ import {
 import { SKY, atBody, bodyKey } from './scene-targets';
 import type { SceneMethodsStore } from './scene-editor.store';
 import type { SceneWrites } from './scene-writes';
+import { bodyEdits } from '../editing/body-edits';
 
 /** The parts of a body or the sky: their settings, those added, their materials, saved as an overlay. */
 export function partMethods(store: SceneMethodsStore, w: SceneWrites) {
-  const { d, settings, wear, selectAdded } = w;
+  const { d, settings, wear, selectAdded, levelAt } = w;
   return {
     setPart(change: Partial<PartSettings>): void {
       const t = store.target();
       if (t.kind === 'sky-part') d.setSkyPart(store.scene(), t.key, change);
-      else if (t.kind === 'part') settings(t.path, (s) => withPartSetting(s, t.key, change));
+      else if (t.kind === 'part') {
+        const level = levelAt(t.path);
+        if (level) bodyEdits.setPart(level, t.key, change);
+      }
     },
     clearPart(keys?: readonly (keyof PartSettings)[]): void {
       const t = store.target();
       if (t.kind === 'sky-part') d.clearSkyPart(store.scene(), t.key, keys);
-      else if (t.kind === 'part') settings(t.path, (s) => withoutPartSetting(s, t.key, keys));
+      else if (t.kind === 'part') {
+        const level = levelAt(t.path);
+        if (level) bodyEdits.clearPart(level, t.key, keys);
+      }
     },
     /** A new part of a shape added onto the body or sky selected: selected. */
     addPart(shape: CreatedShape): void {

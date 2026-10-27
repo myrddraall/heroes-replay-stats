@@ -1,20 +1,17 @@
-import {
-  pathKey,
-  setOverlays,
-  withoutMaterial,
-} from '@myrddraall/heroes-replay-stats-aether/scenes';
+import { pathKey, setOverlays } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import { reordered } from '@myrddraall/heroes-replay-stats-aether/formats';
 import type { MaterialSettings } from '@myrddraall/heroes-replay-stats-aether/materials';
 import { wornIds, wornKeyOf } from '../bodies/body';
-import { materialAt, materialsOf, movedInPart, movedShape } from '../materials/materials';
+import { materialAt } from '../materials/materials';
 import type { TreeMove } from '../tree/scene-tree';
 import { bodyKey, targetOf } from './scene-targets';
 import type { SceneMethodsStore } from './scene-editor.store';
 import type { SceneWrites } from './scene-writes';
+import { bodyEdits } from '../editing/body-edits';
 
 /** A body's materials: their order and settings. */
 export function materialMethods(store: SceneMethodsStore, w: SceneWrites) {
-  const { d, edit, settings, materialChange } = w;
+  const { d, edit, materialChange, levelAt } = w;
   return {
     moveMaterial(move: TreeMove): void {
       const from = targetOf(move.key);
@@ -64,18 +61,15 @@ export function materialMethods(store: SceneMethodsStore, w: SceneWrites) {
         pathKey(from.path) === pathKey(to.path)
       ) {
         // A shape moved among its body's: its materials drawn where it is put.
-        const b = store.bodyByKey().get(bodyKey(from.path));
-        const order = b && movedShape(b, materialsOf(b), from.key, to.key, move.after);
-        if (order) settings(from.path, (s) => ({ ...s, order }));
+        const level = levelAt(from.path);
+        if (level) bodyEdits.moveShape(level, from.key, to.key, move.after);
       } else if (
         from.kind === 'material' &&
         to.kind === 'material' &&
         pathKey(from.path) === pathKey(to.path)
       ) {
-        const b = store.bodyByKey().get(bodyKey(from.path));
-        if (!b) return;
-        const order = movedInPart(b, materialsOf(b), from.key, to.key, move.after);
-        if (order) settings(from.path, (s) => ({ ...s, order }));
+        const level = levelAt(from.path);
+        if (level) bodyEdits.moveMaterial(level, from.key, to.key, move.after);
       }
     },
     setMaterial(change: Partial<MaterialSettings>): void {
@@ -84,7 +78,10 @@ export function materialMethods(store: SceneMethodsStore, w: SceneWrites) {
     clearMaterial(keys?: readonly (keyof MaterialSettings)[]): void {
       const t = store.target();
       if (t.kind === 'sky-material') d.clearSkyMaterial(store.scene(), t.key, keys);
-      else if (t.kind === 'material') settings(t.path, (s) => withoutMaterial(s, t.key, keys));
+      else if (t.kind === 'material') {
+        const level = levelAt(t.path);
+        if (level) bodyEdits.clearMaterial(level, t.key, keys);
+      }
     },
   };
 }

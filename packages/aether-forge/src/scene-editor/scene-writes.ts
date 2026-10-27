@@ -11,8 +11,6 @@ import {
   type SceneBody,
   setOverlays,
   storedBodies,
-  withLightChange,
-  withMaterial,
   without,
   indexOfKey,
 } from '@myrddraall/heroes-replay-stats-aether/scenes';
@@ -21,7 +19,6 @@ import type { MaterialSettings } from '@myrddraall/heroes-replay-stats-aether/ma
 import type { LightSettings } from '@myrddraall/heroes-replay-stats-aether/lights';
 import { patchState } from '@ngrx/signals';
 import { wornIds, wornKeyOf } from '../bodies/body';
-import { keepingPose } from '../viewport/markers';
 import {
   CAMERAS,
   EDITOR_CAMERA,
@@ -44,6 +41,7 @@ import type { SceneMethodsStore } from './scene-editor.store';
 import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/space';
 import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies';
 import { variantsOnOf, switched } from '@myrddraall/heroes-replay-stats-aether/variants';
+import { BodyLevel, bodyEdits } from '../editing/body-edits';
 
 /** What the scene editor's methods change the scene through: its bodies, a body's settings, its lights, groups and cameras, and what is selected. */
 export function sceneWrites(store: SceneMethodsStore) {
@@ -67,11 +65,15 @@ export function sceneWrites(store: SceneMethodsStore) {
   };
   const settings = (path: BodyPath, change: (s: BodySettings) => BodySettings | undefined) =>
     edit((b) => changeSettings(b, path, wornAt(path), change));
-  /** A body's settings after a change, kept where it is as its Axis moves (see `keepingPose`). */
-  const posed = (path: BodyPath, next: BodySettings, touched: readonly (keyof BodySettings)[]) => {
-    const b = store.bodyByKey().get(bodyKey(path));
-    const kept = b ? keepingPose(b, next, touched) : next;
-    return Object.keys(kept).length ? kept : undefined;
+  /** Where a body's edits land: this scene's copy of it (see `BodyLevel`); none: it isn't there. */
+  const levelAt = (path: BodyPath): BodyLevel | null => {
+    const body = store.bodyByKey().get(bodyKey(path));
+    return body ? { body, change: (change) => settings(path, change) } : null;
+  };
+  /** Where the selected body's edits land (one of its materials, parts or lights selected too). */
+  const selectedLevel = (): BodyLevel | null => {
+    const path = selectedPath();
+    return path && levelAt(path);
   };
   /** What the selected body wears changed (the later over the earlier). */
   const wear = (change: (worn: readonly string[]) => readonly string[]) => {
@@ -83,7 +85,10 @@ export function sceneWrites(store: SceneMethodsStore) {
   const lightChange = (t: Target, change: Partial<LightSettings>) => {
     if (t.kind === 'scene-light')
       d.setSceneLights(store.scene(), changedLight(store.sceneLights(), t.id, change));
-    else if (t.kind === 'light') settings(t.path, (s) => withLightChange(s, t.id, change));
+    else if (t.kind === 'light') {
+      const level = levelAt(t.path);
+      if (level) bodyEdits.setLight(level, t.id, change);
+    }
   };
   /** A group put in the scene changed (a setting given as none: taken back). */
   const changePlacement = (key: string, change: Partial<GroupPlacement>) => {
@@ -196,7 +201,10 @@ export function sceneWrites(store: SceneMethodsStore) {
   const materialChange = (key: string, change: Partial<MaterialSettings>) => {
     const t = targetOf(key);
     if (t.kind === 'sky-material') d.setSkyMaterial(store.scene(), t.key, change);
-    else if (t.kind === 'material') settings(t.path, (s) => withMaterial(s, t.key, change));
+    else if (t.kind === 'material') {
+      const level = levelAt(t.path);
+      if (level) bodyEdits.setMaterial(level, t.key, change);
+    }
   };
   return {
     d,
@@ -204,7 +212,8 @@ export function sceneWrites(store: SceneMethodsStore) {
     selectedPath,
     wornAt,
     settings,
-    posed,
+    levelAt,
+    selectedLevel,
     wear,
     lightChange,
     changePlacement,

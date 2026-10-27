@@ -1,9 +1,4 @@
-import {
-  PREVIEW_SCENE,
-  without,
-  withoutPartSetting,
-  withPartSetting,
-} from '@myrddraall/heroes-replay-stats-aether/scenes';
+import { PREVIEW_SCENE, without } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import type { CreatedShape, PartSettings } from '@myrddraall/heroes-replay-stats-aether/formats';
 import { patchState } from '@ngrx/signals';
 import {
@@ -18,33 +13,29 @@ import { ASSET, STAGE_SKY } from './asset-targets';
 import type { AssetMethodsStore } from './asset-editor.store';
 import type { AssetWrites } from './asset-writes';
 import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies';
+import { bodyEdits } from '../editing/body-edits';
 
 /** The asset's parts: their settings, those added, their materials, saved as an overlay. */
 export function assetPartMethods(store: AssetMethodsStore, w: AssetWrites) {
-  const { asset, d, selectAdded, body } = w;
+  const { asset, d, selectAdded, levelOf } = w;
   return {
     setPart(change: Partial<PartSettings>): void {
-      const kind = body();
       const t = store.target();
       if (t.kind === 'sky-part') {
         d.setSkyPart(t.stage ? PREVIEW_SCENE : null, t.key, change);
         return;
       }
-      if (!kind || t.kind !== 'part') return;
-      const now = d.library()[kind][asset().id] ?? {};
-      d.setLibraryBody(kind, asset().id, { parts: withPartSetting(now, t.key, change).parts });
+      const level = t.kind === 'part' && levelOf(t);
+      if (t.kind === 'part' && level) bodyEdits.setPart(level, t.key, change);
     },
     clearPart(keys?: readonly (keyof PartSettings)[]): void {
-      const kind = body();
       const t = store.target();
       if (t.kind === 'sky-part') {
         d.clearSkyPart(t.stage ? PREVIEW_SCENE : null, t.key, keys);
         return;
       }
-      if (!kind || t.kind !== 'part') return;
-      const left = withoutPartSetting(d.library()[kind][asset().id] ?? {}, t.key, keys)?.parts;
-      if (left) d.setLibraryBody(kind, asset().id, { parts: left });
-      else d.clearLibraryBody(kind, asset().id, ['parts']);
+      const level = t.kind === 'part' && levelOf(t);
+      if (t.kind === 'part' && level) bodyEdits.clearPart(level, t.key, keys);
     },
     /** A new part of a shape added onto what is selected (the overlay or planet open, a sky): selected. */
     addPart(shape: CreatedShape): void {

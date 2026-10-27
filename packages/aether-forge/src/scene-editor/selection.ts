@@ -5,27 +5,12 @@ import {
   pathOf,
   PLAY_SCREEN_SCENE,
   RANDOM_SCENE,
-  withLightSwitched,
-  withMaterial,
-  withMaterialSwitched,
-  without,
-  withoutPartSetting,
-  withOverlaySwitched,
-  withPartSetting,
   indexOfKey,
   siblingKey,
-  withoutAddedLight,
 } from '@myrddraall/heroes-replay-stats-aether/scenes';
-import { knownLights, withLightChanged } from '@myrddraall/heroes-replay-stats-aether/lights';
+import { knownLights } from '@myrddraall/heroes-replay-stats-aether/lights';
 import { computed } from '@angular/core';
-import {
-  bodyLabel,
-  bodyView,
-  CATEGORY_TITLES,
-  filesLoaded,
-  overlayEnabledBelow,
-  type TargetKind,
-} from '../bodies/body';
+import { bodyLabel, bodyView, CATEGORY_TITLES, filesLoaded, type TargetKind } from '../bodies/body';
 import { type MaterialView, viewTitle } from '../materials/material-views';
 import {
   lightsOfBody,
@@ -45,6 +30,7 @@ import { patchState } from '@ngrx/signals';
 import { removePart } from '../parts/part-hosts';
 import type { SceneWrites } from './scene-writes';
 import { overlayViewOf } from '../overlays/overlays';
+import { bodyEdits } from '../editing/body-edits';
 
 /** What is selected in the tree: its target, the body, material, part or light it is, how the panel heads it, and what can be done with it. */
 export function selectionViews(store: WithSky) {
@@ -245,10 +231,10 @@ export function selectionMethods(store: SceneMethodsStore, w: SceneWrites) {
   const {
     d,
     selectedPath,
-    settings,
     lightChange,
     changePlacement,
     variantOn,
+    levelAt,
     reveal,
     dropCamera,
     removeBody,
@@ -278,8 +264,8 @@ export function selectionMethods(store: SceneMethodsStore, w: SceneWrites) {
       const t = targetOf(key);
       if (t.kind === 'body') removeBody(t.path);
       else if (t.kind === 'light') {
-        const { id } = t;
-        settings(t.path, (s) => withoutAddedLight(s, id));
+        const level = levelAt(t.path);
+        if (level) bodyEdits.removeLight(level, t.id);
         if (store.selected() === key) patchState(store, { selected: bodyKey(t.path) });
       } else if (t.kind === 'placement') {
         d.setSceneGroups(
@@ -310,52 +296,29 @@ export function selectionMethods(store: SceneMethodsStore, w: SceneWrites) {
         changePlacement(t.key, { enabled: on ? undefined : false });
         return;
       }
-      const b = 'path' in t ? store.bodyByKey().get(bodyKey(t.path)) : undefined;
+      const level = 'path' in t ? levelAt(t.path) : null;
       // Each back to what is under it where that is the same, else set here (a scene's own
       // light: switched on is as it starts).
-      if (t.kind === 'light' && b) {
-        const below = lightsOfBody(b).find((l) => l.light.id === t.id)?.enabledBelow ?? true;
-        settings(t.path, (s) => withLightSwitched(s, t.id, on, below));
-      } else if (t.kind === 'scene-light') lightChange(t, { enabled: on });
-      else if (t.kind === 'body') {
-        // Back to what is under it where that is the same (a planet's own moon may be off
-        // there), else set here.
-        const below = b?.below?.enabled !== false;
-        settings(t.path, (s) => (on === below ? without(s, ['enabled']) : { ...s, enabled: on }));
-      } else if (t.kind === 'part' && b) {
-        const below = partsOfBody(b).find((p) => p.key === t.key)?.enabledBelow ?? true;
-        settings(t.path, (s) =>
-          on === below
-            ? withoutPartSetting(s, t.key, ['enabled'])
-            : withPartSetting(s, t.key, { enabled: on }),
-        );
-      } else if (t.kind === 'group' && t.skyOverlay) {
+      if (t.kind === 'light' && level) bodyEdits.switchLight(level, t.id, on);
+      else if (t.kind === 'scene-light') lightChange(t, { enabled: on });
+      else if (t.kind === 'body' && level) bodyEdits.switchBody(level, on);
+      else if (t.kind === 'part' && level) bodyEdits.switchPart(level, t.key, on);
+      else if (t.kind === 'group' && t.skyOverlay) {
         const below = skyOverlayOn(undefined, d.library(), t.skyOverlay);
         d.setSkyOverlayEnabled(store.scene(), t.skyOverlay, on, below);
       } else if (t.kind === 'sky-part') {
         const below = store.skyParts().find((p) => p.key === t.key)?.enabledBelow ?? true;
         if (on === below) d.clearSkyPart(store.scene(), t.key, ['enabled']);
         else d.setSkyPart(store.scene(), t.key, { enabled: on });
-      } else if (t.kind === 'overlay' && b) {
-        const { id } = t;
-        settings(t.path, (s) => withOverlaySwitched(s, id, on, overlayEnabledBelow(b, id)));
-      } else if (t.kind === 'variant') {
-        variantOn(t.path, t.id, on);
-      } else if (t.kind === 'sky-material') {
+      } else if (t.kind === 'overlay' && level) bodyEdits.switchOverlay(level, t.id, on);
+      else if (t.kind === 'variant') variantOn(t.path, t.id, on);
+      else if (t.kind === 'sky-material') {
         const below = materialAt(store.skyMaterials(), t.key)?.enabledBelow ?? true;
         if (on === below) d.clearSkyMaterial(store.scene(), t.key, ['enabled']);
         else materialChange(change.key, { enabled: on });
-      } else if (t.kind === 'material' && t.view?.kind === 'gridLight' && b) {
-        // One of a shield's lights switched: the shield's lights set here.
-        const id = t.view.id;
-        const lights = materialAt(materialsOf(b), t.key)?.values.gridLights ?? [];
-        settings(t.path, (s) =>
-          withMaterial(s, t.key, { gridLights: withLightChanged(lights, id, { enabled: on }) }),
-        );
-      } else if (t.kind === 'material' && b) {
-        const below = materialAt(materialsOf(b), t.key)?.enabledBelow ?? true;
-        settings(t.path, (s) => withMaterialSwitched(s, t.key, on, below));
-      }
+      } else if (t.kind === 'material' && t.view?.kind === 'gridLight' && level)
+        bodyEdits.switchShieldLight(level, t.key, t.view.id, on);
+      else if (t.kind === 'material' && level) bodyEdits.switchMaterial(level, t.key, on);
     },
     /** The view centred on the selected moon and its moons, or back on the whole scene. */
     toggleFocus(): void {

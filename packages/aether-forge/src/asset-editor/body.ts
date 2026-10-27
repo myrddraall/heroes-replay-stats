@@ -21,6 +21,7 @@ import { axisAids, axisFrame, poleAt, poleDragged } from '../viewport/markers';
 import type { PoleDrag } from '../viewport/scene-markers';
 import type { AssetWrites } from './asset-writes';
 import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies';
+import { bodyEdits } from '../editing/body-edits';
 
 /** The body open (a planet, or an overlay on the stand-in), its levels, and its moons. */
 export function assetBodyViews(store: WithStageSky) {
@@ -107,8 +108,7 @@ export function assetBodyViews(store: WithStageSky) {
 
 /** The body open: its settings, poles, moons and the overlays it wears. */
 export function assetBodyMethods(store: AssetMethodsStore, w: AssetWrites) {
-  const { draft, asset, d, body, posed, changeMoons, moonSettings, wears, removeMoonAt, dragging } =
-    w;
+  const { draft, asset, d, body, changeMoons, wears, removeMoonAt, dragging, selectedLevel } = w;
   return {
     /** A pole of the planet open's axis dragged in the view: its Axis moved, the planet kept as it is. */
     dragPole(drag: PoleDrag): void {
@@ -132,29 +132,17 @@ export function assetBodyMethods(store: AssetMethodsStore, w: AssetWrites) {
       const frame = axisFrame(line.orientation, body, scene.camera, view);
       const { axis, at } = poleDragged(line, drag.north, view.eye, drag.ray, dragging.pole, frame);
       dragging.pole = at;
-      d.changeLibraryBody(kind, asset().id, (s) => posed({ ...s, axis }, ['axis']));
+      const level = selectedLevel();
+      if (level) bodyEdits.setBody(level, { axis });
     },
     setBody(change: Partial<BodySettings>): void {
-      const t = store.target();
-      if (t.kind === 'moon') {
-        moonSettings(t.path, (m) => ({ ...m, ...change }));
-        return;
-      }
-      const kind = body();
-      // Its Axis moved: its base turn with it, so it stays as it is (see `keepingPose`).
-      if (kind)
-        d.changeLibraryBody(kind, asset().id, (s) =>
-          posed({ ...s, ...change }, Object.keys(change) as (keyof BodySettings)[]),
-        );
+      // (Its Axis moved: its base turn with it, so it stays as it is.)
+      const level = selectedLevel();
+      if (level) bodyEdits.setBody(level, change);
     },
     clearBody(keys: readonly (keyof BodySettings)[]): void {
-      const t = store.target();
-      if (t.kind === 'moon') {
-        moonSettings(t.path, (m) => without(m, keys));
-        return;
-      }
-      const kind = body();
-      if (kind) d.changeLibraryBody(kind, asset().id, (s) => posed(without(s, keys) ?? {}, keys));
+      const level = selectedLevel();
+      if (level) bodyEdits.clearBody(level, keys);
     },
     resetBody(): void {
       const t = store.target();

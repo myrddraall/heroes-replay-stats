@@ -1,15 +1,16 @@
 import { PREVIEW_SCENE } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import { reordered } from '@myrddraall/heroes-replay-stats-aether/formats';
 import type { MaterialSettings } from '@myrddraall/heroes-replay-stats-aether/materials';
-import { materialAt, movedInPart, movedShape } from '../materials/materials';
+import { materialAt } from '../materials/materials';
 import type { TreeMove } from '../tree/scene-tree';
 import { targetOf } from './asset-targets';
 import type { AssetMethodsStore } from './asset-editor.store';
 import type { AssetWrites } from './asset-writes';
+import { bodyEdits } from '../editing/body-edits';
 
 /** The asset's materials: their order and settings. */
 export function assetMaterialMethods(store: AssetMethodsStore, w: AssetWrites) {
-  const { asset, d, materialChange, materialClear, body } = w;
+  const { asset, d, materialChange, materialClear, levelOf } = w;
   return {
     moveMaterial(move: TreeMove): void {
       const from = targetOf(move.key, asset());
@@ -48,18 +49,12 @@ export function assetMaterialMethods(store: AssetMethodsStore, w: AssetWrites) {
         else d.setLibrarySkyOrder(order);
       } else if (from.kind === 'part' && to.kind === 'part') {
         // A shape moved among the body's: its materials drawn where it is put.
-        const kind = body();
-        const b = store._body();
-        const order =
-          kind && b && movedShape(b, store._ownMaterials(), from.key, to.key, move.after);
-        if (kind && order) d.setLibraryBody(kind, asset().id, { order });
+        const level = levelOf(from);
+        if (level) bodyEdits.moveShape(level, from.key, to.key, move.after);
       } else if (from.kind === 'material' && to.kind === 'material') {
         // Within the part they are drawn on, among those drawn as it is (opaque or blended).
-        const kind = body();
-        const b = store._body();
-        const order =
-          kind && b && movedInPart(b, store._ownMaterials(), from.key, to.key, move.after);
-        if (kind && order) d.setLibraryBody(kind, asset().id, { order });
+        const level = levelOf(from);
+        if (level) bodyEdits.moveMaterial(level, from.key, to.key, move.after);
       }
     },
     setMaterial(change: Partial<MaterialSettings>): void {
