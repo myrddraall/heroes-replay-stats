@@ -9,11 +9,10 @@ import {
   storedBodies,
   without,
 } from '@myrddraall/heroes-replay-stats-aether/scenes';
-import { patchState } from '@ngrx/signals';
 import type { PoleDrag } from '../viewport/scene-markers';
 import { wornKeyOf } from '../bodies/body';
 import { axisAids, axisFrame, poleAt, poleDragged } from '../viewport/markers';
-import { SCENE, bodyKey, overlayKey } from './scene-targets';
+import { bodyKey, overlayKey } from './scene-targets';
 import type { SceneMethodsStore } from './scene-editor.store';
 import type { SceneWrites } from './scene-writes';
 import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/space';
@@ -83,8 +82,7 @@ export function bodyMethods(store: SceneMethodsStore, w: SceneWrites) {
         return;
       const { bodies, path } = addMoonAt(store.sceneBodies(), parent, moon);
       d.setSceneBodies(store.scene(), storedBodies(bodies, d.library()));
-      store.expand(bodyKey(parent));
-      patchState(store, { selected: bodyKey(path) });
+      w.reveal(bodyKey(path));
     },
     /**
      * The selected body taken out (a planet with its moons, a moon with its own): its parent
@@ -99,9 +97,7 @@ export function bodyMethods(store: SceneMethodsStore, w: SceneWrites) {
     /** An overlay the selected body wears shown in the tree, its rows unfolded. */
     showOverlay(id: string): void {
       const path = selectedPath();
-      if (!path) return;
-      store.expand(SCENE, ...path.map((_, i) => bodyKey(path.slice(0, i + 1))));
-      store.reopen(overlayKey(path, id));
+      if (path) w.openTo(overlayKey(path, id));
     },
     addOverlay(id: string): void {
       wear((worn) => (worn.includes(id) ? worn : [...worn, id]));

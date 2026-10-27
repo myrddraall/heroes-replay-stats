@@ -3,7 +3,7 @@ import { overlayName } from '@myrddraall/heroes-replay-stats-aether/overlays';
 import type { PlanetIndex } from '@myrddraall/heroes-replay-stats-aether/formats';
 import type { PickChoice } from '../controls/pick-list';
 import type { MaterialEntry } from '../materials/materials';
-import { type BodyInfo, bodyLabel, overlayLabel } from '../bodies/body';
+import { type BodyInfo, bodyLabel, overlayEnabled, overlayLabel } from '../bodies/body';
 
 /** The overlays a body may wear, as an editor offers them. */
 
@@ -40,3 +40,16 @@ export const wornLabel = (b: BodyInfo) =>
   b.overlays.length
     ? `${bodyLabel(b)} · ${b.overlays.map(overlayLabel).join(' + ')}`
     : bodyLabel(b);
+
+/** An overlay a body wears, as its panel shows it: which, its name, whether it is drawn. */
+export interface OverlayView {
+  readonly id: string;
+  readonly name: string;
+  readonly enabled: boolean;
+}
+
+/** One of the overlays a body wears as its panel shows it (none: it doesn't wear it). */
+export function overlayViewOf(b: BodyInfo | null | undefined, id: string): OverlayView | null {
+  const o = b?.overlays.find((x) => x.id === id);
+  return b && o ? { id, name: overlayLabel(o), enabled: overlayEnabled(b, id) } : null;
+}

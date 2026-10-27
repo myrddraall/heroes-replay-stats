@@ -1,0 +1,26 @@
+@if (variant(); as v) {
+<forge-variant-properties
+  [variant]="v"
+  [editable]="editor.variantsEditable()"
+  [edited]="editor.variantEdited() === v.id"
+  (toggled)="editor.setVariantOn(v.id, $event)"
+  (renamed)="editor.renameVariant(v.id, $event)"
+  (editToggled)="editor.editVariant(editor.variantEdited() === v.id ? null : v.id)"
+  (removed)="editor.deleteVariant(v.id)"
+/>
+} @else {
+<forge-variant-list
+  [rows]="editor.variantRows()"
+  [edited]="editor.variantEdited()"
+  [changed]="editor.variantsOnSet()"
+  [editable]="editor.variantsEditable()"
+  [fromChangesOffered]="editor.variantFromChangesOffered()"
+  (toggled)="editor.setVariantOn($event.id, $event.on)"
+  (edit)="editor.editVariant($event)"
+  (renamed)="editor.renameVariant($event.id, $event.name)"
+  (removed)="editor.deleteVariant($event)"
+  (created)="editor.newVariant()"
+  (fromChanges)="editor.variantFromChanges()"
+  (resetRequested)="editor.resetVariantsOn()"
+/>
+}

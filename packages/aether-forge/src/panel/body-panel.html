@@ -59,22 +59,7 @@
     }
   </forge-property-section>
 </forge-body-properties>
-@if (editor.variantRows().length || editor.variantsEditable()) {
-<forge-variant-list
-  [rows]="editor.variantRows()"
-  [edited]="editor.variantEdited()"
-  [changed]="editor.variantsOnSet()"
-  [editable]="editor.variantsEditable()"
-  [fromChangesOffered]="editor.variantFromChangesOffered()"
-  (toggled)="editor.setVariantOn($event.id, $event.on)"
-  (edit)="editor.editVariant($event)"
-  (renamed)="editor.renameVariant($event.id, $event.name)"
-  (removed)="editor.deleteVariant($event)"
-  (created)="editor.newVariant()"
-  (fromChanges)="editor.variantFromChanges()"
-  (resetRequested)="editor.resetVariantsOn()"
-/>
-} @if (editor.partShapes().length) {
+@if (editor.partShapes().length) {
 <forge-property-section title="Parts">
   <forge-add-part
     [shapes]="editor.partShapes()"

@@ -54,6 +54,10 @@ export type TargetKind =
   | 'camera'
   | 'part'
   | 'light'
+  /** An overlay a body wears; a body's variants (their list), and one of them. */
+  | 'overlay'
+  | 'variants'
+  | 'variant'
   /** What of a material a row shows: one of its layers, its shield shader, one of that's lights. */
   | 'layer'
   | 'shader'

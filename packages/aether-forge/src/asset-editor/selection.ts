@@ -36,6 +36,7 @@ import { withLightChanged } from '@myrddraall/heroes-replay-stats-aether/lights'
 import { patchState, signalMethod } from '@ngrx/signals';
 import { removePart } from '../parts/part-hosts';
 import type { AssetWrites } from './asset-writes';
+import { overlayViewOf } from '../overlays/overlays';
 
 /** What is selected in the tree: its target, the body, material or sky it is, how the panel heads it, and what can be done with it. */
 export function assetSelectionViews(store: WithOwn) {
@@ -65,6 +66,14 @@ export function assetSelectionViews(store: WithOwn) {
     return t.kind === 'sky' || t.kind === 'sky-material' ? _skyOf(t.stage) : null;
   });
   return {
+    overlayView: computed(() => {
+      const t = target();
+      return t.kind === 'overlay' ? overlayViewOf(_body(), t.id) : null;
+    }),
+    selectedVariant: computed(() => {
+      const t = target();
+      return t.kind === 'variant' ? t.id : null;
+    }),
     target,
     opened: computed((): OpenTarget => asset()),
     heading: computed(() => {
@@ -179,6 +188,10 @@ export function assetSelectionViews(store: WithOwn) {
           'Properties'
         );
       if (t.kind === 'reference') return 'Reference';
+      if (t.kind === 'overlay') return overlayViewOf(_body(), t.id)?.name ?? 'Overlay';
+      if (t.kind === 'variants') return 'Variants';
+      if (t.kind === 'variant')
+        return store.variantRows().find((v) => v.id === t.id)?.name ?? 'Variant';
       if (t.kind === 'sky-material')
         return materialAt(_skyMaterials(t.stage), t.key)?.label ?? t.name;
       if (t.kind === 'material') {
@@ -319,9 +332,11 @@ export function assetSelectionMethods(store: AssetMethodsStore, w: AssetWrites) 
           : withPartSetting(now, t.key, { enabled: false });
         if (next?.parts) d.setLibraryBody(kind, asset().id, { parts: next.parts });
         else d.clearLibraryBody(kind, asset().id, ['parts']);
-      } else if (t.kind === 'group' && t.overlay && kind) {
+      } else if (t.kind === 'variant') {
+        w.variantOn(t.id, on);
+      } else if (t.kind === 'overlay' && kind) {
         const now = d.library()[kind][asset().id] ?? {};
-        const next = withOverlaySwitched(now, t.overlay, on, true);
+        const next = withOverlaySwitched(now, t.id, on, true);
         if (next?.overlaysEnabled)
           d.setLibraryBody(kind, asset().id, { overlaysEnabled: next.overlaysEnabled });
         else d.clearLibraryBody(kind, asset().id, ['overlaysEnabled']);

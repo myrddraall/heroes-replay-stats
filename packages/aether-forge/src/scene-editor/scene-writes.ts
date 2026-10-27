@@ -22,7 +22,6 @@ import type { LightSettings } from '@myrddraall/heroes-replay-stats-aether/light
 import { patchState } from '@ngrx/signals';
 import { wornIds, wornKeyOf } from '../bodies/body';
 import { keepingPose } from '../viewport/markers';
-import { lightsOfBody } from '../lights/lights';
 import {
   CAMERAS,
   EDITOR_CAMERA,
@@ -32,15 +31,18 @@ import {
   type Target,
   bodyKey,
   lightsKey,
-  overlayKey,
-  overlayLightsKey,
+  moonsKey,
+  overlaysKey,
   partRowKey,
+  shapesKey,
   skyPartKey,
   targetOf,
+  variantsKey,
 } from './scene-targets';
 import type { SceneMethodsStore } from './scene-editor.store';
 import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/space';
 import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies';
+import { variantsOnOf, switched } from '@myrddraall/heroes-replay-stats-aether/variants';
 
 /** What the scene editor's methods change the scene through: its bodies, a body's settings, its lights, groups and cameras, and what is selected. */
 export function sceneWrites(store: SceneMethodsStore) {
@@ -95,28 +97,49 @@ export function sceneWrites(store: SceneMethodsStore) {
       placements.map((x, i) => (i === index ? (next as unknown as GroupPlacement) : x)),
     );
   };
-  /** Something selected by its row's key, the rows above it unfolded to it. */
-  const reveal = (key: string) => {
+  /**
+   * The rows above a row unfolded: the scene's, each body it is under (with their Moons), and the
+   * category of its body it is in.
+   */
+  const openTo = (key: string) => {
     const t = targetOf(key);
     store.expand(SCENE);
     if (t.kind === 'camera') store.reopen(CAMERAS);
     if (t.kind === 'scene-light') store.reopen(SCENE_LIGHTS);
-    if (t.kind === 'body' || t.kind === 'part') {
-      // (A body's own rows: under each it is a moon of; a part's, under its body too.)
-      const upTo = t.kind === 'body' ? t.path.length - 1 : t.path.length;
-      store.expand(...t.path.slice(0, upTo).map((_, i) => bodyKey(t.path.slice(0, i + 1))));
-    }
     if (t.kind === 'sky-part') store.expand(SKY);
-    if (t.kind === 'light') {
-      const path = t.path;
-      store.expand(...path.map((_, i) => bodyKey(path.slice(0, i + 1))));
-      const b = store.bodyByKey().get(bodyKey(path));
-      const overlay = b && lightsOfBody(b).find((l) => l.light.id === t.id)?.overlay;
-      if (overlay) {
-        store.reopen(overlayKey(path, overlay));
-        store.expand(overlayLightsKey(path, overlay));
-      } else store.expand(lightsKey(path));
+    if (!('path' in t) || !t.path.length) return;
+    const { path } = t;
+    // (A body's own row: under each body it is a moon of; anything of a body's, under it too.)
+    const under = t.kind === 'body' ? path.length - 1 : path.length;
+    for (let i = 1; i <= under; i++) {
+      store.expand(bodyKey(path.slice(0, i)));
+      if (i < path.length) store.reopen(moonsKey(path.slice(0, i)));
     }
+    if (t.kind === 'part') store.reopen(shapesKey(path));
+    if (t.kind === 'light') store.expand(lightsKey(path));
+    if (t.kind === 'overlay') store.reopen(overlaysKey(path));
+    if (t.kind === 'variant') store.expand(variantsKey(path));
+  };
+  /** One of a body's variants switched where it is: into the scene, or the scene's variant edited. */
+  const variantOn = (path: BodyPath, id: string, on: boolean) => {
+    const open = store.sceneVariantOpen();
+    if (open) {
+      const key = pathKey(path);
+      d.changeSceneVariant(store.scene(), open, (v) => ({
+        ...v,
+        switches: { ...v.switches, [key]: { ...v.switches?.[key], [id]: on } },
+      }));
+      return;
+    }
+    const b = store.bodyByKey().get(bodyKey(path));
+    settings(path, (s) => {
+      const now = variantsOnOf(s, b?.inherited?.settings, d.library().planets[b?.id ?? '']);
+      return { ...s, variantsOn: switched(now, { [id]: on }) };
+    });
+  };
+  /** Something selected by its row's key, the rows above it unfolded to it. */
+  const reveal = (key: string) => {
+    openTo(key);
     patchState(store, { selected: key });
   };
   /** A camera added to the scene taken out; the view through it back to the editor's. */
@@ -163,8 +186,7 @@ export function sceneWrites(store: SceneMethodsStore) {
   const selectAdded = (id: string) => {
     const t = store.target();
     if (t.kind === 'body') {
-      store.expand(bodyKey(t.path));
-      patchState(store, { selected: partRowKey(t.path, `own:${id}`) });
+      reveal(partRowKey(t.path, `own:${id}`));
     } else {
       store.expand(SKY);
       patchState(store, { selected: skyPartKey(`own:${id}`) });
@@ -185,6 +207,8 @@ export function sceneWrites(store: SceneMethodsStore) {
     wear,
     lightChange,
     changePlacement,
+    variantOn,
+    openTo,
     reveal,
     dropCamera,
     removeBody,

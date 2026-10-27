@@ -35,7 +35,11 @@ import {
   lightsKey,
   materialRowKey,
   overlayKey,
-  overlayLightsKey,
+  overlaysKey,
+  moonsKey,
+  shapesKey,
+  variantRowKey,
+  variantsKey,
   partRowKey,
   placementKey,
   sceneLightKey,
@@ -200,19 +204,24 @@ export function treeViews(store: WithPartHosts) {
               for (const m of materials) leaf(skyOverlayMaterialKey(o.id, m.name), m, 4);
           }
         }
-      const body = (b: BodyInfo, depth: number) => {
+      /** A body's rows: its own, then (unfolded) its categories, its moons' rows among them. */
+      const bodyRows = (b: BodyInfo, depth: number): TreeRow[] => {
         const path = pathOf(b.key.slice(5));
-        row(
-          b.key,
-          wornLabel(b),
-          path.length > 1 ? 'brightness_1' : 'public',
-          depth,
-          store.unsavedBodies().has(b.key),
-          false,
-          bodyEnabled(b),
-        );
-        if (!open.has(b.key)) return;
-        rows.push(
+        const out: TreeRow[] = [
+          {
+            key: b.key,
+            label: wornLabel(b),
+            icon: path.length > 1 ? 'brightness_1' : 'public',
+            depth,
+            expandable: true,
+            expanded: open.has(b.key),
+            unsaved: store.unsavedBodies().has(b.key),
+            group: false,
+            enabled: bodyEnabled(b),
+          },
+        ];
+        if (!open.has(b.key)) return out;
+        out.push(
           ...bodySubtreeRows(
             b,
             depth,
@@ -220,18 +229,34 @@ export function treeViews(store: WithPartHosts) {
             {
               part: (key) => partRowKey(path, key),
               material: (name, overlay) => materialRowKey(path, name, overlay),
-              lights: (overlay) => (overlay ? overlayLightsKey(path, overlay) : lightsKey(path)),
               light: (id) => lightRowKey(path, id),
               overlay: (id) => overlayKey(path, id),
+              variant: (id) => variantRowKey(path, id),
+              shapes: () => shapesKey(path),
+              lights: () => lightsKey(path),
+              overlays: () => overlaysKey(path),
+              variants: () => variantsKey(path),
+              moons: () => moonsKey(path),
             },
-            { movableOverlays: true },
+            {
+              movableOverlays: true,
+              variants: (b.variants ?? []).map((v) => ({
+                id: v.id,
+                name: v.name,
+                on: (b.variantsOn ?? []).includes(v.id),
+                removable: false,
+              })),
+              moons: (at) =>
+                b.moons.flatMap((m, i) => {
+                  const child = store.bodyByKey().get(bodyKey([...path, siblingKey(m, i)]));
+                  return child ? bodyRows(child, at) : [];
+                }),
+            },
           ),
         );
-        b.moons.forEach((m, i) => {
-          const child = store.bodyByKey().get(bodyKey([...path, siblingKey(m, i)]));
-          if (child) body(child, depth + 1);
-        });
+        return out;
       };
+      const body = (b: BodyInfo, depth: number) => rows.push(...bodyRows(b, depth));
       store.sceneBodies().forEach((p, i) => {
         const planet = store.bodyByKey().get(bodyKey([siblingKey(p, i)]));
         if (planet) body(planet, 1);

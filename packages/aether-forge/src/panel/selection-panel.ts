@@ -9,7 +9,9 @@ import { PartProperties } from '../parts/part-properties';
 import { ScenePanel } from '../scene-editor/scene-panel';
 import { BodyPanel } from './body-panel';
 import { MaterialPanel } from './material-panel';
+import { OverlayPanel } from './overlay-panel';
 import { SkyPanel } from './sky-panel';
+import { VariantPanel } from './variant-panel';
 
 /**
  * The properties of what is selected in the tree (container, on the `Editor` in effect: the scene
@@ -25,11 +27,13 @@ import { SkyPanel } from './sky-panel';
     LightProperties,
     LitBy,
     MaterialPanel,
+    OverlayPanel,
     PartProperties,
     PickList,
     PropertySelect,
     ScenePanel,
     SkyPanel,
+    VariantPanel,
   ],
   templateUrl: './selection-panel.html',
   styleUrl: './selection-panel.scss',

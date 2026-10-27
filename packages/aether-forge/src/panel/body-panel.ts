@@ -8,7 +8,6 @@ import { AddLight } from '../lights/add-light';
 import { LitBy } from '../lights/lit-by';
 import { AddPart } from '../parts/add-part';
 import { AddPlanet } from '../scene-editor/add-planet';
-import { VariantList } from '../variants/variant-list';
 
 /**
  * A body's properties in the selection panel (container, on the `Editor` in effect): its own, its
@@ -16,16 +15,7 @@ import { VariantList } from '../variants/variant-list';
  */
 @Component({
   selector: 'forge-body-panel',
-  imports: [
-    AddedList,
-    AddLight,
-    AddPart,
-    AddPlanet,
-    BodyProperties,
-    LitBy,
-    PropertySection,
-    VariantList,
-  ],
+  imports: [AddedList, AddLight, AddPart, AddPlanet, BodyProperties, LitBy, PropertySection],
   templateUrl: './body-panel.html',
   styleUrl: './body-panel.scss',
 })

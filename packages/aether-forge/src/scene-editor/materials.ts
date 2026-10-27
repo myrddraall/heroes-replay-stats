@@ -33,16 +33,14 @@ export function materialMethods(store: SceneMethodsStore, w: SceneWrites) {
       }
       // An overlay moved among those its body wears: worn in that order, drawn so.
       if (
-        from.kind === 'group' &&
-        to.kind === 'group' &&
-        from.overlay &&
-        to.overlay &&
+        from.kind === 'overlay' &&
+        to.kind === 'overlay' &&
         pathKey(from.path) === pathKey(to.path)
       ) {
         const b = store.bodyByKey().get(bodyKey(from.path));
         if (!b) return;
         const worn = wornIds(b);
-        const next = reordered(worn, worn, from.overlay, to.overlay, move.after);
+        const next = reordered(worn, worn, from.id, to.id, move.after);
         const order = overlayOrder(materialsOf(b), next);
         edit((bodies) =>
           changeSettings(

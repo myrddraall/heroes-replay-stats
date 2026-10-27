@@ -19,6 +19,12 @@
 <forge-sky-panel />
 } @case ('body') {
 <forge-body-panel />
+} @case ('overlay') {
+<forge-overlay-panel />
+} @case ('variants') {
+<forge-variant-panel />
+} @case ('variant') {
+<forge-variant-panel />
 } @case ('light') { @if (editor.light(); as l) {
 <forge-light-properties
   [light]="l"

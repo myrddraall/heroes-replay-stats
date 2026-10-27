@@ -22,6 +22,7 @@ import type { BodyView, TargetKind } from '../bodies/body';
 import type { LightEntry, LitByEntry } from '../lights/lights';
 import type { MaterialEntry } from '../materials/materials';
 import type { MaterialView } from '../materials/material-views';
+import type { OverlayView } from '../overlays/overlays';
 import type { PartEntry } from '../parts/parts';
 import type { SkyAnchorView } from '../sky/sky';
 import type { AssetTarget, OpenTarget } from '../layout/open-target';
@@ -81,6 +82,8 @@ export abstract class Editor {
   abstract showOverlay(id: string): void;
   abstract removeOverlay(id: string): void;
   abstract resetOverlays(): void;
+  /** The overlay selected in the tree (one the selected body wears), as its panel shows it. */
+  abstract readonly overlayView: Signal<OverlayView | null>;
 
   // Variants (see `variants.ts`): the selected body's own, switched on or off where it is.
   /** The selected body's variants, each switched on or off where it is (none: no list). */
@@ -89,6 +92,8 @@ export abstract class Editor {
   abstract readonly variantsEditable: Signal<boolean>;
   /** The variant open to be edited, if one is. */
   abstract readonly variantEdited: Signal<string | null>;
+  /** The variant selected in the tree (one of the selected body's), by id. */
+  abstract readonly selectedVariant: Signal<string | null>;
   /** Whether which variants are on is set at the level edited. */
   abstract readonly variantsOnSet: Signal<boolean>;
   /** Whether a variant can be made of what is set on the selected body (see `variantSettingsOf`). */

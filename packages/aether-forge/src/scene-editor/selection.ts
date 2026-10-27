@@ -42,6 +42,7 @@ import { skyOverlayOn } from '@myrddraall/heroes-replay-stats-aether/library';
 import { patchState } from '@ngrx/signals';
 import { removePart } from '../parts/part-hosts';
 import type { SceneWrites } from './scene-writes';
+import { overlayViewOf } from '../overlays/overlays';
 
 /** What is selected in the tree: its target, the body, material, part or light it is, how the panel heads it, and what can be done with it. */
 export function selectionViews(store: WithSky) {
@@ -107,6 +108,14 @@ export function selectionViews(store: WithSky) {
   return {
     target,
     selectedPlacement,
+    overlayView: computed(() => {
+      const t = target();
+      return t.kind === 'overlay' ? overlayViewOf(body(), t.id) : null;
+    }),
+    selectedVariant: computed(() => {
+      const t = target();
+      return t.kind === 'variant' ? t.id : null;
+    }),
     focusPath,
     resetAllLabel: computed(() => 'Reset scene'),
     deletable: computed(() => false),
@@ -209,6 +218,10 @@ export function selectionViews(store: WithSky) {
       if (t.kind === 'scene-light')
         return choices().lights?.find((l) => l.id === t.id)?.name ?? 'Properties';
       if (t.kind === 'reference') return 'Reference';
+      if (t.kind === 'overlay') return overlayViewOf(body(), t.id)?.name ?? 'Overlay';
+      if (t.kind === 'variants') return 'Variants';
+      if (t.kind === 'variant')
+        return body()?.variants?.find((v) => v.id === t.id)?.name ?? 'Variant';
       if (t.kind === 'placement') {
         const p = selectedPlacement();
         return p ? `Group · ${p.label ?? groupOf(p.group)?.name ?? p.group}` : 'Group';
@@ -233,6 +246,7 @@ export function selectionMethods(store: SceneMethodsStore, w: SceneWrites) {
     settings,
     lightChange,
     changePlacement,
+    variantOn,
     reveal,
     dropCamera,
     removeBody,
@@ -248,9 +262,8 @@ export function selectionMethods(store: SceneMethodsStore, w: SceneWrites) {
     selectPlaced(index: number): boolean {
       const key = store._placed()?.picks[index];
       if (!key) return false;
-      // A group's planet: the group put in the scene.
-      const path = key.startsWith('body:') ? pathOf(key.slice(5)) : [];
-      store.expand(SCENE, ...path.slice(0, -1).map((_, i) => bodyKey(path.slice(0, i + 1))));
+      // (A group's planet: the group put in the scene.)
+      w.openTo(key);
       patchState(store, { selected: key });
       return true;
     },
@@ -317,9 +330,11 @@ export function selectionMethods(store: SceneMethodsStore, w: SceneWrites) {
         const below = store.skyParts().find((p) => p.key === t.key)?.enabledBelow ?? true;
         if (on === below) d.clearSkyPart(store.scene(), t.key, ['enabled']);
         else d.setSkyPart(store.scene(), t.key, { enabled: on });
-      } else if (t.kind === 'group' && b && t.overlay) {
-        const id = t.overlay;
+      } else if (t.kind === 'overlay' && b) {
+        const { id } = t;
         settings(t.path, (s) => withOverlaySwitched(s, id, on, overlayEnabledBelow(b, id)));
+      } else if (t.kind === 'variant') {
+        variantOn(t.path, t.id, on);
       } else if (t.kind === 'sky-material') {
         const below = materialAt(store.skyMaterials(), t.key)?.enabledBelow ?? true;
         if (on === below) d.clearSkyMaterial(store.scene(), t.key, ['enabled']);

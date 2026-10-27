@@ -11,6 +11,7 @@ import type { PickChoice } from '../controls/pick-list';
 import type { AssetMethodsStore, AssetStoreBase } from './asset-editor.store';
 import { patchState } from '@ngrx/signals';
 import type { AssetWrites } from './asset-writes';
+import { ASSET, ASSET_VARIANTS, assetVariantKey } from './asset-targets';
 
 /** The planet's variants: its data's and those made here, the one edited, which are on, and the level edits go into. */
 export function assetVariantViews(store: AssetStoreBase) {
@@ -120,18 +121,23 @@ export function assetVariantViews(store: AssetStoreBase) {
 /** The planet's variants: edited, made, switched on, deleted, renamed. */
 export function assetVariantMethods(store: AssetMethodsStore, w: AssetWrites) {
   const { draft, asset } = w;
+  /** A variant just made edited, its row shown in its Variants and selected. */
+  const shown = (id: string) => {
+    store.expand(ASSET, ASSET_VARIANTS);
+    patchState(store, { variantEdited: id, selected: assetVariantKey(id) });
+  };
   return {
     // The planet open's variants.
     /** The variant of the planet open edited (what is set goes into it), or its own settings (none). */
     editVariant(id: string | null): void {
       patchState(store, { variantEdited: id });
     },
-    /** A new variant of the planet open, edited. */
+    /** A new variant of the planet open, edited and selected. */
     newVariant(): void {
       const a = asset();
       if (a.kind !== 'planet') return;
       const id = draft.createVariant(a.id, `Variant ${store._variants().length + 1}`);
-      patchState(store, { variantEdited: id });
+      shown(id);
     },
     /**
      * The planet open's own changes made into a new variant of it (what a variant can take of
@@ -151,17 +157,11 @@ export function assetVariantMethods(store: AssetMethodsStore, w: AssetWrites) {
         variants: s.variants,
         variantsOn: [...on, id],
       }));
-      patchState(store, { variantEdited: id });
+      shown(id);
     },
     /** A variant of the planet open switched on or off by default. */
     setVariantOn(id: string, on: boolean): void {
-      const a = asset();
-      if (a.kind !== 'planet') return;
-      const now = variantsOnOf(draft.library().planets[a.id]);
-      draft.setVariantsOn(
-        a.id,
-        on ? [...now.filter((v) => v !== id), id] : now.filter((v) => v !== id),
-      );
+      w.variantOn(id, on);
     },
     /** Which of the planet open's variants are on by default back as its data has them (none). */
     resetVariantsOn(): void {

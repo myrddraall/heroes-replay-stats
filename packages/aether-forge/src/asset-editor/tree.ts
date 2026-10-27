@@ -27,7 +27,11 @@ import {
   assetLightKey,
   assetMaterialKey,
   assetOverlayKey,
-  assetOverlayLightsKey,
+  assetVariantKey,
+  ASSET_MOONS,
+  ASSET_OVERLAYS,
+  ASSET_SHAPES,
+  ASSET_VARIANTS,
   assetOverlayMaterialKey,
   assetPartKey,
   receiverOf,
@@ -318,26 +322,36 @@ export function assetTreeViews(store: WithPartHosts) {
                   part: assetPartKey,
                   material: (name, overlay) =>
                     overlay ? assetOverlayMaterialKey(overlay, name) : assetMaterialKey(name),
-                  lights: (overlay) => (overlay ? assetOverlayLightsKey(overlay) : ASSET_LIGHTS),
                   light: assetLightKey,
                   overlay: assetOverlayKey,
+                  variant: assetVariantKey,
+                  shapes: () => ASSET_SHAPES,
+                  lights: () => ASSET_LIGHTS,
+                  overlays: () => ASSET_OVERLAYS,
+                  variants: () => ASSET_VARIANTS,
+                  moons: () => ASSET_MOONS,
                 },
-                { movableOverlays: false },
+                {
+                  movableOverlays: false,
+                  variants: store.variantRows(),
+                  variantsMade: store.variantsEditable(),
+                  variantEdited: store.variantEdited(),
+                  // Its own moons (a planet's), each switched by its checkbox.
+                  moons: (at) =>
+                    a.kind === 'planet'
+                      ? [...store._moonInfos()].map(([key, m]) => ({
+                          key,
+                          label: bodyLabel(m),
+                          icon: 'brightness_1',
+                          depth: at + (m.key.split('.').length - 1),
+                          expandable: false,
+                          expanded: false,
+                          enabled: m.settings.enabled !== false,
+                        }))
+                      : [],
+                },
               ),
             );
-            // Its own moons (a planet's), each switched by its checkbox.
-            if (a.kind === 'planet')
-              for (const [key, m] of store._moonInfos())
-                rows.push({
-                  key,
-                  label: bodyLabel(m),
-                  detail: 'moon',
-                  icon: 'brightness_1',
-                  depth: 1 + (m.key.split('.').length - 1),
-                  expandable: false,
-                  expanded: false,
-                  enabled: m.settings.enabled !== false,
-                });
             break;
           }
           case 'material': {

@@ -58,7 +58,14 @@ export function nextMoonKey(moons: readonly MoonChoices[]): string {
 /** An overlay the planet open wears, by id: its parts and its lights, under it. */
 export const assetOverlayKey = (id: string) => `asset/overlay/${id}`;
 
-export const assetOverlayLightsKey = (id: string) => `asset/overlay-lights/${id}`;
+/** One of the planet open's variants, by id. */
+export const assetVariantKey = (id: string) => `${ASSET}/variant/${id}`;
+
+/** The asset open's categories: its shapes, the overlays it wears, its variants, its moons (its lights: `ASSET_LIGHTS`). */
+export const ASSET_SHAPES = 'asset/shapes';
+export const ASSET_OVERLAYS = 'asset/overlays';
+export const ASSET_VARIANTS = 'asset/variants';
+export const ASSET_MOONS = 'asset/moons';
 
 export const stageMaterialKey = (name: string) => `${STAGE_SKY}/m/${name}`;
 
@@ -104,15 +111,19 @@ export const KIND_TITLES: Readonly<Record<AssetKind, string>> = {
 /** What an asset tree row's key is, for the asset open. */
 export type Target =
   /**
-   * A group of rows: an overlay the planet open wears (`overlay`: which), its lights, a sky's
+   * A group of rows: the asset open's categories (its shapes, lights, overlays, moons), a sky's
    * depths, an overlay a sky wears (`skyOverlay`: which; the stage's sky's or the sky open's).
    */
   | {
       readonly kind: 'group';
-      readonly overlay?: string;
       readonly skyOverlay?: string;
       readonly stage?: boolean;
     }
+  /** An overlay the planet or overlay open wears, by id. */
+  | { readonly kind: 'overlay'; readonly id: string }
+  /** The planet open's variants (what makes new ones, and the list), and one of them by id. */
+  | { readonly kind: 'variants' }
+  | { readonly kind: 'variant'; readonly id: string }
   /** The stage's sky, or the library's (the sky open). */
   | { readonly kind: 'sky'; readonly stage: boolean }
   | {
@@ -227,7 +238,10 @@ export function targetOf(key: string, asset: AssetTarget): Target {
     return { kind: 'material', name, key: materialKey(name, overlay), overlay };
   }
   if (key.startsWith(`${ASSET}/overlay/`))
-    return { kind: 'group', overlay: key.slice(ASSET.length + 9) };
+    return { kind: 'overlay', id: key.slice(ASSET.length + 9) };
+  if (key.startsWith(`${ASSET}/variant/`))
+    return { kind: 'variant', id: key.slice(ASSET.length + 9) };
+  if (key === ASSET_VARIANTS) return { kind: 'variants' };
   return { kind: 'group' };
 }
 

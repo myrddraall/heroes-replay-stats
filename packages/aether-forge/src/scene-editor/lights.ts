@@ -17,8 +17,6 @@ import {
   bodyKey,
   lightRowKey,
   lightsKey,
-  overlayKey,
-  overlayLightsKey,
   receiverOf,
   sceneLightKey,
 } from './scene-targets';
@@ -43,13 +41,7 @@ export function lightMethods(store: SceneMethodsStore, w: SceneWrites) {
         patchState(store, { selected: sceneLightKey(id) });
         return;
       }
-      const path = light.owner ?? t.path;
-      store.expand(SCENE, ...path.map((_, i) => bodyKey(path.slice(0, i + 1))));
-      if (light.overlay) {
-        store.reopen(overlayKey(path, light.overlay));
-        store.expand(overlayLightsKey(path, light.overlay));
-      } else store.expand(lightsKey(path));
-      patchState(store, { selected: lightRowKey(path, id) });
+      w.reveal(lightRowKey(light.owner ?? t.path, id));
     },
     setLitBy(change: { readonly id: LightId; readonly on: boolean }): void {
       const t = store.target();

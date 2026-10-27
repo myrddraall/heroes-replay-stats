@@ -25,12 +25,17 @@ export const SKY = 'sky';
 
 export const bodyKey = (path: BodyPath) => `body:${pathKey(path)}`;
 
-/** An overlay it wears, by id: its parts (with their materials) and its lights, under it. */
+/** An overlay it wears, by id: its row among its Overlays. */
 export const overlayKey = (path: BodyPath, id: string) => `${bodyKey(path)}/overlay/${id}`;
 
-/** An overlay's lights, a group of their own under the overlay. */
-export const overlayLightsKey = (path: BodyPath, id: string) =>
-  `${bodyKey(path)}/overlay-lights/${id}`;
+/** One of its variants, by id: its row among its Variants. */
+export const variantRowKey = (path: BodyPath, id: string) => `${bodyKey(path)}/variant/${id}`;
+
+/** Its categories: its shapes, the overlays it wears, its variants, its moons (its lights: `lightsKey`). */
+export const shapesKey = (path: BodyPath) => `${bodyKey(path)}/shapes`;
+export const overlaysKey = (path: BodyPath) => `${bodyKey(path)}/overlays`;
+export const variantsKey = (path: BodyPath) => `${bodyKey(path)}/variants`;
+export const moonsKey = (path: BodyPath) => `${bodyKey(path)}/moons`;
 
 /** A material of its own, or of an overlay it wears (by the overlay's id: two may share one). */
 export const materialRowKey = (path: BodyPath, name: string, overlay?: string) =>
@@ -97,14 +102,18 @@ export type Target =
   /** A part of an overlay the sky wears. */
   | { readonly kind: 'sky-part'; readonly key: PartKey }
   | { readonly kind: 'body'; readonly path: BodyPath }
-  /** A group of rows: an overlay a body wears (`overlay`: which), its lights, the sky's depths. */
+  /** A group of rows: a body's categories (its shapes, lights, overlays, moons), the sky's depths. */
   | {
       readonly kind: 'group';
       readonly path: BodyPath;
-      readonly overlay?: string;
       /** An overlay the sky wears (its id). */
       readonly skyOverlay?: string;
     }
+  /** An overlay a body wears, by id. */
+  | { readonly kind: 'overlay'; readonly path: BodyPath; readonly id: string }
+  /** A body's variants (what makes new ones, and the list), and one of them by id. */
+  | { readonly kind: 'variants'; readonly path: BodyPath }
+  | { readonly kind: 'variant'; readonly path: BodyPath; readonly id: string }
   | {
       readonly kind: 'material';
       /** What its settings are kept by (see `materialKey`). */
@@ -171,8 +180,10 @@ export function targetOf(key: string): Target {
   const slash = rest.indexOf('/');
   const path = pathOf(slash < 0 ? rest : rest.slice(0, slash));
   const tail = slash < 0 ? '' : rest.slice(slash);
-  if (tail.startsWith('/overlay/')) return { kind: 'group', path, overlay: tail.slice(9) };
-  if (tail === '/lights' || tail.startsWith('/overlay-lights/')) return { kind: 'group', path };
+  if (tail.startsWith('/overlay/')) return { kind: 'overlay', path, id: tail.slice(9) };
+  if (tail.startsWith('/variant/')) return { kind: 'variant', path, id: tail.slice(9) };
+  if (tail === '/variants') return { kind: 'variants', path };
+  if (['/lights', '/shapes', '/overlays', '/moons'].includes(tail)) return { kind: 'group', path };
   if (tail.startsWith('/l/')) return { kind: 'light', path, id: tail.slice(3) as LightId };
   if (tail.startsWith('/m/')) {
     const name = offPart(tail.slice(3));

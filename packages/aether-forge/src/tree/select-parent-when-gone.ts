@@ -4,7 +4,8 @@ import type { TreeRow } from './scene-tree';
 
 /**
  * Whether what is selected is still there: a part, a light, a material (or one of its layers or
- * its shield shader), a shield's light; none where it is something else (left as it is).
+ * its shield shader), a shield's light, an overlay worn, a variant; none where it is something
+ * else (left as it is).
  */
 function stillThere(editor: Editor): boolean | undefined {
   switch (editor.kind()) {
@@ -12,6 +13,10 @@ function stillThere(editor: Editor): boolean | undefined {
       return !!editor.part();
     case 'light':
       return !!editor.light();
+    case 'overlay':
+      return !!editor.overlayView();
+    case 'variant':
+      return editor.variantRows().some((v) => v.id === editor.selectedVariant());
     case 'material':
     case 'sky-material':
     case 'layer':

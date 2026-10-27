@@ -4,7 +4,7 @@ import { computed } from '@angular/core';
 import type { PickChoice } from '../controls/pick-list';
 import { bodyKey } from './scene-targets';
 import type { SceneMethodsStore, WithBackground } from './scene-editor.store';
-import { switched, variantsOnOf } from '@myrddraall/heroes-replay-stats-aether/variants';
+import { switched } from '@myrddraall/heroes-replay-stats-aether/variants';
 import { patchState } from '@ngrx/signals';
 import type { SceneWrites } from './scene-writes';
 
@@ -78,21 +78,7 @@ export function variantMethods(store: SceneMethodsStore, w: SceneWrites) {
     // the scene's own made, switched, edited, renamed, deleted.
     setVariantOn(id: string, on: boolean): void {
       const path = selectedPath();
-      if (!path) return;
-      const open = store.sceneVariantOpen();
-      if (open) {
-        const key = pathKey(path);
-        d.changeSceneVariant(store.scene(), open, (v) => ({
-          ...v,
-          switches: { ...v.switches, [key]: { ...v.switches?.[key], [id]: on } },
-        }));
-        return;
-      }
-      const b = store.bodyByKey().get(bodyKey(path));
-      settings(path, (s) => {
-        const now = variantsOnOf(s, b?.inherited?.settings, d.library().planets[b?.id ?? '']);
-        return { ...s, variantsOn: switched(now, { [id]: on }) };
-      });
+      if (path) w.variantOn(path, id, on);
     },
     resetVariantsOn(): void {
       const path = selectedPath();

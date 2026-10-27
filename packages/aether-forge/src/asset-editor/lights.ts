@@ -12,14 +12,7 @@ import {
 } from '@myrddraall/heroes-replay-stats-aether/lights';
 import { patchState } from '@ngrx/signals';
 import { lightsOfBody, withLitBy } from '../lights/lights';
-import {
-  ASSET,
-  ASSET_LIGHTS,
-  assetLightKey,
-  assetOverlayKey,
-  assetOverlayLightsKey,
-  receiverOf,
-} from './asset-targets';
+import { ASSET, ASSET_LIGHTS, assetLightKey, receiverOf } from './asset-targets';
 import type { AssetMethodsStore } from './asset-editor.store';
 import type { AssetWrites } from './asset-writes';
 
@@ -49,11 +42,7 @@ export function assetLightMethods(store: AssetMethodsStore, w: AssetWrites) {
     showLight(id: LightId): void {
       const light = store.litBy()?.find((l) => l.id === id);
       if (!light) return;
-      store.expand(ASSET);
-      if (light.overlay) {
-        store.reopen(assetOverlayKey(light.overlay));
-        store.expand(assetOverlayLightsKey(light.overlay));
-      } else store.expand(ASSET_LIGHTS);
+      store.expand(ASSET, ASSET_LIGHTS);
       patchState(store, { selected: assetLightKey(id) });
     },
     setLitBy(change: { readonly id: LightId; readonly on: boolean }): void {

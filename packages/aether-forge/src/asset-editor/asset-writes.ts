@@ -24,6 +24,7 @@ import {
 import type { AssetMethodsStore } from './asset-editor.store';
 import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/space';
 import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies';
+import { variantsOnOf } from '@myrddraall/heroes-replay-stats-aether/variants';
 
 /** What the asset editor's methods change the library through: the asset's settings (or the variant edited), its materials, moons and lights, and the stage's sky. */
 export function assetWrites(store: AssetMethodsStore) {
@@ -156,10 +157,21 @@ export function assetWrites(store: AssetMethodsStore) {
     );
     if (gone.length) d.clearLibraryBody(kind, asset().id, gone);
   };
+  /** One of the planet open's variants switched on or off by default (the last switched on over the others). */
+  const variantOn = (id: string, on: boolean) => {
+    const a = asset();
+    if (a.kind !== 'planet') return;
+    const now = variantsOnOf(draft.library().planets[a.id]);
+    draft.setVariantsOn(
+      a.id,
+      on ? [...now.filter((v) => v !== id), id] : now.filter((v) => v !== id),
+    );
+  };
   return {
     draft,
     asset,
     d,
+    variantOn,
     materialChange,
     materialClear,
     materialBelow,
