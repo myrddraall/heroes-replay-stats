@@ -20,6 +20,7 @@ import { stageViews } from './stage';
 import { assetBackgroundViews } from './background';
 import { assetPartHostViews } from './part-hosts';
 import { assetTreeViews } from './tree';
+import { stageLightingViews } from './stage-lighting';
 import { assetWrites } from './asset-writes';
 import { assetLightMethods } from './lights';
 import { assetMaterialMethods } from './materials';
@@ -74,11 +75,12 @@ const withPartHosts = () => signalStoreFeature(withBackground(), withProps(asset
 export type WithPartHosts = StoreOf<typeof withPartHosts>;
 const withTree = () => signalStoreFeature(withPartHosts(), withProps(assetTreeViews));
 export type WithTree = StoreOf<typeof withTree>;
+const withStageLighting = () => signalStoreFeature(withTree(), withProps(stageLightingViews));
 /** The store as its methods see it: everything computed under them, its state writable. */
-export type AssetMethodsStore = WritableStoreOf<typeof withTree>;
+export type AssetMethodsStore = WritableStoreOf<typeof withStageLighting>;
 
 export const AssetEditorStore = signalStore(
-  withTree(),
+  withStageLighting(),
   withMethods((store) => {
     const w = assetWrites(store);
     return {

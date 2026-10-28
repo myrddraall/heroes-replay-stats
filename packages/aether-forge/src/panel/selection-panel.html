@@ -8,13 +8,12 @@
   />
 </div>
 } @if (pages.pages().length > 1) {
-<div class="layer">
-  <forge-property-select
-    label="Page"
-    [value]="pages.page()"
-    [options]="pages.options()"
-    (valueChange)="pages.show($event)"
-  />
+<div class="pages">
+  <select class="pages__select" aria-label="Page" (change)="pageChosen($event)">
+    @for (p of pages.options(); track p.value) {
+    <option [value]="p.value" [selected]="p.value === pages.page()">{{ p.label }}</option>
+    }
+  </select>
 </div>
 } @switch (editor.kind()) { @case ('scene') {
 <forge-scene-panel />

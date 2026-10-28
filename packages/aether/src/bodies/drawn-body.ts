@@ -10,7 +10,7 @@ import { overlayOfFile } from '../formats/overlay-files';
 import { ownPartKey, overlayPartKey, type PartKey } from '../formats/part-keys';
 import { withPart } from '../formats/part-shapes';
 import { wearOf, wornParts } from '../formats/wear';
-import type { AddedLight, LightSettingsMap } from '../lights/lights';
+import type { AddedLight, LightReach, LightSettingsMap } from '../lights/lights';
 import {
   materialKey,
   type MaterialSettings,
@@ -39,6 +39,8 @@ export interface DrawnBody {
   readonly hidden: boolean;
   /** Drawn dimmed, by the renderer's `dim` (outside what an editor is in). */
   readonly dimmed: boolean;
+  /** Drawn dimmed but for what this takes in of its parts and materials (what a light reaches of it). */
+  readonly dimmedOutside?: LightReach;
   /** Its own turn: its base turn, then about its Axis by its Turn (see `bodyTurn`). */
   readonly turn: Mat3;
   /** Its parts as set (`part`), each with the part it is of (`source`). */
@@ -159,6 +161,7 @@ function drawBody(placement: PlanetPlacement): DrawnBody {
     radius: placement.radius,
     hidden: !!placement.hidden,
     dimmed: !!placement.dimmed,
+    ...(placement.dimmedOutside ? { dimmedOutside: placement.dimmedOutside } : {}),
     turn: bodyTurn(
       poleOf(file.parts),
       placement.axis ?? tuning?.axis,

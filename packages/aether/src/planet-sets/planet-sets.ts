@@ -2,7 +2,7 @@ import type { SceneCamera } from '../formats/play-scene';
 import type { BodyShade, PlanetIndex } from '../formats/planet-files';
 import type { MaterialSettingsMap, MaterialTint } from '../materials/material-settings';
 import type { AddedPart, PartSettingsMap } from '../formats/part-shapes';
-import type { AddedLight, LightSettingsMap } from '../lights/lights';
+import type { AddedLight, LightReach, LightSettingsMap } from '../lights/lights';
 import type { LightBranch } from '../lights/light-flow';
 import type { Orientation, Quat } from '../space/graph';
 
@@ -30,6 +30,8 @@ export interface SetPlanet {
   readonly enabled?: boolean;
   /** Whether it is drawn dimmed (outside what an editor is in; see the view's `dim`). */
   readonly dimmed?: boolean;
+  /** Drawn dimmed but for what this takes in of its parts and materials (see the view's `dim`). */
+  readonly dimmedOutside?: LightReach;
   /**
    * Its materials' settings (its own by name, its overlays' by `materialKey`), over its tuning's
    * and its overlays'.

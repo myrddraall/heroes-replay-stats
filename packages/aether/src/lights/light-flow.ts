@@ -72,7 +72,8 @@ export function flowLights(
     return parent !== undefined && byKey.has(parent) ? top(parent) : key;
   };
   const out = new Map<string, FlowedLight[]>();
-  const give = (key: string, flowed: FlowedLight) => out.set(key, [...(out.get(key) ?? []), flowed]);
+  const give = (key: string, flowed: FlowedLight) =>
+    out.set(key, [...(out.get(key) ?? []), flowed]);
   for (const n of nodes) {
     const key = n.branch.key;
     for (const light of n.lights) {
@@ -118,14 +119,12 @@ export function lightsOut(
   return [
     ...rig
       .filter((l) => flows(settings?.[l.id]))
-      .map(
-        (l): AddedLight => ({
-          ...l,
-          id: handedOnId(owner, l.id),
-          down: settings?.[l.id]?.down,
-          out: settings?.[l.id]?.out,
-        }),
-      ),
+      .map((l): AddedLight => ({
+        ...l,
+        id: handedOnId(owner, l.id),
+        down: settings?.[l.id]?.down,
+        out: settings?.[l.id]?.out,
+      })),
     ...knownLights(added)
       .map((l) => ({ ...l, ...settings?.[l.id] }))
       .filter(flows),

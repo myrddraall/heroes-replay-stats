@@ -1,4 +1,4 @@
-import type { AddedLight, LightSettingsMap } from '../lights/lights';
+import type { AddedLight, LightReach, LightSettingsMap } from '../lights/lights';
 import type { Orientation, Quat } from './graph';
 import { type PartSettingsMap, shapeReach } from '../formats/part-shapes';
 import type { BodyPart, BodyShade } from '../formats/planet-files';
@@ -148,6 +148,8 @@ export interface PlanetPlacement {
   readonly hidden?: boolean;
   /** Drawn dimmed (outside what an editor is in), by the renderer's `dim`. */
   readonly dimmed?: boolean;
+  /** Drawn dimmed but for what this takes in of its parts and materials (what a light reaches of it). */
+  readonly dimmedOutside?: LightReach;
   /**
    * Its materials' settings (its own by name, its overlays' by `materialKey`), over the tunings'
    * (the planet's for its materials, an overlay's for its own).

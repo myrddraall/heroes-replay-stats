@@ -10,9 +10,9 @@
       [attr.aria-label]="(unfolded ? 'Fold ' : 'Unfold ') + link.label"
       (click)="toggle(link.key)"
     >
-      <mat-icon class="material-symbols-outlined" aria-hidden="true">{{
-        unfolded ? 'expand_more' : 'chevron_right'
-      }}</mat-icon>
+      <mat-icon class="material-symbols-outlined" aria-hidden="true"
+        >{{ unfolded ? 'expand_more' : 'chevron_right' }}</mat-icon
+      >
     </button>
     } @else {
     <span></span>
@@ -27,9 +27,9 @@
         [checked]="link.lit"
         (change)="check({ key: link.key, receiver: null }, $event)"
       />
-      <label class="name" [class.name--changed]="link.changed" [for]="id + '-' + i">{{
-        link.label
-      }}</label>
+      <label class="name" [class.name--changed]="link.changed" [for]="id + '-' + i"
+        >{{ link.label }}</label
+      >
     </span>
     }
     <span class="reset-slot">

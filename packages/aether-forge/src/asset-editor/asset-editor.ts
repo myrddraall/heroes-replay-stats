@@ -35,7 +35,9 @@ import type { AssetTarget } from '../layout/open-target';
         const store = inject(AssetEditorStore);
         const ui = inject(EditorUiStore);
         return {
-          planets: store.stagePlanets,
+          // What the light selected doesn't light dimmed.
+          planets: store.stageLit,
+          dim: computed(() => (store.stageDimming() ? 0.35 : 1)),
           sky: store.stageSky,
           tint: store.stageTint,
           backdrop: store.stageBackdrop,

@@ -33,13 +33,18 @@ describe("a light's Linking", () => {
       bodyLink(moon({ lights: { [lamp.id]: { enabled: false } } }), lamp.id, outer, at),
     ).toMatchObject({ lit: false, changed: true });
     const some = bodyLink(
-      moon({ lights: { [lamp.id]: { reach: { mode: 'except', receivers: ['material:clouds'] } } } }),
+      moon({
+        lights: { [lamp.id]: { reach: { mode: 'except', receivers: ['material:clouds'] } } },
+      }),
       lamp.id,
       outer,
       at,
     );
     expect(some?.changed).toBe(true);
     expect(some?.parts.find((p) => p.receiver === 'material:clouds')?.lit).toBe(false);
+    // (What it reaches of it given, for the view to dim the rest; all of it: none.)
+    expect(some?.reach).toEqual({ mode: 'except', receivers: ['material:clouds'] });
+    expect(bodyLink(moon({}), lamp.id, outer, at)?.reach).toBeUndefined();
   });
 
   it('leaves out a body the light does nothing to', () => {

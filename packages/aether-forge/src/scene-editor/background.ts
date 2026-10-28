@@ -26,22 +26,29 @@ import {
   sceneLightKey,
 } from './scene-targets';
 import type { WithTree } from './scene-editor.store';
+import { linkingShown } from '../panel/panel-pages';
 import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/space';
 
 /** What the background shows of the scene: its planets placed, what orbits are about, the markers over the view, the lights' beams. */
 export function backgroundViews(store: WithTree) {
   /**
    * What the light selected lights, by what picking each body selects (`picks`): those it lights,
-   * and those an exception leaves out (none: no light selected). A body's light set to light the
+   * and those an exception leaves out (none: no light selected, or its Linking page not shown). A body's light set to light the
    * whole scene lights the groups' planets too (they can't be left out of it yet).
    */
   const reach = computed(() => {
     const links = store.linking();
-    if (!links) return null;
+    // (Shown on its Linking page only: on its Light page it is seen as it lights the scene.)
+    if (!links || !linkingShown(store._ui.panelPages())) return null;
     const lit = new Set(links.filter((l) => l.lit).map((l) => l.key));
     if (store.target().kind === 'light' && store.light()?.out === 'scene')
       store.placements().forEach((p, i) => lit.add(placementKey(siblingKey(p, i))));
-    return { lit, left: new Set(links.filter((l) => !l.own && !l.lit).map((l) => l.key)) };
+    return {
+      lit,
+      left: new Set(links.filter((l) => !l.own && !l.lit).map((l) => l.key)),
+      // (Some of a body's parts or materials left out: those dimmed.)
+      some: new Map(links.flatMap((l) => (l.lit && l.reach ? [[l.key, l.reach] as const] : []))),
+    };
   });
   return {
     /** The scene's bodies placed for the background (null: the random sets', or loading). */
@@ -56,7 +63,9 @@ export function backgroundViews(store: WithTree) {
       return placed.planets.map((p, i) => {
         const pick = placed.picks[i] ?? '';
         const outside = !!at && pick !== at && !pick.startsWith(`${at}.`);
-        return outside || (reached && !reached.lit.has(pick)) ? { ...p, dimmed: true } : p;
+        if (outside || (reached && !reached.lit.has(pick))) return { ...p, dimmed: true };
+        const some = reached?.some.get(pick);
+        return some ? { ...p, dimmedOutside: some } : p;
       });
     }),
     /** Whether anything of the scene is drawn dimmed: outside what the editor is in, or unlit by the light selected. */
@@ -65,7 +74,9 @@ export function backgroundViews(store: WithTree) {
       const reached = reach();
       return (
         !!store.insideTarget() ||
-        (!!placed && !!reached && placed.picks.some((pick) => !reached.lit.has(pick)))
+        (!!placed &&
+          !!reached &&
+          (reached.some.size > 0 || placed.picks.some((pick) => !reached.lit.has(pick))))
       );
     }),
     /** A drag in the view orbits round what it looks at (the scene's middle as far ahead). */

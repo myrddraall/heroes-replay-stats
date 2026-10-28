@@ -63,3 +63,7 @@ export function panelPagesOf(kind: TargetKind, editor: Editor): readonly PanelPa
 
 /** The kind whose pages a selection's are (a sky's material's: a material's). */
 export const pagesKind = (kind: TargetKind) => (kind === 'sky-material' ? 'material' : kind);
+
+/** Whether a light selected shows its Linking page (the page kept for lights; none kept: its first, Light). */
+export const linkingShown = (kept: Readonly<Record<string, string>>) =>
+  kept[pagesKind('light')] === 'linking';

@@ -1,4 +1,5 @@
 @use 'panel-parts';
+@use '../controls/rows/property-row';
 
 // The properties: one column of pods the panel's full width (the panel's own padding is all it has).
 :host {
@@ -10,4 +11,20 @@
 // of its variants), above everything else in the panel.
 .layer {
   padding: 8px 0 4px;
+}
+
+// Which of the panel's pages is shown: a list the panel's width, apart from the settings under it
+// (as the library's Type is from its list), so it reads as what the panel shows, not a setting.
+.pages {
+  padding: 8px 0 14px;
+
+  &__select {
+    @include property-row.field;
+    width: 100%;
+
+    option {
+      background: rgb(var(--hrs-glass-tint));
+      color: inherit;
+    }
+  }
 }

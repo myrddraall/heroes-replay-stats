@@ -373,6 +373,7 @@ export class SceneView {
           overlays: overlays.filter((o) => !!o),
           ...(p.enabled === false ? { hidden: true } : {}),
           ...(p.dimmed ? { dimmed: true } : {}),
+          ...(p.dimmedOutside ? { dimmedOutside: p.dimmedOutside } : {}),
           position: p.position,
           radius: p.radius,
           materials: p.materials,

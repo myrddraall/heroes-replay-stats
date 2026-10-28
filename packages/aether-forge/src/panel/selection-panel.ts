@@ -45,4 +45,8 @@ import { VariantPanel } from './variant-panel';
 export class SelectionPanel {
   protected readonly editor = inject(Editor);
   protected readonly pages = inject(PanelPagesStore);
+
+  protected pageChosen(event: Event): void {
+    this.pages.show((event.target as HTMLSelectElement).value);
+  }
 }

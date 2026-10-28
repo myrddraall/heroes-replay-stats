@@ -155,6 +155,7 @@ export class ThreeRenderer {
     depthOf: (name, settings, placed) => this.depthOf(name, settings, placed),
     exposure: () => this.loaded.scene.tone.exposure,
     sceneThreshold: () => this.sceneThreshold(),
+    dim: () => this.dim,
   };
   /** The targets a picture is drawn through, and the passes between them. */
   private readonly chain: PassChain;
@@ -181,6 +182,8 @@ export class ThreeRenderer {
   set dim(dim: number) {
     if (dim === this.dimmedBy) return;
     this.dimmedBy = dim;
+    // (Those dimmed in part are baked so: baked again.)
+    for (const placed of this.placed) if (placed.body.dimmedOutside) this.resolveBody(placed);
     this.stillDirty = true;
     this.changed = true;
   }

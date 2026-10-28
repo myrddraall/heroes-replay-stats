@@ -15,6 +15,7 @@ import {
   addedLighting,
   bodyDarkenings,
   linkedSettings,
+  reaches,
   tunedRig,
   withAddedLights,
   withLightSettings,
@@ -50,6 +51,8 @@ export interface DrawContext {
   depthOf(name: string, settings: MaterialSettings | undefined, placed: boolean): MaterialDepth;
   /** The scene's exposure and its bloom threshold. */
   exposure(): number;
+  /** How bright what is drawn dimmed is (see `Renderer.dim`). */
+  dim(): number;
   sceneThreshold(): number;
 }
 
@@ -163,6 +166,9 @@ export function drawStateOf(draw: MeshDraw, ctx: DrawContext): DrawState {
     );
   }
   u.f1('uGlowThreshold', body.glowRig?.bloomThreshold ?? ctx.sceneThreshold());
+  // Outside what is taken in of its body (what a light reaches of it): dimmed.
+  const outside = !!body.dimmedOutside && !reaches(body.dimmedOutside, draw.partKey, draw.key);
+  u.f1('uDim', outside ? ctx.dim() : 1);
   const pattern = draw.part.pattern;
   const drawn = pattern?.kind === 'hex' && settings?.drawAs !== 'texture';
   const round = pattern?.across

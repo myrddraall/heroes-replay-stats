@@ -1,4 +1,4 @@
-import type { LightId, Receiver } from '@myrddraall/heroes-replay-stats-aether/lights';
+import type { LightId, LightReach, Receiver } from '@myrddraall/heroes-replay-stats-aether/lights';
 import type { BodyInfo } from '../bodies/body';
 import { litByOf, type OuterLight, receiversOf } from './lights';
 
@@ -24,6 +24,8 @@ export interface LinkEntry {
   readonly lit: boolean;
   readonly changed: boolean;
   readonly parts: readonly LinkPart[];
+  /** What the light reaches of it, where not all of it (some of its parts or materials left out). */
+  readonly reach?: LightReach;
 }
 
 /** A light taken in or left out by something it lights (`key`), or one of its parts or materials. */
@@ -42,7 +44,12 @@ export function bodyLink(
   b: BodyInfo,
   id: LightId,
   outer: readonly OuterLight[],
-  at: { readonly key: string; readonly label: string; readonly depth: number; readonly own: boolean },
+  at: {
+    readonly key: string;
+    readonly label: string;
+    readonly depth: number;
+    readonly own: boolean;
+  },
 ): LinkEntry | null {
   const light = litByOf(b, null, outer).find((l) => l.id === id);
   if (!light) return null;
@@ -56,5 +63,6 @@ export function bodyLink(
     lit: light.reaches,
     changed: !at.own && (set?.enabled !== undefined || set?.reach !== undefined),
     parts,
+    ...(light.reach && parts.some((p) => !p.lit) ? { reach: light.reach } : {}),
   };
 }
