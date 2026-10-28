@@ -35,6 +35,7 @@ import type { PlanetIndex } from '../formats/planet-files';
 import type { SkySettings } from '../sky/sky-settings';
 import type { PlanetPlacement } from '../space/space';
 import { keepUnchanged } from './stable-placements';
+import { type BranchedPlacement, withFlowedLights } from '../bodies/flowed-lights';
 import { browserColourParser, rendererTint } from '../tints/tints';
 import { backgroundTints } from '../tints/tint-settings';
 import type { AddedPart } from '../formats/part-shapes';
@@ -357,7 +358,7 @@ export class SceneView {
       if (random && !scene && libraryMoonsOf(set, library).length) return previous?.value ?? null;
       const placed = random && scene ? setWithMoons(set, library, scene.scene.camera) : set;
       const file = this.overlayFile();
-      const out: PlanetPlacement[] = [];
+      const out: BranchedPlacement[] = [];
       const variants = untracked(this.dataVariants);
       for (const p of placed.map((s) => withLibrary(s, library, variants.get(s.id)))) {
         const own = loaded.get(p.id);
@@ -367,7 +368,7 @@ export class SceneView {
         if (p.addedParts?.length && !scene) return previous?.value ?? null;
         const planet =
           p.addedParts?.length && scene ? this.addedOnto(own, p.addedParts, loaded, scene) : own;
-        out.push({
+        const placement: PlanetPlacement = {
           planet,
           overlays: overlays.filter((o) => !!o),
           ...(p.enabled === false ? { hidden: true } : {}),
@@ -389,10 +390,16 @@ export class SceneView {
           ...(p.axis ? { axis: p.axis } : {}),
           ...(p.turn !== undefined ? { turn: p.turn } : {}),
           ...(p.baseTurn ? { baseTurn: p.baseTurn } : {}),
-        });
+        };
+        out.push({ placement, id: p.id, ...(p.branch ? { branch: p.branch } : {}) });
       }
+      // Each lit by what reaches it from elsewhere in the scene too (placed by its camera).
+      const lit =
+        scene && out.some((b) => b.branch)
+          ? withFlowedLights(out, scene.scene.camera)
+          : out.map((b) => b.placement);
       // Each body as it was where it hasn't changed: only a changed one is drawn again.
-      return keepUnchanged(previous?.value, out);
+      return keepUnchanged(previous?.value, lit);
     },
   });
 }

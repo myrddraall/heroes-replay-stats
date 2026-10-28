@@ -18,7 +18,9 @@ import {
   type LightReach,
   type LightSettings,
   type LightSettingsMap,
-  lightsForMoons,
+  downOf,
+  type LightOut,
+  lightsOut,
   mergeLightSettings,
   type NewLightKind,
   type PartMaterials,
@@ -87,9 +89,15 @@ export interface LightEntry {
   /** What of its body it may reach (none: a scene's, reaching every body), and what it reaches. */
   readonly receivers: readonly ReceiverEntry[];
   readonly reach?: LightReach;
-  /** Whether it reaches its body's moons too, and whether it can (one added to a body). */
-  readonly moons: boolean;
-  readonly canReachMoons: boolean;
+  /**
+   * Whether it lights its body's moons too (Down), and whether it can (a body's own, with moons);
+   * what else it lights (Out: its planet, its group, the whole scene; none: nothing), and what it
+   * can (a body's own: the whole scene, a moon's its planet too; none, a scene's or a shield's).
+   */
+  readonly down: boolean;
+  readonly canDown: boolean;
+  readonly out?: LightOut;
+  readonly outs: readonly Exclude<LightOut, 'none'>[];
 }
 
 /** A part or material a body's light may reach, as its Reaches list shows it (a part, its materials under it). */
@@ -166,7 +174,7 @@ export function lightsOfBody(b: BodyInfo): LightEntry[] {
       o.id,
     ]),
   ];
-  const added: Omit<LightEntry, 'receivers' | 'moons' | 'canReachMoons'>[] = [
+  const added: Omit<LightEntry, 'receivers' | 'down' | 'canDown' | 'out' | 'outs'>[] = [
     ...below.flatMap(([name, list, overlay]) =>
       knownLights(list ?? []).map((l) => ({
         ...(overlay ? { overlay } : {}),
@@ -190,8 +198,9 @@ export function lightsOfBody(b: BodyInfo): LightEntry[] {
       removable: true,
     })),
   ];
-  // What each reaches (as set over an added light's own), and whether it reaches the moons.
+  // What each reaches (as set over an added light's own), and what beyond its body.
   const receivers = receiversOf(b);
+  const outs: readonly Exclude<LightOut, 'none'>[] = b.orbit ? ['planet', 'scene'] : ['scene'];
   const addedById = new Map(
     [...addedBelowOf(b), ...(b.settings.added ?? [])].map((l) => [l.id, l] as const),
   );
@@ -202,12 +211,14 @@ export function lightsOfBody(b: BodyInfo): LightEntry[] {
       ...e,
       receivers,
       reach: merged.reach,
-      moons: merged.moons ?? false,
-      canReachMoons: own !== undefined,
+      down: downOf(merged),
+      canDown: b.moons.length > 0,
+      ...(merged.out ? { out: merged.out } : {}),
+      outs,
     };
   });
 
-  function rigEntries(): Omit<LightEntry, 'receivers' | 'moons' | 'canReachMoons'>[] {
+  function rigEntries(): Omit<LightEntry, 'receivers' | 'down' | 'canDown' | 'out' | 'outs'>[] {
     return bodyLights(turned, shade, settings).map((light) => {
       const shadow = light.id === 'shadow';
       const own = b.settings.lights?.[light.id];
@@ -227,11 +238,16 @@ export function lightsOfBody(b: BodyInfo): LightEntry[] {
 }
 
 /**
- * The lights added to a body (the library's, its overlay's, its own) that reach its moons, as set
- * (`lightsForMoons`).
+ * A body's lights that light beyond it (`lightsOut`): those added to it (the library's, its
+ * overlays', its own) and its data's, as set; its data's under ids of its own (`handedOnId`).
  */
-export function moonLightsOf(b: BodyInfo): AddedLight[] {
-  return lightsForMoons(
+export function lightsOutOf(b: BodyInfo): AddedLight[] {
+  const rig = lightsOfBody(b)
+    .filter((e) => !e.light.id.startsWith('added-'))
+    .map((e) => e.light);
+  return lightsOut(
+    b.id,
+    rig,
     [...addedBelowOf(b), ...(b.settings.added ?? [])],
     mergeLightSettings(lightsBelowOf(b), b.settings.lights),
   );
@@ -259,8 +275,9 @@ export function sceneLightsOf(lights: readonly AddedLight[] | undefined): LightE
     set: undefined,
     origins: {},
     receivers: [],
-    moons: false,
-    canReachMoons: false,
+    down: false,
+    canDown: false,
+    outs: [],
     removable: true,
   }));
 }

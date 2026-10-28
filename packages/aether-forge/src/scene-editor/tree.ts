@@ -13,12 +13,17 @@ import {
   visualExtent,
   siblingKey,
 } from '@myrddraall/heroes-replay-stats-aether/scenes';
-import type { AddedLight } from '@myrddraall/heroes-replay-stats-aether/lights';
+import {
+  type AddedLight,
+  downOf,
+  type LightBranch,
+  receivedLight,
+} from '@myrddraall/heroes-replay-stats-aether/lights';
 import { computed } from '@angular/core';
 import { bodyEnabled, type BodyInfo, filesLoaded, wornIds } from '../bodies/body';
 import { byDepth, skyOverlayLabel } from '../sky/sky';
 import { referenceRow } from '../aids/reference-row';
-import { lightIcon, moonLightsOf, sceneLightsOf } from '../lights/lights';
+import { lightIcon, lightsOutOf, sceneLightsOf } from '../lights/lights';
 import { type MaterialEntry } from '../materials/materials';
 import { wornLabel } from '../overlays/overlays';
 import type { TreeRow } from '../tree/scene-tree';
@@ -311,16 +316,24 @@ export function treeViews(store: WithPartHosts) {
         at.map((_, i) => store.bodyByKey().get(bodyKey(at.slice(0, i + 1))));
       // Each root: a planet where it is (the scene's, or a group's put in it), or the moon
       // centred on; its moons; the path its bodies' own paths are under (the scene's); its
-      // bodies from it down to each (`chain`); what picking one selects; the lights of the
-      // groups it is in.
+      // bodies from it down to each (`chain`); what picking one selects; where each is in the
+      // tree the lights reach through (`branch`); the lights from beyond what is put out that
+      // light all of it (its groups', those of the bodies the moon centred on is a moon of).
       interface Root {
         readonly root: { readonly position: Vec3; readonly radius: number };
         readonly moons: readonly MoonChoices[];
         readonly fit: boolean;
         readonly chain: (path: BodyPath) => (BodyInfo | undefined)[];
         readonly pick: (path: BodyPath) => string;
+        readonly branch: (path: BodyPath) => LightBranch;
         readonly lights: readonly AddedLight[];
       }
+      /** Where a body is in the tree, by the keys of the bodies down to it. */
+      const branchOf = (key: (path: BodyPath) => string, path: BodyPath, group?: string) => ({
+        key: key(path),
+        ...(path.length ? { parent: key(path.slice(0, -1)) } : {}),
+        ...(group !== undefined ? { group } : {}),
+      });
       const focus = store.focusPath();
       const focused = focus.length ? bodyAt(planets, focus) : undefined;
       const roots: Root[] = focused
@@ -331,7 +344,12 @@ export function treeViews(store: WithPartHosts) {
               fit: true,
               chain: (path) => sceneChain([...focus, ...path]),
               pick: (path) => bodyKey([...focus, ...path]),
-              lights: [],
+              branch: (path) => branchOf((at) => bodyKey([...focus, ...at]), path),
+              // (Those that light down from the bodies it is a moon of, not put out.)
+              lights: sceneChain(focus.slice(0, -1))
+                .flatMap((parent) => (parent ? lightsOutOf(parent) : []))
+                .filter((l) => l.enabled !== false && downOf(l))
+                .map(receivedLight),
             },
           ]
         : [
@@ -344,10 +362,12 @@ export function treeViews(store: WithPartHosts) {
                 fit: planets.length === 1 && !grouped.length,
                 chain: (path) => sceneChain([key, ...path]),
                 pick: (path) => bodyKey([key, ...path]),
+                branch: (path) => branchOf((at) => bodyKey([key, ...at]), path),
                 lights: [],
               };
             }),
             // The groups' planets where they are put: picked, the group put in it is selected.
+            // (A group's lights light all of it; those lighting the whole scene are the scene's.)
             ...grouped.map((g, j): Root => ({
               root: { position: g.body.position, radius: g.body.radius },
               moons: g.body.moons ?? [],
@@ -357,7 +377,8 @@ export function treeViews(store: WithPartHosts) {
                   store.groupInfos().get(groupBodyKey(j, at)),
                 ),
               pick: () => placementKey(g.placement[0]!),
-              lights: g.lights,
+              branch: (path) => branchOf((at) => groupBodyKey(j, at), path, `group:${j}`),
+              lights: g.lights.filter((l) => l.out !== 'scene').map(receivedLight),
             })),
           ];
       const out: SetPlanet[] = [];
@@ -365,7 +386,7 @@ export function treeViews(store: WithPartHosts) {
       const picks: string[] = [];
       /** What must stay in view of each body put out, in its radii. */
       const extents: number[] = [];
-      for (const { root, moons, fit, chain, pick, lights } of roots) {
+      for (const { root, moons, fit, chain, pick, branch, lights } of roots) {
         // What must stay in view of each body: as far as its parts and its halo reach.
         const extent = (path: BodyPath) => {
           const b = chain(path).at(-1);
@@ -383,11 +404,6 @@ export function treeViews(store: WithPartHosts) {
           const s = b.settings;
           // Drawn where it and every body it is a moon of are switched on.
           const drawn = bodies.every((x) => (x?.settings.enabled ?? x?.below?.enabled) !== false);
-          // The lights of the bodies it is a moon of that reach their moons, and its groups'.
-          const inherited = [
-            ...bodies.slice(0, -1).flatMap((parent) => (parent ? moonLightsOf(parent) : [])),
-            ...lights,
-          ];
           extents.push(visualExtent(b.file, b.overlays, bodyParts(b), glowMarginOf(b)));
           picks.push(pick(p.path));
           out.push({
@@ -409,7 +425,8 @@ export function treeViews(store: WithPartHosts) {
             ...(s.addedParts ? { addedParts: s.addedParts } : {}),
             order: s.order,
             lights: s.lights,
-            added: inherited.length ? [...(s.added ?? []), ...inherited] : s.added,
+            added: lights.length ? [...(s.added ?? []), ...lights] : s.added,
+            branch: branch(p.path),
             tint: s.tint,
             lightFrom: s.lightFrom,
             rim: s.rim,

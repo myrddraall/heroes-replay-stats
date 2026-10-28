@@ -4,7 +4,7 @@ import {
   bodyDarkenings,
   bodyLights,
   linkedSettings,
-  lightsForMoons,
+  downOf,
   newLight,
   reaches,
   withAddedLights,
@@ -207,21 +207,11 @@ describe('a body’s lights', () => {
     expect(linkedSettings(undefined, [], 'own:surface', 'rock')).toBeUndefined();
   });
 
-  it('reach a body’s moons only where set to, whole and as set', () => {
-    const lamp = newLight('directional', []);
-    const other = newLight('ambient', [lamp]);
-    const moons = lightsForMoons([lamp, other], {
-      [lamp.id]: {
-        moons: true,
-        strength: 3,
-        reach: { mode: 'only', receivers: ['part:own:surface'] },
-      },
-    });
-    expect(moons.map((l) => l.id)).toEqual([lamp.id]);
-    expect(moons[0]!.strength).toBe(3);
-    expect(moons[0]!.reach).toBeUndefined();
-    // Switched off: not on the moons either.
-    expect(lightsForMoons([{ ...lamp, moons: true, enabled: false }], undefined)).toEqual([]);
+  it('light down where added, where set to, or where kept from before as reaching moons', () => {
+    expect(newLight('point', []).down).toBe(true);
+    expect(downOf({})).toBe(false);
+    expect(downOf({ moons: true })).toBe(true);
+    expect(downOf({ moons: true, down: false })).toBe(false);
   });
 
   it("leave out lights of kinds kept from before (a grid's reveal and activation, its material's now)", () => {

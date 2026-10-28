@@ -168,12 +168,16 @@ export function setWithMoons(
   library: LibraryState,
   layoutView: Viewpoint,
 ): SetPlanet[] {
-  return set.flatMap((p) => {
+  return set.flatMap((p, n) => {
     const moons = library.moons?.[p.id] ?? [];
-    if (!moons.length) return [p];
+    // (Each in the tree its lights reach through: the planet, then its moons under it.)
+    const key = p.branch?.key ?? `set:${n}`;
+    const planet = p.branch ? p : { ...p, branch: { key } };
+    if (!moons.length) return [planet];
     const placed = placeBodies({ position: p.position, radius: p.radius }, moons, layoutView);
+    const keyOf = (path: readonly string[]) => (path.length ? `${key}/${path.join('/')}` : key);
     return [
-      p,
+      planet,
       ...placed.slice(1).map((at): SetPlanet => {
         const m = moonAt(moons, at.path)!;
         const chain = at.path.map((_, i) => moonAt(moons, at.path.slice(0, i + 1)));
@@ -184,6 +188,11 @@ export function setWithMoons(
           radius: at.radius,
           ...(m.overlays ? { overlays: m.overlays } : {}),
           ...(drawn ? {} : { enabled: false }),
+          branch: {
+            key: keyOf(at.path),
+            parent: keyOf(at.path.slice(0, -1)),
+            ...(p.branch?.group !== undefined ? { group: p.branch.group } : {}),
+          },
         };
       }),
     ];

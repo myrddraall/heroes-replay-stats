@@ -3,6 +3,7 @@ import type { BodyShade, PlanetIndex } from '../formats/planet-files';
 import type { MaterialSettingsMap, MaterialTint } from '../materials/material-settings';
 import type { AddedPart, PartSettingsMap } from '../formats/part-shapes';
 import type { AddedLight, LightSettingsMap } from '../lights/lights';
+import type { LightBranch } from '../lights/light-flow';
 import type { Orientation, Quat } from '../space/graph';
 
 /** A planet in a set: which, where (the scene's units), and its body's radius there. */
@@ -44,6 +45,8 @@ export interface SetPlanet {
   readonly lights?: LightSettingsMap;
   /** Lights added to it (its own and its overlay's). */
   readonly added?: readonly AddedLight[];
+  /** Where it is in its scene's tree, for the lights reaching it from elsewhere (none: none do, nor do its). */
+  readonly branch?: LightBranch;
   /** A tint over all its materials (its style's too), over its tuning's. */
   readonly tint?: MaterialTint;
   /** Its rig turned and made stronger together, over its tuning's (kept from before lights were objects; see `tunedRig`). */

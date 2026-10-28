@@ -99,8 +99,9 @@ export const SHIELD_DEFAULTS: Required<ShieldEffect> = {
 /**
  * A light's settings, each where set: on or off, whether it darkens instead of lighting, colour
  * (`#rrggbb`: one that darkens takes it away) and strength, the side it comes from and how softly
- * it falls off round the body; what of its body it reaches (all of it unless set), and, one added
- * to a body, whether it reaches the body's moons too (theirs too). A rim light's `from` is its
+ * it falls off round the body; what of its body it reaches (all of it unless set), whether it
+ * lights what is under it (`down`) and how far beyond it it reaches (`out`: see `LightOut`). A
+ * rim light's `from` is its
  * lean (the side of the rim it favours), its `fade` how far in from the rim it spreads (0 to 1)
  * and its `softness` its falloff.
  */
@@ -148,8 +149,34 @@ export interface LightSettings {
   /** What it does to a shield's grid, where it is one of the shield's lights (none: it reveals). */
   readonly shield?: ShieldEffect;
   readonly reach?: LightReach;
+  /**
+   * Whether it lights what is under it in the scene (its body's moons, theirs too): none, as kept
+   * from before (`moons`), else no (see `downOf`).
+   */
+  readonly down?: boolean;
+  /** How far beyond its body it reaches (none, or `none`: nowhere beyond it). */
+  readonly out?: LightOut;
+  /** Whether it reached its body's moons, kept from before there was `down`. */
   readonly moons?: boolean;
 }
+
+/**
+ * How far beyond the body it is on a light reaches: nowhere (set over one under it that does), the
+ * planet it is a moon of (with all of that planet's moons), the group it is in (all of the group's
+ * bodies), or the whole scene.
+ */
+export type LightOut = 'none' | 'planet' | 'group' | 'scene';
+
+/** How far beyond its body a light reaches, where it reaches beyond it at all. */
+export const outOf = (s: LightSettings): Exclude<LightOut, 'none'> | undefined =>
+  s.out === 'none' ? undefined : s.out;
+
+/**
+ * Whether a light lights what is under it (a body's moons): as set, else as it was set before
+ * (`moons`), else not (a body's lights from its data light it alone; a light added since starts
+ * on: see `newLight`).
+ */
+export const downOf = (s: LightSettings): boolean => s.down ?? s.moons ?? false;
 
 /** Lights' settings by light. */
 export type LightSettingsMap = Readonly<Partial<Record<LightId, LightSettings>>>;
@@ -185,9 +212,16 @@ const NEW_SKY_REACH = 1.5;
 
 /**
  * A new light of a kind, named after the lights of that kind already added beside it (an
- * antilight's: after the antilights).
+ * antilight's: after the antilights); lighting what is under it (see `downOf`).
  */
 export function newLight(
+  kind: NewLightKind,
+  existing: readonly { readonly kind: LightKind; readonly darkens?: boolean }[],
+): AddedLight {
+  return { ...lightOfKind(kind, existing), down: true };
+}
+
+function lightOfKind(
   kind: NewLightKind,
   existing: readonly { readonly kind: LightKind; readonly darkens?: boolean }[],
 ): AddedLight {
@@ -678,20 +712,6 @@ export function linkedSettings(
     if (!reaches(reach, part, material)) off[id] = { ...settings?.[id], enabled: false };
   }
   return Object.keys(off).length ? { ...settings, ...off } : settings;
-}
-
-/**
- * The lights added to a body that reach its moons too, as set (their settings in them), for a
- * moon: each reaches the whole moon (its reach was among its own body's parts).
- */
-export function lightsForMoons(
-  added: readonly AddedLight[],
-  settings: LightSettingsMap | undefined,
-): AddedLight[] {
-  return knownLights(added)
-    .map((l) => ({ ...l, ...settings?.[l.id] }))
-    .filter((l) => l.moons === true && l.enabled !== false)
-    .map((l) => ({ ...l, reach: undefined, moons: undefined }));
 }
 
 /** Lights' settings from several levels, the later over the earlier, each setting its own. */

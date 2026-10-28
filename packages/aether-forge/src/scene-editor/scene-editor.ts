@@ -1,5 +1,6 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { SCENE_SOURCE } from '@myrddraall/heroes-replay-stats-aether/view';
+import { receivedLight } from '@myrddraall/heroes-replay-stats-aether/lights';
 import { Editor } from '../editing/editor';
 import { OVERRIDE_SHOWN } from '../controls/rows/override-shown';
 import { EditorLayout } from '../layout/editor-layout';
@@ -35,7 +36,13 @@ import { SceneHeader } from './scene-header';
         return {
           planets: store.scenePlanets,
           sky: store.sceneSky,
-          lights: store.sceneLights,
+          // (With the groups' that light the whole scene.)
+          lights: computed(() => [
+            ...store.sceneLights(),
+            ...store
+              .placedGroups()
+              .flatMap((g) => g.lights.filter((l) => l.out === 'scene').map(receivedLight)),
+          ]),
           tint: store.sceneTint,
           key: store.scene,
           random: store.sets,

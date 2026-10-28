@@ -1,4 +1,5 @@
 import {
+  type LightOut,
   type LightReach,
   type LightSettings,
   type Receiver,
@@ -62,14 +63,22 @@ const REACH_MODES: readonly PropertyOption[] = [
   { value: 'except', label: 'All but the checked' },
 ];
 
+/** What else a light lights, as its Also lights list offers it (those its body can: see `LightEntry`). */
+const OUT_LABELS: Record<LightOut, string> = {
+  none: 'Nothing else',
+  planet: 'Its planet',
+  group: 'Its group',
+  scene: 'The whole scene',
+};
+
 /**
  * A body's light's properties (presentational), the same rows for every light: whether it lights
  * or darkens (an antilight: its colour taken away, its strength how much), its colour and
  * strength, a directional light's side (Light from) and how softly it falls off round the body,
  * a point's or spot's place and reach (an environment light's: how far out the sky is read),
  * and one that lights its specular colour and strength (its shine on a material that shines);
- * what of its body it reaches (its parts and their materials, checked), and whether it reaches the
- * body's moons. Whether it is on is its row's checkbox in the tree.
+ * what of its body it reaches (its parts and their materials, checked), whether it lights the
+ * body's moons and what else it lights. Whether it is on is its row's checkbox in the tree.
  */
 @Component({
   selector: 'forge-light-properties',
@@ -136,6 +145,20 @@ export class LightProperties {
       ? [...r.receivers, receiver]
       : r.receivers.filter((x) => x !== receiver);
     this.settingsChange.emit({ reach: { mode: r.mode, receivers } });
+  }
+
+  protected readonly outOptions = computed((): PropertyOption[] =>
+    (['none', ...this.light().outs] as const).map((value) => ({
+      value,
+      label: OUT_LABELS[value],
+    })),
+  );
+
+  /** What else it lights chosen: nothing, as it starts (one set under it: nothing over that). */
+  protected chooseOut(value: string): void {
+    if (value !== 'none') this.settingsChange.emit({ out: value as LightOut });
+    else if (this.light().removable || !this.light().origins.out) this.unset(['out']);
+    else this.settingsChange.emit({ out: 'none' });
   }
 
   /** Settings taken back: one added at the level edited has its own, taken out of it. */

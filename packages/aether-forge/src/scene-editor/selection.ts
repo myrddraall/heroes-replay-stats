@@ -8,7 +8,7 @@ import {
   indexOfKey,
   siblingKey,
 } from '@myrddraall/heroes-replay-stats-aether/scenes';
-import { knownLights } from '@myrddraall/heroes-replay-stats-aether/lights';
+import { flowLights, knownLights } from '@myrddraall/heroes-replay-stats-aether/lights';
 import { computed } from '@angular/core';
 import {
   bodyLabel,
@@ -23,7 +23,7 @@ import {
   lightsOfBody,
   type LitByEntry,
   litByOf,
-  moonLightsOf,
+  lightsOutOf,
   type OuterLight,
   sceneLightsOf,
 } from '../lights/lights';
@@ -103,9 +103,28 @@ export function selectionViews(store: WithSky) {
     const t = target();
     return t.kind === 'placement' ? (placements()[indexOfKey(placements(), t.key)] ?? null) : null;
   });
+  /** The lights of the scene's bodies that light other bodies, by the key of each they light (`flowLights`). */
+  const flowed = computed(() =>
+    flowLights(
+      [...bodyByKey()].flatMap(([key, b]) => {
+        if (!key.startsWith('body:')) return [];
+        const path = pathOf(key.slice(5));
+        return [
+          {
+            branch: {
+              key,
+              ...(path.length > 1 ? { parent: bodyKey(path.slice(0, -1)) } : {}),
+            },
+            lights: lightsOutOf(b),
+          },
+        ];
+      }),
+    ),
+  );
   /**
    * The lights from beyond the selected body that light it too: the scene's (those on), and
-   * those of the planets it is a moon of that reach their moons.
+   * those of the other bodies that reach it (the planets it is a moon of lighting down, those
+   * lighting out to it).
    */
   const outerLights = computed((): OuterLight[] => {
     const t = target();
@@ -114,18 +133,10 @@ export function selectionViews(store: WithSky) {
       ...knownLights(choices().lights ?? [])
         .filter((l) => l.enabled !== false)
         .map((light) => ({ light, owner: 'scene' as const })),
-      ...t.path.slice(0, -1).flatMap((_, i) => {
-        const owner = t.path.slice(0, i + 1);
-        const parent = bodyByKey().get(bodyKey(owner));
-        if (!parent) return [];
-        const overlays = new Map(
-          lightsOfBody(parent).flatMap((l) => (l.overlay ? [[l.light.id, l.overlay]] : [])),
-        );
-        return moonLightsOf(parent).map((light) => ({
-          light,
-          owner,
-          overlay: overlays.get(light.id),
-        }));
+      ...(flowed().get(bodyKey(t.path)) ?? []).map(({ light, from }) => {
+        const owner = bodyByKey().get(from);
+        const overlay = owner && lightsOfBody(owner).find((l) => l.light.id === light.id)?.overlay;
+        return { light, owner: pathOf(from.slice(5)), ...(overlay ? { overlay } : {}) };
       }),
     ];
   });

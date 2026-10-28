@@ -104,8 +104,9 @@ export class MaterialPanel {
       origins: {},
       removable: true,
       receivers: [],
-      moons: false,
-      canReachMoons: false,
+      down: false,
+      canDown: false,
+      outs: [],
     };
   });
 

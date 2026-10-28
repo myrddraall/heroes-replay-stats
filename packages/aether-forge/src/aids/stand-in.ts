@@ -223,8 +223,9 @@ export function standInLights(set: LightSettingsMap): LightEntry[] {
         origins: {},
         removable: false,
         receivers: [],
-        moons: false,
-        canReachMoons: false,
+        down: false,
+        canDown: false,
+        outs: [],
       };
     });
 }

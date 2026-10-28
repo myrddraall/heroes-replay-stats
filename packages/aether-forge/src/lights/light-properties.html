@@ -205,8 +205,8 @@
 } @if (entry.receivers.length && on('linking')) {
 <forge-property-section
   title="Linking"
-  [changed]="isSet('reach') || isSet('moons')"
-  (resetRequested)="unset(['reach', 'moons'])"
+  [changed]="isSet('reach') || isSet('down') || isSet('moons') || isSet('out')"
+  (resetRequested)="unset(['reach', 'down', 'moons', 'out'])"
 >
   <forge-property-select
     label="Reaches"
@@ -225,15 +225,26 @@
     [checked]="entry.reach?.receivers?.includes(item.receiver) ?? false"
     (checkedChange)="checkReceiver(item.receiver, $event)"
   />
-  } } @if (entry.canReachMoons) {
+  } } @if (entry.canDown) {
   <forge-property-check
-    label="Reaches its moons"
-    [checked]="entry.moons"
-    [changed]="isSet('moons')"
-    [origin]="entry.origins.moons"
-    [overridden]="entry.overrides?.moons"
-    (resetRequested)="unset(['moons'])"
-    (checkedChange)="settingsChange.emit({ moons: $event })"
+    label="Lights its moons"
+    [checked]="entry.down"
+    [changed]="isSet('down') || isSet('moons')"
+    [origin]="entry.origins.down ?? entry.origins.moons"
+    [overridden]="entry.overrides?.down ?? entry.overrides?.moons"
+    (resetRequested)="unset(['down', 'moons'])"
+    (checkedChange)="settingsChange.emit({ down: $event })"
+  />
+  } @if (entry.outs.length) {
+  <forge-property-select
+    label="Also lights"
+    [value]="entry.out ?? 'none'"
+    [options]="outOptions()"
+    [changed]="isSet('out')"
+    [origin]="entry.origins.out"
+    [overridden]="entry.overrides?.out"
+    (resetRequested)="unset(['out'])"
+    (valueChange)="chooseOut($event)"
   />
   }
 </forge-property-section>

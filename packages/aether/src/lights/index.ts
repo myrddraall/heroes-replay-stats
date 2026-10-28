@@ -8,8 +8,10 @@ export {
   type LightKind,
   type LightReach,
   type LightSettings,
+  type LightOut,
   type LightSettingsMap,
-  lightsForMoons,
+  downOf,
+  outOf,
   mergeLightSettings,
   newLight,
   type NewLightKind,
@@ -23,3 +25,12 @@ export {
   withLightChanged,
   withReceiver,
 } from './lights';
+export {
+  type FlowedLight,
+  type FlowNode,
+  flowLights,
+  handedOnId,
+  type LightBranch,
+  lightsOut,
+  receivedLight,
+} from './light-flow';

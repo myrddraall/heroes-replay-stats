@@ -104,7 +104,6 @@ function drawBody(placement: PlanetPlacement): DrawnBody {
   const file = planet.planet;
   const tuning = file.tuning;
   const overlays = placement.overlays ?? [];
-  const wears = overlays.map((o) => wearOf(file, overlayOfFile(o.id)));
   const worn = (o: LoadedPlanet) => wornParts(file, overlayOfFile(o.id), o.planet.parts);
   const parts = [
     ...file.parts.map((p) => ({ source: p, part: withPart(p, placement.parts?.[ownPartKey(p)]) })),
@@ -148,9 +147,7 @@ function drawBody(placement: PlanetPlacement): DrawnBody {
     });
   }
   const glowRig = overlays.length ? overlays.find((o) => o.planet.light)?.planet.light : file.light;
-  const rig = overlays.find((o) => o.planet.light)?.planet.light ?? file.light;
-  const lighting = placement.lighting ?? tuning?.lighting;
-  const lightFrom = placement.lightFrom ?? tuning?.lightFrom;
+  const { rig, lighting, lightFrom, shade } = bodyRigOf(placement);
   const tint = placement.tint ?? tuning?.tint;
   const rim = placement.rim ?? tuning?.rim;
   const orientation = placement.orientation ?? tuning?.orientation;
@@ -180,11 +177,36 @@ function drawBody(placement: PlanetPlacement): DrawnBody {
     ...(orientation ? { orientation } : {}),
     ...(placement.lights ? { lights: placement.lights } : {}),
     ...(placement.added ? { added: placement.added } : {}),
+    shade,
+  };
+}
+
+/** What lights a body as placed: its rig (see `DrawnBody`), as made stronger and turned, and its shade. */
+export function bodyRigOf(placement: PlanetPlacement): {
+  readonly rig?: PlanetLight;
+  readonly lighting?: number;
+  readonly lightFrom?: Vec3;
+  readonly shade: BodyShade;
+} {
+  const file = placement.planet.planet;
+  const tuning = file.tuning;
+  const overlays = placement.overlays ?? [];
+  const rig = overlays.find((o) => o.planet.light)?.planet.light ?? file.light;
+  const lighting = placement.lighting ?? tuning?.lighting;
+  const lightFrom = placement.lightFrom ?? tuning?.lightFrom;
+  return {
+    ...(rig ? { rig } : {}),
+    ...(lighting !== undefined ? { lighting } : {}),
+    ...(lightFrom ? { lightFrom } : {}),
     shade: {
       ...DEFAULT_SHADE,
       ...tuning?.shade,
       ...overlays.reduce(
-        (a: Partial<BodyShade>, o, i) => ({ ...a, ...o.planet.shade, ...wears[i]?.shade }),
+        (a: Partial<BodyShade>, o) => ({
+          ...a,
+          ...o.planet.shade,
+          ...wearOf(file, overlayOfFile(o.id))?.shade,
+        }),
         {},
       ),
       ...placement.shade,
