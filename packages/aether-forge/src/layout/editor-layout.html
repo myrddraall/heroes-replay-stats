@@ -40,11 +40,14 @@
       </div>
       @if (ui.browsing()) {
       <forge-asset-browser />
-      } @else {
+      } @else { @if (editor.crumbs().length > 1) {
+      <forge-breadcrumb [crumbs]="editor.crumbs()" (crumbPick)="editor.goTo($event)" />
+      }
       <forge-scene-tree
         [rows]="editor.rows()"
         [selected]="editor.selected()"
         (rowSelect)="editor.select($event)"
+        (rowOpen)="editor.enter($event)"
         (expandToggle)="editor.toggleExpanded($event)"
         (enabledChange)="editor.setEnabled($event)"
         (moved)="editor.moveMaterial($event)"
@@ -84,6 +87,8 @@
       (cameraMoveStart)="draft.holdHistory()"
       (cameraMoveEnd)="draft.releaseHistory()"
       (planetPick)="pick($event)"
+      (pickMissed)="missed()"
+      (planetHover)="ui.hoverBody($event === null ? null : editor.pickKey($event))"
     />
     @if (ui.stats() && !ui.screenshot()) {
     <forge-frame-stats-readout class="layout__stats" />
@@ -95,6 +100,8 @@
       [mode]="ui.markers()"
       [camera]="camera"
       [aspect]="ui.aspect()"
+      [hovered]="ui.hovered()"
+      (hover)="ui.hoverMarker($event)"
       (picked)="editor.showMarker($event)"
       (poleDrag)="poleDrag($event)"
     />

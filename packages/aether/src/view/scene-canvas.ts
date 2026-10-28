@@ -62,6 +62,7 @@ interface Running {
   relight(lights: readonly AddedLight[]): void;
   rebackdrop(backdrop: Backdrop | null): void;
   rebeam(beams: readonly EditingAid[]): void;
+  redim(dim: number): void;
   recamera(camera: SceneCameraSet | undefined): void;
   refollow(follow: SceneCameraSet | null): void;
 }
@@ -131,6 +132,7 @@ const sameLabels = (a: readonly Label[], b: readonly Label[]) =>
   host: {
     '(click)': 'clicked($event)',
     '(pointermove)': 'hovered($event)',
+    '(pointerleave)': 'unhovered()',
     '[class.pickable]': 'pickable()',
     '[class.over-planet]': 'overPlanet()',
   },
@@ -147,6 +149,8 @@ export class SceneCanvas {
   readonly backdrop = input<Backdrop | null>(null);
   /** Lights' beams shown over it (an editor's, of the light selected; none: none). */
   readonly beams = input<readonly EditingAid[]>([]);
+  /** How bright the sky and the planets marked dimmed are drawn, 0 to 1. */
+  readonly dim = input(1);
   /** Where a scene puts the camera, over the game's (none: the game's). */
   readonly camera = input<SceneCameraSet | undefined>(undefined);
   /**
@@ -163,6 +167,11 @@ export class SceneCanvas {
   readonly pickable = input(false);
   /** A planet clicked, by its index in `placements`. */
   readonly planetPick = output<number>();
+  /** A click on none of the planets that can be picked. */
+  readonly pickMissed = output<void>();
+  /** The planet the pointer is over, where planets can be picked, by its index (none: none). */
+  readonly planetHover = output<number | null>();
+  private hoveredIndex: number | null = null;
   /** Whether the pointer is over a planet that can be picked. */
   protected readonly overPlanet = signal(false);
   /** The planet under a point of the canvas, while the scene runs. */
@@ -224,6 +233,10 @@ export class SceneCanvas {
       untracked(() => this.running?.rebeam(beams));
     });
     effect(() => {
+      const dim = this.dim();
+      untracked(() => this.running?.redim(dim));
+    });
+    effect(() => {
       const camera = this.camera();
       untracked(() => this.running?.recamera(camera));
     });
@@ -264,12 +277,25 @@ export class SceneCanvas {
     if (!this.pickable()) return;
     const index = this.pickAt?.(event.offsetX, event.offsetY) ?? null;
     if (index !== null) this.planetPick.emit(index);
+    else this.pickMissed.emit();
   }
 
   /** The pointer moved: whether it is over a planet to pick (shown by the cursor). */
   protected hovered(event: PointerEvent): void {
     if (!this.pickable()) return;
-    this.overPlanet.set((this.pickAt?.(event.offsetX, event.offsetY) ?? null) !== null);
+    this.hoverOn(this.pickAt?.(event.offsetX, event.offsetY) ?? null);
+  }
+
+  /** The pointer left the canvas (onto a marker over it, or off the view): over no planet. */
+  protected unhovered(): void {
+    this.hoverOn(null);
+  }
+
+  private hoverOn(index: number | null): void {
+    this.overPlanet.set(index !== null);
+    if (index === this.hoveredIndex) return;
+    this.hoveredIndex = index;
+    this.planetHover.emit(index);
   }
 
   private run(
@@ -329,6 +355,7 @@ export class SceneCanvas {
       if (timed) {
         this.frameStats.frame(performance.now() - start);
         for (const ms of renderer.gpuTimes()) this.frameStats.gpu(ms);
+        for (const s of renderer.frameSections()) this.frameStats.sections(s);
       }
       drawnAt = performance.now();
       if (!this.drawn()) this.drawn.set(true);
@@ -493,8 +520,14 @@ export class SceneCanvas {
         renderer.setBeams(beams);
         if (!frame) draw();
       },
+      // What is outside what an editor is in dimmed, or back as it is.
+      redim: (dim) => {
+        renderer.dim = dim;
+        if (!frame) draw();
+      },
       // The camera moved (a scene's): drawn again from there.
       recamera: (camera) => {
+        if (this.frameStats.watching()) this.frameStats.moved();
         renderer.setCamera(camera);
         if (!frame) draw();
       },
@@ -552,6 +585,7 @@ export class SceneCanvas {
     renderer.setSceneLights(this.lights());
     renderer.setBackdrop(this.backdrop());
     renderer.setBeams(this.beams());
+    renderer.dim = this.dim();
     renderer.setCamera(this.camera());
     renderer.setSkyFollow(this.skyFollow());
     resize();

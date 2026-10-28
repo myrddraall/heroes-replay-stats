@@ -91,8 +91,43 @@ export function axisEnds(line: AxisLine, past = 0): { readonly north: Vec3; read
   return { north: at(1), south: at(-1) };
 }
 
-/** What the editor shows over the picture: a light's aids, a planet's axis. */
-export type EditingAid = LightAid | AxisLine;
+/**
+ * A line between two points of the scene, as the editor joins what it marks (a light to the body
+ * it lights, a spot's cone's edges, what a camera sees): `pixels` thick on the screen wherever it
+ * is, dashed or solid, hidden where the picture is nearer (an editing aid).
+ */
+export interface AidLine {
+  readonly shape: 'line';
+  readonly from: Vec3;
+  readonly to: Vec3;
+  readonly pixels: number;
+  /** Its colour, each channel 0 to 1, and how strongly it shows. */
+  readonly colour: Vec3;
+  readonly alpha: number;
+  readonly dashed: boolean;
+}
+
+/**
+ * A dot marking something that can be picked: `pixels` across on the screen whatever the zoom, a
+ * dark disc in a ring `ring` pixels wide; faint where the picture is nearer, unless `onTop`. It
+ * sits `lift` toward the eye from `at` (a body's: its radius, on its sphere's near side), moved
+ * `shift` pixels across (several at one place, side by side). An editing aid.
+ */
+export interface AidDot {
+  readonly shape: 'dot';
+  readonly at: Vec3;
+  readonly lift: number;
+  readonly shift: number;
+  readonly pixels: number;
+  readonly ring: number;
+  /** Its ring's colour, each channel 0 to 1, and how strongly it shows. */
+  readonly colour: Vec3;
+  readonly alpha: number;
+  readonly onTop: boolean;
+}
+
+/** What the editor shows over the picture: a light's aids, a planet's axis, the markers' lines and dots. */
+export type EditingAid = LightAid | AxisLine | AidLine | AidDot;
 
 /** How far a square facing the eye reaches from a body's middle, in its radii, to cover its sphere's outline from any distance the editor looks from. */
 export const OUTLINE_EXTENT = 1.15;

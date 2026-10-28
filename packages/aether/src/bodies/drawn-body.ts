@@ -37,6 +37,8 @@ export interface DrawnBody {
   readonly radius: number;
   /** Not drawn (nor picked), though where it is: switched off. */
   readonly hidden: boolean;
+  /** Drawn dimmed, by the renderer's `dim` (outside what an editor is in). */
+  readonly dimmed: boolean;
   /** Its own turn: its base turn, then about its Axis by its Turn (see `bodyTurn`). */
   readonly turn: Mat3;
   /** Its parts as set (`part`), each with the part it is of (`source`). */
@@ -159,6 +161,7 @@ function drawBody(placement: PlanetPlacement): DrawnBody {
     position: placement.position,
     radius: placement.radius,
     hidden: !!placement.hidden,
+    dimmed: !!placement.dimmed,
     turn: bodyTurn(
       poleOf(file.parts),
       placement.axis ?? tuning?.axis,

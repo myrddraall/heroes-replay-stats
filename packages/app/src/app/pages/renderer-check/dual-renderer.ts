@@ -5,7 +5,11 @@ import type {
 } from '@myrddraall/heroes-replay-stats-aether/formats';
 import type { DrawnSky } from '@myrddraall/heroes-replay-stats-aether/sky';
 import type { AddedLight } from '@myrddraall/heroes-replay-stats-aether/lights';
-import { type Renderer, ThreeRenderer } from '@myrddraall/heroes-replay-stats-aether/render';
+import {
+  type FrameSections,
+  type Renderer,
+  ThreeRenderer,
+} from '@myrddraall/heroes-replay-stats-aether/render';
 import type { Backdrop } from '@myrddraall/heroes-replay-stats-aether/space';
 import type { DrawnBody } from '@myrddraall/heroes-replay-stats-aether/bodies';
 import { NO_TINT, type Tint } from '@myrddraall/heroes-replay-stats-aether/tints';
@@ -123,6 +127,12 @@ export class DualRenderer implements Renderer {
   set aidFade(v: number) {
     for (const r of this.all) r.aidFade = v;
   }
+  get dim(): number {
+    return this.first.dim;
+  }
+  set dim(v: number) {
+    for (const r of this.all) r.dim = v;
+  }
   get settling(): boolean {
     return this.all.some((r) => r.settling);
   }
@@ -176,6 +186,11 @@ export class DualRenderer implements Renderer {
   gpuTimes(): number[] {
     const times = this.all.map((r) => r.gpuTimes());
     return times[0] ?? [];
+  }
+  /** The scene canvas's renderer's frame sections (every renderer's taken, as `gpuTimes`). */
+  frameSections(): FrameSections[] {
+    const sections = this.all.map((r) => r.frameSections());
+    return sections[0] ?? [];
   }
   anchors(): { id: string; x: number; y: number; top: number }[] {
     return this.first.anchors();

@@ -38,6 +38,7 @@ import { removePart } from '../parts/part-hosts';
 import type { AssetWrites } from './asset-writes';
 import { overlayViewOf } from '../overlays/overlays';
 import { bodyEdits } from '../editing/body-edits';
+import type { Crumb } from '../tree/breadcrumb';
 
 /** What is selected in the tree: its target, the body, material or sky it is, how the panel heads it, and what can be done with it. */
 export function assetSelectionViews(store: WithOwn) {
@@ -67,6 +68,7 @@ export function assetSelectionViews(store: WithOwn) {
     return t.kind === 'sky' || t.kind === 'sky-material' ? _skyOf(t.stage) : null;
   });
   return {
+    crumbs: computed((): readonly Crumb[] => []),
     overlayView: computed(() => {
       const t = target();
       return t.kind === 'overlay' ? overlayViewOf(_body(), t.id) : null;
@@ -270,12 +272,25 @@ export function assetSelectionMethods(store: AssetMethodsStore, w: AssetWrites) 
       patchState(store, { onStandIn });
     },
     /** The asset on the stage clicked: its own row selected (a planet's moon: its row). */
+    pickKey(index: number): string | null {
+      if (store.asset().kind === 'sky') return null;
+      if (index === 0) return ASSET;
+      const path = moonPaths(store._moons())[index - 1];
+      return path ? moonKey(path) : null;
+    },
     selectPlaced(index: number): boolean {
       if (store.asset().kind === 'sky') return false;
       const path = index > 0 ? moonPaths(store._moons())[index - 1] : undefined;
       patchState(store, { selected: path ? moonKey(path) : ASSET });
       if (path) store.expand(ASSET);
       return true;
+    },
+    // (Editing in place is the scene editor's: the asset editor is always at what is open.)
+    enter: () => undefined,
+    leave: () => undefined,
+    goTo: () => undefined,
+    deselect(): void {
+      patchState(store, { selected: ASSET });
     },
     /** A row selected; a group only folds. */
     select(key: string): void {

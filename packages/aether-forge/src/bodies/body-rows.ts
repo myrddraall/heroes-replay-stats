@@ -38,12 +38,14 @@ export interface BodyRowOptions {
   readonly moons?: (depth: number) => readonly TreeRow[];
   /** Its variants, each on or off where it is, and the one open to be edited. */
   readonly variants?: readonly VariantRow[];
+  readonly variantEdited?: string | null;
   /**
    * Which of its categories can be added to here: each shown with nothing in it yet (to add the
    * first), where the others are shown only with something in them.
    */
   readonly adds?: Partial<Record<BodyCategory, boolean>>;
-  readonly variantEdited?: string | null;
+  /** An overlay it wears: that overlay's shapes and lights alone (what an editor inside it shows). */
+  readonly only?: string;
 }
 
 /**
@@ -98,11 +100,12 @@ export function bodySubtreeRows(
   /** A category's row (selected, it shows what adds to it): unfolding where it has rows under it. */
   const category = (key: string, label: string, icon: string, expanded: boolean, has: boolean) =>
     rows.push({ key, label, icon, depth: at, expandable: has, expanded: has && expanded });
-  const adds = options.adds ?? {};
+  const { only } = options;
+  const adds = only ? {} : (options.adds ?? {});
   const material = (key: string, m: MaterialEntry, d: number) =>
     rows.push(...materialRows(key, m, d, open));
   const all = materialsOf(b);
-  const nodes = partsInDrawOrder(b, all);
+  const nodes = partsInDrawOrder(b, all).filter((n) => !only || n.part.overlay === only);
   const labels = new Map(b.overlays.map((o) => [o.id, overlayLabel(o)] as const));
   // (A material drawn on more than one of its owner's parts is told apart by the part too.)
   const owners = new Map<string, PartNode[]>();
@@ -145,7 +148,7 @@ export function bodySubtreeRows(
           );
       }
   }
-  const lights = lightsOfBody(b);
+  const lights = lightsOfBody(b).filter((l) => !only || l.overlay === only);
   if (lights.length || adds.lights) {
     category(
       keys.lights(),
@@ -167,7 +170,7 @@ export function bodySubtreeRows(
           enabled: light.enabled,
         });
   }
-  if (b.overlays.length || adds.overlays) {
+  if (!only && (b.overlays.length || adds.overlays)) {
     category(
       keys.overlays(),
       CATEGORY_TITLES.overlays,
@@ -189,7 +192,7 @@ export function bodySubtreeRows(
         });
   }
   const variants = options.variants ?? [];
-  if (variants.length || adds.variants) {
+  if (!only && (variants.length || adds.variants)) {
     category(
       keys.variants(),
       CATEGORY_TITLES.variants,
@@ -210,7 +213,7 @@ export function bodySubtreeRows(
           enabled: v.on,
         });
   }
-  const moons = options.moons?.(at + 1) ?? [];
+  const moons = only ? [] : (options.moons?.(at + 1) ?? []);
   if (moons.length || adds.moons) {
     category(
       keys.moons(),

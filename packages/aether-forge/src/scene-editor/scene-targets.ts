@@ -223,6 +223,11 @@ export interface SceneEditorState {
   readonly sceneVariantEdited: string | null;
   /** The scene just shown before its planets were there: its first planet is unfolded as they come. */
   readonly opening: boolean;
+  /**
+   * What the editor is inside (editing in place): a planet's or moon's row key, or an overlay's a
+   * body wears; none: the whole scene. Its edits still land on the scene's copy.
+   */
+  readonly inside: string | null;
 }
 
 /** One of a scene's cameras: its id, its name, where it puts the view (over the game's), whether it is the game's. */

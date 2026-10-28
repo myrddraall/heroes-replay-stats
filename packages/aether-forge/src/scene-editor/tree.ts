@@ -82,6 +82,71 @@ export function treeViews(store: WithPartHosts) {
       /** A material's row, its layers under it (folded unless unfolded). */
       const leaf = (key: string, m: MaterialEntry, depth: number) =>
         rows.push(...materialRows(key, m, depth, open));
+      /**
+       * A body's rows below its own: its categories, its moons' rows among them (`only`: an
+       * overlay it wears, its shapes and lights alone).
+       */
+      const subtreeRows = (b: BodyInfo, depth: number, only?: string): TreeRow[] => {
+        const path = pathOf(b.key.slice(5));
+        return bodySubtreeRows(
+          b,
+          depth,
+          open,
+          {
+            part: (key) => partRowKey(path, key),
+            material: (name, overlay) => materialRowKey(path, name, overlay),
+            light: (id) => lightRowKey(path, id),
+            overlay: (id) => overlayKey(path, id),
+            variant: (id) => variantRowKey(path, id),
+            shapes: () => shapesKey(path),
+            lights: () => lightsKey(path),
+            overlays: () => overlaysKey(path),
+            variants: () => variantsKey(path),
+            moons: () => moonsKey(path),
+          },
+          {
+            movableOverlays: true,
+            // (One of a planet's own moons is the library's: nothing is put onto it here.)
+            adds: { shapes: !b.inherited, lights: true, overlays: true, moons: !b.inherited },
+            variants: (b.variants ?? []).map((v) => ({
+              id: v.id,
+              name: v.name,
+              on: (b.variantsOn ?? []).includes(v.id),
+              removable: false,
+            })),
+            moons: (at) =>
+              b.moons.flatMap((m, i) => {
+                const child = store.bodyByKey().get(bodyKey([...path, siblingKey(m, i)]));
+                return child ? bodyRows(child, at) : [];
+              }),
+            ...(only ? { only } : {}),
+          },
+        );
+      };
+      /** A body's rows: its own, then (unfolded) what is under it. */
+      const bodyRows = (b: BodyInfo, depth: number): TreeRow[] => [
+        {
+          key: b.key,
+          label: wornLabel(b),
+          icon: pathOf(b.key.slice(5)).length > 1 ? 'brightness_1' : 'public',
+          depth,
+          expandable: true,
+          expanded: open.has(b.key),
+          unsaved: store.unsavedBodies().has(b.key),
+          group: false,
+          enabled: bodyEnabled(b),
+        },
+        ...(open.has(b.key) ? subtreeRows(b, depth) : []),
+      ];
+      const body = (b: BodyInfo, depth: number) => rows.push(...bodyRows(b, depth));
+      // Inside a planet, a moon or an overlay one wears: only what is in it, then the aids.
+      const inside = store.insideTarget();
+      const at = inside && store.bodyByKey().get(bodyKey(inside.path));
+      if (inside && at)
+        return [
+          ...subtreeRows(at, -1, inside.kind === 'overlay' ? inside.id : undefined),
+          referenceRow(),
+        ];
       if (store.groupOpen()) row(SCENE, 'Group', 'workspaces', 0, store.sceneUnsaved());
       else row(SCENE, 'Scene', 'landscape', 0, store.sceneUnsaved());
       if (!open.has(SCENE)) return rows;
@@ -204,61 +269,6 @@ export function treeViews(store: WithPartHosts) {
               for (const m of materials) leaf(skyOverlayMaterialKey(o.id, m.name), m, 4);
           }
         }
-      /** A body's rows: its own, then (unfolded) its categories, its moons' rows among them. */
-      const bodyRows = (b: BodyInfo, depth: number): TreeRow[] => {
-        const path = pathOf(b.key.slice(5));
-        const out: TreeRow[] = [
-          {
-            key: b.key,
-            label: wornLabel(b),
-            icon: path.length > 1 ? 'brightness_1' : 'public',
-            depth,
-            expandable: true,
-            expanded: open.has(b.key),
-            unsaved: store.unsavedBodies().has(b.key),
-            group: false,
-            enabled: bodyEnabled(b),
-          },
-        ];
-        if (!open.has(b.key)) return out;
-        out.push(
-          ...bodySubtreeRows(
-            b,
-            depth,
-            open,
-            {
-              part: (key) => partRowKey(path, key),
-              material: (name, overlay) => materialRowKey(path, name, overlay),
-              light: (id) => lightRowKey(path, id),
-              overlay: (id) => overlayKey(path, id),
-              variant: (id) => variantRowKey(path, id),
-              shapes: () => shapesKey(path),
-              lights: () => lightsKey(path),
-              overlays: () => overlaysKey(path),
-              variants: () => variantsKey(path),
-              moons: () => moonsKey(path),
-            },
-            {
-              movableOverlays: true,
-              // (One of a planet's own moons is the library's: nothing is put onto it here.)
-              adds: { shapes: !b.inherited, lights: true, overlays: true, moons: !b.inherited },
-              variants: (b.variants ?? []).map((v) => ({
-                id: v.id,
-                name: v.name,
-                on: (b.variantsOn ?? []).includes(v.id),
-                removable: false,
-              })),
-              moons: (at) =>
-                b.moons.flatMap((m, i) => {
-                  const child = store.bodyByKey().get(bodyKey([...path, siblingKey(m, i)]));
-                  return child ? bodyRows(child, at) : [];
-                }),
-            },
-          ),
-        );
-        return out;
-      };
-      const body = (b: BodyInfo, depth: number) => rows.push(...bodyRows(b, depth));
       store.sceneBodies().forEach((p, i) => {
         const planet = store.bodyByKey().get(bodyKey([siblingKey(p, i)]));
         if (planet) body(planet, 1);

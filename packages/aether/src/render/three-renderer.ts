@@ -1,3 +1,4 @@
+import type { FrameSections } from './renderer';
 import {
   BufferAttribute,
   type BufferGeometry,
@@ -158,6 +159,7 @@ export class ThreeRenderer {
   /** The targets a picture is drawn through, and the passes between them. */
   private readonly chain: PassChain;
   private readonly gpuTimesMs: number[] = [];
+  private readonly sections: FrameSections[] = [];
   /** Whether the GPU's time is measured (frame stats shown). */
   timing = false;
   /** How far the stars are streaked across the view, 0 to 1 (0: not at all). */
@@ -171,6 +173,17 @@ export class ThreeRenderer {
   fade = 1;
   /** How strongly the editor's beams and outlines show, 0 to 1 (faded in once the planets are where they are going). */
   aidFade = 1;
+  private dimmedBy = 1;
+  /** How bright the sky and the bodies marked dimmed are drawn (see `Renderer`): a change draws again. */
+  get dim(): number {
+    return this.dimmedBy;
+  }
+  set dim(dim: number) {
+    if (dim === this.dimmedBy) return;
+    this.dimmedBy = dim;
+    this.stillDirty = true;
+    this.changed = true;
+  }
   private sky: DrawnSky = { worn: [], materials: {} };
   private backdrop: Backdrop | null = null;
   private sceneLights: readonly AddedLight[] = [];
@@ -208,6 +221,8 @@ export class ThreeRenderer {
       forceWebGL: options.forceWebGL ?? false,
     });
     this.renderer.autoClear = false;
+    // (Its draw calls counted over a whole frame, not each pass: see `frameSections`.)
+    this.renderer.info.autoReset = false;
     this.renderer.toneMapping = NoToneMapping;
     this.renderer.outputColorSpace = LinearSRGBColorSpace;
     this.renderer.setPixelRatio(1);
@@ -272,6 +287,7 @@ export class ThreeRenderer {
       surfaces: () => this.surfaces,
       sceneThreshold: () => this.sceneThreshold(),
       placed: () => this.placed,
+      dim: () => this.dim,
     });
     this.aids = new EditingAids({
       renderer: this.renderer,
@@ -547,7 +563,8 @@ export class ThreeRenderer {
   /**
    * The placed planet under a point of the view (`x`, `y`: shares of its width and height; the
    * view `aspect` wide), by its index in what was put up (`setPlanets`); the nearest where they
-   * overlap; null where there is none. Its body counts, not its halo.
+   * overlap; null where there is none. Its body counts, not its halo; one hidden or dimmed (in
+   * the background of what is edited) is not picked.
    */
   pick(x: number, y: number, aspect: number): number | null {
     const m = multiply(this.projection, this.view);
@@ -560,7 +577,7 @@ export class ThreeRenderer {
     };
     let best: { index: number; depth: number } | null = null;
     this.placed.forEach(({ body }, index) => {
-      if (body.hidden) return;
+      if (body.hidden || body.dimmed) return;
       const { position, radius } = body;
       const centre = project(position);
       const top = project([position[0], position[1], position[2] + radius]);
@@ -899,6 +916,10 @@ export class ThreeRenderer {
     return this.gpuTimesMs.splice(0);
   }
 
+  frameSections(): FrameSections[] {
+    return this.sections.splice(0);
+  }
+
   /** How many bodies are up (not hidden), and how many of them are baked whole (the renderer check). */
   bodyCounts(): { placed: number; baked: number } {
     const up = this.placed.filter((b) => !b.body.hidden);
@@ -940,10 +961,20 @@ export class ThreeRenderer {
     if (!this.skyReady() && !this.drawnOnce) return false;
     const r = this.renderer;
     const { width, height } = this.canvas;
-    if (this.stillDirty) this.drawStill();
+    const now = this.timing ? () => performance.now() : () => 0;
+    r.info.reset();
+    const started = now();
+    const stillDrawn = this.stillDirty;
+    if (stillDrawn) this.drawStill();
+    const stillDone = now();
     const viewProjection = multiply(this.projection, this.view);
+    let baked = 0;
     for (const body of this.placed)
-      if (this.bakes.bakeDue(body, seconds)) this.bakes.bakeBody(body, seconds, viewProjection);
+      if (this.bakes.bakeDue(body, seconds)) {
+        this.bakes.bakeBody(body, seconds, viewProjection);
+        baked++;
+      }
+    const bakesDone = now();
     for (const output of OUTPUTS) {
       const colour = output === 'colour';
       r.setRenderTarget(this.chain.target(this.chain.frame, output));
@@ -959,6 +990,7 @@ export class ThreeRenderer {
       this.drawMeshes(seconds, 'foreground', output);
       if (colour) this.drawParticles(seconds, 'foreground');
     }
+    const passesDone = now();
     this.chain.drawBloom(this.sceneThreshold());
     const tone = this.chain.passes.toneUniforms;
     const tints = [this.tint, this.fadingFrom];
@@ -989,13 +1021,36 @@ export class ThreeRenderer {
       up: this.viewUpNow(),
       fovY: this.camera.fovY,
       height: this.canvas.height,
+      width: this.canvas.width,
+      forward: [-this.view[2]!, -this.view[6]!, -this.view[10]!],
+      near: this.camera.near,
       bodies: this.placed.map(({ body: { position, radius } }) => [...position, radius] as const),
       fade: this.aidFade,
     });
-    if (this.timing)
+    if (this.timing) {
+      this.sections.push({
+        stillDrawn,
+        still: stillDone - started,
+        bakes: bakesDone - stillDone,
+        baked,
+        resized: this.bakes.takeResizes(),
+        passes: passesDone - bakesDone,
+        post: now() - passesDone,
+        renders: r.info.render.frameCalls,
+        calls: r.info.render.drawCalls,
+        pipelines:
+          (r as unknown as { _pipelines?: { caches?: Map<string, unknown> } })._pipelines?.caches
+            ?.size ?? 0,
+        textures: r.info.memory.textures,
+        textureMb: r.info.memory.texturesSize / 1e6,
+        width,
+        height,
+        backend: this.backendName ?? '',
+      });
       void r.resolveTimestampsAsync().then((ms) => {
         if (typeof ms === 'number' && ms > 0) this.gpuTimesMs.push(ms);
       });
+    }
     this.changed = false;
     this.drawnOnce = true;
     // (The editor's aids once the whole picture is up: see `EditingAids.compile`.)
@@ -1048,6 +1103,7 @@ export class ThreeRenderer {
       u.set('uSceneThreshold', threshold);
       u.set('uGlowThreshold', threshold);
       u.set('uPattern', 0);
+      u.set('uDim', this.dim);
       u.set('uShadeCount', 0);
       u.apply(tint);
       u.set('uRimTurn', [0, 0]);
@@ -1091,6 +1147,7 @@ export class ThreeRenderer {
       u.set('uView', this.skyView(skyAnchorOf(settings, this.sky.anchor)));
       u.set('uProjection', this.projection);
       u.set('uStreak', this.streak);
+      u.set('uDim', this.dim);
       u.apply(tint);
       u.set('uChannel', CHANNELS[layer.channel ?? 'rgb']);
       u.set(

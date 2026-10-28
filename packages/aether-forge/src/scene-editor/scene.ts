@@ -347,7 +347,13 @@ export function sceneMethods(store: SceneMethodsStore, w: SceneWrites) {
     showScene: signalMethod<string>((id) => {
       if (id === store.scene()) return;
       // Seen through the editor's camera, where the scene's primary is.
-      patchState(store, { scene: id, focus: null, look: EDITOR_CAMERA, editorCamera: null });
+      patchState(store, {
+        scene: id,
+        focus: null,
+        inside: null,
+        look: EDITOR_CAMERA,
+        editorCamera: null,
+      });
       // Its first planet selected, where it has one (else the scene itself).
       const first = store.sceneBodies()[0];
       const planet = first ? bodyKey([siblingKey(first, 0)]) : SCENE;

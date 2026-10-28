@@ -10,7 +10,14 @@ import {
 } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import { knownLights } from '@myrddraall/heroes-replay-stats-aether/lights';
 import { computed } from '@angular/core';
-import { bodyLabel, bodyView, CATEGORY_TITLES, filesLoaded, type TargetKind } from '../bodies/body';
+import {
+  bodyLabel,
+  bodyView,
+  CATEGORY_TITLES,
+  filesLoaded,
+  overlayLabel,
+  type TargetKind,
+} from '../bodies/body';
 import { type MaterialView, viewTitle } from '../materials/material-views';
 import {
   lightsOfBody,
@@ -24,19 +31,21 @@ import { materialAt, materialsOf } from '../materials/materials';
 import { partsOfBody } from '../parts/parts';
 import type { AssetTarget, OpenTarget } from '../layout/open-target';
 import type { SceneMethodsStore, WithSky } from './scene-editor.store';
-import { atBody, bodyKey, receiverOf, SCENE, targetOf } from './scene-targets';
+import { atBody, bodyKey, overlayKey, receiverOf, SCENE, targetOf } from './scene-targets';
 import { skyOverlayOn } from '@myrddraall/heroes-replay-stats-aether/library';
 import { patchState } from '@ngrx/signals';
 import { removePart } from '../parts/part-hosts';
 import type { SceneWrites } from './scene-writes';
 import { overlayViewOf } from '../overlays/overlays';
 import { bodyEdits } from '../editing/body-edits';
+import { Crumb } from '../tree/breadcrumb';
 
 /** What is selected in the tree: its target, the body, material, part or light it is, how the panel heads it, and what can be done with it. */
 export function selectionViews(store: WithSky) {
   const {
     selected,
     focus,
+    inside,
     scene: sceneId,
     _sceneFile,
     bodyByKey,
@@ -54,6 +63,40 @@ export function selectionViews(store: WithSky) {
   const body = computed(() => {
     const t = target();
     return 'path' in t ? bodyByKey().get(bodyKey(t.path)) : undefined;
+  });
+  /** What the editor is inside, where it is still there: a planet or moon, or an overlay one wears. */
+  const insideTarget = computed(() => {
+    const key = inside();
+    const t = key === null ? null : targetOf(key);
+    if (!t || (t.kind !== 'body' && t.kind !== 'overlay')) return null;
+    const b = bodyByKey().get(bodyKey(t.path));
+    if (!b || (t.kind === 'overlay' && !b.overlays.some((o) => o.id === t.id))) return null;
+    return t;
+  });
+  /** Where the editor is, outermost first: the scene, then each body it is inside, then an overlay. */
+  const crumbs = computed((): Crumb[] => {
+    const id = sceneId();
+    const scene =
+      id === RANDOM_SCENE ? 'Random sets' : id === PLAY_SCREEN_SCENE ? 'Play screen' : label();
+    const t = insideTarget();
+    if (!t) return [{ key: null, label: scene }];
+    const bodies = t.path.flatMap((_, i) => {
+      const b = bodyByKey().get(bodyKey(t.path.slice(0, i + 1)));
+      return b ? [{ key: b.key, label: bodyLabel(b) }] : [];
+    });
+    const o =
+      t.kind === 'overlay'
+        ? bodyByKey()
+            .get(bodyKey(t.path))
+            ?.overlays.find((x) => x.id === t.id)
+        : undefined;
+    return [
+      { key: null, label: scene },
+      ...bodies,
+      ...(t.kind === 'overlay' && o
+        ? [{ key: overlayKey(t.path, t.id), label: overlayLabel(o) }]
+        : []),
+    ];
   });
   /** The group put in the scene that is selected, where one is. */
   const selectedPlacement = computed(() => {
@@ -95,6 +138,8 @@ export function selectionViews(store: WithSky) {
   });
   return {
     target,
+    insideTarget,
+    crumbs,
     selectedPlacement,
     overlayView: computed(() => {
       const t = target();
@@ -240,6 +285,19 @@ export function selectionMethods(store: SceneMethodsStore, w: SceneWrites) {
     removeBody,
     materialChange,
   } = w;
+  /**
+   * Back out to a crumb's level (none: the whole scene), what it was inside selected there and
+   * its rows unfolded to it; the level it is at: that selected (its own row is not in the tree).
+   */
+  const goTo = (key: string | null): void => {
+    const was = store.inside();
+    if (key === was) {
+      if (key !== null) patchState(store, { selected: key });
+      return;
+    }
+    patchState(store, { inside: key });
+    if (was !== null) reveal(was);
+  };
   return {
     /** A row selected; the materials' group only folds (there is nothing of its own to set). */
     select(key: string): void {
@@ -247,6 +305,9 @@ export function selectionMethods(store: SceneMethodsStore, w: SceneWrites) {
       else patchState(store, { selected: key });
     },
     /** The body clicked in the view (by its index as put up) selected, its rows unfolded to it. */
+    pickKey(index: number): string | null {
+      return store._placed()?.picks[index] ?? null;
+    },
     selectPlaced(index: number): boolean {
       const key = store._placed()?.picks[index];
       if (!key) return false;
@@ -319,6 +380,26 @@ export function selectionMethods(store: SceneMethodsStore, w: SceneWrites) {
       } else if (t.kind === 'material' && t.view?.kind === 'gridLight' && level)
         bodyEdits.switchShieldLight(level, t.key, t.view.id, on);
       else if (t.kind === 'material' && level) bodyEdits.switchMaterial(level, t.key, on);
+    },
+    /** Inside what a row stands for, where it can be gone inside (a planet, a moon, an overlay it wears). */
+    enter(key: string): void {
+      const t = targetOf(key);
+      if (t.kind !== 'body' && t.kind !== 'overlay') return;
+      patchState(store, { inside: key, selected: key });
+    },
+    /**
+     * One level back out: an overlay to its body, a moon to its planet, a planet to the scene;
+     * what it was inside selected there.
+     */
+    leave(): void {
+      const t = store.insideTarget();
+      if (!t) return;
+      const out = t.kind === 'overlay' ? t.path : t.path.slice(0, -1);
+      goTo(out.length ? bodyKey(out) : null);
+    },
+    goTo,
+    deselect(): void {
+      patchState(store, { selected: store.inside() ?? SCENE });
     },
     /** The view centred on the selected moon and its moons, or back on the whole scene. */
     toggleFocus(): void {

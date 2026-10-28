@@ -45,6 +45,8 @@ export interface BodyBakerHost {
   sceneThreshold(): number;
   /** The bodies placed. */
   placed(): readonly Placed[];
+  /** How bright the bodies marked dimmed are put into the frame (see `Renderer.dim`). */
+  dim(): number;
 }
 
 /**
@@ -53,7 +55,15 @@ export interface BodyBakerHost {
  * impostor, far to near.
  */
 export class BodyBaker {
+  /** How many bakes were made again at another size since last asked (see `takeResizes`). */
+  private resizes = 0;
   constructor(private readonly host: BodyBakerHost) {}
+  /** How many bakes were made again at another size since last asked (the frame stats). */
+  takeResizes(): number {
+    const n = this.resizes;
+    this.resizes = 0;
+    return n;
+  }
 
   private bakeKey(body: Placed): string {
     return `${this.host.viewVersion()}:${this.host.skyVersion()}:${body.version}:${body.hasShapes ? this.host.surfacesKey() : ''}`;
@@ -83,6 +93,7 @@ export class BodyBaker {
     if (fits && !roomy && bake.pass) return;
     bake.width = bakeSize(rect.w);
     bake.height = bakeSize(rect.h);
+    this.resizes++;
     this.host.chain.freePass(bake.pass);
     bake.pass = this.host.chain.newPass(bake.width, bake.height);
   }
@@ -273,6 +284,7 @@ export class BodyBaker {
         ]);
         u.set('uOrigin', [r.x, top - bake.shift]);
         u.set('uFront', this.frontDepth(body, viewProjection));
+        u.set('uDim', body.body.dimmed ? this.host.dim() : 1);
         this.host.renderer.render(impostor.scene, this.host.camera3);
       }
     }

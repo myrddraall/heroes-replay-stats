@@ -64,6 +64,8 @@ export class SceneTree {
   /** The selected row's key. */
   readonly selected = input<string>('');
   readonly rowSelect = output<string>();
+  /** A row double-clicked: what it stands for gone inside, where it can be. */
+  readonly rowOpen = output<string>();
   readonly expandToggle = output<string>();
   readonly enabledChange = output<{ key: string; enabled: boolean }>();
   readonly moved = output<TreeMove>();

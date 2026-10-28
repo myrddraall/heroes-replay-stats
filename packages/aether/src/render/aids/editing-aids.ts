@@ -1,6 +1,9 @@
 import {
   BufferAttribute,
   BufferGeometry,
+  InstancedBufferGeometry,
+  InstancedInterleavedBuffer,
+  InterleavedBufferAttribute,
   Mesh,
   type NodeMaterial,
   type PerspectiveCamera,
@@ -10,6 +13,8 @@ import {
   type WebGPURenderer,
 } from 'three/webgpu';
 import {
+  type AidDot,
+  type AidLine,
   BEAM_LENGTH,
   beamAcross,
   beamTube,
@@ -18,9 +23,9 @@ import {
   OUTLINE_EXTENT,
 } from '../../aids/beams';
 import { bodyFrame } from '../../space/space';
-import type { AidKind } from '../draw-types';
+import type { AidKind, InstancedAidKind } from '../draw-types';
 import { MAX_BEAM_SPHERES } from '../uniforms/limits';
-import { beamMaterial, outlineMaterial } from './aid-shaders';
+import { beamMaterial, dotMaterial, lineMaterial, outlineMaterial } from './aid-shaders';
 import type { ToClip } from '../passes/pass-shaders';
 import { ShaderUniforms } from '../uniforms/shader-uniforms';
 import { UniformSet } from '../uniforms/uniforms';
@@ -59,6 +64,10 @@ export interface AidView {
   /** The camera's vertical field of view, in degrees, and the canvas's height in pixels. */
   readonly fovY: number;
   readonly height: number;
+  /** The canvas's width in pixels; the way the camera looks, and how near it sees from. */
+  readonly width: number;
+  readonly forward: Vec3;
+  readonly near: number;
   /** The bodies an aid can be hidden behind: each its centre and radius. */
   readonly bodies: readonly (readonly [number, number, number, number])[];
   /** How strongly they show, 0 to 1. */
@@ -75,6 +84,11 @@ export class EditingAids {
   /** The aids' draws by kind, made as more are wanted and kept (one of each made and compiled at the start). */
   private readonly pool = new Map<AidKind, { mesh: Mesh; uniforms: ShaderUniforms }[]>();
   private readonly geometry = new BufferGeometry();
+  /** The markers' lines and dots: each kind one draw, an instance each (see `drawInstanced`). */
+  private readonly instanced = new Map<
+    InstancedAidKind,
+    { mesh: Mesh; uniforms: ShaderUniforms; geometry: InstancedBufferGeometry; room: number }
+  >();
   private readonly scene = new Scene();
   /** Whether their programs are asked for, and whether they have compiled (none is drawn until they have: see `compile`). */
   private asked = false;
@@ -98,9 +112,12 @@ export class EditingAids {
   compile(): void {
     if (this.asked) return;
     this.asked = true;
-    const compiled = (['outline', 'light', 'dark', 'edge'] as const).map((kind) => {
+    const meshes = [
+      ...(['outline', 'light', 'dark', 'edge'] as const).map((kind) => this.aid(kind, 0).mesh),
+      ...(['line', 'dot'] as const).map((kind) => this.instancedAid(kind).mesh),
+    ];
+    const compiled = meshes.map((mesh) => {
       const scene = new Scene();
-      const { mesh } = this.aid(kind, 0);
       scene.add(mesh);
       return this.host.compile(mesh, scene).then(() => void scene.clear());
     });
@@ -144,6 +161,106 @@ export class EditingAids {
     return pool[n]!;
   }
 
+  /** A kind of the markers' draws (made the first time it is wanted). */
+  private instancedAid(kind: InstancedAidKind) {
+    let found = this.instanced.get(kind);
+    if (!found) {
+      const uniforms = new ShaderUniforms();
+      const depth = this.host.depth()!;
+      const material =
+        kind === 'line'
+          ? lineMaterial(uniforms, depth, this.host.toClip())
+          : dotMaterial(uniforms, depth, this.host.toClip());
+      const geometry = new InstancedBufferGeometry();
+      // A square, its corners (x along a line from 0 to 1, or across a dot from -1; y across).
+      const x0 = kind === 'line' ? 0 : -1;
+      geometry.setAttribute(
+        'position',
+        new BufferAttribute(new Float32Array([x0, -1, 0, 1, -1, 0, 1, 1, 0, x0, 1, 0]), 3),
+      );
+      geometry.setIndex([0, 1, 2, 0, 2, 3]);
+      found = { mesh: this.mesh(geometry, material), uniforms, geometry, room: 0 };
+      this.roomFor(kind, found, 1);
+      this.instanced.set(kind, found);
+    }
+    return found;
+  }
+
+  /** Room in a kind's instances for `n` (made again, twice as big, when there isn't). */
+  private roomFor(
+    kind: InstancedAidKind,
+    draw: { geometry: InstancedBufferGeometry; room: number },
+    n: number,
+  ): Float32Array {
+    const names =
+      kind === 'line' ? ['lineFrom', 'lineTo', 'lineColour'] : ['dotAt', 'dotSize', 'dotColour'];
+    if (n > draw.room) {
+      draw.room = Math.max(16, draw.room * 2, n);
+      const buffer = new InstancedInterleavedBuffer(new Float32Array(draw.room * 12), 12);
+      names.forEach((name, k) =>
+        draw.geometry.setAttribute(name, new InterleavedBufferAttribute(buffer, 4, k * 4)),
+      );
+    }
+    const attribute = draw.geometry.getAttribute(names[0]!) as InterleavedBufferAttribute;
+    return attribute.data.array as Float32Array;
+  }
+
+  /**
+   * The markers' lines and dots, each kind in one draw: a line cut where it passes behind the eye
+   * (to what the camera sees from `near` on), a dot as it is.
+   */
+  private drawInstanced(view: AidView, shared: UniformSet, lines: AidLine[], dots: AidDot[]) {
+    const r = this.host.renderer;
+    const cut = lines.flatMap((l) => {
+      const ahead = (p: Vec3) =>
+        (p[0] - view.eye[0]) * view.forward[0] +
+        (p[1] - view.eye[1]) * view.forward[1] +
+        (p[2] - view.eye[2]) * view.forward[2];
+      const near = view.near * 1.01;
+      const a = ahead(l.from);
+      const b = ahead(l.to);
+      if (a < near && b < near) return [];
+      const at = (t: number): Vec3 => [
+        l.from[0] + (l.to[0] - l.from[0]) * t,
+        l.from[1] + (l.to[1] - l.from[1]) * t,
+        l.from[2] + (l.to[2] - l.from[2]) * t,
+      ];
+      const t = (near - a) / (b - a);
+      return [{ ...l, from: a < near ? at(t) : l.from, to: b < near ? at(t) : l.to }];
+    });
+    for (const [kind, n] of [
+      ['line', cut.length],
+      ['dot', dots.length],
+    ] as const) {
+      if (!n) continue;
+      const draw = this.instancedAid(kind);
+      const data = this.roomFor(kind, draw, n);
+      if (kind === 'line')
+        cut.forEach((l, i) =>
+          data.set([...l.from, l.pixels, ...l.to, l.dashed ? 1 : 0, ...l.colour, l.alpha], i * 12),
+        );
+      else
+        dots.forEach((d, i) =>
+          data.set(
+            [...d.at, d.lift, d.pixels, d.shift, d.ring, d.onTop ? 1 : 0, ...d.colour, d.alpha],
+            i * 12,
+          ),
+        );
+      (
+        draw.geometry.getAttribute(
+          kind === 'line' ? 'lineFrom' : 'dotAt',
+        ) as InterleavedBufferAttribute
+      ).data.needsUpdate = true;
+      draw.geometry.instanceCount = n;
+      draw.uniforms.apply(shared);
+      draw.uniforms.set('uViewport', [view.width, view.height]);
+      draw.uniforms.set('uFade', view.fade);
+      this.scene.add(draw.mesh);
+      r.render(this.scene, this.host.camera3);
+      this.scene.remove(draw.mesh);
+    }
+  }
+
   /**
    * The beams and outlines over the picture as shown (after its exposure and bloom: as they are
    * whatever the scene's light), each hidden where the frame's depth is nearer; one that lights
@@ -172,8 +289,18 @@ export class EditingAids {
     };
     const outlines: Mesh[] = [];
     const beams: Mesh[] = [];
+    const lines: AidLine[] = [];
+    const dots: AidDot[] = [];
     const rad = Math.PI / 180;
     for (const aid of this.shown) {
+      if (aid.shape === 'line') {
+        lines.push(aid);
+        continue;
+      }
+      if (aid.shape === 'dot') {
+        dots.push(aid);
+        continue;
+      }
       if (aid.shape === 'outline') {
         const o = aid as LightOutline;
         const { mesh, uniforms } = next('outline');
@@ -248,13 +375,14 @@ export class EditingAids {
         uniforms.set('uFade', 1);
       }
     }
-    // Outlines first, then the beams over them.
+    // Outlines first, then the beams over them, then the markers' lines and their dots.
     this.host.renderer.setRenderTarget(null);
     for (const mesh of [...outlines, ...beams]) {
       this.scene.add(mesh);
       this.host.renderer.render(this.scene, this.host.camera3);
       this.scene.remove(mesh);
     }
+    this.drawInstanced(view, shared, lines, dots);
   }
 
   private mesh(geometry: BufferGeometry, material: NodeMaterial): Mesh {

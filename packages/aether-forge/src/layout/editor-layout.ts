@@ -17,6 +17,7 @@ import { MatDrawer, MatDrawerContainer, MatDrawerContent } from '@angular/materi
 import { MatTooltip } from '@angular/material/tooltip';
 import { Router } from '@angular/router';
 import { FORGE_OPTIONS } from '../forge-options';
+import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/space';
 import { SceneView } from '@myrddraall/heroes-replay-stats-aether/view';
 import { SidePanel } from '@myrddraall/heroes-replay-stats-ui';
 import { AssetBrowser } from '../library/asset-browser';
@@ -30,6 +31,7 @@ import { Editor } from '../editing/editor';
 import { EditorBar } from './editor-bar';
 import { EditorUiStore } from './editor-ui.store';
 import { SceneTree } from '../tree/scene-tree';
+import { Breadcrumb } from '../tree/breadcrumb';
 import { SelectionPanel } from '../panel/selection-panel';
 import { EditingAidsStore } from '../aids/editing-aids.store';
 import { ReferenceOverlay } from '../viewport/reference-overlay';
@@ -72,12 +74,13 @@ import { FrameStatsReadout } from '../diagnostics/frame-stats-readout';
     LookThrough,
     SceneMarkers,
     FrameStatsReadout,
+    Breadcrumb,
   ],
   templateUrl: './editor-layout.html',
   styleUrl: './editor-layout.scss',
   host: {
     '(document:fullscreenchange)': 'fullscreenChanged()',
-    '(document:keydown.escape)': 'ui.setScreenshot(false)',
+    '(document:keydown.escape)': 'escape($event)',
   },
 })
 export class EditorLayout {
@@ -106,6 +109,11 @@ export class EditorLayout {
     const destroyRef = inject(DestroyRef);
     afterNextRender(() => {
       const host = this.sceneHost().nativeElement as HTMLElement;
+      // The markers drawn in the scene in the page's own colours.
+      this.ui.setMarkerColours({
+        edge: themeColour(host, 'rgb(var(--hrs-glass-edge))'),
+        selected: themeColour(host, 'var(--mat-sys-primary)'),
+      });
       const sized = new ResizeObserver(() =>
         this.ui.setAspect(host.clientWidth / Math.max(1, host.clientHeight)),
       );
@@ -114,7 +122,6 @@ export class EditorLayout {
     });
   }
 
-  /** A planet clicked in the view: selected in the editor (from the library: what it shows, opened). */
   /** A planet's pole dragged in the view: its axis moved, the whole drag one step. */
   protected poleDrag(drag: PoleDrag): void {
     if (drag.phase === 'start') this.draft.holdHistory();
@@ -122,8 +129,33 @@ export class EditorLayout {
     if (drag.phase === 'end') this.draft.releaseHistory();
   }
 
+  /**
+   * A planet clicked in the view: selected in the editor (from the library: what it shows,
+   * opened); clicked again straight after, gone inside.
+   */
   protected pick(index: number): void {
-    if (this.editor.selectPlaced(index) && this.ui.browsing()) this.ui.open(this.editor.opened());
+    if (!this.editor.selectPlaced(index)) return;
+    if (this.ui.browsing()) this.ui.open(this.editor.opened());
+    else if (this.ui.clickedAgain(`placed:${index}`)) this.editor.enter(this.editor.selected());
+  }
+
+  /**
+   * A click on no planet (nor one dimmed, behind what it is inside): nothing in particular
+   * selected; twice, one level back out.
+   */
+  protected missed(): void {
+    if (this.ui.browsing()) return;
+    if (this.ui.clickedAgain('missed')) this.editor.leave();
+    else this.editor.deselect();
+  }
+
+  /** Esc: out of the screenshot mode, else (not typing) one level back out of what it is inside. */
+  protected escape(event: Event): void {
+    if (this.ui.screenshot()) return this.ui.setScreenshot(false);
+    const at = event.target;
+    if (at instanceof Element && at.closest('input, select, textarea, [contenteditable="true"]'))
+      return;
+    this.editor.leave();
   }
 
   /** The browser left full screen (Esc, or its own control): the screenshot mode ends with it. */
@@ -140,4 +172,17 @@ export class EditorLayout {
     if (id > 1) this.location.back();
     else void this.router.navigateByUrl(this.options.exit);
   }
+}
+
+/** A colour of the page's theme (a CSS colour, its custom properties as `el` has them), each channel 0 to 1. */
+function themeColour(el: HTMLElement, css: string): Vec3 {
+  const probe = el.ownerDocument.createElement('span');
+  probe.style.color = css;
+  el.append(probe);
+  const colour = getComputedStyle(probe).color;
+  probe.remove();
+  // ("rgb(r, g, b)" in 0 to 255, or "color(srgb r g b)" in 0 to 1.)
+  const scale = colour.startsWith('color(') ? 1 : 255;
+  const [r = scale, g = scale, b = scale] = (colour.match(/[\d.]+/g) ?? []).map(Number);
+  return [r / scale, g / scale, b / scale];
 }

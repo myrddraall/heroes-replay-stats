@@ -45,6 +45,7 @@ const sceneStoreBase = () =>
       editorCamera: null,
       sceneVariantEdited: null,
       opening: false,
+      inside: null,
     }),
     withFolding([SCENE]),
     withLocalStorage<SceneEditorState & { expanded: readonly string[] }>(

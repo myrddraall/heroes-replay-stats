@@ -62,7 +62,8 @@ export function particleMaterial(
       u.int('uBodyTintBlend'),
       u.float('uBodyTintStrength'),
     );
-    return cold(vec4(star.mul(vColor.a), 0));
+    // (Dimmed outside what an editor is in: 1, as it is.)
+    return cold(vec4(star.mul(vColor.a).mul(u.float('uDim', 1)), 0));
   })();
   coldVertex(m);
   return m;

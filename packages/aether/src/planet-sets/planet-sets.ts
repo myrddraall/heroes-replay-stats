@@ -27,6 +27,8 @@ export interface SetPlanet {
   readonly overlaysEnabled?: Readonly<Record<string, boolean>>;
   /** Whether it is drawn at all (off: where it is, but not drawn; its place in the set kept). */
   readonly enabled?: boolean;
+  /** Whether it is drawn dimmed (outside what an editor is in; see the view's `dim`). */
+  readonly dimmed?: boolean;
   /**
    * Its materials' settings (its own by name, its overlays' by `materialKey`), over its tuning's
    * and its overlays'.

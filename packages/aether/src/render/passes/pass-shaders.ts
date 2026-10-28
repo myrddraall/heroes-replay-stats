@@ -239,7 +239,8 @@ export function impostorMaterial(
       If(dot(c, c).equal(0), () => {
         Discard();
       });
-      return cold(c);
+      // A body dimmed outside what an editor is in (1: as it is).
+      return cold(vec4(c.rgb.mul(u.float('uDim', 1)), c.a));
     })();
   }
   coldVertex(m);

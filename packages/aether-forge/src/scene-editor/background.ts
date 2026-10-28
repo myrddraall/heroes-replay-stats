@@ -4,7 +4,7 @@ import type { SetPlanet } from '@myrddraall/heroes-replay-stats-aether/planet-se
 import { pathOf, SCENE_CENTRE, siblingKey } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import { computed } from '@angular/core';
 import type { SceneMarker } from '../viewport/scene-markers';
-import { type BodyInfo } from '../bodies/body';
+import { type BodyInfo, bodyLabel } from '../bodies/body';
 import { splitViewKey } from '../materials/material-views';
 import { axisAids, lightAids, poleMarkers, lightMarkerAt, spotEdges } from '../viewport/markers';
 import {
@@ -32,7 +32,17 @@ import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/space';
 export function backgroundViews(store: WithTree) {
   return {
     /** The scene's bodies placed for the background (null: the random sets', or loading). */
-    scenePlanets: computed(() => store._placed()?.planets ?? null),
+    scenePlanets: computed(() => {
+      const placed = store._placed();
+      const inside = store.insideTarget();
+      if (!placed || !inside) return placed?.planets ?? null;
+      // Inside a planet, a moon or an overlay one wears: all but it and its moons dimmed.
+      const at = bodyKey(inside.path);
+      return placed.planets.map((p, i) => {
+        const pick = placed.picks[i] ?? '';
+        return pick === at || pick.startsWith(`${at}.`) ? p : { ...p, dimmed: true };
+      });
+    }),
     /** A drag in the view orbits round what it looks at (the scene's middle as far ahead). */
     orbitAbout: computed((): Vec3 | null => null),
     /**
@@ -76,6 +86,28 @@ export function backgroundViews(store: WithTree) {
       );
       const placed = store._placed();
       if (!placed) return out;
+      // Each planet and moon (not a group's: the group's marker is its), but those dimmed outside
+      // what the editor is inside.
+      const inside = store.insideTarget();
+      const at = inside && bodyKey(inside.path);
+      placed.picks.forEach((pick, i) => {
+        const body = placed.planets[i];
+        const b = store.bodyByKey().get(pick);
+        if (!body || !b || !pick.startsWith('body:')) return;
+        // (The one it is inside is where the editor is: not marked; its moons are.)
+        if (at && !pick.startsWith(`${at}.`)) return;
+        out.push({
+          id: pick,
+          key: pick,
+          kind: 'body',
+          label: bodyLabel(b),
+          icon: pathOf(pick.slice(5)).length > 1 ? 'brightness_1' : 'public',
+          at: body.position,
+          lift: body.radius,
+          selected: t.kind === 'body' && bodyKey(t.path) === pick,
+          off: body.enabled === false,
+        });
+      });
       /**
        * A body's lights' markers: each one from a side out from the body, on the side it comes
        * from (in the body's frame), a line to it; each one from all round on the body's middle
@@ -144,32 +176,38 @@ export function backgroundViews(store: WithTree) {
         const body = placed.planets[i];
         const m = b && materialAt(materialsOf(b), t.key);
         if (m && body && split) lit(shieldLightsOf(split.base, m.values.gridLights), body, i, b);
-      } else if ('path' in t && t.path.length) {
-        const key = bodyKey(t.path);
-        const b = store.bodyByKey().get(key);
-        const i = placed.picks.indexOf(key);
+      } else {
+        // Inside a planet or moon: its lights (inside an overlay it wears, the overlay's), whatever
+        // is selected in it. Outside: only a light selected (in the tree), on its body.
+        const path = inside?.path ?? ('path' in t && t.path.length ? t.path : null);
+        const key = path && bodyKey(path);
+        const b = key ? store.bodyByKey().get(key) : undefined;
+        const i = key ? placed.picks.indexOf(key) : -1;
         const body = placed.planets[i];
-        // The body's lights, and its shields' (an overlay's it wears).
-        if (b && body)
-          lit(
-            [
-              ...lightsOfBody(b).map(({ light }) => ({
-                key: lightRowKey(t.path, light.id),
-                light,
-              })),
-              ...shieldLightsOfBody(b, materialsOf(b), (name, overlay) =>
-                materialRowKey(t.path, name, overlay),
-              ),
-            ],
-            body,
-            i,
-            b,
-          );
-        // A body selected: its poles named at its axis's ends.
-        if (b && body && t.kind === 'body')
-          axisAids(b, body, scene.camera, view).forEach((line, n) =>
-            out.push(...poleMarkers(line, key, n)),
-          );
+        if (path && b && body) {
+          const all = [
+            ...lightsOfBody(b)
+              .filter(({ overlay }) => inside?.kind !== 'overlay' || overlay === inside.id)
+              .map(({ light }) => ({ key: lightRowKey(path, light.id), light })),
+            ...(inside?.kind === 'overlay'
+              ? []
+              : shieldLightsOfBody(b, materialsOf(b), (name, overlay) =>
+                  materialRowKey(path, name, overlay),
+                )),
+          ];
+          const lights = inside ? all : all.filter((l) => l.key === store.selected());
+          if (lights.length) lit(lights, body, i, b);
+        }
+        // A planet or moon selected: its poles named at its axis's ends.
+        if (t.kind === 'body') {
+          const selected = bodyKey(t.path);
+          const sb = store.bodyByKey().get(selected);
+          const sbody = placed.planets[placed.picks.indexOf(selected)];
+          if (sb && sbody)
+            axisAids(sb, sbody, scene.camera, view).forEach((line, n) =>
+              out.push(...poleMarkers(line, selected, n)),
+            );
+        }
       }
       return out;
     }),

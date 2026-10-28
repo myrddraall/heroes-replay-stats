@@ -1,36 +1,29 @@
-// Over the view, taking no clicks but its markers'.
+// Over the view, taking no clicks but its markers'. What is on it is placed in hundredths of its
+// width and height (`cqw`, `cqh`), moved by transforms: a move of the view's camera then moves
+// layers and paints nothing again. (The markers' dots and lines are drawn in the scene: see
+// `markerAids`.)
 :host {
   position: absolute;
   inset: 0;
   overflow: hidden;
   pointer-events: none;
+  container-type: size;
 }
 
-.lines {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-
-  line {
-    stroke: rgb(var(--hrs-glass-edge) / 0.7);
-    stroke-width: 1.25;
-    stroke-dasharray: 4 3;
-
-    &.selected {
-      stroke: var(--mat-sys-primary);
-      stroke-width: 2;
-      stroke-dasharray: none;
-    }
-
-    &.off {
-      opacity: 0.4;
-    }
-  }
+// Where a marker or a pole's name is, from the view's top left.
+@mixin placed($shift: 0px) {
+  top: 0;
+  left: 0;
+  transform: translate(calc(var(--x) * 1cqw + #{$shift}), calc(var(--y) * 1cqh));
+  will-change: transform;
 }
 
-// A marker: its icon on a dark round, its name beside it; centred on where it is.
+// A marker: its icon on a dark round (in the ring its dot grows into), its name beside it, centred
+// on where it is; shown where it is hovered, selected or focused. Otherwise it is there unseen, its
+// round over its dot, for the pointer to find it by. A body's only shows (its disk is what is
+// picked).
 .marker {
+  @include placed(var(--shift, 0px));
   position: absolute;
   display: flex;
   align-items: center;
@@ -42,6 +35,7 @@
   color: #fff;
   cursor: pointer;
   pointer-events: auto;
+  opacity: 0;
 
   mat-icon {
     display: grid;
@@ -51,40 +45,35 @@
     font-size: 18px;
     border-radius: 50%;
     background: rgb(0 0 0 / 0.65);
-    box-shadow: 0 0 0 1px rgb(var(--hrs-glass-edge) / 0.8);
   }
 
-  &:hover mat-icon,
-  &:focus-visible mat-icon {
-    box-shadow: 0 0 0 2px rgb(var(--hrs-glass-edge));
+  .label {
+    display: none;
+  }
+
+  &.open,
+  &:focus-visible {
+    opacity: 1;
+
+    .label {
+      display: block;
+    }
   }
 
   &:focus-visible {
     outline: none;
-  }
 
-  &.selected mat-icon {
-    box-shadow: 0 0 0 2px var(--mat-sys-primary);
-  }
-
-  // A light not selected: a dot, its icon on hover (or focus), not to get in the light's way.
-  &.lite:not(:hover, :focus-visible) mat-icon {
-    font-size: 0;
-    background: none;
-    box-shadow: none;
-
-    &::after {
-      content: '';
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: rgb(0 0 0 / 0.65);
-      box-shadow: 0 0 0 1px rgb(var(--hrs-glass-edge) / 0.8);
+    mat-icon {
+      box-shadow: 0 0 0 2px rgb(var(--hrs-glass-edge));
     }
   }
 
-  &.off {
+  &.off.open {
     opacity: 0.55;
+  }
+
+  &--body {
+    pointer-events: none;
   }
 }
 
@@ -98,6 +87,7 @@
 
 // A planet's pole's name, centred on where it is, larger than a marker's name.
 .pole {
+  @include placed;
   position: absolute;
   translate: -50% -50%;
   padding: 2px 10px;

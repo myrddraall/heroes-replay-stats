@@ -6,6 +6,7 @@ import { Editor } from '../editing/editor';
 import { OVERRIDE_SHOWN } from '../controls/rows/override-shown';
 import { EditorLayout } from '../layout/editor-layout';
 import { EditorUiStore } from '../layout/editor-ui.store';
+import { editorAids } from '../viewport/marker-aids';
 import { selectParentWhenGone } from '../tree/select-parent-when-gone';
 import type { AssetTarget } from '../layout/open-target';
 
@@ -42,10 +43,8 @@ import type { AssetTarget } from '../layout/open-target';
           camera: store.viewCamera,
           // An anchored sky moves with the view's camera, or (not following it) with the game's.
           skyFollow: computed(() => (ui.skyFollows() ? null : {})),
-          // The light selected's beams, with the markers (none in a screenshot or the library's preview).
-          beams: computed(() =>
-            ui.markers() !== 'none' && !ui.screenshot() && !ui.browsing() ? store.beams() : [],
-          ),
+          // The light selected's beams, and the markers' dots and lines (see `editorAids`).
+          beams: computed(() => editorAids(store, ui)),
         };
       },
     },

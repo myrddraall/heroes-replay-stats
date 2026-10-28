@@ -45,6 +45,7 @@
       [class.name--off]="row.enabled === false || underOff().has(row.key)"
       [attr.aria-pressed]="row.key === selected()"
       (click)="rowSelect.emit(row.key)"
+      (dblclick)="rowOpen.emit(row.key)"
       (keydown.arrowdown)="move($event, i, 1)"
       (keydown.arrowup)="move($event, i, -1)"
       (keydown.alt.arrowdown)="moveBy($event, i, 1)"

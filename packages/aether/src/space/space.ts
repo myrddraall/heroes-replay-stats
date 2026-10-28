@@ -146,6 +146,8 @@ export interface PlanetPlacement {
   readonly overlays?: readonly LoadedPlanet[];
   /** Not drawn (nor picked), though where it is: switched off. */
   readonly hidden?: boolean;
+  /** Drawn dimmed (outside what an editor is in), by the renderer's `dim`. */
+  readonly dimmed?: boolean;
   /**
    * Its materials' settings (its own by name, its overlays' by `materialKey`), over the tunings'
    * (the planet's for its materials, an overlay's for its own).

@@ -1,7 +1,9 @@
 import { type Node, NodeMaterial, type Texture } from 'three/webgpu';
 import {
   abs,
+  attribute,
   bool,
+  clamp,
   Discard,
   dot,
   float,
@@ -11,6 +13,8 @@ import {
   length,
   Loop,
   max,
+  mix,
+  mod,
   normalize,
   positionGeometry,
   pow,
@@ -20,6 +24,7 @@ import {
   textureLoad,
   transpose,
   varying,
+  vec2,
   vec3,
   vec4,
 } from 'three/tsl';
@@ -186,6 +191,146 @@ export function outlineMaterial(
       Discard();
     });
     return cold(vec4(colour.mul(a), a));
+  })();
+  coldVertex(m);
+  return m;
+}
+
+/** Whether a point of the scene is behind what the picture has drawn, or behind one of the bodies' spheres. */
+function behindPicture(
+  u: ShaderUniforms,
+  frameDepth: Texture,
+  viewProjection: Node<'mat4'>,
+  at: Node<'vec3'>,
+): Node<'bool'> {
+  const clip = viewProjection.mul(vec4(at, 1)).toVar();
+  const depth = clip.z.div(clip.w).mul(0.5).add(0.5);
+  const eye = u.vec3('uEye');
+  const ray = at.sub(eye).toVar();
+  const far = length(ray).toVar();
+  const d = ray.div(far).toVar();
+  const hidden = depth.greaterThan(textureLoad(frameDepth, pixel()).x.add(2e-4)).toVar();
+  const count = u.int('uSphereCount');
+  Loop(MAX_BEAM_SPHERES, ({ i }) => {
+    If(i.lessThan(count), () => {
+      const near = meets(eye, u.row('surfaces', i, 0), d);
+      If(near.greaterThan(0).and(near.lessThan(far.mul(0.999))), () => {
+        hidden.assign(bool(true));
+      });
+    });
+  });
+  return hidden;
+}
+
+/** A point of the scene moved across the screen by `pixels` (x right, y up), in clip space. */
+const shifted = (clip: Node<'vec4'>, pixels: Node<'vec2'>, viewport: Node<'vec2'>) =>
+  vec4(clip.xy.add(pixels.mul(2).div(viewport).mul(clip.w)), clip.zw);
+
+/**
+ * The markers' lines, one instance each (`lineFrom`: its start and thickness in pixels; `lineTo`:
+ * its end and whether dashed; `lineColour`): a strip along it on the screen, as thick wherever it
+ * is, dashed 4 pixels on, 3 off; hidden where the picture is nearer, or behind a body.
+ */
+export function lineMaterial(u: ShaderUniforms, frameDepth: Texture, toClip: ToClip): NodeMaterial {
+  const m = overlay(new NodeMaterial());
+  m.name = 'aid-line';
+  setBlend(m, 'over');
+  const viewProjection = u.mat4('uViewProjection');
+  const viewport = u.vec2('uViewport');
+  const from = attribute<'vec4'>('lineFrom', 'vec4');
+  const to = attribute<'vec4'>('lineTo', 'vec4');
+  const colourIn = attribute<'vec4'>('lineColour', 'vec4');
+  const corner = positionGeometry.xy;
+  const half = from.w.div(2).add(1);
+  const a = viewProjection.mul(vec4(from.xyz, 1));
+  const b = viewProjection.mul(vec4(to.xyz, 1));
+  const sa = a.xy.div(a.w).mul(viewport).mul(0.5);
+  const sb = b.xy.div(b.w).mul(viewport).mul(0.5);
+  const run = sb.sub(sa);
+  const dir = run.div(max(length(run), 1e-6));
+  const vAt = varying(mix(from.xyz, to.xyz, corner.x));
+  // Its way along and across it in pixels, as the screen has them, not bent by depth: each
+  // carried times its clip w, with w, and divided again (WebGL 2 has no unperspective varyings).
+  const w = mix(a.w, b.w, corner.x);
+  const vPixels = varying(vec3(corner.x.mul(length(run)), corner.y.mul(half), 1).mul(w));
+  m.vertexNode = Fn(() =>
+    toClip(
+      shifted(mix(a, b, corner.x), vec2(dir.y.negate(), dir.x).mul(corner.y.mul(half)), viewport),
+    ),
+  )();
+  const vColour = varying(colourIn);
+  const vStyle = varying(vec2(from.w, to.w));
+  m.fragmentNode = Fn(() => {
+    If(behindPicture(u, frameDepth, viewProjection, vAt), () => {
+      Discard();
+    });
+    const onScreen = vPixels.xy.div(vPixels.z).toVar();
+    const edge = clamp(vStyle.x.div(2).add(0.5).sub(abs(onScreen.y)), 0, 1);
+    const along = mod(onScreen.x, 7);
+    const dash = select(
+      vStyle.y.greaterThan(0.5),
+      clamp(float(4.5).sub(along), 0, 1).mul(clamp(along.add(0.5), 0, 1)),
+      float(1),
+    );
+    const alpha = vColour.a.mul(edge).mul(dash).mul(u.float('uFade', 1)).toVar();
+    If(alpha.lessThanEqual(0), () => {
+      Discard();
+    });
+    return cold(vec4(vColour.rgb.mul(alpha), alpha));
+  })();
+  coldVertex(m);
+  return m;
+}
+
+/** How strongly a dot shows where the picture is nearer (behind a planet). */
+const FAINT_DOT = 0.3;
+
+/**
+ * The markers' dots, one instance each (`dotAt`: where, and how far toward the eye; `dotSize`:
+ * its width and shift across in pixels, its ring's width, whether on top; `dotColour`): a dark
+ * disc in a ring of its colour, facing the screen, as wide at any distance; faint where the
+ * picture is nearer, unless on top.
+ */
+export function dotMaterial(u: ShaderUniforms, frameDepth: Texture, toClip: ToClip): NodeMaterial {
+  const m = overlay(new NodeMaterial());
+  m.name = 'aid-dot';
+  setBlend(m, 'over');
+  const viewProjection = u.mat4('uViewProjection');
+  const viewport = u.vec2('uViewport');
+  const eye = u.vec3('uEye');
+  const atIn = attribute<'vec4'>('dotAt', 'vec4');
+  const size = attribute<'vec4'>('dotSize', 'vec4');
+  const colourIn = attribute<'vec4'>('dotColour', 'vec4');
+  const corner = positionGeometry.xy;
+  const half = size.x.div(2).add(1);
+  // (On its sphere's near side: a little past it, so its own sphere doesn't hide it.)
+  const at = atIn.xyz.add(normalize(eye.sub(atIn.xyz)).mul(atIn.w.mul(1.002)));
+  const vAt = varying(at);
+  const vOffset = varying(corner.mul(half));
+  m.vertexNode = Fn(() =>
+    toClip(
+      shifted(viewProjection.mul(vec4(at, 1)), corner.mul(half).add(vec2(size.y, 0)), viewport),
+    ),
+  )();
+  const vColour = varying(colourIn);
+  const vSize = varying(vec3(size.x, size.z, size.w));
+  m.fragmentNode = Fn(() => {
+    const r = length(vOffset);
+    const outer = vSize.x.div(2);
+    const disc = clamp(outer.add(0.5).sub(r), 0, 1);
+    const ring = clamp(r.sub(outer.sub(vSize.y)).add(0.5), 0, 1).mul(disc);
+    const faint = select(
+      vSize.z.greaterThan(0.5).or(behindPicture(u, frameDepth, viewProjection, vAt).not()),
+      float(1),
+      float(FAINT_DOT),
+    );
+    const strength = vColour.a.mul(faint).mul(u.float('uFade', 1)).toVar();
+    // The disc dark (as a marker's round is), its ring in its colour; premultiplied.
+    const alpha = mix(disc.mul(0.65), disc, ring).mul(strength).toVar();
+    If(alpha.lessThanEqual(0), () => {
+      Discard();
+    });
+    return cold(vec4(vColour.rgb.mul(ring).mul(strength), alpha));
   })();
   coldVertex(m);
   return m;

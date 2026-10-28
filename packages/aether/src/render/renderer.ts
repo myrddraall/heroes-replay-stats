@@ -10,6 +10,31 @@ import { ThreeRenderer } from './three-renderer';
 import type { Tint } from '../tints/tints';
 import type { Vec3 } from '../space/vectors';
 
+/**
+ * How long a frame took on the CPU in each of its parts, in ms, while frames are timed: the still
+ * sky drawn again (where `stillDrawn`), the bodies baked again (`baked` of them, `resized` of
+ * them into a bake made again at another size), the frame's
+ * passes, and bloom, the tone and the aids; its passes rendered and draw calls, the GPU's pipelines
+ * and textures made so far (their megabytes too), and what it was drawn at.
+ */
+export interface FrameSections {
+  readonly stillDrawn: boolean;
+  readonly still: number;
+  readonly bakes: number;
+  readonly baked: number;
+  readonly resized: number;
+  readonly passes: number;
+  readonly post: number;
+  readonly renders: number;
+  readonly calls: number;
+  readonly pipelines: number;
+  readonly textures: number;
+  readonly textureMb: number;
+  readonly width: number;
+  readonly height: number;
+  readonly backend: string;
+}
+
 /** What draws the Play screen's scene into a canvas, as the scene canvas drives it. */
 export interface Renderer {
   timing: boolean;
@@ -20,11 +45,15 @@ export interface Renderer {
   fade: number;
   /** How strongly the editor's beams and outlines show, 0 to 1. */
   aidFade: number;
+  /** How bright the sky and the bodies marked dimmed are drawn, 0 to 1 (1: as they are). */
+  dim: number;
   /** Whether it is still compiling or baking: a frame drawn now isn't the whole picture yet. */
   readonly settling: boolean;
   draw(seconds: number): boolean;
   needsFrame(seconds: number): boolean;
   gpuTimes(): number[];
+  /** The frames drawn since last asked, part by part, while timed (see `FrameSections`). */
+  frameSections(): FrameSections[];
   anchors(): { id: string; x: number; y: number; top: number }[];
   pick(x: number, y: number, aspect: number): number | null;
   /** The bodies put up, each as drawn (see `drawnBody`). */

@@ -84,6 +84,10 @@ export class SceneView {
   /** Whether a planet can be picked by a click (an editor's): `planetPick` gives its index in the set shown. */
   readonly pickable = input(false);
   readonly planetPick = output<number>();
+  /** A click on none of them. */
+  readonly pickMissed = output<void>();
+  /** The planet the pointer is over, by its index in the set shown (none: none). */
+  readonly planetHover = output<number | null>();
   private readonly canvas = viewChild(SceneCanvas);
   /** How far the editor's aids show over it, 0 to 1 (see `SceneCanvas.aidsShown`): for markers laid over it. */
   readonly aidsShown = computed(() => this.canvas()?.aidsShown() ?? 0);
@@ -104,6 +108,8 @@ export class SceneView {
   protected readonly backdrop = computed(() => this.source?.backdrop?.() ?? null);
   /** Lights' beams over it, where the scene shown has any. */
   protected readonly beams = computed(() => this.source?.beams?.() ?? []);
+  /** How bright what is outside what an editor is in is drawn (1: as it is). */
+  protected readonly dim = computed(() => this.source?.dim?.() ?? 1);
   protected readonly drawing = this.store.drawing;
   private readonly parse = browserColourParser();
   /** The tint over the whole picture: the scene's, where it has one; else the site's. */
@@ -365,6 +371,7 @@ export class SceneView {
           planet,
           overlays: overlays.filter((o) => !!o),
           ...(p.enabled === false ? { hidden: true } : {}),
+          ...(p.dimmed ? { dimmed: true } : {}),
           position: p.position,
           radius: p.radius,
           materials: p.materials,

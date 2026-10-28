@@ -1,14 +1,12 @@
 <div class="picture" [class.shown]="drawn()">
   <!-- A new canvas for each renderer: one that has had a WebGPU context can't give a WebGL one. -->
   @for (make of [makeRenderer()]; track make) {
-    <canvas #canvas aria-hidden="true"></canvas>
+  <canvas #canvas aria-hidden="true"></canvas>
   }
   <canvas #previous class="previous" aria-hidden="true"></canvas>
-  @if (names()) {
-    @for (label of labels(); track $index) {
-      <span class="name" [style.left.%]="label.x * 100" [style.top.%]="label.top * 100">
-        {{ label.id }}
-      </span>
-    }
-  }
+  @if (names()) { @for (label of labels(); track $index) {
+  <span class="name" [style.left.%]="label.x * 100" [style.top.%]="label.top * 100">
+    {{ label.id }}
+  </span>
+  } }
 </div>

@@ -27,6 +27,7 @@ import type { PartEntry } from '../parts/parts';
 import type { SkyAnchorView } from '../sky/sky';
 import type { AssetTarget, OpenTarget } from '../layout/open-target';
 import type { TreeMove, TreeRow } from '../tree/scene-tree';
+import type { Crumb } from '../tree/breadcrumb';
 import type { PoleDrag, SceneMarker } from '../viewport/scene-markers';
 import type { AddedLists } from '../controls/added-list';
 import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/space';
@@ -53,12 +54,25 @@ export abstract class Editor {
   /** What the tree shows: as many rows as are unfolded. */
   abstract readonly rows: Signal<TreeRow[]>;
   abstract readonly selected: Signal<string>;
+  /**
+   * Editing in place: where the editor is, outermost first (all of what is open, then each thing
+   * it is inside: a scene's planet, a moon, an overlay one wears); its edits land where they would
+   * outside. What a row stands for gone inside, one level back out, or out to a crumb's level.
+   */
+  abstract readonly crumbs: Signal<readonly Crumb[]>;
+  abstract enter(key: string): void;
+  abstract leave(): void;
+  abstract goTo(key: string | null): void;
+  /** Nothing in particular selected: what the editor is at (the scene, what it is inside, what is open). */
+  abstract deselect(): void;
   /** What the selected row is; its properties' panel's title. */
   abstract readonly kind: Signal<TargetKind>;
   abstract readonly title: Signal<string>;
   abstract select(key: string): void;
   /** The body shown at an index of the scene's planets (as put up) selected; whether there was one. */
   abstract selectPlaced(index: number): boolean;
+  /** What a body put out in the view stands for (its row's key, as picking it selects), by its index. */
+  abstract pickKey(index: number): string | null;
   abstract toggleExpanded(key: string): void;
   /** A material switched on or off from the tree, by its row's key. */
   abstract setEnabled(change: { key: string; enabled: boolean }): void;

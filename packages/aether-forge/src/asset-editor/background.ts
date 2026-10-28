@@ -3,7 +3,7 @@ import type { SetPlanet } from '@myrddraall/heroes-replay-stats-aether/planet-se
 import type { SceneCameraSet } from '@myrddraall/heroes-replay-stats-aether/formats';
 import { computed } from '@angular/core';
 import { materialAt } from '../materials/materials';
-import { type BodyInfo } from '../bodies/body';
+import { type BodyInfo, bodyLabel } from '../bodies/body';
 import { splitViewKey } from '../materials/material-views';
 import { axisAids, lightAids, poleMarkers, lightMarkerAt, spotEdges } from '../viewport/markers';
 import {
@@ -18,6 +18,8 @@ import type { SceneMarker } from '../viewport/scene-markers';
 import { standInLights } from '../aids/stand-in';
 import {
   ASSET,
+  moonKey,
+  moonPaths,
   assetLightKey,
   assetMaterialKey,
   assetOverlayMaterialKey,
@@ -96,6 +98,27 @@ export function assetBackgroundViews(store: WithStage) {
       if (!view || !scene || !lit) return [];
       const { body, lights } = lit;
       const out: SceneMarker[] = [];
+      // The planet open's own moons (the planet itself not: the editor is where it is, as inside it).
+      if (store.asset().kind !== 'sky') {
+        const paths = moonPaths(store._moons());
+        store.stagePlanets().forEach((p, i) => {
+          const path = i > 0 ? paths[i - 1] : undefined;
+          if (!path) return;
+          const key = moonKey(path);
+          const moon = store._moonInfos().get(key);
+          out.push({
+            id: key,
+            key,
+            kind: 'body',
+            label: moon ? bodyLabel(moon) : key,
+            icon: 'brightness_1',
+            at: p.position,
+            lift: p.radius,
+            selected: store.selected() === key,
+            off: p.enabled === false,
+          });
+        });
+      }
       // Where the renderer puts them: as the body is lit (fixed in the world, or kept to the eye).
       const from = lightsView(lit.info, scene.camera, view);
       const marker = (key: string, light: LightEntry['light'], at: Vec3) => ({

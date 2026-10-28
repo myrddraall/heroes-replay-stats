@@ -34,6 +34,8 @@ export interface SceneSource {
   readonly backdrop?: Signal<Backdrop | null>;
   /** Lights' beams shown over it (an editing aid: the light selected); never part of the design. */
   readonly beams?: Signal<readonly EditingAid[]>;
+  /** How bright the sky and the planets marked dimmed are drawn, 0 to 1 (none: 1, as they are). */
+  readonly dim?: Signal<number>;
   /** Where it puts the camera, over the game's (none: the game's). */
   readonly camera?: Signal<SceneCameraSet | undefined>;
   /**

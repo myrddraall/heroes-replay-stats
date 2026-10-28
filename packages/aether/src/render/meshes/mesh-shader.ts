@@ -102,7 +102,9 @@ export function meshNodes(
     If(u.int('uOutput').equal(1), () => {
       result.assign(shaded.glow);
     });
-    return cold(result);
+    // Dimmed outside what an editor is in (1: as it is).
+    const dim = u.float('uDim', 1);
+    return cold(vec4(result.rgb.mul(dim), result.a));
   })();
   return { vertex, fragment };
 }

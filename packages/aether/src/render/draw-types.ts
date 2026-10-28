@@ -40,6 +40,9 @@ export type Output = (typeof OUTPUTS)[number];
 /** The editor's aids' kinds: an outline, a light's beam, a darkening one's, and its edges. */
 export type AidKind = 'outline' | 'light' | 'dark' | 'edge';
 
+/** The aids drawn many to a draw (each one an instance): the markers' lines, their dots. */
+export type InstancedAidKind = 'line' | 'dot';
+
 /**
  * One material drawn on one mesh, or on one part of a placed planet's body; moving when one of
  * its layers scrolls.

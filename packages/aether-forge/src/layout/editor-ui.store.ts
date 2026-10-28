@@ -1,18 +1,20 @@
 import { FORGE_OPTIONS } from '../forge-options';
 import { storageKey } from '@myrddraall/heroes-replay-stats-aether';
-import { inject } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   patchState,
   signalMethod,
   signalStore,
   withHooks,
+  withComputed,
   withMethods,
   withProps,
   withState,
 } from '@ngrx/signals';
 import { withLocalStorage } from '@myrddraall/heroes-replay-stats-signals';
 import { libraryPath, type OpenKind, type OpenTarget, openPath } from './open-target';
+import type { MarkerColours } from '../viewport/marker-aids';
 
 /** How soon a second click on the same thing makes a double-click, in milliseconds. */
 export const DOUBLE_CLICK = 500;
@@ -51,6 +53,11 @@ interface EditorUiState {
   readonly screenshot: boolean;
   /** The page of the properties' panel last shown for each kind of thing selected, by kind. */
   readonly panelPages: Readonly<Record<string, string>>;
+  /** What the pointer is over in the view, by its row's key: a marker's button, a body's disk. */
+  readonly hoveredMarker: string | null;
+  readonly hoveredBody: string | null;
+  /** The colours the markers are drawn in, as the page's theme has them (read from it once shown). */
+  readonly markerColours: MarkerColours;
 }
 
 /**
@@ -74,6 +81,9 @@ export const EditorUiStore = signalStore(
     confirmingClear: false,
     screenshot: false,
     panelPages: {},
+    hoveredMarker: null,
+    hoveredBody: null,
+    markerColours: { edge: [0.85, 0.6, 1], selected: [0.75, 0.4, 1] },
   }),
   withLocalStorage<EditorUiState>(storageKey('editor'), [
     'names',
@@ -84,6 +94,10 @@ export const EditorUiStore = signalStore(
     'right',
     'panelPages',
   ]),
+  withComputed((store) => ({
+    /** What the pointer is over in the view (a marker's button over a body's disk). */
+    hovered: computed(() => store.hoveredMarker() ?? store.hoveredBody()),
+  })),
   withProps(() => ({
     _router: inject(Router),
     /** The editor's own URL, what its paths are under. */
@@ -173,6 +187,17 @@ export const EditorUiStore = signalStore(
       },
       setScreenshot(screenshot: boolean): void {
         patchState(store, { screenshot });
+      },
+      /** The pointer onto a marker's button (its key) or off it (none). */
+      hoverMarker(key: string | null): void {
+        if (key !== store.hoveredMarker()) patchState(store, { hoveredMarker: key });
+      },
+      /** The pointer onto a body's disk in the view (its key) or off it (none). */
+      hoverBody(key: string | null): void {
+        if (key !== store.hoveredBody()) patchState(store, { hoveredBody: key });
+      },
+      setMarkerColours(markerColours: MarkerColours): void {
+        patchState(store, { markerColours });
       },
     };
   }),
