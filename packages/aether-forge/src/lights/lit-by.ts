@@ -1,4 +1,5 @@
-import { Component, input, output } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
+import { MAX_LIGHTS, MAX_SHADES } from '@myrddraall/heroes-replay-stats-aether/render';
 import { MatIcon } from '@angular/material/icon';
 import type { LightId } from '@myrddraall/heroes-replay-stats-aether/lights';
 import { PropertySection } from '../controls/property-section';
@@ -25,6 +26,24 @@ export class LitBy {
   /** A light added here taken out. */
   readonly lightRemove = output<LightId>();
   protected readonly id = `lit-by-${next++}`;
+  /**
+   * What a body is drawn with past its limits, as a line under its lights (none: within them):
+   * those that light (all but ambient ones, which add up into one) and those that darken.
+   */
+  protected readonly over = computed(() => {
+    const acting = this.lights().filter((l) => l.reaches);
+    const lighting = acting.filter((l) => !l.darkens && l.kind !== 'ambient').length;
+    const darkening = acting.filter((l) => l.darkens).length;
+    const lines = [
+      ...(lighting > MAX_LIGHTS
+        ? [`Only ${MAX_LIGHTS} of its ${lighting} lights that light are drawn.`]
+        : []),
+      ...(darkening > MAX_SHADES
+        ? [`Only ${MAX_SHADES} of its ${darkening} lights that darken are drawn.`]
+        : []),
+    ];
+    return lines.join(' ') || null;
+  });
 
   protected check(id: LightId, event: Event): void {
     this.litChange.emit({ id, on: (event.target as HTMLInputElement).checked });

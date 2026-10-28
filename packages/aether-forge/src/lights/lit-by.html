@@ -34,5 +34,7 @@
   </div>
   } @empty {
   <p class="hint">Nothing lights it.</p>
+  } @if (over(); as over) {
+  <p class="hint" role="status">{{ over }}</p>
   }
 </forge-property-section>

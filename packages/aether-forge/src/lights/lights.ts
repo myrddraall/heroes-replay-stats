@@ -281,6 +281,8 @@ export interface LitByEntry {
   readonly id: LightId;
   readonly kind: LightKind;
   readonly name: string;
+  /** Whether it darkens instead of lighting. */
+  readonly darkens: boolean;
   /** Whether it lights it (a body: whether it is on for it). */
   readonly reaches: boolean;
   /** Whether it is on as the levels under the one edited have it. */
@@ -370,6 +372,7 @@ export function litByOf(
       id: light.id,
       kind: light.kind,
       name: light.name,
+      darkens: !!light.darkens,
       reaches: receiver === null ? light.enabled : reachesReceiver(l.reach, receiver, parts),
       enabledBelow: l.enabledBelow,
       ...(l.reach ? { reach: l.reach } : {}),
