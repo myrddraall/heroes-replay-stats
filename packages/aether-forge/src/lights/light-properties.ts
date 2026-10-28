@@ -2,7 +2,6 @@ import {
   type LightOut,
   type LightReach,
   type LightSettings,
-  type Receiver,
   SHIELD_DEFAULTS,
 } from '@myrddraall/heroes-replay-stats-aether/lights';
 import {
@@ -21,6 +20,8 @@ import { type PropertyOption, PropertySelect } from '../controls/rows/property-s
 import { PropertySection } from '../controls/property-section';
 import { PropertyText } from '../controls/rows/property-text';
 import type { LightEntry } from './lights';
+import { LightLinking } from './light-linking';
+import type { LinkChange, LinkEntry } from './linking';
 /** A light's own settings (its name is apart, and its switch: the tree row's). */
 const LIGHT_KEYS: readonly (keyof LightSettings)[] = [
   'darkens',
@@ -91,6 +92,7 @@ const OUT_LABELS: Record<LightOut, string> = {
     PropertySelect,
     PropertyCheck,
     PropertyPlacement,
+    LightLinking,
   ],
   templateUrl: './light-properties.html',
   styleUrl: '../panel/properties-panel.scss',
@@ -102,7 +104,12 @@ export class LightProperties {
   readonly light = input.required<LightEntry>();
   /** Whether it is one of a shield's lights: what it does to the grid is shown (its Shield section). */
   readonly onShield = input(false);
+  /** What it lights, as its Linking lists it (none: nothing listed: a shield's light, the stand-in's). */
+  readonly links = input<readonly LinkEntry[]>([]);
   readonly settingsChange = output<Partial<LightSettings>>();
+  /** Something it lights taken in or left out, or what is set of it here reset. */
+  readonly linkChange = output<LinkChange>();
+  readonly linkReset = output<string>();
   /** Settings set here to take back (none given: all of them). */
   readonly clear = output<readonly (keyof LightSettings)[] | undefined>();
   /** It was taken out (one added at the level edited). */
@@ -138,14 +145,8 @@ export class LightProperties {
     else this.settingsChange.emit({ reach: { mode: 'except', receivers: [] } });
   }
 
-  protected checkReceiver(receiver: Receiver, checked: boolean): void {
-    const r = this.light().reach;
-    if (!r) return;
-    const receivers = checked
-      ? [...r.receivers, receiver]
-      : r.receivers.filter((x) => x !== receiver);
-    this.settingsChange.emit({ reach: { mode: r.mode, receivers } });
-  }
+  /** Its own body, where its Linking lists it: how what it reaches of it is named is set too. */
+  protected readonly ownLink = computed(() => this.links().some((l) => l.own));
 
   protected readonly outOptions = computed((): PropertyOption[] =>
     (['none', ...this.light().outs] as const).map((value) => ({

@@ -3,6 +3,7 @@ import {
   type BodyLight,
   downOf,
   knownLights,
+  type LightId,
   outOf,
   type LightSettings,
   type LightSettingsMap,
@@ -26,6 +27,10 @@ export interface FlowedLight {
 
 /** The id a body's data light is handed on under: its owner's (the body's library id) and its own. */
 export const handedOnId = (owner: string, id: string): `added-${string}` => `added-~${owner}~${id}`;
+
+/** The id a light handed on has on its own body (its data's: see `handedOnId`; one added: its own). */
+export const sourceIdOf = (id: LightId): LightId =>
+  id.startsWith('added-~') ? (id.slice(id.lastIndexOf('~') + 1) as LightId) : id;
 
 /** A light as another body takes it: all of that body lit, and handed on no further. */
 export const receivedLight = (light: AddedLight): AddedLight => ({

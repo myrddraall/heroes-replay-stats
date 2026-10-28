@@ -20,6 +20,7 @@ import type {
 import type { PickChoice } from '../controls/pick-list';
 import type { BodyView, TargetKind } from '../bodies/body';
 import type { LightEntry, LitByEntry } from '../lights/lights';
+import type { LinkChange, LinkEntry } from '../lights/linking';
 import type { MaterialEntry } from '../materials/materials';
 import type { MaterialView } from '../materials/material-views';
 import type { OverlayView } from '../overlays/overlays';
@@ -169,6 +170,14 @@ export abstract class Editor {
   abstract showLight(id: LightId): void;
   /** A light taken in or left out by the selected body, part or material. */
   abstract setLitBy(change: { readonly id: LightId; readonly on: boolean }): void;
+  /**
+   * What the selected light lights, as its Linking lists it (none: it lists nothing). Each is
+   * changed as its Lit by is: the same setting.
+   */
+  abstract readonly linking: Signal<readonly LinkEntry[] | null>;
+  abstract setLinking(change: LinkChange): void;
+  /** What the level edited sets of the selected light for something it lights (`key`) taken back. */
+  abstract resetLinking(key: string): void;
 
   /** The sky's tint, as shown and as set in the layer edited; whether anything of the sky is set. */
   abstract readonly skyTint: Signal<MaterialTint>;

@@ -30,18 +30,43 @@ import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/space';
 
 /** What the background shows of the scene: its planets placed, what orbits are about, the markers over the view, the lights' beams. */
 export function backgroundViews(store: WithTree) {
+  /**
+   * What the light selected lights, by what picking each body selects (`picks`): those it lights,
+   * and those an exception leaves out (none: no light selected). A body's light set to light the
+   * whole scene lights the groups' planets too (they can't be left out of it yet).
+   */
+  const reach = computed(() => {
+    const links = store.linking();
+    if (!links) return null;
+    const lit = new Set(links.filter((l) => l.lit).map((l) => l.key));
+    if (store.target().kind === 'light' && store.light()?.out === 'scene')
+      store.placements().forEach((p, i) => lit.add(placementKey(siblingKey(p, i))));
+    return { lit, left: new Set(links.filter((l) => !l.own && !l.lit).map((l) => l.key)) };
+  });
   return {
     /** The scene's bodies placed for the background (null: the random sets', or loading). */
     scenePlanets: computed(() => {
       const placed = store._placed();
       const inside = store.insideTarget();
-      if (!placed || !inside) return placed?.planets ?? null;
-      // Inside a planet, a moon or an overlay one wears: all but it and its moons dimmed.
-      const at = bodyKey(inside.path);
+      const reached = reach();
+      if (!placed || (!inside && !reached)) return placed?.planets ?? null;
+      // Inside a planet, a moon or an overlay one wears: all but it and its moons dimmed. A light
+      // selected: what it doesn't light dimmed too.
+      const at = inside && bodyKey(inside.path);
       return placed.planets.map((p, i) => {
         const pick = placed.picks[i] ?? '';
-        return pick === at || pick.startsWith(`${at}.`) ? p : { ...p, dimmed: true };
+        const outside = !!at && pick !== at && !pick.startsWith(`${at}.`);
+        return outside || (reached && !reached.lit.has(pick)) ? { ...p, dimmed: true } : p;
       });
+    }),
+    /** Whether anything of the scene is drawn dimmed: outside what the editor is in, or unlit by the light selected. */
+    dimming: computed(() => {
+      const placed = store._placed();
+      const reached = reach();
+      return (
+        !!store.insideTarget() ||
+        (!!placed && !!reached && placed.picks.some((pick) => !reached.lit.has(pick)))
+      );
     }),
     /** A drag in the view orbits round what it looks at (the scene's middle as far ahead). */
     orbitAbout: computed((): Vec3 | null => null),
@@ -82,6 +107,7 @@ export function backgroundViews(store: WithTree) {
           at: p.position,
           selected: t.kind === 'placement' && t.key === siblingKey(p, i),
           off: p.enabled === false,
+          left: !!reach()?.left.has(placementKey(siblingKey(p, i))),
         }),
       );
       const placed = store._placed();
@@ -106,6 +132,7 @@ export function backgroundViews(store: WithTree) {
           lift: body.radius,
           selected: t.kind === 'body' && bodyKey(t.path) === pick,
           off: body.enabled === false,
+          left: !!reach()?.left.has(pick),
         });
       });
       /**

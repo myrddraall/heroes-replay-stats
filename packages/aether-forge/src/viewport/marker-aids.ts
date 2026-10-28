@@ -23,7 +23,7 @@ const DOT_OPEN = 34;
 
 /**
  * The markers shown in a mode: all of them, or only the selected thing's (a light's own;
- * otherwise the lights of the body selected).
+ * otherwise the lights of the body selected), and what the light selected leaves out.
  */
 export function shownMarkers(
   all: readonly SceneMarker[],
@@ -31,7 +31,7 @@ export function shownMarkers(
 ): readonly SceneMarker[] {
   if (mode !== 'selected') return all;
   const lightSelected = all.some((m) => m.kind === 'light' && m.selected);
-  return all.filter((m) => m.selected || (m.kind === 'light' && !lightSelected));
+  return all.filter((m) => m.selected || m.left || (m.kind === 'light' && !lightSelected));
 }
 
 /**

@@ -17,6 +17,8 @@ import {
   type AddedLight,
   downOf,
   type LightBranch,
+  type LightSettingsMap,
+  mergeLightSettings,
   receivedLight,
 } from '@myrddraall/heroes-replay-stats-aether/lights';
 import { computed } from '@angular/core';
@@ -327,6 +329,8 @@ export function treeViews(store: WithPartHosts) {
         readonly pick: (path: BodyPath) => string;
         readonly branch: (path: BodyPath) => LightBranch;
         readonly lights: readonly AddedLight[];
+        /** What the scene sets of the lights on all of it (a group put in it: those it takes out). */
+        readonly except?: LightSettingsMap;
       }
       /** Where a body is in the tree, by the keys of the bodies down to it. */
       const branchOf = (key: (path: BodyPath) => string, path: BodyPath, group?: string) => ({
@@ -379,6 +383,8 @@ export function treeViews(store: WithPartHosts) {
               pick: () => placementKey(g.placement[0]!),
               branch: (path) => branchOf((at) => groupBodyKey(j, at), path, `group:${j}`),
               lights: g.lights.filter((l) => l.out !== 'scene').map(receivedLight),
+              except: store.placements().find((p, i) => siblingKey(p, i) === g.placement[0])
+                ?.lights,
             })),
           ];
       const out: SetPlanet[] = [];
@@ -386,7 +392,7 @@ export function treeViews(store: WithPartHosts) {
       const picks: string[] = [];
       /** What must stay in view of each body put out, in its radii. */
       const extents: number[] = [];
-      for (const { root, moons, fit, chain, pick, branch, lights } of roots) {
+      for (const { root, moons, fit, chain, pick, branch, lights, except } of roots) {
         // What must stay in view of each body: as far as its parts and its halo reach.
         const extent = (path: BodyPath) => {
           const b = chain(path).at(-1);
@@ -424,7 +430,7 @@ export function treeViews(store: WithPartHosts) {
             parts: s.parts,
             ...(s.addedParts ? { addedParts: s.addedParts } : {}),
             order: s.order,
-            lights: s.lights,
+            lights: except ? mergeLightSettings(s.lights, except) : s.lights,
             added: lights.length ? [...(s.added ?? []), ...lights] : s.added,
             branch: branch(p.path),
             tint: s.tint,

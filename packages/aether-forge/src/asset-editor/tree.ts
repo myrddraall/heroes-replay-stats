@@ -13,6 +13,7 @@ import {
   type LitByEntry,
   litByOf,
 } from '../lights/lights';
+import { bodyLink, type LinkEntry } from '../lights/linking';
 import { type PartEntry } from '../parts/parts';
 import type { PickChoice } from '../controls/pick-list';
 import type { TreeRow } from '../tree/scene-tree';
@@ -57,6 +58,14 @@ export function assetTreeViews(store: WithPartHosts) {
       // A sky's overlay is drawn as the sky is: no light lights it.
       if (store._skyOverlay()) return null;
       return b && filesLoaded(b) && receiver !== undefined ? litByOf(b, receiver) : null;
+    }),
+    /** What its light selected lights: its body, each of its parts and materials (its moons are their own). */
+    linking: computed((): readonly LinkEntry[] | null => {
+      const t = store.target();
+      const b = store._body();
+      if (t.kind !== 'light' || !b || !filesLoaded(b)) return null;
+      const own = bodyLink(b, t.id, [], { key: ASSET, label: bodyLabel(b), depth: 0, own: true });
+      return own ? [own] : null;
     }),
     light: computed((): LightEntry | undefined => {
       const t = store.target();

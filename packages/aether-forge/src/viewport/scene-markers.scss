@@ -77,6 +77,28 @@
   }
 }
 
+// Left out of the light selected (an exception): a small mark at the top right of its dot, shown
+// as long as the light is selected.
+.left {
+  @include placed;
+  position: absolute;
+  translate: 6px -22px;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.7);
+  color: #fff;
+  pointer-events: auto;
+
+  mat-icon {
+    width: 14px;
+    height: 14px;
+    font-size: 14px;
+  }
+}
+
 .label {
   padding: 2px 8px;
   border-radius: 4px;

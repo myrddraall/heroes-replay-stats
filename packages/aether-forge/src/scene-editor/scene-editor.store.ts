@@ -22,6 +22,7 @@ import { sceneMethods, sceneViews } from './scene';
 import { cameraMethods, cameraViews } from './cameras';
 import { skyMethods, skyViews } from './sky';
 import { selectionMethods, selectionViews } from './selection';
+import { linkingViews } from './linking';
 import type { StoreOf, WritableStoreOf } from '../editing/store-of';
 import { bodyKey, EDITOR_CAMERA, SCENE, type SceneEditorState } from './scene-targets';
 import { partHostViews } from './part-hosts';
@@ -80,7 +81,8 @@ export type WithSky = StoreOf<typeof withSky>;
 const withSelection = () => signalStoreFeature(withSky(), withProps(selectionViews));
 
 export type WithSelection = StoreOf<typeof withSelection>;
-const withPartHosts = () => signalStoreFeature(withSelection(), withProps(partHostViews));
+const withLinking = () => signalStoreFeature(withSelection(), withProps(linkingViews));
+const withPartHosts = () => signalStoreFeature(withLinking(), withProps(partHostViews));
 export type WithPartHosts = StoreOf<typeof withPartHosts>;
 const withTree = () => signalStoreFeature(withPartHosts(), withProps(treeViews));
 export type WithTree = StoreOf<typeof withTree>;

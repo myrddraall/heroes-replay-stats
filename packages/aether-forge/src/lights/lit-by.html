@@ -1,5 +1,5 @@
 <forge-property-section title="Lit by">
-  @for (l of lights(); track l.id) {
+  @for (l of lights(); track l.id + (l.from ?? '')) {
   <div class="light">
     <input
       type="checkbox"
@@ -8,7 +8,9 @@
       [checked]="l.reaches"
       (change)="check(l.id, $event)"
     />
-    <label class="name" [for]="id + '-' + $index">{{ l.name }}</label>
+    <label class="name" [for]="id + '-' + $index"
+      >{{ l.name }} @if (l.from) {<span class="from">{{ l.from }}</span>}</label
+    >
     <button
       type="button"
       class="show"

@@ -36,4 +36,15 @@
   <mat-icon class="material-symbols-outlined" aria-hidden="true">{{ m.icon }}</mat-icon>
   <span class="label">{{ m.label }}</span>
 </button>
+} @if (m.left) {
+<span
+  class="left"
+  role="img"
+  [style.--x]="m.x"
+  [style.--y]="m.y"
+  [attr.aria-label]="m.label + ' left out'"
+  [title]="m.label + ' left out'"
+>
+  <mat-icon class="material-symbols-outlined" aria-hidden="true">light_off</mat-icon>
+</span>
 } }

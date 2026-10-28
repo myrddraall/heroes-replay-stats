@@ -42,6 +42,8 @@ export interface SceneMarker {
   readonly selected: boolean;
   /** Whether it is switched off. */
   readonly off?: boolean;
+  /** Whether the light selected leaves it out (an exception: it would light it otherwise), marked so. */
+  readonly left?: boolean;
   /** How many markers' widths it is moved across from where it is (several at one place, side by side). */
   readonly nudge?: number;
   /** A pole's: which end of which of its body's axes (see `axisAids`); dragged, it moves the axis. */

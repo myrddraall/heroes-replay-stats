@@ -103,7 +103,6 @@ export class MaterialPanel {
       set,
       origins: {},
       removable: true,
-      receivers: [],
       down: false,
       canDown: false,
       outs: [],

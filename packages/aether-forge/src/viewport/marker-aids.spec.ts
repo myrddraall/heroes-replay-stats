@@ -66,7 +66,7 @@ describe("the markers' aids", () => {
     expect(markerAids([here], 'all', null, camera, 1, colours)).toEqual([]);
   });
 
-  it('in the selected mode, keep only the selected thing’s (a light’s own, else the lights)', () => {
+  it('in the selected mode, keep only the selected thing’s (a light’s own, else the lights) and what the light leaves out', () => {
     const all = [
       marker({ key: 'a', kind: 'light' }),
       marker({ key: 'b', kind: 'light' }),
@@ -75,5 +75,7 @@ describe("the markers' aids", () => {
     expect(shownMarkers(all, 'selected').map((m) => m.key)).toEqual(['a', 'b']);
     const one = all.map((m) => (m.key === 'b' ? { ...m, selected: true } : m));
     expect(shownMarkers(one, 'selected').map((m) => m.key)).toEqual(['b']);
+    const left = one.map((m) => (m.key === 'p' ? { ...m, left: true } : m));
+    expect(shownMarkers(left, 'selected').map((m) => m.key)).toEqual(['b', 'p']);
   });
 });

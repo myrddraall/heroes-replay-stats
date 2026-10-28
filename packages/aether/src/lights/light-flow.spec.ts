@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { AddedLight, BodyLight } from './lights';
-import { type FlowNode, flowLights, lightsOut } from './light-flow';
+import { type FlowNode, flowLights, lightsOut, sourceIdOf } from './light-flow';
 
 const lamp = (id: string, s: Partial<AddedLight> = {}): AddedLight => ({
   id: `added-${id}`,
@@ -81,5 +81,6 @@ describe('lights flowing through a scene', () => {
     });
     expect(out.map((l) => l.id)).toEqual(['added-~korhal~directional-0', 'added-mine']);
     expect(out[0]).toMatchObject({ kind: 'directional', strength: 1.33, down: true });
+    expect(out.map((l) => sourceIdOf(l.id))).toEqual(['directional-0', 'added-mine']);
   });
 });

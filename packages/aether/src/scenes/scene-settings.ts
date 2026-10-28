@@ -2,7 +2,7 @@ import type { SceneVariant } from '../variants/variants';
 import type { MaterialSettingsMap, MaterialTint } from '../materials/material-settings';
 import type { AddedPart, PartSettingsMap } from '../formats/part-shapes';
 import type { SkyAnchor } from '../sky/sky-anchors';
-import type { AddedLight } from '../lights/lights';
+import type { AddedLight, LightSettingsMap } from '../lights/lights';
 import type { SceneCameraSet } from '../formats/play-scene';
 import type { Viewpoint } from '../space/space';
 import { bodyTransform, placementFrame, pointToLocal, pointToWorld } from '../space/graph';
@@ -355,6 +355,8 @@ export interface GroupPlacement {
   readonly turn?: number;
   readonly enabled?: boolean;
   readonly label?: string;
+  /** What the scene sets of the lights on the group's planets, by light: those it takes out (`enabled` false). */
+  readonly lights?: LightSettingsMap;
 }
 
 /** The game's camera, by the id a scene's cameras know it by (first among them, always there). */

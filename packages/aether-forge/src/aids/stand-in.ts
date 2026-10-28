@@ -222,7 +222,6 @@ export function standInLights(set: LightSettingsMap): LightEntry[] {
         set: set[l.id],
         origins: {},
         removable: false,
-        receivers: [],
         down: false,
         canDown: false,
         outs: [],

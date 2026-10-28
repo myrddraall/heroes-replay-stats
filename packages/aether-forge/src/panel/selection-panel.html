@@ -46,6 +46,9 @@
 <forge-light-properties
   [page]="pages.page()"
   [light]="l"
+  [links]="editor.linking() ?? []"
+  (linkChange)="editor.setLinking($event)"
+  (linkReset)="editor.resetLinking($event)"
   (settingsChange)="editor.setLight($event)"
   (clear)="editor.clearLight($event)"
   (removed)="editor.removeLight()"

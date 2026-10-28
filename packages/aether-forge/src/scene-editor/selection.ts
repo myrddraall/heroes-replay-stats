@@ -8,7 +8,7 @@ import {
   indexOfKey,
   siblingKey,
 } from '@myrddraall/heroes-replay-stats-aether/scenes';
-import { flowLights, knownLights } from '@myrddraall/heroes-replay-stats-aether/lights';
+import { flowLights, knownLights, sourceIdOf } from '@myrddraall/heroes-replay-stats-aether/lights';
 import { computed } from '@angular/core';
 import {
   bodyLabel,
@@ -122,23 +122,29 @@ export function selectionViews(store: WithSky) {
     ),
   );
   /**
-   * The lights from beyond the selected body that light it too: the scene's (those on), and
+   * The lights from beyond a body (by its path) that light it too: the scene's (those on), and
    * those of the other bodies that reach it (the planets it is a moon of lighting down, those
-   * lighting out to it).
+   * lighting out to it), each named by what it is of.
    */
+  const outerLightsOf = (path: BodyPath): OuterLight[] => [
+    ...knownLights(choices().lights ?? [])
+      .filter((l) => l.enabled !== false)
+      .map((light) => ({ light, owner: 'scene' as const, from: 'Scene' })),
+    ...(flowed().get(bodyKey(path)) ?? []).map(({ light, from }) => {
+      const owner = bodyByKey().get(from);
+      const overlay =
+        owner && lightsOfBody(owner).find((l) => l.light.id === sourceIdOf(light.id))?.overlay;
+      return {
+        light,
+        owner: pathOf(from.slice(5)),
+        ...(overlay ? { overlay } : {}),
+        ...(owner ? { from: bodyLabel(owner) } : {}),
+      };
+    }),
+  ];
   const outerLights = computed((): OuterLight[] => {
     const t = target();
-    if (!('path' in t)) return [];
-    return [
-      ...knownLights(choices().lights ?? [])
-        .filter((l) => l.enabled !== false)
-        .map((light) => ({ light, owner: 'scene' as const })),
-      ...(flowed().get(bodyKey(t.path)) ?? []).map(({ light, from }) => {
-        const owner = bodyByKey().get(from);
-        const overlay = owner && lightsOfBody(owner).find((l) => l.light.id === light.id)?.overlay;
-        return { light, owner: pathOf(from.slice(5)), ...(overlay ? { overlay } : {}) };
-      }),
-    ];
+    return 'path' in t ? outerLightsOf(t.path) : [];
   });
   /** The moon the view is centred on (its planet's index and its own path), if any. */
   const focusPath = computed((): BodyPath => {
@@ -149,6 +155,9 @@ export function selectionViews(store: WithSky) {
   });
   return {
     target,
+    /** The lights of the scene's bodies that light other bodies, and those from beyond a body that light it (see `outerLightsOf`). */
+    flowed,
+    outerLightsOf,
     insideTarget,
     crumbs,
     preview: computed(() => null),
@@ -230,7 +239,9 @@ export function selectionViews(store: WithSky) {
     light: computed(() => {
       const t = target();
       if (t.kind === 'scene-light')
-        return sceneLightsOf(choices().lights).find((l) => l.light.id === t.id);
+        return sceneLightsOf(choices().lights, groupOpen() ? ['scene'] : []).find(
+          (l) => l.light.id === t.id,
+        );
       const b = body();
       return t.kind === 'light' && b ? lightsOfBody(b).find((l) => l.light.id === t.id) : undefined;
     }),

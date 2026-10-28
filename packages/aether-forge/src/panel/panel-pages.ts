@@ -43,7 +43,8 @@ export function panelPagesOf(kind: TargetKind, editor: Editor): readonly PanelPa
     case 'light': {
       const l = editor.light();
       if (!l) return [];
-      return [page('light', 'Light'), ...(l.receivers.length ? [page('linking', 'Linking')] : [])];
+      const linking = !!editor.linking()?.length || l.canDown || l.outs.length > 0;
+      return [page('light', 'Light'), ...(linking ? [page('linking', 'Linking')] : [])];
     }
     case 'part':
       return editor.part()

@@ -8,7 +8,7 @@ let next = 0;
 
 /**
  * What lights what is selected (presentational): each light that acts on it (a body's, its
- * overlay's, the library's, the scene's, a planet's it is a moon of), and whether it lights it: a body's, whether it is on for it; a part's or material's, whether it
+ * overlay's, the library's, the scene's, another body's: named by what it is of), and whether it lights it: a body's, whether it is on for it; a part's or material's, whether it
  * reaches it. Checked or not, it is taken in or left out there; each can be gone to in the tree,
  * and one added at the level edited taken out.
  */

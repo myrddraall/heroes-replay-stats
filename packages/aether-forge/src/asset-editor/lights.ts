@@ -8,6 +8,8 @@ import { ASSET, ASSET_LIGHTS, assetLightKey, receiverOf } from './asset-targets'
 import type { AssetMethodsStore } from './asset-editor.store';
 import type { AssetWrites } from './asset-writes';
 import { bodyEdits } from '../editing/body-edits';
+import type { LinkChange } from '../lights/linking';
+import { litByOf } from '../lights/lights';
 
 /** The asset's lights, the stand-in's, and what lights the asset. */
 export function assetLightMethods(store: AssetMethodsStore, w: AssetWrites) {
@@ -41,6 +43,21 @@ export function assetLightMethods(store: AssetMethodsStore, w: AssetWrites) {
       const light = store.litBy()?.find((l) => l.id === change.id);
       if (level && light && receiver !== undefined)
         bodyEdits.setLitBy(level, light, receiver, change.on);
+    },
+    /** Its light selected taken in or left out by one of its body's parts or materials. */
+    setLinking(change: LinkChange): void {
+      const t = store.target();
+      const b = store._body();
+      const level = selectedLevel();
+      if (t.kind !== 'light' || !b || !level || change.receiver === null) return;
+      const light = litByOf(b, change.receiver).find((l) => l.id === t.id);
+      if (light) bodyEdits.setLitBy(level, light, change.receiver, change.on);
+    },
+    /** (Its own body's: the light's Reaches, taken back with its Linking.) */
+    resetLinking(): void {
+      const t = store.target();
+      const level = selectedLevel();
+      if (t.kind === 'light' && level) bodyEdits.clearLight(level, t.id, ['reach']);
     },
     removeLight(id?: LightId): void {
       const level = selectedLevel();

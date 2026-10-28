@@ -114,7 +114,7 @@ describe('the stand-in planet', () => {
     const ambient = lights[0]!.light;
     expect([ambient.colour, ambient.strength]).toEqual(['#ffffff', 1]);
     // An editing aid's: nothing to link, nothing to take away.
-    expect(lights.every((l) => !l.removable && !l.receivers.length)).toBe(true);
+    expect(lights.every((l) => !l.removable && !l.canDown && !l.outs.length)).toBe(true);
     expect(standInLightSettings({})).toEqual({ 'directional-0': { enabled: false } });
     // Switched on (as set) over how it starts; renamed.
     const set = { 'directional-0': { enabled: true, name: 'Relief' } } as const;

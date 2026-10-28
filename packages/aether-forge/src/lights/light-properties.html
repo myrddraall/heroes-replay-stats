@@ -202,30 +202,13 @@
   />
   }
 </forge-property-section>
-} @if (entry.receivers.length && on('linking')) {
+} @if ((links().length || entry.canDown || entry.outs.length) && on('linking')) {
 <forge-property-section
   title="Linking"
   [changed]="isSet('reach') || isSet('down') || isSet('moons') || isSet('out')"
   (resetRequested)="unset(['reach', 'down', 'moons', 'out'])"
 >
-  <forge-property-select
-    label="Reaches"
-    [value]="reachMode()"
-    [options]="reachModes"
-    [changed]="isSet('reach')"
-    [origin]="entry.origins.reach"
-    [overridden]="entry.overrides?.reach"
-    (resetRequested)="unset(['reach'])"
-    (valueChange)="chooseReach($event)"
-  />
-  @if (reachMode() !== 'all') { @for (item of entry.receivers; track item.receiver) {
-  <forge-property-check
-    [class.receiver--material]="item.material"
-    [label]="item.label"
-    [checked]="entry.reach?.receivers?.includes(item.receiver) ?? false"
-    (checkedChange)="checkReceiver(item.receiver, $event)"
-  />
-  } } @if (entry.canDown) {
+  @if (entry.canDown) {
   <forge-property-check
     label="Lights its moons"
     [checked]="entry.down"
@@ -245,6 +228,23 @@
     [overridden]="entry.overrides?.out"
     (resetRequested)="unset(['out'])"
     (valueChange)="chooseOut($event)"
+  />
+  } @if (ownLink()) {
+  <forge-property-select
+    label="Reaches"
+    [value]="reachMode()"
+    [options]="reachModes"
+    [changed]="isSet('reach')"
+    [origin]="entry.origins.reach"
+    [overridden]="entry.overrides?.reach"
+    (resetRequested)="unset(['reach'])"
+    (valueChange)="chooseReach($event)"
+  />
+  } @if (links().length) {
+  <forge-light-linking
+    [links]="links()"
+    (linkChange)="linkChange.emit($event)"
+    (linkReset)="linkReset.emit($event)"
   />
   }
 </forge-property-section>

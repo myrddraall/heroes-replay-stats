@@ -47,8 +47,9 @@ import { SceneHeader } from './scene-header';
           key: store.scene,
           random: store.sets,
           camera: store.viewCamera,
-          // Inside a planet, a moon or an overlay: the rest of the scene dimmed.
-          dim: computed(() => (store.insideTarget() ? 0.35 : 1)),
+          // Inside a planet, a moon or an overlay: the rest of the scene dimmed; a light selected,
+          // what it doesn't light.
+          dim: computed(() => (store.dimming() ? 0.35 : 1)),
           // An anchored sky moves with the view's camera, or (not following it) with the scene's.
           skyFollow: computed(() => (ui.skyFollows() ? null : store.sceneCamera())),
           // The light selected's beams, and the markers' dots and lines (see `editorAids`).

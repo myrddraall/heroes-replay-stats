@@ -33,4 +33,5 @@ export {
   type LightBranch,
   lightsOut,
   receivedLight,
+  sourceIdOf,
 } from './light-flow';

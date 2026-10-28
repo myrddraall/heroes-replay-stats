@@ -86,8 +86,7 @@ export interface LightEntry {
   readonly addedIn?: string;
   /** The overlay the body wears it is of, by id (shown under the overlay); none: the body's. */
   readonly overlay?: string;
-  /** What of its body it may reach (none: a scene's, reaching every body), and what it reaches. */
-  readonly receivers: readonly ReceiverEntry[];
+  /** What of its body it reaches (none: everything). */
   readonly reach?: LightReach;
   /**
    * Whether it lights its body's moons too (Down), and whether it can (a body's own, with moons);
@@ -108,7 +107,7 @@ export interface ReceiverEntry {
 }
 
 /** What a body's lights may reach: its parts, each with the materials drawn on it (its overlays' named so). */
-function receiversOf(b: BodyInfo): ReceiverEntry[] {
+export function receiversOf(b: BodyInfo): ReceiverEntry[] {
   const nodes = partNodes(b, materialsOf(b));
   const named = (id: string | undefined) => {
     const o = b.overlays.find((x) => x.id === id);
@@ -174,7 +173,7 @@ export function lightsOfBody(b: BodyInfo): LightEntry[] {
       o.id,
     ]),
   ];
-  const added: Omit<LightEntry, 'receivers' | 'down' | 'canDown' | 'out' | 'outs'>[] = [
+  const added: Omit<LightEntry, 'down' | 'canDown' | 'out' | 'outs'>[] = [
     ...below.flatMap(([name, list, overlay]) =>
       knownLights(list ?? []).map((l) => ({
         ...(overlay ? { overlay } : {}),
@@ -199,7 +198,6 @@ export function lightsOfBody(b: BodyInfo): LightEntry[] {
     })),
   ];
   // What each reaches (as set over an added light's own), and what beyond its body.
-  const receivers = receiversOf(b);
   const outs: readonly Exclude<LightOut, 'none'>[] = b.orbit ? ['planet', 'scene'] : ['scene'];
   const addedById = new Map(
     [...addedBelowOf(b), ...(b.settings.added ?? [])].map((l) => [l.id, l] as const),
@@ -209,7 +207,6 @@ export function lightsOfBody(b: BodyInfo): LightEntry[] {
     const merged = { ...own, ...settings[e.light.id] };
     return {
       ...e,
-      receivers,
       reach: merged.reach,
       down: downOf(merged),
       canDown: b.moons.length > 0,
@@ -218,7 +215,7 @@ export function lightsOfBody(b: BodyInfo): LightEntry[] {
     };
   });
 
-  function rigEntries(): Omit<LightEntry, 'receivers' | 'down' | 'canDown' | 'out' | 'outs'>[] {
+  function rigEntries(): Omit<LightEntry, 'down' | 'canDown' | 'out' | 'outs'>[] {
     return bodyLights(turned, shade, settings).map((light) => {
       const shadow = light.id === 'shadow';
       const own = b.settings.lights?.[light.id];
@@ -266,18 +263,24 @@ const lightsBelowOf = (b: BodyInfo) =>
     ...ownLevels(b).map((l) => l.settings?.lights),
   );
 
-/** A scene's own lights as shown: each added to the scene (its settings its own). */
-export function sceneLightsOf(lights: readonly AddedLight[] | undefined): LightEntry[] {
+/**
+ * A scene's own lights as shown: each added to the scene (its settings its own); a group's, those
+ * that may light the whole scene it is put in too (`outs`).
+ */
+export function sceneLightsOf(
+  lights: readonly AddedLight[] | undefined,
+  outs: readonly Exclude<LightOut, 'none'>[] = [],
+): LightEntry[] {
   return knownLights(lights ?? []).map((l) => ({
     light: addedLight(l),
     nameBelow: l.name,
     enabledBelow: true,
     set: undefined,
     origins: {},
-    receivers: [],
     down: false,
     canDown: false,
-    outs: [],
+    ...(l.out ? { out: l.out } : {}),
+    outs,
     removable: true,
   }));
 }
@@ -291,6 +294,8 @@ export interface OuterLight {
   readonly owner: BodyPath | 'scene';
   /** The overlay of the planet it is of, by id, where it is an overlay's. */
   readonly overlay?: string;
+  /** What it is of, by name: the scene, or the body (see `LitByEntry`). */
+  readonly from?: string;
 }
 
 /** A light that may light what is selected (a body, a part, a material), as its Lit by list shows it. */
@@ -313,6 +318,8 @@ export interface LitByEntry {
    */
   readonly owner?: BodyPath | 'scene';
   readonly overlay?: string;
+  /** What it is of, by name, where not the body's own: the scene, or another body. */
+  readonly from?: string;
   /** Whether it was added at the level edited, to the body (it can be taken out here). */
   readonly removable?: boolean;
 }
@@ -364,9 +371,10 @@ export function litByOf(
       enabledBelow: e.enabledBelow,
       owner: undefined,
       overlay: e.overlay,
+      from: undefined,
       removable: e.removable,
     })),
-    ...outer.map(({ light, owner, overlay }) => {
+    ...outer.map(({ light, owner, overlay, from }) => {
       const set = b.settings.lights?.[light.id];
       return {
         light: addedLight(light, set),
@@ -375,6 +383,7 @@ export function litByOf(
         enabledBelow: true,
         owner,
         overlay,
+        from,
         removable: false,
       };
     }),
@@ -396,6 +405,7 @@ export function litByOf(
       ...(l.reachBelow ? { reachBelow: l.reachBelow } : {}),
       ...(l.owner !== undefined ? { owner: l.owner } : {}),
       ...(l.overlay ? { overlay: l.overlay } : {}),
+      ...(l.from ? { from: l.from } : {}),
       ...(l.removable ? { removable: true } : {}),
     }));
 }

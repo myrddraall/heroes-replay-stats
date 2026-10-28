@@ -21,6 +21,12 @@
   cursor: pointer;
 }
 
+// What it is of, where not the body's own (the scene, another body), dim after its name.
+.from {
+  margin-inline-start: 4px;
+  opacity: 0.6;
+}
+
 .show {
   @include property-row.reset;
 }
