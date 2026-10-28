@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { alongToSphere, beamAcross, beamTube, coneEdges } from './beams';
+import { alongToSphere, beamAcross, beamTube, coneEdges, ringFacing } from './beams';
 
 const dot = (a: readonly number[], b: readonly number[]) =>
   a.reduce((sum, v, i) => sum + v * b[i]!, 0);
@@ -60,5 +60,18 @@ describe('a spot’s cone as seen', () => {
       true,
     ]);
     expect(coneEdges(at, aim, 15, [0, 0, 0])).toEqual([]);
+  });
+});
+
+describe('a ring about a point light', () => {
+  it('goes round it at its reach, square to the eye', () => {
+    const ring = ringFacing([2, 0, 0], 0.5, [2, -10, 0], 12);
+    expect(ring).toHaveLength(12);
+    for (const [a] of ring) {
+      expect(Math.hypot(a[0] - 2, a[1], a[2])).toBeCloseTo(0.5);
+      expect(a[1]).toBeCloseTo(0);
+    }
+    // (Closed: its last piece ends where its first starts.)
+    ring[11]![1].forEach((v, k) => expect(v).toBeCloseTo(ring[0]![0][k]!));
   });
 });

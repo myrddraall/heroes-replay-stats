@@ -4,7 +4,7 @@ import {
   type AddedLight,
   type LightId,
   type LightSettings,
-  type NewLightKind,
+  type LightKind,
   newLight,
   type Receiver,
   withLightChanged,
@@ -119,7 +119,7 @@ export const bodyEdits = {
     l.change((s) => withLightSwitched(s, id, on, below));
   },
   /** A new light of a kind added to it (named apart from those added before it): the light. */
-  addLight(l: BodyLevel, kind: NewLightKind): AddedLight {
+  addLight(l: BodyLevel, kind: LightKind): AddedLight {
     const added = lightsOfBody(l.body)
       .map((x) => x.light)
       .filter((x) => x.id.startsWith('added-'));

@@ -9,6 +9,7 @@ import {
   effect,
   ElementRef,
   inject,
+  Injector,
   viewChild,
 } from '@angular/core';
 import { MatIconButton } from '@angular/material/button';
@@ -25,6 +26,7 @@ import { AssetCatalogStore } from '../library/asset-catalog.store';
 import { AssetInfo } from '../library/asset-info';
 import { LibraryHead } from '../library/library-head';
 import { ResetConfirm } from './reset-confirm';
+import { PanelResize } from './panel-resize';
 import { ClearConfirm } from './clear-confirm';
 import { typeLabel } from '../library/library-types';
 import { Editor } from '../editing/editor';
@@ -75,6 +77,7 @@ import { FrameStatsReadout } from '../diagnostics/frame-stats-readout';
     SceneMarkers,
     FrameStatsReadout,
     Breadcrumb,
+    PanelResize,
   ],
   templateUrl: './editor-layout.html',
   styleUrl: './editor-layout.scss',
@@ -96,6 +99,8 @@ export class EditorLayout {
   private readonly location = inject(Location);
   private readonly router = inject(Router);
   private readonly sceneHost = viewChild.required('scene', { read: ElementRef });
+  private readonly drawers = viewChild.required(MatDrawerContainer);
+  private readonly injector = inject(Injector);
   private readonly document = inject(DOCUMENT);
 
   constructor() {
@@ -120,6 +125,12 @@ export class EditorLayout {
       sized.observe(host);
       destroyRef.onDestroy(() => sized.disconnect());
     });
+  }
+
+  /** A panel made wider or narrower: the view beside it fitted to what is left, once drawn so. */
+  protected resize(panel: 'left' | 'right', width: number): void {
+    this.ui.setPanelWidth(panel, width);
+    afterNextRender(() => this.drawers().updateContentMargins(), { injector: this.injector });
   }
 
   /** A planet's pole dragged in the view: its axis moved, the whole drag one step. */

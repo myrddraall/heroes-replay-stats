@@ -36,6 +36,8 @@ export interface SceneMarker {
   readonly from?: Vec3;
   /** Its other lines, shown when it is selected (a spot's: the edges of its cone, to the body). */
   readonly lines?: readonly (readonly [Vec3, Vec3])[];
+  /** Its settings' lines, fainter, shown when it is selected (a spot's fade edge, a point's reach: see `lightSettingLines`). */
+  readonly softLines?: readonly (readonly [Vec3, Vec3])[];
   /** A camera's own (what it sees outlined, as far ahead as `outline`). */
   readonly camera?: SceneCamera;
   readonly outline?: number;

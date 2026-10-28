@@ -7,7 +7,7 @@ import {
   type LightId,
   type LightSettings,
   newLight,
-  type NewLightKind,
+  type LightKind,
   withLightChanged,
 } from '@myrddraall/heroes-replay-stats-aether/lights';
 import { type AddedItem, AddedList } from '../controls/added-list';
@@ -110,7 +110,7 @@ export class MaterialPanel {
   });
 
   /** A light added to the shield shader (its lights set at the level edited), and selected. */
-  protected addGridLight(kind: NewLightKind): void {
+  protected addGridLight(kind: LightKind): void {
     const base = splitViewKey(this.editor.selected())?.base;
     const lights = this.editor.material()?.values.gridLights ?? [];
     if (!base) return;

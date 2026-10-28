@@ -115,14 +115,14 @@ describe('materials’ settings', () => {
       shield: { activates: true },
     };
     const all = newLight('ambient', [both]);
-    const anti = { ...newLight('antilight', []), strength: 0.5, wrap: 0.5 };
+    const anti = { ...newLight('directional', []), darkens: true, strength: 0.5, wrap: 0.5 };
     const off = { ...newLight('directional', []), enabled: false };
     const spot = { ...newLight('spot', []), lookAt: { kind: 'body', at: [0, -1, 0] } as const };
     const sky = newLight('environment', []);
     const { reveal, activation } = gridFields(
       materialValues(material(), { gridLights: [both, all, anti, off, spot, sky] }),
     );
-    // Revealing: the one doing both, the one from all round, the antilight hiding, the spot and the sky.
+    // Revealing: the one doing both, the one from all round, the darkening one hiding, the spot and the sky.
     expect(reveal).toMatchObject([
       { from: right, reach: 1, falloff: 1, strength: 1 },
       { reach: 0, falloff: 1, strength: 0.2 },

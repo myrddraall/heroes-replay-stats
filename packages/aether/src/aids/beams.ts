@@ -37,17 +37,20 @@ export interface LightOutline {
    * column (x across, y away from the scene's own camera, z up).
    */
   readonly axes: Float32Array;
-  /** The light's kind as the shaders number it (0 from a side, 1 a point, 2 a spot, 3 a hemisphere, 4 the sky round the body). */
+  /** The light's kind as the shaders number it (0 from a side, 1 a point, 2 a spot, 3 a hemisphere, 4 the sky round the body, 5 the rim). */
   readonly kind: number;
   /** The way it travels (from a side), or the way its sky is from (a hemisphere): the body's frame. */
   readonly direction: Vec3;
-  /** Where a point or a spot is, in the body's frame and radii, and the way a spot points. */
+  /** Where a point or a spot is, in the body's frame and radii, and the way a spot points (a rim: its turn of the view, yaw and pitch). */
   readonly position: Vec3;
   readonly aim: Vec3;
-  /** A point's reach; a spot's cone (its half-angle, degrees) and how much of it fades. */
+  /** A point's or a spot's reach (a rim's spread); a spot's cone (its half-angle, degrees) and how much of it fades. */
   readonly fade: number;
   readonly cone: number;
   readonly edge: number;
+  /** How far round the body it wraps (0 to 1), and how sharply it falls off (see `LightSettings`). */
+  readonly wrap: number;
+  readonly softness: number;
   readonly colour: Vec3;
   readonly darkens: boolean;
 }
@@ -164,6 +167,26 @@ export function coneEdges(
     const t = alongToSphere(at, g);
     return [at, [at[0] + g[0] * t, at[1] + g[1] * t, at[2] + g[2] * t]] as const;
   });
+}
+
+/**
+ * A ring about `at` facing `eye` (`radius` round, in the same frame and units), as `segments`
+ * straight pieces: how far a point light reaches (half as strong there), shown about it.
+ */
+export function ringFacing(
+  at: Vec3,
+  radius: number,
+  eye: Vec3,
+  segments = 48,
+): readonly (readonly [Vec3, Vec3])[] {
+  const [u, v] = beamAcross([eye[0] - at[0], eye[1] - at[1], eye[2] - at[2]]);
+  const point = (i: number): Vec3 => {
+    const phi = (2 * Math.PI * i) / segments;
+    const c = Math.cos(phi) * radius;
+    const s = Math.sin(phi) * radius;
+    return [0, 1, 2].map((k) => at[k]! + u[k]! * c + v[k]! * s) as unknown as Vec3;
+  };
+  return Array.from({ length: segments }, (_, i) => [point(i), point(i + 1)] as const);
 }
 
 /**

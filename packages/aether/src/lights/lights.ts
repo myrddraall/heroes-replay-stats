@@ -20,18 +20,26 @@ import { type Vec3, normalized } from '../space/vectors';
  * the surface turns away from the eye, leaning to a side); a point near the body (fading with
  * distance); a spot (a point, lighting within a cone); above and below (a hemisphere: one colour
  * from the sky's side, another from the ground's); the sky round the body (an environment light:
- * the sky's own colours, each side of the body lit by the sky beyond it). Either lights, or
- * darkens (`darkens`: an antilight, taking its colour away). The same lights light a body's
+ * the sky's own colours, each side of the body lit by the sky beyond it). Any of them lights, or
+ * darkens (`darkens`: taking its colour away). The same lights light a body's
  * materials and say where a shield's grid shows (`shield`).
  */
 export type LightKind =
   'ambient' | 'directional' | 'rim' | 'point' | 'spot' | 'hemisphere' | 'environment';
 
-/** A light to add: of a kind, or an antilight (a directional light that darkens). */
-export type NewLightKind = LightKind | 'antilight';
+/** What each kind of light is called (whether it darkens is a setting of any of them). */
+export const LIGHT_KIND_NAMES: Readonly<Record<LightKind, string>> = {
+  ambient: 'Ambient light',
+  directional: 'Directional light',
+  point: 'Point light',
+  spot: 'Spot light',
+  hemisphere: 'Hemisphere light',
+  environment: 'Environment light',
+  rim: 'Rim light',
+};
 
 /**
- * The kinds there are, and the antilight of before (`shadow`: now a directional light that
+ * The kinds there are, and one kept from before (`shadow`: read as a directional light that
  * darkens). Lights of others kept from before (a grid's reveal and activation, its material's own
  * settings now) are left out wherever lights are read.
  */
@@ -47,8 +55,8 @@ const KINDS: readonly string[] = [
 ];
 
 /**
- * Added lights of the kinds there are (those kept from before left out), an antilight of before
- * as the directional light that darkens it now is.
+ * Added lights of the kinds there are (those kept from before left out), a `shadow` of before as
+ * the directional light that darkens it now is.
  */
 export const knownLights = <T extends { readonly kind: string; readonly darkens?: boolean }>(
   added: readonly T[],
@@ -211,51 +219,29 @@ const NEW_SPREAD = 0;
 const NEW_SKY_REACH = 1.5;
 
 /**
- * A new light of a kind, named after the lights of that kind already added beside it (an
- * antilight's: after the antilights); lighting what is under it (see `downOf`).
+ * A new light of a kind, named after the lights of that kind already added beside it; lighting
+ * what is under it (see `downOf`).
  */
 export function newLight(
-  kind: NewLightKind,
+  kind: LightKind,
   existing: readonly { readonly kind: LightKind; readonly darkens?: boolean }[],
 ): AddedLight {
   return { ...lightOfKind(kind, existing), down: true };
 }
 
 function lightOfKind(
-  kind: NewLightKind,
+  kind: LightKind,
   existing: readonly { readonly kind: LightKind; readonly darkens?: boolean }[],
 ): AddedLight {
   const id = `added-${Math.random().toString(36).slice(2, 10)}` as const;
-  const darkens = kind === 'antilight';
-  const count = existing.filter(
-    (l) => (darkens ? 'directional' : kind) === l.kind && !!l.darkens === darkens,
-  ).length;
-  const base = {
-    ambient: 'Ambient light',
-    directional: 'Directional light',
-    antilight: 'Antilight',
-    point: 'Point light',
-    spot: 'Spot light',
-    hemisphere: 'Hemisphere light',
-    environment: 'Environment light',
-    rim: 'Rim light',
-  }[kind];
+  const count = existing.filter((l) => l.kind === kind).length;
+  const base = LIGHT_KIND_NAMES[kind];
   const name = count ? `${base} ${count + 1}` : base;
   switch (kind) {
     case 'ambient':
       return { id, kind, name, colour: '#ffffff', strength: 0.2 };
     case 'directional':
       return { id, kind, name, colour: '#ffffff', strength: 1, from: NEW_FROM };
-    case 'antilight':
-      return {
-        id,
-        kind: 'directional',
-        name,
-        darkens: true,
-        strength: 0.5,
-        from: NEW_SHADOW_FROM,
-        softness: 1,
-      };
     case 'point':
       return {
         id,
@@ -368,7 +354,7 @@ export interface BodyLight {
   readonly kind: LightKind;
   readonly name: string;
   readonly enabled: boolean;
-  /** Whether it darkens (an antilight, taking its colour away) instead of lighting. */
+  /** Whether it darkens (taking its colour away) instead of lighting. */
   readonly darkens: boolean;
   readonly colour: string;
   readonly strength: number;
@@ -567,7 +553,7 @@ export function bodyLights(
     set('shadow', {
       id: 'shadow',
       kind: 'directional',
-      name: 'Antilight',
+      name: 'Shade',
       darkens: true,
       colour: '#ffffff',
       strength: shade.strength,

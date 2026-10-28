@@ -40,7 +40,7 @@ describe('a body’s lights', () => {
       ['directional-0', 'directional', 'Fill light'],
       ['directional-1', 'directional', 'Back light'],
       ['directional-2', 'directional', 'Key light'],
-      ['shadow', 'directional', 'Antilight'],
+      ['shadow', 'directional', 'Shade'],
     ]);
     // Its shadow darkens (white taken away); the rig's lights light.
     expect(lights.map((l) => l.darkens)).toEqual([false, false, false, false, true]);
@@ -120,8 +120,8 @@ describe('a body’s lights', () => {
     expect(bodyLights(rig, DEFAULT_SHADE)[1]!.specularStrength).toBe(0);
   });
 
-  it('read an antilight of before as a directional light that darkens', () => {
-    const old = { id: 'added-a', kind: 'shadow', name: 'Antilight', strength: 0.4 } as const;
+  it('read a light of the old shadow kind as a directional light that darkens', () => {
+    const old = { id: 'added-a', kind: 'shadow', name: 'Shade', strength: 0.4 } as const;
     expect(knownLights([old])).toEqual([{ ...old, kind: 'directional', darkens: true }]);
   });
 
@@ -160,16 +160,15 @@ describe('a body’s lights', () => {
     expect(lit.directional).toHaveLength(1);
   });
 
-  it('add antilights as darkenings, not light', () => {
-    const shadow = newLight('antilight', []);
-    expect(shadow).toMatchObject({ kind: 'directional', darkens: true, name: 'Antilight' });
+  it('take a light set to darken as a darkening, not light (whatever its kind)', () => {
+    const shadow = { ...newLight('directional', []), darkens: true, strength: 0.5, softness: 1 };
     expect(bodyDarkenings(undefined, DEFAULT_SHADE, [shadow], undefined)).toEqual([
       { direction: shadow.from, strength: 0.5, softness: 1, colour: [1, 1, 1] },
     ]);
     expect(withAddedLights(undefined, [shadow], undefined, 1.5)).toBeUndefined();
     expect(addedLighting([shadow], undefined)).toBe(false);
-    expect(newLight('antilight', [shadow]).name).toBe('Antilight 2');
-    expect(newLight('directional', [shadow]).name).toBe('Directional light');
+    // Named after its kind as any other is, darkening or not.
+    expect(newLight('directional', [shadow]).name).toBe('Directional light 2');
   });
 
   it('name new lights after those of their kind there are', () => {

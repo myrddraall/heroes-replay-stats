@@ -5,9 +5,17 @@
     aria-label="Tree"
     position="start"
     mode="side"
+    [style.--ui-side-panel-width.px]="ui.leftWidth()"
     [opened]="ui.left() && !ui.screenshot()"
     (openedChange)="ui.screenshot() || ui.setPanel('left', $event)"
   >
+    <div
+      class="layout__resize layout__resize--start"
+      forgePanelResize="start"
+      aria-label="Tree width"
+      [width]="ui.leftWidth()"
+      (widthChange)="resize('left', $event)"
+    ></div>
     <ui-side-panel
       [title]="ui.browsing() ? libraryTitle() : editor.heading()"
       (closeRequested)="ui.setPanel('left', false)"
@@ -61,9 +69,17 @@
     aria-label="Properties"
     position="end"
     mode="side"
+    [style.--ui-side-panel-width.px]="ui.rightWidth()"
     [opened]="ui.right() && !ui.screenshot()"
     (openedChange)="ui.screenshot() || ui.setPanel('right', $event)"
   >
+    <div
+      class="layout__resize layout__resize--end"
+      forgePanelResize="end"
+      aria-label="Properties width"
+      [width]="ui.rightWidth()"
+      (widthChange)="resize('right', $event)"
+    ></div>
     <ui-side-panel
       [title]="ui.browsing() ? editor.heading() : editor.title()"
       (closeRequested)="ui.setPanel('right', false)"
@@ -127,19 +143,19 @@
     >
       <mat-icon class="material-symbols-outlined" aria-hidden="true">arrow_back</mat-icon>
     </button>
+    @if (!ui.left()) {
     <button
       mat-icon-button
       type="button"
       class="layout__toggle layout__toggle--start"
       aria-controls="background-tree"
-      [attr.aria-expanded]="ui.left()"
-      [attr.aria-label]="ui.left() ? 'Hide the tree' : 'Show the tree'"
-      (click)="ui.setPanel('left', !ui.left())"
+      aria-expanded="false"
+      aria-label="Show the tree"
+      (click)="ui.setPanel('left', true)"
     >
-      <mat-icon class="material-symbols-outlined" aria-hidden="true">
-        {{ ui.left() ? 'left_panel_close' : 'left_panel_open' }}
-      </mat-icon>
+      <mat-icon class="material-symbols-outlined" aria-hidden="true">left_panel_open</mat-icon>
     </button>
+    }
     <forge-look-through
       class="layout__look"
       [options]="editor.lookOptions()"
@@ -148,19 +164,18 @@
       (lookChange)="editor.lookThrough($event)"
       (resetRequested)="editor.resetEditorCamera()"
     />
+    @if (!ui.right()) {
     <button
       mat-icon-button
       type="button"
       class="layout__toggle"
       aria-controls="background-properties"
-      [attr.aria-expanded]="ui.right()"
-      [attr.aria-label]="ui.right() ? 'Hide the properties' : 'Show the properties'"
-      (click)="ui.setPanel('right', !ui.right())"
+      aria-expanded="false"
+      aria-label="Show the properties"
+      (click)="ui.setPanel('right', true)"
     >
-      <mat-icon class="material-symbols-outlined" aria-hidden="true">
-        {{ ui.right() ? 'right_panel_close' : 'right_panel_open' }}
-      </mat-icon>
+      <mat-icon class="material-symbols-outlined" aria-hidden="true">right_panel_open</mat-icon>
     </button>
-    }
+    } }
   </mat-drawer-content>
 </mat-drawer-container>

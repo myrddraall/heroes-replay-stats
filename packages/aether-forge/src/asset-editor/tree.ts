@@ -8,6 +8,7 @@ import { byDepth, skyOverlayChoices, skyOverlayLabel } from '../sky/sky';
 import { referenceRow } from '../aids/reference-row';
 import {
   type LightEntry,
+  lightDetail,
   lightIcon,
   lightsOfBody,
   type LitByEntry,
@@ -430,6 +431,7 @@ export function assetTreeViews(store: WithPartHosts) {
                 rows.push({
                   key: standInLightKey(light.id),
                   label: light.name,
+                  ...(lightDetail(light) ? { detail: lightDetail(light) } : {}),
                   icon: lightIcon(light),
                   depth: 2,
                   expandable: false,

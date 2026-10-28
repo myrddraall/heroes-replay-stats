@@ -721,6 +721,8 @@ export class ThreeRenderer {
   resize(width: number, height: number): void {
     const w = Math.max(1, Math.round(width));
     const h = Math.max(1, Math.round(height));
+    // (The same size again, as a panel's edge dragged less than a pixel gives: nothing to do.)
+    if (this.started && w === this.canvas.width && h === this.canvas.height) return;
     this.canvas.width = w;
     this.canvas.height = h;
     this.renderer.setSize(w, h, false);

@@ -27,7 +27,7 @@ import type { AidKind, InstancedAidKind } from '../draw-types';
 import { MAX_BEAM_SPHERES } from '../uniforms/limits';
 import { beamMaterial, dotMaterial, lineMaterial, outlineMaterial } from './aid-shaders';
 import type { ToClip } from '../passes/pass-shaders';
-import { ShaderUniforms } from '../uniforms/shader-uniforms';
+import { ShaderUniforms, viewTurn } from '../uniforms/shader-uniforms';
 import { UniformSet } from '../uniforms/uniforms';
 import { type Vec3, distance, normalized } from '../../space/vectors';
 
@@ -38,6 +38,37 @@ const DARK_BEAM_ALPHA = 0.7;
 const BEAM_EDGE_ALPHA = 0.5;
 /** How strongly a light's outline on its body shows. */
 const OUTLINE_ALPHA = 0.85;
+
+/** A threshold no facing reaches: no line there. */
+const NO_LINE = 9;
+
+/**
+ * Where a light's outline lines go (see `outlineMaterial`), from what the body's shader does with
+ * it: where it stops reaching (from a side or a point: facing it no less than `-wrap`; a spot's back
+ * cut the same), and where it reaches half (from a side: its facing wrapped and sharpened by its
+ * softness come to half; the sky round the body: facing the eye by `1 - ½^(1/softness)`; the rim:
+ * where its spread and softness come to half, none where all of it reaches half or more).
+ */
+export function outlineAt(o: LightOutline): { readonly main: number; readonly faint: number } {
+  const half = Math.pow(0.5, 1 / Math.max(o.softness, 1e-3));
+  switch (o.kind) {
+    case 0:
+      return { main: -o.wrap, faint: (o.wrap + 1) * half - o.wrap };
+    case 1:
+    case 2:
+      return { main: -o.wrap, faint: NO_LINE };
+    case 3:
+      return { main: 0, faint: NO_LINE };
+    case 4:
+      return { main: 1 - half, faint: NO_LINE };
+    case 5: {
+      const x = o.fade < 1 ? (half - o.fade) / (1 - o.fade) : 0;
+      return { main: x > 0 ? 1 - Math.cbrt(x) : NO_LINE, faint: NO_LINE };
+    }
+    default:
+      return { main: NO_LINE, faint: NO_LINE };
+  }
+}
 
 /** What the editor's aids need of the renderer they are drawn over. */
 export interface AidsHost {
@@ -319,6 +350,15 @@ export class EditingAids {
         uniforms.set('uFade', o.fade);
         uniforms.set('uCosCone', Math.cos(o.cone * rad));
         uniforms.set('uCosFade', Math.cos(o.cone * (1 - o.edge) * rad));
+        const at = outlineAt(o);
+        uniforms.set('uMainAt', at.main);
+        uniforms.set('uFaintAt', at.faint);
+        if (o.kind === 5) {
+          // The rim's turn of the view (yaw, pitch: its aim), about its body's across and up, the
+          // way the body's shader turns it (see `ShaderUniforms`), as a matrix's columns.
+          const rows = viewTurn(o.axes.subarray(0, 3), o.axes.subarray(6, 9), o.aim[0], o.aim[1]);
+          uniforms.set('uRimTurn', Float32Array.from(rows));
+        }
         uniforms.set('uColor', o.darkens ? [1, 1, 1] : o.colour);
         uniforms.set('uAlpha', OUTLINE_ALPHA * view.fade);
         continue;

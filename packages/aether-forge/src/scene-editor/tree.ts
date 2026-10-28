@@ -25,7 +25,7 @@ import { computed } from '@angular/core';
 import { bodyEnabled, type BodyInfo, filesLoaded, wornIds } from '../bodies/body';
 import { byDepth, skyOverlayLabel } from '../sky/sky';
 import { referenceRow } from '../aids/reference-row';
-import { lightIcon, lightsOutOf, sceneLightsOf } from '../lights/lights';
+import { lightDetail, lightIcon, lightsOutOf, sceneLightsOf } from '../lights/lights';
 import { type MaterialEntry } from '../materials/materials';
 import { wornLabel } from '../overlays/overlays';
 import type { TreeRow } from '../tree/scene-tree';
@@ -174,6 +174,7 @@ export function treeViews(store: WithPartHosts) {
             rows.push({
               key: sceneLightKey(light.id),
               label: light.name,
+              ...(lightDetail(light) ? { detail: lightDetail(light) } : {}),
               icon: lightIcon(light),
               depth: 2,
               expandable: false,

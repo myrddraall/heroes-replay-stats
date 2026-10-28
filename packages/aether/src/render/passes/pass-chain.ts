@@ -144,7 +144,10 @@ export class PassChain {
   /**
    * The canvas-sized targets and the bloom's, sized to the canvas: made the first time, with the
    * passes that read them; resized in place after (the passes keep their materials, compiled: new
-   * ones would not have their programs on the frame drawn straight after a resize).
+   * ones would not have their programs on the frame drawn straight after a resize). Their depth
+   * textures go with them (three.js sizes a target's own depth texture again as it is drawn to):
+   * marked changed by hand, a depth texture is made again at the same size while three.js's
+   * render pass for the target, kept by its size, still draws into the one destroyed.
    */
   allocateAll(): void {
     const { width, height } = this.host.canvas;
@@ -152,14 +155,7 @@ export class PassChain {
     const bh = Math.max(1, Math.ceil(height / BLOOM_SCALE));
     if (this.passes && this.stillBackground && this.stillScene && this.frame && this.bloom) {
       for (const pass of [this.stillBackground, this.stillScene, this.frame])
-        for (const t of [pass.colour, pass.glow]) {
-          t.setSize(width, height);
-          if (t.depthTexture) {
-            t.depthTexture.image.width = width;
-            t.depthTexture.image.height = height;
-            t.depthTexture.needsUpdate = true;
-          }
-        }
+        for (const t of [pass.colour, pass.glow]) t.setSize(width, height);
       for (const t of this.bloom) t.setSize(bw, bh);
       this.bloomStep.value.set(1 / width, 1 / height);
       return;

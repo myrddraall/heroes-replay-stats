@@ -66,6 +66,17 @@ export function markerAids(
     const lite = m.kind === 'light' && !m.selected;
     if (m.from && !lite) line(m.from, m.at, m);
     if (m.selected) for (const [a, b] of m.lines ?? []) line(a, b, m);
+    if (m.selected)
+      for (const [from, to] of m.softLines ?? [])
+        lines.push({
+          shape: 'line',
+          from,
+          to,
+          pixels: 1.25,
+          colour: colours.selected,
+          alpha: 0.7,
+          dashed: true,
+        });
     if (m.camera)
       for (const [a, b] of cameraOutline(m.camera, aspect, m.outline ?? OUTLINE)) line(a, b, m);
     if (m.kind === 'pole') continue;

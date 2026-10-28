@@ -1,4 +1,5 @@
 import {
+  LIGHT_KIND_NAMES,
   type LightOut,
   type LightReach,
   type LightSettings,
@@ -74,7 +75,7 @@ const OUT_LABELS: Record<LightOut, string> = {
 
 /**
  * A body's light's properties (presentational), the same rows for every light: whether it lights
- * or darkens (an antilight: its colour taken away, its strength how much), its colour and
+ * or darkens (its colour taken away, its strength how much), its colour and
  * strength, a directional light's side (Light from) and how softly it falls off round the body,
  * a point's or spot's place and reach (an environment light's: how far out the sky is read),
  * and one that lights its specular colour and strength (its shine on a material that shines);
@@ -118,6 +119,8 @@ export class LightProperties {
   protected readonly lightKeys = LIGHT_KEYS;
   protected readonly effects = EFFECTS;
   protected readonly changed = computed(() => LIGHT_KEYS.some((k) => this.isSet(k)));
+  /** What kind of light it is (whether it darkens is its Effect). */
+  protected readonly kindName = computed(() => LIGHT_KIND_NAMES[this.light().light.kind]);
 
   /**
    * Renamed: one added at the level edited, its own name; else over its name under the level

@@ -331,7 +331,12 @@ export function withValues<T extends Object3D>(object: T, values: DrawValues): T
  * A turn of the view (about `up` by x, then about `right` by y), as the rows of its matrix: worked
  * out once on the CPU in place of turning the view in the shader.
  */
-function viewTurn(right: ArrayLike<number>, up: ArrayLike<number>, x: number, y: number): number[] {
+export function viewTurn(
+  right: ArrayLike<number>,
+  up: ArrayLike<number>,
+  x: number,
+  y: number,
+): number[] {
   const a = turning(right, y);
   const b = turning(up, x);
   return Array.from({ length: 9 }, (_, i) => {

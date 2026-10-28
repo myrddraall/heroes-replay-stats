@@ -2,7 +2,7 @@ import type { LayerSlot } from '@myrddraall/heroes-replay-stats-aether/materials
 import type { AddedLight } from '@myrddraall/heroes-replay-stats-aether/lights';
 import type { TreeRow } from '../tree/scene-tree';
 import { LAYER_NAMES, type MaterialEntry } from './materials';
-import { lightIcon, shieldOf } from '../lights/lights';
+import { lightDetail, lightIcon, shieldOf } from '../lights/lights';
 
 /**
  * What of a material a row shows, where it isn't the material itself: one of its layers; the
@@ -126,6 +126,7 @@ export function partMaterialRows(
       push({
         key: viewKey(base, { kind: 'gridLight', id: l.id }),
         label: l.name,
+        ...(lightDetail(l) ? { detail: lightDetail(l) } : {}),
         icon: lightIcon(l),
         depth: depth + 2,
         expandable: false,

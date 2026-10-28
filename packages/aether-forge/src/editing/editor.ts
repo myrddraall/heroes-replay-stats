@@ -15,7 +15,7 @@ import type { SkyAnchor } from '@myrddraall/heroes-replay-stats-aether/sky';
 import type {
   LightId,
   LightSettings,
-  NewLightKind,
+  LightKind,
 } from '@myrddraall/heroes-replay-stats-aether/lights';
 import type { PickChoice } from '../controls/pick-list';
 import type { BodyView, TargetKind } from '../bodies/body';
@@ -161,7 +161,7 @@ export abstract class Editor {
   abstract setLight(change: Partial<LightSettings>): void;
   abstract clearLight(keys?: readonly (keyof LightSettings)[]): void;
   /** A light added: to the scene where it is selected, else to the body selected; selected. */
-  abstract addLight(kind: NewLightKind): void;
+  abstract addLight(kind: LightKind): void;
   /** A light taken out, where it was added at the level edited: one of the selected body's (by id), else the one selected. */
   abstract removeLight(id?: LightId): void;
   /** What lights the selected body, part or material (none: something else is selected). */

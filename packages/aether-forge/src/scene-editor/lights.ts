@@ -2,7 +2,7 @@ import {
   type LightId,
   type LightSettings,
   newLight,
-  type NewLightKind,
+  type LightKind,
   sourceIdOf,
 } from '@myrddraall/heroes-replay-stats-aether/lights';
 import { patchState } from '@ngrx/signals';
@@ -96,7 +96,7 @@ export function lightMethods(store: SceneMethodsStore, w: SceneWrites) {
         bodyEdits.clearLight(level, (store.target() as { id: LightId }).id, ['reach']);
       else bodyEdits.clearLight(level, linked.id, ['enabled', 'reach']);
     },
-    addLight(kind: NewLightKind): void {
+    addLight(kind: LightKind): void {
       const t = store.target();
       const path = selectedPath();
       const level = path && levelAt(path);

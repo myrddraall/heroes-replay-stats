@@ -1,7 +1,7 @@
 import {
   type LightId,
   type LightSettings,
-  type NewLightKind,
+  type LightKind,
 } from '@myrddraall/heroes-replay-stats-aether/lights';
 import { patchState } from '@ngrx/signals';
 import { ASSET, ASSET_LIGHTS, assetLightKey, receiverOf } from './asset-targets';
@@ -23,7 +23,7 @@ export function assetLightMethods(store: AssetMethodsStore, w: AssetWrites) {
         if (level) bodyEdits.setLight(level, t.id, change);
       }
     },
-    addLight(kind: NewLightKind): void {
+    addLight(kind: LightKind): void {
       const level = selectedLevel();
       if (!level) return;
       const light = bodyEdits.addLight(level, kind);

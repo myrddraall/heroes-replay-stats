@@ -15,8 +15,14 @@
 
 // Which of the panel's pages is shown: a list the panel's width, apart from the settings under it
 // (as the library's Type is from its list), so it reads as what the panel shows, not a setting.
+// As much room under it as the panel's head leaves over it (16px each side, as seen).
 .pages {
-  padding: 8px 0 14px;
+  padding: 0 0 16px;
+
+  // (Under the level edited: as much room over it as under it.)
+  .layer + & {
+    padding-top: 11px;
+  }
 
   &__select {
     @include property-row.field;

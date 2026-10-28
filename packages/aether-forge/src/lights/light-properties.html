@@ -16,6 +16,10 @@
     (resetRequested)="clear.emit(['name'])"
     (valueChange)="rename($event)"
   />
+  <div class="kind">
+    <span class="kind__label">Type</span>
+    <span class="kind__value">{{ kindName() }}</span>
+  </div>
 </forge-property-section>
 <forge-property-section
   title="Light"

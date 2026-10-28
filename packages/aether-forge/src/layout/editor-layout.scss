@@ -18,7 +18,7 @@
 }
 
 .layout__drawer {
-  width: var(--ui-side-panel-width, min(320px, 90vw));
+  width: min(var(--ui-side-panel-width, 320px), 90vw);
   overflow: hidden;
   border-radius: 0;
 
@@ -83,12 +83,58 @@
   }
 }
 
-// What the view looks through, beside the tree's toggle.
+// What the view looks through, beside Back (and the tree's toggle, where the tree is closed).
 .layout__look {
   position: absolute;
   top: 8px;
-  inset-inline-start: 104px;
+  inset-inline-start: 56px;
   z-index: 10001;
+}
+
+.layout__toggle--start + .layout__look {
+  inset-inline-start: 104px;
+}
+
+// A panel's inner edge, dragged to make it wider or narrower: a thin strip over its edge, lit
+// where the pointer or the focus is on it.
+.layout__resize {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 2;
+  width: 8px;
+  cursor: col-resize;
+  touch-action: none;
+
+  &--start {
+    right: -4px;
+  }
+
+  &--end {
+    left: -4px;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 3px;
+    width: 2px;
+    background: var(--mat-sys-primary);
+    opacity: 0;
+    transition: opacity 120ms;
+  }
+
+  &:hover::after,
+  &:focus-visible::after,
+  &:active::after {
+    opacity: 1;
+  }
+
+  &:focus-visible {
+    outline: none;
+  }
 }
 
 // The screenshot mode's hint: shown a moment, then gone, so it isn't in the picture.

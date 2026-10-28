@@ -6,6 +6,7 @@ export {
   type AidLine,
   type AxisLine,
   coneEdges,
+  ringFacing,
   type EditingAid,
   type LightAid,
   type LightOutline,

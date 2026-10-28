@@ -40,9 +40,11 @@ interface EditorUiState {
    * it is for that camera.
    */
   readonly skyFollows: boolean;
-  /** Whether the tree's panel and the properties' panel are open. */
+  /** Whether the tree's panel and the properties' panel are open, and how wide each is (pixels). */
   readonly left: boolean;
   readonly right: boolean;
+  readonly leftWidth: number;
+  readonly rightWidth: number;
   /** The view's shape (its width over its height), between the panels. */
   readonly aspect: number;
   /** Whether a reset of everything in what is open was asked for and waits to be confirmed. */
@@ -76,6 +78,8 @@ export const EditorUiStore = signalStore(
     skyFollows: true,
     left: true,
     right: true,
+    leftWidth: 320,
+    rightWidth: 320,
     aspect: 16 / 9,
     confirmingReset: false,
     confirmingClear: false,
@@ -92,6 +96,8 @@ export const EditorUiStore = signalStore(
     'skyFollows',
     'left',
     'right',
+    'leftWidth',
+    'rightWidth',
     'panelPages',
   ]),
   withComputed((store) => ({
@@ -175,6 +181,9 @@ export const EditorUiStore = signalStore(
       },
       setPanel(panel: 'left' | 'right', open: boolean): void {
         patchState(store, { [panel]: open });
+      },
+      setPanelWidth(panel: 'left' | 'right', width: number): void {
+        patchState(store, panel === 'left' ? { leftWidth: width } : { rightWidth: width });
       },
       setAspect(aspect: number): void {
         if (Number.isFinite(aspect) && aspect > 0) patchState(store, { aspect });

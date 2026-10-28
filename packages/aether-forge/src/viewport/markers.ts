@@ -5,6 +5,7 @@ import {
   type AxisLine,
   coneEdges,
   type LightAid,
+  ringFacing,
   type LightOutline,
 } from '@myrddraall/heroes-replay-stats-aether/aids';
 import type { SetPlanet } from '@myrddraall/heroes-replay-stats-aether/planet-sets';
@@ -119,6 +120,32 @@ export function spotEdges(
 }
 
 /**
+ * The lines of a light's settings, fainter than its own, drawn with its marker when it is
+ * selected (in the scene, placed as `spotEdges` places a spot's): a spot's cone where it starts to
+ * fade (its Edge in from its edge, where it has one); how far a point or a spot reaches (where it
+ * is half as strong), a ring about it facing the eye.
+ */
+export function lightSettingLines(
+  light: BodyLight,
+  body: SetPlanet,
+  layout: Viewpoint,
+  eye: Vec3,
+): readonly (readonly [Vec3, Vec3])[] {
+  const placed = placedLight(light);
+  if (!placed?.position || (placed.kind !== 'point' && placed.kind !== 'spot')) return [];
+  const frame = bodyTransform(body, layout);
+  const local = pointToLocal(frame, eye);
+  const inner =
+    placed.kind === 'spot' && placed.aim && (placed.edge ?? 0) > 0
+      ? coneEdges(placed.position, placed.aim, (placed.cone ?? 90) * (1 - placed.edge!), local)
+      : [];
+  const ring = ringFacing(placed.position, placed.fade ?? 1, local);
+  return [...inner, ...ring].map(
+    ([a, b]) => [pointToWorld(frame, a), pointToWorld(frame, b)] as const,
+  );
+}
+
+/**
  * What the view shows of a light selected, about a body it lights (placed in the body's placement
  * frame, `layout`: see `wayOut`): the outline of where it falls on the body's sphere (any light but
  * one from all round), and a directional light's beam out of the body the way it comes from. None
@@ -142,6 +169,8 @@ export function lightAids(light: BodyLight, body: SetPlanet, layout: Viewpoint):
     fade: placed.fade ?? 1,
     cone: placed.cone ?? 90,
     edge: placed.edge ?? 0,
+    wrap: placed.wrap ?? 0,
+    softness: placed.softness ?? 1,
     colour,
     darkens: light.darkens,
   };

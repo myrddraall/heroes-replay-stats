@@ -9,7 +9,7 @@ import {
   overlayEnabled,
   overlayLabel,
 } from './body';
-import { lightIcon, lightsOfBody } from '../lights/lights';
+import { lightDetail, lightIcon, lightsOfBody } from '../lights/lights';
 import { type MaterialEntry, materialsOf, onPart, sharedMaterials } from '../materials/materials';
 import { movableShape, partIcon, type PartNode, partsInDrawOrder } from '../parts/parts';
 import { layerRows, partMaterialRows } from '../materials/material-views';
@@ -162,7 +162,7 @@ export function bodySubtreeRows(
         rows.push({
           key: keys.light(light.id),
           label: light.name,
-          ...(overlay ? { detail: labels.get(overlay) ?? overlay } : {}),
+          ...withDetail(lightDetail(light, overlay && (labels.get(overlay) ?? overlay))),
           icon: lightIcon(light),
           depth: at + 1,
           expandable: false,
@@ -226,3 +226,6 @@ export function bodySubtreeRows(
   }
   return rows;
 }
+
+/** A row's detail, where it has one. */
+const withDetail = (detail: string | undefined) => (detail ? { detail } : {});

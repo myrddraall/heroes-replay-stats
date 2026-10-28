@@ -74,6 +74,20 @@
   }
 }
 
+// What kind a light is: a row like the others, its value as text (set when it is added).
+.kind {
+  @include property-row.row;
+
+  &__label {
+    @include property-row.label;
+  }
+
+  &__value {
+    grid-column: 2 / -1;
+    font: var(--mat-sys-body-small);
+  }
+}
+
 // A material in a light's Reaches list, under its part.
 .receiver--material {
   padding-inline-start: 14px;

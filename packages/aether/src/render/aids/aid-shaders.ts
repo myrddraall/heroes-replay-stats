@@ -112,8 +112,13 @@ export function beamMaterial(
 }
 
 /**
- * A light's outline on its body's sphere: lines where its reach crosses its
- * edges; none where the frame has something nearer, nor behind another body's sphere.
+ * A light's outline on its body's sphere, as the body's shader lights it (`reachOf`): where it
+ * stops reaching (`uMainAt`: from a side or a point, how squarely the point faces it, its wrap
+ * taken in; a spot, its cone's edge; above and below, where its two colours meet; the sky round
+ * the body and the rim, where they reach half), and fainter where it reaches half (`uFaintAt`: from
+ * a side; a point, by how far away; a spot, where its cone starts to fade) and how far a spot
+ * reaches (half as strong); none where the frame has something nearer, nor behind another body's
+ * sphere.
  */
 export function outlineMaterial(
   u: ShaderUniforms,
@@ -144,6 +149,10 @@ export function outlineMaterial(
   const fade = u.float('uFade');
   const cosCone = u.float('uCosCone');
   const cosFade = u.float('uCosFade');
+  const mainAt = u.float('uMainAt');
+  const faintAt = u.float('uFaintAt', 9);
+  // (A rim's turn of the view, as the rows of its matrix: see `viewTurn`.)
+  const rimTurn = u.mat3('uRimTurn');
   const alpha = u.float('uAlpha');
   const colour = u.vec3('uColor');
   const line = (fv: Node<'float'>) =>
@@ -167,26 +176,38 @@ export function outlineMaterial(
     const n = normalize(transpose(lightAxes).mul(hit.sub(centre))).toVar();
     const main = float(1).toVar();
     const faint = float(1).toVar();
+    const reach = float(1).toVar();
     If(kind.equal(0).or(kind.equal(3)), () => {
-      main.assign(dot(n, normalize(dir).negate()));
+      const facing = dot(n, normalize(dir).negate()).toVar();
+      main.assign(facing.sub(mainAt));
+      faint.assign(facing.sub(faintAt));
     })
       .ElseIf(kind.equal(1), () => {
         const to = pos.sub(n).toVar();
-        main.assign(dot(n, normalize(to)));
+        main.assign(dot(n, normalize(to)).sub(mainAt));
         faint.assign(length(to).sub(fade));
       })
       .ElseIf(kind.equal(2), () => {
-        const to = normalize(pos.sub(n)).toVar();
-        gone.assign(gone.or(dot(n, to).lessThanEqual(0)));
+        const away = pos.sub(n).toVar();
+        const to = normalize(away).toVar();
+        gone.assign(gone.or(dot(n, to).lessThanEqual(mainAt)));
         const along = dot(to.negate(), aim).toVar();
         main.assign(along.sub(cosCone));
         faint.assign(along.sub(cosFade));
+        reach.assign(length(away).sub(fade));
+      })
+      .ElseIf(kind.equal(5), () => {
+        // (The rim: by how far the point turns from the eye, the view leaned by its turn.)
+        const view = transpose(rimTurn).mul(normalize(eye.sub(hit)));
+        main.assign(dot(normalize(hit.sub(centre)), normalize(view)).sub(mainAt));
       })
       .Else(() => {
         const look = transpose(lightAxes).mul(eye.sub(centre));
-        main.assign(float(0.5).sub(dot(n, normalize(look))));
+        main.assign(dot(n, normalize(look)).sub(mainAt));
       });
-    const a = max(line(main), line(faint).mul(0.45)).mul(alpha).toVar();
+    const a = max(line(main), max(line(faint), line(reach)).mul(0.45))
+      .mul(alpha)
+      .toVar();
     If(gone.or(a.lessThanEqual(0)), () => {
       Discard();
     });

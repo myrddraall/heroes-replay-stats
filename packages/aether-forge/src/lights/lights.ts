@@ -15,6 +15,7 @@ import {
   knownLights,
   type LightId,
   type LightKind,
+  LIGHT_KIND_NAMES,
   type LightReach,
   type LightSettings,
   type LightSettingsMap,
@@ -22,7 +23,6 @@ import {
   type LightOut,
   lightsOut,
   mergeLightSettings,
-  type NewLightKind,
   type PartMaterials,
   reachesReceiver,
   type Receiver,
@@ -48,11 +48,10 @@ import type { AddedItem } from '../controls/added-list';
 import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies';
 /** A body's and a scene's lights as an editor shows them, what lights each body, and the shield's lights. */
 
-/** Each kind of light's icon (an antilight's: any light that darkens). */
-export const LIGHT_ICONS: Record<NewLightKind, string> = {
+/** Each kind of light's icon (whether it darkens or lights, the same). */
+export const LIGHT_ICONS: Record<LightKind, string> = {
   ambient: 'brightness_low',
   directional: 'wb_sunny',
-  antilight: 'contrast',
   point: 'flare',
   spot: 'highlight',
   hemisphere: 'wb_twilight',
@@ -60,9 +59,24 @@ export const LIGHT_ICONS: Record<NewLightKind, string> = {
   rim: 'blur_circular',
 };
 
-/** A light's icon in the tree: by its kind, or an antilight's where it darkens. */
-export const lightIcon = (l: { readonly kind: LightKind; readonly darkens?: boolean }): string =>
-  l.darkens ? LIGHT_ICONS.antilight : LIGHT_ICONS[l.kind];
+/** A light's icon in the tree: by its kind. */
+export const lightIcon = (l: { readonly kind: LightKind }): string => LIGHT_ICONS[l.kind];
+
+/**
+ * What a light is, as its tree row says it beside its name (none where its name says it already:
+ * "Spot light 2"); with the overlay it is of, where it is one's.
+ */
+export function lightDetail(
+  light: { readonly kind: LightKind; readonly name: string },
+  overlay?: string,
+): string | undefined {
+  const kind = LIGHT_KIND_NAMES[light.kind];
+  const parts = [
+    ...(light.name.toLowerCase().startsWith(kind.toLowerCase()) ? [] : [kind]),
+    ...(overlay ? [overlay] : []),
+  ];
+  return parts.length ? parts.join(' · ') : undefined;
+}
 
 /** A body's light as its properties show it. */
 export interface LightEntry {

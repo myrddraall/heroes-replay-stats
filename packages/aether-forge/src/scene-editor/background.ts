@@ -6,7 +6,14 @@ import { computed } from '@angular/core';
 import type { SceneMarker } from '../viewport/scene-markers';
 import { type BodyInfo, bodyLabel } from '../bodies/body';
 import { splitViewKey } from '../materials/material-views';
-import { axisAids, lightAids, poleMarkers, lightMarkerAt, spotEdges } from '../viewport/markers';
+import {
+  axisAids,
+  lightAids,
+  lightMarkerAt,
+  lightSettingLines,
+  poleMarkers,
+  spotEdges,
+} from '../viewport/markers';
 import {
   lightsView,
   type LightEntry,
@@ -185,6 +192,7 @@ export function backgroundViews(store: WithTree) {
               ...marker(key, light, at.at),
               from: at.from,
               lines: spotEdges(light, body, from, view.eye),
+              softLines: lightSettingLines(light, body, from, view.eye),
             });
         }
       };
