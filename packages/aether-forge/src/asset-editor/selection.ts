@@ -16,10 +16,11 @@ import { skyAnchorView } from '../sky/sky';
 import { type MaterialView, viewTitle } from '../materials/material-views';
 import { lightsOfBody } from '../lights/lights';
 import type { PickChoice } from '../controls/pick-list';
-import type { AssetTarget, OpenTarget } from '../layout/open-target';
+import { type AssetTarget, openKey, type OpenTarget } from '../layout/open-target';
 import { standInLights } from '../aids/stand-in';
 import {
   ASSET,
+  DEFAULT_PREVIEW_PLANET,
   ASSET_LIGHTS,
   atBody,
   KIND_TITLES,
@@ -39,6 +40,7 @@ import type { AssetWrites } from './asset-writes';
 import { overlayViewOf } from '../overlays/overlays';
 import { bodyEdits } from '../editing/body-edits';
 import type { Crumb } from '../tree/breadcrumb';
+import { previewDefault, type PreviewSetup } from '../aids/preview-setup';
 
 /** What is selected in the tree: its target, the body, material or sky it is, how the panel heads it, and what can be done with it. */
 export function assetSelectionViews(store: WithOwn) {
@@ -184,7 +186,13 @@ export function assetSelectionViews(store: WithOwn) {
       if (t.kind === 'sky-part')
         return _skyParts(t.stage).find((p) => p.key === t.key)?.label ?? 'Part';
       if (t.kind === 'backdrop') return 'Backdrop';
-      if (t.kind === 'stand-in') return 'Stand-in planet';
+      // (An overlay shown worn by a planet of the library: that planet, as its row says.)
+      if (t.kind === 'stand-in')
+        return (
+          (asset().kind === 'style' &&
+            _aids.previewOf(openKey(asset()), 'style', previewDefault('style')).planet) ||
+          'Stand-in planet'
+        );
       if (t.kind === 'stand-in-light')
         return (
           standInLights(_aids.standInLights()).find((x) => x.light.id === t.id)?.light.name ??
@@ -262,7 +270,6 @@ export function assetSelectionMethods(store: AssetMethodsStore, w: AssetWrites) 
         selected: ASSET,
         onStandIn: false,
         editorCamera: null,
-        ...(a.kind === 'planet' ? { previewPlanet: a.id } : {}),
       });
       store._ui.confirmReset(false);
       store.expand(ASSET);
@@ -291,6 +298,15 @@ export function assetSelectionMethods(store: AssetMethodsStore, w: AssetWrites) 
     goTo: () => undefined,
     deselect(): void {
       patchState(store, { selected: ASSET });
+    },
+    setPreview(change: Partial<PreviewSetup>): void {
+      store._aids.setPreview(store._previewKey(), change);
+    },
+    clearPreview(keys?: readonly (keyof PreviewSetup)[]): void {
+      store._aids.clearPreview(store._previewKey(), keys);
+    },
+    usePreviewForKind(): void {
+      store._aids.usePreviewForKind(store._previewKey(), store.asset().kind);
     },
     /** A row selected; a group only folds. */
     select(key: string): void {
@@ -384,7 +400,7 @@ export function assetSelectionMethods(store: AssetMethodsStore, w: AssetWrites) 
     deleteAsset(): void {
       if (!store._created()) return;
       d.deleteOverlay(asset().id);
-      store._ui.show({ kind: 'planet', id: store.previewPlanet() });
+      store._ui.show({ kind: 'planet', id: DEFAULT_PREVIEW_PLANET });
     },
     /** The asset open back as the game data has it (the stage keeps its sky). */
     resetAll(): void {

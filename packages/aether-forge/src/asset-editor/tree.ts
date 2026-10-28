@@ -385,7 +385,7 @@ export function assetTreeViews(store: WithPartHosts) {
         row(STAGE, 'Preview stage', 'videocam', 0, store.stageUnsaved(), true);
         if (open.has(STAGE)) {
           // The backdrop: the stage's sky (its materials under it), or a colour or grid in its place.
-          if (store._aids.backdrop() === 'sky') {
+          if (store.preview().backdrop === 'sky') {
             row(STAGE_BACKDROP, 'Backdrop', 'wallpaper', 1);
             if (open.has(STAGE_BACKDROP)) skyRows(true, stageDepthKey, stageMaterialKey, 2);
           } else
@@ -399,18 +399,21 @@ export function assetTreeViews(store: WithPartHosts) {
             });
           // The stand-in only where it is shown: a material or a style opened on its own (a
           // material opened from a planet or overlay: where switched to the stand-in); its
-          // lights under it (open unless folded: its key among those kept means folded).
+          // lights under it (open unless folded: its key among those kept means folded). A
+          // planet's style shown worn by a planet of the library instead: that planet's row,
+          // where the stand-in's is (what it is shown on is chosen there).
           if (
             (a.kind === 'material' && !(a.on && !store.onStandIn())) ||
             (a.kind === 'style' && !store._skyOverlay())
           ) {
-            const unfolded = !open.has(STAGE_STAND_IN);
+            const on = a.kind === 'style' ? store.preview().planet : null;
+            const unfolded = !on && !open.has(STAGE_STAND_IN);
             rows.push({
               key: STAGE_STAND_IN,
-              label: 'Stand-in planet',
-              icon: 'circle',
+              label: on ?? 'Stand-in planet',
+              icon: on ? 'public' : 'circle',
               depth: 1,
-              expandable: true,
+              expandable: !on,
               expanded: unfolded,
             });
             if (unfolded)

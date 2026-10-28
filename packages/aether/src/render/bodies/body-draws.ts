@@ -47,3 +47,31 @@ export function sorted<T extends { readonly draw: MeshDraw; readonly blend: Scen
       Number(a.blend !== 'opaque') - Number(b.blend !== 'opaque') || rank.get(a)! - rank.get(b)!,
   );
 }
+
+/**
+ * A body's draws, in their order, less each opaque one wholly under a later opaque one on the same
+ * part: nothing of it would show. The later covers all of the part where it is switched on, cuts
+ * no holes (no cutout, no pattern on its part) and is drawn after it. Switching the later off, or
+ * swapping their order (in a variant, a scene), draws the earlier again.
+ */
+export function withoutHidden<
+  T extends {
+    readonly draw: MeshDraw;
+    readonly blend: SceneBlend;
+    readonly enabled: boolean;
+    readonly material: SceneMaterial;
+  },
+>(states: readonly T[]): T[] {
+  const covered = new Set<string>();
+  const out: T[] = [];
+  for (let i = states.length - 1; i >= 0; i--) {
+    const s = states[i]!;
+    const part = s.draw.partKey;
+    if (s.blend === 'opaque' && part !== undefined) {
+      if (covered.has(part)) continue;
+      if (s.enabled && !(s.material.cutout ?? 0) && !s.draw.part?.pattern) covered.add(part);
+    }
+    out.push(s);
+  }
+  return out.reverse();
+}

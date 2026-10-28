@@ -28,6 +28,7 @@ import type { SkyAnchorView } from '../sky/sky';
 import type { AssetTarget, OpenTarget } from '../layout/open-target';
 import type { TreeMove, TreeRow } from '../tree/scene-tree';
 import type { Crumb } from '../tree/breadcrumb';
+import type { PreviewSetup } from '../aids/preview-setup';
 import type { PoleDrag, SceneMarker } from '../viewport/scene-markers';
 import type { AddedLists } from '../controls/added-list';
 import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/space';
@@ -65,6 +66,18 @@ export abstract class Editor {
   abstract goTo(key: string | null): void;
   /** Nothing in particular selected: what the editor is at (the scene, what it is inside, what is open). */
   abstract deselect(): void;
+  /**
+   * The Preview stage of the library item open (none: the scene editor's, which has none), what
+   * of it the item sets itself (over its kind's), and its kind's name among the library's (for
+   * making it all of that kind's). Setting it sets the item's own; clearing puts some (all: none
+   * named) back as its kind has it.
+   */
+  abstract readonly preview: Signal<PreviewSetup | null>;
+  abstract readonly previewOwn: Signal<Partial<PreviewSetup>>;
+  abstract readonly previewKind: Signal<string | null>;
+  abstract setPreview(change: Partial<PreviewSetup>): void;
+  abstract clearPreview(keys?: readonly (keyof PreviewSetup)[]): void;
+  abstract usePreviewForKind(): void;
   /** What the selected row is; its properties' panel's title. */
   abstract readonly kind: Signal<TargetKind>;
   abstract readonly title: Signal<string>;

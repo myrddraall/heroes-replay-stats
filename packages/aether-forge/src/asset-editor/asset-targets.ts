@@ -259,8 +259,6 @@ export interface AssetEditorState {
   readonly asset: AssetTarget;
   /** The selected row's key. */
   readonly selected: string;
-  /** The planet on the stage: the last opened (a style, a material, the sky are shown on it). */
-  readonly previewPlanet: string;
   /** A material opened from a planet or overlay: shown on the stand-in instead of on that. */
   readonly onStandIn: boolean;
   /** Where the editor's own camera is, over the game's (none: there): the stage seen from any side; not kept. */

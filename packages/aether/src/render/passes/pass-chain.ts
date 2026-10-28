@@ -49,6 +49,9 @@ export interface PassChainHost {
   failed(error: unknown): void;
 }
 
+/** How many bakes' passes are kept spare at most (see `PassChain.spareBakes`). */
+const MAX_SPARE_BAKES = 6;
+
 /**
  * The targets a picture is drawn through and the passes between them: the frame (colour and glow,
  * each with its depth), the still sky's (what doesn't move, drawn again only when it changes), the
@@ -98,6 +101,31 @@ export class PassChain {
   /** The tone-mapped picture's target, made to be read back (`readPixels`). */
   private shownTarget: RenderTarget | null = null;
 
+  /**
+   * Bakes' passes let go of (a bake made again at another size, a body taken down), with their
+   * impostors, kept to be taken again by a bake of their size: a bake made again costs no
+   * allocation. A few at most, as many pixels as two frames at most, the oldest let go of first.
+   */
+  private readonly spareBakes: Pass[] = [];
+  /** A pass for a bake `width` × `height`: a spare one of that size, else a new one. */
+  takeBakePass(width: number, height: number): Pass {
+    const i = this.spareBakes.findIndex(
+      (p) => p.colour.width === width && p.colour.height === height,
+    );
+    return i >= 0 ? this.spareBakes.splice(i, 1)[0]! : this.newPass(width, height);
+  }
+  /** A bake's pass let go of: kept as a spare (see `spareBakes`). */
+  giveBakePass(pass: Pass | null): void {
+    if (!pass) return;
+    this.spareBakes.push(pass);
+    const { width, height } = this.host.canvas;
+    const pixels = () => this.spareBakes.reduce((n, p) => n + p.colour.width * p.colour.height, 0);
+    while (
+      this.spareBakes.length > MAX_SPARE_BAKES ||
+      (this.spareBakes.length && pixels() > 2 * width * height)
+    )
+      this.freePass(this.spareBakes.shift()!);
+  }
   newPass(width: number, height: number): Pass {
     return { colour: floatTarget(width, height), glow: floatTarget(width, height) };
   }
@@ -362,9 +390,10 @@ export class PassChain {
     this.skyLightQuarter = skyTarget(SKY_LIGHT_SIZE / 4);
   }
 
-  /** Free what the GPU holds of the targets (a bake's pass is freed with its bake). */
+  /** Free what the GPU holds of the targets, the spare bakes' too (a bake's own is let go of with its bake). */
   dispose(): void {
     for (const p of [this.stillBackground, this.stillScene, this.frame]) this.freePass(p);
+    for (const p of this.spareBakes.splice(0)) this.freePass(p);
     for (const t of this.bloom ?? []) t.dispose();
     this.skyLight.dispose();
   }

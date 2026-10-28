@@ -29,7 +29,6 @@ const assetStoreBase = () =>
     withState<AssetEditorState>({
       asset: { kind: 'planet', id: DEFAULT_PREVIEW_PLANET },
       selected: ASSET,
-      previewPlanet: DEFAULT_PREVIEW_PLANET,
       onStandIn: false,
       editorCamera: null,
       variantEdited: null,
@@ -37,7 +36,7 @@ const assetStoreBase = () =>
     withFolding([STAGE, ASSET]),
     withLocalStorage<AssetEditorState & { expanded: readonly string[] }>(
       storageKey('asset-editor'),
-      ['previewPlanet', 'expanded'],
+      ['expanded'],
     ),
     withProps(() => {
       const data = inject(DATA_URL);

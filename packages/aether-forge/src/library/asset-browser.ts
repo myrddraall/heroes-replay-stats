@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, effect, inject, untracked } from '@angular/core';
 import { overlayName } from '@myrddraall/heroes-replay-stats-aether/overlays';
 import { RANDOM_SCENE } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import { DraftDesignStore } from '../draft/draft-design.store';
@@ -112,6 +112,24 @@ export class AssetBrowser {
         )
       : all;
   });
+
+  /** The kind whose list has had what shows behind it made one of its items (see the constructor). */
+  private filled: OpenKind | null = null;
+
+  constructor() {
+    // A kind listed (chosen, or the page opened on it) with nothing of its shown behind (the
+    // random sets): its list's first item shown. Once a kind, as its list fills: a search
+    // narrowing the list leaves what is shown as it is.
+    effect(() => {
+      const type = this.catalog.type();
+      const items = this.items();
+      if (this.filled === type || !items.length) return;
+      this.filled = type;
+      const current = untracked(this.current);
+      if (!items.some((item) => item.key === current))
+        untracked(() => this.ui.show(parseOpen(items[0]!.key)));
+    });
+  }
 
   /** Clicked: selected; clicked again soon after (a double-click), opened. */
   protected clicked(key: string): void {

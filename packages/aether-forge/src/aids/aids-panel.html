@@ -1,14 +1,14 @@
-@switch (editor.kind()) { @case ('backdrop') {
+@switch (editor.kind()) { @case ('backdrop') { @if (backdrop(); as values) {
 <forge-editing-aid-properties
   title="Backdrop"
   [fills]="backdropFills"
   [skies]="skies()"
-  [values]="backdrop()"
+  [values]="values"
   [changed]="backdropChanged()"
   (valuesChange)="setAid('backdrop', $event)"
   (clear)="clearAid('backdrop', $event)"
 />
-@if (aids.backdrop() === 'sky') {
+} @if (editor.preview()?.backdrop === 'sky') {
 <forge-tint-section
   [tint]="editor.skyTint()"
   [set]="editor.skyTintSet()"
@@ -25,15 +25,28 @@
     Reset sky
   </button>
 </div>
-} } @case ('stand-in') {
+}
+<ng-container [ngTemplateOutlet]="previewButtons" />
+} @case ('stand-in') { @if (worn()) {
+<forge-property-select
+  label="Planet"
+  [value]="editor.preview()?.planet ?? ''"
+  [options]="planets()"
+  [changed]="editor.previewOwn().planet !== undefined"
+  (valueChange)="setPlanet($event)"
+  (resetRequested)="editor.clearPreview(['planet'])"
+/>
+} @if (!editor.preview()?.planet || !worn()) { @if (standIn(); as values) {
 <forge-editing-aid-properties
   title="Stand-in planet"
   [fills]="standInFills"
-  [values]="standIn()"
+  [values]="values"
   [changed]="standInChanged()"
   (valuesChange)="setAid('standIn', $event)"
   (clear)="clearAid('standIn', $event)"
 />
+} }
+<ng-container [ngTemplateOutlet]="previewButtons" />
 } @case ('reference') {
 <forge-reference-properties
   [name]="aids.referenceName()"
@@ -46,3 +59,19 @@
   (clear)="clearReference($event)"
 />
 } }
+
+<ng-template #previewButtons>
+  <div class="buttons">
+    <button type="button" class="button" (click)="editor.clearPreview()" [disabled]="!previewSet()">
+      Reset
+    </button>
+    <button
+      type="button"
+      class="button"
+      (click)="editor.usePreviewForKind()"
+      [disabled]="!previewSet()"
+    >
+      Use for all {{ editor.previewKind() }}
+    </button>
+  </div>
+</ng-template>

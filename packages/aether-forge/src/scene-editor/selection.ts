@@ -140,6 +140,9 @@ export function selectionViews(store: WithSky) {
     target,
     insideTarget,
     crumbs,
+    preview: computed(() => null),
+    previewOwn: computed(() => ({})),
+    previewKind: computed(() => null),
     selectedPlacement,
     overlayView: computed(() => {
       const t = target();
@@ -398,6 +401,10 @@ export function selectionMethods(store: SceneMethodsStore, w: SceneWrites) {
       goTo(out.length ? bodyKey(out) : null);
     },
     goTo,
+    // (A scene has no Preview stage: it is the scene.)
+    setPreview: () => undefined,
+    clearPreview: () => undefined,
+    usePreviewForKind: () => undefined,
     deselect(): void {
       patchState(store, { selected: store.inside() ?? SCENE });
     },

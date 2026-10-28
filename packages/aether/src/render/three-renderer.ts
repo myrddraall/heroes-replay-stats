@@ -75,7 +75,7 @@ import {
 } from './draw-types';
 import { BLOOM_STRENGTH, DEFAULT_BLOOM_THRESHOLD } from './tuning';
 import { fenced, freeGpu, meshGeometry } from './gpu';
-import { fileId, moves, sorted, turnFor } from './bodies/body-draws';
+import { fileId, moves, sorted, turnFor, withoutHidden } from './bodies/body-draws';
 import { type Vec3, distance, turnAbout } from '../space/vectors';
 import type { DrawnBody } from '../bodies/drawn-body';
 let nextPlacedId = 0;
@@ -501,9 +501,11 @@ export class ThreeRenderer {
         bodyDraw: d,
       };
     });
-    placed.states = sorted(
-      draws.map((d) => drawStateOf(d, this.drawContext)),
-      () => placed.body.order,
+    placed.states = withoutHidden(
+      sorted(
+        draws.map((d) => drawStateOf(d, this.drawContext)),
+        () => placed.body.order,
+      ),
     );
     placed.version++;
   }

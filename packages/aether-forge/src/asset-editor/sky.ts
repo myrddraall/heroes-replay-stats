@@ -6,6 +6,8 @@ import {
 } from '@myrddraall/heroes-replay-stats-aether/overlays';
 import { PREVIEW_SCENE, type SkyChoices } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import { computed } from '@angular/core';
+import { openKey } from '../layout/open-target';
+import { previewDefault } from '../aids/preview-setup';
 import type { MaterialUse } from '../library/asset-catalog.store';
 import type { MaterialEntry } from '../materials/materials';
 import {
@@ -24,7 +26,11 @@ import type { AssetWrites } from './asset-writes';
 
 /** The preview stage's scene and its sky, or the sky open: the overlays it wears, its materials and parts, an overlay made here. */
 export function stageSkyViews(store: WithVariants) {
-  const { _draft, asset, _catalog, previewPlanet, _sceneFile } = store;
+  const { _draft, asset, _catalog, _aids, _sceneFile } = store;
+  /** The planet the item open is shown on, as its Preview stage has it (whatever its kind starts with). */
+  const shownOn = computed(
+    () => _aids.previewOf(openKey(asset()), asset().kind, previewDefault(asset().kind)).planet,
+  );
   const library = _draft.library;
   const stageScene = computed(() => _draft.scenes().planets[PREVIEW_SCENE] ?? {});
   /** A sky (the stage's, or the library's): what is under it, and what is set. */
@@ -43,7 +49,7 @@ export function stageSkyViews(store: WithVariants) {
     const on = a.on;
     return (
       (on && uses.find((u) => u.kind === on.kind && u.id === on.id)) ||
-      uses.find((u) => u.kind === 'planet' && u.id === previewPlanet()) ||
+      uses.find((u) => u.kind === 'planet' && u.id === shownOn()) ||
       uses[0]
     );
   });

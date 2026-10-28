@@ -49,6 +49,9 @@ export interface BodyBakerHost {
   dim(): number;
 }
 
+/** How much bigger than its rectangle a bake is made (see `sizeBake`). */
+const BAKE_ROOM = 1.25;
+
 /**
  * The bodies baked: each drawn on its own into a pass of its own, only when it changes (the view,
  * the sky, its settings, its scrolling layers far enough), and put back into each frame as an
@@ -87,19 +90,25 @@ export class BodyBaker {
       shift: 0,
     };
   }
+  /**
+   * A bake big enough for its rectangle: as it is, where it fits and isn't twice as big as needed;
+   * else made again, a quarter bigger than needed (a body growing in the view, as it is zoomed to,
+   * isn't made again at every step), no bigger than the frame, its old pass a spare for another.
+   */
   private sizeBake(bake: Bake, rect: PixelRect): void {
     const fits = rect.w <= bake.width && rect.h <= bake.height;
     const roomy = bake.width > 2 * bakeSize(rect.w) || bake.height > 2 * bakeSize(rect.h);
     if (fits && !roomy && bake.pass) return;
-    bake.width = bakeSize(rect.w);
-    bake.height = bakeSize(rect.h);
+    const { width, height } = this.host.canvas;
+    bake.width = bakeSize(Math.min(rect.w * BAKE_ROOM, width + 1));
+    bake.height = bakeSize(Math.min(rect.h * BAKE_ROOM, height + 1));
     this.resizes++;
-    this.host.chain.freePass(bake.pass);
-    bake.pass = this.host.chain.newPass(bake.width, bake.height);
+    this.host.chain.giveBakePass(bake.pass);
+    bake.pass = this.host.chain.takeBakePass(bake.width, bake.height);
   }
   freeBake(bake: Bake | null): void {
     if (!bake) return;
-    this.host.chain.freePass(bake.pass);
+    this.host.chain.giveBakePass(bake.pass);
     bake.pass = null;
   }
   /**

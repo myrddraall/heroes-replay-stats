@@ -1,5 +1,6 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
-import type { PropertyOption } from '../controls/rows/property-select';
+import { type PropertyOption, PropertySelect } from '../controls/rows/property-select';
 import { Editor } from '../editing/editor';
 import { AssetCatalogStore } from '../library/asset-catalog.store';
 import { TintSection } from '../materials/tint-section';
@@ -9,23 +10,28 @@ import {
   type EditingAidValues,
 } from './editing-aid-properties';
 import {
-  type BackdropFill,
   EDITING_AIDS_DEFAULTS,
   type EditingAidsState,
   EditingAidsStore,
-  type GridSize,
-  type StandInFill,
 } from './editing-aids.store';
+import type { PreviewSetup } from './preview-setup';
 import { ReferenceProperties, type ReferenceValues } from './reference-properties';
 
 /**
- * The editing aids' properties in the selection panel (container, on the page's aids store: never
- * the design): the backdrop (a sky's tint and reset on the `Editor` in effect, where it is a sky),
- * the stand-in planet, and the reference image.
+ * The editing aids' properties in the selection panel (container, on the page's aids store and
+ * the `Editor` in effect: never the design): the item open's Preview stage (its backdrop, a sky's
+ * tint and reset where it is a sky; its stand-in planet, or the planet an overlay is worn by; put
+ * back as its kind has it, or made its kind's), and the reference image.
  */
 @Component({
   selector: 'forge-aids-panel',
-  imports: [EditingAidProperties, ReferenceProperties, TintSection],
+  imports: [
+    EditingAidProperties,
+    NgTemplateOutlet,
+    PropertySelect,
+    ReferenceProperties,
+    TintSection,
+  ],
   templateUrl: './aids-panel.html',
   styleUrl: './aids-panel.scss',
 })
@@ -48,7 +54,7 @@ export class AidsPanel {
     { value: 'grid', label: 'Grid' },
   ];
 
-  /** The aids' properties, each aid's under the same names. */
+  /** The aids' properties, each aid's under the same names: by their names in a Preview stage. */
   private readonly keys = {
     backdrop: {
       fill: 'backdrop',
@@ -61,22 +67,26 @@ export class AidsPanel {
       colour: 'standInColour',
       gridSize: 'gridSize',
     },
-  } as const satisfies Record<
-    string,
-    Partial<Record<keyof EditingAidValues, keyof EditingAidsState>>
-  >;
+  } as const satisfies Record<string, Partial<Record<keyof EditingAidValues, keyof PreviewSetup>>>;
 
-  protected readonly backdrop = computed((): EditingAidValues => ({
-    fill: this.aids.backdrop(),
-    sky: this.aids.backdropSky(),
-    colour: this.aids.backdropColour(),
-    gridSize: this.aids.gridSize(),
-  }));
-  protected readonly standIn = computed((): EditingAidValues => ({
-    fill: this.aids.standIn(),
-    colour: this.aids.standInColour(),
-    gridSize: this.aids.gridSize(),
-  }));
+  /** The planets an overlay can be shown worn by on its Preview stage: the stand-in, or one of the library's. */
+  protected readonly planets = computed((): PropertyOption[] => [
+    { value: '', label: 'Stand-in' },
+    ...this.catalog.planets().map((p) => ({ value: p.id, label: p.id })),
+  ]);
+  /** Whether the item open is an overlay (it can be shown worn by another planet). */
+  protected readonly worn = computed(() => this.editor.opened().kind === 'style');
+
+  protected readonly backdrop = computed((): EditingAidValues | null => {
+    const p = this.editor.preview();
+    return (
+      p && { fill: p.backdrop, sky: p.backdropSky, colour: p.backdropColour, gridSize: p.gridSize }
+    );
+  });
+  protected readonly standIn = computed((): EditingAidValues | null => {
+    const p = this.editor.preview();
+    return p && { fill: p.standIn, colour: p.standInColour, gridSize: p.gridSize };
+  });
   /** The reference image's settings, each by the aids store's name for it. */
   private readonly referenceKeys = {
     shown: 'referenceShown',
@@ -106,38 +116,34 @@ export class AidsPanel {
   });
   protected readonly backdropChanged = computed(() => this.changedOf('backdrop'));
   protected readonly standInChanged = computed(() => this.changedOf('standIn'));
+  /** Whether the item open sets anything of its Preview stage itself. */
+  protected readonly previewSet = computed(() => Object.keys(this.editor.previewOwn()).length > 0);
 
+  /** Which of an aid's settings the item open sets itself (the others as its kind has them). */
   private changedOf(aid: 'backdrop' | 'standIn'): EditingAidChanged {
-    const keys: Partial<Record<keyof EditingAidValues, keyof EditingAidsState>> = this.keys[aid];
-    const differs = (k: keyof EditingAidValues) => {
+    const keys: Partial<Record<keyof EditingAidValues, keyof PreviewSetup>> = this.keys[aid];
+    const own = this.editor.previewOwn();
+    const set = (k: keyof EditingAidValues) => {
       const key = keys[k];
-      // (By value: a direction kept in this browser comes back a new array.)
-      return (
-        !!key && JSON.stringify(this.aids[key]()) !== JSON.stringify(EDITING_AIDS_DEFAULTS[key])
-      );
+      return !!key && key in own;
     };
-    return {
-      fill: differs('fill'),
-      sky: differs('sky'),
-      colour: differs('colour'),
-      gridSize: differs('gridSize'),
-    };
+    return { fill: set('fill'), sky: set('sky'), colour: set('colour'), gridSize: set('gridSize') };
   }
 
+  /** Some of an aid's settings set for the item open. */
   protected setAid(aid: 'backdrop' | 'standIn', change: Partial<EditingAidValues>): void {
-    const fill = change.fill;
-    this.aids.set({
-      ...(fill !== undefined
-        ? aid === 'backdrop'
-          ? { backdrop: fill as BackdropFill }
-          : { standIn: fill as StandInFill }
-        : {}),
-      ...(change.colour !== undefined
-        ? { [aid === 'backdrop' ? 'backdropColour' : 'standInColour']: change.colour }
-        : {}),
-      ...(change.sky !== undefined ? { backdropSky: change.sky } : {}),
-      ...(change.gridSize !== undefined ? { gridSize: change.gridSize as GridSize } : {}),
-    });
+    const keys: Partial<Record<keyof EditingAidValues, keyof PreviewSetup>> = this.keys[aid];
+    const out: Partial<Record<keyof PreviewSetup, unknown>> = {};
+    for (const [k, v] of Object.entries(change) as [keyof EditingAidValues, unknown][]) {
+      const key = keys[k];
+      if (key && v !== undefined) out[key] = v;
+    }
+    this.editor.setPreview(out as Partial<PreviewSetup>);
+  }
+
+  /** The planet the overlay open is shown worn by ('': the stand-in). */
+  protected setPlanet(planet: string): void {
+    this.editor.setPreview({ planet: planet || null });
   }
 
   protected setReference(change: Partial<ReferenceValues>): void {
@@ -155,7 +161,7 @@ export class AidsPanel {
     aid: 'backdrop' | 'standIn',
     fields: readonly (keyof EditingAidValues)[],
   ): void {
-    const keys: Partial<Record<keyof EditingAidValues, keyof EditingAidsState>> = this.keys[aid];
-    this.aids.reset(fields.flatMap((f) => (keys[f] ? [keys[f]] : [])));
+    const keys: Partial<Record<keyof EditingAidValues, keyof PreviewSetup>> = this.keys[aid];
+    this.editor.clearPreview(fields.flatMap((f) => (keys[f] ? [keys[f]] : [])));
   }
 }
