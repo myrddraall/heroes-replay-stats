@@ -1,0 +1,26 @@
+<main class="page">
+  <h1>Renderer check</h1>
+  <p>
+    The steps run one at a time: the background drawn by three.js on WebGPU and on WebGL 2, every
+    shader compiled cold, until every planet is drawn; then both at once, their pictures compared.
+  </p>
+  <hrs-check-controls
+    [phase]="check.phase()"
+    [step]="check.step()"
+    [copyLabel]="copyLabel()"
+    [hasResults]="check.tables().length > 0"
+    (start)="check.start()"
+    (copyResults)="copy()"
+  />
+  @if (check.test() || check.warmingUp()) {
+    <hrs-check-pictures [test]="check.test()" [warmingUp]="check.warmingUp()" [webgpuCanvas]="check.canvas">
+      <aether-scene-view />
+    </hrs-check-pictures>
+  }
+  @for (table of check.tables(); track table.title) {
+    <hrs-check-table [table]="table" />
+  }
+  @if (check.difference(); as d) {
+    <hrs-check-difference [difference]="d" />
+  }
+</main>

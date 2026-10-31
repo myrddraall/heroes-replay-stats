@@ -1,0 +1,151 @@
+@let s = settings();
+<section class="card hrs-glass" aria-labelledby="graphics-heading">
+  <h2 id="graphics-heading">Graphics</h2>
+
+  <h3 id="quality-label">Quality</h3>
+  <mat-button-toggle-group
+    class="choice"
+    aria-labelledby="quality-label"
+    hideSingleSelectionIndicator
+    [value]="quality()"
+    (change)="qualityChosen.emit($event.value)"
+  >
+    @for (q of qualities; track q) {
+      <mat-button-toggle [value]="q">{{ qualityLabels[q] }}</mat-button-toggle>
+    }
+    <!-- The settings at no preset; chosen, the last ones that were. -->
+    <mat-button-toggle value="custom" [disabled]="!hasCustom()">Custom</mat-button-toggle>
+  </mat-button-toggle-group>
+  <p class="hint">
+    A preset sets everything below up to the look; change one and it is Custom, which you can go
+    back to after trying a preset.
+  </p>
+
+  <mat-slide-toggle
+    class="toggle"
+    [checked]="s.animate"
+    (change)="changed.emit({ animate: $event.checked })"
+  >
+    Animate the background
+  </mat-slide-toggle>
+  <p class="hint">
+    Off, it is drawn once for each page you go to, fading from the last, and again when the window
+    is resized.
+  </p>
+
+  @for (slider of qualitySliders(); track slider.key) {
+    <hrs-setting-slider
+      [inputId]="slider.key"
+      [label]="slider.label"
+      [value]="slider.value"
+      [shown]="slider.shown"
+      [min]="slider.range.min"
+      [max]="slider.range.max"
+      [step]="slider.step"
+      [hint]="slider.hint"
+      (valueChange)="change(slider.key, $event)"
+    />
+  }
+
+  <mat-slide-toggle class="toggle" [checked]="s.blur" (change)="changed.emit({ blur: $event.checked })">
+    Blur behind the glass
+  </mat-slide-toggle>
+  <p class="hint">
+    Costly: the browser blurs again for every frame of the background, which can make dragging a
+    map stutter even on a fast machine.
+  </p>
+
+  <h3>Look</h3>
+  <span class="label" id="theme-label">Theme</span>
+  <mat-button-toggle-group
+    class="choice"
+    aria-labelledby="theme-label"
+    hideSingleSelectionIndicator
+    [value]="s.theme"
+    (change)="changed.emit({ theme: $event.value })"
+  >
+    @for (theme of themes; track theme.value) {
+      <mat-button-toggle [value]="theme.value">{{ theme.label }}</mat-button-toggle>
+    }
+  </mat-button-toggle-group>
+  <p class="hint">The game's purples with magenta, or the Nexus blue with cyan. Teams keep their colours.</p>
+
+  <span class="label" id="colour-mode-label">Background colour</span>
+  <div class="colour">
+    <mat-button-toggle-group
+      class="choice"
+      aria-labelledby="colour-mode-label"
+      hideSingleSelectionIndicator
+      [value]="s.colourMode"
+      (change)="changed.emit({ colourMode: $event.value })"
+    >
+      @for (mode of colourModes; track mode.value) {
+        <mat-button-toggle [value]="mode.value">{{ mode.label }}</mat-button-toggle>
+      }
+    </mat-button-toggle-group>
+    @if (s.colourMode === 'fixed') {
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="colour__select">
+        <mat-label>Colour</mat-label>
+        <mat-select [value]="s.colour" (selectionChange)="changed.emit({ colour: $event.value })">
+          @for (colour of colours(); track colour.id) {
+            <mat-option [value]="colour.id">{{ colour.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
+  </div>
+  <p class="hint">
+    @switch (s.colourMode) {
+      @case ('fixed') {
+        The site opens in purple and fades to it.
+      }
+      @case ('random') {
+        Another of the colours each page you go to; the site opens in purple.
+      }
+      @case ('in-turn') {
+        The next of the colours each page you go to; the site opens in purple.
+      }
+    }
+  </p>
+
+  @for (slider of glassSliders(); track slider.key) {
+    <hrs-setting-slider
+      [inputId]="slider.key"
+      [label]="slider.label"
+      [value]="slider.value"
+      [shown]="slider.shown"
+      [min]="slider.range.min"
+      [max]="slider.range.max"
+      [step]="slider.step"
+      [hint]="slider.hint"
+      (valueChange)="change(slider.key, $event)"
+    />
+  }
+
+  <h3>Drawing</h3>
+  <span class="label" id="api-label">Graphics API</span>
+  <mat-button-toggle-group
+    class="choice"
+    aria-labelledby="api-label"
+    hideSingleSelectionIndicator
+    [value]="s.api"
+    (change)="changed.emit({ api: $event.value })"
+  >
+    @for (api of apis; track api.value) {
+      <mat-button-toggle [value]="api.value">{{ api.label }}</mat-button-toggle>
+    }
+  </mat-button-toggle-group>
+  <p class="hint">
+    @switch (s.api) {
+      @case ('auto') {
+        WebGPU where the browser has it, otherwise WebGL 2.
+      }
+      @case ('webgpu') {
+        WebGPU, or WebGL 2 where the browser has no WebGPU.
+      }
+      @case ('webgl2') {
+        The older API: simpler, and on some machines quicker to start.
+      }
+    }
+  </p>
+</section>

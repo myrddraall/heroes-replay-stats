@@ -1,0 +1,115 @@
+@use 'glass-mixins' as glass;
+@use './rows/property-row';
+
+// A flyout's panel: the frame's glass, near opaque (readable over the list or the background it
+// opens over), its parts in a column, only its list scrolling.
+@mixin panel {
+  @include glass.frame-glass(top, 0, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-sizing: border-box;
+  width: 280px;
+  max-height: min(70vh, 520px);
+  padding: 12px;
+  overflow: hidden;
+  color: var(--mat-sys-on-surface);
+  background: rgb(var(--hrs-glass-tint) / 0.97);
+  backdrop-filter: blur(12px);
+}
+
+// Its parts: a title, a section's heading, a filter over its list, the list (scrolling), its
+// choices (a name, and under it what it is), and the word for none.
+@mixin parts {
+  .title {
+    flex: none;
+    margin: 0;
+    font: var(--mat-sys-title-small);
+  }
+
+  .section {
+    flex: none;
+    margin: 4px 0 0;
+    font: var(--mat-sys-label-medium);
+    text-transform: uppercase;
+    opacity: 0.8;
+  }
+
+  .filter {
+    @include property-row.field;
+    flex: none;
+    width: 100%;
+  }
+
+  .choices {
+    display: grid;
+    flex: none;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    &--scroll {
+      flex: 1 1 auto;
+      align-content: start;
+      min-height: 0;
+      overflow-y: auto;
+    }
+  }
+
+  .choice {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid transparent;
+    background: none;
+    color: inherit;
+    font: var(--mat-sys-body-small);
+    text-align: start;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      border-color: rgb(var(--hrs-glass-edge) / 0.5);
+      background: rgb(var(--hrs-glass-edge) / 0.15);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--mat-sys-primary);
+      outline-offset: -2px;
+    }
+
+    &__icon {
+      flex: none;
+      width: 18px;
+      height: 18px;
+      font-size: 18px;
+      opacity: 0.85;
+    }
+
+    &__text {
+      display: grid;
+      min-width: 0;
+    }
+
+    &__label,
+    &__caption {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    &__caption {
+      font-size: 0.85em;
+      opacity: 0.75;
+    }
+  }
+
+  .none {
+    padding: 6px 8px;
+    font: var(--mat-sys-body-small);
+    opacity: 0.75;
+  }
+}

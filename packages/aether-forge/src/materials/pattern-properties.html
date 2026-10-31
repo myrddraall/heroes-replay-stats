@@ -1,0 +1,128 @@
+@let v = values(); @let c = controls(); @if (c.colours) {
+<!-- A shield's: its cells (drawn, or the game's texture), and its colour where inactive. -->
+<forge-property-section
+  title="Cells"
+  [changed]="anySet(['drawAs', 'scale', 'width', 'soft', 'cut'])"
+  (resetRequested)="clear.emit(['drawAs', 'scale', 'width', 'soft', 'cut'])"
+>
+  @if (c.drawAs) {
+  <forge-property-select
+    label="Draw as"
+    [value]="v.drawAs"
+    [options]="drawAsOptions"
+    [changed]="isSet('drawAs')"
+    [origin]="origins()?.drawAs"
+    [overridden]="overrides()?.drawAs"
+    (resetRequested)="clear.emit(['drawAs'])"
+    (valueChange)="drawAs($event)"
+  />
+  }
+  <forge-property-number
+    label="Scale"
+    [value]="v.scale"
+    [min]="0.01"
+    [step]="0.05"
+    [changed]="isSet('scale')"
+    [origin]="origins()?.scale"
+    [overridden]="overrides()?.scale"
+    (resetRequested)="clear.emit(['scale'])"
+    (valueChange)="settingsChange.emit({ scale: $event })"
+  />
+  @if (c.lines) {
+  <forge-property-number
+    label="Line width"
+    [value]="v.width"
+    [min]="0"
+    [max]="0.5"
+    [step]="0.01"
+    [changed]="isSet('width')"
+    [origin]="origins()?.width"
+    [overridden]="overrides()?.width"
+    (resetRequested)="clear.emit(['width'])"
+    (valueChange)="settingsChange.emit({ width: $event })"
+  />
+  <forge-property-number
+    label="Line softness"
+    [value]="v.soft"
+    [min]="0"
+    [max]="1"
+    [step]="0.05"
+    [changed]="isSet('soft')"
+    [origin]="origins()?.soft"
+    [overridden]="overrides()?.soft"
+    (resetRequested)="clear.emit(['soft'])"
+    (valueChange)="settingsChange.emit({ soft: $event })"
+  />
+  } @else if (c.cut) {
+  <forge-property-number
+    label="Contrast"
+    [value]="v.cut"
+    [min]="0"
+    [max]="0.9"
+    [step]="0.05"
+    [changed]="isSet('cut')"
+    [origin]="origins()?.cut"
+    [overridden]="overrides()?.cut"
+    (resetRequested)="clear.emit(['cut'])"
+    (valueChange)="settingsChange.emit({ cut: $event })"
+  />
+  }
+</forge-property-section>
+<forge-property-section
+  title="Colours"
+  [changed]="anySet(['inactive', 'active'])"
+  (resetRequested)="clear.emit(['inactive', 'active'])"
+>
+  <forge-property-colour
+    label="Inactive"
+    [value]="v.inactive"
+    [changed]="isSet('inactive')"
+    [origin]="origins()?.inactive"
+    [overridden]="overrides()?.inactive"
+    (resetRequested)="clear.emit(['inactive'])"
+    (valueChange)="settingsChange.emit({ inactive: $event })"
+  />
+  <forge-property-colour
+    label="Active"
+    [value]="v.active"
+    [changed]="isSet('active')"
+    [origin]="origins()?.active"
+    [overridden]="overrides()?.active"
+    (resetRequested)="clear.emit(['active'])"
+    (valueChange)="settingsChange.emit({ active: $event })"
+  />
+</forge-property-section>
+} @else {
+<!-- Any other's emissive texture: how large, and how much of it is cut away. -->
+<forge-property-section
+  title="Texture"
+  [changed]="anySet(['scale', 'cut'])"
+  (resetRequested)="clear.emit(['scale', 'cut'])"
+>
+  <forge-property-number
+    label="Scale"
+    [value]="v.scale"
+    [min]="0.01"
+    [step]="0.05"
+    [changed]="isSet('scale')"
+    [origin]="origins()?.scale"
+    [overridden]="overrides()?.scale"
+    (resetRequested)="clear.emit(['scale'])"
+    (valueChange)="settingsChange.emit({ scale: $event })"
+  />
+  @if (c.cut) {
+  <forge-property-number
+    label="Contrast"
+    [value]="v.cut"
+    [min]="0"
+    [max]="0.9"
+    [step]="0.05"
+    [changed]="isSet('cut')"
+    [origin]="origins()?.cut"
+    [overridden]="overrides()?.cut"
+    (resetRequested)="clear.emit(['cut'])"
+    (valueChange)="settingsChange.emit({ cut: $event })"
+  />
+  }
+</forge-property-section>
+}

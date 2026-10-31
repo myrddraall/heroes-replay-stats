@@ -1,0 +1,92 @@
+<span class="label" [class.label--changed]="changed()" [id]="id"
+  >{{ label() }} @if (origin() && !changed()) {
+  <span class="origin" [title]="'Set in ' + origin()"
+    ><span class="origin__text">, set in {{ origin() }}</span></span
+  >
+  } @if (overridden(); as by) {
+  <button
+    type="button"
+    class="overridden"
+    [title]="'Overridden by ' + by"
+    [attr.aria-label]="'Overridden by ' + by"
+    (click)="$event.preventDefault(); showOverride?.(by)"
+  >
+    <mat-icon class="material-symbols-outlined" aria-hidden="true">layers</mat-icon>
+  </button>
+  }
+</span>
+<span class="control">
+  <span
+    class="disc"
+    [class.disc--dragging]="dragging()"
+    role="slider"
+    tabindex="0"
+    [attr.aria-labelledby]="id"
+    aria-valuemin="0"
+    aria-valuemax="360"
+    [attr.aria-valuenow]="angle()"
+    [attr.aria-valuetext]="text()"
+    (pointerdown)="pointerDown($event)"
+    (pointermove)="pointerMove($event)"
+    (pointerup)="pointerUp($event)"
+    (pointercancel)="pointerUp($event)"
+    (keydown)="key($event)"
+    (keyup)="keyUp($event)"
+  >
+    <span class="cross" aria-hidden="true"></span>
+    @if (snapping()) {
+    <span class="cuts" aria-hidden="true"></span>
+    }
+    <span
+      class="point"
+      [class.point--far]="far()"
+      [style.left.%]="50 + point().x * 50"
+      [style.top.%]="50 + point().y * 50"
+      aria-hidden="true"
+    ></span>
+  </span>
+  @if (sided()) {
+  <span class="views" role="group" [attr.aria-label]="'Seen from, for ' + label()">
+    @for (v of views; track v[0]) {
+    <button
+      type="button"
+      class="view"
+      [class]="'view view--' + v[0]"
+      [attr.aria-label]="v[1].label"
+      [title]="v[1].label"
+      [attr.aria-pressed]="view() === v[0]"
+      (click)="look(v[0])"
+    >
+      {{ v[1].glyph }}
+    </button>
+    }
+  </span>
+  }
+  <span class="readout">
+    @for (line of angles(); track $index) {
+    <span class="readout__line" aria-hidden="true">{{ line }}</span>
+    } @if (sided()) {
+    <button
+      type="button"
+      class="flip"
+      [title]="far() ? 'To this side' : 'To the far side'"
+      (click)="flip()"
+    >
+      Flip side
+    </button>
+    }
+  </span>
+</span>
+<span class="reset-slot">
+  @if (changed()) {
+  <button
+    type="button"
+    class="reset"
+    [attr.aria-label]="'Reset ' + label()"
+    title="Reset"
+    (click)="resetRequested.emit()"
+  >
+    <mat-icon class="material-symbols-outlined" aria-hidden="true">restart_alt</mat-icon>
+  </button>
+  }
+</span>

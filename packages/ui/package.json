@@ -1,0 +1,40 @@
+{
+  "name": "@myrddraall/heroes-replay-stats-ui",
+  "version": "0.0.0-MAIN",
+  "private": true,
+  "description": "Shared interface pieces for the app and its packages, such as the side panel",
+  "types": "./src/index.ts",
+  "sideEffects": false,
+  "scripts": {
+    "format": "prettier --write \"src/**/*.{ts,html,scss}\"",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@angular/cdk": "^22.1.0",
+    "@angular/common": "^22.1.0",
+    "@angular/compiler": "^22.1.0",
+    "@angular/core": "^22.1.0",
+    "@angular/material": "^22.1.0",
+    "@eslint/js": "^10.0.1",
+    "angular-eslint": "^22.5.0",
+    "eslint": "^10.9.1",
+    "prettier": "^3.8.1",
+    "rxjs": "^7.8.0",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "^8.69.0"
+  },
+  "peerDependencies": {
+    "@angular/common": "^22.1.0",
+    "@angular/core": "^22.1.0",
+    "@angular/material": "^22.1.0"
+  },
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "type": "module"
+}

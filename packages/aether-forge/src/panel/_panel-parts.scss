@@ -1,0 +1,19 @@
+@use '../controls/rows/property-row';
+
+// What the selection panel's pods share: a row of buttons, a button, a hint.
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 4px;
+}
+
+.button {
+  @include property-row.button;
+}
+
+.hint {
+  margin: 0;
+  font: var(--mat-sys-body-small);
+  opacity: 0.75;
+}

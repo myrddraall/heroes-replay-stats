@@ -1,0 +1,8 @@
+@if (stats.current(); as s) {
+<span>{{ s.fps | number: '1.0-0' }} fps</span>
+<span>CPU {{ s.ms | number: '1.1-1' }} ms</span>
+@if (s.gpuMs !== null) {
+<span>GPU {{ s.gpuMs | number: '1.1-1' }} ms</span>
+} } @else {
+<span>– fps</span>
+}

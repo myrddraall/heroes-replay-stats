@@ -1,0 +1,42 @@
+@if (arenas().length > 1 || hasTeamColour()) {
+  <section class="controls" aria-labelledby="map-view-heading">
+    <h3 id="map-view-heading" class="controls__heading">View</h3>
+    @if (arenas().length > 1) {
+      <div class="controls__row">
+        <span id="map-view-arena" class="controls__label">Arena</span>
+        <mat-button-toggle-group
+          class="controls__arenas"
+          aria-labelledby="map-view-arena"
+          hideSingleSelectionIndicator
+          [value]="arena()"
+          (change)="arenaChange.emit($event.value)"
+        >
+          @for (a of arenas(); track a.layer.id; let k = $index) {
+            <mat-button-toggle [value]="k">{{ a.label }}</mat-button-toggle>
+          }
+        </mat-button-toggle-group>
+      </div>
+    }
+    @if (hasTeamColour()) {
+      <div class="controls__row">
+        <span class="controls__label">Teams</span>
+        <!-- Order's dot, the swap, Chaos's dot (the points of interest's dots); swapped, the dots trade places. -->
+        <button
+          mat-stroked-button
+          type="button"
+          class="controls__team"
+          [class.controls__team--swapped]="teamColoursSwapped()"
+          aria-label="Swap team colours"
+          [attr.aria-pressed]="teamColoursSwapped()"
+          (click)="teamColoursToggle.emit()"
+        >
+          <span class="controls__swap" aria-hidden="true">
+            <span class="controls__dot controls__dot--order"></span>
+            <mat-icon class="material-symbols-outlined">swap_horiz</mat-icon>
+            <span class="controls__dot controls__dot--chaos"></span>
+          </span>
+        </button>
+      </div>
+    }
+  </section>
+}

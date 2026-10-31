@@ -1,0 +1,37 @@
+{
+  "name": "@myrddraall/heroes-replay-stats-signals",
+  "version": "0.0.0-MAIN",
+  "private": true,
+  "description": "Shared NgRx signal store features for the app and its packages, such as keeping state in local storage",
+  "types": "./src/index.ts",
+  "sideEffects": false,
+  "scripts": {
+    "format": "prettier --write \"src/**/*.{ts,html,scss}\"",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@angular/compiler": "^22.1.0",
+    "@angular/core": "^22.1.0",
+    "@eslint/js": "^10.0.1",
+    "@ngrx/signals": "^22.0.1",
+    "angular-eslint": "^22.5.0",
+    "eslint": "^10.9.1",
+    "prettier": "^3.8.1",
+    "rxjs": "^7.8.0",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "^8.69.0"
+  },
+  "peerDependencies": {
+    "@angular/core": "^22.1.0",
+    "@ngrx/signals": "^22.0.1"
+  },
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "type": "module"
+}

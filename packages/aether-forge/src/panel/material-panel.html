@@ -1,0 +1,91 @@
+@switch (editor.kind()) { @case ('material') { @if (editor.material(); as m) {
+<forge-material-properties
+  [page]="pages.page()"
+  [shared]="editor.sharedMaterial() !== null"
+  (sharedOpen)="openShared()"
+  [name]="m.name"
+  [origin]="m.origin"
+  [origins]="m.origins"
+  [overrides]="m.overrides"
+  [values]="m.values"
+  [controls]="m.controls"
+  [changed]="m.set !== undefined"
+  [set]="m.set"
+  [labelBelow]="m.labelBelow"
+  (settingsChange)="editor.setMaterial($event)"
+  (clear)="editor.clearMaterial($event)"
+  (resetRequested)="editor.clearMaterial()"
+/>
+} @if (pages.page() === 'lighting' && editor.litBy(); as lit) {
+<forge-lit-by
+  [lights]="lit"
+  (litChange)="editor.setLitBy($event)"
+  (lightShow)="editor.showLight($event)"
+/>
+} } @case ('shader') { @if (editor.material(); as m) {
+<forge-pattern-properties
+  [values]="m.values"
+  [controls]="m.controls"
+  [set]="m.set"
+  [origins]="m.origins"
+  [overrides]="m.overrides"
+  (settingsChange)="editor.setMaterial($event)"
+  (clear)="editor.clearMaterial($event)"
+/>
+<forge-property-section
+  title="Lights"
+  [changed]="m.set?.gridLights !== undefined"
+  (resetRequested)="editor.clearMaterial(['gridLights'])"
+>
+  <forge-add-light (added)="addGridLight($event)" />
+  <forge-added-list
+    title="Lights"
+    [items]="shieldLights()"
+    (itemShow)="editor.select($event)"
+    (itemRemove)="removeGridLight($event)"
+  />
+</forge-property-section>
+} } @case ('gridLight') { @if (gridLight(); as l) {
+<forge-light-properties
+  [light]="l"
+  [onShield]="true"
+  (settingsChange)="changeGridLight(l.light.id, $event)"
+  (clear)="changeGridLight(l.light.id, cleared($event))"
+  (removed)="removeGridLight(editor.selected())"
+/>
+} } @case ('layer') { @if (layer(); as l) {
+<forge-layer-properties
+  [layer]="l.layer"
+  [dataUrl]="dataUrl"
+  [open]="true"
+  [transforms]="!l.material.controls.particles"
+  (settingsChange)="layerChange(l.layer.slot, $event)"
+  (clear)="layerClear(l.layer.slot, $event)"
+/>
+<!-- An emissive texture's own (a shield's is its shader's): how large, how much cut away. -->
+@if ( l.layer.slot === 'emissive' && l.material.controls.scale && !l.material.controls.colours ) {
+<forge-pattern-properties
+  [values]="l.material.values"
+  [controls]="l.material.controls"
+  [set]="l.material.set"
+  [origins]="l.material.origins"
+  [overrides]="l.material.overrides"
+  (settingsChange)="editor.setMaterial($event)"
+  (clear)="editor.clearMaterial($event)"
+/>
+} } } @case ('sky-material') { @if (editor.material(); as m) {
+<forge-material-properties
+  [page]="pages.page()"
+  [name]="m.name"
+  [origins]="m.origins"
+  [overrides]="m.overrides"
+  [values]="m.values"
+  [controls]="m.controls"
+  [changed]="m.set !== undefined"
+  [set]="m.set"
+  [labelBelow]="m.labelBelow"
+  (settingsChange)="editor.setMaterial($event)"
+  (clear)="editor.clearMaterial($event)"
+  (resetRequested)="editor.clearMaterial()"
+/>
+} } }

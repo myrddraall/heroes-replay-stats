@@ -1,0 +1,96 @@
+@let l = layer(); @let v = l.values;
+<forge-property-section
+  [title]="l.label"
+  [open]="open() || changed()"
+  [changed]="changed()"
+  (resetRequested)="clear.emit(all())"
+>
+  <forge-property-text
+    label="Name"
+    [value]="l.set?.label ?? ''"
+    [placeholder]="l.labelBelow"
+    [changed]="isSet('label')"
+    [origin]="l.origins.label"
+    [overridden]="l.overrides?.label"
+    (resetRequested)="clear.emit(['label'])"
+    (valueChange)="rename($event)"
+  />
+  @if (v.texture !== undefined && l.choices.length > 1 && transforms()) {
+  <forge-property-select
+    label="Texture"
+    [value]="v.texture"
+    [options]="options()"
+    [changed]="isSet('texture')"
+    [origin]="l.origins.texture"
+    [overridden]="l.overrides?.texture"
+    (resetRequested)="clear.emit(['texture'])"
+    (valueChange)="settingsChange.emit({ texture: $event })"
+  />
+  } @if (transforms()) { @for (h of halves; track h; let i = $index) {
+  <forge-property-number
+    [label]="'Offset ' + h"
+    [value]="v.offset[i]!"
+    [step]="0.01"
+    [changed]="isSet('offset')"
+    [origin]="l.origins.offset"
+    [overridden]="l.overrides?.offset"
+    (resetRequested)="clear.emit(['offset'])"
+    (valueChange)="half('offset', i, $event)"
+  />
+  }
+  <forge-property-number
+    label="Rotation"
+    [value]="v.rotation"
+    [step]="1"
+    [changed]="isSet('rotation')"
+    [origin]="l.origins.rotation"
+    [overridden]="l.overrides?.rotation"
+    (resetRequested)="clear.emit(['rotation'])"
+    (valueChange)="settingsChange.emit({ rotation: $event })"
+  />
+  @for (h of halves; track h; let i = $index) {
+  <forge-property-number
+    [label]="'Tiling ' + h"
+    [value]="v.tiling[i]!"
+    [step]="0.05"
+    [changed]="isSet('tiling')"
+    [origin]="l.origins.tiling"
+    [overridden]="l.overrides?.tiling"
+    (resetRequested)="clear.emit(['tiling'])"
+    (valueChange)="half('tiling', i, $event)"
+  />
+  } @for (h of halves; track h; let i = $index) {
+  <forge-property-number
+    [label]="'Scroll ' + h"
+    [value]="v.scroll[i]!"
+    [step]="0.005"
+    [changed]="isSet('scroll')"
+    [origin]="l.origins.scroll"
+    [overridden]="l.overrides?.scroll"
+    (resetRequested)="clear.emit(['scroll'])"
+    (valueChange)="half('scroll', i, $event)"
+  />
+  } @for (h of halves; track h; let i = $index) {
+  <forge-property-check
+    [label]="'Repeat ' + h"
+    [checked]="v.wrap[i]!"
+    [changed]="isSet('wrap')"
+    [origin]="l.origins.wrap"
+    [overridden]="l.overrides?.wrap"
+    (resetRequested)="clear.emit(['wrap'])"
+    (checkedChange)="half('wrap', i, $event)"
+  />
+  } } @if (l.texture; as t) {
+  <div class="texture">
+    <a class="texture__path" [href]="dataUrl() + t.file" target="_blank" rel="noopener"
+      >{{ dataUrl() + t.file }}</a
+    >
+    @if (t.source) {
+    <span class="texture__source" title="In the game data">
+      {{ t.baked ? 'Baked from ' : '' }}{{ t.source }}
+    </span>
+    }
+    <span class="texture__size">{{ t.width }} × {{ t.height }}</span>
+  </div>
+  }
+</forge-property-section>

@@ -1,0 +1,6 @@
+@if (store.focusedName(); as name) {
+<div class="focus">
+  <span>Centred on {{ name }}</span>
+  <button type="button" class="button" (click)="store.unfocus()">Unfocus</button>
+</div>
+}

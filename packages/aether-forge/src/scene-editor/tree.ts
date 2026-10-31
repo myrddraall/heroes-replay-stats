@@ -1,0 +1,464 @@
+import { adjustmentRows, GRADING_TITLE } from '../materials/material-views';
+import { skyOverlayOn } from '@myrddraall/heroes-replay-stats-aether/library';
+import type { SetPlanet } from '@myrddraall/heroes-replay-stats-aether/planet-sets';
+import {
+  bodyAt,
+  bodyParts,
+  type BodyPath,
+  fitRadius,
+  fitScene,
+  type MoonChoices,
+  pathOf,
+  placeBodies,
+  SCENE_CENTRE,
+  visualExtent,
+  siblingKey,
+} from '@myrddraall/heroes-replay-stats-aether/scenes';
+import {
+  type AddedLight,
+  type LightBranch,
+  type LightSettingsMap,
+  mergeLightSettings,
+  receivedLight,
+} from '@myrddraall/heroes-replay-stats-aether/lights';
+import { computed } from '@angular/core';
+import { bodyEnabled, type BodyInfo, filesLoaded, wornIds } from '../bodies/body';
+import { byDepth, skyOverlayLabel } from '../sky/sky';
+import { referenceRow } from '../aids/reference-row';
+import { lightDetail, lightIcon, sceneLightsOf } from '../lights/lights';
+import { type MaterialEntry } from '../materials/materials';
+import { wornLabel } from '../overlays/overlays';
+import type { TreeRow } from '../tree/scene-tree';
+import {
+  CAMERAS,
+  SCENE,
+  SCENE_LIGHTS,
+  SKY,
+  bodyKey,
+  cameraKey,
+  glowMarginOf,
+  groupBodyKey,
+  lightRowKey,
+  lightsKey,
+  materialRowKey,
+  overlayKey,
+  overlaysKey,
+  moonsKey,
+  shapesKey,
+  variantRowKey,
+  variantsKey,
+  partRowKey,
+  placementKey,
+  sceneLightKey,
+  skyDepthKey,
+  skyMaterialKey,
+  skyOverlayKey,
+  skyOverlayMaterialKey,
+  skyPartKey,
+} from './scene-targets';
+import type { WithPartHosts } from './scene-editor.store';
+import { bodySubtreeRows, materialRows } from '../bodies/body-rows';
+import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/space';
+
+/** The scene's tree: its rows (the scene, its cameras, sky, groups and bodies, each body's parts, lights and overlays), and the bodies placed. */
+export function treeViews(store: WithPartHosts) {
+  return {
+    rows: computed((): TreeRow[] => {
+      const open = store.unfolded();
+      const rows: TreeRow[] = [];
+      const row = (
+        key: string,
+        label: string,
+        icon: string,
+        depth: number,
+        unsaved = false,
+        group = false,
+        enabled?: boolean,
+      ) =>
+        rows.push({
+          key,
+          label,
+          icon,
+          depth,
+          expandable: true,
+          expanded: open.has(key),
+          unsaved,
+          group,
+          enabled,
+        });
+      /** A material's row, its layers under it (folded unless unfolded). */
+      const leaf = (key: string, m: MaterialEntry, depth: number) =>
+        rows.push(...materialRows(key, m, depth, open));
+      /**
+       * A body's rows below its own: its categories, its moons' rows among them (`only`: an
+       * overlay it wears, its shapes and lights alone).
+       */
+      const subtreeRows = (b: BodyInfo, depth: number, only?: string): TreeRow[] => {
+        const path = pathOf(b.key.slice(5));
+        return bodySubtreeRows(
+          b,
+          depth,
+          open,
+          {
+            part: (key) => partRowKey(path, key),
+            material: (name, overlay) => materialRowKey(path, name, overlay),
+            light: (id) => lightRowKey(path, id),
+            overlay: (id) => overlayKey(path, id),
+            variant: (id) => variantRowKey(path, id),
+            shapes: () => shapesKey(path),
+            lights: () => lightsKey(path),
+            overlays: () => overlaysKey(path),
+            variants: () => variantsKey(path),
+            moons: () => moonsKey(path),
+          },
+          {
+            movableOverlays: true,
+            // (One of a planet's own moons is the library's: nothing is put onto it here.)
+            adds: { shapes: !b.inherited, lights: true, overlays: true, moons: !b.inherited },
+            adjustments: true,
+            variants: (b.variants ?? []).map((v) => ({
+              id: v.id,
+              name: v.name,
+              on: (b.variantsOn ?? []).includes(v.id),
+              removable: false,
+            })),
+            moons: (at) =>
+              b.moons.flatMap((m, i) => {
+                const child = store.bodyByKey().get(bodyKey([...path, siblingKey(m, i)]));
+                return child ? bodyRows(child, at) : [];
+              }),
+            ...(only ? { only } : {}),
+          },
+        );
+      };
+      /** A body's rows: its own, then (unfolded) what is under it. */
+      const bodyRows = (b: BodyInfo, depth: number): TreeRow[] => [
+        {
+          key: b.key,
+          label: wornLabel(b),
+          icon: pathOf(b.key.slice(5)).length > 1 ? 'brightness_1' : 'public',
+          depth,
+          expandable: true,
+          expanded: open.has(b.key),
+          unsaved: store.unsavedBodies().has(b.key),
+          group: false,
+          enabled: bodyEnabled(b),
+        },
+        ...(open.has(b.key) ? subtreeRows(b, depth) : []),
+      ];
+      const body = (b: BodyInfo, depth: number) => rows.push(...bodyRows(b, depth));
+      // Inside a planet, a moon or an overlay one wears: only what is in it, then the aids.
+      const inside = store.insideTarget();
+      const at = inside && store.bodyByKey().get(bodyKey(inside.path));
+      if (inside && at)
+        return [
+          ...subtreeRows(at, -1, inside.kind === 'overlay' ? inside.id : undefined),
+          referenceRow(),
+        ];
+      if (store.groupOpen()) row(SCENE, 'Group', 'workspaces', 0, store.sceneUnsaved());
+      else row(SCENE, 'Scene', 'landscape', 0, store.sceneUnsaved());
+      if (!open.has(SCENE)) return rows;
+      // The scene's own lights, where it has any.
+      const own = sceneLightsOf(store.sceneLights());
+      if (own.length) {
+        rows.push({
+          key: SCENE_LIGHTS,
+          label: 'Lights',
+          icon: 'lightbulb',
+          depth: 1,
+          expandable: true,
+          expanded: !open.has(SCENE_LIGHTS),
+          group: true,
+        });
+        if (!open.has(SCENE_LIGHTS))
+          for (const { light } of own)
+            rows.push({
+              key: sceneLightKey(light.id),
+              label: light.name,
+              ...(lightDetail(light) ? { detail: lightDetail(light) } : {}),
+              icon: lightIcon(light),
+              depth: 2,
+              expandable: false,
+              expanded: false,
+              enabled: light.enabled,
+            });
+      }
+      // Its cameras, the game's first (the one it is shown through marked).
+      const cameras = store.cameraList();
+      if (cameras.length) {
+        rows.push({
+          key: CAMERAS,
+          label: 'Cameras',
+          icon: 'videocam',
+          depth: 1,
+          expandable: true,
+          expanded: !open.has(CAMERAS),
+          group: true,
+        });
+        if (!open.has(CAMERAS))
+          for (const c of cameras)
+            rows.push({
+              key: cameraKey(c.id),
+              label: c.name,
+              ...(c.id === store.primaryCamera() ? { detail: 'primary' } : {}),
+              icon: 'videocam',
+              depth: 2,
+              expandable: false,
+              expanded: false,
+            });
+      }
+      // Its colour grading, over the whole picture (a group has none: it is the scene's it is put in).
+      if (!store.groupOpen())
+        rows.push(...adjustmentRows(SCENE, store.sceneGrading(), 1, open, GRADING_TITLE));
+      // A group has no sky of its own (it is drawn under the scene's it is put in).
+      const sky = !store.groupOpen();
+      if (sky) row(SKY, 'Sky', 'blur_on', 1, store.skyUnsaved());
+      // Its materials by where they are drawn among the scene's objects: behind, among, in front;
+      // then each overlay it wears, its parts with their materials under it.
+      if (sky && open.has(SKY))
+        for (const g of byDepth(store.skyMaterials().filter((m) => !m.overlay && !m.added))) {
+          const group = skyDepthKey(g.depth);
+          rows.push({
+            key: group,
+            label: g.label,
+            icon: g.icon,
+            depth: 2,
+            expandable: true,
+            expanded: !open.has(group),
+            group: true,
+          });
+          if (!open.has(group)) for (const m of g.materials) leaf(skyMaterialKey(m.name), m, 3);
+        }
+      // The parts added onto it (its own), each with the materials it draws.
+      if (sky && open.has(SKY))
+        for (const part of store.skyParts().filter((p) => !p.overlay)) {
+          const key = skyPartKey(part.key);
+          const materials = store
+            .skyMaterials()
+            .filter((m) => m.added && part.materials.includes(m.name));
+          rows.push({
+            key,
+            label: part.label,
+            icon: part.band ? 'panorama_horizontal' : 'category',
+            depth: 2,
+            expandable: materials.length > 0,
+            expanded: !open.has(key),
+            enabled: part.enabled,
+          });
+          if (!open.has(key)) for (const m of materials) leaf(skyMaterialKey(m.name), m, 3);
+        }
+      if (sky && open.has(SKY))
+        for (const o of store.skyOverlays()) {
+          const group = skyOverlayKey(o.id);
+          rows.push({
+            key: group,
+            label: skyOverlayLabel(o),
+            detail: 'overlay',
+            icon: 'style',
+            depth: 2,
+            expandable: true,
+            expanded: !open.has(group),
+            group: true,
+            enabled: skyOverlayOn(store.sceneSky(), store._draft.library(), o.id),
+            movable: store.skyOverlays().length > 1,
+          });
+          if (open.has(group)) continue;
+          for (const part of store.skyParts().filter((p) => p.overlay === o.id)) {
+            const key = skyPartKey(part.key);
+            const materials = store
+              .skyMaterials()
+              .filter((m) => m.overlay === o.id && part.materials.includes(m.name));
+            rows.push({
+              key,
+              label: part.label,
+              icon: 'panorama_horizontal',
+              depth: 3,
+              expandable: materials.length > 0,
+              expanded: !open.has(key),
+              enabled: part.enabled,
+            });
+            if (!open.has(key))
+              for (const m of materials) leaf(skyOverlayMaterialKey(o.id, m.name), m, 4);
+          }
+        }
+      // Its colour adjustments, over all of it.
+      if (sky && open.has(SKY)) rows.push(...adjustmentRows(SKY, store.skyTints(), 2, open));
+      store.sceneBodies().forEach((p, i) => {
+        const planet = store.bodyByKey().get(bodyKey([siblingKey(p, i)]));
+        if (planet) body(planet, 1);
+      });
+      // The groups put in it, each switched by its checkbox (what is in it is set in the group).
+      store.placements().forEach((p, i) =>
+        rows.push({
+          key: placementKey(siblingKey(p, i)),
+          label: store.placementLabel()(p),
+          detail: 'group',
+          icon: 'workspaces',
+          depth: 1,
+          expandable: false,
+          expanded: false,
+          enabled: p.enabled !== false,
+        }),
+      );
+      rows.push(referenceRow());
+      return rows;
+    }),
+    /**
+     * The scene's bodies placed for the background: each planet where it is, its moons about it;
+     * centred on a moon, that moon in the middle of the view with its own. Null for the random
+     * sets (the background draws them), or while what they need is loading.
+     */
+    _placed: computed((): { planets: SetPlanet[]; picks: string[] } | null => {
+      if (!store.hasPlanets()) return null;
+      const planets = store.sceneBodies();
+      const grouped = store.placedGroups();
+      if (!planets.length && !grouped.length) return { planets: [], picks: [] };
+      const scene = store._sceneFile.hasValue() ? store._sceneFile.value() : null;
+      if (!scene) return null;
+      // Its moons are placed, and what is drawn smaller to keep in view fitted, as the game's
+      // camera sees them, so the scene's own cameras and the editor's move round the same layout.
+      const layoutView = scene.camera;
+      const up = Math.tan((layoutView.fovY * Math.PI) / 360);
+      const reach = { up, across: up * store._ui.aspect() };
+      /** The scene's bodies from its planet down to the one at a path. */
+      const sceneChain = (at: BodyPath) =>
+        at.map((_, i) => store.bodyByKey().get(bodyKey(at.slice(0, i + 1))));
+      // Each root: a planet where it is (the scene's, or a group's put in it), or the moon
+      // centred on; its moons; the path its bodies' own paths are under (the scene's); its
+      // bodies from it down to each (`chain`); what picking one selects; where each is in the
+      // tree the lights reach through (`branch`); the lights from beyond what is put out that
+      // light all of it (its groups', those of the bodies the moon centred on is a moon of).
+      interface Root {
+        readonly root: { readonly position: Vec3; readonly radius: number };
+        readonly moons: readonly MoonChoices[];
+        readonly fit: boolean;
+        readonly chain: (path: BodyPath) => (BodyInfo | undefined)[];
+        readonly pick: (path: BodyPath) => string;
+        readonly branch: (path: BodyPath) => LightBranch;
+        readonly lightsAt: (path: BodyPath) => readonly AddedLight[];
+        /** What the scene sets of the lights on all of it (a group put in it: those it takes out). */
+        readonly except?: LightSettingsMap;
+      }
+      /** Where a body is in the tree, by the keys of the bodies down to it. */
+      const branchOf = (key: (path: BodyPath) => string, path: BodyPath, group?: string) => ({
+        key: key(path),
+        ...(path.length ? { parent: key(path.slice(0, -1)) } : {}),
+        ...(group !== undefined ? { group } : {}),
+      });
+      const focus = store.focusPath();
+      const focused = focus.length ? bodyAt(planets, focus) : undefined;
+      const roots: Root[] = focused
+        ? [
+            {
+              root: SCENE_CENTRE,
+              moons: focused.moons ?? [],
+              fit: true,
+              chain: (path) => sceneChain([...focus, ...path]),
+              pick: (path) => bodyKey([...focus, ...path]),
+              branch: (path) => branchOf((at) => bodyKey([...focus, ...at]), path),
+              // (Those that reach each from the bodies not put out: the planets it is a moon of
+              // lighting down, the others lighting out to it; those it and its moons hand on to
+              // each other flow as they are put out.)
+              lightsAt: (path) =>
+                (store.flowed().get(bodyKey([...focus, ...path])) ?? [])
+                  .filter(({ from }) => !focus.every((k, i) => pathOf(from.slice(5))[i] === k))
+                  .map(({ light }) => light),
+            },
+          ]
+        : [
+            ...planets.map((p, i): Root => {
+              const key = siblingKey(p, i);
+              return {
+                root: { position: p.position, radius: p.radius },
+                moons: p.moons ?? [],
+                // A scene of one planet is kept in view; several are where they are put.
+                fit: planets.length === 1 && !grouped.length,
+                chain: (path) => sceneChain([key, ...path]),
+                pick: (path) => bodyKey([key, ...path]),
+                branch: (path) => branchOf((at) => bodyKey([key, ...at]), path),
+                lightsAt: () => [],
+              };
+            }),
+            // The groups' planets where they are put: picked, the group put in it is selected.
+            // (A group's lights light all of it; those lighting the whole scene are the scene's.)
+            ...grouped.map((g, j): Root => ({
+              root: { position: g.body.position, radius: g.body.radius },
+              moons: g.body.moons ?? [],
+              fit: false,
+              chain: (path) =>
+                [[], ...path.map((_, k) => path.slice(0, k + 1))].map((at) =>
+                  store.groupInfos().get(groupBodyKey(j, at)),
+                ),
+              pick: () => placementKey(g.placement[0]!),
+              branch: (path) => branchOf((at) => groupBodyKey(j, at), path, `group:${j}`),
+              lightsAt: () => g.lights.filter((l) => l.out !== 'scene').map(receivedLight),
+              except: store.placements().find((p, i) => siblingKey(p, i) === g.placement[0])
+                ?.lights,
+            })),
+          ];
+      const out: SetPlanet[] = [];
+      /** What picking each body put out selects, in the same order. */
+      const picks: string[] = [];
+      /** What must stay in view of each body put out, in its radii. */
+      const extents: number[] = [];
+      for (const { root, moons, fit, chain, pick, branch, lightsAt, except } of roots) {
+        // What must stay in view of each body: as far as its parts and its halo reach.
+        const extent = (path: BodyPath) => {
+          const b = chain(path).at(-1);
+          return b
+            ? visualExtent(b.file, b.overlays, bodyParts(b), glowMarginOf(b))
+            : visualExtent();
+        };
+        const base = fit
+          ? { ...root, radius: fitRadius(root, moons, layoutView, reach, new Map(), extent) }
+          : root;
+        for (const p of placeBodies(base, moons, layoutView)) {
+          const bodies = chain(p.path);
+          const b = bodies.at(-1);
+          if (!b || !filesLoaded(b)) return null;
+          const s = b.settings;
+          // Drawn where it and every body it is a moon of are switched on.
+          const drawn = bodies.every((x) => (x?.settings.enabled ?? x?.below?.enabled) !== false);
+          const lights = lightsAt(p.path);
+          extents.push(visualExtent(b.file, b.overlays, bodyParts(b), glowMarginOf(b)));
+          picks.push(pick(p.path));
+          out.push({
+            id: b.id,
+            position: p.position,
+            radius: p.radius,
+            overlays: wornIds(b),
+            ...(b.variantsOn ? { variantsOn: b.variantsOn } : {}),
+            ...(drawn ? {} : { enabled: false }),
+            ...(s.overlayEnabled !== undefined ? { overlayEnabled: s.overlayEnabled } : {}),
+            ...(s.overlaysEnabled ? { overlaysEnabled: s.overlaysEnabled } : {}),
+            lighting: s.lighting,
+            shade: {
+              ...(s.shade !== undefined ? { strength: s.shade } : {}),
+              ...(s.shadeTowards ? { direction: s.shadeTowards } : {}),
+            },
+            materials: s.materials,
+            parts: s.parts,
+            ...(s.addedParts ? { addedParts: s.addedParts } : {}),
+            order: s.order,
+            lights: except ? mergeLightSettings(s.lights, except) : s.lights,
+            added: lights.length ? [...(s.added ?? []), ...lights] : s.added,
+            branch: branch(p.path),
+            tints: s.tints,
+            tintsEnabled: s.tintsEnabled,
+            lightFrom: s.lightFrom,
+            rim: s.rim,
+            ...(s.orientation ? { orientation: s.orientation } : {}),
+            ...(s.axis ? { axis: s.axis } : {}),
+            ...(s.turn !== undefined ? { turn: s.turn } : {}),
+            ...(s.baseTurn ? { baseTurn: s.baseTurn } : {}),
+          });
+        }
+      }
+      // Several planets where they are put: the whole drawn smaller where any would leave the view.
+      return {
+        planets: roots.length > 1 ? fitScene(out, extents, layoutView, reach) : out,
+        picks,
+      };
+    }),
+  };
+}

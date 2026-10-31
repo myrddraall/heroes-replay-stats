@@ -1,0 +1,42 @@
+// Not encapsulated: the SVG's elements come from the pack. Everything is scoped to the layer.
+hrs-map-minimap-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  pointer-events: none;
+  transition: opacity var(--hrs-map-viewer-fade, 600ms) ease;
+
+  &[hidden] {
+    display: none;
+  }
+
+  svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  // The outline's lines on screen (they don't scale with the zoom): the light line 4 px, and
+  // 4 px of black outside it (the black stroke is centred on the same line, under the main shape).
+  .inner-stroke {
+    stroke-width: 4px;
+  }
+
+  .out-stroke use {
+    stroke-width: 12px;
+  }
+
+  // With the terrain shown, the terrain shows through, and its own cores show, not the swirls.
+  &.map-minimap-layer--over-terrain {
+    opacity: 0.6;
+
+    .nexus {
+      display: none;
+    }
+  }
+
+  &.map-minimap-layer--faded {
+    opacity: 0;
+  }
+}

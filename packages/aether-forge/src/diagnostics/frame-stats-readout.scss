@@ -1,0 +1,12 @@
+// Small and quiet, dark behind it so it reads over the brightest sky; takes no clicks.
+:host {
+  display: flex;
+  gap: 8px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgb(var(--hrs-glass-tint) / 0.85);
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-label-small);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}

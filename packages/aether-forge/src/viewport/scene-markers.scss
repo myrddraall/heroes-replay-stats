@@ -1,0 +1,153 @@
+// Over the view, taking no clicks but its markers'. What is on it is placed in hundredths of its
+// width and height (`cqw`, `cqh`), moved by transforms: a move of the view's camera then moves
+// layers and paints nothing again. (The markers' dots and lines are drawn in the scene: see
+// `markerAids`.)
+:host {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  container-type: size;
+}
+
+// Where a marker or a pole's name is, from the view's top left.
+@mixin placed($shift: 0px) {
+  top: 0;
+  left: 0;
+  transform: translate(calc(var(--x) * 1cqw + #{$shift}), calc(var(--y) * 1cqh));
+  will-change: transform;
+}
+
+// A marker: its icon on a dark round (in the ring its dot grows into), its name beside it, centred
+// on where it is; shown where it is hovered, selected or focused. Otherwise it is there unseen, its
+// round over its dot, for the pointer to find it by. A body's only shows (its disk is what is
+// picked).
+.marker {
+  @include placed(var(--shift, 0px));
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  translate: -14px -50%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #fff;
+  cursor: pointer;
+  pointer-events: auto;
+  opacity: 0;
+
+  mat-icon {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    font-size: 18px;
+    border-radius: 50%;
+    background: rgb(0 0 0 / 0.65);
+  }
+
+  .label {
+    display: none;
+  }
+
+  &.open,
+  &:focus-visible {
+    opacity: 1;
+
+    .label {
+      display: block;
+    }
+  }
+
+  &:focus-visible {
+    outline: none;
+
+    mat-icon {
+      box-shadow: 0 0 0 2px rgb(var(--hrs-glass-edge));
+    }
+  }
+
+  &.off.open {
+    opacity: 0.55;
+  }
+
+  &--body {
+    pointer-events: none;
+  }
+
+  // A light's that may be dragged (round its body, or across the view).
+  &.draggable {
+    cursor: grab;
+    touch-action: none;
+
+    &:active {
+      cursor: grabbing;
+    }
+  }
+}
+
+// Left out of the light selected (an exception): a small mark at the top right of its dot, shown
+// as long as the light is selected.
+.left {
+  @include placed;
+  position: absolute;
+  translate: 6px -22px;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.7);
+  color: #fff;
+  pointer-events: auto;
+
+  mat-icon {
+    width: 14px;
+    height: 14px;
+    font-size: 14px;
+  }
+}
+
+.label {
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgb(0 0 0 / 0.55);
+  font: var(--mat-sys-label-medium);
+  white-space: nowrap;
+}
+
+// A planet's pole's name, centred on where it is, larger than a marker's name.
+.pole {
+  @include placed;
+  position: absolute;
+  translate: -50% -50%;
+  padding: 2px 10px;
+  color: #fff;
+  font: var(--mat-sys-title-large);
+  cursor: grab;
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+// A spot's aim's handle (its dot is drawn in the scene): a small round over it, dragged.
+.aim {
+  @include placed;
+  position: absolute;
+  translate: -50% -50%;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  cursor: grab;
+  pointer-events: auto;
+  touch-action: none;
+
+  &:active {
+    cursor: grabbing;
+  }
+}

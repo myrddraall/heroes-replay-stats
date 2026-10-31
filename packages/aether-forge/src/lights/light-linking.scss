@@ -1,0 +1,59 @@
+@use '../controls/rows/property-row';
+
+.heading {
+  display: block;
+  margin-block-end: 2px;
+  font: var(--mat-sys-body-small);
+  opacity: 0.85;
+}
+
+// A thing a light lights: its fold, its checkbox and name (in by its depth), its reset at the right.
+.link {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) property-row.$reset-column;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+  padding-inline-start: calc(var(--depth, 0) * 14px);
+}
+
+.fold {
+  @include property-row.reset;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+
+  &--material {
+    padding-inline-start: 14px;
+  }
+}
+
+.check {
+  @include property-row.check;
+}
+
+.name {
+  overflow: hidden;
+  font: var(--mat-sys-body-small);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &--own {
+    cursor: default;
+  }
+
+  &--changed {
+    color: var(--mat-sys-primary);
+  }
+}
+
+@include property-row.origin;
+
+.reset-slot {
+  @include property-row.reset-slot;
+}

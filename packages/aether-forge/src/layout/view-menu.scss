@@ -1,0 +1,17 @@
+:host {
+  display: contents;
+}
+
+.gear {
+  --mat-icon-button-state-layer-size: 32px;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  padding: 4px;
+
+  mat-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+  }
+}

@@ -1,0 +1,29 @@
+:host {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.clip {
+  position: absolute;
+  inset: 0;
+}
+
+// Its middle where it is put; as tall as asked, as wide as its own shape makes it.
+.image {
+  position: absolute;
+  width: auto;
+  max-width: none;
+  transform: translate(-50%, -50%);
+}
+
+// The split: a thin line, dark-edged so it reads over a bright picture or a dark one.
+.line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.5);
+}

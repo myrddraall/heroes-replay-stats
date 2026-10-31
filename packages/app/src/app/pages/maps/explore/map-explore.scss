@@ -1,0 +1,65 @@
+@use '../../../../theme/glass-mixins' as glass;
+
+// The drawer container fills the host; the viewer fills the content between the panels. Nothing
+// here may scroll sideways: the panels keep to their width, the map clips.
+:host {
+  position: relative;
+  display: block;
+  overflow: hidden;
+}
+
+.explore {
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+}
+
+.explore__drawer {
+  width: var(--ui-side-panel-width, min(360px, 90vw));
+  overflow: hidden;
+  // Material rounds a side drawer's inner corners; these run the full height, flush with the map.
+  border-radius: 0;
+
+  // Material's own inner container scrolls by default; only the panel's body may, or a
+  // scrollbar appears for the border's pixel.
+  :host ::ng-deep &.mat-drawer .mat-drawer-inner-container {
+    overflow: hidden;
+  }
+
+  // the frame's glass over the map, lit along the edge facing it
+  &.mat-drawer-end {
+    @include glass.frame-glass(left, 1, 0);
+  }
+
+  // (Material marks only an end drawer: a start one is any other.)
+  &:not(.mat-drawer-end) {
+    @include glass.frame-glass(right, -1, 0);
+  }
+}
+
+.explore__content {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+
+.explore__viewer {
+  position: absolute;
+  inset: 0;
+}
+
+// Over the map's top corners, above the viewer's own status line: one toggle per panel, each on
+// its panel's side.
+.explore__toggle {
+  position: absolute;
+  top: 8px;
+  inset-inline-end: 8px;
+  z-index: 10001;
+  background: rgb(var(--hrs-glass-tint) / var(--hrs-glass-alpha-frame));
+  backdrop-filter: var(--hrs-glass-backdrop-frame);
+
+  &.explore__toggle--start {
+    inset-inline-end: auto;
+    inset-inline-start: 8px;
+  }
+}

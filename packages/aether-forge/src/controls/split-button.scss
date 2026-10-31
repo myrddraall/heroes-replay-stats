@@ -1,0 +1,36 @@
+@use './rows/property-row';
+
+:host {
+  display: inline-flex;
+}
+
+// One button to look at, two to press, as the editor's buttons are: what it does | the arrow
+// (opens the menu of all it does), with a divider between.
+.split {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid rgb(var(--hrs-glass-edge) / 0.4);
+  background: rgb(var(--hrs-glass-tint) / 0.5);
+
+  &:hover {
+    border-color: rgb(var(--hrs-glass-edge) / 0.8);
+  }
+}
+
+.split__main,
+.split__arrow {
+  @include property-row.button;
+  border: 0;
+  background: transparent;
+}
+
+.split__arrow {
+  padding: 0 2px;
+  border-inline-start: 1px solid rgb(var(--hrs-glass-edge) / 0.4);
+
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+  }
+}

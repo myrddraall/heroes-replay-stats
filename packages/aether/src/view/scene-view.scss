@@ -1,0 +1,11 @@
+:host {
+  display: block;
+  position: relative;
+  // The game's clear colour, shown until the scene has loaded.
+  background: #000;
+}
+
+aether-scene-canvas {
+  position: absolute;
+  inset: 0;
+}

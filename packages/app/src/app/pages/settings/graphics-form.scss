@@ -1,0 +1,35 @@
+.card {
+  padding: 20px;
+  margin-bottom: 16px; // a glass panel (hrs-glass)
+}
+h3 {
+  margin: 24px 0 8px;
+  font: var(--mat-sys-title-medium);
+}
+.label {
+  display: block;
+  margin-top: 16px;
+  margin-bottom: 8px;
+  font: var(--mat-sys-body-large);
+}
+.choice {
+  flex-wrap: wrap;
+}
+.toggle {
+  display: block;
+  margin-top: 16px;
+}
+.colour {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.colour__select {
+  width: 200px;
+}
+.hint {
+  color: var(--mat-sys-on-surface-variant);
+  margin: 8px 0 0;
+  max-width: 60ch;
+}

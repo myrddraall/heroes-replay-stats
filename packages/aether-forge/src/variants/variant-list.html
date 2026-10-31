@@ -1,0 +1,58 @@
+<forge-property-section
+  [title]="title()"
+  [changed]="changed()"
+  (resetRequested)="resetRequested.emit()"
+>
+  @if (editable()) {
+  <div class="buttons">
+    <button type="button" class="button" (click)="created.emit()">
+      <mat-icon class="material-symbols-outlined" aria-hidden="true">add_circle</mat-icon>
+      <span>New variant</span>
+    </button>
+    @if (fromChangesOffered()) {
+    <button type="button" class="button" (click)="fromChanges.emit()">Variant from changes</button>
+    }
+  </div>
+  } @for (row of rows(); track row.id) {
+  <div class="item variant" [class.variant--edited]="row.id === edited()">
+    <input
+      type="checkbox"
+      class="switch"
+      [checked]="row.on"
+      [attr.aria-label]="(row.on ? 'Switch off ' : 'Switch on ') + row.name"
+      (change)="toggled.emit({ id: row.id, on: !row.on })"
+    />
+    @if (editable()) {
+    <button
+      type="button"
+      class="name"
+      [attr.aria-pressed]="row.id === edited()"
+      [title]="row.id === edited() ? 'Back to its own settings' : 'Edit this variant'"
+      (click)="open(row.id)"
+    >
+      {{ row.name }}
+    </button>
+    } @else {
+    <span class="name">{{ row.name }}</span>
+    } @if (editable() && row.removable) {
+    <button
+      type="button"
+      class="action"
+      [attr.aria-label]="'Delete ' + row.name"
+      title="Delete"
+      (click)="removed.emit(row.id)"
+    >
+      <mat-icon class="material-symbols-outlined" aria-hidden="true">delete</mat-icon>
+    </button>
+    } @else {
+    <span></span>
+    }
+  </div>
+  @if (row.id === edited()) {
+  <forge-property-text
+    label="Name"
+    [value]="row.name"
+    (valueChange)="renamed.emit({ id: row.id, name: $event })"
+  />
+  } }
+</forge-property-section>

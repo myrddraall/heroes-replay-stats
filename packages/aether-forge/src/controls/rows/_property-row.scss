@@ -1,0 +1,176 @@
+// The column at a row's end for its reset (there whether or not the row is set, so they line up).
+$reset-column: 16px;
+
+// One short row of a properties panel: its label in a fixed column, its controls in the rest.
+@mixin row {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr) auto $reset-column;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+}
+
+// A row's label, cut short where it doesn't fit; in the theme's colour where the row is set here.
+@mixin label {
+  overflow: hidden;
+  font: var(--mat-sys-body-small);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.85;
+
+  &.label--changed {
+    color: var(--mat-sys-primary);
+    opacity: 1;
+  }
+}
+
+@mixin reset-slot {
+  display: flex;
+  justify-content: center;
+  width: $reset-column;
+
+  .reset {
+    @include reset;
+  }
+}
+
+// A small reset: an icon only, as small as the text beside it.
+@mixin reset {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+
+  mat-icon {
+    width: 14px;
+    height: 14px;
+    font-size: 14px;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+  }
+}
+
+// A small field: the glass's tint behind it, its edge faint until focused.
+@mixin field {
+  box-sizing: border-box;
+  height: 24px;
+  padding: 0 4px;
+  border: 1px solid rgb(var(--hrs-glass-edge) / 0.3);
+  border-radius: 0;
+  background: rgb(var(--hrs-glass-tint) / 0.5);
+  color: inherit;
+  font: var(--mat-sys-body-small);
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: -1px;
+  }
+}
+
+// A small checkbox, in the theme's colour.
+@mixin check {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: var(--mat-sys-primary);
+  cursor: pointer;
+}
+
+// A small button: square, its edge faint, its icon (if any) as small as its text.
+@mixin button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid rgb(var(--hrs-glass-edge) / 0.4);
+  border-radius: 0;
+  background: rgb(var(--hrs-glass-tint) / 0.5);
+  color: inherit;
+  font: var(--mat-sys-body-small);
+  cursor: pointer;
+
+  mat-icon {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+  }
+
+  &:hover:not(:disabled) {
+    border-color: rgb(var(--hrs-glass-edge) / 0.8);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: -1px;
+  }
+}
+
+// A value set at a level under the one edited: a small hollow dot after the label (which level, in
+// its title, and in words for assistive technology).
+@mixin origin {
+  .origin {
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    margin-left: 4px;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    vertical-align: middle;
+    opacity: 0.7;
+  }
+
+  .origin__text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+// A setting a level over the one edited wins for (editing it here shows only once that lets go):
+// a small mark after the label that names the level (in its title, and in words for assistive
+// technology) and takes you there, the row's controls faded.
+@mixin overridden {
+  .overridden {
+    display: inline-flex;
+    margin-left: 4px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--mat-sys-tertiary);
+    vertical-align: middle;
+    cursor: pointer;
+
+    mat-icon {
+      width: 12px;
+      height: 12px;
+      font-size: 12px;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--mat-sys-primary);
+      outline-offset: 1px;
+    }
+  }
+
+  :host(.row--overridden) > :not(label):not(.label):not(.reset-slot) {
+    opacity: 0.5;
+  }
+}

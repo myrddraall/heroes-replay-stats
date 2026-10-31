@@ -1,0 +1,23 @@
+:host {
+  display: block;
+  margin-top: 12px;
+}
+.setting {
+  display: flex;
+  justify-content: space-between;
+  max-width: 480px;
+  font: var(--mat-sys-body-large);
+}
+.setting__value {
+  color: var(--hrs-bronze);
+  font-variant-numeric: tabular-nums;
+}
+.slider {
+  width: 100%;
+  max-width: 480px;
+}
+.hint {
+  color: var(--mat-sys-on-surface-variant);
+  margin: 0;
+  max-width: 60ch;
+}

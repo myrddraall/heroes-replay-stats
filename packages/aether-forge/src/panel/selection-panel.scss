@@ -1,0 +1,36 @@
+@use 'panel-parts';
+@use '../controls/rows/property-row';
+
+// The properties: one column of pods the panel's full width (the panel's own padding is all it has).
+:host {
+  display: grid;
+  padding: 4px 0 12px;
+}
+
+// The level what is set goes into (a planet's own settings or one of its variants; a scene or one
+// of its variants), above everything else in the panel.
+.layer {
+  padding: 8px 0 4px;
+}
+
+// Which of the panel's pages is shown: a list the panel's width, apart from the settings under it
+// (as the library's Type is from its list), so it reads as what the panel shows, not a setting.
+// As much room under it as the panel's head leaves over it (16px each side, as seen).
+.pages {
+  padding: 0 0 16px;
+
+  // (Under the level edited: as much room over it as under it.)
+  .layer + & {
+    padding-top: 11px;
+  }
+
+  &__select {
+    @include property-row.field;
+    width: 100%;
+
+    option {
+      background: rgb(var(--hrs-glass-tint));
+      color: inherit;
+    }
+  }
+}

@@ -1,0 +1,15 @@
+<nav class="crumbs" aria-label="Where you are">
+  @for (crumb of crumbs(); track crumb.key; let last = $last) { @if (last) {
+  <button
+    type="button"
+    class="crumb crumb--here"
+    aria-current="location"
+    (click)="crumbPick.emit(crumb.key)"
+  >
+    {{ crumb.label }}
+  </button>
+  } @else {
+  <button type="button" class="crumb" (click)="crumbPick.emit(crumb.key)">{{ crumb.label }}</button>
+  <mat-icon class="material-symbols-outlined sep" aria-hidden="true">chevron_right</mat-icon>
+  } }
+</nav>

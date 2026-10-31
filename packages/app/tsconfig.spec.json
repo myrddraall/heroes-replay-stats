@@ -5,7 +5,17 @@
   "compilerOptions": {
     "types": [
       "vitest/globals"
-    ]
+    ],
+    // The workspace's Angular packages from their sources, so the test build compiles them as it
+    // does the app (it leaves packages it resolves from node_modules uncompiled, for Vitest).
+    "paths": {
+      "@myrddraall/heroes-replay-stats-aether": ["../aether/src/index.ts"],
+      "@myrddraall/heroes-replay-stats-aether/*": ["../aether/src/*/index.ts"],
+      "@myrddraall/heroes-replay-stats-aether-forge": ["../aether-forge/src/index.ts"],
+      "@myrddraall/heroes-replay-stats-map": ["../map/src/index.ts"],
+      "@myrddraall/heroes-replay-stats-signals": ["../signals/src/index.ts"],
+      "@myrddraall/heroes-replay-stats-ui": ["../ui/src/index.ts"]
+    }
   },
   "include": [
     "src/**/*.d.ts",
