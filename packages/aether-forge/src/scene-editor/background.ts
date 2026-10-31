@@ -166,7 +166,7 @@ export function backgroundViews(store: WithTree) {
         b: BodyInfo | undefined,
       ) => {
         // Where the renderer puts them: as the body is lit (fixed in the world, or kept to the eye).
-        const from = lightsView(b, scene.camera, view);
+        const fromOf = (light: LightEntry['light']) => lightsView(b, scene.camera, view, light);
         const round = lights.filter(
           ({ light }) =>
             light.kind === 'ambient' ||
@@ -188,11 +188,11 @@ export function backgroundViews(store: WithTree) {
             at: body.position,
             nudge: n - (round.length - 1) / 2,
             // (An environment light's: where it reads the sky, about the body.)
-            softLines: lightSettingLines(light, body, from, view.eye).soft,
+            softLines: lightSettingLines(light, body, fromOf(light), view.eye).soft,
           }),
         );
         for (const { key, light } of lights)
-          out.push(...placedLightMarkers(marker(key, light), light, body, from, view.eye));
+          out.push(...placedLightMarkers(marker(key, light), light, body, fromOf(light), view.eye));
       };
       if (t.kind === 'scene-light') {
         placed.picks.forEach((pick, i) => {
@@ -283,7 +283,7 @@ export function backgroundViews(store: WithTree) {
         lightAids(
           light,
           body,
-          lightsView(b, scene.camera, view),
+          lightsView(b, scene.camera, view, light),
           onShield ? shieldSurfaceOf(light) : bodySurfaceOf(b),
         );
       if (t.kind === 'scene-light') {

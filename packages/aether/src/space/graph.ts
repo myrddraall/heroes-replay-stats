@@ -384,9 +384,11 @@ export function bodyTransform(
  * camera, else fixed in the world, the body's placement frame; either turned by the body's own
  * turn (its Axis and Turn: `bodyTurn`; a halo's: none). With them, what
  * the shader takes in the surface's frame: the turn from the square's frame into it (`surface`),
- * the eye (in the body's radii), the view's right and up; and the turns that take what lights it
- * into it: its lights' directions and places (`lightTurn`), and its leans (`leanTurn`: into the
- * square's frame, the view's, which the rims and glows lean across). A draw fixed in the world is
+ * the eye (in the body's radii), the view's right and up; and the turn that takes what lights it
+ * into it: its lights' directions and places (`lightTurn`). Its leans (where its rims, its rim
+ * lights and glows lean, and where its fresnel spreads from) are the view's, never turned: a rim is
+ * the body's outline as the eye sees it, on the same side of it wherever the camera goes (as the
+ * scene's own camera sets them, and as the game's billboards keep them). A draw fixed in the world is
  * lit as placed in the body's placement frame (its lights stay where they are as the camera goes
  * round); one facing the camera is lit in the square's frame, as the game's billboards are (its
  * whole look, its lighting too, kept to the eye; its Turn turns its textures, not its light),
@@ -401,7 +403,6 @@ export interface DrawFrames {
   readonly right: Vec3;
   readonly up: Vec3;
   readonly lightTurn: Mat3;
-  readonly leanTurn: Mat3;
 }
 
 /** What `drawFrames` works from: a body's frames, where it is, the eye drawing it and the view's right and up there. */
@@ -462,6 +463,5 @@ export function drawFrames(o: DrawFramesOf): DrawFrames {
     right: turnBack(frame, o.viewRight),
     up: turnBack(frame, o.viewUp),
     lightTurn: turnInto(frame, lit),
-    leanTurn: turnInto(quad, lit),
   };
 }

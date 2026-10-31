@@ -36,6 +36,7 @@
     (resetRequested)="clear.emit(['darkens'])"
     (valueChange)="settingsChange.emit({ darkens: $event === 'darkens' })"
   />
+  @if (!onShield()) {
   <forge-property-colour
     [label]="l.kind === 'environment' ? 'Tint' : 'Colour'"
     [value]="l.colour"
@@ -45,6 +46,7 @@
     (resetRequested)="clear.emit(['colour'])"
     (valueChange)="settingsChange.emit({ colour: $event })"
   />
+  }
   <forge-property-number
     label="Strength"
     [value]="l.strength"
@@ -268,6 +270,7 @@
     [checked]="s.activates"
     (checkedChange)="shieldChange({ activates: $event })"
   />
+  @if (wraps()) {
   <forge-property-number
     label="Spread"
     [value]="spread()"
@@ -276,6 +279,7 @@
     [step]="0.05"
     (valueChange)="shieldChange({ spread: $event })"
   />
+  }
   @if (s.activates) {
   <forge-property-number
     label="Energizes"

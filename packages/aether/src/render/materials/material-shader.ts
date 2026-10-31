@@ -1,7 +1,11 @@
 import type { Node, Texture, TextureNode } from 'three/webgpu';
 import {
   abs,
+  acos,
+  asin,
   clamp,
+  cos,
+  cross,
   dot,
   exp,
   float,
@@ -12,7 +16,6 @@ import {
   max,
   min,
   mix,
-  mod,
   normalize,
   pow,
   select,
@@ -26,6 +29,7 @@ import {
   vec4,
 } from 'three/tsl';
 import { channelOn, tintRun } from './tint-shader';
+import { nearestPlates, plateEdge } from './plates';
 import { MAX_TINTS } from '../uniforms/limits';
 import { HALF_REACH } from '../../lights/lights';
 import type { ShaderUniforms } from '../uniforms/shader-uniforms';
@@ -146,6 +150,9 @@ export interface UvChange {
   readonly uvDy: Node<'vec2'>;
   readonly uv2Dx: Node<'vec2'>;
   readonly uv2Dy: Node<'vec2'>;
+  /** A body's normal's change across the pixel (for a drawn pattern on its sphere: none, none drawn). */
+  readonly nDx?: Node<'vec3'>;
+  readonly nDy?: Node<'vec3'>;
 }
 
 /** A shaded pixel: its colour, its glow, and whether it is cut out (an opaque material's alpha below its cutout). */
@@ -157,6 +164,17 @@ export interface Shaded {
 
 type Derivative = (n: Node<'vec2'>) => Node<'vec2'>;
 
+/** How much of an activation's colour and glow a grid's plates take, its lines taking all of it. */
+const ACTIVATED_PLATES = 0.25;
+
+/**
+ * The Play screen planets' grid texture (Storm_LootUI_Grid_Diff, its green channel as the shield
+ * reads it), across one of its plate's edges, in plates from the edge (0.5 its middle): a fill all
+ * over, a line along the edge and a glow inside it, each a gaussian of its width about the edge.
+ * Fitted to its profile (averaged over its vertical edges), within 0.003 everywhere; its fine
+ * triangles inside each plate left out.
+ */
+const PLATE_LOOK = { fill: 0.1956, line: 0.077, lineWidth: 0.0168, glow: 0.1207, glowWidth: 0.0891 };
 /** How much brighter the game's fresnel (type 1) comes out than the formula's square: measured (see above). */
 const FRESNEL_GAIN = 4.3;
 const LUMA = [0.2126, 0.7152, 0.0722] as const;
@@ -391,7 +409,9 @@ export function shadeMaterial(
    * how far the point faces away from the eye (none facing it squarely, all at the edge and behind,
    * to the power of its softness: the sky lights the body's edges); the rim (5) as below. The sky
    * round the body reads nothing of the sky here (`skyLightAt` does, where its colour counts).
-   * A rim's turn of the view (`rimTurned`) is read only where the light is a rim. A spot's cone
+   * A rim's turn of the view (`rimTurned`) is read only where the light is a rim. Its reach as it
+   * would be widened (`widen`: wrapped further round, its cone wider by that much of the body's
+   * size as it sees it, spread further in from its rim) into `wide`, its cone's edge with it. A spot's cone
    * comes apart from its reach (`edge`: 1 for any other light), and its softness is the
    * cone's, not its facing's: a light or a shade takes the two together, a grid's field its own way.
    */
@@ -408,15 +428,23 @@ export function shadeMaterial(
     rimTurned: () => Node<'vec3'>,
     edge: Node<'float'>,
     coneSoftness: Node<'float'>,
+    widen: Node<'float'>,
+    wide: Node<'float'>,
   ) => {
     const out = vec4(0).toVar();
+    // (How far it reaches widened by `widen`, its cone's edge with it, into `wide`.)
+    const widened = wide as unknown as { assign(v: Node<'float'>): void };
     If(kindOf.equal(0).or(kindOf.equal(3)), () => {
       const side = normalize(dir).negate().toVar();
       const facing = dot(nn, side).toVar();
       If(kindOf.equal(0), () => {
-        out.assign(vec4(side, pow(clamp(facing.add(wrap).div(wrap.add(1)), 0, 1), softness)));
+        const wraps = (by: Node<'float'>) =>
+          pow(clamp(facing.add(by).div(by.add(1)), 0, 1), softness);
+        out.assign(vec4(side, wraps(wrap)));
+        widened.assign(wraps(wrap.add(widen)));
       }).Else(() => {
         out.assign(vec4(side, facing.mul(0.5).add(0.5)));
+        widened.assign(out.w);
       });
     })
       .ElseIf(kindOf.equal(5), () => {
@@ -424,30 +452,36 @@ export function shadeMaterial(
         // surface by how far it turns from the eye (the view leaned by its aim), spread fade of
         // the way in, to its softness.
         const r = float(0).toVar();
+        const rw = float(0).toVar();
         const view = rimTurned().toVar();
+        const fadeWide = min(fade.add(widen), 1).toVar();
         If(revealed, () => {
           r.assign(fresnelTo(L1, view, fade, softness, rimType));
+          rw.assign(fresnelTo(L1, view, fadeWide, softness, rimType));
         }).Else(() => {
           const facing = clamp(dot(nn, normalize(view)), 0, 1).toVar();
-          r.assign(pow(mix(fade, 1, pow(facing.oneMinus(), 3)), softness));
+          const edgeOn = pow(facing.oneMinus(), 3).toVar();
+          r.assign(pow(mix(fade, 1, edgeOn), softness));
+          rw.assign(pow(mix(fadeWide, 1, edgeOn), softness));
         });
         out.assign(vec4(nn, r));
+        widened.assign(rw);
       })
       .ElseIf(kindOf.equal(4), () => {
         out.assign(vec4(nn, pow(clamp(dot(nn, normalize(eye)).oneMinus(), 0, 1), softness)));
+        widened.assign(out.w);
       })
       .Else(() => {
         const d = pos.sub(s.world).toVar();
         const dist = max(length(d), 1e-6).toVar();
         const to = d.div(dist).toVar();
-        const facing = clamp(dot(nn, to).add(wrap).div(wrap.add(1)), 0, 1).toVar();
+        const facingBy = (by: Node<'float'>) => clamp(dot(nn, to).add(by).div(by.add(1)), 0, 1);
         const spot = kindOf.equal(2).toVar();
         const r2 = dist.mul(dist).div(fade.mul(fade)).toVar();
         const ends = clamp(r2.mul(r2).oneMinus(), 0, 1).toVar();
-        const strength = pow(facing, softness)
-          .div(r2.div(HALF_REACH * HALF_REACH).add(1))
-          .mul(ends.mul(ends))
-          .toVar();
+        const far = r2.div(HALF_REACH * HALF_REACH).add(1).reciprocal().mul(ends.mul(ends)).toVar();
+        const strength = pow(facingBy(wrap), softness).mul(far).toVar();
+        widened.assign(pow(facingBy(wrap.add(widen)), softness).mul(far));
         // A spot's cone: all of it in to where its fade starts (cone.y, its Edge in from its edge),
         // falling off to nothing at its edge (cone.x); a grid's field's faster the higher its
         // softness (`coneSoftness`; a light's, its Edge alone); a cone with no edge to fade over
@@ -463,6 +497,19 @@ export function shadeMaterial(
             within.assign(step(cone.x, along));
           });
           (edge as unknown as { assign(v: Node<'float'>): void }).assign(pow(within, coneSoftness));
+          // (Widened: its cone's edge further out by `widen` of the body's size as the light sees it
+          // (its angle across the body's radius: the same whatever the cone), never past square.)
+          const across = asin(min(length(pos).reciprocal(), 1)).toVar();
+          const outer = cos(
+            min(acos(clamp(cone.x, -1, 1)).add(across.mul(widen)), Math.PI / 2),
+          ).toVar();
+          const inner = max(cone.y, outer).toVar();
+          const withinWide = select(
+            inner.greaterThan(outer),
+            smoothstep(outer, inner, along),
+            step(outer, along),
+          );
+          widened.assign(wide.mul(pow(withinWide, coneSoftness)));
         });
         out.assign(vec4(to, strength));
       });
@@ -484,10 +531,14 @@ export function shadeMaterial(
   const dark = vec3(1).toVar();
   const active = float(0).toVar();
   const activeGlow = float(0).toVar();
+  // How bright a grid shows: its look times this (1 for anything not a grid); a grid's, what its
+  // lights reveal of it, each its strength times how far it reaches there (a rim's, its pattern
+  // layer's fresnel as the game draws it), added and not capped: past 1 brighter, its limb past
+  // white and blooming, as a light's strength brightens what it lights.
   const reveal = float(1).toVar();
-  // A grid's rim lights' look: its pattern layer's fresnel as the game draws it, not capped (its
-  // limb goes past white and blooms), apart from what its other lights reveal.
-  const rimLook = float(0).toVar();
+  // (What its activations reveal of it where they activate it: how bright their active colour
+  // shows, whatever its reveal lights do; see below.)
+  const activeReveal = float(0).toVar();
   const specMap = vec3(0).toVar();
   if (body) {
     If(L4.used.equal(1), () => {
@@ -510,6 +561,10 @@ export function shadeMaterial(
       // (A shade or a field from all round: all of it alike.)
       const reach = float(1).toVar();
       const edge = float(1).toVar();
+      const reachWide = float(1).toVar();
+      // (An activation's reveal reaches as much further as it energizes: see below. A variable
+      // before any branch reads it: a node first worked out inside one branch is not set in another.)
+      const widen = select(role.equal(3), amount.y, float(0)).toVar();
       const to = vec3(0).toVar();
       If(role.equal(0).or(k.notEqual(0)).or(dot(r0.xyz, r0.xyz).notEqual(0)), () => {
         // (A rim's turn of the view: rows 8 to 10, its matrix's.)
@@ -521,6 +576,12 @@ export function shadeMaterial(
         const field = role.greaterThanEqual(2).toVar();
         const surface = select(field, r0.w, u.float('uDropOff'));
         const facingSoftness = select(field.and(k.equal(2)), float(1), surface);
+        // (Each a variable before `reachOf` branches on its kind, as `widen` is.)
+        const softness = select(k.greaterThanEqual(3), r0.w, facingSoftness).toVar();
+        // (How far round: a light or a shade, as its material lets it; a grid's field, its own
+        // spread.)
+        const wrap = select(role.greaterThanEqual(2), r3.w, u.float('uWrap')).toVar();
+        const coneSoftness = select(field, r0.w, float(1)).toVar();
         const r = reachOf(
           k,
           r0.xyz,
@@ -528,14 +589,14 @@ export function shadeMaterial(
           r2.w,
           r4.xyz,
           row(6),
-          select(k.greaterThanEqual(3), r0.w, facingSoftness),
-          // (How far round: a light or a shade, as its material lets it; a grid's field, its own
-          // spread.)
-          select(role.greaterThanEqual(2), r3.w, u.float('uWrap')),
+          softness,
+          wrap,
           n,
           rimTurned,
           edge,
-          select(field, r0.w, float(1)),
+          coneSoftness,
+          widen,
+          reachWide,
         ).toVar();
         reach.assign(r.w);
         to.assign(r.xyz);
@@ -565,88 +626,114 @@ export function shadeMaterial(
         .Else(() => {
           // A grid's field: how much its reveal or activation reaches here, as the same light
           // would reach a body (from a side wrapped round by its wrap and sharpened by its falloff;
-          // from a point, above and below, the sky or the rim likewise), times its strength (more
-          // than 1 reaches further fully); what it reaches never comes out even: its side and its
-          // falloff always tell (one that darkens: taken away). A spot's cone alone shapes it, its
-          // strength, how squarely the grid faces it and how far it is saying how fully (up to
-          // full), so a strong spot fills its cone without hardening its edge; the sky's by how
-          // bright the sky is that way. An activation's activates (0 to 1 in all), glows (how much
-          // brighter it shines, and blooms) and reveals too, as much as it energizes.
+          // from a point, above and below, the sky or the rim likewise), times its strength, as a
+          // light's (one that darkens: taken away). A spot's cone shapes it, its edge by its
+          // falloff; the sky's by how bright the sky is that way. An activation's activates (0 to
+          // 1 in all), glows (its active colour brighter, and blooming) and reveals too, further
+          // than it activates by as much as it energizes.
           const strength = amount.x;
-          const f = select(
-            k.equal(2),
-            edge.mul(sign(strength)).mul(min(abs(strength).mul(reach), 1)),
-            strength.mul(select(k.equal(4), reach.mul(dot(sky, vec3(...LUMA))), reach)),
-          ).toVar();
-          If(role.equal(2).and(k.equal(5)), () => {
-            rimLook.addAssign(f);
-          })
-            .ElseIf(role.equal(2), () => {
-              revealSum.addAssign(f);
-            })
-            .Else(() => {
-              active.addAssign(f);
-              activeGlow.addAssign(amount.z.mul(min(f, 1)));
-              revealSum.addAssign(amount.y.mul(f));
-            });
+          const f = strength
+            .mul(select(k.equal(4), reach.mul(dot(sky, vec3(...LUMA))), reach))
+            .mul(select(k.equal(2), edge, float(1)))
+            .toVar();
+          If(role.equal(2), () => {
+            revealSum.addAssign(f);
+          }).Else(() => {
+            // (How much it activates, 0 to 1: a spot's full in its cone however strong, its edge
+            // shaping it still; its glow, as much as it activates.)
+            const activates = select(
+              k.equal(2),
+              edge.mul(sign(strength)).mul(min(abs(strength).mul(reach), 1)),
+              f,
+            ).toVar();
+            active.addAssign(activates);
+            activeGlow.addAssign(amount.z.mul(clamp(activates, 0, 1)));
+            activeReveal.addAssign(f);
+            // It reveals as a reveal light would, as much further than it activates as it
+            // energizes (its reach widened: round, out of its cone, in from its rim).
+            revealSum.addAssign(
+              strength.mul(select(k.equal(4), reachWide.mul(dot(sky, vec3(...LUMA))), reachWide)),
+            );
+          });
         });
     });
     active.assign(clamp(active, 0, 1));
     activeGlow.assign(max(activeGlow, 0));
-    // How much of a grid shows (its reveal, as the eye sees it: half revealed looks half as bright,
-    // so a light's fall-off reads across its reach).
+    // How bright a grid shows: what its lights reveal (none below nothing: what darkens takes away).
     If(revealed, () => {
-      reveal.assign(pow(clamp(revealSum, 0, 1), 2.2));
-    });
-    // A grid's colour, from inactive (its own) towards active where its activation reaches.
-    If(u.int('uActivationCount').greaterThan(0), () => {
-      diffuse.assign(
-        vec4(mix(diffuse.rgb, u.vec3('uActiveColor').mul(L0.bright), active), diffuse.a),
-      );
+      reveal.assign(max(revealSum, 0));
     });
   }
 
-  // The emissive layer, or (a body's) a drawn hex pattern in its place: its edges smoothed over the
-  // pixel by how the edge changes across it (the coordinates' change along the edge's gradient).
+  // The emissive layer, or (a body's) a drawn shell of flat hex plates in its place (`plates`),
+  // laid out about its texture's pole, standing for its grid texture: a plate's fill, then the line
+  // where two plates meet and its glow inside them, as the game's grid texture has them (measured
+  // in it: `PLATE_LOOK`), its line's width and its glow by the pattern's Width and Soft (1: the
+  // game's); each smoothed over the pixel (its change across it, `nDx` and `nDy`); its middle lifted
+  // as the texture's would be.
   const emissive = vec4(0, 0, 0, 1).toVar();
+  // (A drawn grid's value before it is lifted, for where its activation reaches its lines.)
+  const gridValue = float(-1).toVar();
   if (body) {
     If(u.int('uPattern').equal(1), () => {
       If(L1.used.equal(1), () => {
         const params = u.vec3('uPatternParams');
-        const scale = vec2(1, 0.5).mul(params.x).toVar();
-        const p = s.uv.mul(scale).toVar();
-        const px = change.uvDx.mul(scale).toVar();
-        const py = change.uvDy.mul(scale).toVar();
-        const r = vec2(1, 1.7320508);
-        const side = vec2(0.5, 0.8660254);
-        const h = r.mul(0.5);
-        const a = mod(p, r).sub(h).toVar();
-        const b = mod(p.sub(h), r).sub(h).toVar();
-        const q = select(dot(a, a).lessThan(dot(b, b)), a, b).toVar();
-        const c = abs(q).toVar();
-        const slanted = dot(c, side).greaterThan(c.x).toVar();
-        const edge = float(0.5)
-          .sub(select(slanted, dot(c, side), c.x))
+        const pole = u.vec3('uMap.pole');
+        const meridian = u.vec3('uMap.meridian');
+        const side = cross(pole, meridian).toVar();
+        const intoPattern = (v: Node<'vec3'>) => vec3(dot(v, meridian), dot(v, side), dot(v, pole));
+        const p = normalize(intoPattern(n)).toVar();
+        const { near, next } = nearestPlates(p, params.x);
+        const { edge, grows } = plateEdge(p, near, next);
+        const blur = abs(dot(intoPattern(change.nDx ?? vec3(0)), grows))
+          .add(abs(dot(intoPattern(change.nDy ?? vec3(0)), grows)))
           .toVar();
-        // (The edge falls one for one with p across the nearer side: its gradient that side's normal.)
-        const grad = q
-          .sign()
-          .negate()
-          .mul(select(slanted, side, vec2(1, 0)))
+        // A gaussian about the edge, widened by the pixel's blur (as bright in all).
+        const about = (height: number, width: Node<'float'>) => {
+          const w = sqrt(width.mul(width).add(blur.mul(blur))).toVar();
+          return width.div(w).mul(height).mul(exp(max(edge, 0).div(w).pow(2).negate()));
+        };
+        const value = float(PLATE_LOOK.fill)
+          .add(about(PLATE_LOOK.line, params.y.mul(PLATE_LOOK.lineWidth)))
+          .add(about(PLATE_LOOK.glow, float(PLATE_LOOK.glowWidth)).mul(params.z))
           .toVar();
-        const aa = abs(dot(grad, px))
-          .add(abs(dot(grad, py)))
-          .toVar();
-        const width = params.y;
-        const line = smoothstep(width.sub(aa), width.add(aa), edge).oneMinus();
-        const halo = params.z.mul(exp(max(edge.sub(width), 0).mul(-6)));
-        emissive.assign(vec4(vec3(max(line, halo)).mul(L1.bright).mul(fresnel(L1)), 1));
+        gridValue.assign(value);
+        const lifted = midtone(vec4(value), L1.midtone).x;
+        emissive.assign(vec4(vec3(lifted).mul(L1.bright).mul(fresnel(L1)), 1));
       });
     }).Else(() => {
       emissive.assign(colorLayer('emissive', L1));
     });
   } else {
     emissive.assign(colorLayer('emissive', L1));
+  }
+
+  // A grid's colour, from inactive (its own) towards active where its activation reaches: its lines
+  // fully, its plates by a share (`ACTIVATED_PLATES`); how much of the pixel is line (and its glow)
+  // read from the grid's value between its plate's fill and its edge (`PLATE_LOOK`: a drawn grid's
+  // as drawn, the game's texture's as read). Its activations' glow brightens the active colour
+  // alone (as much as each activates: their glow on average), and blooms as much of it as is in.
+  // Where it is activated it shows as bright as its activations reveal it (as much as it is
+  // activated), its reveal lights' not adding: elsewhere as all of them reveal it.
+  const activeBloom = float(0).toVar();
+  if (body) {
+    If(u.int('uActivationCount').greaterThan(0), () => {
+      If(gridValue.lessThan(0), () => {
+        gridValue.assign(channelOf(texel('emissive', L1), L1.channel).x);
+      });
+      const fill = PLATE_LOOK.fill;
+      const edge = fill + PLATE_LOOK.line + PLATE_LOOK.glow;
+      const line = clamp(gridValue.sub(fill).div(edge - fill), 0, 1);
+      const share = mix(float(ACTIVATED_PLATES), float(1), line).toVar();
+      const into = active.mul(share).toVar();
+      const brighter = activeGlow.div(max(active, 1e-4)).toVar();
+      const colour = u.vec3('uActiveColor').mul(L0.bright).mul(brighter.add(1));
+      diffuse.assign(vec4(mix(diffuse.rgb, colour, into), diffuse.a));
+      activeBloom.assign(brighter.mul(into));
+      If(revealed, () => {
+        reveal.assign(mix(reveal, max(activeReveal, 0), active));
+      });
+    });
   }
 
   // The tints: the material's own, then its body's (or the sky's), in one run (`tints` then
@@ -697,8 +784,8 @@ export function shadeMaterial(
   }
 
   // The glow: a grid's Glow up to 1 dims its look, past 1 only blooms (past), revealing nothing
-  // more. The emissive pattern cut: what is below the cut goes black, the rest keeps its range. A
-  // grid shines brighter, and blooms more, where its glowing activation activates it.
+  // more. The emissive pattern cut: what is below the cut goes black, the rest keeps its range. (A
+  // grid's activation's glow is in its active colour: see `activeBloom`.)
   const emissiveMult = u.float('uEmissiveMult', 1);
   const past = float(0).toVar();
   const glow = emissive.rgb.mul(emissiveMult).toVar();
@@ -712,7 +799,6 @@ export function shadeMaterial(
   If(cutAt.greaterThan(0), () => {
     glow.assign(max(glow.sub(cutAt), 0).div(cutAt.oneMinus()));
   });
-  glow.mulAssign(activeGlow.add(1));
   const emissiveBlend = u.int('uEmissiveBlend', 2);
   const added = emissiveBlend.equal(2).toVar();
   const rgb = base.add(glow).toVar();
@@ -726,12 +812,10 @@ export function shadeMaterial(
   }).Else(() => {
     tintsOver(0, rgb);
   });
-  // What a grid's lights reveal of it: that much of its look, no brighter than white (what is
-  // brighter blooms, below, as much of it as is revealed); and its rim lights' look over that, as
-  // bright as their fresnel makes it.
+  // A grid as bright as its lights reveal it (see `reveal`).
   if (body) {
     If(revealed, () => {
-      rgb.assign(rgb.mul(rimLook).add(min(rgb, vec3(1)).mul(reveal)));
+      rgb.assign(rgb.mul(reveal));
     });
   }
 
@@ -759,13 +843,13 @@ export function shadeMaterial(
   // bloom would make of this light, so at 0 it glows not at all. The light is the emissive
   // layer's, or the colour it modulates (a grid over a colour glows in that colour); a grid's Glow
   // past 1 blooms it that much more, as much of it as is revealed.
-  const shineOut = select(added, tintedGlow.mul(reveal.add(rimLook)), rgb).toVar();
+  const shineOut = select(added, tintedGlow.mul(reveal), rgb).toVar();
   const boost = u.float('uGlowBoost', 1);
   const glowOut = vec4(
     max(colour.rgb.sub(u.float('uGlowThreshold')), 0)
       .mul(min(boost, 1))
       .sub(max(colour.rgb.sub(u.float('uSceneThreshold')), 0))
-      .add(shineOut.mul(max(boost.sub(1), 0).add(activeGlow).add(past)).mul(covered)),
+      .add(shineOut.mul(max(boost.sub(1), 0).add(activeBloom).add(past)).mul(covered)),
     colour.a,
   ).toVar();
   return { colour, glow: glowOut, cut };

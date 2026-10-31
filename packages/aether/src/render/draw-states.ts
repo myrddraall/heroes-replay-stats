@@ -1,4 +1,5 @@
 import { drawnTints } from '../tints/tint-layers';
+import { platesCut } from './materials/plates';
 import { MAX_TINTS } from './uniforms/limits';
 import { haloLike } from '../formats/planet-files';
 import {
@@ -65,7 +66,11 @@ export interface DrawContext {
 export function drawStateOf(draw: MeshDraw, ctx: DrawContext): DrawState {
   const settings = ctx.settingsOf(draw);
   const has = (texture: string) => ctx.hasTexture(texture);
-  const layered = withLayers(withMasks(draw.material, settings?.masks), settings?.layers, has);
+  // A part's drawn pattern (a whole shell of plates, `plates`) stands for its texture's grid all
+  // round it: none of its data's masks (laid on the mesh the game shows, the half facing its camera).
+  const drawn = draw.part?.pattern?.kind === 'hex' && settings?.drawAs !== 'texture';
+  const own = drawn ? { ...draw.material, alphaMasks: [] } : draw.material;
+  const layered = withLayers(withMasks(own, settings?.masks), settings?.layers, has);
   const body = draw.placed?.body;
   const unshaded =
     !!draw.part &&
@@ -175,14 +180,13 @@ export function drawStateOf(draw: MeshDraw, ctx: DrawContext): DrawState {
   const outside = !!body.dimmedOutside && !reaches(body.dimmedOutside, draw.partKey, draw.key);
   u.f1('uDim', outside ? ctx.dim() : 1);
   const pattern = draw.part.pattern;
-  const drawn = pattern?.kind === 'hex' && settings?.drawAs !== 'texture';
   const round = pattern?.across
     ? pattern.across * (material.emissive?.tiling?.[0] ?? 1)
     : HEX_ROUND;
   u.i1('uPattern', drawn ? 1 : 0);
   u.f3(
     'uPatternParams',
-    round / scale,
+    platesCut(round / scale),
     settings?.width ?? MATERIAL_DEFAULTS.width,
     settings?.soft ?? MATERIAL_DEFAULTS.soft,
   );

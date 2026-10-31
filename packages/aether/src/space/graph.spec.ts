@@ -157,7 +157,6 @@ describe('the scene graph', () => {
       });
       expect(f.surface).toBe(IDENTITY);
       expect(f.lightTurn).toBe(IDENTITY);
-      expect(f.leanTurn).toBe(IDENTITY);
     }
   });
 
@@ -184,7 +183,6 @@ describe('the scene graph', () => {
     // A billboard's lights in its frame facing the eye, its Turn turning its textures, not them.
     const camera = frames(OTHER, 'camera');
     expectNear(turn(camera.frame, turn(camera.lightTurn, light)), turn(camera.quad, light), 6);
-    expect(camera.leanTurn).toBe(IDENTITY);
     expect(Array.from(frames(OTHER, 'world').frame)).toEqual(
       Array.from(frames(LAYOUT, 'world').frame),
     );

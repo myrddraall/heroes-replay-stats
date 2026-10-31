@@ -184,10 +184,18 @@ export class LightProperties {
     return this.light().set?.[key] !== undefined;
   }
 
-  /** Whether it is a directional, point or spot light: one with a shine. */
+  /** Whether it is a directional, point or spot light: one with a shine (not a shield's: its field has none). */
   protected readonly shiny = computed(() => {
     const k = this.light().light.kind;
-    return k === 'directional' || k === 'point' || k === 'spot';
+    return !this.onShield() && (k === 'directional' || k === 'point' || k === 'spot');
+  });
+  /**
+   * Whether a shield's light reaches round the grid by a Spread of its own: from a side or a point
+   * (the others' reach is their kind's: a spot's its cone, a rim's its own Spread).
+   */
+  protected readonly wraps = computed(() => {
+    const k = this.light().light.kind;
+    return k === 'directional' || k === 'point';
   });
   /**
    * Whether it has a Drop off of its own: the sky round the body and the rim (how they fall off

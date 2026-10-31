@@ -416,7 +416,8 @@ export function bodyNodes(
         uv2.assign(at);
       });
     });
-    const change = uvChange(uv, uv2, dFdx, dFdy);
+    // (And the normal's: a drawn pattern's on the sphere, `plates`.)
+    const change = { ...uvChange(uv, uv2, dFdx, dFdy), nDx: dFdx(h.n), nDy: dFdy(h.n) };
     const width = fwidth(h.across).toVar();
     // Shaded once; a ring, brightest along one circle (its v's peak: a crease a pixel or so wide
     // when small), at RING_SAMPLES points across the pixel's width of it, averaged, so the line is

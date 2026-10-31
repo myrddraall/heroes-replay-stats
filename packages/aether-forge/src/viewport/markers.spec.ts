@@ -140,6 +140,10 @@ describe("a planet's axis marker", () => {
     const lit = korhal({ orientation: 'camera', billboardLights: 'scene' });
     expect(lightsView(lit, layout, other)).toBe(layout);
     expect(lightsView(undefined, layout, other)).toBe(other);
+    // A rim light: the outline as the eye sees it, the camera's whatever the body.
+    const rim = { kind: 'rim' };
+    expect(lightsView(korhal({ orientation: 'world' }), layout, other, rim)).toBe(other);
+    expect(lightsView(lit, layout, other, rim)).toBe(other);
   });
 });
 

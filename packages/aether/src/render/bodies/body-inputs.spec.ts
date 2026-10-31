@@ -363,8 +363,7 @@ describe("a body's shading inputs from the scene's own camera", () => {
   it('are as they were for a body lit from a side, a point, spots, a rim, above and below and the sky', () => {
     const now = placedInputs(LIT.position, LIT.radius, CAMERA, litSet(), LIT_LEANS);
     expect(now.inputs).toMatchSnapshot();
-    for (const turnOf of [now.frames.lightTurn, now.frames.leanTurn, now.frames.surface])
-      expect(turnOf).toBe(IDENTITY);
+    for (const turnOf of [now.frames.lightTurn, now.frames.surface]) expect(turnOf).toBe(IDENTITY);
   });
 
   it('are the same for a body fixed in the world, its axis and turn as its data has them, as for its billboard', () => {
@@ -440,13 +439,13 @@ describe("a body's lights from another camera", () => {
     it(`stay with the eye for a billboard, exactly as the game's billboards were lit (${seen})`, () => {
       const now = placedInputs(LIT.position, LIT.radius, camera, set, LIT_LEANS, 'camera');
       expect(now.inputs).toEqual(billboardInputs(LIT.position, LIT.radius, camera, set));
-      for (const turnOf of [now.frames.lightTurn, now.frames.leanTurn, now.frames.surface])
+      for (const turnOf of [now.frames.lightTurn, now.frames.surface])
         expect(turnOf).toBe(IDENTITY);
     });
   }
 
-  it("lean a world surface's rims as set in the world, turned into the view", () => {
-    const { frames, inputs } = placedInputs(
+  it("lean a world surface's rims across the view as set, wherever the camera goes", () => {
+    const { inputs } = placedInputs(
       LIT.position,
       LIT.radius,
       OTHER,
@@ -456,9 +455,7 @@ describe("a body's lights from another camera", () => {
     );
     for (let i = 0; i < count; i++) {
       if (before[(i * 11 + 1) * 4 + 3] !== 5) continue;
-      const lean = rowOf(before, i, 0).map((v) => -v) as unknown as Vec3;
-      const [yaw, pitch] = rimTurn(turn(frames.leanTurn, lean));
-      expectNear(rowOf(inputs.reaches, i, 4).slice(0, 2), [-yaw, -pitch]);
+      expectNear(rowOf(inputs.reaches, i, 4).slice(0, 2), rowOf(before, i, 4).slice(0, 2));
     }
   });
 

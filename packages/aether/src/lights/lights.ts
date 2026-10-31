@@ -85,9 +85,10 @@ export interface LightReach {
 
 /**
  * What a light does to a shield's grid, where it is one of the shield's lights: reveals it
- * (shows it where it reaches), activates it (colours it from inactive to active there, revealing
- * `energizes` times as much there too and shining `glow` brighter), either or both. One that
- * darkens does the opposite: hides, deactivates.
+ * (shows it where it reaches), activates it (colours it from inactive to active there, its lines
+ * more than its plates, the active colour `glow` brighter; and reveals it there and beyond, as much
+ * further as it `energizes`: further round, a wider cone, further in from the rim), either or
+ * both. One that darkens does the opposite: hides, deactivates.
  */
 export interface ShieldEffect {
   readonly reveals?: boolean;

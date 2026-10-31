@@ -41,23 +41,6 @@ const BEAM_EDGE_ALPHA = 0.5;
 /** How strongly a light's outline on its body shows. */
 const OUTLINE_ALPHA = 0.85;
 
-/**
- * A rim's lean (the way it leans: against `direction`, the way it travels, in its body's frame
- * `axes`) in the frame facing the eye at the body (`facing`): x across, y away, z up.
- */
-export function rimLeanFacing(
-  axes: ArrayLike<number>,
-  facing: ArrayLike<number>,
-  direction: Vec3,
-): Vec3 {
-  const world = [0, 1, 2].map(
-    (k) => -(axes[k]! * direction[0] + axes[3 + k]! * direction[1] + axes[6 + k]! * direction[2]),
-  );
-  return [0, 3, 6].map(
-    (c) => world[0]! * facing[c]! + world[1]! * facing[c + 1]! + world[2]! * facing[c + 2]!,
-  ) as unknown as Vec3;
-}
-
 /** A threshold no facing reaches: no line there. */
 const NO_LINE = 9;
 
@@ -378,11 +361,11 @@ export class EditingAids {
         uniforms.set('uFaintAt', at.faint);
         if (o.kind === 5) {
           // The rim's turn of the view as the body's shader turns it (see `ShaderUniforms`): its
-          // lean (its body's frame) put into the frame facing the eye at the body, its yaw and
-          // pitch from that, turned about that frame's across and up; as a matrix's columns.
+          // lean (against the way it travels) the view's, as set, wherever the eye is (see
+          // `DrawFrames`), its yaw and pitch from that, turned about the frame facing the eye at
+          // the body's across and up; as a matrix's columns.
           const facing = bodyFrame(o.centre, 1, eye, view.up, placementUp(o.axes)).axes;
-          const lean = rimLeanFacing(o.axes, facing, o.direction);
-          const [yaw, pitch] = rimTurn(lean);
+          const [yaw, pitch] = rimTurn([-o.direction[0], -o.direction[1], -o.direction[2]]);
           const rows = viewTurn(facing.subarray(0, 3), facing.subarray(6, 9), -yaw, -pitch);
           uniforms.set('uRimTurn', Float32Array.from(rows));
         }

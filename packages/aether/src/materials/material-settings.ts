@@ -272,8 +272,8 @@ export const MATERIAL_DEFAULTS = {
   scale: 1,
   falloff: 2,
   cut: 0,
-  width: 0.08,
-  soft: 0.3,
+  width: 1,
+  soft: 1,
 } as const;
 
 /**
@@ -506,7 +506,8 @@ export interface MaterialSettings {
   readonly falloff?: number;
   /**
    * How large its emissive pattern is, drawn or textured alike (2: twice the size): a texture's
-   * tiling over this, a drawn pattern's cells round the part over this.
+   * tiling over this, a drawn pattern's plates round the part over this (as near as its shell of
+   * plates comes: see `platesCut`).
    */
   readonly scale?: number;
   /**
@@ -521,9 +522,9 @@ export interface MaterialSettings {
   readonly masks?: readonly string[];
   /** How much of its emissive pattern is cut to black, 0 to 1: a grid's cells go, its lines stay. */
   readonly cut?: number;
-  /** How wide its drawn pattern's lines are, as a share of a cell (0 to 0.5). */
+  /** How wide its drawn pattern's lines are, as many times the game's grid texture's (1: as wide). */
   readonly width?: number;
-  /** How softly its drawn pattern's lines glow about themselves, 0 to 1. */
+  /** How brightly its drawn pattern's lines glow inside its plates, as many times the game's grid texture's (1: as bright; 0: none). */
   readonly soft?: number;
   /** Its tints, in order (see `TintsSet`): its own at this level, after those of the levels under it. */
   readonly tints?: readonly TintLayer[];

@@ -128,7 +128,7 @@ export function assetBackgroundViews(store: WithStage) {
         });
       }
       // Where the renderer puts them: as the body is lit (fixed in the world, or kept to the eye).
-      const from = lightsView(lit.info, scene.camera, view);
+      const fromOf = (light: LightEntry['light']) => lightsView(lit.info, scene.camera, view, light);
       const marker = (key: string, light: LightEntry['light']) => ({
         id: key,
         key,
@@ -150,11 +150,11 @@ export function assetBackgroundViews(store: WithStage) {
           at: body.position,
           nudge: n - (round.length - 1) / 2,
           // (An environment light's: where it reads the sky, about the body.)
-          softLines: lightSettingLines(light, body, from, view.eye).soft,
+          softLines: lightSettingLines(light, body, fromOf(light), view.eye).soft,
         }),
       );
       for (const { key, light } of lights)
-        out.push(...placedLightMarkers(marker(key, light), light, body, from, view.eye));
+        out.push(...placedLightMarkers(marker(key, light), light, body, fromOf(light), view.eye));
       // The planet open selected: its poles named at its axis's ends.
       if (store.target().kind === 'body' && lit.info && lit.info.file?.kind !== 'style')
         axisAids(lit.info, body, scene.camera, view).forEach((line, n) =>
@@ -189,7 +189,7 @@ export function assetBackgroundViews(store: WithStage) {
         ? lightAids(
             light,
             lit.body,
-            lightsView(lit.info, scene.camera, view),
+            lightsView(lit.info, scene.camera, view, light),
             onShield ? shieldSurfaceOf(light) : bodySurfaceOf(lit.info ?? undefined),
           )
         : [];

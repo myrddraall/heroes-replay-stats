@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import type { DataTexture } from 'three/webgpu';
 import { UniformSet } from './uniforms';
 import { DrawValues } from './shader-uniforms';
-import { rimTurn } from '../../space/directions';
 import { type Vec3, turnAbout } from '../../space/vectors';
 
 const unit = (v: Vec3): Vec3 => {
@@ -93,7 +92,6 @@ describe('DrawValues', () => {
       const none = new DrawValues();
       none.apply(reaches());
       none.set('uLightTurn', [1, 0, 0, 0, 1, 0, 0, 0, 1]);
-      none.set('uLeanTurn', [1, 0, 0, 0, 1, 0, 0, 0, 1]);
       expect(Array.from(table(none).subarray(0, 88))).toEqual(
         Array.from(table(plain).subarray(0, 88)),
       );
@@ -109,18 +107,10 @@ describe('DrawValues', () => {
       expectClose(row(data, 0, 4), [-1, 0, 0, 0]);
     });
 
-    it("works a rim's aim out again from its lean turned into the view", () => {
+    it("keeps a rim's aim the view's, as set, however its lights are turned", () => {
       const d = new DrawValues();
       d.apply(reaches());
       d.set('uLightTurn', QUARTER);
-      const before = row(table(d), 1, 4);
-      // (Its lean, the way it comes from: its direction the other way.)
-      expectClose(before, [0.4, -0.25, 0, 0]);
-      d.set('uLeanTurn', QUARTER);
-      const [yaw, pitch] = rimTurn([0.9, 0.3, -0.3]);
-      expectClose(row(table(d), 1, 4), [-yaw, -pitch, 0, 0]);
-      // Back to none: as set again.
-      d.set('uLeanTurn', [1, 0, 0, 0, 1, 0, 0, 0, 1]);
       expectClose(row(table(d), 1, 4), [0.4, -0.25, 0, 0]);
     });
   });

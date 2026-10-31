@@ -18,7 +18,6 @@ import {
 import { int, ivec2, textureLoad, uniform } from 'three/tsl';
 import type { UniformSet } from './uniforms';
 import { MAX_GRADES } from '../../tints/grading';
-import { rimTurn } from '../../space/directions';
 import {
   MAX_FIELDS,
   MAX_LIGHTS,
@@ -453,7 +452,7 @@ const TURNS_FROM = new Set(['uRight', 'uUp', 'uRimTurn', 'uRevealed']);
  * turn of its lights' directions and places, and of its leans (into the view), from the body's
  * placement frame they are set in. Not the shader's: worked out here, into the rows it reads.
  */
-const FRAMES_FROM = new Set(['uLightTurn', 'uLeanTurn']);
+const FRAMES_FROM = new Set(['uLightTurn']);
 
 /** Whether a turn (a mat3's numbers by column) is none at all, number for number; none given: none. */
 const noTurn = (m: ArrayLike<number>) =>
@@ -573,9 +572,8 @@ export class DrawValues {
   /**
    * The reaches into the table, from the body's placement frame (as set) into the frame the draw
    * is shaded in: each one's direction, place and aim (rows 0, 3, 4; their fourth numbers kept)
-   * turned by `uLightTurn`; a rim's aim (its lean's turn of the view, row 4) worked out again from
-   * its lean (the way it comes from: its row 0 the other way) turned into the view by `uLeanTurn`.
-   * A turn that is none copies the rows as they are, number for number.
+   * turned by `uLightTurn`, but a rim's aim (its lean's turn of the view, row 4): the view's, as
+   * set (see `DrawFrames`). A turn that is none copies the rows as they are, number for number.
    */
   private frameReaches(): void {
     this.framesStale = false;
@@ -584,9 +582,7 @@ export class DrawValues {
     if (!source) return;
     const { data, texture } = this.table;
     const lightTurn = this.vector('uLightTurn');
-    const leanTurn = this.vector('uLeanTurn');
     const lights = !noTurn(lightTurn);
-    const leans = !noTurn(leanTurn);
     const start = PACK_START.start.reaches * 4;
     let changed = false;
     const put = (at: number, v: number) => {
@@ -607,12 +603,6 @@ export class DrawValues {
           const v = turned(lightTurn, source[at]!, source[at + 1]!, source[at + 2]!);
           for (let c = 0; c < 3; c++) put(to + row * 4 + c, v[c]!);
         }
-      if (rim && leans) {
-        const lean = turned(leanTurn, -source[from]!, -source[from + 1]!, -source[from + 2]!);
-        const [yaw, pitch] = rimTurn(lean);
-        put(to + 16, -yaw);
-        put(to + 17, -pitch);
-      }
     }
     if (changed) texture.needsUpdate = true;
   }

@@ -497,14 +497,16 @@ const sameReach = (a: LightReach | undefined, b: LightReach | undefined) => {
  * own camera (`layout`) for a body fixed in the world, or whose billboards are lit in the scene,
  * its lights fixed there too; the camera the editor looks through (`view`) for one lit as a
  * billboard, its lights kept to the eye (keeping the scene camera's up, unless its billboards
- * keep the screen's).
+ * keep the screen's). A rim light (`light`) always the camera's, as the screen has it: a rim is
+ * the body's outline as the eye sees it, leaning across the view (see `DrawFrames`).
  */
 export function lightsView(
   b: BodyInfo | null | undefined,
   layout: Viewpoint,
   view: Viewpoint,
+  light?: { readonly kind: string },
 ): Viewpoint {
-  if (!b) return view;
+  if (!b || light?.kind === 'rim') return view;
   const v = valuesOf(b);
   if (v.orientation === 'world' || v.billboardLights === 'scene') return layout;
   return v.billboardUp === 'scene' ? { ...view, keepUpOf: layout } : view;
