@@ -1,3 +1,4 @@
+import { tintRowsOf } from '../tints/tint-rows';
 import type { LibraryState } from '@myrddraall/heroes-replay-stats-aether/library';
 import {
   createdSkyFile,
@@ -22,7 +23,6 @@ import {
   materialValues,
   mergeMaterialSettings,
   mergeSettings,
-  NO_MATERIAL_TINT,
 } from '@myrddraall/heroes-replay-stats-aether/materials';
 import {
   DEFAULT_SKY_ANCHOR,
@@ -83,7 +83,13 @@ export function skyMaterialsOf(
       enabledBelow: under?.enabled ?? MATERIAL_DEFAULTS.enabled,
       controls: materialControls(material, { particles: drawn, sky: true }),
       set: edited?.materials?.[name],
-      baseTint: under?.tint ?? NO_MATERIAL_TINT,
+      tints: tintRowsOf(
+        [
+          ['the library (material)', base?.[name]],
+          ['the library (sky)', below?.materials?.[name]],
+        ],
+        edited?.materials?.[name],
+      ),
       layers: layersOf(
         material,
         mergeMaterialSettings(base, below?.materials, edited?.materials)[name],
@@ -127,7 +133,7 @@ export function skyMaterialsOf(
           enabledBelow: under?.enabled ?? MATERIAL_DEFAULTS.enabled,
           controls: materialControls(material, { particles: false, sky: true }),
           set: edited?.materials?.[key],
-          baseTint: under?.tint ?? NO_MATERIAL_TINT,
+          tints: tintRowsOf(levels, edited?.materials?.[key]),
           layers: layersOf(material, settings, edited?.materials?.[key], levels, textures),
         });
       }

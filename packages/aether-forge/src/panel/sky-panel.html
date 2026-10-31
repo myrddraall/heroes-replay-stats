@@ -1,11 +1,4 @@
 @let added = editor.added();
-<forge-tint-section
-  [tint]="editor.skyTint()"
-  [set]="editor.skyTintSet()"
-  (tintChange)="editor.setSkyTint($event)"
-  (clear)="editor.clearSkyTint()"
-/>
-<p class="hint">Over the whole sky, its stars too. Its materials are under it in the tree.</p>
 @let anchor = editor.skyAnchor();
 <forge-property-section
   title="Placement"

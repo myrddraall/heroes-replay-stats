@@ -91,15 +91,7 @@
   />
   }
 </forge-property-section>
-} @if (!c.particles) { @if (on('look')) {
-<forge-tint-section
-  [tint]="v.tint"
-  [base]="baseTint()"
-  [set]="set()?.tint"
-  (tintChange)="settingsChange.emit({ tint: $event })"
-  (clear)="clear.emit(['tint'])"
-/>
-} @if (on('lighting')) {
+} @if (!c.particles) { @if (on('lighting')) {
 <forge-property-section
   title="Light"
   [changed]="anySet(['lit', 'wrap', 'dropOff', 'glow', 'specular', 'glossiness'])"

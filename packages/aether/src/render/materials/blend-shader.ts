@@ -1,5 +1,21 @@
 import type { Node } from 'three/webgpu';
-import { abs, clamp, dot, Fn, If, max, min, mix, select, sqrt, step, vec3 } from 'three/tsl';
+import {
+  abs,
+  clamp,
+  cos,
+  cross,
+  dot,
+  Fn,
+  If,
+  max,
+  min,
+  mix,
+  select,
+  sin,
+  sqrt,
+  step,
+  vec3,
+} from 'three/tsl';
 
 /**
  * The blend modes in three.js's shading language, as `BLEND_MODES` numbers them (`blend(b, s,
@@ -10,6 +26,7 @@ import { abs, clamp, dot, Fn, If, max, min, mix, select, sqrt, step, vec3 } from
  */
 
 type V3 = Node<'vec3'>;
+type V4 = Node<'vec4'>;
 type F = Node<'float'>;
 
 const lum = Fn(([c]: [V3]) => dot(c, vec3(0.3, 0.59, 0.11))).setLayout({
@@ -197,6 +214,30 @@ export const blend = Fn(([b, s, mode]: [V3, V3, Node<'int'>]) => {
     })
     .ElseIf(mode.equal(22), () => {
       out.assign(mix(min(vec3(1), b.div(max(s, vec3(1e-5)))), vec3(1), step(s, vec3(0))));
+    })
+    .ElseIf(mode.equal(23), () => {
+      out.assign(s);
+    })
+    .ElseIf(mode.equal(24).or(mode.equal(25)), () => {
+      // Darker colour (24), lighter colour (25): the whole colour, b's or s's, by luminosity.
+      If(mode.equal(24), () => {
+        out.assign(select(lum(s).lessThan(lum(b)), s, b));
+      }).Else(() => {
+        out.assign(select(lum(s).greaterThan(lum(b)), s, b));
+      });
+    })
+    .ElseIf(mode.equal(26).or(mode.equal(27)), () => {
+      // Reflect (27): b² / (1 - s), white where s is; glow (26): the same, b and s swapped.
+      const glow = mode.equal(26).toVar();
+      const top = select(glow, s, b).toVar();
+      const under = select(glow, b, s).toVar();
+      out.assign(
+        mix(
+          min(vec3(1), top.mul(top).div(max(vec3(1).sub(under), vec3(1e-5)))),
+          vec3(1),
+          step(vec3(1), under),
+        ),
+      );
     });
   return out;
 }).setLayout({
@@ -230,6 +271,87 @@ export const tintBy = Fn(([c, colour, mode, strength]: [V3, V3, Node<'int'>, F])
     { name: 'c', type: 'vec3' },
     { name: 'colour', type: 'vec3' },
     { name: 'mode', type: 'int' },
+    { name: 'strength', type: 'float' },
+  ],
+});
+
+/** A colour's hue turned about grey by `turn` (radians), as a hue/saturation tint turns it. */
+const hueTurned = (c: V3, turn: F) => {
+  const k = vec3(0.57735027);
+  const cs = cos(turn);
+  return c
+    .mul(cs)
+    .add(cross(k, c).mul(sin(turn)))
+    .add(k.mul(dot(k, c)).mul(cs.oneMinus()));
+};
+
+/**
+ * A hue/saturation tint over a colour by `strength` (`hsl`: x its hue turn in radians, y its
+ * saturation -1 grey to 1 twice as much, z its lightness -1 black to 1 white); a colour past white
+ * shifted at its hue, keeping its brightness.
+ */
+export const hslBy = Fn(([c, hsl, strength]: [V3, V3, F]) => {
+  const out = c.toVar();
+  If(strength.greaterThan(0), () => {
+    const m = max(max(max(c.r, c.g), c.b), 1).toVar();
+    const t = hueTurned(c.div(m), hsl.x).toVar();
+    t.assign(mix(vec3(lum(t)), t, hsl.y.add(1)));
+    If(hsl.z.greaterThan(0), () => {
+      t.assign(mix(t, vec3(1), hsl.z));
+    }).Else(() => {
+      t.assign(t.mul(hsl.z.add(1)));
+    });
+    out.assign(mix(c, max(t, vec3(0)).mul(m), strength));
+  });
+  return out;
+}).setLayout({
+  name: 'hslBy',
+  type: 'vec3',
+  inputs: [
+    { name: 'c', type: 'vec3' },
+    { name: 'hsl', type: 'vec3' },
+    { name: 'strength', type: 'float' },
+  ],
+});
+
+/**
+ * A gradient map over a colour by `strength`: its brightness (0 to 1) to the gradient's colour
+ * there, between its stops (`s0` to `s3`: colour, at; `count` of them, in order of where they are),
+ * the first's below it, the last's past it; a colour past white mapped at its hue's brightness,
+ * keeping its brightness.
+ */
+export const gradientBy = Fn(
+  ([c, s0, s1, s2, s3, count, strength]: [V3, V4, V4, V4, V4, Node<'int'>, F]) => {
+    const out = c.toVar();
+    If(strength.greaterThan(0).and(count.greaterThan(0)), () => {
+      const m = max(max(max(c.r, c.g), c.b), 1).toVar();
+      const t = clamp(lum(c.div(m)), 0, 1).toVar();
+      const g = s0.rgb.toVar();
+      const span = (a: V4, b: V4) =>
+        mix(a.rgb, b.rgb, clamp(t.sub(a.w).div(max(b.w.sub(a.w), 1e-4)), 0, 1));
+      If(count.greaterThan(1).and(t.greaterThan(s0.w)), () => {
+        g.assign(span(s0, s1));
+      });
+      If(count.greaterThan(2).and(t.greaterThan(s1.w)), () => {
+        g.assign(span(s1, s2));
+      });
+      If(count.greaterThan(3).and(t.greaterThan(s2.w)), () => {
+        g.assign(span(s2, s3));
+      });
+      out.assign(mix(c, g.mul(m), strength));
+    });
+    return out;
+  },
+).setLayout({
+  name: 'gradientBy',
+  type: 'vec3',
+  inputs: [
+    { name: 'c', type: 'vec3' },
+    { name: 's0', type: 'vec4' },
+    { name: 's1', type: 'vec4' },
+    { name: 's2', type: 'vec4' },
+    { name: 's3', type: 'vec4' },
+    { name: 'count', type: 'int' },
     { name: 'strength', type: 'float' },
   ],
 });

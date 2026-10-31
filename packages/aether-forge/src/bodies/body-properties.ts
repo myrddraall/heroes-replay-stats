@@ -5,17 +5,12 @@ import {
   ORBIT_KEYS,
 } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import {
-  type MaterialTint,
-  NO_MATERIAL_TINT,
-} from '@myrddraall/heroes-replay-stats-aether/materials';
-import {
   orbitOffset,
   type Orientation,
   type Vec3,
 } from '@myrddraall/heroes-replay-stats-aether/space';
 import { PropertyDirection } from '../controls/rows/property-direction';
 import { PropertySection } from '../controls/property-section';
-import { TintSection } from '../materials/tint-section';
 import { PropertyNumber } from '../controls/rows/property-number';
 import { type PlacementChange, PropertyPlacement } from '../controls/rows/property-placement';
 import { PropertyText } from '../controls/rows/property-text';
@@ -37,7 +32,6 @@ import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies
 @Component({
   selector: 'forge-body-properties',
   imports: [
-    TintSection,
     PropertySection,
     PropertyNumber,
     PropertyDirection,
@@ -80,8 +74,6 @@ export class BodyProperties {
   readonly lit = input(true);
   /** What of it is set here (the rest is its own). */
   readonly set = input<BodySettings>({});
-  /** Its tint where none is set here: its own (its file's), or none. */
-  readonly baseTint = input<MaterialTint>(NO_MATERIAL_TINT);
   /**
    * Whether a body's own settings (its orientation, tint, rim, fit) are offered: not for an overlay
    * the sky wears (one open in the library). A planet's overlay offers them all: what it sets

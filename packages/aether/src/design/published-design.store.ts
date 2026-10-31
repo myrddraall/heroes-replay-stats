@@ -24,9 +24,8 @@ function oldScenes(key: string): ScenesState | null {
   try {
     const raw = localStorage.getItem(key);
     const old = raw ? (JSON.parse(raw) as Partial<ScenesState>) : null;
-    return old?.planets
-      ? { settings: old.settings ?? EMPTY_SCENES.settings, planets: old.planets }
-      : null;
+    // (As kept: what is kept from before scenes were graded is read as their grading's on load.)
+    return old?.planets ? ({ ...old, planets: old.planets } as ScenesState) : null;
   } catch {
     return null;
   }

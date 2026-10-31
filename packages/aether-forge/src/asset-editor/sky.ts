@@ -19,7 +19,6 @@ import {
 } from '../sky/sky';
 import type { PartEntry } from '../parts/parts';
 import type { AssetMethodsStore, WithVariants } from './asset-editor.store';
-import type { MaterialTint } from '@myrddraall/heroes-replay-stats-aether/materials';
 import type { SkyAnchor } from '@myrddraall/heroes-replay-stats-aether/sky';
 import { ASSET, STAGE, STAGE_SKY } from './asset-targets';
 import type { AssetWrites } from './asset-writes';
@@ -159,18 +158,6 @@ export function assetSkyMethods(store: AssetMethodsStore, w: AssetWrites) {
     resetSkyOverlays(): void {
       const sky = selectedSky();
       if (sky) d.setSkyOverlays(sky.stage ? PREVIEW_SCENE : null, undefined);
-    },
-    setSkyTint(tint: MaterialTint): void {
-      const s = selectedSky();
-      if (!s) return;
-      if (s.stage) d.setSkyTint(PREVIEW_SCENE, tint);
-      else d.setLibrarySkyTint(tint);
-    },
-    clearSkyTint(): void {
-      const s = selectedSky();
-      if (!s) return;
-      if (s.stage) d.clearSkyTint(PREVIEW_SCENE);
-      else d.clearLibrarySkyTint();
     },
     setSkyAnchor(anchor: SkyAnchor): void {
       const s = selectedSky();

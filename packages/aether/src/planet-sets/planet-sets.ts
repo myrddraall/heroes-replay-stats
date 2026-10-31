@@ -1,6 +1,7 @@
 import type { SceneCamera } from '../formats/play-scene';
 import type { BodyShade, PlanetIndex } from '../formats/planet-files';
-import type { MaterialSettingsMap, MaterialTint } from '../materials/material-settings';
+import type { MaterialSettingsMap } from '../materials/material-settings';
+import type { TintLayer, TintSwitches } from '../tints/tint-layers';
 import type { AddedPart, PartSettingsMap } from '../formats/part-shapes';
 import type { AddedLight, LightReach, LightSettingsMap } from '../lights/lights';
 import type { LightBranch } from '../lights/light-flow';
@@ -50,7 +51,9 @@ export interface SetPlanet {
   /** Where it is in its scene's tree, for the lights reaching it from elsewhere (none: none do, nor do its). */
   readonly branch?: LightBranch;
   /** A tint over all its materials (its style's too), over its tuning's. */
-  readonly tint?: MaterialTint;
+  readonly tints?: readonly TintLayer[];
+  /** Which of its tints are drawn, by id (see `TintsSet`). */
+  readonly tintsEnabled?: TintSwitches;
   /** Its rig turned and made stronger together, over its tuning's (kept from before lights were objects; see `tunedRig`). */
   readonly lightFrom?: readonly [number, number, number];
   /** Where its rims and glows lean: a point on its face (body frame), over its tuning's. */

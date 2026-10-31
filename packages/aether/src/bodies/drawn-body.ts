@@ -1,3 +1,4 @@
+import { stackedTints, type TintLayer, type TintSwitches } from '../tints/tint-layers';
 import {
   type BodyPart,
   type BodyShade,
@@ -14,7 +15,6 @@ import type { AddedLight, LightReach, LightSettingsMap } from '../lights/lights'
 import {
   materialKey,
   type MaterialSettings,
-  type MaterialTint,
   mergeSettings,
 } from '../materials/material-settings';
 import { bodyTurn, type Mat3, type Orientation } from '../space/graph';
@@ -55,7 +55,9 @@ export interface DrawnBody {
   /** Its rig made stronger and turned (see `tunedRig`), its tuning's where it sets none. */
   readonly lighting?: number;
   readonly lightFrom?: Vec3;
-  readonly tint?: MaterialTint;
+  readonly tints?: readonly TintLayer[];
+  /** Which of its tints are drawn, by id (see `TintsSet`). */
+  readonly tintsEnabled?: TintSwitches;
   /** Where its rims and glows lean, its tuning's where it sets none. */
   readonly rim?: Vec3;
   /** Which way its surfaces are turned, its tuning's where it sets none. */
@@ -150,7 +152,8 @@ function drawBody(placement: PlanetPlacement): DrawnBody {
   }
   const glowRig = overlays.length ? overlays.find((o) => o.planet.light)?.planet.light : file.light;
   const { rig, lighting, lightFrom, shade } = bodyRigOf(placement);
-  const tint = placement.tint ?? tuning?.tint;
+  // Its tints: its tuning's, then those set where it is put (theirs joined, see `TintsSet`).
+  const tints = stackedTints(tuning, placement);
   const rim = placement.rim ?? tuning?.rim;
   const orientation = placement.orientation ?? tuning?.orientation;
   return {
@@ -175,7 +178,7 @@ function drawBody(placement: PlanetPlacement): DrawnBody {
     ...(glowRig ? { glowRig } : {}),
     ...(lighting !== undefined ? { lighting } : {}),
     ...(lightFrom ? { lightFrom } : {}),
-    ...(tint ? { tint } : {}),
+    ...tints,
     ...(rim ? { rim } : {}),
     ...(orientation ? { orientation } : {}),
     ...(placement.lights ? { lights: placement.lights } : {}),

@@ -1,3 +1,4 @@
+import { assetAdjustmentMethods } from './adjustments';
 import { DATA_URL, storageKey } from '@myrddraall/heroes-replay-stats-aether';
 import { loadPlaySceneFile } from '@myrddraall/heroes-replay-stats-aether/formats';
 import { inject, resource } from '@angular/core';
@@ -92,6 +93,7 @@ export const AssetEditorStore = signalStore(
       ...assetBodyMethods(store, w),
       ...assetSkyMethods(store, w),
       ...assetVariantMethods(store, w),
+      ...assetAdjustmentMethods(store, w),
     };
   }),
 );

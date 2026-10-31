@@ -8,12 +8,15 @@ import { bodyKey, targetOf } from './scene-targets';
 import type { SceneMethodsStore } from './scene-editor.store';
 import type { SceneWrites } from './scene-writes';
 import { bodyEdits } from '../editing/body-edits';
+import { sceneAdjustmentMethods } from './adjustments';
 
 /** A body's materials: their order and settings. */
 export function materialMethods(store: SceneMethodsStore, w: SceneWrites) {
   const { d, edit, materialChange, levelAt } = w;
   return {
     moveMaterial(move: TreeMove): void {
+      // (A colour adjustment moved among the level's own: drawn in that order.)
+      if (sceneAdjustmentMethods(store, w).moveAdjustment(move)) return;
       const from = targetOf(move.key);
       const to = targetOf(move.target);
       // An overlay moved among those the sky wears: worn in that order.

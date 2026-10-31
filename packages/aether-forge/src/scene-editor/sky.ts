@@ -1,3 +1,5 @@
+import type { TintsSet } from '@myrddraall/heroes-replay-stats-aether/tints';
+import { type TintRow, tintRowsOf } from '../tints/tint-rows';
 import { skyWornOf } from '@myrddraall/heroes-replay-stats-aether/library';
 import {
   addedSourced,
@@ -6,8 +8,6 @@ import {
   sourceFiles,
 } from '@myrddraall/heroes-replay-stats-aether/overlays';
 import {
-  type MaterialTint,
-  NO_MATERIAL_TINT,
 } from '@myrddraall/heroes-replay-stats-aether/materials';
 import { computed } from '@angular/core';
 import { wornIds } from '../bodies/body';
@@ -84,8 +84,10 @@ export function skyViews(store: WithCameras) {
       skyOverlayChoices(sceneFile(), library()),
     ),
     skyChanged: computed(() => Object.keys(sky()).length > 0),
-    skyTint: computed((): MaterialTint => sky().tint ?? library().sky.tint ?? NO_MATERIAL_TINT),
-    skyTintSet: computed(() => sky().tint),
+    skyTints: computed(
+      (): readonly TintRow[] => tintRowsOf([['the library (sky)', library().sky]], sky()),
+    ),
+    skyTintsSet: computed((): TintsSet | undefined => sky()),
     skyAnchor: computed(() => skyAnchorView(library().sky, sky())),
     skyUnsaved: computed(() => !same(choices().sky, published().sky)),
     neededFiles: computed(() => {
@@ -139,12 +141,6 @@ export function skyMethods(store: SceneMethodsStore, w: SceneWrites) {
     showSkyOverlay(id: string): void {
       store.expand(SCENE, SKY);
       store.reopen(skyOverlayKey(id));
-    },
-    setSkyTint(tint: MaterialTint): void {
-      d.setSkyTint(store.scene(), tint);
-    },
-    clearSkyTint(): void {
-      d.clearSkyTint(store.scene());
     },
     setSkyAnchor(anchor: SkyAnchor): void {
       d.setSkyAnchor(store.scene(), anchor);

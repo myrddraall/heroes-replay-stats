@@ -26,7 +26,7 @@ const planet = loaded('korhal', {
   tuning: {
     materials: { rock: { strength: 0.5, glow: 2 } },
     variants: { storm: { materials: { haze: { strength: 0.3 } }, shade: { strength: 0.2 } } },
-    tint: { colour: '#ff0000', blend: 'multiply', strength: 1 },
+    tints: [{ id: 'red', kind: 'colour', colour: '#ff0000', blend: 'multiply', strength: 1 }],
   },
 });
 const storm = loaded('style-storm', {
@@ -62,7 +62,7 @@ describe('a body as drawn', () => {
       radius: 1,
     };
     const body = drawnBody(placement);
-    expect(body.tint).toEqual(planet.planet.tuning!.tint);
+    expect(body.tints).toEqual(planet.planet.tuning!.tints);
     expect(body.shade.strength).toBe(0.2);
     expect(drawnBody({ ...placement, shade: { strength: 0.7 } }).shade.strength).toBe(0.7);
     // The same placement, the same body.

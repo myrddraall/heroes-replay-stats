@@ -1,3 +1,4 @@
+import { adjustmentRows, GRADING_TITLE } from '../materials/material-views';
 import { skyOverlayOn } from '@myrddraall/heroes-replay-stats-aether/library';
 import type { SetPlanet } from '@myrddraall/heroes-replay-stats-aether/planet-sets';
 import {
@@ -114,6 +115,7 @@ export function treeViews(store: WithPartHosts) {
             movableOverlays: true,
             // (One of a planet's own moons is the library's: nothing is put onto it here.)
             adds: { shapes: !b.inherited, lights: true, overlays: true, moons: !b.inherited },
+            adjustments: true,
             variants: (b.variants ?? []).map((v) => ({
               id: v.id,
               name: v.name,
@@ -205,6 +207,9 @@ export function treeViews(store: WithPartHosts) {
               expanded: false,
             });
       }
+      // Its colour grading, over the whole picture (a group has none: it is the scene's it is put in).
+      if (!store.groupOpen())
+        rows.push(...adjustmentRows(SCENE, store.sceneGrading(), 1, open, GRADING_TITLE));
       // A group has no sky of its own (it is drawn under the scene's it is put in).
       const sky = !store.groupOpen();
       if (sky) row(SKY, 'Sky', 'blur_on', 1, store.skyUnsaved());
@@ -276,6 +281,8 @@ export function treeViews(store: WithPartHosts) {
               for (const m of materials) leaf(skyOverlayMaterialKey(o.id, m.name), m, 4);
           }
         }
+      // Its colour adjustments, over all of it.
+      if (sky && open.has(SKY)) rows.push(...adjustmentRows(SKY, store.skyTints(), 2, open));
       store.sceneBodies().forEach((p, i) => {
         const planet = store.bodyByKey().get(bodyKey([siblingKey(p, i)]));
         if (planet) body(planet, 1);
@@ -436,7 +443,8 @@ export function treeViews(store: WithPartHosts) {
             lights: except ? mergeLightSettings(s.lights, except) : s.lights,
             added: lights.length ? [...(s.added ?? []), ...lights] : s.added,
             branch: branch(p.path),
-            tint: s.tint,
+            tints: s.tints,
+            tintsEnabled: s.tintsEnabled,
             lightFrom: s.lightFrom,
             rim: s.rim,
             ...(s.orientation ? { orientation: s.orientation } : {}),

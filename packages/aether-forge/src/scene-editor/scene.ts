@@ -39,8 +39,7 @@ import {
 } from '@myrddraall/heroes-replay-stats-aether/variants';
 import type { AddedLight } from '@myrddraall/heroes-replay-stats-aether/lights';
 import { computed } from '@angular/core';
-import { CUSTOM_TINT } from '../draft/with-tint';
-import { grouped, type PropertyOption } from '../controls/rows/property-select';
+import { tintRowsOf } from '../tints/tint-rows';
 import type { BodyInfo } from '../bodies/body';
 import { overlayChoices } from '../overlays/overlays';
 import type { PickChoice } from '../controls/pick-list';
@@ -54,7 +53,7 @@ import type { SceneWrites } from './scene-writes';
 import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/space';
 import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies';
 
-/** The scene open: its entry in the draft and as published, its planets and groups, its name, tint and what of it is unsaved. */
+/** The scene open: its entry in the draft and as published, its planets and groups, its name, grading and what of it is unsaved. */
 export function sceneViews(store: SceneStoreBase) {
   const {
     _ui,
@@ -66,7 +65,6 @@ export function sceneViews(store: SceneStoreBase) {
     files,
     madeLookup,
     sceneVariantEdited,
-    _tintPresets: presets,
   } = store;
   /** Whether the library shows the scene (a preview: seen through its own cameras, not moved). */
   const browsing = computed(() => _ui.browsing());
@@ -319,25 +317,12 @@ export function sceneViews(store: SceneStoreBase) {
     ),
     /** The scene's own lights, lighting every planet in it. */
     sceneLights: computed((): readonly AddedLight[] => choices().lights ?? []),
-    sceneTint: computed(() => _draft.scenes().settings),
+    /** The scene's colour grading as set (none: none; a group has none). */
+    sceneGradingSet: computed(() => (groupOpen() ? undefined : choices().grading)),
+    /** The scene's colour grading as listed, in order. */
+    sceneGrading: computed(() => tintRowsOf([], groupOpen() ? undefined : choices().grading)),
     sets: random,
-    tintOptions: computed((): PropertyOption[] =>
-      grouped(
-        [
-          { value: presets[0]!.id, label: presets[0]!.label },
-          { value: CUSTOM_TINT, label: 'Custom' },
-        ],
-        presets.slice(1).map((p) => ({ value: p.id, label: p.label })),
-      ),
-    ),
-    /** The tint choice that is none. */
-    noTint: computed(() => presets[0]!.id),
-    tintChoice: computed(() => {
-      const settings = _draft.scenes().settings;
-      if (settings.choice) return settings.choice;
-      return settings.background.on ? CUSTOM_TINT : presets[0]!.id;
-    }),
-    sceneUnsaved: computed(() => !same(choices(), published()) || _draft.unsavedColour()),
+    sceneUnsaved: computed(() => !same(choices(), published())),
     /** The overlays a body may wear: the game data's, and those made in the editor; by name. */
     overlayOptions: computed((): readonly PickChoice[] =>
       overlayChoices(_index.hasValue() ? _index.value() : null, library()),
@@ -345,7 +330,7 @@ export function sceneViews(store: SceneStoreBase) {
   };
 }
 
-/** The scene itself: shown, renamed, deleted, its planets added, another set drawn, its tint, all of it reset. */
+/** The scene itself: shown, renamed, deleted, its planets added, another set drawn, all of it reset. */
 export function sceneMethods(store: SceneMethodsStore, w: SceneWrites) {
   const { d } = w;
   return {
@@ -387,14 +372,9 @@ export function sceneMethods(store: SceneMethodsStore, w: SceneWrites) {
     anotherSet(): void {
       store._background.nextPlanetSet();
     },
-    chooseTint(choice: string): void {
-      d.chooseTint(choice);
-    },
-    setTint: d.setTint,
-    /** The whole scene back as the library has it: its planets' looks, moons, sky, the colour; the view on it all. */
+    /** The whole scene back as the library has it: its planets' looks, moons, sky, its grading; the view on it all. */
     resetAll(): void {
       d.resetScene(store.scene());
-      d.resetTint();
       patchState(store, { focus: null, selected: SCENE });
       store._ui.confirmReset(false);
     },

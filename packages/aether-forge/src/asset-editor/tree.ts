@@ -1,3 +1,5 @@
+import { adjustmentRows } from '../materials/material-views';
+import { tintRowsOf } from '../tints/tint-rows';
 import { skyOverlayOn } from '@myrddraall/heroes-replay-stats-aether/library';
 import type { SkyChoices } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import type { PartKey } from '@myrddraall/heroes-replay-stats-aether/formats';
@@ -269,6 +271,16 @@ export function assetTreeViews(store: WithPartHosts) {
               depth + 1,
             );
         }
+        // Its colour adjustments, over all of it.
+        const own = store._skyOf(stage);
+        rows.push(
+          ...adjustmentRows(
+            stage ? STAGE_BACKDROP : ASSET,
+            tintRowsOf(own.below ? [['the library (sky)', own.below]] : [], own.edited),
+            depth,
+            open,
+          ),
+        );
       };
       const ownSkyRows = (
         materials: readonly MaterialEntry[],
@@ -343,6 +355,7 @@ export function assetTreeViews(store: WithPartHosts) {
                 },
                 {
                   movableOverlays: false,
+                  adjustments: true,
                   variants: store.variantRows(),
                   adds: {
                     shapes: store.partShapes().length > 0,

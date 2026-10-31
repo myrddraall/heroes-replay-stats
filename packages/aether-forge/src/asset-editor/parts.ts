@@ -93,7 +93,7 @@ export function assetPartMethods(store: AssetMethodsStore, w: AssetWrites) {
       } else {
         // The overlay's own settings start as the planet's for those parts.
         const own = kept(d.library().planets[asset().id] ?? {});
-        const settings = without(own, ['label', 'enabled', 'lights', 'added', 'tint', 'rim']);
+        const settings = without(own, ['label', 'enabled', 'lights', 'added', 'tints', 'tintsEnabled', 'rim']);
         if (settings) d.setLibraryBody('styles', id, settings);
       }
       store._ui.open({ kind: 'style', id });

@@ -1,9 +1,9 @@
+import { stackedTints, type TintLayer, type TintSwitches } from '../tints/tint-layers';
 import type { PlayScene, SkyOverlayFile } from '../formats/play-scene';
 import type { PartSettingsMap } from '../formats/part-shapes';
 import {
   materialKey,
   type MaterialSettingsMap,
-  type MaterialTint,
   mergeSettings,
 } from '../materials/material-settings';
 import type { SkyAnchor } from './sky-anchors';
@@ -24,7 +24,9 @@ export interface DrawnSky {
   }[];
   /** Its materials' settings, by `materialKey`: its own by name, its overlays' by overlay too. */
   readonly materials: MaterialSettingsMap;
-  readonly tint?: MaterialTint;
+  readonly tints?: readonly TintLayer[];
+  /** Which of its tints are drawn, by id (see `TintsSet`). */
+  readonly tintsEnabled?: TintSwitches;
   /** How it is anchored against the camera, where its materials don't say otherwise. */
   readonly anchor?: SkyAnchor;
   /** Its materials' draw order, by `materialKey`, where set. */
@@ -56,7 +58,7 @@ export function drawnSky(sky: SkySettings, scene: PlayScene): DrawnSky {
   return {
     worn,
     materials,
-    ...(sky.tint ? { tint: sky.tint } : {}),
+    ...stackedTints(sky),
     ...(sky.anchor ? { anchor: sky.anchor } : {}),
     ...(sky.order ? { order: sky.order } : {}),
     ...(sky.parts ? { parts: sky.parts } : {}),

@@ -37,10 +37,16 @@ import type { AddedLight } from '../lights/lights';
 import type { LoadedPlanet } from '../formats/planet-loader';
 import type { DrawnSky } from '../sky/drawn-sky';
 import { overlayOfPartKey, type PartKey } from '../formats/part-keys';
-import { BLEND_MODES, NO_TINT, type Tint } from '../tints/tints';
-import { MAX_SURFACES } from './uniforms/limits';
+import { type Grading, NO_GRADING, sameGrading } from '../tints/grading';
+import { MAX_SURFACES, MAX_TINTS } from './uniforms/limits';
 import { UniformSet } from './uniforms/uniforms';
-import { CHANNELS, layerBrightness, tintUniforms } from './uniforms/draw-uniforms';
+import {
+  CHANNELS,
+  gradesUniforms,
+  layerBrightness,
+  tintsUniforms,
+} from './uniforms/draw-uniforms';
+import { drawnTints } from '../tints/tint-layers';
 import {
   type Backdrop,
   bodyFrame,
@@ -167,11 +173,24 @@ export class ThreeRenderer {
   streak = 0;
   /** How far the sky's layers are smeared across, as a share of the way round the sky (0: not at all). */
   smear = 0;
-  /** The tint drawn over the whole picture. */
-  tint: Tint = NO_TINT;
-  /** The tint the picture fades from, and how far it is from it to `tint` (1: all the way). */
-  fadingFrom: Tint = NO_TINT;
+  /** The scene's colour grading. */
+  get grading(): Grading {
+    return this.gradings[0];
+  }
+  set grading(grading: Grading) {
+    this.gradings = [grading, this.gradings[1]];
+  }
+  /** The grading the picture fades from, and how far it is from it to `grading` (1: all the way). */
+  get fadingFrom(): Grading {
+    return this.gradings[1];
+  }
+  set fadingFrom(grading: Grading) {
+    this.gradings = [this.gradings[0], grading];
+  }
   fade = 1;
+  /** The grading and the one it fades from, and those their lookup tables were baked for. */
+  private gradings: readonly [Grading, Grading] = [NO_GRADING, NO_GRADING];
+  private baked: readonly [Grading | null, Grading | null] = [null, null];
   /** How strongly the editor's beams and outlines show, 0 to 1 (faded in once the planets are where they are going). */
   aidFade = 1;
   private dimmedBy = 1;
@@ -524,7 +543,7 @@ export class ThreeRenderer {
     );
     const signature = JSON.stringify([
       this.skyStates.map((s) => s.signature),
-      this.sky.tint ?? null,
+      drawnTints(this.sky, MAX_TINTS),
       this.textures.size,
     ]);
     if (signature !== this.skySignature) {
@@ -737,6 +756,29 @@ export class ThreeRenderer {
   /** Whether a picture has been drawn (see `draw`). */
   private drawnOnce = false;
 
+  /** The gradings on the light as the tone pass reads them (worked out again when they change). */
+  private gradeUniforms(): UniformSet {
+    if (this.grades?.of !== this.gradings) {
+      const set = new UniformSet();
+      gradesUniforms(set, this.gradings[0].light, this.gradings[1].light);
+      this.grades = { of: this.gradings, set };
+    }
+    return this.grades.set;
+  }
+  private grades: { of: readonly [Grading, Grading]; set: UniformSet } | null = null;
+  /** The gradings' lookup tables baked again where their grading on the picture changed. */
+  private bakeGradings(): void {
+    ([0, 1] as const).forEach((i) => {
+      const g = this.gradings[i];
+      const was = this.baked[i];
+      if (!g.picture.length || (was && sameGrading({ ...was, light: [] }, { ...g, light: [] })))
+        return;
+      const u = new UniformSet();
+      tintsUniforms(u, 'uTint', g.picture);
+      this.chain.bakeGrading(i, u);
+      this.baked = i === 0 ? [g, this.baked[1]] : [this.baked[0], g];
+    });
+  }
   private sceneThreshold(): number {
     return this.loaded.scene.tone.bloomThreshold ?? DEFAULT_BLOOM_THRESHOLD;
   }
@@ -1000,11 +1042,9 @@ export class ThreeRenderer {
     const passesDone = now();
     this.chain.drawBloom(this.sceneThreshold());
     const tone = this.chain.passes.toneUniforms;
-    const tints = [this.tint, this.fadingFrom];
-    tints.forEach((t, i) => {
-      tone.set(`uTint${i}`, t.colour);
-      tone.set(`uBlend${i}`, BLEND_MODES[t.blend]);
-    });
+    this.bakeGradings();
+    tone.apply(this.gradeUniforms());
+    this.gradings.forEach((g, i) => tone.set(`uLooked${i}`, g.picture.length ? 1 : 0));
     tone.set('uFade', this.fade);
     tone.set('uBloomStrength', BLOOM_STRENGTH);
     tone.set('uExposure', this.loaded.scene.tone.exposure);
@@ -1099,7 +1139,7 @@ export class ThreeRenderer {
     };
     const threshold = this.sceneThreshold();
     const tint = new UniformSet();
-    tintUniforms(tint, 'uBodyTint', this.sky.tint);
+    tintsUniforms(tint, 'uBodyTint', drawnTints(this.sky, MAX_TINTS));
     for (const g of this.gpu.gpuDraws.values()) g.mesh.visible = false;
     states.forEach((s, order) => {
       const g = this.gpu.gpuOf(s);
@@ -1140,7 +1180,7 @@ export class ThreeRenderer {
     );
     if (!list.length) return;
     const tint = new UniformSet();
-    tintUniforms(tint, 'uBodyTint', this.sky.tint);
+    tintsUniforms(tint, 'uBodyTint', drawnTints(this.sky, MAX_TINTS));
     let any = false;
     for (const p of this.particles) if (p.gpu) p.gpu.mesh.visible = false;
     for (const p of list) {

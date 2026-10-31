@@ -1,3 +1,4 @@
+import { type TintLevel, type TintRow, tintRowsOf } from '../tints/tint-rows';
 import { overlayOn, wornKey } from '@myrddraall/heroes-replay-stats-aether/overlays';
 import {
   DEFAULT_ORBIT,
@@ -15,8 +16,6 @@ import {
 } from '@myrddraall/heroes-replay-stats-aether/formats';
 import {
   type MaterialSettingsMap,
-  type MaterialTint,
-  NO_MATERIAL_TINT,
 } from '@myrddraall/heroes-replay-stats-aether/materials';
 import {
   DEFAULT_ORIENTATION,
@@ -75,7 +74,10 @@ export type TargetKind =
   /** What of a material a row shows: one of its layers, its shield shader, one of that's lights. */
   | 'layer'
   | 'shader'
-  | 'gridLight';
+  | 'gridLight'
+  /** A body's, a material's or the sky's colour adjustments (their category), or one of them. */
+  | 'adjustments'
+  | 'adjustment';
 
 /**
  * An overlay a body wears, as an editor has it: which, its settings under the layer edited (the
@@ -147,8 +149,8 @@ export interface BodyView {
   readonly values: BodyValues;
   /** Whether anything of it is set in the layer edited. */
   readonly changed: boolean;
-  /** Its tint under the layer edited. */
-  readonly baseTint: MaterialTint;
+  /** Its tints over all its materials, as its Colour section lists them. */
+  readonly tints: readonly TintRow[];
   readonly focused: boolean;
   /** Whether moons can be put about it (a scene's bodies, but for its planets' own moons). */
   readonly canHaveMoons: boolean;
@@ -265,7 +267,6 @@ export function valuesOf(b: BodyInfo): BodyValues {
       strength.style ??
       tuning?.shade?.strength ??
       DEFAULT_SHADE.strength,
-    tint: at('tint') ?? tuning?.tint ?? NO_MATERIAL_TINT,
     lightFrom: at('lightFrom') ?? tuning?.lightFrom ?? keyLightFrom(rigOf(b)),
     shadeTowards:
       s.shadeTowards ??
@@ -348,7 +349,6 @@ export function bodyOrigins(b: BodyInfo): SettingOrigins<keyof BodySettings> {
       ...styleOwn('strength'),
       ['its tuning', tuning?.shade?.strength],
     ),
-    tint: first(...stack('tint'), ['its tuning', tuning?.tint]),
     lightFrom: first(...stack('lightFrom'), ['its tuning', tuning?.lightFrom]),
     shadeTowards: first(
       ...mine('shadeTowards'),
@@ -386,7 +386,7 @@ export function bodyView(
     lights: !libraryMoon,
     styled: canHaveMoons || libraryMoon,
     focusable: !libraryMoon,
-    baseTint: ownSetting(b, 'tint') ?? b.file?.tuning?.tint ?? NO_MATERIAL_TINT,
+    tints: bodyTintRows(b),
     overrides: overridesOf(b, (s) => s),
     focused,
     canHaveMoons,
@@ -397,6 +397,21 @@ export function bodyView(
     label: bodyLabel(b),
     labelBelow: bodyLabelBelow(b),
   };
+}
+
+/**
+ * A body's tints as listed (`TintRow`): its tuning's, the overlays' it wears (as the library has
+ * them), its own levels' under the one edited (the library's, its variants on), then the level's.
+ */
+export function bodyTintRows(b: BodyInfo): TintRow[] {
+  return tintRowsOf(
+    [
+      ['its tuning', b.file?.tuning],
+      ...drawnOverlays(b).map((o): TintLevel => [`the library (${overlayLabel(o)})`, o.below]),
+      ...ownLevels(b).map((l): TintLevel => [l.name, l.settings]),
+    ],
+    b.settings,
+  );
 }
 
 /** Whether a scene sets one of its planet's own moons otherwise than the planet has it: its orbit, what it wears. */
@@ -421,7 +436,6 @@ export interface BodyValues {
   readonly overlays: readonly string[];
   readonly lighting: number;
   readonly shade: number;
-  readonly tint: MaterialTint;
   /** Where its key light comes from; none where it has no light. */
   readonly lightFrom: Vec3 | null;
   readonly shadeTowards: Vec3;

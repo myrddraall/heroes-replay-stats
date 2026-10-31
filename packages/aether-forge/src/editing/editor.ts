@@ -1,3 +1,5 @@
+import type { TintEdit } from '../tints/tint-rows';
+import type { AdjustmentsView } from '../tints/adjustments';
 import type { VariantRow } from '../variants/variant-list';
 import type { Signal } from '@angular/core';
 import type { Orbit } from '@myrddraall/heroes-replay-stats-aether/scenes';
@@ -9,7 +11,6 @@ import type {
 } from '@myrddraall/heroes-replay-stats-aether/formats';
 import type {
   MaterialSettings,
-  MaterialTint,
 } from '@myrddraall/heroes-replay-stats-aether/materials';
 import type { SkyAnchor } from '@myrddraall/heroes-replay-stats-aether/sky';
 import type {
@@ -180,9 +181,13 @@ export abstract class Editor {
   /** What the level edited sets of the selected light for something it lights (`key`) taken back. */
   abstract resetLinking(key: string): void;
 
-  /** The sky's tint, as shown and as set in the layer edited; whether anything of the sky is set. */
-  abstract readonly skyTint: Signal<MaterialTint>;
-  abstract readonly skyTintSet: Signal<MaterialTint | undefined>;
+  /**
+   * The colour adjustments a row is of or is one of (a body's, a material's, the sky's), by its
+   * key; none where it is neither. An edit of them goes into the level edited.
+   */
+  abstract adjustmentsAt(key: string): AdjustmentsView | null;
+  abstract editAdjustments(key: string, edit: TintEdit): void;
+  /** Whether anything of the sky is set in the layer edited. */
   abstract readonly skyChanged: Signal<boolean>;
   /** The overlays the sky selected wears (by id, in order), those it may, and whether chosen here. */
   abstract readonly skyWorn: Signal<readonly string[]>;
@@ -194,8 +199,6 @@ export abstract class Editor {
   abstract showSkyOverlay(id: string): void;
   abstract removeSkyOverlay(id: string): void;
   abstract resetSkyOverlays(): void;
-  abstract setSkyTint(tint: MaterialTint): void;
-  abstract clearSkyTint(): void;
   /** How the sky selected is anchored against the camera, as shown, as set in the layer edited, and where else it is set. */
   abstract readonly skyAnchor: Signal<SkyAnchorView>;
   abstract setSkyAnchor(anchor: SkyAnchor): void;

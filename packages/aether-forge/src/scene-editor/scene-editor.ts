@@ -43,7 +43,8 @@ import { SceneHeader } from './scene-header';
               .placedGroups()
               .flatMap((g) => g.lights.filter((l) => l.out === 'scene').map(receivedLight)),
           ]),
-          tint: store.sceneTint,
+          // (Its own grading, never the site's tint.)
+          grading: computed(() => store.sceneGradingSet() ?? {}),
           key: store.scene,
           random: store.sets,
           camera: store.viewCamera,

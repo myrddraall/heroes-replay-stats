@@ -39,7 +39,7 @@ import type { AssetTarget } from '../layout/open-target';
           planets: store.stageLit,
           dim: computed(() => (store.stageDimming() ? 0.35 : 1)),
           sky: store.stageSky,
-          tint: store.stageTint,
+          grading: store.stageGrading,
           backdrop: store.stageBackdrop,
           key: store.stageKey,
           camera: store.viewCamera,

@@ -29,7 +29,6 @@ export function withPublishing() {
       );
       const changedScenes = computed(() => differing(scenes().planets, published.scenes().planets));
       const skyChanged = computed(() => !same(library().sky, published.library().sky));
-      const colourChanged = computed(() => !same(scenes().settings, published.scenes().settings));
       return {
         /** What is published, to compare with. */
         publishedScenes: computed(() => published.scenes()),
@@ -40,16 +39,14 @@ export function withPublishing() {
         unsavedLibraryMaterials: computed(() => new Set(changedMaterials())),
         unsavedLibrarySky: skyChanged,
         unsavedScenes: computed(() => new Set(changedScenes())),
-        unsavedColour: colourChanged,
-        /** How many things differ from what is published (an asset, a scene, the sky, the colour). */
+        /** How many things differ from what is published (an asset, a scene, the sky). */
         unsaved: computed(
           () =>
             changedPlanets().length +
             changedStyles().length +
             changedMaterials().length +
             changedScenes().length +
-            (skyChanged() ? 1 : 0) +
-            (colourChanged() ? 1 : 0),
+            (skyChanged() ? 1 : 0),
         ),
       };
     }),

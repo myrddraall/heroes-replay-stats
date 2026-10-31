@@ -18,3 +18,6 @@ export const MAX_SURFACES = 16;
 
 /** How many bodies' spheres a beam is hidden behind at most (the nearest first). */
 export const MAX_BEAM_SPHERES = 16;
+
+/** How many tints a draw takes at most of its material's own, and as many again of its body's (or the sky's). */
+export const MAX_TINTS = 8;

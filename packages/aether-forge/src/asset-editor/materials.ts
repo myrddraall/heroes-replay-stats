@@ -7,12 +7,15 @@ import { targetOf } from './asset-targets';
 import type { AssetMethodsStore } from './asset-editor.store';
 import type { AssetWrites } from './asset-writes';
 import { bodyEdits } from '../editing/body-edits';
+import { assetAdjustmentMethods } from './adjustments';
 
 /** The asset's materials: their order and settings. */
 export function assetMaterialMethods(store: AssetMethodsStore, w: AssetWrites) {
   const { asset, d, materialChange, materialClear, levelOf } = w;
   return {
     moveMaterial(move: TreeMove): void {
+      // (A colour adjustment moved among the level's own: drawn in that order.)
+      if (assetAdjustmentMethods(store, w).moveAdjustment(move)) return;
       const from = targetOf(move.key, asset());
       const to = targetOf(move.target, asset());
       // An overlay moved among those a sky wears: worn in that order.

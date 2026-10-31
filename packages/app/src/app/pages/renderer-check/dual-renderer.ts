@@ -12,7 +12,7 @@ import {
 } from '@myrddraall/heroes-replay-stats-aether/render';
 import type { Backdrop } from '@myrddraall/heroes-replay-stats-aether/space';
 import type { DrawnBody } from '@myrddraall/heroes-replay-stats-aether/bodies';
-import { NO_TINT, type Tint } from '@myrddraall/heroes-replay-stats-aether/tints';
+import { type Grading, NO_GRADING } from '@myrddraall/heroes-replay-stats-aether/tints';
 import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/space';
 
 /** Which of three.js's backends the check draws with: WebGPU, WebGL 2, or both at once. */
@@ -103,16 +103,16 @@ export class DualRenderer implements Renderer {
   set smear(v: number) {
     for (const r of this.all) r.smear = v;
   }
-  get tint(): Tint {
-    return this.first.tint ?? NO_TINT;
+  get grading(): Grading {
+    return this.first.grading ?? NO_GRADING;
   }
-  set tint(v: Tint) {
-    for (const r of this.all) r.tint = v;
+  set grading(v: Grading) {
+    for (const r of this.all) r.grading = v;
   }
-  get fadingFrom(): Tint {
+  get fadingFrom(): Grading {
     return this.first.fadingFrom;
   }
-  set fadingFrom(v: Tint) {
+  set fadingFrom(v: Grading) {
     for (const r of this.all) r.fadingFrom = v;
   }
   get fade(): number {

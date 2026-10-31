@@ -1,3 +1,5 @@
+import { drawnTints } from '../tints/tint-layers';
+import { MAX_TINTS } from './uniforms/limits';
 import { haloLike } from '../formats/planet-files';
 import {
   DEFAULT_ACTIVE,
@@ -30,7 +32,7 @@ import {
   partUniforms,
   scrollingLayers,
   shadeUniforms,
-  tintUniforms,
+  tintsUniforms,
 } from './uniforms/draw-uniforms';
 import { drawTurnOf } from '../space/graph';
 import type { BodyLeans } from './bodies/body-frames';
@@ -91,7 +93,7 @@ export function drawStateOf(draw: MeshDraw, ctx: DrawContext): DrawState {
   u.f1('uFalloff', settings?.falloff ?? MATERIAL_DEFAULTS.falloff);
   u.f1('uCut', settings?.cut ?? MATERIAL_DEFAULTS.cut);
   u.f1('uStrength', settings?.strength ?? MATERIAL_DEFAULTS.strength);
-  tintUniforms(u, 'uTint', settings?.tint);
+  tintsUniforms(u, 'uTint', drawnTints(settings, MAX_TINTS));
   const base = {
     draw,
     enabled,
@@ -131,7 +133,7 @@ export function drawStateOf(draw: MeshDraw, ctx: DrawContext): DrawState {
   const shine = materialValues(material, settings);
   u.f1('uSpecularMult', shine.specular);
   u.f1('uSpecularity', shine.glossiness);
-  tintUniforms(u, 'uBodyTint', body.tint);
+  tintsUniforms(u, 'uBodyTint', drawnTints(body, MAX_TINTS));
   const { rim } = body;
   u.v2('uRimTurn', rim ? rimTurn(rim) : [0, 0]);
   // Which way it is turned: its material's say, else its part's, else a halo square to the

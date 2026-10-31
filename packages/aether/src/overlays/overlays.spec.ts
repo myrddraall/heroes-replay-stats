@@ -180,4 +180,26 @@ describe('overlays', () => {
       sources: {},
     });
   });
+
+  it("reads the scenes' one Colour kept before they were graded as the first of each scene's grading", () => {
+    const design = migrateDesign({
+      library: { planets: {}, styles: {}, sky: {} },
+      scenes: {
+        settings: { background: { on: true, colour: '#ffcc00', blend: 'multiply' }, choice: 'gold' },
+        planets: { s: { name: 'Mine' }, g: { group: true }, '@preview': {} },
+      } as never,
+    });
+    expect(design.scenes).toEqual({
+      planets: {
+        s: {
+          name: 'Mine',
+          grading: { tints: [{ id: 'colour', kind: 'theme', strength: 1, preset: 'gold' }] },
+        },
+        g: { group: true },
+        '@preview': {},
+      },
+    });
+    // Kept since: as it is.
+    expect(migrateDesign(design)).toEqual(design);
+  });
 });

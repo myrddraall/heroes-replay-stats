@@ -1,4 +1,7 @@
 import type { MoonChoices, PlanetChoices, SceneBody, SkyChoices } from '../scenes/scene-settings';
+import { migrateTints } from '../tints/tint-layers';
+import { keptColourTint } from '../tints/grading';
+import { PREVIEW_SCENE } from '../scenes/scenes';
 import type { Design } from '../design/design';
 import type { LibraryState } from '../library/library';
 import type { CreatedOverlay } from './created-overlays';
@@ -340,17 +343,19 @@ export function sceneWithout(p: PlanetChoices, id: string): PlanetChoices {
  * A design as kept, read as it is now: what named an overlay's part by its role alone (before
  * bodies wore several overlays) named by the overlay it was set for; what was kept for an
  * overlay's materials by their names alone (before they were kept by the overlay too) by their
- * keys; scenes' planets, moons and group placements given keys (`keyedScene`). A design kept
- * since is as it is.
+ * keys; scenes' planets, moons and group placements given keys (`keyedScene`); each one tint kept
+ * before objects had several the first of its list (`migrateTints`); the scenes' one Colour kept
+ * before scenes were graded the first of each scene's grading (`graded`). A design kept since is
+ * as it is.
  */
 export function migrateDesign(design: Design): Design {
+  design = graded(migrateTints(design));
   const planets = design.scenes?.planets ?? {};
   const body = wornBy(madeMaterials(design.library, 'planet'), [LEGACY_OVERLAY]);
   const sky = wornBy(madeMaterials(design.library, 'sky'), ['horizon-energy']);
   return {
     library: migrateLibrary(design.library, body, sky),
     scenes: {
-      ...design.scenes,
       planets: Object.fromEntries(
         Object.entries(planets).map(([k, p]) => [
           k,
@@ -359,4 +364,24 @@ export function migrateDesign(design: Design): Design {
       ),
     },
   };
+}
+
+/**
+ * A design with the scenes' one Colour kept before scenes were graded (`scenes.settings`) as the
+ * first tint of each scene's grading (not a group's, nor the preview stage's), and taken out.
+ */
+function graded(design: Design): Design {
+  const kept = (design.scenes as { settings?: Parameters<typeof keptColourTint>[0] } | undefined)
+    ?.settings;
+  if (!kept) return design;
+  const first = keptColourTint(kept);
+  const planets = Object.fromEntries(
+    Object.entries(design.scenes.planets ?? {}).map(([id, p]) => {
+      if (!first || p.group || id === PREVIEW_SCENE) return [id, p];
+      const tints = p.grading?.tints ?? [];
+      if (tints.some((t) => t.id === first.id)) return [id, p];
+      return [id, { ...p, grading: { ...p.grading, tints: [first, ...tints] } }];
+    }),
+  );
+  return { ...design, scenes: { planets } };
 }

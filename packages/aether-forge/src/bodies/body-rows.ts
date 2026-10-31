@@ -5,6 +5,7 @@ import { OPAQUE_ICON, SEE_THROUGH_ICON, type TreeRow } from '../tree/scene-tree'
 import {
   type BodyCategory,
   type BodyInfo,
+  bodyTintRows,
   CATEGORY_TITLES,
   overlayEnabled,
   overlayLabel,
@@ -12,7 +13,7 @@ import {
 import { lightDetail, lightIcon, lightsOfBody } from '../lights/lights';
 import { type MaterialEntry, materialsOf, onPart, sharedMaterials } from '../materials/materials';
 import { movableShape, partIcon, type PartNode, partsInDrawOrder } from '../parts/parts';
-import { layerRows, partMaterialRows } from '../materials/material-views';
+import { adjustmentRows, layerRows, partMaterialRows } from '../materials/material-views';
 
 /** How an editor keys the rows of a body's subtree (each editor's own scheme: see its targets). */
 export interface BodyRowKeys {
@@ -46,6 +47,8 @@ export interface BodyRowOptions {
   readonly adds?: Partial<Record<BodyCategory, boolean>>;
   /** An overlay it wears: that overlay's shapes and lights alone (what an editor inside it shows). */
   readonly only?: string;
+  /** Whether its colour adjustments are shown (their category even with none, to add the first). */
+  readonly adjustments?: boolean;
 }
 
 /**
@@ -68,13 +71,15 @@ export function materialRows(
       // (Opaque: a solid square; see-through, a checkerboard.)
       ...(m.values.blend === 'opaque' ? { icon: OPAQUE_ICON } : { icon: SEE_THROUGH_ICON }),
       depth,
-      expandable: m.layers.length > 0,
+      expandable: true,
       expanded: open.has(key),
       enabled: m.values.enabled,
       ...(unsaved !== undefined ? { unsaved } : {}),
       movable,
     },
-    ...(open.has(key) ? layerRows(key, m, depth + 1) : []),
+    ...(open.has(key)
+      ? [...layerRows(key, m, depth + 1), ...adjustmentRows(key, m.tints, depth + 1, open)]
+      : []),
   ];
 }
 
@@ -83,7 +88,8 @@ export function materialRows(
  * where it can be added to (selected, a category shows what adds to it):
  * its Shapes (its parts and its overlays' in one list, in the order they are drawn, each of an
  * overlay marked with its name and each with the materials drawn on it; moved to draw them in
- * another order), its Lights (its own and its overlays', marked so), the Overlays it wears (in
+ * another order), its Lights (its own and its overlays', marked so), its Colour adjustments, the
+ * Overlays it wears (in
  * the order worn), its Variants, and its
  * Moons. Shapes, Overlays and Moons start unfolded (a key kept means folded), Lights and Variants
  * folded (a key kept means unfolded); a part is unfolded unless folded.
@@ -170,6 +176,7 @@ export function bodySubtreeRows(
           enabled: light.enabled,
         });
   }
+  if (!only && options.adjustments) rows.push(...adjustmentRows(b.key, bodyTintRows(b), at, open));
   if (!only && (b.overlays.length || adds.overlays)) {
     category(
       keys.overlays(),

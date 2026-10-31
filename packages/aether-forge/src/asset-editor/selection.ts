@@ -1,19 +1,25 @@
+import { assetAdjustmentMethods } from './adjustments';
+import { tintLabel, tintRowsOf } from '../tints/tint-rows';
 import { overlayName } from '@myrddraall/heroes-replay-stats-aether/overlays';
 import {
-  type MaterialTint,
-  NO_MATERIAL_TINT,
 } from '@myrddraall/heroes-replay-stats-aether/materials';
 import { computed } from '@angular/core';
 import { baseMaterialOf, materialAt, type MaterialEntry } from '../materials/materials';
 import {
   BodyCategory,
   bodyLabel,
+  bodyTintRows,
   bodyView,
   CATEGORY_TITLES,
   type TargetKind,
 } from '../bodies/body';
 import { skyAnchorView } from '../sky/sky';
-import { type MaterialView, viewTitle } from '../materials/material-views';
+import {
+  adjustmentAt,
+  ADJUSTMENTS_TITLE,
+  type MaterialView,
+  viewTitle,
+} from '../materials/material-views';
 import { lightsOfBody } from '../lights/lights';
 import type { PickChoice } from '../controls/pick-list';
 import { type AssetTarget, openKey, type OpenTarget } from '../layout/open-target';
@@ -131,6 +137,9 @@ export function assetSelectionViews(store: WithOwn) {
       return `Reset ${a.kind === 'sky' ? 'the sky' : a.id}`;
     }),
     kind: computed((): TargetKind => {
+      // (The planet's, a moon's or the sky's colour adjustments, or one of them; a material's are its views.)
+      const adjustment = adjustmentAt(selected());
+      if (adjustment) return adjustment.id ? 'adjustment' : 'adjustments';
       const t = target();
       if ('view' in t && t.view) return t.view.kind;
       const k = t.kind;
@@ -173,6 +182,18 @@ export function assetSelectionViews(store: WithOwn) {
     title: computed(() => {
       const t = target();
       const a = asset();
+      const adjustment = adjustmentAt(selected());
+      if (adjustment && !('view' in t && t.view)) {
+        const sky = selectedSky();
+        const b = _body();
+        const rows = sky
+          ? tintRowsOf(sky.below ? [['the library (sky)', sky.below]] : [], sky.edited)
+          : b
+            ? bodyTintRows(b)
+            : [];
+        const row = rows.find((r) => r.tint.id === adjustment.id);
+        return row ? tintLabel(row.tint) : ADJUSTMENTS_TITLE;
+      }
       if ('view' in t && t.view) {
         const b = _body();
         const m =
@@ -223,18 +244,19 @@ export function assetSelectionViews(store: WithOwn) {
       const b = _body();
       return b ? bodyLabel(b) : a.id;
     }),
-    skyTint: computed((): MaterialTint => {
-      const sky = selectedSky();
-      return sky?.edited.tint ?? sky?.below?.tint ?? NO_MATERIAL_TINT;
-    }),
-    skyTintSet: computed(() => selectedSky()?.edited.tint),
     skyAnchor: computed(() => {
       const sky = selectedSky();
       return skyAnchorView(sky?.below, sky?.edited);
     }),
     skyChanged: computed(() => {
       const sky = selectedSky();
-      return !!sky && (!!sky.edited.materials || !!sky.edited.tint || !!sky.edited.anchor);
+      return (
+        !!sky &&
+        (!!sky.edited.materials ||
+          !!sky.edited.tints ||
+          !!sky.edited.tintsEnabled ||
+          !!sky.edited.anchor)
+      );
     }),
     overlayOptions: computed((): readonly PickChoice[] => []),
     sets: computed(() => false),
@@ -351,6 +373,7 @@ export function assetSelectionMethods(store: AssetMethodsStore, w: AssetWrites) 
       patchState(store, { selected: key });
     },
     setEnabled(change: { key: string; enabled: boolean }): void {
+      if (assetAdjustmentMethods(store, w).switchAdjustment(change.key, change.enabled)) return;
       const t = targetOf(change.key, asset());
       const on = change.enabled;
       const level = levelOf(t);

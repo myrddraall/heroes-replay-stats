@@ -66,7 +66,6 @@ describe('materials’ settings', () => {
       spread: 0.3,
       scale: 1,
     });
-    expect(v.tint).toEqual({ colour: '#ffffff', blend: 'multiply', strength: 0 });
     expect(materialValues(m, { blend: 'alpha', spread: 0, enabled: false })).toMatchObject({
       enabled: false,
       blend: 'alpha',

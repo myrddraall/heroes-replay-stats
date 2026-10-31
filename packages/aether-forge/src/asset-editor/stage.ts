@@ -1,3 +1,4 @@
+import type { TintsSet } from '@myrddraall/heroes-replay-stats-aether/tints';
 import { overlayFileFor, ownOverlays } from '@myrddraall/heroes-replay-stats-aether/overlays';
 import type { SetPlanet } from '@myrddraall/heroes-replay-stats-aether/planet-sets';
 import {
@@ -97,11 +98,17 @@ export function stageViews(store: WithCameras) {
           owner,
           material: owner ? a.id : undefined,
         });
-        const tint = { colour: standInColour, blend: 'multiply' as const, strength: 1 };
+        const tint = {
+          id: 'stand-in',
+          kind: 'colour' as const,
+          colour: standInColour,
+          blend: 'multiply' as const,
+          strength: 1,
+        };
         return {
           id,
           ...fitted(owner),
-          materials: fill === 'colour' ? { [STAND_IN_MATERIAL]: { tint } } : undefined,
+          materials: fill === 'colour' ? { [STAND_IN_MATERIAL]: { tints: [tint] } } : undefined,
           // Lit by its own lights, as set (a material preview's: evenly, unless asked).
           lights: standInLightSettings(_aids.standInLights()),
         };
@@ -159,7 +166,8 @@ export function stageViews(store: WithCameras) {
       if (use?.kind === 'style') return [wearing(use.id)];
       return [{ id: shownOn(), ...fitted(shownOn()) }];
     }),
-    stageTint: computed(() => _draft.scenes().settings),
+    /** The stage's colour grading: none (an asset shown as the game draws it, never in the site's tint). */
+    stageGrading: computed((): TintsSet => ({})),
     /** Which asset is on the stage (another one flown to; this one edited, faded in place). */
     stageKey: computed(() => {
       const a = asset();

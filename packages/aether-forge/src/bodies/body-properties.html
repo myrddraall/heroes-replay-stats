@@ -124,14 +124,6 @@
   />
 </forge-property-section>
 } @if (bodySettings() && on('look')) {
-<forge-tint-section
-  [tint]="v.tint"
-  [base]="baseTint()"
-  [set]="set().tint"
-  (tintChange)="settingsChange.emit({ tint: $event })"
-  (clear)="clear.emit(['tint'])"
-/>
-} @if (bodySettings() && on('look')) {
 <forge-property-section title="Rim" [changed]="isSet('rim')" (resetRequested)="clear.emit(['rim'])">
   <forge-property-direction
     label="Direction"

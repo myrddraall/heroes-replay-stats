@@ -1,3 +1,4 @@
+import type { TintsSet } from '@myrddraall/heroes-replay-stats-aether/tints';
 import type { Design } from '@myrddraall/heroes-replay-stats-aether/design';
 import { type SkyChoices, without } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import type {
@@ -7,7 +8,6 @@ import type {
 } from '@myrddraall/heroes-replay-stats-aether/formats';
 import type {
   MaterialSettings,
-  MaterialTint,
 } from '@myrddraall/heroes-replay-stats-aether/materials';
 import type { SkyAnchor } from '@myrddraall/heroes-replay-stats-aether/sky';
 import { signalStoreFeature, type, withMethods } from '@ngrx/signals';
@@ -26,11 +26,9 @@ export function withSkies() {
         clearLibrarySkyMaterial(name: string, keys?: readonly (keyof MaterialSettings)[]): void {
           setLibrarySky((sky) => skyMaterial(sky, name, null, keys));
         },
-        setLibrarySkyTint(tint: MaterialTint): void {
-          setLibrarySky((sky) => ({ ...sky, tint }));
-        },
-        clearLibrarySkyTint(): void {
-          setLibrarySky((sky) => ({ ...sky, tint: undefined }));
+        /** The library sky's tints as they are to be set (none: none set). */
+        setLibrarySkyTints(set: TintsSet | undefined): void {
+          setLibrarySky((sky) => ({ ...sky, tints: set?.tints, tintsEnabled: set?.tintsEnabled }));
         },
         /** The library sky's materials' draw order (none: as the data has it). */
         setLibrarySkyOrder(order: readonly string[] | undefined): void {
@@ -95,11 +93,9 @@ export function withSkies() {
         ): void {
           setSceneSky(id, (sky) => skyMaterial(sky, name, null, keys));
         },
-        setSkyTint(id: string, tint: MaterialTint): void {
-          setSceneSky(id, (sky) => ({ ...sky, tint }));
-        },
-        clearSkyTint(id: string): void {
-          setSceneSky(id, (sky) => ({ ...sky, tint: undefined }));
+        /** A scene's sky's tints as they are to be set (none: none set). */
+        setSkyTints(id: string, set: TintsSet | undefined): void {
+          setSceneSky(id, (sky) => ({ ...sky, tints: set?.tints, tintsEnabled: set?.tintsEnabled }));
         },
         /** A scene's sky's materials' draw order (none: as the library has it). */
         setSkyOrder(id: string, order: readonly string[] | undefined): void {

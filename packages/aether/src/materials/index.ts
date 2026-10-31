@@ -8,11 +8,9 @@ export {
   materialKey,
   type MaterialSettings,
   type MaterialSettingsMap,
-  type MaterialTint,
   type MaterialValues,
   materialValues,
   mergeMaterialSettings,
   mergeSettings,
-  NO_MATERIAL_TINT,
   withLayer,
 } from './material-settings';

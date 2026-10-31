@@ -38,7 +38,7 @@ import {
   vec3,
   vec4,
 } from 'three/tsl';
-import { blend } from '../materials/blend-shader';
+import { gradedLight, gradedPicture, lookedUp, lutColour } from './grade-shader';
 import type { ShaderUniforms } from '../uniforms/shader-uniforms';
 import { cold, coldDepth, coldVertex } from '../cold-shaders';
 
@@ -293,12 +293,19 @@ export function bloomBlurMaterial(source: Texture, step: Node<'vec2'>): NodeMate
 }
 
 /**
- * The tone mapping: the scene and its bloom exposed, its luminance to the white
- * point; the tint, fading from the one before; an editing backdrop under what the scene covers.
- * Its uniforms: uExposure, uWhitePoint, uFade, uBloomStrength, uTint0/1, uBlend0/1, uBackdrop,
- * uBackdropA/B, uGridSize, uHeight (the canvas's, for the backdrop's grid from the bottom left).
+ * The tone mapping: the scene and its bloom, graded on the light (`gradedLight`), exposed, its
+ * luminance to the white point, then graded on the picture (looked up in `luts`); fading from the
+ * grading before (set 1, its own table) by `uFade`; an editing backdrop under what the scene covers.
+ * Its uniforms: uExposure, uWhitePoint, uFade, uBloomStrength, the grades' (`gradesUniforms`),
+ * uLooked0/1 (whether each set's table is read), uBackdrop, uBackdropA/B, uGridSize, uHeight (the
+ * canvas's, for the backdrop's grid from the bottom left).
  */
-export function toneMaterial(u: ShaderUniforms, scene: Texture, bloom: Texture): NodeMaterial {
+export function toneMaterial(
+  u: ShaderUniforms,
+  scene: Texture,
+  bloom: Texture,
+  luts: readonly [Texture, Texture],
+): NodeMaterial {
   const m = overlay(new NodeMaterial());
   m.name = 'tone';
   m.vertexNode = fullscreen();
@@ -308,16 +315,23 @@ export function toneMaterial(u: ShaderUniforms, scene: Texture, bloom: Texture):
     const hdr = sceneAt.rgb.add(texture(bloom, uv()).rgb.mul(u.float('uBloomStrength'))).toVar();
     const exposure = u.float('uExposure', 1);
     const white = u.float('uWhitePoint', 1);
-    const light = dot(hdr, vec3(0.2126, 0.7152, 0.0722));
-    const c = hdr.mul(exposure).toVar();
-    const l = light.mul(exposure).toVar();
-    const mapped = l.mul(l.div(white.mul(white)).add(1)).div(l.add(1));
-    const toned = clamp(select(l.greaterThan(0), c.mul(mapped.div(l)), c), 0, 1).toVar();
-    const shown = mix(
-      blend(toned, u.vec3('uTint1'), u.int('uBlend1')),
-      blend(toned, u.vec3('uTint0'), u.int('uBlend0')),
-      u.float('uFade', 1),
-    ).toVar();
+    const toned = (set: 0 | 1) => {
+      const graded = gradedLight(u, set, hdr);
+      const light = dot(graded, vec3(0.2126, 0.7152, 0.0722));
+      const c = graded.mul(exposure).toVar();
+      const l = light.mul(exposure).toVar();
+      const mapped = l.mul(l.div(white.mul(white)).add(1)).div(l.add(1));
+      const out = clamp(select(l.greaterThan(0), c.mul(mapped.div(l)), c), 0, 1).toVar();
+      If(u.int(`uLooked${set}`).greaterThan(0), () => {
+        out.assign(lookedUp(out, luts[set]));
+      });
+      return out;
+    };
+    const shown = toned(0).toVar();
+    const fade = u.float('uFade', 1);
+    If(fade.lessThan(1), () => {
+      shown.assign(mix(toned(1), shown, fade));
+    });
     const backdrop = u.int('uBackdrop');
     If(backdrop.greaterThan(0), () => {
       // The grid's squares from the bottom left, as WebGL's fragment coordinates have them.
@@ -329,6 +343,17 @@ export function toneMaterial(u: ShaderUniforms, scene: Texture, bloom: Texture):
     });
     return cold(vec4(shown, 1));
   })();
+  coldVertex(m);
+  return m;
+}
+
+/** A scene's grading on the picture baked into a lookup table (`lutColour`'s layout), as `u`'s tint pack has it. */
+export function lutMaterial(u: ShaderUniforms): NodeMaterial {
+  const m = overlay(new NodeMaterial());
+  m.name = 'grading';
+  m.vertexNode = fullscreen();
+  setBlend(m, 'none');
+  m.fragmentNode = Fn(() => cold(vec4(gradedPicture(u, lutColour(uv())), 1)))();
   coldVertex(m);
   return m;
 }

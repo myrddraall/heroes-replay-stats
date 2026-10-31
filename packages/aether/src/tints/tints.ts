@@ -1,9 +1,11 @@
 /**
  * How a tint recolours: CSS's blend modes of those names (Compositing and Blending Level 1), and
  * the image editors' others CSS doesn't have (linear dodge and burn, vivid, linear and pin light,
- * hard mix, subtract, divide), as Photoshop defines them.
+ * hard mix, subtract, divide, darker and lighter colour), as Photoshop defines them; glow and
+ * reflect as Krita (and Paint Shop Pro) have them. `normal`: the colour itself, by the strength.
  */
 export type TintBlend =
+  | 'normal'
   | 'multiply'
   | 'screen'
   | 'overlay'
@@ -26,16 +28,11 @@ export type TintBlend =
   | 'hue'
   | 'saturation'
   | 'color'
-  | 'luminosity';
-
-/** A colour the scene, or a part of it, is blended with; its channels 0..1. */
-export interface Tint {
-  readonly colour: readonly [number, number, number];
-  readonly blend: TintBlend;
-}
-
-/** White multiplied: the scene as the game draws it. */
-export const NO_TINT: Tint = { colour: [1, 1, 1], blend: 'multiply' };
+  | 'luminosity'
+  | 'darker-color'
+  | 'lighter-color'
+  | 'glow'
+  | 'reflect';
 
 /** Each blend's number in the shaders' `blend` (kept as they were: settings name blends, not numbers). */
 export const BLEND_MODES: Readonly<Record<TintBlend, number>> = {
@@ -62,15 +59,25 @@ export const BLEND_MODES: Readonly<Record<TintBlend, number>> = {
   'hard-mix': 20,
   subtract: 21,
   divide: 22,
+  normal: 23,
+  'darker-color': 24,
+  'lighter-color': 25,
+  glow: 26,
+  reflect: 27,
 };
 
-/** The blends in groups, as an image editor lists them: darkening, lightening, contrast, comparing, colour. */
+/**
+ * The blends in groups, as an image editor lists them: the colour itself, darkening, lightening,
+ * contrast, comparing, colour; then glow and reflect (Krita's "quadratic" ones).
+ */
 export const BLEND_GROUPS: readonly (readonly TintBlend[])[] = [
-  ['multiply', 'darken', 'color-burn', 'linear-burn'],
-  ['screen', 'lighten', 'color-dodge', 'linear-dodge'],
+  ['normal'],
+  ['multiply', 'darken', 'color-burn', 'linear-burn', 'darker-color'],
+  ['screen', 'lighten', 'color-dodge', 'linear-dodge', 'lighter-color'],
   ['overlay', 'soft-light', 'hard-light', 'vivid-light', 'linear-light', 'pin-light', 'hard-mix'],
   ['difference', 'exclusion', 'subtract', 'divide'],
   ['hue', 'saturation', 'color', 'luminosity'],
+  ['glow', 'reflect'],
 ];
 
 /** The blends, in BLEND_GROUPS' order. */
@@ -91,17 +98,6 @@ export interface ViewTints {
 }
 
 export const NO_TINTS: ViewTints = { background: null };
-
-/** The tint as the renderer draws it. A colour that isn't one tints nothing. */
-export function rendererTint(tints: ViewTints, parse: ColourParser): Tint {
-  const set = tints.background;
-  const colour = set ? parse(set.colour) : null;
-  return colour && set ? { colour, blend: set.blend } : NO_TINT;
-}
-
-export function sameTint(a: Tint, b: Tint): boolean {
-  return a.blend === b.blend && a.colour.every((c, j) => c === b.colour[j]);
-}
 
 /**
  * A CSS colour parsed by the browser (any colour CSS takes), as RGB 0..1; a translucent one is

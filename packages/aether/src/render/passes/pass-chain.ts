@@ -23,11 +23,14 @@ import {
   copyMaterial,
   downsampleMaterial,
   impostorMaterial,
+  lutMaterial,
   PassQuad,
   type ToClip,
   toneMaterial,
 } from './pass-shaders';
 import { DrawValues, ShaderUniforms, withValues } from '../uniforms/shader-uniforms';
+import type { UniformSet } from '../uniforms/uniforms';
+import { LUT_SIZE } from './grade-shader';
 import { BLOOM_PASSES, BLOOM_SCALE, BLOOM_SPACING, SKY_LIGHT_SIZE } from '../tuning';
 
 /** What the pass chain needs of the renderer it serves. */
@@ -77,6 +80,11 @@ export class PassChain {
   /** It at half its size and at a quarter: its mipmaps one and two, made by passes of their own. */
   readonly skyLightHalf: RenderTarget;
   readonly skyLightQuarter: RenderTarget;
+  /**
+   * The grading on the picture's lookup tables (`lutColour`'s layout): the grading shown's, and the
+   * one it fades from's; baked by their passes (`bakeGrading`).
+   */
+  readonly luts: readonly [RenderTarget, RenderTarget];
   bloom: [RenderTarget, RenderTarget] | null = null;
   passes: {
     copy: Map<string, PassQuad>;
@@ -86,6 +94,9 @@ export class PassChain {
     blur: [PassQuad, PassQuad];
     tone: PassQuad;
     toneUniforms: ShaderUniforms;
+    /** The lookup tables' bakes (`luts`), each with its uniforms. */
+    grading: readonly [PassQuad, PassQuad];
+    gradingUniforms: readonly [ShaderUniforms, ShaderUniforms];
     /** The sky light's mipmaps made: its half from it, its quarter from its half. */
     downsample: [PassQuad, PassQuad];
     /** The impostors' materials, pass 0 and pass 1, each drawn here with a placeholder pass's textures (its program compiled ahead, and held). */
@@ -183,6 +194,7 @@ export class PassChain {
     const of = (pass: Pass, o: Output) => (o === 'glow' ? pass.glow : pass.colour);
     const still = { background: this.stillBackground, scene: this.stillScene };
     const toneUniforms = new ShaderUniforms();
+    const gradingUniforms = [new ShaderUniforms(), new ShaderUniforms()] as const;
     this.passes = {
       copy: byOutput((o) => copyMaterial(of(still.background, o).texture)),
       copyDepth: byOutput((o) => copyDepthMaterial(of(still.scene, o).depthTexture!)),
@@ -205,8 +217,15 @@ export class PassChain {
         quad(bloomBlurMaterial(this.bloom[0].texture, this.blurSteps[0])),
         quad(bloomBlurMaterial(this.bloom[1].texture, this.blurSteps[1])),
       ],
-      tone: quad(toneMaterial(toneUniforms, frame.colour.texture, this.bloom[0].texture)),
+      tone: quad(
+        toneMaterial(toneUniforms, frame.colour.texture, this.bloom[0].texture, [
+          this.luts[0].texture,
+          this.luts[1].texture,
+        ]),
+      ),
       toneUniforms,
+      grading: [quad(lutMaterial(gradingUniforms[0])), quad(lutMaterial(gradingUniforms[1]))],
+      gradingUniforms,
       downsample: [
         quad(downsampleMaterial(this.skyLight.texture)),
         quad(downsampleMaterial(this.skyLightHalf.texture)),
@@ -255,6 +274,8 @@ export class PassChain {
       [p.blur[0], this.bloom![1]],
       [p.blur[1], this.bloom![0]],
       [p.tone, null],
+      [p.grading[0], this.luts[0]],
+      [p.grading[1], this.luts[1]],
     ];
     const compiled = into.map(([quad, target]) => this.host.compile(quad, target));
     for (const { mesh, scene } of p.impostors)
@@ -301,6 +322,13 @@ export class PassChain {
       this.bakeImpostors.set(pass, made);
     }
     return made;
+  }
+  /** A grading on the picture baked into a lookup table (0: the grading shown's, 1: the one it fades from's). */
+  bakeGrading(lut: 0 | 1, uniforms: UniformSet): void {
+    const p = this.passes!;
+    p.gradingUniforms[lut].apply(uniforms);
+    this.host.renderer.setRenderTarget(this.luts[lut]);
+    p.grading[lut].render(this.host.renderer);
   }
   drawBloom(threshold: number): void {
     const r = this.host.renderer;
@@ -384,6 +412,19 @@ export class PassChain {
     this.skyLight = skyTarget(SKY_LIGHT_SIZE);
     this.skyLightHalf = skyTarget(SKY_LIGHT_SIZE / 2);
     this.skyLightQuarter = skyTarget(SKY_LIGHT_SIZE / 4);
+    const lut = () => {
+      const t = new RenderTarget(LUT_SIZE * LUT_SIZE, LUT_SIZE, {
+        type: HalfFloatType,
+        format: RGBAFormat,
+        minFilter: LinearFilter,
+        magFilter: LinearFilter,
+        generateMipmaps: false,
+        depthBuffer: false,
+      });
+      t.texture.colorSpace = NoColorSpace;
+      return t;
+    };
+    this.luts = [lut(), lut()];
   }
 
   /** Free what the GPU holds of the targets, the spare bakes' too (a bake's own is let go of with its bake). */
@@ -392,5 +433,6 @@ export class PassChain {
     for (const p of this.spareBakes.splice(0)) this.freePass(p);
     for (const t of this.bloom ?? []) t.dispose();
     this.skyLight.dispose();
+    for (const t of this.luts) t.dispose();
   }
 }

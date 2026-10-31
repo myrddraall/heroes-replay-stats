@@ -21,7 +21,7 @@ import type { LoadedPlayScene, SceneCameraSet } from '../formats/play-scene';
 import type { SkySettings } from '../sky/sky-settings';
 import type { Backdrop, PlanetPlacement } from '../space/space';
 import { RENDERER, type Renderer, type RendererFactory } from '../render/renderer';
-import { NO_TINT, sameTint, type Tint } from '../tints/tints';
+import { type Grading, NO_GRADING, sameGrading } from '../tints/grading';
 
 /** Placements as the renderer draws them. */
 const drawnBodies = (placements: readonly PlanetPlacement[]) => placements.map((p) => drawnBody(p));
@@ -53,7 +53,7 @@ const AID_FADE_SECONDS = 0.3;
 
 /** What the running scene is told of a change of its inputs. */
 interface Running {
-  retint(tint: Tint): void;
+  regrade(grading: Grading): void;
   play(): void;
   resize(): void;
   newPicture(): void;
@@ -114,12 +114,12 @@ const sameLabels = (a: readonly Label[], b: readonly Label[]) =>
 /**
  * A loaded scene drawn into a canvas that fills this element (presentational), at a share of the
  * screen's resolution (`resolution`) whatever its size.
- * Animated, it is drawn up to `fps` frames a second, `fadeFps` while a change of tint fades in
+ * Animated, it is drawn up to `fps` frames a second, `fadeFps` while a change of grading fades in
  * (0: none till it rises again), and only while it can be seen (the tab shown, the element on
  * screen). Not animated, it is drawn once, then again for each new `picture`, at the time it is
  * then, cross-fading from the last; with reduced motion asked for, it is drawn once, still, and a
  * change shows at once.
- * It is always first drawn untinted, and fades into `tint`. The planets up are `placements`;
+ * It is always first drawn ungraded, and fades into `grading`. The planets up are `placements`;
  * a new set is flown to while it animates (the camera turns, the planets slide out and the new
  * ones in, the stars streak), or cross-faded to where it doesn't. The sky's materials show as
  * `sky` says. Where the browser has neither WebGPU nor WebGL 2 it stays empty: the element's own
@@ -139,8 +139,8 @@ const sameLabels = (a: readonly Label[], b: readonly Label[]) =>
 })
 export class SceneCanvas {
   readonly scene = input.required<LoadedPlayScene>();
-  /** The tint it is drawn in. */
-  readonly tint = input<Tint>(NO_TINT);
+  /** The colour grading it is drawn in. */
+  readonly grading = input<Grading>(NO_GRADING);
   /** How the sky shows: its materials' settings by name (those not named as the data has them), its tint. */
   readonly sky = input<SkySettings>({});
   /** The scene's lights, lighting every planet (see `scene-lights.ts`). */
@@ -213,8 +213,8 @@ export class SceneCanvas {
 
   constructor() {
     effect(() => {
-      const tint = this.tint();
-      untracked(() => this.running?.retint(tint));
+      const grading = this.grading();
+      untracked(() => this.running?.regrade(grading));
     });
     effect(() => {
       const sky = this.sky();
@@ -487,17 +487,17 @@ export class SceneCanvas {
       return renderer.pick(x / w, y / h, w / h);
     };
     this.running = {
-      // A new tint fades in the running animation's frames; where nothing animates, the picture
+      // A new grading fades in the running animation's frames; where nothing animates, the picture
       // cross-fades to it.
-      retint: (tint) => {
-        if (sameTint(tint, renderer.tint)) return;
+      regrade: (grading) => {
+        if (sameGrading(grading, renderer.grading)) return;
         if (frame) {
-          renderer.fadingFrom = renderer.tint;
-          renderer.tint = tint;
+          renderer.fadingFrom = renderer.grading;
+          renderer.grading = grading;
           renderer.fade = 0;
         } else {
           crossFadeTo(() => {
-            renderer.tint = tint;
+            renderer.grading = grading;
             renderer.fade = 1;
           });
         }
@@ -579,7 +579,7 @@ export class SceneCanvas {
         }
       },
     };
-    renderer.tint = NO_TINT; // always shown untinted first
+    renderer.grading = NO_GRADING; // always shown ungraded first
     renderer.aidFade = 0;
     renderer.setSky(drawnSky(this.sky(), loaded.scene));
     renderer.setSceneLights(this.lights());
@@ -592,7 +592,7 @@ export class SceneCanvas {
     play();
     const placements = this.placements(); // may have loaded before the scene did
     if (placements) this.running.replace(placements);
-    this.running.retint(this.tint());
+    this.running.regrade(this.grading());
 
     onCleanup(() => {
       this.running = undefined;

@@ -1,5 +1,6 @@
 import type { SkyOverlayFile } from '../formats/play-scene';
-import type { MaterialSettingsMap, MaterialTint } from '../materials/material-settings';
+import type { MaterialSettingsMap } from '../materials/material-settings';
+import type { TintLayer, TintSwitches } from '../tints/tint-layers';
 import type { SkyAnchor } from './sky-anchors';
 import type { AddedPart, PartSettingsMap } from '../formats/part-shapes';
 
@@ -12,7 +13,9 @@ export interface SkySettings {
   readonly materials?: MaterialSettingsMap;
   /** The materials' base settings, by name (under its overlays' materials' own). */
   readonly base?: MaterialSettingsMap;
-  readonly tint?: MaterialTint;
+  readonly tints?: readonly TintLayer[];
+  /** Which of its tints are drawn, by id (see `TintsSet`). */
+  readonly tintsEnabled?: TintSwitches;
   /** How it is anchored against the camera, where its materials don't say otherwise (unset: `world`). */
   readonly anchor?: SkyAnchor;
   /** Its materials' draw order, by `materialKey` (the later over the earlier; see `drawOrder`), where set. */

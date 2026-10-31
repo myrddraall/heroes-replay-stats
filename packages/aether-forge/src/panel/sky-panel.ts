@@ -6,7 +6,6 @@ import { type PropertyOption, PropertySelect } from '../controls/rows/property-s
 import { DraftDesignStore } from '../draft/draft-design.store';
 import { Editor } from '../editing/editor';
 import { SKY_ANCHOR_CHOICES } from '../sky/sky';
-import { TintSection } from '../materials/tint-section';
 import { AddPart } from '../parts/add-part';
 
 /**
@@ -15,7 +14,7 @@ import { AddPart } from '../parts/add-part';
  */
 @Component({
   selector: 'forge-sky-panel',
-  imports: [AddedList, AddPart, PickList, PropertySection, PropertySelect, TintSection],
+  imports: [AddedList, AddPart, PickList, PropertySection, PropertySelect],
   templateUrl: './sky-panel.html',
   styleUrl: './sky-panel.scss',
 })

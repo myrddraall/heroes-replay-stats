@@ -1,3 +1,4 @@
+import { DOCUMENT } from '@angular/common';
 import {
   Component,
   computed,
@@ -36,8 +37,9 @@ import type { SkySettings } from '../sky/sky-settings';
 import type { PlanetPlacement } from '../space/space';
 import { keepUnchanged } from './stable-placements';
 import { type BranchedPlacement, withFlowedLights } from '../bodies/flowed-lights';
-import { browserColourParser, rendererTint } from '../tints/tints';
-import { backgroundTints } from '../tints/tint-settings';
+import { browserColourParser } from '../tints/tints';
+import { gradingOf, hexOf, NO_GRADING, pictureTint } from '../tints/grading';
+import { presetColour, TINT_PRESETS } from '../tints/tint-presets';
 import type { AddedPart } from '../formats/part-shapes';
 import { overlayOfFile } from '../formats/overlay-files';
 
@@ -113,10 +115,28 @@ export class SceneView {
   protected readonly dim = computed(() => this.source?.dim?.() ?? 1);
   protected readonly drawing = this.store.drawing;
   private readonly parse = browserColourParser();
-  /** The tint over the whole picture: the scene's, where it has one; else the site's. */
-  protected readonly tint = computed(() => {
-    const own = this.source?.tint();
-    return rendererTint(own ? backgroundTints(own) : this.store.tints(), this.parse);
+  private readonly presets = inject(TINT_PRESETS);
+  private readonly root = inject(DOCUMENT).documentElement;
+  /** A colour as `#rrggbb` (any CSS colour, as the browser reads it), or null where it isn't one. */
+  private hex(css: string): string | null {
+    const rgb = this.parse(css);
+    return rgb ? hexOf(rgb) : null;
+  }
+  /**
+   * The colour grading: the scene's, where it has one (its theme colours as the theme has them);
+   * else the site's tint over the picture.
+   */
+  protected readonly grading = computed(() => {
+    const own = this.source?.grading();
+    if (own !== undefined && own !== null)
+      return gradingOf(own, (t) => {
+        const preset = this.presets.find((p) => p.id === t.preset);
+        const colour = preset?.token ? this.hex(presetColour(preset, this.root)) : null;
+        return preset && colour ? pictureTint(colour, preset.blend, t.strength) : null;
+      });
+    const site = this.store.tints().background;
+    const colour = site ? this.hex(site.colour) : null;
+    return site && colour ? { light: [], picture: [pictureTint(colour, site.blend)] } : NO_GRADING;
   });
   /** Where the scene shown puts the camera, over the game's. */
   protected readonly camera = computed(() => this.source?.camera?.());
@@ -381,7 +401,8 @@ export class SceneView {
           order: p.order,
           lights: p.lights,
           added: p.added,
-          tint: p.tint,
+          tints: p.tints,
+          tintsEnabled: p.tintsEnabled,
           lightFrom: p.lightFrom,
           rim: p.rim,
           lighting: p.lighting,

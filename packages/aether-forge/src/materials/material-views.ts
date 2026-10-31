@@ -3,15 +3,20 @@ import type { AddedLight } from '@myrddraall/heroes-replay-stats-aether/lights';
 import type { TreeRow } from '../tree/scene-tree';
 import { LAYER_NAMES, type MaterialEntry } from './materials';
 import { lightDetail, lightIcon, shieldOf } from '../lights/lights';
+import { TINT_KIND_ICONS, tintLabel, type TintRow } from '../tints/tint-rows';
 
 /**
  * What of a material a row shows, where it isn't the material itself: one of its layers; the
- * shield shader it is drawn with (its pattern); one of that shader's lights (by its id).
+ * shield shader it is drawn with (its pattern); one of that shader's lights (by its id); its
+ * colour adjustments, or one of them (by its id). A body's and the sky's colour adjustments are
+ * keyed the same way, after their own row's key (see `adjustmentsKey`).
  */
 export type MaterialView =
   | { readonly kind: 'layer'; readonly slot: LayerSlot }
   | { readonly kind: 'shader' }
-  | { readonly kind: 'gridLight'; readonly id: AddedLight['id'] };
+  | { readonly kind: 'gridLight'; readonly id: AddedLight['id'] }
+  | { readonly kind: 'adjustments' }
+  | { readonly kind: 'adjustment'; readonly id: string };
 
 const VIEW = '::';
 
@@ -22,7 +27,9 @@ export function viewKey(materialKey: string, view: MaterialView): string {
       ? `layer:${view.slot}`
       : view.kind === 'gridLight'
         ? `light:${view.id}`
-        : 'shader';
+        : view.kind === 'adjustment'
+          ? `adjust:${view.id}`
+          : view.kind;
   return `${materialKey}${VIEW}${what}`;
 }
 
@@ -42,6 +49,8 @@ export function splitViewKey(
   const base = key.slice(0, at);
   const what = key.slice(at + VIEW.length);
   if (what === 'shader') return { base, view: { kind: 'shader' } };
+  if (what === 'adjustments') return { base, view: { kind: 'adjustments' } };
+  if (what.startsWith('adjust:')) return { base, view: { kind: 'adjustment', id: what.slice(7) } };
   if (what.startsWith('group:')) return { base, view: 'group' };
   if (what.startsWith('light:'))
     return { base, view: { kind: 'gridLight', id: what.slice(6) as AddedLight['id'] } };
@@ -57,10 +66,76 @@ const LAYER_SLOTS: readonly LayerSlot[] = ['diffuse', 'emissive', 'mask1', 'mask
 /** A view's title: its shader, its light, or its layer (by the material's own name for it, where given). */
 export function viewTitle(view: MaterialView, m?: MaterialEntry): string {
   if (view.kind === 'shader') return 'Shield shader';
+  if (view.kind === 'adjustments') return ADJUSTMENTS_TITLE;
+  if (view.kind === 'adjustment') {
+    const row = m?.tints.find((r) => r.tint.id === view.id);
+    return row ? tintLabel(row.tint) : 'Colour adjustment';
+  }
   if (view.kind === 'gridLight')
     return m?.values.gridLights.find((l) => l.id === view.id)?.name ?? 'Light';
   const layer = m?.layers.find((l) => l.slot === view.slot)?.label ?? LAYER_NAMES[view.slot];
   return m ? `${m.label} · ${layer}` : layer;
+}
+
+/** The colour adjustments' category's name, and a scene's (its grading). */
+export const ADJUSTMENTS_TITLE = 'Colour adjustments';
+export const GRADING_TITLE = 'Colour grading';
+
+/** The row keys of what a row's owner (a body, a material, the sky) has of colour adjustments: their category, one of them. */
+export const adjustmentsKey = (owner: string) => viewKey(owner, { kind: 'adjustments' });
+export const adjustmentKey = (owner: string, id: string) =>
+  viewKey(owner, { kind: 'adjustment', id });
+
+/**
+ * A key's colour adjustments' owner (the row they are under) and, where it is one of them, which;
+ * none where the key is neither their category nor one of them.
+ */
+export function adjustmentAt(key: string): { readonly owner: string; readonly id?: string } | null {
+  const split = splitViewKey(key);
+  if (!split || split.view === 'group') return null;
+  if (split.view.kind === 'adjustments') return { owner: split.base };
+  if (split.view.kind === 'adjustment') return { owner: split.base, id: split.view.id };
+  return null;
+}
+
+/**
+ * An owner's colour adjustments as rows under it: their category (folded unless unfolded: its key
+ * kept means unfolded), each of them in the order drawn under it, switched on or off, those of the
+ * level edited moved among themselves, each added under it marked with where. The category is
+ * named `title` (a scene's: its grading).
+ */
+export function adjustmentRows(
+  owner: string,
+  tints: readonly TintRow[],
+  depth: number,
+  open: ReadonlySet<string>,
+  title = ADJUSTMENTS_TITLE,
+): TreeRow[] {
+  const key = adjustmentsKey(owner);
+  const unfolded = open.has(key) && tints.length > 0;
+  return [
+    {
+      key,
+      label: title,
+      icon: 'palette',
+      depth,
+      expandable: tints.length > 0,
+      expanded: unfolded,
+    },
+    ...(unfolded
+      ? tints.map((r) => ({
+          key: adjustmentKey(owner, r.tint.id),
+          label: tintLabel(r.tint),
+          ...(r.from !== undefined ? { detail: r.from } : {}),
+          icon: TINT_KIND_ICONS[r.tint.kind],
+          depth: depth + 1,
+          expandable: false,
+          expanded: false,
+          enabled: r.on,
+          movable: r.from === undefined,
+        }))
+      : []),
+  ];
 }
 
 /** A material's layers as rows under its own (each showing that layer). */

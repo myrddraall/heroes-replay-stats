@@ -1,3 +1,5 @@
+import type { TintsSet } from '@myrddraall/heroes-replay-stats-aether/tints';
+import { withTints } from '../tints/adjustments';
 import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies';
 import type { PartKey, PartSettings } from '@myrddraall/heroes-replay-stats-aether/formats';
 import {
@@ -59,6 +61,18 @@ export const bodyEdits = {
   switchBody(l: BodyLevel, on: boolean): void {
     const below = l.body.below?.enabled !== false;
     l.change((s) => (on === below ? without(s, ['enabled']) : { ...s, enabled: on }));
+  },
+
+  /** Its colour adjustments at the level as they are to be set (none: none set there). */
+  setTints(l: BodyLevel, set: TintsSet | undefined): void {
+    l.change((s) => withTints(s, set));
+  },
+  /** One of its materials' colour adjustments at the level as they are to be set (none: none set there). */
+  setMaterialTints(l: BodyLevel, key: string, set: TintsSet | undefined): void {
+    l.change((s) => {
+      const cleared = withoutMaterial(s, key, ['tints', 'tintsEnabled']);
+      return set ? withMaterial(cleared ?? {}, key, set) : cleared;
+    });
   },
 
   setMaterial(l: BodyLevel, key: string, change: Partial<MaterialSettings>): void {

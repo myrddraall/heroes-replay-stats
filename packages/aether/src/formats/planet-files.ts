@@ -1,7 +1,8 @@
 import type { SceneColor, SceneMaterial, SceneTexture } from './play-scene';
 import type { Orientation, Quat } from '../space/graph';
 import type { PartMapping, PartRole, PartShape } from './part-shapes';
-import type { MaterialSettingsMap, MaterialTint } from '../materials/material-settings';
+import type { MaterialSettingsMap } from '../materials/material-settings';
+import type { TintLayer, TintSwitches } from '../tints/tint-layers';
 import type { Vec3 } from '../space/vectors';
 import type { BodyVariant } from '../bodies/body-settings';
 
@@ -204,7 +205,9 @@ export interface PlanetTuning {
   /** Its materials' settings, by name (a style's: its own materials'). */
   readonly materials?: MaterialSettingsMap;
   /** A tint over all its materials (a planet's: its style's too). */
-  readonly tint?: MaterialTint;
+  readonly tints?: readonly TintLayer[];
+  /** Which of its tints are drawn, by id (see `TintsSet`). */
+  readonly tintsEnabled?: TintSwitches;
   /** Where its key light comes from (its lights turned together; body frame). */
   readonly lightFrom?: Vec3;
   /** Where its rims and glows lean: a point on its face (body frame). */

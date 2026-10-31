@@ -1,4 +1,4 @@
-@let t = tint(); @if (own()) {
+@if (own()) {
 <forge-property-section
   [title]="group() ? 'Group' : 'Scene'"
   [changed]="!!name()"
@@ -20,34 +20,6 @@
 </forge-property-section>
 } @if (planets()) {
 <ng-content select="[planetsPod]" />
-} @if (!group()) {
-<forge-property-section
-  title="Colour"
-  [changed]="tinted()"
-  (resetRequested)="presetChange.emit(none())"
->
-  <forge-property-select
-    label="Tint"
-    [changed]="tinted()"
-    (resetRequested)="presetChange.emit(none())"
-    [value]="preset()"
-    [options]="presetOptions()"
-    (valueChange)="presetChange.emit($event)"
-  />
-  @if (custom()) {
-  <forge-property-colour
-    label="Colour"
-    [value]="t.colour"
-    (valueChange)="tintChange.emit({ colour: $event })"
-  />
-  <forge-property-select
-    label="Blend"
-    [value]="t.blend"
-    [options]="blends"
-    (valueChange)="blend($event)"
-  />
-  }
-</forge-property-section>
 } @if (sets()) {
 <forge-property-section title="Sets">
   <div class="buttons">

@@ -1,3 +1,4 @@
+import type { TintLayer } from '../tints/tint-layers';
 import { describe, expect, it } from 'vitest';
 import {
   EMPTY_LIBRARY,
@@ -9,8 +10,8 @@ import {
 import type { SetPlanet } from '../planet-sets/planet-sets';
 import { DEFAULT_SKY_ANCHOR, skyAnchorOf } from '../sky/sky-anchors';
 const korhal: SetPlanet = { id: 'korhal', position: [0, 0, 0], radius: 1 };
-const red = { colour: '#ff0000', blend: 'color', strength: 1 } as const;
-const blue = { colour: '#0000ff', blend: 'hue', strength: 0.5 } as const;
+const red: TintLayer = { id: 'red', kind: 'colour', colour: '#ff0000', blend: 'color', strength: 1 };
+const blue: TintLayer = { id: 'blue', kind: 'colour', colour: '#0000ff', blend: 'hue', strength: 0.5 };
 
 describe('withLibrary', () => {
   it('leaves a planet the library has nothing for as it is', () => {
@@ -26,17 +27,17 @@ describe('withLibrary', () => {
     const set = withLibrary({ ...korhal, orientation: 'camera', axis: [1, 0, 0] }, library);
     expect(set).toMatchObject({ orientation: 'camera', axis: [1, 0, 0] });
     // Set nowhere: not given at all (the renderer's default, facing the camera).
-    const none = withLibrary(korhal, { ...EMPTY_LIBRARY, planets: { korhal: { tint: red } } });
+    const none = withLibrary(korhal, { ...EMPTY_LIBRARY, planets: { korhal: { tints: [red] } } });
     expect(none).not.toHaveProperty('orientation');
     expect(none).not.toHaveProperty('axis');
   });
 
-  it("puts the planet's and its style's defaults under what is set for it", () => {
+  it("puts the planet's and its style's defaults under what is set for it, its tints before the scene's", () => {
     const library: LibraryState = {
       planets: {
         korhal: {
           lighting: 0.5,
-          tint: red,
+          tints: [red],
           shade: 0.3,
           materials: { rock: { strength: 0.2, glow: 1 } },
         },
@@ -45,11 +46,11 @@ describe('withLibrary', () => {
       sky: {},
     };
     const shown = withLibrary(
-      { ...korhal, overlays: ['nexus'], tint: blue, materials: { rock: { strength: 0.9 } } },
+      { ...korhal, overlays: ['nexus'], tints: [blue], materials: { rock: { strength: 0.9 } } },
       library,
     );
     expect(shown.lighting).toBe(0.5);
-    expect(shown.tint).toEqual(blue);
+    expect(shown.tints).toEqual([red, blue]);
     expect(shown.materials).toEqual({ rock: { strength: 0.9, glow: 1 }, shield: { glow: 2 } });
     expect(shown.shade).toEqual({ strength: 0.3, direction: [1, 0, 0] });
   });
@@ -112,14 +113,14 @@ describe('withLibrary', () => {
   it("lets an overlay set any of a planet's settings under its own, the later over the earlier, the scene over all", () => {
     const library: LibraryState = {
       ...EMPTY_LIBRARY,
-      planets: { korhal: { tint: red, rim: [1, 0, 0], turn: 10 } },
+      planets: { korhal: { tints: [red], rim: [1, 0, 0], turn: 10 } },
       styles: {
-        warm: { tint: blue, orientation: 'world', turn: 30 },
+        warm: { tints: [blue], orientation: 'world', turn: 30 },
         tilted: { axis: [0, 0.5, 1], turn: 45 },
       },
     };
     const worn = withLibrary({ ...korhal, overlays: ['warm', 'tilted'] }, library);
-    expect(worn.tint).toEqual(red); // the planet's own over the overlay's
+    expect(worn.tints).toEqual([blue, red]); // the overlay's tints, then the planet's own
     expect(worn.rim).toEqual([1, 0, 0]);
     expect(worn.orientation).toBe('world'); // an overlay's where the planet sets none
     expect(worn.axis).toEqual([0, 0.5, 1]);
@@ -136,11 +137,11 @@ describe('withLibrary', () => {
     const library: LibraryState = {
       ...EMPTY_LIBRARY,
       planets: { korhal: { overlays: ['warm'] } },
-      styles: { warm: { tint: blue } },
+      styles: { warm: { tints: [blue] } },
     };
     const own = withLibrary({ ...korhal, overlays: ['nexus'], ownOverlays: true }, library);
     expect(own.overlays).toEqual(['warm']);
-    expect(own.tint).toEqual(blue);
+    expect(own.tints).toEqual([blue]);
     expect(withLibrary({ ...korhal, overlays: ['nexus'] }, library).overlays).toEqual(['nexus']);
   });
 });
@@ -169,14 +170,14 @@ describe('skyWithLibrary', () => {
   it("puts the library's sky under a scene's", () => {
     const library: LibraryState = {
       ...EMPTY_LIBRARY,
-      sky: { materials: { stars: { strength: 0.4, glow: 1 } }, tint: red },
+      sky: { materials: { stars: { strength: 0.4, glow: 1 } }, tints: [red] },
     };
     expect(skyWithLibrary({ materials: { stars: { strength: 1 } } }, library)).toMatchObject({
       materials: { stars: { strength: 1, glow: 1 } },
-      tint: red,
+      tints: [red],
     });
-    expect(skyWithLibrary({ tint: blue }, library).tint).toEqual(blue);
-    expect(skyWithLibrary(undefined, library).tint).toEqual(red);
+    expect(skyWithLibrary({ tints: [blue] }, library).tints).toEqual([red, blue]);
+    expect(skyWithLibrary(undefined, library).tints).toEqual([red]);
   });
 
   it("wears its data's overlays unless set, each switched on its own, their settings the library's", () => {
@@ -223,7 +224,7 @@ describe('the sky’s anchor as the library sets it', () => {
     const library: LibraryState = { ...EMPTY_LIBRARY, sky: { anchor: 'position' } };
     expect(skyWithLibrary(undefined, library).anchor).toBe('position');
     expect(skyWithLibrary({ anchor: 'camera' }, library).anchor).toBe('camera');
-    expect(skyWithLibrary({ tint: undefined }, library).anchor).toBe('position');
+    expect(skyWithLibrary({ tints: undefined }, library).anchor).toBe('position');
   });
 
   it('is a material’s own over the sky’s, set at any level (the scene’s over the library’s)', () => {

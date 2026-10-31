@@ -1,3 +1,4 @@
+import { type TintRow, tintRowsOf } from '../tints/tint-rows';
 import {
   overlayPartKey,
   ownPartKey,
@@ -20,12 +21,10 @@ import {
   materialKey,
   type MaterialSettings,
   type MaterialSettingsMap,
-  type MaterialTint,
   type MaterialValues,
   materialValues,
   mergeMaterialSettings,
   mergeSettings,
-  NO_MATERIAL_TINT,
   withLayer,
 } from '@myrddraall/heroes-replay-stats-aether/materials';
 import {
@@ -85,7 +84,8 @@ export interface MaterialEntry {
   readonly enabledBelow: boolean;
   readonly controls: MaterialControls;
   readonly set: MaterialSettings | undefined;
-  readonly baseTint: MaterialTint;
+  /** Its tints, as its Colour section lists them. */
+  readonly tints: readonly TintRow[];
   /** Its layers: each one's texture and how it lies on it. */
   readonly layers: readonly LayerEntry[];
   /** Whether it is drawn by a part added onto its owner (a sky's: listed with that part). */
@@ -370,7 +370,7 @@ export function materialsOf(
             enabledBelow: under?.enabled ?? MATERIAL_DEFAULTS.enabled,
             controls: materialControls(material, { pattern, drawAs: values.drawAs }),
             set: chosen?.[key],
-            baseTint: under?.tint ?? NO_MATERIAL_TINT,
+            tints: tintRowsOf(levels, chosen?.[key]),
             // Its layers as worn here (a body's own masks on an overlay's material); any texture
             // of the body's, its overlays' or the sky's to read instead.
             layers: layersOf(
@@ -480,7 +480,7 @@ export function baseMaterialOf(
     enabledBelow: tuning?.[name]?.enabled ?? MATERIAL_DEFAULTS.enabled,
     controls: materialControls(material, { pattern, particles, drawAs: values.drawAs, sky }),
     set: base?.[name],
-    baseTint: tuning?.[name]?.tint ?? NO_MATERIAL_TINT,
+    tints: tintRowsOf([['its tuning', tuning?.[name]]], base?.[name]),
     layers: layersOf(
       material,
       mergeMaterialSettings(tuning, base)[name],

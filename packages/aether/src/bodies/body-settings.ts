@@ -1,6 +1,7 @@
 import type { AddedPart, PartSettingsMap } from '../formats/part-shapes';
 import type { AddedLight, LightSettingsMap } from '../lights/lights';
-import type { MaterialSettingsMap, MaterialTint } from '../materials/material-settings';
+import type { MaterialSettingsMap } from '../materials/material-settings';
+import type { TintLayer, TintSwitches } from '../tints/tint-layers';
 import type { Orientation, Quat } from '../space/graph';
 import type { Vec3 } from '../space/vectors';
 
@@ -38,7 +39,9 @@ export interface BodySettings {
   readonly lighting?: number;
   readonly shade?: number;
   /** A tint over all its materials. */
-  readonly tint?: MaterialTint;
+  readonly tints?: readonly TintLayer[];
+  /** Which of its tints are drawn, by id (see `TintsSet`). */
+  readonly tintsEnabled?: TintSwitches;
   /**
    * How much room its glow is given past its spheres where the view is fitted to it, times their
    * reach (`HALO_MARGIN` unless set).

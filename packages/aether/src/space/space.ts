@@ -3,7 +3,8 @@ import type { Orientation, Quat } from './graph';
 import { type PartSettingsMap, shapeReach } from '../formats/part-shapes';
 import type { BodyPart, BodyShade } from '../formats/planet-files';
 import type { LoadedPlanet } from '../formats/planet-loader';
-import type { MaterialSettingsMap, MaterialTint } from '../materials/material-settings';
+import type { MaterialSettingsMap } from '../materials/material-settings';
+import type { TintLayer, TintSwitches } from '../tints/tint-layers';
 import { type Vec3, cross, dot, normalized } from './vectors';
 
 /**
@@ -166,7 +167,9 @@ export interface PlanetPlacement {
   /** Lights added to it (its own and its overlay's), after its rig's. */
   readonly added?: readonly AddedLight[];
   /** A tint over all its materials (its overlays' too), over its tuning's. */
-  readonly tint?: MaterialTint;
+  readonly tints?: readonly TintLayer[];
+  /** Which of its tints are drawn, by id (see `TintsSet`). */
+  readonly tintsEnabled?: TintSwitches;
   /**
    * Its rig turned and made stronger together (`tunedRig`), over its tuning's: kept from before
    * lights were objects (each light's own settings now), no longer set.

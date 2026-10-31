@@ -1,10 +1,5 @@
 @let added = editor.added(); @switch (editor.kind()) { @case ('scene') { @if (scene; as s) {
 <forge-scene-properties
-  [tint]="draft.scenes().settings.background"
-  [presetOptions]="s.tintOptions()"
-  [preset]="s.tintChoice()"
-  [none]="s.noTint()"
-  [custom]="s.tintChoice() === 'custom'"
   [sets]="s.sets()"
   [own]="s.own()"
   [group]="s.groupOpen()"
@@ -13,8 +8,6 @@
   [planet]="s.sceneLabel()"
   (nameChange)="s.rename($event)"
   (deleteRequested)="s.deleteScene()"
-  (tintChange)="draft.setTint($event)"
-  (presetChange)="draft.chooseTint($event)"
   (anotherSet)="s.anotherSet()"
 >
   <forge-property-section planetsPod title="Planets">

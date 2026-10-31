@@ -5,13 +5,21 @@ import {
   type SceneLayer,
   type SceneMaterial,
 } from '../../formats/play-scene';
-import { GridField, MaterialTint } from '../../materials/material-settings';
+import { GridField } from '../../materials/material-settings';
+import {
+  MAX_STOPS,
+  type TintLayer,
+  type TintMaskChannel,
+  type TintMaskLayer,
+} from '../../tints/tint-layers';
 import { rimTurn } from '../../space/directions';
 import { type Darkening, rgbOf } from '../../lights/lights';
 import { axisOf, type PartMapping } from '../../formats/part-shapes';
 import type { BodyPart, PlanetLight } from '../../formats/planet-files';
 import { MAX_FIELDS, MAX_LIGHTS, MAX_SHADES, V_SAMPLES } from './limits';
 import { BLEND_MODES, parseCanvasColour } from '../../tints/tints';
+import { MAX_GRADES, toneRange, whiteBalance } from '../../tints/grading';
+import { GRADE_ROWS } from './shader-uniforms';
 import type { UniformSet } from './uniforms';
 import { type Vec3, normalized } from '../../space/vectors';
 
@@ -39,13 +47,98 @@ export const layersOf = (m: SceneMaterial): readonly (SceneLayer | null | undefi
   m.specular,
 ];
 
-/** A tint into the uniforms `<name>Color`, `<name>Blend` and `<name>Strength` (none: strength 0). */
-export function tintUniforms(u: UniformSet, name: string, tint: MaterialTint | undefined): void {
-  const colour = tint ? parseCanvasColour(tint.colour) : null;
-  u.f1(`${name}Strength`, colour && tint ? tint.strength : 0);
-  if (!colour || !tint) return;
-  u.v3(`${name}Color`, colour);
-  u.i1(`${name}Blend`, BLEND_MODES[tint.blend]);
+/** A tint's kind, stage, mask and mask channel as the shader numbers them. */
+const TINT_KINDS: Partial<Record<TintLayer['kind'], number>> = {
+  colour: 0,
+  hsl: 1,
+  gradient: 2,
+  levels: 3,
+};
+/** A grading tint on the light's kind as the tone pass numbers it. */
+const GRADE_KINDS: Partial<Record<TintLayer['kind'], number>> = {
+  'white-balance': 0,
+  'brightness-contrast': 1,
+  'lift-gamma-gain': 2,
+};
+const TINT_MASK_LAYERS: Record<TintMaskLayer, number> = { diffuse: 0, emissive: 1, mask1: 2, mask2: 3 };
+const TINT_CHANNELS: Record<TintMaskChannel, number> = { r: 0, g: 1, b: 2, a: 3, luma: 4 };
+
+/**
+ * An object's tints as drawn (`drawnTints`) into the uniforms the tint packs read (`<prefix>A` to
+ * `<prefix>I`, one vec4 each a tint, and `<prefix>Count`): the material's own (`uTint`) or its
+ * body's, the sky's for the sky (`uBodyTint`). Each tint's rows: A its colour and strength; B its
+ * kind, blend, stage (1 before it is lit) and how many stops; C its hue turn (radians),
+ * saturation and lightness; D its mask's kind (0 none, 1 a layer's channel, 2 facing), layer,
+ * channel and whether inverted; E a facing mask's from and to; F to I its gradient's stops (colour, at);
+ * a levels tint's F its input's low, high and gamma, G its output's low and high.
+ */
+export function tintsUniforms(u: UniformSet, prefix: string, tints: readonly TintLayer[]): void {
+  const rows = Array.from({ length: 9 }, () => new Array<number>(tints.length * 4).fill(0));
+  tints.forEach((t, i) => {
+    const put = (row: number, values: readonly number[]) =>
+      values.forEach((v, c) => (rows[row]![i * 4 + c] = v));
+    const colour = t.kind === 'colour' ? (parseCanvasColour(t.colour) ?? [1, 1, 1]) : [1, 1, 1];
+    put(0, [...colour, t.strength]);
+    const stops = t.kind === 'gradient' ? t.stops.slice(0, MAX_STOPS) : [];
+    put(1, [
+      TINT_KINDS[t.kind] ?? 0,
+      t.kind === 'colour' ? BLEND_MODES[t.blend] : 0,
+      t.stage === 'surface' ? 1 : 0,
+      stops.length,
+    ]);
+    if (t.kind === 'hsl') put(2, [(t.hue * Math.PI) / 180, t.saturation, t.lightness, 0]);
+    const mask = t.mask;
+    put(3, [
+      !mask ? 0 : mask.by === 'layer' ? 1 : 2,
+      mask?.by === 'layer' ? TINT_MASK_LAYERS[mask.layer] : 0,
+      mask?.by === 'layer' ? TINT_CHANNELS[mask.channel] : 0,
+      mask?.invert ? 1 : 0,
+    ]);
+    if (mask?.by === 'facing') put(4, [mask.from, mask.to, 0, 0]);
+    [...stops]
+      .sort((a, b) => a.at - b.at)
+      .forEach((stop, k) => put(5 + k, [...(parseCanvasColour(stop.colour) ?? [0, 0, 0]), stop.at]));
+    if (t.kind === 'levels') {
+      put(5, [t.inputLow, t.inputHigh, t.gamma, 0]);
+      put(6, [t.outputLow, t.outputHigh, 0, 0]);
+    }
+  });
+  'ABCDEFGHI'.split('').forEach((r, k) => u.fv(`${prefix}${r}`, rows[k]!, '4fv'));
+  u.i1(`${prefix}Count`, tints.length);
+}
+
+/**
+ * A scene's grading on the light, and the one it fades from (`MAX_GRADES` on in the pack), into
+ * the uniforms the tone pass reads (`uGradeA` to `uGradeD`, `uGradeCount0` and `uGradeCount1`).
+ * Each tint's rows: A its kind (0 white balance, 1 brightness and contrast, 2 lift/gamma/gain) and
+ * strength; B white balance's multiplier, brightness's (2 to its stops) and contrast, or lift's
+ * offset; C gamma's power (one over it); D gain's slope.
+ */
+export function gradesUniforms(
+  u: UniformSet,
+  shown: readonly TintLayer[],
+  from: readonly TintLayer[],
+): void {
+  const rows = Array.from({ length: GRADE_ROWS }, () => new Array<number>(2 * MAX_GRADES * 4).fill(0));
+  const fill = (tints: readonly TintLayer[], first: number) =>
+    tints.slice(0, MAX_GRADES).forEach((t, k) => {
+      const i = first + k;
+      const put = (row: number, values: readonly number[]) =>
+        values.forEach((v, c) => (rows[row]![i * 4 + c] = v));
+      put(0, [GRADE_KINDS[t.kind] ?? 0, t.strength, 0, 0]);
+      if (t.kind === 'white-balance') put(1, whiteBalance(t.temperature, t.tint));
+      else if (t.kind === 'brightness-contrast') put(1, [2 ** t.brightness, t.contrast, 0]);
+      else if (t.kind === 'lift-gamma-gain') {
+        put(1, toneRange(t.lift));
+        put(2, toneRange(t.gamma).map((g) => 1 / Math.max(0.01, g)));
+        put(3, toneRange(t.gain));
+      }
+    });
+  fill(shown, 0);
+  fill(from, MAX_GRADES);
+  'ABCD'.split('').forEach((r, k) => u.fv(`uGrade${r}`, rows[k]!, '4fv'));
+  u.i1('uGradeCount0', Math.min(shown.length, MAX_GRADES));
+  u.i1('uGradeCount1', Math.min(from.length, MAX_GRADES));
 }
 
 /**

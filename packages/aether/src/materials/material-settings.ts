@@ -11,7 +11,7 @@ import {
 } from '../lights/lights';
 import { anchoredDepth, type SkyAnchor, skyAnchorOf } from '../sky/sky-anchors';
 import { DEFAULT_ORIENTATION, type Orientation } from '../space/graph';
-import type { TintBlend } from '../tints/tints';
+import { stackedTints, type TintLayer, type TintSwitches } from '../tints/tint-layers';
 import { type Vec3 } from '../space/vectors';
 
 /**
@@ -34,7 +34,6 @@ export interface MaterialValues {
   readonly cut: number;
   readonly width: number;
   readonly soft: number;
-  readonly tint: MaterialTint;
   /**
    * Where it is drawn among the scene's objects (a sky material's; a planet's are among them): one
    * not anchored to the world never among them (`anchoredDepth`).
@@ -249,8 +248,6 @@ export function gridFields(v: MaterialValues): {
   };
 }
 
-/** No tint: white, not at all. */
-export const NO_MATERIAL_TINT: MaterialTint = { colour: '#ffffff', blend: 'multiply', strength: 0 };
 /** A grid's active colour where none is set: magenta (the game has none: its grids are only ever inactive). */
 export const DEFAULT_ACTIVE = '#ff2bd6';
 
@@ -304,7 +301,9 @@ export function mergeMaterialSettings(
               ),
             )
           : (settings.layers ?? before?.layers);
-      out[name] = { ...before, ...settings, ...(layers ? { layers } : {}) };
+      // Its tints joined, the nearer's after; their switches the nearer's over.
+      const tints = stackedTints(before, settings);
+      out[name] = { ...before, ...settings, ...(layers ? { layers } : {}), ...tints };
     }
   }
   return out;
@@ -379,7 +378,6 @@ export function materialValues(
     cut: settings?.cut ?? MATERIAL_DEFAULTS.cut,
     width: settings?.width ?? MATERIAL_DEFAULTS.width,
     soft: settings?.soft ?? MATERIAL_DEFAULTS.soft,
-    tint: settings?.tint ?? NO_MATERIAL_TINT,
     depth: anchoredDepth(settings?.depth ?? ownDepth, anchor),
     anchor,
     lit: settings?.lit ?? !material.unshaded,
@@ -527,8 +525,10 @@ export interface MaterialSettings {
   readonly width?: number;
   /** How softly its drawn pattern's lines glow about themselves, 0 to 1. */
   readonly soft?: number;
-  /** A colour blended over it. */
-  readonly tint?: MaterialTint;
+  /** Its tints, in order (see `TintsSet`): its own at this level, after those of the levels under it. */
+  readonly tints?: readonly TintLayer[];
+  /** Which of its tints are drawn, by id, as this level says (see `TintsSet`). */
+  readonly tintsEnabled?: TintSwitches;
   /**
    * Where it is drawn among the scene's objects (a sky material's say): behind them all, as if
    * infinitely far (`background`, the sky's default), among them at its own depth (`scene`), or in
@@ -620,17 +620,6 @@ export function withLayers(
       i < 2 ? withLayer(m, layers[i ? 'mask2' : 'mask1'], loaded) : m,
     ),
   };
-}
-
-/**
- * A colour blended over a material's own, as CSS's blend modes of those names do, by `strength`
- * (0: not at all, 1: all the way); a colour past white keeps its brightness.
- */
-export interface MaterialTint {
-  /** `#rrggbb`. */
-  readonly colour: string;
-  readonly blend: TintBlend;
-  readonly strength: number;
 }
 
 /** Where a material is drawn among the scene's objects: behind them, among them or in front. */

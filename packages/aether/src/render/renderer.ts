@@ -7,7 +7,7 @@ import type { DrawnSky } from '../sky/drawn-sky';
 import type { Backdrop } from '../space/space';
 import type { DrawnBody } from '../bodies/drawn-body';
 import { ThreeRenderer } from './three-renderer';
-import type { Tint } from '../tints/tints';
+import type { Grading } from '../tints/grading';
 import type { Vec3 } from '../space/vectors';
 
 /**
@@ -40,8 +40,8 @@ export interface Renderer {
   timing: boolean;
   streak: number;
   smear: number;
-  tint: Tint;
-  fadingFrom: Tint;
+  grading: Grading;
+  fadingFrom: Grading;
   fade: number;
   /** How strongly the editor's beams and outlines show, 0 to 1. */
   aidFade: number;

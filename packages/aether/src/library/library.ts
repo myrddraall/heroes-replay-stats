@@ -1,6 +1,7 @@
 import type { MoonChoices, SkyChoices } from '../scenes/scene-settings';
 import { type MaterialSettingsMap, mergeMaterialSettings } from '../materials/material-settings';
 import { mergeLightSettings } from '../lights/lights';
+import { stackedTints } from '../tints/tint-layers';
 import { type CreatedOverlay, mergeAddedParts } from '../overlays/created-overlays';
 import { overlayOn } from '../overlays/overlays';
 import { variantLayersOf, variantsOf, variantsOnOf } from '../variants/variants';
@@ -151,7 +152,8 @@ export function withLibrary(
       ...(planet.added ?? []),
     ],
     lighting: planet.lighting ?? under.lighting,
-    tint: planet.tint ?? under.tint,
+    // Its tints: its overlays', its own levels', then those set where it is put, joined.
+    ...stackedTints(...styles, ...mine, planet),
     lightFrom: planet.lightFrom ?? under.lightFrom,
     rim: planet.rim ?? under.rim,
     ...orientationOf(planet, under),
@@ -208,7 +210,7 @@ export function skyWithLibrary(
       sky?.materials,
     ),
     ...(library.materials ? { base: library.materials } : {}),
-    tint: sky?.tint ?? library.sky.tint,
+    ...stackedTints(library.sky, sky),
     anchor: sky?.anchor ?? library.sky.anchor,
     order: sky?.order ?? library.sky.order,
     overlays,

@@ -1,5 +1,6 @@
 import type { SceneVariant } from '../variants/variants';
-import type { MaterialSettingsMap, MaterialTint } from '../materials/material-settings';
+import type { MaterialSettingsMap } from '../materials/material-settings';
+import type { TintLayer, TintsSet, TintSwitches } from '../tints/tint-layers';
 import type { AddedPart, PartSettingsMap } from '../formats/part-shapes';
 import type { SkyAnchor } from '../sky/sky-anchors';
 import type { AddedLight, LightSettingsMap } from '../lights/lights';
@@ -293,7 +294,9 @@ export function fitScene<T extends { readonly position: Vec3; readonly radius: n
  */
 export interface SkyChoices {
   readonly materials?: MaterialSettingsMap;
-  readonly tint?: MaterialTint;
+  readonly tints?: readonly TintLayer[];
+  /** Which of its tints are drawn, by id (see `TintsSet`). */
+  readonly tintsEnabled?: TintSwitches;
   /** How it is anchored against the camera (unset: as the level under it has it; else `world`). */
   readonly anchor?: SkyAnchor;
   /** Its materials' draw order, by `materialKey` (the later over the earlier; see `drawOrder`), where set. */
@@ -430,6 +433,11 @@ export interface PlanetChoices {
   /** What the scene is called, where it is named (else its first planet's id, or its own). */
   readonly name?: string;
   readonly sky?: SkyChoices;
+  /**
+   * Its colour grading (a scene's; not a group's): tints over the whole picture, in order, those
+   * on the light graded before those on the picture (`gradingOf`).
+   */
+  readonly grading?: TintsSet;
   /** Kept before scenes had several planets: the one planet, its style, looks and moons. */
   readonly planet?: string;
   readonly style?: string;

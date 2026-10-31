@@ -25,7 +25,8 @@ import {
   vec3,
   vec4,
 } from 'three/tsl';
-import { tintBy } from './blend-shader';
+import { channelOn, tintRun } from './tint-shader';
+import { MAX_TINTS } from '../uniforms/limits';
 import { HALF_REACH } from '../../lights/lights';
 import type { ShaderUniforms } from '../uniforms/shader-uniforms';
 
@@ -641,14 +642,49 @@ export function shadeMaterial(
     emissive.assign(colorLayer('emissive', L1));
   }
 
-  // Unshaded: its diffuse; lit: by the light on it, and the shine; then darkened by its shades.
+  // The tints: the material's own, then its body's (or the sky's), in one run (`tints` then
+  // `bodyTints` in the draw's table), each over what the ones before it left. Each is on where its
+  // mask says: a channel of one of the material's layers as read (its masks as they cut it), or
+  // how far the surface turns from the eye; those of a stage over `c`, and over `glow` too where
+  // given (the glow, where it is added).
+  const mask0 = maskLayer('mask0', L2);
+  const mask1 = maskLayer('mask1', L3);
+  const tintCount = u.int('uTintCount');
+  const tintRow = (i: Node<'int'>, r: number) =>
+    u.row('tints', select(i.lessThan(tintCount), i, i.sub(tintCount).add(MAX_TINTS)), r);
+  /** Where a tint is on, by its mask (`d`, `e`: its rows 3 and 4). */
+  const maskOn = (d: Node<'vec4'>, e: Node<'vec4'>) => {
+    const by = int(d.x).toVar();
+    const on = float(1).toVar();
+    If(by.equal(1), () => {
+      const layer = int(d.y).toVar();
+      const v = vec4(select(layer.equal(2), mask0, mask1)).toVar();
+      If(layer.equal(0), () => {
+        v.assign(diffuse);
+      }).ElseIf(layer.equal(1), () => {
+        v.assign(emissive);
+      });
+      on.assign(channelOn(v, int(d.z)));
+    }).ElseIf(by.equal(2), () => {
+      const edge = clamp(dot(n, toEye), 0, 1).oneMinus();
+      on.assign(smoothstep(e.x, max(e.y, e.x.add(1e-4)), edge));
+    });
+    return on;
+  };
+  const tintsOver = (stage: number, ...colours: Node<'vec3'>[]) =>
+    tintRun(tintCount.add(u.int('uBodyTintCount')), tintRow, stage, maskOn, colours);
+  // The surface as the tints before lighting leave it.
+  const surface = diffuse.rgb.toVar();
+  tintsOver(1, surface);
+
+  // Unshaded: its surface; lit: by the light on it, and the shine; then darkened by its shades.
   const base = vec3(0).toVar();
   If(u.int('uUnshaded').equal(1), () => {
-    base.assign(diffuse.rgb);
+    base.assign(surface);
   });
   if (body) {
     If(u.int('uUnshaded').equal(0).and(u.int('uLit').equal(1)), () => {
-      base.assign(diffuse.rgb.mul(light).add(shine.mul(specMap)).mul(u.float('uLightScale', 1)));
+      base.assign(surface.mul(light).add(shine.mul(specMap)).mul(u.float('uLightScale', 1)));
     });
     base.mulAssign(dark);
   }
@@ -676,25 +712,12 @@ export function shadeMaterial(
   If(added.not(), () => {
     rgb.assign(base.mul(glow).mul(select(emissiveBlend.equal(1), 2, 1)));
   });
-  // The tints (the material's, then its body's) over the colour, and over the glow where it is
-  // added: in one loop, one tint in it (pass i: the colour for 0 and 1, the glow for 2 and 3; the
-  // body's tint for odd i).
+  // The tints after lighting, over the colour, and over the glow where it is added.
   const tintedGlow = glow.toVar();
-  const tints = select(added, int(4), int(2)).toVar();
-  Loop(tints, ({ i }) => {
-    const ofBody = i.equal(1).or(i.equal(3)).toVar();
-    const onColour = i.lessThan(2).toVar();
-    const tinted = tintBy(
-      select(onColour, rgb, tintedGlow),
-      select(ofBody, u.vec3('uBodyTintColor'), u.vec3('uTintColor')),
-      select(ofBody, u.int('uBodyTintBlend'), u.int('uTintBlend')),
-      select(ofBody, u.float('uBodyTintStrength'), u.float('uTintStrength')),
-    ).toVar();
-    If(onColour, () => {
-      rgb.assign(tinted);
-    }).Else(() => {
-      tintedGlow.assign(tinted);
-    });
+  If(added, () => {
+    tintsOver(0, rgb, tintedGlow);
+  }).Else(() => {
+    tintsOver(0, rgb);
   });
   // What a grid's lights reveal of it: that much of its look, no brighter than white (what is
   // brighter blooms, below, as much of it as is revealed).
@@ -704,7 +727,7 @@ export function shadeMaterial(
     });
   }
 
-  const alpha = maskLayer('mask0', L2).mul(maskLayer('mask1', L3)).mul(diffuse.a).toVar();
+  const alpha = mask0.mul(mask1).mul(diffuse.a).toVar();
   If(u.int('uVertexAlpha').equal(1), () => {
     alpha.mulAssign(s.color.a);
   });

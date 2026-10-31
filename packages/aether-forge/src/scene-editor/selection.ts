@@ -1,3 +1,4 @@
+import { sceneAdjustmentMethods } from './adjustments';
 import {
   bodyAt,
   type BodyPath,
@@ -12,13 +13,21 @@ import { flowLights, knownLights, sourceIdOf } from '@myrddraall/heroes-replay-s
 import { computed } from '@angular/core';
 import {
   bodyLabel,
+  bodyTintRows,
   bodyView,
   CATEGORY_TITLES,
   filesLoaded,
   overlayLabel,
   type TargetKind,
 } from '../bodies/body';
-import { type MaterialView, viewTitle } from '../materials/material-views';
+import {
+  adjustmentAt,
+  ADJUSTMENTS_TITLE,
+  GRADING_TITLE,
+  type MaterialView,
+  viewTitle,
+} from '../materials/material-views';
+import { tintLabel } from '../tints/tint-rows';
 import {
   lightsOfBody,
   type LitByEntry,
@@ -201,6 +210,9 @@ export function selectionViews(store: WithSky) {
       return `${groupOpen() ? 'Group' : 'Scene'} · ${label()}`;
     }),
     kind: computed((): TargetKind => {
+      // (A body's or the sky's colour adjustments, or one of them; a material's are its views.)
+      const adjustment = adjustmentAt(selected());
+      if (adjustment) return adjustment.id ? 'adjustment' : 'adjustments';
       const t = target();
       if ('view' in t && t.view) return t.view.kind;
       // The scene's lights shown as any light is; the sky's overlays' parts as any part.
@@ -248,6 +260,20 @@ export function selectionViews(store: WithSky) {
     }),
     title: computed(() => {
       const t = target();
+      const adjustment = adjustmentAt(selected());
+      if (adjustment && !('view' in t && t.view)) {
+        const b = body();
+        const grading = t.kind === 'scene';
+        const rows = grading
+          ? store.sceneGrading()
+          : t.kind === 'sky'
+            ? store.skyTints()
+            : b
+              ? bodyTintRows(b)
+              : [];
+        const row = rows.find((r) => r.tint.id === adjustment.id);
+        return row ? tintLabel(row.tint) : grading ? GRADING_TITLE : ADJUSTMENTS_TITLE;
+      }
       if ('view' in t && t.view) {
         const b = body();
         const m =
@@ -379,6 +405,7 @@ export function selectionMethods(store: SceneMethodsStore, w: SceneWrites) {
       reveal(key);
     },
     setEnabled(change: { key: string; enabled: boolean }): void {
+      if (sceneAdjustmentMethods(store, w).switchAdjustment(change.key, change.enabled)) return;
       const t = targetOf(change.key);
       const on = change.enabled;
       if (t.kind === 'placement') {

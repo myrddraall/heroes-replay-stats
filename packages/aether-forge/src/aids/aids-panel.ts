@@ -3,7 +3,6 @@ import { Component, computed, inject } from '@angular/core';
 import { type PropertyOption, PropertySelect } from '../controls/rows/property-select';
 import { Editor } from '../editing/editor';
 import { AssetCatalogStore } from '../library/asset-catalog.store';
-import { TintSection } from '../materials/tint-section';
 import {
   EditingAidProperties,
   type EditingAidChanged,
@@ -30,7 +29,6 @@ import { ReferenceProperties, type ReferenceValues } from './reference-propertie
     NgTemplateOutlet,
     PropertySelect,
     ReferenceProperties,
-    TintSection,
   ],
   templateUrl: './aids-panel.html',
   styleUrl: './aids-panel.scss',

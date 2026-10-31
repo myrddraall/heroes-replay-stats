@@ -1,4 +1,5 @@
-import { storageKey, TINT_PRESETS, ViewStore } from '@myrddraall/heroes-replay-stats-aether';
+import { sceneAdjustmentMethods } from './adjustments';
+import { storageKey, ViewStore } from '@myrddraall/heroes-replay-stats-aether';
 import { loadPlanetIndex } from '@myrddraall/heroes-replay-stats-aether/formats';
 import { withPlanetFiles } from '../library/with-planet-files';
 import { RANDOM_SCENE, siblingKey } from '@myrddraall/heroes-replay-stats-aether/scenes';
@@ -59,7 +60,6 @@ const sceneStoreBase = () =>
       _ui: inject(EditorUiStore),
       _background: inject(ViewStore),
       _catalog: inject(AssetCatalogStore),
-      _tintPresets: inject(TINT_PRESETS),
       _index: resource({ loader: ({ abortSignal }) => loadPlanetIndex(_base, abortSignal) }),
     })),
   );
@@ -108,6 +108,7 @@ export const SceneEditorStore = signalStore(
       ...bodyMethods(store, w),
       ...skyMethods(store, w),
       ...variantMethods(store, w),
+      ...sceneAdjustmentMethods(store, w),
     };
   }),
   withHooks({

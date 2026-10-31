@@ -19,7 +19,6 @@ import { withCreatedOverlays } from './with-created-overlays';
 import { withSkies } from './with-skies';
 import { withScenes } from './with-scenes';
 import { withSceneVariants } from './with-scene-variants';
-import { withTint } from './with-tint';
 
 /** Where the draft is kept between visits (until it is saved or discarded). */
 const DRAFT_KEY = storageKey('draft');
@@ -35,7 +34,6 @@ function withDraftWrites() {
     withSkies(),
     withScenes(),
     withSceneVariants(),
-    withTint(),
   );
 }
 

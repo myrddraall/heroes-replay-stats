@@ -13,6 +13,7 @@ import {
   without,
 } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import type { AddedLight } from '@myrddraall/heroes-replay-stats-aether/lights';
+import type { TintsSet } from '@myrddraall/heroes-replay-stats-aether/tints';
 import { inject } from '@angular/core';
 import { signalStoreFeature, type, withMethods } from '@ngrx/signals';
 import { designWrites } from './design-writes';
@@ -144,6 +145,10 @@ export function withScenes() {
         /** A scene's own lights (none: none). */
         setSceneLights(id: string, lights: readonly AddedLight[]): void {
           setScene(id, (p) => ({ ...p, lights: lights.length ? lights : undefined }));
+        },
+        /** A scene's colour grading (none: none). */
+        setSceneGrading(id: string, grading: TintsSet | undefined): void {
+          setScene(id, (p) => ({ ...p, grading }));
         },
       };
     }),

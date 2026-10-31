@@ -4,15 +4,12 @@ import type { SceneBlend } from '@myrddraall/heroes-replay-stats-aether/formats'
 import {
   type MaterialDepth,
   type MaterialSettings,
-  type MaterialTint,
   type MaterialValues,
-  NO_MATERIAL_TINT,
 } from '@myrddraall/heroes-replay-stats-aether/materials';
 import type { SkyAnchor } from '@myrddraall/heroes-replay-stats-aether/sky';
 import { ORIENTATION_CHOICES, SKY_ANCHOR_CHOICES } from '../sky/sky';
 import { PropertyCheck } from '../controls/rows/property-check';
 import { PropertySection } from '../controls/property-section';
-import { TintSection } from './tint-section';
 import { PropertySelect } from '../controls/rows/property-select';
 import { PropertyNumber } from '../controls/rows/property-number';
 import { PropertyText } from '../controls/rows/property-text';
@@ -29,7 +26,6 @@ import { type SettingOrigins } from '../editing/setting-origins';
   selector: 'forge-material-properties',
   imports: [
     MatIcon,
-    TintSection,
     PropertySection,
     PropertyNumber,
     PropertySelect,
@@ -58,8 +54,6 @@ export class MaterialProperties {
   readonly changed = input(false);
   /** What of it is set here (the rest is its own). */
   readonly set = input<MaterialSettings | undefined>(undefined);
-  /** Its tint where none is set here: its own (its file's), or none. */
-  readonly baseTint = input<MaterialTint>(NO_MATERIAL_TINT);
   /** Its name as the levels under the one edited have it (shown while it isn't renamed here). */
   readonly labelBelow = input('');
   /** Whether it is a planet's or overlay's material, the library's own (shared) to open from here. */

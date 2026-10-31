@@ -9,12 +9,6 @@
   (clear)="clearAid('backdrop', $event)"
 />
 } @if (editor.preview()?.backdrop === 'sky') {
-<forge-tint-section
-  [tint]="editor.skyTint()"
-  [set]="editor.skyTintSet()"
-  (tintChange)="editor.setSkyTint($event)"
-  (clear)="editor.clearSkyTint()"
-/>
 <div class="buttons">
   <button
     type="button"

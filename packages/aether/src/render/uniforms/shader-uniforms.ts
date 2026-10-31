@@ -17,8 +17,16 @@ import {
 } from 'three/webgpu';
 import { int, ivec2, textureLoad, uniform } from 'three/tsl';
 import type { UniformSet } from './uniforms';
+import { MAX_GRADES } from '../../tints/grading';
 import { rimTurn } from '../../space/directions';
-import { MAX_FIELDS, MAX_LIGHTS, MAX_SHADES, MAX_SURFACES, V_SAMPLES } from './limits';
+import {
+  MAX_FIELDS,
+  MAX_LIGHTS,
+  MAX_SHADES,
+  MAX_SURFACES,
+  MAX_TINTS,
+  V_SAMPLES,
+} from './limits';
 
 /**
  * The uniforms a shader reads, by the names `UniformSet` sets them by (uLightDir, uLayers[0].color
@@ -47,6 +55,16 @@ const REACH_ROWS = 11;
 /** The rim's kind of light (its view turned by its aim: `turnReaches`). */
 const RIM = 5;
 
+/** Each tint's rows (`tintsUniforms`). */
+const TINT_ROWS = 9;
+/** Each grading tint's rows on the light (`gradesUniforms`). */
+export const GRADE_ROWS = 4;
+/** A tint pack's fields: the uniform arrays `<prefix>A` to `<prefix>I`, one row each. */
+const tintFields = (prefix: string) =>
+  Object.fromEntries(
+    'ABCDEFGHI'.split('').map((r, k) => [`${prefix}${r}`, [k, 0, 4] as const]),
+  ) as Record<string, readonly [number, number, number]>;
+
 /** A packed array: how many entries, how many vec4 rows each, and where each uniform array lands in them. */
 interface Pack {
   readonly count: number;
@@ -68,6 +86,22 @@ export const PACKS = {
     fields: { 'uMap.v[0]': [0, 0, 1], 'uMap2.v[0]': [0, 1, 1] },
   },
   surfaces: { count: MAX_SURFACES, rows: 1, fields: { uSurfaces: [0, 0, 4] } },
+  /**
+   * A draw's tints: its material's own, then (straight after, so the shader reads both as one run,
+   * `row('tints', i)` past the material's reaching the body's) its body's or the sky's; their rows
+   * as `tintsUniforms` sets them.
+   */
+  tints: { count: MAX_TINTS, rows: TINT_ROWS, fields: tintFields('uTint') },
+  bodyTints: { count: MAX_TINTS, rows: TINT_ROWS, fields: tintFields('uBodyTint') },
+  /**
+   * A scene's grading on the light (the tone pass's): the grading shown, then the one it fades
+   * from, `MAX_GRADES` apart; their rows as `gradesUniforms` sets them.
+   */
+  grades: {
+    count: 2 * MAX_GRADES,
+    rows: GRADE_ROWS,
+    fields: { uGradeA: [0, 0, 4], uGradeB: [1, 0, 4], uGradeC: [2, 0, 4], uGradeD: [3, 0, 4] },
+  },
 } as const satisfies Record<string, Pack>;
 
 export type PackName = keyof typeof PACKS;

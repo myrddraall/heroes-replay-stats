@@ -1,9 +1,7 @@
 import type { PlanetChoices } from './scene-settings';
-import { type TintSettings, UNTINTED } from '../tints/tint-settings';
 
-/** The scenes: each a planet with its moons and a sky of its own (the random sets' under ''), and the colour over the whole picture. */
+/** The scenes: each a planet with its moons and a sky of its own (the random sets' under ''). */
 export interface ScenesState {
-  readonly settings: TintSettings;
   readonly planets: Readonly<Record<string, PlanetChoices>>;
 }
 
@@ -31,4 +29,4 @@ export const PRESET_SCENES: readonly string[] = [RANDOM_SCENE, PLAY_SCREEN_SCENE
  */
 export const ownScene = (id: string) => !PRESET_SCENES.includes(id) && id !== PREVIEW_SCENE;
 
-export const EMPTY_SCENES: ScenesState = { settings: UNTINTED, planets: {} };
+export const EMPTY_SCENES: ScenesState = { planets: {} };

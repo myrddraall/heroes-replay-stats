@@ -5,7 +5,7 @@ import type { SetPlanet } from '../planet-sets/planet-sets';
 import type { Backdrop } from '../space/space';
 import type { EditingAid } from '../aids/beams';
 import type { SceneCameraSet } from '../formats/play-scene';
-import { type TintSettings } from '../tints/tint-settings';
+import type { TintsSet } from '../tints/tint-layers';
 import { PublishedDesignStore } from '../design/published-design.store';
 import type { LibraryState } from '../library/library';
 import type { ScenesState } from '../scenes/scenes';
@@ -19,17 +19,17 @@ export interface DesignSource {
 /**
  * What a background shows, where something other than the site's random sets is to be shown (an
  * editor's scene): its planets (null while what they need loads: what was shown stays), or the
- * random sets (`random`); its sky, and its tint over the whole picture (null: the site's).
+ * random sets (`random`); its sky, and its colour grading (null: the site's tint).
  */
 export interface SceneSource {
   readonly planets: Signal<readonly SetPlanet[] | null>;
   /** Whether it shows the random sets (its planets are none of its own). */
   readonly random?: Signal<boolean>;
-  /** Its sky as set (over the library's): its materials, tint, order, and the overlays it wears. */
+  /** Its sky as set (over the library's): its materials, tints, order, and the overlays it wears. */
   readonly sky: Signal<SkyChoices>;
   /** The scene's lights, lighting every planet (none: none). */
   readonly lights?: Signal<readonly AddedLight[]>;
-  readonly tint: Signal<TintSettings | null>;
+  readonly grading: Signal<TintsSet | null>;
   /** An editing aid shown in place of the sky (none: the sky); never part of the design. */
   readonly backdrop?: Signal<Backdrop | null>;
   /** Lights' beams shown over it (an editing aid: the light selected); never part of the design. */
