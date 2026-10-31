@@ -5,7 +5,7 @@ import type { TintLayer, TintSwitches } from '../tints/tint-layers';
 import type { AddedPart, PartSettingsMap } from '../formats/part-shapes';
 import type { AddedLight, LightReach, LightSettingsMap } from '../lights/lights';
 import type { LightBranch } from '../lights/light-flow';
-import type { Orientation, Quat } from '../space/graph';
+import type { BillboardLights, BillboardUp, Orientation, Quat } from '../space/graph';
 
 /** A planet in a set: which, where (the scene's units), and its body's radius there. */
 export interface SetPlanet {
@@ -63,6 +63,9 @@ export interface SetPlanet {
   readonly shade?: Partial<BodyShade>;
   /** Which way its surfaces are turned, over its tuning's (see `Orientation`). */
   readonly orientation?: Orientation;
+  /** Which way up its billboards keep, and what they are lit in, over its library's (see `BillboardUp`, `BillboardLights`). */
+  readonly billboardUp?: BillboardUp;
+  readonly billboardLights?: BillboardLights;
   /** Where its poles point (its frame), and its turn about them (degrees), over its tuning's (see `bodyTurn`). */
   readonly axis?: readonly [number, number, number];
   readonly turn?: number;

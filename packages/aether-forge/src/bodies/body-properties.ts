@@ -15,7 +15,11 @@ import { PropertyNumber } from '../controls/rows/property-number';
 import { type PlacementChange, PropertyPlacement } from '../controls/rows/property-placement';
 import { PropertyText } from '../controls/rows/property-text';
 import { PropertySelect } from '../controls/rows/property-select';
-import { ORIENTATION_CHOICES } from '../sky/sky';
+import {
+  BILLBOARD_LIGHTS_CHOICES,
+  BILLBOARD_UP_CHOICES,
+  ORIENTATION_CHOICES,
+} from '../sky/sky';
 import type { BodyValues } from './body';
 import type { SettingOrigins } from '../editing/setting-origins';
 import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies';
@@ -86,6 +90,8 @@ export class BodyProperties {
   readonly label = input('');
   readonly labelBelow = input('');
   protected readonly orientations = ORIENTATION_CHOICES;
+  protected readonly billboardUps = BILLBOARD_UP_CHOICES;
+  protected readonly billboardLights = BILLBOARD_LIGHTS_CHOICES;
   readonly settingsChange = output<Partial<BodySettings>>();
   readonly orbitChange = output<Partial<Orbit>>();
   readonly placeChange = output<{ readonly position?: Vec3; readonly radius?: number }>();
@@ -155,6 +161,16 @@ export class BodyProperties {
   protected orient(value: string): void {
     const found = ORIENTATION_CHOICES.find((o) => o.value === value);
     if (found) this.settingsChange.emit({ orientation: found.value satisfies Orientation });
+  }
+
+  protected keepUp(value: string): void {
+    const found = BILLBOARD_UP_CHOICES.find((o) => o.value === value);
+    if (found) this.settingsChange.emit({ billboardUp: found.value });
+  }
+
+  protected lightIn(value: string): void {
+    const found = BILLBOARD_LIGHTS_CHOICES.find((o) => o.value === value);
+    if (found) this.settingsChange.emit({ billboardLights: found.value });
   }
 
   /** Renamed here; left empty, back to its name under the level edited. */

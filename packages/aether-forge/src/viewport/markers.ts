@@ -22,20 +22,18 @@ import {
 import { LIGHT_KINDS } from '@myrddraall/heroes-replay-stats-aether/render';
 import {
   aimOf,
-  bodyFrame,
   bodyTransform,
+  DEFAULT_BILLBOARD_UP,
   type LookAt,
   NO_QUAT,
   type Orientation,
   placementFrame,
-  placementUp,
   pointToLocal,
   pointToWorld,
   poseKept,
   turn,
   type Vec3,
   type Viewpoint,
-  viewUp,
 } from '@myrddraall/heroes-replay-stats-aether/space';
 import type { SceneMarker } from './scene-markers';
 import { type BodyInfo, valuesOf } from '../bodies/body';
@@ -443,14 +441,11 @@ export function keepingPose(
 }
 
 /**
- * A body's frame facing the eye of `view` (its billboards' and their lights'), keeping the way up
- * of its placement frame (from the scene's own camera, `layout`).
+ * A body's frame facing the eye of `view` (its billboards'), keeping the way up of its placement
+ * frame (from the scene's own camera, `layout`) unless its billboards keep the screen's.
  */
 const facingFrame = (body: SetPlanet, layout: Viewpoint, view: Viewpoint) =>
-  bodyFrame(
+  placementFrame(
     body.position,
-    body.radius,
-    view.eye,
-    viewUp(view),
-    placementUp(placementFrame(body.position, layout)),
-  ).axes;
+    (body.billboardUp ?? DEFAULT_BILLBOARD_UP) === 'scene' ? { ...view, keepUpOf: layout } : view,
+  );

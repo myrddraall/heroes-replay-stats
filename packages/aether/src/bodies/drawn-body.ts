@@ -17,7 +17,13 @@ import {
   type MaterialSettings,
   mergeSettings,
 } from '../materials/material-settings';
-import { bodyTurn, type Mat3, type Orientation } from '../space/graph';
+import {
+  type BillboardLights,
+  type BillboardUp,
+  bodyTurn,
+  type Mat3,
+  type Orientation,
+} from '../space/graph';
 import type { PlanetPlacement } from '../space/space';
 import type { Vec3 } from '../space/vectors';
 
@@ -62,6 +68,9 @@ export interface DrawnBody {
   readonly rim?: Vec3;
   /** Which way its surfaces are turned, its tuning's where it sets none. */
   readonly orientation?: Orientation;
+  /** Which way up its billboards keep, and what they are lit in (see `BillboardUp`, `BillboardLights`). */
+  readonly billboardUp?: BillboardUp;
+  readonly billboardLights?: BillboardLights;
   /** Its lights' settings, by light, over its rig's and its shade. */
   readonly lights?: LightSettingsMap;
   /** Lights added to it (its own and its overlays'), after its rig's. */
@@ -181,6 +190,8 @@ function drawBody(placement: PlanetPlacement): DrawnBody {
     ...tints,
     ...(rim ? { rim } : {}),
     ...(orientation ? { orientation } : {}),
+    ...(placement.billboardUp ? { billboardUp: placement.billboardUp } : {}),
+    ...(placement.billboardLights ? { billboardLights: placement.billboardLights } : {}),
     ...(placement.lights ? { lights: placement.lights } : {}),
     ...(placement.added ? { added: placement.added } : {}),
     shade,

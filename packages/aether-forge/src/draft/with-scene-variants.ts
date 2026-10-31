@@ -1,6 +1,11 @@
 import type { Design } from '@myrddraall/heroes-replay-stats-aether/design';
 import { without } from '@myrddraall/heroes-replay-stats-aether/scenes';
-import { MADE_VARIANT, type SceneVariant } from '@myrddraall/heroes-replay-stats-aether/variants';
+import {
+  BILLBOARD_SCENE_VARIANT,
+  givenSceneVariant,
+  MADE_VARIANT,
+  type SceneVariant,
+} from '@myrddraall/heroes-replay-stats-aether/variants';
 import { signalStoreFeature, type, withMethods } from '@ngrx/signals';
 import { designWrites } from './design-writes';
 
@@ -23,16 +28,26 @@ export function withSceneVariants() {
           }));
           return variant;
         },
-        /** A scene's variant changed (its name, what it switches). */
+        /**
+         * A scene's variant changed (its name, what it switches); one every scene has, kept as
+         * the scene's changes to it (first) once changed.
+         */
         changeSceneVariant(
           id: string,
           variant: string,
           change: (v: SceneVariant) => SceneVariant,
         ): void {
-          setScene(id, (p) => ({
-            ...p,
-            sceneVariants: (p.sceneVariants ?? []).map((v) => (v.id === variant ? change(v) : v)),
-          }));
+          setScene(id, (p) => {
+            const own = p.sceneVariants ?? [];
+            const kept = own.some((v) => v.id === variant);
+            if (!kept && givenSceneVariant(variant)) {
+              // (What it switches for every planet stays the given variant's, never kept here.)
+              const { id: given, name, switches } = change(BILLBOARD_SCENE_VARIANT);
+              const changed: SceneVariant = { id: given, name, ...(switches ? { switches } : {}) };
+              return { ...p, sceneVariants: [changed, ...own] };
+            }
+            return { ...p, sceneVariants: own.map((v) => (v.id === variant ? change(v) : v)) };
+          });
         },
         /** A scene's variant deleted (off too). */
         deleteSceneVariant(id: string, variant: string): void {

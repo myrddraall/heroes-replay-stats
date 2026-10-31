@@ -1,5 +1,5 @@
 import type { AddedLight, LightReach, LightSettingsMap } from '../lights/lights';
-import type { Orientation, Quat } from './graph';
+import type { BillboardLights, BillboardUp, Orientation, Quat } from './graph';
 import { type PartSettingsMap, shapeReach } from '../formats/part-shapes';
 import type { BodyPart, BodyShade } from '../formats/planet-files';
 import type { LoadedPlanet } from '../formats/planet-loader';
@@ -40,6 +40,11 @@ export interface Viewpoint {
   readonly eye: Vec3;
   readonly forward: Vec3;
   readonly up: Vec3;
+  /**
+   * The scene's own camera, whose up bodies' billboards keep seen from here (see `bodyFrame`,
+   * `placementFrame`); none: the view's own up.
+   */
+  readonly keepUpOf?: Viewpoint;
 }
 
 /**
@@ -183,6 +188,9 @@ export interface PlanetPlacement {
   readonly shade?: Partial<BodyShade>;
   /** Which way its surfaces are turned, over its tuning's (its parts and materials may set their own). */
   readonly orientation?: Orientation;
+  /** Which way up its billboards keep, and what they are lit in (see `BillboardUp`, `BillboardLights`). */
+  readonly billboardUp?: BillboardUp;
+  readonly billboardLights?: BillboardLights;
   /** Where its poles point (its frame), and its turn about them (degrees), over its tuning's (see `bodyTurn`). */
   readonly axis?: Vec3;
   readonly turn?: number;

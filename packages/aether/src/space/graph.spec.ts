@@ -237,13 +237,13 @@ describe('the scene graph', () => {
       turned: true,
     });
     expect(drawTurnOf(undefined, undefined, false)).toEqual({
-      orientation: 'camera',
+      orientation: 'world',
       turned: true,
     });
   });
 
-  it('turns each draw as its material says, else its part, else its body, else its tuning, else facing the camera', () => {
-    expect(orientationOf()).toBe('camera');
+  it('turns each draw as its material says, else its part, else its body, else its tuning, else fixed in the world', () => {
+    expect(orientationOf()).toBe('world');
     expect(orientationOf(undefined, undefined, undefined, 'world')).toBe('world');
     expect(orientationOf(undefined, undefined, 'world', 'camera')).toBe('world');
     expect(orientationOf(undefined, 'camera', 'world')).toBe('camera');

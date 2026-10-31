@@ -3,6 +3,10 @@ export { keyLightFrom, TOWARDS_EYE } from './directions';
 export {
   bodyTransform,
   bodyTurn,
+  type BillboardLights,
+  type BillboardUp,
+  DEFAULT_BILLBOARD_LIGHTS,
+  DEFAULT_BILLBOARD_UP,
   DEFAULT_ORIENTATION,
   type DrawTurn,
   drawTurnOf,

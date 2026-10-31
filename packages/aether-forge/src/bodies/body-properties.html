@@ -90,8 +90,8 @@
 } @if (bodySettings() && on('body')) {
 <forge-property-section
   title="Orientation"
-  [changed]="isSet('orientation') || isSet('axis') || isSet('turn') || isSet('baseTurn')"
-  (resetRequested)="clear.emit(['orientation', 'axis', 'turn', 'baseTurn'])"
+  [changed]="isSet('orientation') || isSet('billboardUp') || isSet('billboardLights') || isSet('axis') || isSet('turn') || isSet('baseTurn')"
+  (resetRequested)="clear.emit(['orientation', 'billboardUp', 'billboardLights', 'axis', 'turn', 'baseTurn'])"
 >
   <forge-property-select
     label="Orientation"
@@ -103,6 +103,28 @@
     (resetRequested)="clear.emit(['orientation'])"
     (valueChange)="orient($event)"
   />
+  @if (v.orientation === 'camera') {
+  <forge-property-select
+    label="Up"
+    [value]="v.billboardUp"
+    [options]="billboardUps"
+    [changed]="isSet('billboardUp')"
+    [origin]="origins()?.billboardUp"
+    [overridden]="overrides()?.billboardUp"
+    (resetRequested)="clear.emit(['billboardUp'])"
+    (valueChange)="keepUp($event)"
+  />
+  <forge-property-select
+    label="Lights"
+    [value]="v.billboardLights"
+    [options]="billboardLights"
+    [changed]="isSet('billboardLights')"
+    [origin]="origins()?.billboardLights"
+    [overridden]="overrides()?.billboardLights"
+    (resetRequested)="clear.emit(['billboardLights'])"
+    (valueChange)="lightIn($event)"
+  />
+  }
   <forge-property-direction
     label="Axis"
     [value]="v.axis"

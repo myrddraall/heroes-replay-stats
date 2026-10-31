@@ -52,17 +52,24 @@ export function shadeOf(settings: BodySettings | undefined): Partial<BodyShade> 
   };
 }
 
-/** A body's orientation, axis, turn and base turn, the scene's over the library's, each where set. */
-function orientationOf(
-  set: SetPlanet,
-  own: Pick<SetPlanet, 'orientation' | 'axis' | 'turn' | 'baseTurn'> | undefined,
-): Pick<SetPlanet, 'orientation' | 'axis' | 'turn' | 'baseTurn'> {
+/** What turns a body: its orientation and its billboards' up and lights, axis, turn and base turn; the scene's over the library's, each where set. */
+type Turning = Pick<
+  SetPlanet,
+  'orientation' | 'billboardUp' | 'billboardLights' | 'axis' | 'turn' | 'baseTurn'
+>;
+
+/** A body's orientation (its billboards' up and lights), axis, turn and base turn, the scene's over the library's, each where set. */
+function orientationOf(set: SetPlanet, own: Turning | undefined): Turning {
   const orientation = set.orientation ?? own?.orientation;
+  const billboardUp = set.billboardUp ?? own?.billboardUp;
+  const billboardLights = set.billboardLights ?? own?.billboardLights;
   const axis = set.axis ?? own?.axis;
   const turn = set.turn ?? own?.turn;
   const baseTurn = set.baseTurn ?? own?.baseTurn;
   return {
     ...(orientation ? { orientation } : {}),
+    ...(billboardUp ? { billboardUp } : {}),
+    ...(billboardLights ? { billboardLights } : {}),
     ...(axis ? { axis } : {}),
     ...(turn !== undefined ? { turn } : {}),
     ...(baseTurn ? { baseTurn } : {}),

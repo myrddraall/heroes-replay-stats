@@ -142,10 +142,11 @@ export function poleOf(parts: readonly BodyPart[]): Vec3 {
  * Whether a part is a halo about its body, by its data: what the game draws to be seen round the
  * body's outline from the eye, never turned with the body. A ring (a flat ring in the plane facing
  * the eye, lying on the limb: the nexus style's atmosphere), a sphere seen from its far side (an
- * atmosphere shell, showing past the limb), or a part all of whose materials are an unshaded glow
- * added over what is behind it (blend add or alphaAdd: the nexus style's shield, Korhal's edge
- * light). It faces the camera square on unless its part or its material says otherwise (see
- * `drawTurnOf`).
+ * atmosphere shell, showing past the limb), or a shell bigger than the body all of whose materials
+ * are an unshaded glow added over what is behind it (blend add or alphaAdd: Korhal's edge light).
+ * A sphere no bigger than its body is a layer of its surface, whatever it is drawn with (the nexus
+ * style's shield): turned as the surface under it is, so the two meet exactly. A halo faces the
+ * camera square on unless its part or its material says otherwise (see `drawTurnOf`).
  */
 export function haloLike(
   part: BodyPart,
@@ -153,6 +154,7 @@ export function haloLike(
 ): boolean {
   const { shape } = part;
   if (shape.kind === 'ring' || (shape.kind === 'sphere' && shape.side === 'far')) return true;
+  if (shape.kind === 'sphere' && shape.radius <= 1) return false;
   const own = part.materials.map((m) => materials[m]);
   return (
     own.length > 0 &&
@@ -212,7 +214,7 @@ export interface PlanetTuning {
   readonly lightFrom?: Vec3;
   /** Where its rims and glows lean: a point on its face (body frame). */
   readonly rim?: Vec3;
-  /** Which way its surfaces are turned unless set otherwise (see `Orientation`; unset: facing the camera). */
+  /** Which way its surfaces are turned unless set otherwise (see `Orientation`; unset: fixed in the world). */
   readonly orientation?: Orientation;
   /** Where its poles point (its frame; unset: its data's pole, `poleOf`), and its turn about them (degrees; unset: 0): see `bodyTurn`. */
   readonly axis?: Vec3;

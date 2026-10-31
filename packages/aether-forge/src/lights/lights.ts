@@ -494,14 +494,21 @@ const sameReach = (a: LightReach | undefined, b: LightReach | undefined) => {
 
 /**
  * The view a body's lights are placed from, as the renderer lights it (see `wayOut`): the scene's
- * own camera (`layout`) for a body fixed in the world, its lights fixed there too; the camera the
- * editor looks through (`view`) for one facing the camera, its lights kept to the eye.
+ * own camera (`layout`) for a body fixed in the world, or whose billboards are lit in the scene,
+ * its lights fixed there too; the camera the editor looks through (`view`) for one lit as a
+ * billboard, its lights kept to the eye (keeping the scene camera's up, unless its billboards
+ * keep the screen's).
  */
-export const lightsView = (
+export function lightsView(
   b: BodyInfo | null | undefined,
   layout: Viewpoint,
   view: Viewpoint,
-): Viewpoint => (b && valuesOf(b).orientation === 'world' ? layout : view);
+): Viewpoint {
+  if (!b) return view;
+  const v = valuesOf(b);
+  if (v.orientation === 'world' || v.billboardLights === 'scene') return layout;
+  return v.billboardUp === 'scene' ? { ...view, keepUpOf: layout } : view;
+}
 
 /**
  * A shield's lights as lights to mark (their rows' keys under its material's, `base`): each as it

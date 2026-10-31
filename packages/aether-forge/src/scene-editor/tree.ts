@@ -448,6 +448,8 @@ export function treeViews(store: WithPartHosts) {
             lightFrom: s.lightFrom,
             rim: s.rim,
             ...(s.orientation ? { orientation: s.orientation } : {}),
+            ...(s.billboardUp ? { billboardUp: s.billboardUp } : {}),
+            ...(s.billboardLights ? { billboardLights: s.billboardLights } : {}),
             ...(s.axis ? { axis: s.axis } : {}),
             ...(s.turn !== undefined ? { turn: s.turn } : {}),
             ...(s.baseTurn ? { baseTurn: s.baseTurn } : {}),

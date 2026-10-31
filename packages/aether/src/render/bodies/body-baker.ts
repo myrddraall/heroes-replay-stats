@@ -196,6 +196,7 @@ export class BodyBaker {
             viewRight: [v[0]!, v[4]!, v[8]!],
             viewUp: [v[1]!, v[5]!, v[9]!],
             orientation,
+            ...(body.body.billboardLights ? { lights: body.body.billboardLights } : {}),
             turn: turned ? bodyTurned : IDENTITY,
           })),
         );

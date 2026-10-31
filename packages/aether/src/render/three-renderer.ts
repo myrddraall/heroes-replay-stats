@@ -60,6 +60,7 @@ import {
   type Viewpoint,
 } from '../space/space';
 import {
+  DEFAULT_BILLBOARD_UP,
   DEFAULT_ORIENTATION,
   isIdentity,
   placementFrame,
@@ -91,6 +92,24 @@ import { fileId, moves, sorted, turnFor, withoutHidden } from './bodies/body-dra
 import { type Vec3, distance, turnAbout } from '../space/vectors';
 import type { DrawnBody } from '../bodies/drawn-body';
 let nextPlacedId = 0;
+
+/**
+ * A body's frame facing the eye (`bodyFrame`): keeping its placement frame's up (`placement`), or
+ * the screen's where its billboards keep that (`BillboardUp`).
+ */
+const billboardFrame = (
+  body: Pick<DrawnBody, 'position' | 'radius' | 'billboardUp'>,
+  placement: ArrayLike<number>,
+  eye: Vec3,
+  up: Vec3,
+) =>
+  bodyFrame(
+    body.position,
+    body.radius,
+    eye,
+    up,
+    (body.billboardUp ?? DEFAULT_BILLBOARD_UP) === 'scene' ? placementUp(placement) : undefined,
+  );
 
 /**
  * The Play screen's scene drawn with three.js (WebGPU, or its WebGL 2 backend where the browser
@@ -462,7 +481,7 @@ export class ThreeRenderer {
       const placed: Placed = {
         id: keep?.id ?? nextPlacedId++,
         body,
-        quad: bodyFrame(body.position, body.radius, eye, up, placementUp(placement)),
+        quad: billboardFrame(body, placement, eye, up),
         placementFrame: placement,
         extent: 0,
         states: [],
@@ -675,7 +694,7 @@ export class ThreeRenderer {
       if (position === was.position && radius === was.radius && seen) return;
       placed.body = { ...was, position, radius };
       if (position !== was.position) placed.placementFrame = placementFrame(position, this.layout);
-      placed.quad = bodyFrame(position, radius, eye, up, placementUp(placed.placementFrame));
+      placed.quad = billboardFrame(placed.body, placed.placementFrame, eye, up);
       this.measure(placed);
       placed.version++;
     });

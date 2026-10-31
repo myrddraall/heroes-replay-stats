@@ -40,13 +40,31 @@ export interface SceneNode {
 
 /**
  * Which way a body's surface (a part of it, a material of a part) is turned: towards the eye
- * that draws it (the game's billboards: its face always the same), or fixed in the world (its
- * far side and its poles seen as the camera goes round).
+ * that draws it (a billboard, as the game's are: its face always the same), or fixed in the world
+ * (its far side and its poles seen as the camera goes round).
  */
 export type Orientation = 'camera' | 'world';
 
-/** A surface faces the camera unless set otherwise. */
-export const DEFAULT_ORIENTATION: Orientation = 'camera';
+/** A surface is fixed in the world unless set otherwise (seen from its scene's own camera, as a billboard looks). */
+export const DEFAULT_ORIENTATION: Orientation = 'world';
+
+/**
+ * Which way up a body's billboards keep: the scene's (they never roll as the camera turns or tilts;
+ * see `bodyFrame`) or the screen's (their up kept up on the screen, rolling with the camera, as
+ * the game's do).
+ */
+export type BillboardUp = 'scene' | 'screen';
+
+/**
+ * What a body's billboards are lit in: the scene (its lights stay where they are as the camera
+ * goes round) or the billboard (its lights turned with it, its whole look kept to the eye, as the
+ * game's are).
+ */
+export type BillboardLights = 'scene' | 'billboard';
+
+/** A billboard's up and lights unless set otherwise. */
+export const DEFAULT_BILLBOARD_UP: BillboardUp = 'scene';
+export const DEFAULT_BILLBOARD_LIGHTS: BillboardLights = 'billboard';
 
 /**
  * Which way one draw of a body (a material on a part) is turned, from the most particular say to
@@ -192,14 +210,18 @@ export function turnInto(to: Mat3, from: Mat3): Mat3 {
 /**
  * A body's placement frame: the billboard frame (`bodyFrame`) of a body at `position` as the
  * scene's own camera (`layout`) sees it. Fixed in the world: a function of where the body is,
- * never of the camera drawing it.
+ * never of the camera drawing it. From another camera that keeps the scene camera's up
+ * (`keepUpOf`), its billboard frame from there, as the renderer draws it.
  */
 export function placementFrame(position: Vec3, layout: Viewpoint): Float32Array {
-  return bodyFrame(position, 1, layout.eye, viewUp(layout)).axes;
+  const steady = layout.keepUpOf && placementUp(placementFrame(position, layout.keepUpOf));
+  return bodyFrame(position, 1, layout.eye, viewUp(layout), steady).axes;
 }
 
 /** A placement frame's up (its z): the way up its body's billboards keep (see `bodyFrame`). */
-export const placementUp = (frame: ArrayLike<number>): Vec3 => [frame[6]!, frame[7]!, frame[8]!];
+export function placementUp(frame: ArrayLike<number>): Vec3 {
+  return [frame[6]!, frame[7]!, frame[8]!];
+}
 
 /** A vector at length 1 (none: none). */
 const unit = (v: Vec3): Vec3 | null => {
@@ -367,8 +389,9 @@ export function bodyTransform(
  * square's frame, the view's, which the rims and glows lean across). A draw fixed in the world is
  * lit as placed in the body's placement frame (its lights stay where they are as the camera goes
  * round); one facing the camera is lit in the square's frame, as the game's billboards are (its
- * whole look, its lighting too, kept to the eye; its Turn turns its textures, not its light).
- * Seen from the scene's own camera, every turn is exactly none and every value as it always was.
+ * whole look, its lighting too, kept to the eye; its Turn turns its textures, not its light),
+ * unless its body's billboards are lit in the scene (`BillboardLights`): then as placed.
+ * Seen from the scene's own camera, every turn is none (to rounding) and every value as it always was.
  */
 export interface DrawFrames {
   readonly quad: Mat3;
@@ -395,6 +418,8 @@ export interface DrawFramesOf {
   readonly viewRight: Vec3;
   readonly viewUp: Vec3;
   readonly orientation: Orientation;
+  /** What its billboards are lit in (see `BillboardLights`; none: `DEFAULT_BILLBOARD_LIGHTS`). */
+  readonly lights?: BillboardLights;
   /** The body's own turn as this draw takes it (`bodyTurn`; none: none). */
   readonly turn?: Mat3;
 }
@@ -417,8 +442,12 @@ export function surfaceFrame(
 export function drawFrames(o: DrawFramesOf): DrawFrames {
   const quad = o.quad.axes;
   const frame = surfaceFrame(o.placement, quad, o.orientation, o.turn);
-  // What its lights are set in: the placement frame for a surface fixed in the world, the square's facing the eye.
-  const lit = o.orientation === 'camera' ? quad : o.placement;
+  // What its lights are set in: the placement frame for a surface fixed in the world, or a
+  // billboard's lit in the scene; the square's facing the eye for one lit as a billboard.
+  const lit =
+    o.orientation === 'camera' && (o.lights ?? DEFAULT_BILLBOARD_LIGHTS) === 'billboard'
+      ? quad
+      : o.placement;
   const surface = turnInto(frame, quad);
   const to: Vec3 = [o.eye[0] - o.centre[0], o.eye[1] - o.centre[1], o.eye[2] - o.centre[2]];
   const eye =

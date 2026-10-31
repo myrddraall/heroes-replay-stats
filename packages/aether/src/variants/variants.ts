@@ -1,8 +1,24 @@
 import type { PlanetChoices } from '../scenes/scene-settings';
 import type { BodyVariant, BodySettings } from '../bodies/body-settings';
+import { DEFAULT_BILLBOARD_LIGHTS, DEFAULT_BILLBOARD_UP } from '../space/graph';
 
 /** What the ids of variants made in the editor start with. */
 export const MADE_VARIANT = 'variant-';
+
+/**
+ * The variant every planet has, after its data's: drawn as a billboard, facing the camera (its
+ * up and its lights as a billboard's are by default). Changed in the library as a data variant
+ * is (by its id).
+ */
+export const BILLBOARD_VARIANT: BodyVariant = {
+  id: 'billboard',
+  name: 'Billboard',
+  settings: {
+    orientation: 'camera',
+    billboardUp: DEFAULT_BILLBOARD_UP,
+    billboardLights: DEFAULT_BILLBOARD_LIGHTS,
+  },
+};
 
 /**
  * What of a body's settings is its own alone, never a variant's: what names it, whether it is
@@ -47,13 +63,17 @@ export interface Variant {
   readonly layers: readonly BodySettings[];
 }
 
-/** A body's variants in order: its data's (each with the library's changes to it), then those made in the editor. */
+/**
+ * A body's variants in order: its data's, then its Billboard (`BILLBOARD_VARIANT`), each with the
+ * library's changes to it; then those made in the editor.
+ */
 export function variantsOf(
   data: readonly BodyVariant[] | undefined,
   own: BodySettings | undefined,
 ): Variant[] {
   const kept = new Map((own?.variants ?? []).map((v) => [v.id, v] as const));
-  const fromData = (data ?? []).map((v): Variant => {
+  const given = [...(data ?? []).filter((v) => v.id !== BILLBOARD_VARIANT.id), BILLBOARD_VARIANT];
+  const fromData = given.map((v): Variant => {
     const changed = kept.get(v.id);
     return {
       id: v.id,
@@ -98,14 +118,40 @@ export function switched(
 
 /**
  * A scene's variant: a name, and the variants of its planets it switches on or off (by the body's
- * path in the scene, `pathKey`; then by each variant's id). It sets nothing of a planet itself:
- * a planet's look is always its own.
+ * path in the scene, `pathKey`; then by each variant's id), and for every one of them (`every`:
+ * a body's own switches over those). It sets nothing of a planet itself: a planet's look is
+ * always its own.
  */
 export interface SceneVariant {
   readonly id: string;
   readonly name: string;
   readonly switches?: Readonly<Record<string, Readonly<Record<string, boolean>>>>;
+  readonly every?: Readonly<Record<string, boolean>>;
 }
+
+/**
+ * The variant every scene has, first: its Billboard, switching on every planet's
+ * (`BILLBOARD_VARIANT`). Its name and its switches for each planet are the scene's to change (kept
+ * by its id).
+ */
+export const BILLBOARD_SCENE_VARIANT: SceneVariant = {
+  id: BILLBOARD_VARIANT.id,
+  name: 'Billboard',
+  every: { [BILLBOARD_VARIANT.id]: true },
+};
+
+/** A scene's variants in order: its Billboard (`BILLBOARD_SCENE_VARIANT`, as the scene changes it), then its own. */
+export function sceneVariantsOf(scene: PlanetChoices | undefined): readonly SceneVariant[] {
+  const own = scene?.sceneVariants ?? [];
+  const changed = own.find((v) => v.id === BILLBOARD_SCENE_VARIANT.id);
+  return [
+    { ...BILLBOARD_SCENE_VARIANT, ...changed, every: BILLBOARD_SCENE_VARIANT.every },
+    ...own.filter((v) => v !== changed),
+  ];
+}
+
+/** Whether a scene's variant is one every scene has (not made there: never deleted). */
+export const givenSceneVariant = (id: string) => id === BILLBOARD_SCENE_VARIANT.id;
 
 /**
  * Which variants of one of a scene's bodies are on (by its path, `body`): as it has them (`on`),
@@ -118,7 +164,7 @@ export function sceneSwitched(
   on: readonly string[],
 ): readonly string[] {
   const active = new Set(scene?.sceneVariantsOn ?? []);
-  return (scene?.sceneVariants ?? [])
+  return sceneVariantsOf(scene)
     .filter((v) => active.has(v.id))
-    .reduce((now, v) => switched(now, v.switches?.[body]), on);
+    .reduce((now, v) => switched(now, { ...v.every, ...v.switches?.[body] }), on);
 }

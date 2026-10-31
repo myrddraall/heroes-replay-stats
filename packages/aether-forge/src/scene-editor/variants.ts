@@ -4,17 +4,23 @@ import { computed } from '@angular/core';
 import type { PickChoice } from '../controls/pick-list';
 import { bodyKey } from './scene-targets';
 import type { SceneMethodsStore, WithBackground } from './scene-editor.store';
-import { switched } from '@myrddraall/heroes-replay-stats-aether/variants';
+import {
+  givenSceneVariant,
+  sceneVariantsOf,
+  switched,
+} from '@myrddraall/heroes-replay-stats-aether/variants';
 import { patchState } from '@ngrx/signals';
 import type { SceneWrites } from './scene-writes';
 
 /** The variants: the scene's own and its planets', which are on, and the level edits go into. */
 export function variantViews(store: WithBackground) {
   const choices = computed(() => store._draft.scenes().planets[store.scene()] ?? {});
+  /** The scene's variants: its Billboard, then its own. */
+  const sceneVariants = computed(() => sceneVariantsOf(choices()));
   /** The scene's variant edited, where it is one of the scene's. */
   const sceneVariantOpen = computed(() => {
     const id = store.sceneVariantEdited();
-    return id && (choices().sceneVariants ?? []).some((v) => v.id === id) ? id : null;
+    return id && sceneVariants().some((v) => v.id === id) ? id : null;
   });
   /** The body selected, where one is (or one of its materials, parts, lights). */
   const selectedBody = computed(() => {
@@ -25,11 +31,11 @@ export function variantViews(store: WithBackground) {
     sceneVariantOpen,
     /** The scene's own variants as listed: each one's name, whether on. */
     sceneVariantRows: computed((): readonly VariantRow[] =>
-      (choices().sceneVariants ?? []).map((v) => ({
+      sceneVariants().map((v) => ({
         id: v.id,
         name: v.name,
         on: (choices().sceneVariantsOn ?? []).includes(v.id),
-        removable: true,
+        removable: !givenSceneVariant(v.id),
       })),
     ),
     sceneVariantsOnSet: computed(() => (choices().sceneVariantsOn ?? []).length > 0),
@@ -54,14 +60,14 @@ export function variantViews(store: WithBackground) {
       if (!b || !('path' in t)) return false;
       const open = sceneVariantOpen();
       return open
-        ? (choices().sceneVariants ?? []).find((v) => v.id === open)?.switches?.[
+        ? sceneVariants().find((v) => v.id === open)?.switches?.[
             pathKey(t.path)
           ] !== undefined
         : b.settings.variantsOn !== undefined;
     }),
     /** The levels edited here: the scene itself, then each of its own variants. */
     layerOptions: computed((): readonly PickChoice[] => {
-      const variants = choices().sceneVariants ?? [];
+      const variants = sceneVariants();
       return variants.length
         ? [{ value: '', label: 'Scene' }, ...variants.map((v) => ({ value: v.id, label: v.name }))]
         : [];

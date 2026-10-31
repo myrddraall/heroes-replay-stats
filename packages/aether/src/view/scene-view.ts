@@ -408,6 +408,8 @@ export class SceneView {
           lighting: p.lighting,
           shade: p.shade,
           ...(p.orientation ? { orientation: p.orientation } : {}),
+          ...(p.billboardUp ? { billboardUp: p.billboardUp } : {}),
+          ...(p.billboardLights ? { billboardLights: p.billboardLights } : {}),
           ...(p.axis ? { axis: p.axis } : {}),
           ...(p.turn !== undefined ? { turn: p.turn } : {}),
           ...(p.baseTurn ? { baseTurn: p.baseTurn } : {}),

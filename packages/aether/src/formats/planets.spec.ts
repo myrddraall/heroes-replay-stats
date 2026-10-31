@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SceneLayer, SceneMaterial } from './play-scene';
-import type { BodyPart } from './planet-files';
+import { type BodyPart, haloLike } from './planet-files';
 import { drawOrder, type Ordered, reordered } from './wear';
 import { layerSlots, withLayer, withLayers } from '../materials/material-settings';
 import { mergePartSettings, shapeReach, withPart } from './part-shapes';
@@ -122,6 +122,21 @@ describe('a body’s parts', () => {
   it('let a ring go of its body’s limb', () => {
     expect(withPart(ring, { keepToLimb: false }).shape).not.toHaveProperty('seen');
     expect(withPart(ring, { keepToLimb: true }).shape).toHaveProperty('seen', 12);
+  });
+
+  it('are halos (facing the camera) as rings, far sides and glowing shells past the body, never a layer on its surface', () => {
+    const glow = { glow: material };
+    const near = (radius: number): BodyPart => ({
+      ...sphere,
+      shape: { kind: 'sphere', radius, side: 'near' },
+      materials: ['glow'],
+    });
+    expect(haloLike(ring, glow)).toBe(true);
+    expect(haloLike(sphere, glow)).toBe(true);
+    // A glowing shell past the body (Korhal's edge light); one on it (the nexus shield) is its surface's.
+    expect(haloLike(near(1.1), glow)).toBe(true);
+    expect(haloLike(near(1), glow)).toBe(false);
+    expect(haloLike(near(1.1), { glow: { ...material, unshaded: false } })).toBe(false);
   });
 
   it('merge their settings level over level, each its own', () => {

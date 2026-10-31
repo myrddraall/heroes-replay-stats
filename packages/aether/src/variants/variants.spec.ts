@@ -3,7 +3,10 @@ import { EMPTY_LIBRARY, type LibraryState, withLibrary } from '../library/librar
 import type { SetPlanet } from '../planet-sets/planet-sets';
 import type { PlanetChoices } from '../scenes/scene-settings';
 import {
+  BILLBOARD_SCENE_VARIANT,
+  BILLBOARD_VARIANT,
   sceneSwitched,
+  sceneVariantsOf,
   switched,
   variantLayersOf,
   variantSettingsOf,
@@ -18,7 +21,7 @@ const painted = {
 };
 
 describe('variants', () => {
-  it("are a body's data's (with the library's changes to them), then those made in the editor", () => {
+  it("are a body's data's and its Billboard (with the library's changes to them), then those made in the editor", () => {
     const own = {
       variants: [
         { id: 'variant-1', name: 'Shield', settings: { overlaysEnabled: { nexus: true } } },
@@ -28,6 +31,7 @@ describe('variants', () => {
     const variants = variantsOf([painted], own);
     expect(variants.map((v) => [v.id, v.name, v.made])).toEqual([
       ['painted', 'Flat', false],
+      ['billboard', 'Billboard', false],
       ['variant-1', 'Shield', true],
     ]);
     // The data's settings, then the library's changes to them.
@@ -61,6 +65,32 @@ describe('variants', () => {
     expect(sceneSwitched({ ...scene, sceneVariantsOn: ['s1', 's2'] }, '0', ['lit'])).toEqual([
       'shield',
     ]);
+  });
+
+  it("give every planet a Billboard, and every scene one switching on all its planets'", () => {
+    // A planet's: a billboard facing the camera, changed in the library by its id.
+    const billboard = variantsOf(undefined, {
+      variants: [{ id: 'billboard', settings: { billboardUp: 'screen' } }],
+    });
+    expect(billboard.map((v) => [v.id, v.made])).toEqual([['billboard', false]]);
+    expect(billboard[0]?.layers).toEqual([BILLBOARD_VARIANT.settings, { billboardUp: 'screen' }]);
+    expect(BILLBOARD_VARIANT.settings?.orientation).toBe('camera');
+    // A scene's: first, off until switched on; on, every planet's Billboard on, but where it says.
+    const scene: PlanetChoices = {
+      sceneVariants: [
+        { id: 'billboard', name: 'Far ones', switches: { '1': { billboard: false } } },
+        { id: 's1', name: 'Preview' },
+      ],
+    };
+    expect(sceneVariantsOf(scene).map((v) => [v.id, v.name])).toEqual([
+      ['billboard', 'Far ones'],
+      ['s1', 'Preview'],
+    ]);
+    expect(sceneVariantsOf(undefined)).toEqual([BILLBOARD_SCENE_VARIANT]);
+    expect(sceneSwitched(scene, '0', ['lit'])).toEqual(['lit']);
+    const on = { ...scene, sceneVariantsOn: ['billboard'] };
+    expect(sceneSwitched(on, '0', ['lit'])).toEqual(['lit', 'billboard']);
+    expect(sceneSwitched(on, '1', ['lit'])).toEqual(['lit']);
   });
 
   it("stack over a planet's own settings and under a scene's when it is drawn, and may switch its overlays", () => {

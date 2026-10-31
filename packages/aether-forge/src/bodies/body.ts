@@ -18,6 +18,10 @@ import {
   type MaterialSettingsMap,
 } from '@myrddraall/heroes-replay-stats-aether/materials';
 import {
+  type BillboardLights,
+  type BillboardUp,
+  DEFAULT_BILLBOARD_LIGHTS,
+  DEFAULT_BILLBOARD_UP,
   DEFAULT_ORIENTATION,
   keyLightFrom,
   NO_QUAT,
@@ -279,6 +283,8 @@ export function valuesOf(b: BodyInfo): BodyValues {
     rim: at('rim') ?? tuning?.rim ?? TOWARDS_EYE,
     glowMargin: at('glowMargin') ?? HALO_MARGIN,
     orientation: bodyOrientation(b),
+    billboardUp: at('billboardUp') ?? DEFAULT_BILLBOARD_UP,
+    billboardLights: at('billboardLights') ?? DEFAULT_BILLBOARD_LIGHTS,
     // As its data has them unless set: its textures' pole, no turn about it.
     axis: at('axis') ?? tuning?.axis ?? poleOf(b.file?.parts ?? []),
     turn: at('turn') ?? tuning?.turn ?? 0,
@@ -290,7 +296,7 @@ export function valuesOf(b: BodyInfo): BodyValues {
 export const bodySays = (b: BodyInfo): Orientation | undefined =>
   stackedSetting(b, 'orientation') ?? b.file?.tuning?.orientation;
 
-/** That, else facing the camera. */
+/** That, else fixed in the world. */
 export const bodyOrientation = (b: BodyInfo): Orientation => bodySays(b) ?? DEFAULT_ORIENTATION;
 
 /** Whether a body is drawn (a scene's; its moons with it). */
@@ -360,6 +366,8 @@ export function bodyOrigins(b: BodyInfo): SettingOrigins<keyof BodySettings> {
     rim: first(...stack('rim'), ['its tuning', tuning?.rim]),
     glowMargin: first(...stack('glowMargin')),
     orientation: first(...stack('orientation'), ['its tuning', tuning?.orientation]),
+    billboardUp: first(...stack('billboardUp')),
+    billboardLights: first(...stack('billboardLights')),
     axis: first(...stack('axis'), ['its tuning', tuning?.axis]),
     turn: first(...stack('turn'), ['its tuning', tuning?.turn]),
     baseTurn: first(...stack('baseTurn'), ['its tuning', tuning?.baseTurn]),
@@ -443,6 +451,9 @@ export interface BodyValues {
   readonly glowMargin: number;
   /** Which way its surfaces are turned (unless its parts or materials say), where its poles point (its frame) and its turn about them (degrees). */
   readonly orientation: Orientation;
+  /** Which way up its billboards keep, and what they are lit in (see `BillboardUp`, `BillboardLights`). */
+  readonly billboardUp: BillboardUp;
+  readonly billboardLights: BillboardLights;
   readonly axis: Vec3;
   readonly turn: number;
   /** Its base turn (its pose before its Turn; see `bodyTurn`). */

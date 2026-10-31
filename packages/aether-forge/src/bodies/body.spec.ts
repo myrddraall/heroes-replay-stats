@@ -6,8 +6,10 @@ import { materialAt, materialsOf } from '../materials/materials';
 import { file, korhal, material } from './body-fixtures';
 
 describe("a body's orientation", () => {
-  it('turns each material as it says, else its part, else the body (the layer edited over those under it), else facing the camera', () => {
-    expect(valuesOf(korhal({})).orientation).toBe('camera');
+  it('turns each material as it says, else its part, else the body (the layer edited over those under it), else fixed in the world', () => {
+    expect(valuesOf(korhal({})).orientation).toBe('world');
+    expect(valuesOf(korhal({})).billboardUp).toBe('scene');
+    expect(valuesOf(korhal({})).billboardLights).toBe('billboard');
     expect(valuesOf(korhal({})).axis).toEqual([0, 0, 1]);
     // The body's, from the library under the scene: its parts and materials with it.
     const below: BodyInfo = { ...korhal({}), below: { orientation: 'world', axis: [0, 0.3, 1] } };
@@ -57,10 +59,14 @@ describe("a body's orientation", () => {
   });
 
   it('leaves a halo facing the camera when only its body says World, unless set on it', () => {
+    // A glowing shell past the body (one on it is its surface's: see `haloLike`).
+    const world = file('world');
+    const shell = { ...world.parts[0]!, shape: { kind: 'sphere', radius: 1.1, side: 'near' } };
     const halo: BodyInfo = {
       ...korhal({ orientation: 'world' }),
       file: {
-        ...file('world'),
+        ...world,
+        parts: [shell as typeof world.parts[0] & object],
         materials: { clouds: { ...material, blend: 'add' } },
       },
     };

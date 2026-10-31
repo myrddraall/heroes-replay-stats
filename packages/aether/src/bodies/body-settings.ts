@@ -2,7 +2,7 @@ import type { AddedPart, PartSettingsMap } from '../formats/part-shapes';
 import type { AddedLight, LightSettingsMap } from '../lights/lights';
 import type { MaterialSettingsMap } from '../materials/material-settings';
 import type { TintLayer, TintSwitches } from '../tints/tint-layers';
-import type { Orientation, Quat } from '../space/graph';
+import type { BillboardLights, BillboardUp, Orientation, Quat } from '../space/graph';
 import type { Vec3 } from '../space/vectors';
 
 /** A body's settings as the saved designs and the game data keep them, and its variants. */
@@ -55,6 +55,9 @@ export interface BodySettings {
    * so its Axis can change without turning it (none: none; see `bodyTurn`).
    */
   readonly orientation?: Orientation;
+  /** Which way up its billboards keep, and what they are lit in (see `BillboardUp`, `BillboardLights`). */
+  readonly billboardUp?: BillboardUp;
+  readonly billboardLights?: BillboardLights;
   readonly axis?: Vec3;
   readonly turn?: number;
   readonly baseTurn?: Quat;

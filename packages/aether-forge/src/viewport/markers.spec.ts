@@ -77,7 +77,7 @@ describe("a planet's axis marker", () => {
     const frame = placementFrame(body.position, layout);
     north(world, other).forEach((v, k) => expect(v).toBeCloseTo(turn(frame, [0, 0.6, 0.8])[k]!, 5));
     expect(north(world, other)).toEqual(north(world, layout));
-    const billboard = korhal({ axis: [0, 0.6, 0.8] });
+    const billboard = korhal({ orientation: 'camera', axis: [0, 0.6, 0.8] });
     expect(north(billboard, other)).not.toEqual(north(billboard, layout));
     // A Turn turns about it: the line stays.
     expect(north(korhal({ orientation: 'world', axis: [0, 0.6, 0.8], turn: 90 }), other)).toEqual(
@@ -128,7 +128,17 @@ describe("a planet's axis marker", () => {
 
   it("places a body's lights as it is lit: fixed in the world, or kept to the eye", () => {
     expect(lightsView(korhal({ orientation: 'world' }), layout, other)).toBe(layout);
-    expect(lightsView(korhal({}), layout, other)).toBe(other);
+    expect(lightsView(korhal({}), layout, other)).toBe(layout);
+    // A billboard's kept to the eye, keeping the scene camera's up unless it keeps the screen's;
+    // lit in the scene, fixed there.
+    expect(lightsView(korhal({ orientation: 'camera' }), layout, other)).toEqual({
+      ...other,
+      keepUpOf: layout,
+    });
+    const screen = korhal({ orientation: 'camera', billboardUp: 'screen' });
+    expect(lightsView(screen, layout, other)).toBe(other);
+    const lit = korhal({ orientation: 'camera', billboardLights: 'scene' });
+    expect(lightsView(lit, layout, other)).toBe(layout);
     expect(lightsView(undefined, layout, other)).toBe(other);
   });
 });

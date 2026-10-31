@@ -30,6 +30,8 @@ import {
   skyDepths,
 } from '@myrddraall/heroes-replay-stats-aether/sky';
 import {
+  type BillboardLights,
+  type BillboardUp,
   DEFAULT_ORIENTATION,
   type Orientation,
 } from '@myrddraall/heroes-replay-stats-aether/space';
@@ -286,8 +288,26 @@ export const ORIENTATION_CHOICES: readonly {
   readonly value: Orientation;
   readonly label: string;
 }[] = [
-  { value: 'camera', label: 'Camera' },
   { value: 'world', label: 'World' },
+  { value: 'camera', label: 'Billboard' },
+];
+
+/** Which way up a body's billboards keep, as the editor offers it. */
+export const BILLBOARD_UP_CHOICES: readonly {
+  readonly value: BillboardUp;
+  readonly label: string;
+}[] = [
+  { value: 'scene', label: 'Scene' },
+  { value: 'screen', label: 'Screen' },
+];
+
+/** What a body's billboards are lit in, as the editor offers it. */
+export const BILLBOARD_LIGHTS_CHOICES: readonly {
+  readonly value: BillboardLights;
+  readonly label: string;
+}[] = [
+  { value: 'scene', label: 'Scene' },
+  { value: 'billboard', label: 'Billboard' },
 ];
 
 /** The anchors a sky or its material may be given, as their choices show them. */
