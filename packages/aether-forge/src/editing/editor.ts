@@ -31,6 +31,7 @@ import type { TreeMove, TreeRow } from '../tree/scene-tree';
 import type { Crumb } from '../tree/breadcrumb';
 import type { PreviewSetup } from '../aids/preview-setup';
 import type { PoleDrag, SceneMarker } from '../viewport/scene-markers';
+import type { LightDrag } from '../viewport/light-drag';
 import type { AddedLists } from '../controls/added-list';
 import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/space';
 import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies';
@@ -234,6 +235,11 @@ export abstract class Editor {
   abstract moveCamera(set: SceneCameraSet): void;
   /** A planet's pole dragged in the view (the selected body's): its Axis moved, the planet kept as it is. */
   abstract dragPole(drag: PoleDrag): void;
+  /**
+   * A light's marker dragged in the view (the light selected as it begins): the side it comes from,
+   * its place, or a spot's aim moved (see `LightHandle`).
+   */
+  abstract dragLight(drag: LightDrag): void;
   /** What a drag in the view orbits round, kept where it is in the view (a planet open); none: what the view looks at. */
   abstract readonly orbitAbout: Signal<Vec3 | null>;
   /** What the view may look through (the editor's camera, a scene's cameras), by id; none: no choice. */

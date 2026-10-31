@@ -17,7 +17,7 @@ import {
   without,
 } from './scene-settings';
 import type { Viewpoint } from '../space/space';
-import type { PlanetSet } from '../planet-sets/planet-sets';
+import type { PlanetSet, SetPlanet } from '../planet-sets/planet-sets';
 import type { Vec3 } from '../space/vectors';
 import { withLibraryMoons } from './scene-moons';
 import type { BodySettings } from '../bodies/body-settings';
@@ -37,22 +37,35 @@ export const SCENE_CENTRE: { readonly position: Vec3; readonly radius: number } 
 const NEW_SCENE = /^scene-\d+$/;
 
 /**
- * The Play screen's planets, from the game's set (`playSet`'s): each where the game puts it, its
- * small one a moon of its medium one, on the orbit that puts it there as the game's camera
- * (`layoutView`, the scene's own) places it.
+ * The Play screen's planets, from the game's set (`playSet`'s): each where the game puts it, with
+ * the variants the game's look has on, its small one a moon of its medium one, on the orbit that
+ * puts it there as the game's camera (`layoutView`, the scene's own) places it.
  */
 export function playScreenBodies(set: PlanetSet, layoutView: Viewpoint): SceneBody[] {
   const medium = set.find((p) => p.id === 'play-medium');
   const small = set.find((p) => p.id === 'play-small');
+  const variantsOn = (p: SetPlanet) =>
+    p.variantsOn ? { settings: { variantsOn: p.variantsOn } } : {};
   return set
     .filter((p) => !(medium && p === small))
     .map((p): SceneBody => {
-      const body = { id: p.id, key: BODY_KEY + p.id, position: p.position, radius: p.radius };
+      const body = {
+        id: p.id,
+        key: BODY_KEY + p.id,
+        position: p.position,
+        radius: p.radius,
+        ...variantsOn(p),
+      };
       return p === medium && small
         ? {
             ...body,
             moons: [
-              { id: small.id, key: BODY_KEY + small.id, orbit: orbitTo(medium, small, layoutView) },
+              {
+                id: small.id,
+                key: BODY_KEY + small.id,
+                orbit: orbitTo(medium, small, layoutView),
+                ...variantsOn(small),
+              },
             ],
           }
         : body;

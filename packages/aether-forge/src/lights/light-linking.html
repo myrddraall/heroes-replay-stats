@@ -28,7 +28,11 @@
         (change)="check({ key: link.key, receiver: null }, $event)"
       />
       <label class="name" [class.name--changed]="link.changed" [for]="id + '-' + i"
-        >{{ link.label }}</label
+        >{{ link.label }} @if (link.origin && !link.changed) {
+        <span class="origin" [title]="'Set in ' + link.origin"
+          ><span class="origin__text">, set in {{ link.origin }}</span></span
+        >
+        }</label
       >
     </span>
     }

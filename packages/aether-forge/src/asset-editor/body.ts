@@ -27,6 +27,11 @@ import { bodyEdits } from '../editing/body-edits';
 export function assetBodyViews(store: WithStageSky) {
   const { asset, _draft, _catalog, _skyOverlay: skyOverlay, _planetLevels: planetLevels } = store;
   const library = _draft.library;
+  /** What a planet's data sets for it (its overlays' switches), where it sets any. */
+  const dataOf = (id: string): Pick<BodyInfo, 'data'> => {
+    const data = _catalog.dataSettings().get(id);
+    return data ? { data } : {};
+  };
   /** The planet open's own moons (the library's; none for anything else). */
   const moons = computed((): readonly MoonChoices[] => {
     const a = asset();
@@ -66,9 +71,10 @@ export function assetBodyViews(store: WithStageSky) {
         })),
         overlaysSet: chosen !== undefined,
         ...(a.kind === 'planet' ? planetLevels(a.id) : { settings: library()[kind][a.id] ?? {} }),
+        ...(a.kind === 'planet' ? dataOf(a.id) : {}),
         materialBase: library().materials,
         file,
-        moons: [],
+        moons: moons(),
       };
     }),
     /** The planet open's own moons (the library's; none for anything else). */

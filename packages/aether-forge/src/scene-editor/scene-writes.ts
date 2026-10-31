@@ -42,11 +42,12 @@ import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/space';
 import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies';
 import { variantsOnOf, switched } from '@myrddraall/heroes-replay-stats-aether/variants';
 import { BodyLevel, bodyEdits } from '../editing/body-edits';
+import { parentRowOf } from '../tree/select-parent-when-gone';
 
 /** What the scene editor's methods change the scene through: its bodies, a body's settings, its lights, groups and cameras, and what is selected. */
 export function sceneWrites(store: SceneMethodsStore) {
   /** Where the pole being dragged is (see `dragPole`). */
-  const dragging = { pole: null as Vec3 | null };
+  const dragging = { pole: null as Vec3 | null, light: null as Vec3 | null };
   const d = store._draft;
   /** The scene's planets changed (the random sets' have none of their own). */
   const edit = (change: (bodies: readonly SceneBody[]) => readonly SceneBody[]) => {
@@ -157,10 +158,11 @@ export function sceneWrites(store: SceneMethodsStore) {
     if (store.look() === id) patchState(store, { look: EDITOR_CAMERA });
   };
   /**
-   * A body taken out (a planet with its moons, a moon with its own): what was selected of it, its
-   * parent selected (the scene, for a planet); the view off it.
+   * A body taken out (a planet with its moons, a moon with its own): what was selected of it, the
+   * row above it selected (its planet's Moons; the scene, for a planet); the view off it.
    */
   const removeBody = (path: BodyPath) => {
+    const up = parentRowOf(store.rows(), bodyKey(path));
     edit((b) => removeAt(b, path));
     const inside = (key: string | null) =>
       key !== null && path.every((v, i) => pathOf(key)[i] === v);
@@ -168,7 +170,9 @@ export function sceneWrites(store: SceneMethodsStore) {
     const selected = 'path' in t && t.path.length >= path.length && inside(pathKey(t.path));
     const focus = store.focus();
     patchState(store, {
-      ...(selected ? { selected: path.length > 1 ? bodyKey(path.slice(0, -1)) : SCENE } : {}),
+      ...(selected
+        ? { selected: up ?? (path.length > 1 ? bodyKey(path.slice(0, -1)) : SCENE) }
+        : {}),
       focus: inside(focus) ? null : focus,
     });
   };

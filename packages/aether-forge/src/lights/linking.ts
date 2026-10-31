@@ -1,6 +1,11 @@
-import type { LightId, LightReach, Receiver } from '@myrddraall/heroes-replay-stats-aether/lights';
+import type {
+  LightId,
+  LightReach,
+  LightSettings,
+  Receiver,
+} from '@myrddraall/heroes-replay-stats-aether/lights';
 import type { BodyInfo } from '../bodies/body';
-import { litByOf, type OuterLight, receiversOf } from './lights';
+import { lightLevelsOf, litByOf, type OuterLight, receiversOf } from './lights';
 
 /** A part or material of a body as a light's Linking shows it: whether the light reaches it. */
 export interface LinkPart {
@@ -23,6 +28,8 @@ export interface LinkEntry {
   readonly own: boolean;
   readonly lit: boolean;
   readonly changed: boolean;
+  /** The level under the one edited that leaves it out or some of it, where one does (none for its own body). */
+  readonly origin?: string;
   readonly parts: readonly LinkPart[];
   /** What the light reaches of it, where not all of it (some of its parts or materials left out). */
   readonly reach?: LightReach;
@@ -58,10 +65,17 @@ export function bodyLink(
     return reaching ? [{ ...r, lit: reaching.reaches }] : [];
   });
   const set = b.settings.lights?.[id];
+  const says = (s: LightSettings | undefined) => s?.enabled !== undefined || s?.reach !== undefined;
+  const origin = at.own
+    ? undefined
+    : lightLevelsOf(b)
+        .reverse()
+        .find(([, level]) => says(level?.[id]))?.[0];
   return {
     ...at,
     lit: light.reaches,
-    changed: !at.own && (set?.enabled !== undefined || set?.reach !== undefined),
+    changed: !at.own && says(set),
+    ...(origin ? { origin } : {}),
     parts,
     ...(light.reach && parts.some((p) => !p.lit) ? { reach: light.reach } : {}),
   };

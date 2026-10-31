@@ -23,6 +23,7 @@ import {
   OUTLINE_EXTENT,
 } from '../../aids/beams';
 import { bodyFrame } from '../../space/space';
+import { rimTurn } from '../../space/directions';
 import type { AidKind, InstancedAidKind } from '../draw-types';
 import { MAX_BEAM_SPHERES } from '../uniforms/limits';
 import { beamMaterial, dotMaterial, lineMaterial, outlineMaterial } from './aid-shaders';
@@ -39,15 +40,34 @@ const BEAM_EDGE_ALPHA = 0.5;
 /** How strongly a light's outline on its body shows. */
 const OUTLINE_ALPHA = 0.85;
 
+/**
+ * A rim's lean (the way it leans: against `direction`, the way it travels, in its body's frame
+ * `axes`) in the frame facing the eye at the body (`facing`): x across, y away, z up.
+ */
+export function rimLeanFacing(
+  axes: ArrayLike<number>,
+  facing: ArrayLike<number>,
+  direction: Vec3,
+): Vec3 {
+  const world = [0, 1, 2].map(
+    (k) => -(axes[k]! * direction[0] + axes[3 + k]! * direction[1] + axes[6 + k]! * direction[2]),
+  );
+  return [0, 3, 6].map(
+    (c) => world[0]! * facing[c]! + world[1]! * facing[c + 1]! + world[2]! * facing[c + 2]!,
+  ) as unknown as Vec3;
+}
+
 /** A threshold no facing reaches: no line there. */
 const NO_LINE = 9;
 
 /**
  * Where a light's outline lines go (see `outlineMaterial`), from what the body's shader does with
- * it: where it stops reaching (from a side or a point: facing it no less than `-wrap`; a spot's back
- * cut the same), and where it reaches half (from a side: its facing wrapped and sharpened by its
- * softness come to half; the sky round the body: facing the eye by `1 - ½^(1/softness)`; the rim:
- * where its spread and softness come to half, none where all of it reaches half or more).
+ * it: where it stops reaching (`main`: from a side or a point, facing it no less than `-wrap`; a
+ * spot's back cut the same), and where it is half as strong (`faint`: from a side, its facing
+ * wrapped and sharpened by its softness come to half; a hemisphere, where its colours meet; the
+ * sky round the body, facing the eye by `1 - ½^(1/softness)`; the rim, where its spread and
+ * softness come to half, none where all of it reaches half or more). A point's and a spot's half
+ * is worked out in the shader (its distance in it); the hemisphere, the sky and the rim never stop.
  */
 export function outlineAt(o: LightOutline): { readonly main: number; readonly faint: number } {
   const half = Math.pow(0.5, 1 / Math.max(o.softness, 1e-3));
@@ -58,12 +78,12 @@ export function outlineAt(o: LightOutline): { readonly main: number; readonly fa
     case 2:
       return { main: -o.wrap, faint: NO_LINE };
     case 3:
-      return { main: 0, faint: NO_LINE };
+      return { main: NO_LINE, faint: 0 };
     case 4:
-      return { main: 1 - half, faint: NO_LINE };
+      return { main: NO_LINE, faint: 1 - half };
     case 5: {
       const x = o.fade < 1 ? (half - o.fade) / (1 - o.fade) : 0;
-      return { main: x > 0 ? 1 - Math.cbrt(x) : NO_LINE, faint: NO_LINE };
+      return { main: NO_LINE, faint: x > 0 ? 1 - Math.cbrt(x) : NO_LINE };
     }
     default:
       return { main: NO_LINE, faint: NO_LINE };
@@ -348,15 +368,21 @@ export class EditingAids {
         uniforms.set('uPos', o.position);
         uniforms.set('uAim', o.aim);
         uniforms.set('uFade', o.fade);
+        uniforms.set('uWrap', o.wrap);
+        uniforms.set('uSoftness', o.softness);
         uniforms.set('uCosCone', Math.cos(o.cone * rad));
         uniforms.set('uCosFade', Math.cos(o.cone * (1 - o.edge) * rad));
         const at = outlineAt(o);
         uniforms.set('uMainAt', at.main);
         uniforms.set('uFaintAt', at.faint);
         if (o.kind === 5) {
-          // The rim's turn of the view (yaw, pitch: its aim), about its body's across and up, the
-          // way the body's shader turns it (see `ShaderUniforms`), as a matrix's columns.
-          const rows = viewTurn(o.axes.subarray(0, 3), o.axes.subarray(6, 9), o.aim[0], o.aim[1]);
+          // The rim's turn of the view as the body's shader turns it (see `ShaderUniforms`): its
+          // lean (its body's frame) put into the frame facing the eye at the body, its yaw and
+          // pitch from that, turned about that frame's across and up; as a matrix's columns.
+          const facing = bodyFrame(o.centre, 1, eye, view.up).axes;
+          const lean = rimLeanFacing(o.axes, facing, o.direction);
+          const [yaw, pitch] = rimTurn(lean);
+          const rows = viewTurn(facing.subarray(0, 3), facing.subarray(6, 9), -yaw, -pitch);
           uniforms.set('uRimTurn', Float32Array.from(rows));
         }
         uniforms.set('uColor', o.darkens ? [1, 1, 1] : o.colour);

@@ -1,4 +1,4 @@
-import { type AddedLight, bodyLights, tunedRig } from '../lights/lights';
+import { type AddedLight, bodyLights, rangeOf, tunedRig } from '../lights/lights';
 import { flowLights, type LightBranch, lightsOut } from '../lights/light-flow';
 import { aimOf } from '../space/look-at';
 import {
@@ -66,7 +66,7 @@ export function withFlowedLights(
 function movedLight(light: AddedLight, from: Transform, to: Transform): AddedLight {
   if ((light.kind !== 'point' && light.kind !== 'spot') || !light.position) return light;
   const position = pointToLocal(to, pointToWorld(from, light.position));
-  const fade = light.fade !== undefined ? (light.fade * from.scale) / to.scale : undefined;
+  const range = (rangeOf(light) * from.scale) / to.scale;
   const spot =
     light.kind === 'spot'
       ? {
@@ -80,5 +80,5 @@ function movedLight(light: AddedLight, from: Transform, to: Transform): AddedLig
           aim: undefined,
         }
       : {};
-  return { ...light, position, ...(fade !== undefined ? { fade } : {}), ...spot };
+  return { ...light, position, range, ...spot };
 }

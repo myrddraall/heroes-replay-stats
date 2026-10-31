@@ -187,12 +187,11 @@ export class SceneView {
     loader: ({ params, abortSignal }) => loadPlanetIndex(params, abortSignal),
   });
   /** Each planet's own variants as its data has them (the planet index's), by its id. */
-  private readonly dataVariants = computed(
+  /** Each planet's index entry (its data's variants, and its overlays' switches), by its id. */
+  private readonly planetData = computed(
     () =>
       new Map(
-        (this.index.hasValue() ? this.index.value().planets : []).map(
-          (p) => [p.id, p.variants] as const,
-        ),
+        (this.index.hasValue() ? this.index.value().planets : []).map((p) => [p.id, p] as const),
       ),
   );
   private readonly planets = computed(
@@ -254,7 +253,7 @@ export class SceneView {
         }))
       : [];
     return neededBy(
-      [...set, ...moons].map((s) => withLibrary(s, library, this.dataVariants().get(s.id))),
+      [...set, ...moons].map((s) => withLibrary(s, library, this.planetData().get(s.id))),
       this.overlayFile(),
     ).join(',');
   });
@@ -359,8 +358,8 @@ export class SceneView {
       const placed = random && scene ? setWithMoons(set, library, scene.scene.camera) : set;
       const file = this.overlayFile();
       const out: BranchedPlacement[] = [];
-      const variants = untracked(this.dataVariants);
-      for (const p of placed.map((s) => withLibrary(s, library, variants.get(s.id)))) {
+      const data = untracked(this.planetData);
+      for (const p of placed.map((s) => withLibrary(s, library, data.get(s.id)))) {
         const own = loaded.get(p.id);
         const overlays = (p.overlays ?? []).map((id) => loaded.get(file(id)));
         if (!own || overlays.some((o) => !o)) return previous?.value ?? null;

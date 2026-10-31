@@ -14,6 +14,7 @@ import type { AssetMethodsStore } from './asset-editor.store';
 import type { AssetWrites } from './asset-writes';
 import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies';
 import { bodyEdits } from '../editing/body-edits';
+import { parentRowOf } from '../tree/select-parent-when-gone';
 
 /** The asset's parts: their settings, those added, their materials, saved as an overlay. */
 export function assetPartMethods(store: AssetMethodsStore, w: AssetWrites) {
@@ -53,9 +54,10 @@ export function assetPartMethods(store: AssetMethodsStore, w: AssetWrites) {
       const at = store._partHost();
       const t = store.target();
       if (!at) return;
+      const up = parentRowOf(store.rows(), store.selected());
       removePart(at.host, at.id);
       patchState(store, {
-        selected: t.kind === 'sky-part' ? (t.stage ? STAGE_SKY : ASSET) : ASSET,
+        selected: up ?? (t.kind === 'sky-part' ? (t.stage ? STAGE_SKY : ASSET) : ASSET),
       });
     },
     /**

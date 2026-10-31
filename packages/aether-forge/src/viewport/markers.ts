@@ -3,6 +3,8 @@ import {
   AXIS_NAMES_PAST,
   axisEnds,
   type AxisLine,
+  circleAbout,
+  circleSegments,
   coneEdges,
   type LightAid,
   ringFacing,
@@ -101,7 +103,8 @@ export function lightMarkerAt(
 
 /**
  * The edges of a spot light's cone as seen from `eye` (the camera the editor looks through), from
- * the spot to the body (none for any other light, or with the eye inside the cone), in the scene:
+ * the spot to the body, past it as far as it reaches (none for any other light, or with the eye
+ * inside the cone), in the scene:
  * drawn with its marker when it is selected. The cone is where the renderer puts it, in the body's
  * placement frame (`layout`: see `wayOut`).
  */
@@ -114,44 +117,106 @@ export function spotEdges(
   const placed = placedLight(light);
   if (placed?.kind !== 'spot' || !placed.position || !placed.aim) return [];
   const frame = bodyTransform(body, layout);
-  return coneEdges(placed.position, placed.aim, placed.cone ?? 90, pointToLocal(frame, eye)).map(
+  return coneEdges(
+    placed.position,
+    placed.aim,
+    placed.cone ?? 90,
+    pointToLocal(frame, eye),
+    placed.fade,
+  ).map(
     ([a, b]) => [pointToWorld(frame, a), pointToWorld(frame, b)] as const,
   );
 }
 
+/** Lines: each from one point to another. */
+type Lines = readonly (readonly [Vec3, Vec3])[];
+
 /**
- * The lines of a light's settings, fainter than its own, drawn with its marker when it is
- * selected (in the scene, placed as `spotEdges` places a spot's): a spot's cone where it starts to
- * fade (its Edge in from its edge, where it has one); how far a point or a spot reaches (where it
- * is half as strong), a ring about it facing the eye.
+ * The lines of a light's settings drawn with its marker when it is selected (in the scene, placed
+ * as `spotEdges` places a spot's), as the outline on its body draws them: solid where it stops
+ * reaching (`solid`: a point's reach, its range, a ring about it facing the eye; a spot's, the
+ * circle closing its cone there, its edges meeting it), thinner (`thin`) the rest of a point's
+ * reach in front of it (three circles square to each other, so it reads as the ball it is from
+ * any side), dashed what it doesn't stop at (`soft`: those circles behind it; a spot's cone where
+ * it starts to fade, its Edge in from its edge, where it has one, closed where it reaches as its
+ * edge is; where an environment light
+ * reads the sky, a ring about its body).
  */
 export function lightSettingLines(
   light: BodyLight,
   body: SetPlanet,
   layout: Viewpoint,
   eye: Vec3,
-): readonly (readonly [Vec3, Vec3])[] {
+): { readonly solid: Lines; readonly thin: Lines; readonly soft: Lines } {
   const placed = placedLight(light);
-  if (!placed?.position || (placed.kind !== 'point' && placed.kind !== 'spot')) return [];
   const frame = bodyTransform(body, layout);
   const local = pointToLocal(frame, eye);
-  const inner =
-    placed.kind === 'spot' && placed.aim && (placed.edge ?? 0) > 0
-      ? coneEdges(placed.position, placed.aim, (placed.cone ?? 90) * (1 - placed.edge!), local)
-      : [];
-  const ring = ringFacing(placed.position, placed.fade ?? 1, local);
-  return [...inner, ...ring].map(
-    ([a, b]) => [pointToWorld(frame, a), pointToWorld(frame, b)] as const,
-  );
+  const world = (lines: Lines) =>
+    lines.map(([a, b]) => [pointToWorld(frame, a), pointToWorld(frame, b)] as const);
+  if (placed?.kind === 'environment')
+    return {
+      solid: [],
+      thin: [],
+      soft: world(ringFacing([0, 0, 0], 1 + (placed.fade ?? 0), local)),
+    };
+  if (!placed?.position || (placed.kind !== 'point' && placed.kind !== 'spot'))
+    return { solid: [], thin: [], soft: [] };
+  const at = placed.position;
+  const reach = placed.fade ?? 1;
+  if (placed.kind === 'point') {
+    // Its ball: the circles through it square to each other, each piece in front of it or behind.
+    const segments = circleSegments(reach, Math.hypot(...at.map((v, k) => local[k]! - v)));
+    const circles = ([[1, 0, 0], [0, 1, 0], [0, 0, 1]] as const).flatMap((normal) =>
+      circleAbout(at, normal, reach, segments),
+    );
+    const ahead = ([a, b]: readonly [Vec3, Vec3]) =>
+      [0, 1, 2].reduce((sum, k) => sum + ((a[k]! + b[k]!) / 2 - at[k]!) * (local[k]! - at[k]!), 0) >= 0;
+    return {
+      solid: world(ringFacing(at, reach, local)),
+      thin: world(circles.filter(ahead)),
+      soft: world(circles.filter((l) => !ahead(l))),
+    };
+  }
+  const aim = placed.aim ?? [0, 0, 1];
+  /** The circle closing a cone `degrees` wide (its half-angle) where it reaches. */
+  const closing = (degrees: number) => {
+    const angle = (degrees * Math.PI) / 180;
+    const end = at.map((v, k) => v + aim[k]! * reach * Math.cos(angle)) as unknown as Vec3;
+    const radius = reach * Math.sin(angle);
+    return circleAbout(
+      end,
+      aim,
+      radius,
+      circleSegments(radius, Math.hypot(...end.map((v, k) => local[k]! - v))),
+    );
+  };
+  const cone = placed.cone ?? 90;
+  // Where it starts to fade, as its edge: its lines, and the circle closing them where it reaches.
+  const fades = (placed.edge ?? 0) > 0 ? cone * (1 - placed.edge!) : null;
+  const inner = fades === null ? [] : [...coneEdges(at, aim, fades, local, reach), ...closing(fades)];
+  return { solid: world(closing(cone)), thin: [], soft: world(inner) };
+}
+
+/** How a body's surface takes a light (its lit materials' Wrap and Drop off: see `MaterialSettings`). */
+export interface LightSurface {
+  readonly wrap: number;
+  readonly dropOff: number;
 }
 
 /**
  * What the view shows of a light selected, about a body it lights (placed in the body's placement
  * frame, `layout`: see `wayOut`): the outline of where it falls on the body's sphere (any light but
  * one from all round), and a directional light's beam out of the body the way it comes from. None
- * of a light switched off.
+ * of a light switched off. How far it wraps round and how sharply it falls off are its body's
+ * surface's (`surface`: see `bodySurfaceOf`; a shield's light's, its own spread and Drop off); the
+ * sky's and the rim's falloff their own.
  */
-export function lightAids(light: BodyLight, body: SetPlanet, layout: Viewpoint): LightAid[] {
+export function lightAids(
+  light: BodyLight,
+  body: SetPlanet,
+  layout: Viewpoint,
+  surface: LightSurface,
+): LightAid[] {
   if (!light.enabled) return [];
   const placed = placedLight(light);
   if (!placed) return [];
@@ -169,8 +234,11 @@ export function lightAids(light: BodyLight, body: SetPlanet, layout: Viewpoint):
     fade: placed.fade ?? 1,
     cone: placed.cone ?? 90,
     edge: placed.edge ?? 0,
-    wrap: placed.wrap ?? 0,
-    softness: placed.softness ?? 1,
+    wrap: surface.wrap,
+    softness:
+      placed.kind === 'environment' || placed.kind === 'rim'
+        ? (placed.softness ?? 1)
+        : surface.dropOff,
     colour,
     darkens: light.darkens,
   };
@@ -290,10 +358,18 @@ export const axisFrame = (
  */
 export function axisDraggedTo(line: AxisLine, eye: Vec3, ray: Vec3, previous: Vec3): Vec3 {
   const c = line.centre;
+  return draggedRound(c, Math.hypot(...previous.map((v, k) => v - c[k]!)), eye, ray, previous);
+}
+
+/**
+ * Where something dragged round a middle `c` goes, kept `r` from it (see `axisDraggedTo`): the
+ * point of that sphere under the pointer, near or far as it was taken, round over its edge past
+ * its outline.
+ */
+export function draggedRound(c: Vec3, r: number, eye: Vec3, ray: Vec3, previous: Vec3): Vec3 {
   const to = (p: Vec3): Vec3 => [p[0] - c[0], p[1] - c[1], p[2] - c[2]];
   const dot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
   const o = to(eye);
-  const r = Math.hypot(...to(previous));
   const b = dot(ray, o);
   const disc = b * b - (dot(o, o) - r * r);
   const at = (t: number): Vec3 => [eye[0] + ray[0] * t, eye[1] + ray[1] * t, eye[2] + ray[2] * t];

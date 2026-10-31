@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { newLight, SHIELD_DEFAULTS, withLightChanged } from '../lights/lights';
+import { newLight, SHIELD_DEFAULTS, shieldSpreadOf, withLightChanged } from '../lights/lights';
 import {
   DEFAULT_GRID_LIGHTS,
   gridFields,
@@ -117,7 +117,11 @@ describe('materials’ settings', () => {
     const all = newLight('ambient', [both]);
     const anti = { ...newLight('directional', []), darkens: true, strength: 0.5, wrap: 0.5 };
     const off = { ...newLight('directional', []), enabled: false };
-    const spot = { ...newLight('spot', []), lookAt: { kind: 'body', at: [0, -1, 0] } as const };
+    const spot = {
+      ...newLight('spot', []),
+      position: [0, -2.5, 1.5] as const,
+      lookAt: { kind: 'body', at: [0, -1, 0] } as const,
+    };
     const sky = newLight('environment', []);
     const { reveal, activation } = gridFields(
       materialValues(material(), { gridLights: [both, all, anti, off, spot, sky] }),
@@ -181,5 +185,22 @@ describe('materials’ settings', () => {
       wrap: 0.5,
       shield: { activates: true },
     });
+  });
+});
+
+describe('how far a material lets light on round (its Wrap)', () => {
+  it('is as set, else its data’s, else none (Drop off: else 1)', () => {
+    const lit = material({ unshaded: false });
+    expect(materialValues(lit, undefined).wrap).toBe(0);
+    expect(materialValues(lit, undefined).dropOff).toBe(1);
+    expect(materialValues({ ...lit, dropOff: 3 }, { dropOff: 2 }).dropOff).toBe(2);
+    expect(materialValues({ ...lit, wrap: 0.5 }, undefined).wrap).toBe(0.5);
+    expect(materialValues({ ...lit, wrap: 0.5 }, { wrap: 0.2 }).wrap).toBe(0.2);
+  });
+
+  it('leaves a shield’s light its own spread round the grid (from before, its Wrap)', () => {
+    expect(shieldSpreadOf({})).toBe(0);
+    expect(shieldSpreadOf({ wrap: 0.4 })).toBe(0.4);
+    expect(shieldSpreadOf({ wrap: 0.4, shield: { spread: 0.7 } })).toBe(0.7);
   });
 });

@@ -10,6 +10,19 @@
   (pointercancel)="poleUp($event)"
   >{{ m.label }}</span
 >
+} @else if (m.kind === 'aim') {
+<span
+  class="aim"
+  role="img"
+  [style.--x]="m.x"
+  [style.--y]="m.y"
+  [attr.aria-label]="m.label"
+  title="Aim"
+  (pointerdown)="lightDown($event, m)"
+  (pointermove)="lightMove($event)"
+  (pointerup)="lightUp($event)"
+  (pointercancel)="lightUp($event)"
+></span>
 } @else if (m.kind === 'body') {
 <span class="marker marker--body" [class.open]="m.open" [style.--x]="m.x" [style.--y]="m.y">
   <mat-icon class="material-symbols-outlined" aria-hidden="true">{{ m.icon }}</mat-icon>
@@ -22,12 +35,17 @@
   [class.open]="m.open"
   [class.selected]="m.selected"
   [class.off]="m.off"
+  [class.draggable]="!!m.handle"
   [style.--x]="m.x"
   [style.--y]="m.y"
   [style.--shift.px]="m.shift"
   [attr.aria-label]="m.label"
   [attr.aria-pressed]="m.selected"
-  (click)="picked.emit(m.key)"
+  (click)="pick(m)"
+  (pointerdown)="lightDown($event, m)"
+  (pointermove)="lightMove($event)"
+  (pointerup)="lightUp($event)"
+  (pointercancel)="lightUp($event)"
   (pointerenter)="hoverOn(m.key)"
   (pointerleave)="hoverOn(null)"
   (focus)="hoverOn(m.key)"

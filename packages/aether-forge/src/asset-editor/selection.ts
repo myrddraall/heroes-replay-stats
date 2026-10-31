@@ -41,6 +41,7 @@ import { overlayViewOf } from '../overlays/overlays';
 import { bodyEdits } from '../editing/body-edits';
 import type { Crumb } from '../tree/breadcrumb';
 import { previewDefault, type PreviewSetup } from '../aids/preview-setup';
+import { parentRowOf } from '../tree/select-parent-when-gone';
 
 /** What is selected in the tree: its target, the body, material or sky it is, how the panel heads it, and what can be done with it. */
 export function assetSelectionViews(store: WithOwn) {
@@ -292,8 +293,16 @@ export function assetSelectionMethods(store: AssetMethodsStore, w: AssetWrites) 
       if (path) store.expand(ASSET);
       return true;
     },
-    // (Editing in place is the scene editor's: the asset editor is always at what is open.)
-    enter: () => undefined,
+    // (Editing in place is the scene editor's: the asset editor is always at what is open.) One of
+    // the planet's variants: edited (its changes go into it); the one edited: back to its own.
+    enter(key: string): void {
+      const t = targetOf(key, asset());
+      if (t.kind !== 'variant') return;
+      patchState(store, {
+        selected: key,
+        variantEdited: store.variantEdited() === t.id ? null : t.id,
+      });
+    },
     leave: () => undefined,
     goTo: () => undefined,
     deselect(): void {
@@ -327,8 +336,9 @@ export function assetSelectionMethods(store: AssetMethodsStore, w: AssetWrites) 
       }
       if (t.kind === 'light') {
         const level = levelOf(t);
+        const up = parentRowOf(store.rows(), key);
         if (level) bodyEdits.removeLight(level, t.id);
-        if (store.selected() === key) patchState(store, { selected: ASSET });
+        if (store.selected() === key) patchState(store, { selected: up ?? ASSET });
         return;
       }
       const host = store._addHost();

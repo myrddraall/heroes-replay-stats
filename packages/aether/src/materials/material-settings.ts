@@ -7,6 +7,7 @@ import {
   placedLight,
   SHIELD_DEFAULTS,
   type ShieldEffect,
+  shieldSpreadOf,
 } from '../lights/lights';
 import { anchoredDepth, type SkyAnchor, skyAnchorOf } from '../sky/sky-anchors';
 import { DEFAULT_ORIENTATION, type Orientation } from '../space/graph';
@@ -46,6 +47,10 @@ export interface MaterialValues {
   /** Its shine (see `MaterialSettings`): its own where not set. */
   readonly specular: number;
   readonly glossiness: number;
+  /** How far it lets light on round (see `MaterialSettings`): as set, else its data's, else 0. */
+  readonly wrap: number;
+  /** How sharply its light falls off round it (see `MaterialSettings`): as set, else its data's, else 1. */
+  readonly dropOff: number;
   /** A grid's colours: inactive (its own), and active (where it is activated). */
   readonly inactive: string;
   readonly active: string;
@@ -231,7 +236,7 @@ export function gridFields(v: MaterialValues): {
           }
         : {}),
       ...(light.from ? { from: light.from } : {}),
-      reach: light.wrap ?? 0,
+      reach: shieldSpreadOf(light),
       falloff: light.softness ?? 1,
       strength,
     };
@@ -380,6 +385,8 @@ export function materialValues(
     lit: settings?.lit ?? !material.unshaded,
     specular: settings?.specular ?? material.specularMult ?? 0,
     glossiness: settings?.glossiness ?? material.specularity ?? DEFAULT_GLOSSINESS,
+    wrap: settings?.wrap ?? material.wrap ?? 0,
+    dropOff: settings?.dropOff ?? material.dropOff ?? 1,
     inactive: settings?.inactive ?? ownInactive(material),
     active: settings?.active ?? DEFAULT_ACTIVE,
     gridLights: gridLightsOf(settings),
@@ -473,6 +480,20 @@ export interface MaterialSettings {
    */
   readonly specular?: number;
   readonly glossiness?: number;
+  /**
+   * How far a lit material lets light on round past where its face turns from it (0 the half
+   * facing a light; 1 on round to the point facing away), every light alike: an atmosphere, or a
+   * rough or soft surface, softening its edge of light and dark (wrap lighting). Unset: its
+   * data's (`SceneMaterial.wrap`), else 0.
+   */
+  readonly wrap?: number;
+  /**
+   * How sharply a lit material's light falls off round it, from where a light faces it squarely to
+   * where it turns away: the power its facing is raised to (1 as the game lights; higher, a harder
+   * edge; lower, a softer), every light from a side, a point or a spot alike. Unset: its data's
+   * (`SceneMaterial.dropOff`), else 1.
+   */
+  readonly dropOff?: number;
   /**
    * The side it spreads from: the point on its face (body frame) its layers' fresnel is brightest
    * on, as a light comes from one (unset: each layer's own turn).

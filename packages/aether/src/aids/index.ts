@@ -5,6 +5,8 @@ export {
   type AidDot,
   type AidLine,
   type AxisLine,
+  circleAbout,
+  circleSegments,
   coneEdges,
   ringFacing,
   type EditingAid,

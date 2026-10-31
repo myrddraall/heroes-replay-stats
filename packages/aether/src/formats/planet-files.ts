@@ -30,6 +30,11 @@ export interface PlanetIndexEntry {
   readonly style?: string;
   /** Its own variants as its data has them (see `variantsOf`). */
   readonly variants?: readonly BodyVariant[];
+  /**
+   * Whether each overlay it wears is drawn, by the overlay's id, unless a level over its data says
+   * (off: one of its variants may switch it on); unset: drawn.
+   */
+  readonly overlaysEnabled?: Readonly<Record<string, boolean>>;
 }
 
 /** One of the Play screen's own planets where the game puts it, at its body's radius there. */
@@ -37,6 +42,8 @@ export interface PlayPlacement {
   readonly id: string;
   readonly position: readonly [number, number, number];
   readonly radius: number;
+  /** Its variants on there (the game's look: lit as the Play screen paints it). */
+  readonly variantsOn?: readonly string[];
 }
 
 export interface PlanetIndex {
@@ -49,8 +56,8 @@ export interface PlanetIndex {
 
 /**
  * A directional light: the way it travels, and its colour (times its multiplier). Or, by `kind`,
- * a light from a point near the body (where it is, in the body's frame and radii; `fade`: the
- * distance it is half as strong at), a spot (that, pointing `aim`, within a cone of `cone`
+ * a light from a point near the body (where it is, in the body's frame and radii; `fade`: how
+ * far it reaches, fading to nothing there, half as strong a fifth of the way), a spot (that, pointing `aim`, within a cone of `cone`
  * degrees fading over `edge` of it), a hemisphere (its colour from the side `direction` comes
  * from, `ground` from the other), the sky round the body (an environment light: the sky's
  * colours read `fade` radii out from the body's edge, each side lit by the sky beyond it, its

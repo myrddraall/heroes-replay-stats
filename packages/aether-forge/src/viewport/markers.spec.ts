@@ -161,8 +161,12 @@ describe("a light's markers and aids", () => {
         [0.3, -2.4, 1.6],
       ),
     );
-    const [outline] = lightAids(spot, body, layout);
+    const [outline] = lightAids(spot, body, layout, { wrap: 0.3, dropOff: 2 });
     expect(outline?.shape === 'outline' && Array.from(outline.axes)).toEqual(Array.from(frame));
+    // (How far round it wraps: as its body's surface says, given.)
+    expect(outline?.shape === 'outline' && outline.wrap).toBe(0.3);
+    // (How sharply it falls off: its body's surface's too, a spot's as a point's.)
+    expect(outline?.shape === 'outline' && outline.softness).toBe(2);
     const side: BodyLight = {
       ...spot,
       id: 'added-side',
@@ -170,7 +174,7 @@ describe("a light's markers and aids", () => {
       from: [-0.4, -0.6, 0.7],
       position: undefined,
     };
-    const way = lightAids(side, body, layout)[0];
+    const way = lightAids(side, body, layout, { wrap: 0, dropOff: 1 })[0];
     const l = Math.hypot(-0.4, -0.6, 0.7);
     const want = turn(frame, [-0.4 / l, -0.6 / l, 0.7 / l]);
     expect(

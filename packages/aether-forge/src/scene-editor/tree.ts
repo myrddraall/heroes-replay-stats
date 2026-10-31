@@ -15,7 +15,6 @@ import {
 } from '@myrddraall/heroes-replay-stats-aether/scenes';
 import {
   type AddedLight,
-  downOf,
   type LightBranch,
   type LightSettingsMap,
   mergeLightSettings,
@@ -25,7 +24,7 @@ import { computed } from '@angular/core';
 import { bodyEnabled, type BodyInfo, filesLoaded, wornIds } from '../bodies/body';
 import { byDepth, skyOverlayLabel } from '../sky/sky';
 import { referenceRow } from '../aids/reference-row';
-import { lightDetail, lightIcon, lightsOutOf, sceneLightsOf } from '../lights/lights';
+import { lightDetail, lightIcon, sceneLightsOf } from '../lights/lights';
 import { type MaterialEntry } from '../materials/materials';
 import { wornLabel } from '../overlays/overlays';
 import type { TreeRow } from '../tree/scene-tree';
@@ -329,7 +328,7 @@ export function treeViews(store: WithPartHosts) {
         readonly chain: (path: BodyPath) => (BodyInfo | undefined)[];
         readonly pick: (path: BodyPath) => string;
         readonly branch: (path: BodyPath) => LightBranch;
-        readonly lights: readonly AddedLight[];
+        readonly lightsAt: (path: BodyPath) => readonly AddedLight[];
         /** What the scene sets of the lights on all of it (a group put in it: those it takes out). */
         readonly except?: LightSettingsMap;
       }
@@ -350,11 +349,13 @@ export function treeViews(store: WithPartHosts) {
               chain: (path) => sceneChain([...focus, ...path]),
               pick: (path) => bodyKey([...focus, ...path]),
               branch: (path) => branchOf((at) => bodyKey([...focus, ...at]), path),
-              // (Those that light down from the bodies it is a moon of, not put out.)
-              lights: sceneChain(focus.slice(0, -1))
-                .flatMap((parent) => (parent ? lightsOutOf(parent) : []))
-                .filter((l) => l.enabled !== false && downOf(l))
-                .map(receivedLight),
+              // (Those that reach each from the bodies not put out: the planets it is a moon of
+              // lighting down, the others lighting out to it; those it and its moons hand on to
+              // each other flow as they are put out.)
+              lightsAt: (path) =>
+                (store.flowed().get(bodyKey([...focus, ...path])) ?? [])
+                  .filter(({ from }) => !focus.every((k, i) => pathOf(from.slice(5))[i] === k))
+                  .map(({ light }) => light),
             },
           ]
         : [
@@ -368,7 +369,7 @@ export function treeViews(store: WithPartHosts) {
                 chain: (path) => sceneChain([key, ...path]),
                 pick: (path) => bodyKey([key, ...path]),
                 branch: (path) => branchOf((at) => bodyKey([key, ...at]), path),
-                lights: [],
+                lightsAt: () => [],
               };
             }),
             // The groups' planets where they are put: picked, the group put in it is selected.
@@ -383,7 +384,7 @@ export function treeViews(store: WithPartHosts) {
                 ),
               pick: () => placementKey(g.placement[0]!),
               branch: (path) => branchOf((at) => groupBodyKey(j, at), path, `group:${j}`),
-              lights: g.lights.filter((l) => l.out !== 'scene').map(receivedLight),
+              lightsAt: () => g.lights.filter((l) => l.out !== 'scene').map(receivedLight),
               except: store.placements().find((p, i) => siblingKey(p, i) === g.placement[0])
                 ?.lights,
             })),
@@ -393,7 +394,7 @@ export function treeViews(store: WithPartHosts) {
       const picks: string[] = [];
       /** What must stay in view of each body put out, in its radii. */
       const extents: number[] = [];
-      for (const { root, moons, fit, chain, pick, branch, lights, except } of roots) {
+      for (const { root, moons, fit, chain, pick, branch, lightsAt, except } of roots) {
         // What must stay in view of each body: as far as its parts and its halo reach.
         const extent = (path: BodyPath) => {
           const b = chain(path).at(-1);
@@ -411,6 +412,7 @@ export function treeViews(store: WithPartHosts) {
           const s = b.settings;
           // Drawn where it and every body it is a moon of are switched on.
           const drawn = bodies.every((x) => (x?.settings.enabled ?? x?.below?.enabled) !== false);
+          const lights = lightsAt(p.path);
           extents.push(visualExtent(b.file, b.overlays, bodyParts(b), glowMarginOf(b)));
           picks.push(pick(p.path));
           out.push({

@@ -102,8 +102,8 @@
 } @if (on('lighting')) {
 <forge-property-section
   title="Light"
-  [changed]="anySet(['lit', 'glow', 'specular', 'glossiness'])"
-  (resetRequested)="clear.emit(['lit', 'glow', 'specular', 'glossiness'])"
+  [changed]="anySet(['lit', 'wrap', 'dropOff', 'glow', 'specular', 'glossiness'])"
+  (resetRequested)="clear.emit(['lit', 'wrap', 'dropOff', 'glow', 'specular', 'glossiness'])"
 >
   @if (c.lit) {
   <forge-property-check
@@ -114,6 +114,30 @@
     [overridden]="overrides()?.lit"
     (resetRequested)="clear.emit(['lit'])"
     (checkedChange)="settingsChange.emit({ lit: !$event })"
+  />
+  } @if (v.lit) {
+  <forge-property-number
+    label="Wrap"
+    [value]="v.wrap"
+    [min]="0"
+    [max]="1"
+    [step]="0.05"
+    [changed]="isSet('wrap')"
+    [origin]="origins()?.wrap"
+    [overridden]="overrides()?.wrap"
+    (resetRequested)="clear.emit(['wrap'])"
+    (valueChange)="settingsChange.emit({ wrap: $event })"
+  />
+  <forge-property-number
+    label="Drop off"
+    [value]="v.dropOff"
+    [min]="0.1"
+    [step]="0.05"
+    [changed]="isSet('dropOff')"
+    [origin]="origins()?.dropOff"
+    [overridden]="overrides()?.dropOff"
+    (resetRequested)="clear.emit(['dropOff'])"
+    (valueChange)="settingsChange.emit({ dropOff: $event })"
   />
   }
   <forge-property-number

@@ -8,14 +8,15 @@ import { splitViewKey } from '../materials/material-views';
 import {
   axisAids,
   lightAids,
-  lightMarkerAt,
-  lightSettingLines,
   poleMarkers,
-  spotEdges,
+  lightSettingLines,
 } from '../viewport/markers';
+import { placedLightMarkers } from '../viewport/light-drag';
 import {
   lightsView,
   type LightEntry,
+  bodySurfaceOf,
+  shieldSurfaceOf,
   lightIcon,
   lightsOfBody,
   shieldLightsOf,
@@ -128,13 +129,12 @@ export function assetBackgroundViews(store: WithStage) {
       }
       // Where the renderer puts them: as the body is lit (fixed in the world, or kept to the eye).
       const from = lightsView(lit.info, scene.camera, view);
-      const marker = (key: string, light: LightEntry['light'], at: Vec3) => ({
+      const marker = (key: string, light: LightEntry['light']) => ({
         id: key,
         key,
         kind: 'light' as const,
         label: light.name,
         icon: lightIcon(light),
-        at,
         selected: store.selected() === key,
         off: !light.enabled,
       });
@@ -145,18 +145,16 @@ export function assetBackgroundViews(store: WithStage) {
           (light.kind === 'rim' && !light.from),
       );
       round.forEach(({ key, light }, n) =>
-        out.push({ ...marker(key, light, body.position), nudge: n - (round.length - 1) / 2 }),
+        out.push({
+          ...marker(key, light),
+          at: body.position,
+          nudge: n - (round.length - 1) / 2,
+          // (An environment light's: where it reads the sky, about the body.)
+          softLines: lightSettingLines(light, body, from, view.eye).soft,
+        }),
       );
-      for (const { key, light } of lights) {
-        const at = lightMarkerAt(light, body, from);
-        if (at)
-          out.push({
-            ...marker(key, light, at.at),
-            from: at.from,
-            lines: spotEdges(light, body, from, view.eye),
-            softLines: lightSettingLines(light, body, from, view.eye),
-          });
-      }
+      for (const { key, light } of lights)
+        out.push(...placedLightMarkers(marker(key, light), light, body, from, view.eye));
       // The planet open selected: its poles named at its axis's ends.
       if (store.target().kind === 'body' && lit.info && lit.info.file?.kind !== 'style')
         axisAids(lit.info, body, scene.camera, view).forEach((line, n) =>
@@ -185,7 +183,16 @@ export function assetBackgroundViews(store: WithStage) {
             ? t.view.id
             : null;
       const light = id && lit.lights.find(({ light }) => light.id === (id as string))?.light;
-      return light ? lightAids(light, lit.body, lightsView(lit.info, scene.camera, view)) : [];
+      // (A shield's light wraps round the grid by its own spread; any other, by its body's surface.)
+      const onShield = 'view' in t && t.view?.kind === 'gridLight';
+      return light
+        ? lightAids(
+            light,
+            lit.body,
+            lightsView(lit.info, scene.camera, view),
+            onShield ? shieldSurfaceOf(light) : bodySurfaceOf(lit.info ?? undefined),
+          )
+        : [];
     }),
   };
 }

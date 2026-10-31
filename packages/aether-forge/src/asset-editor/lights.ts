@@ -2,6 +2,7 @@ import {
   type LightId,
   type LightSettings,
   type LightKind,
+  withLightChanged,
 } from '@myrddraall/heroes-replay-stats-aether/lights';
 import { patchState } from '@ngrx/signals';
 import { ASSET, ASSET_LIGHTS, assetLightKey, receiverOf } from './asset-targets';
@@ -10,18 +11,37 @@ import type { AssetWrites } from './asset-writes';
 import { bodyEdits } from '../editing/body-edits';
 import type { LinkChange } from '../lights/linking';
 import { litByOf } from '../lights/lights';
+import { type LightDrag, lightDragStep } from '../viewport/light-drag';
+import { parentRowOf } from '../tree/select-parent-when-gone';
 
 /** The asset's lights, the stand-in's, and what lights the asset. */
 export function assetLightMethods(store: AssetMethodsStore, w: AssetWrites) {
-  const { standInLightChange, selectedLevel } = w;
+  const { standInLightChange, selectedLevel, materialChange, dragging } = w;
+  /** The light selected changed: the stand-in's, or the asset's (as set at the level edited). */
+  const lightChange = (change: Partial<LightSettings>) => {
+    const t = store.target();
+    if (t.kind === 'stand-in-light') standInLightChange(t.id, change);
+    else if (t.kind === 'light') {
+      const level = selectedLevel();
+      if (level) bodyEdits.setLight(level, t.id, change);
+    }
+  };
   return {
     setLight(change: Partial<LightSettings>): void {
+      lightChange(change);
+    },
+    dragLight(drag: LightDrag): void {
+      const view = store.camera();
+      const change = view && lightDragStep(store.markers(), view.eye, drag, dragging);
+      if (!change) return;
       const t = store.target();
-      if (t.kind === 'stand-in-light') standInLightChange(t.id, change);
-      else if (t.kind === 'light') {
-        const level = selectedLevel();
-        if (level) bodyEdits.setLight(level, t.id, change);
-      }
+      // A shield's light: one of its material's.
+      if ('view' in t && t.view?.kind === 'gridLight') {
+        const lights = store.material()?.values.gridLights ?? [];
+        materialChange(store.selected(), {
+          gridLights: withLightChanged(lights, t.view.id, change),
+        });
+      } else lightChange(change);
     },
     addLight(kind: LightKind): void {
       const level = selectedLevel();
@@ -67,8 +87,10 @@ export function assetLightMethods(store: AssetMethodsStore, w: AssetWrites) {
       }
       const t = store.target();
       if (t.kind !== 'light' || !level) return;
+      // (The row above it selected in its place.)
+      const up = parentRowOf(store.rows(), store.selected());
       bodyEdits.removeLight(level, t.id);
-      patchState(store, { selected: ASSET });
+      patchState(store, { selected: up ?? ASSET });
     },
     clearLight(keys?: readonly (keyof LightSettings)[]): void {
       const t = store.target();

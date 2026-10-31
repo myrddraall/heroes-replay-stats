@@ -47,6 +47,16 @@ describe("a light's Linking", () => {
     expect(bodyLink(moon({}), lamp.id, outer, at)?.reach).toBeUndefined();
   });
 
+  it('says where a level under the one edited leaves it out (none where this level sets it)', () => {
+    const below = { ...moon({}), below: { lights: { [lamp.id]: { enabled: false } } } };
+    expect(bodyLink(below, lamp.id, outer, at)).toMatchObject({
+      lit: false,
+      changed: false,
+      origin: 'the library (planet)',
+    });
+    expect(bodyLink(moon({}), lamp.id, outer, at)?.origin).toBeUndefined();
+  });
+
   it('leaves out a body the light does nothing to', () => {
     expect(bodyLink(moon({}), lamp.id, [], at)).toBeNull();
   });

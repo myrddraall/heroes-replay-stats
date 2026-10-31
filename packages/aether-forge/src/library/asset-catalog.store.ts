@@ -225,6 +225,15 @@ export const AssetCatalogStore = signalStore(
       dataVariants: computed(
         () => new Map((index()?.planets ?? []).map((p) => [p.id, p.variants] as const)),
       ),
+      /** What each planet's data sets for it (the planet index's: its overlays' switches), by its id. */
+      dataSettings: computed(
+        () =>
+          new Map(
+            (index()?.planets ?? []).flatMap((p) =>
+              p.overlaysEnabled ? [[p.id, { overlaysEnabled: p.overlaysEnabled }] as const] : [],
+            ),
+          ),
+      ),
       /** The overlays, by what they are worn on (planets', then the sky's), and whether made here. */
       overlays: computed((): CatalogOverlay[] => [
         ...styles().map((id) => ({ id, kind: 'planet' as const, made: createdOverlay(id) })),

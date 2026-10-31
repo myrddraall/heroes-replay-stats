@@ -20,6 +20,8 @@ export const NEAREST = 1;
 /** A dot's width in pixels, and hovered or selected (a ring round the marker's icon over it). */
 const DOT = 10;
 const DOT_OPEN = 34;
+/** A spot's aim's handle's dot's width in pixels. */
+const DOT_AIM = 14;
 
 /**
  * The markers shown in a mode: all of them, or only the selected thing's (a light's own;
@@ -36,10 +38,10 @@ export function shownMarkers(
 
 /**
  * The markers drawn in the scene (editing aids, depth tested): a dot for each that can be picked
- * (none for a pole: its name is its marker), grown into a ring round its icon where hovered or
- * selected, then on top; the lines of what is marked (a light selected to its body, a spot's
- * cone's edges, what a camera sees), dashed, solid where selected. A camera where the view is
- * (or behind it) isn't marked: its lines would fill the view.
+ * (none for a pole: its name is its marker; a spot's aim's handle a small one), grown into a ring
+ * round its icon where hovered or selected, then on top; the lines of what is marked (a light
+ * selected to its body, a spot's cone's edges, what a camera sees), dashed, solid where selected.
+ * A camera where the view is (or behind it) isn't marked: its lines would fill the view.
  */
 export function markerAids(
   markers: readonly SceneMarker[],
@@ -67,6 +69,17 @@ export function markerAids(
     if (m.from && !lite) line(m.from, m.at, m);
     if (m.selected) for (const [a, b] of m.lines ?? []) line(a, b, m);
     if (m.selected)
+      for (const [from, to] of m.thinLines ?? [])
+        lines.push({
+          shape: 'line',
+          from,
+          to,
+          pixels: 1,
+          colour: colours.selected,
+          alpha: 0.85,
+          dashed: false,
+        });
+    if (m.selected)
       for (const [from, to] of m.softLines ?? [])
         lines.push({
           shape: 'line',
@@ -86,7 +99,7 @@ export function markerAids(
       at: m.at,
       lift: m.lift ?? 0,
       shift: (m.nudge ?? 0) * MARKER_WIDTH,
-      pixels: open ? DOT_OPEN : DOT,
+      pixels: m.kind === 'aim' ? DOT_AIM : open ? DOT_OPEN : DOT,
       ring: m.selected ? 2 : 1.25,
       colour: m.selected ? colours.selected : colours.edge,
       alpha: (open ? 1 : 0.8) * (m.off ? 0.55 : 1),

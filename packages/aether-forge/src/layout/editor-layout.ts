@@ -39,6 +39,7 @@ import { EditingAidsStore } from '../aids/editing-aids.store';
 import { ReferenceOverlay } from '../viewport/reference-overlay';
 import { LookThrough } from '../viewport/look-through';
 import { type PoleDrag, SceneMarkers } from '../viewport/scene-markers';
+import type { LightDrag } from '../viewport/light-drag';
 import { FrameStatsReadout } from '../diagnostics/frame-stats-readout';
 
 /**
@@ -137,6 +138,16 @@ export class EditorLayout {
   protected poleDrag(drag: PoleDrag): void {
     if (drag.phase === 'start') this.draft.holdHistory();
     this.editor.dragPole(drag);
+    if (drag.phase === 'end') this.draft.releaseHistory();
+  }
+
+  /** A light's marker dragged in the view: the light selected as it begins, the whole drag one step. */
+  protected lightDrag(drag: LightDrag): void {
+    if (drag.phase === 'start') {
+      this.draft.holdHistory();
+      if (this.editor.selected() !== drag.key) this.editor.showMarker(drag.key);
+    }
+    this.editor.dragLight(drag);
     if (drag.phase === 'end') this.draft.releaseHistory();
   }
 

@@ -153,6 +153,9 @@ export function drawStateOf(draw: MeshDraw, ctx: DrawContext): DrawState {
     linked,
   );
   shadeUniforms(u, darkenings);
+  // How far the material lets every light on it round, and how sharply its light falls off.
+  u.f1('uWrap', shine.wrap);
+  u.f1('uDropOff', shine.dropOff);
   const grid = draw.part.pattern?.kind === 'hex';
   if (grid) {
     const { reveal, activation } = gridFields(materialValues(material, settings));

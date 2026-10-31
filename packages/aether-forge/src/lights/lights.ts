@@ -27,9 +27,12 @@ import {
   reachesReceiver,
   type Receiver,
   tunedRig,
+  type ShieldEffect,
+  shieldSpreadOf,
   withReceiver,
 } from '@myrddraall/heroes-replay-stats-aether/lights';
 import { materialKey } from '@myrddraall/heroes-replay-stats-aether/materials';
+import type { LightSurface } from '../viewport/markers';
 import type { Viewpoint } from '@myrddraall/heroes-replay-stats-aether/space';
 import {
   type BodyInfo,
@@ -144,6 +147,27 @@ export function receiversOf(b: BodyInfo): ReceiverEntry[] {
 }
 
 /**
+ * How a body's surface takes a light, as its outline shows it: its lit materials' Wrap and Drop
+ * off, the most of each (as the renderer has each); none: a light's own reach and falloff.
+ */
+export function bodySurfaceOf(b: BodyInfo | undefined): LightSurface {
+  const lit = (b ? materialsOf(b) : []).filter((m) => m.values.lit).map((m) => m.values);
+  return lit.length
+    ? {
+        wrap: Math.max(...lit.map((v) => v.wrap)),
+        dropOff: Math.max(...lit.map((v) => v.dropOff)),
+      }
+    : { wrap: 0, dropOff: 1 };
+}
+
+/** A shield's light's own reach round its grid and falloff (its spread and Drop off), as a surface's. */
+export const shieldSurfaceOf = (light: {
+  readonly shield?: ShieldEffect;
+  readonly wrap?: number;
+  readonly softness?: number;
+}): LightSurface => ({ wrap: shieldSpreadOf(light), dropOff: light.softness ?? 1 });
+
+/**
  * A body's lights as shown (see `bodyLights`): its rig as it is turned (Light from) with each
  * light's settings in effect over it, and its shadow as its shade comes to; what the layer edited
  * sets of each, and which level under it sets the rest.
@@ -158,17 +182,7 @@ export function lightsOfBody(b: BodyInfo): LightEntry[] {
     { ...DEFAULT_SHADE, ...b.file?.tuning?.shade },
   ).softness;
   const shade = { strength: values.shade, direction: values.shadeTowards, softness };
-  // The overlays' (shared, the later over the earlier), then its own.
-  const levels: [string, LightSettingsMap | undefined][] = [
-    ...b.overlays.map((o): [string, LightSettingsMap | undefined] => [
-      `the library (${overlayLabel(o)})`,
-      o.below?.lights,
-    ]),
-    ...ownLevels(b).map((l): [string, LightSettingsMap | undefined] => [
-      l.name,
-      l.settings?.lights,
-    ]),
-  ];
+  const levels = lightLevelsOf(b);
   const settings = mergeLightSettings(...levels.map(([, l]) => l), b.settings.lights);
   const under = mergeLightSettings(...levels.map(([, l]) => l));
   const lightsBelow = new Map(bodyLights(turned, shade, under).map((l) => [l.id, l]));
@@ -269,6 +283,23 @@ const addedBelowOf = (b: BodyInfo): AddedLight[] => [
   ...ownLevels(b).flatMap((l) => l.settings?.added ?? []),
   ...b.overlays.flatMap((o) => o.below?.added ?? []),
 ];
+
+/**
+ * What each level under the one edited sets of a body's lights, by its name: its overlays' (shared,
+ * the later over the earlier), then its own (the library's, its variants').
+ */
+export function lightLevelsOf(b: BodyInfo): [string, LightSettingsMap | undefined][] {
+  return [
+    ...b.overlays.map((o): [string, LightSettingsMap | undefined] => [
+      `the library (${overlayLabel(o)})`,
+      o.below?.lights,
+    ]),
+    ...ownLevels(b).map((l): [string, LightSettingsMap | undefined] => [
+      l.name,
+      l.settings?.lights,
+    ]),
+  ];
+}
 
 /** What is set for a body's lights under the level edited: its overlays', then the library's for it. */
 const lightsBelowOf = (b: BodyInfo) =>
@@ -389,12 +420,14 @@ export function litByOf(
       removable: e.removable,
     })),
     ...outer.map(({ light, owner, overlay, from }) => {
-      const set = b.settings.lights?.[light.id];
+      // (What the levels under the one edited set of it, then what the level edited does.)
+      const below = under[light.id];
+      const set = { ...below, ...b.settings.lights?.[light.id] };
       return {
         light: addedLight(light, set),
-        reach: set?.reach ?? light.reach,
-        reachBelow: light.reach,
-        enabledBelow: true,
+        reach: set.reach ?? light.reach,
+        reachBelow: below?.reach ?? light.reach,
+        enabledBelow: below?.enabled ?? true,
         owner,
         overlay,
         from,

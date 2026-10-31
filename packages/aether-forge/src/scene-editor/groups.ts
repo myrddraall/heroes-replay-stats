@@ -11,6 +11,7 @@ import { patchState } from '@ngrx/signals';
 import { SCENE, placementKey } from './scene-targets';
 import type { SceneMethodsStore } from './scene-editor.store';
 import type { SceneWrites } from './scene-writes';
+import { parentRowOf } from '../tree/select-parent-when-gone';
 
 /** Groups put in the scene. */
 export function groupMethods(store: SceneMethodsStore, w: SceneWrites) {
@@ -38,11 +39,12 @@ export function groupMethods(store: SceneMethodsStore, w: SceneWrites) {
     removePlacement(): void {
       const t = store.target();
       if (t.kind !== 'placement') return;
+      const up = parentRowOf(store.rows(), store.selected());
       d.setSceneGroups(
         store.scene(),
         store.placements().filter((p, i) => siblingKey(p, i) !== t.key),
       );
-      patchState(store, { selected: SCENE });
+      patchState(store, { selected: up ?? SCENE });
     },
     /** The group put in the scene selected opened (what is in it is set there). */
     editPlacedGroup(): void {

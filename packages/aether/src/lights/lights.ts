@@ -94,15 +94,28 @@ export interface ShieldEffect {
   readonly activates?: boolean;
   readonly energizes?: number;
   readonly glow?: number;
+  /**
+   * How far round the grid's face what it does reaches past the half facing it (0 the half
+   * facing it, 1 on round to the point facing away); from before, its light's `wrap`.
+   */
+  readonly spread?: number;
 }
 
-/** What a shield's light does unless set: it reveals. */
+/** What a shield's light does unless set: it reveals, over the half of the grid facing it. */
 export const SHIELD_DEFAULTS: Required<ShieldEffect> = {
   reveals: true,
   activates: false,
   energizes: 0.25,
   glow: 0.5,
+  spread: 0,
 };
+
+/** How far round a shield's light reaches what it does (see `ShieldEffect.spread`). */
+export const shieldSpreadOf = (l: {
+  readonly shield?: ShieldEffect;
+  readonly wrap?: number;
+}): number => l.shield?.spread ?? l.wrap ?? SHIELD_DEFAULTS.spread;
+
 
 /**
  * A light's settings, each where set: on or off, whether it darkens instead of lighting, colour
@@ -138,8 +151,14 @@ export interface LightSettings {
   readonly placement?: PlacementMode;
   readonly orbitTurn?: number;
   /**
-   * How far a point or spot light reaches, in its body's radii: at this distance it is half as
-   * strong. An environment light's: how far out from the body's edge the sky is read, in its radii.
+   * How far a point or spot light reaches, in its body's radii: it fades to nothing there (half as
+   * strong a fifth of the way, `HALF_REACH`), and lights nothing past it.
+   */
+  readonly range?: number;
+  /**
+   * An environment light's: how far out from the body's edge the sky is read, in its radii. A
+   * point or spot light's from before it had `range`: where it was half as strong (read as a
+   * range `HALF_REACH` times as far: see `rangeOf`).
    */
   readonly fade?: number;
   /** What a spot light looks at: a spot on its body's face, or a direction (none: `aim`, else its body's middle). */
@@ -199,10 +218,23 @@ export interface AddedLight extends LightSettings {
 /** Where a light comes from unless turned: upper left, in front (a shadow: lower right, in front). */
 const NEW_FROM: Vec3 = normalized([-0.55, -0.45, 0.7]);
 const NEW_SHADOW_FROM: Vec3 = normalized([0.6, -0.3, -0.75]);
-/** Where a point light is unless moved: to the right, in front, above; a spot: in front, above (both in view on the stage). */
+/**
+ * Where a point light is unless moved: to the right, in front, above; a spot: to the right, in
+ * front, above, nearer (both in view on the stage, the spot's cone narrower than its body).
+ */
 const NEW_POSITION: Vec3 = [1.2, -1.2, 0.8];
-const NEW_SPOT_POSITION: Vec3 = [0, -2.5, 1.5];
-const NEW_FADE = 3;
+const NEW_SPOT_POSITION: Vec3 = [0.8, -2, 0.9];
+const NEW_RANGE = 15;
+/**
+ * How far a point or spot light is half as strong, as a share of its range: a fifth (as Unity's
+ * lights fall off); so one from before, set by where it was half as strong, lights as it did up
+ * to its range (where it was a twenty-sixth as strong) and nothing past.
+ */
+export const HALF_REACH = 1 / 5;
+
+/** How far a point or spot light reaches (see `LightSettings.range`), in its body's radii. */
+export const rangeOf = (l: { readonly range?: number; readonly fade?: number }): number =>
+  l.range ?? (l.fade !== undefined ? l.fade / HALF_REACH : NEW_RANGE);
 /** How strong a point light is, and a spot, unless set: dim enough near the body not to white it out. */
 const NEW_POINT_STRENGTH = 0.5;
 const NEW_SPOT_STRENGTH = 0.8;
@@ -250,7 +282,7 @@ function lightOfKind(
         colour: '#ffffff',
         strength: NEW_POINT_STRENGTH,
         position: NEW_POSITION,
-        fade: NEW_FADE,
+        range: NEW_RANGE,
       };
     case 'spot':
       return {
@@ -260,7 +292,7 @@ function lightOfKind(
         colour: '#ffffff',
         strength: NEW_SPOT_STRENGTH,
         position: NEW_SPOT_POSITION,
-        fade: NEW_FADE,
+        range: NEW_RANGE,
         cone: NEW_CONE,
         edge: NEW_EDGE,
       };
@@ -315,7 +347,7 @@ export function addedLight(light: AddedLight, settings?: LightSettings): BodyLig
           position: s.position ?? (light.kind === 'spot' ? NEW_SPOT_POSITION : NEW_POSITION),
           ...(s.placement ? { placement: s.placement } : {}),
           ...(s.orbitTurn !== undefined ? { orbitTurn: s.orbitTurn } : {}),
-          fade: s.fade ?? NEW_FADE,
+          range: rangeOf(s),
           softness: s.softness ?? 1,
           specular: s.specular ?? '#ffffff',
           specularStrength: s.specularStrength ?? 1,
@@ -363,10 +395,11 @@ export interface BodyLight {
   /** A directional, point or spot light's shine (see `LightSettings`). */
   readonly specular?: string;
   readonly specularStrength?: number;
-  /** A point or spot light's (see `LightSettings`); `fade` an environment light's too. */
+  /** A point or spot light's (see `LightSettings`); `fade` an environment light's and a rim's. */
   readonly position?: Vec3;
   readonly placement?: PlacementMode;
   readonly orbitTurn?: number;
+  readonly range?: number;
   readonly fade?: number;
   /** A spot light's (see `LightSettings`). */
   readonly lookAt?: LookAt;
@@ -415,7 +448,7 @@ export function placedLight(l: BodyLight): PlanetDirectionalLight | undefined {
       kind: l.kind,
       direction: aim,
       position: l.position,
-      fade: l.fade ?? NEW_FADE,
+      fade: rangeOf(l),
       color,
       softness: l.softness ?? 1,
       ...wrap,

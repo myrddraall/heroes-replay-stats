@@ -47,6 +47,15 @@ function ancestorsOf(rows: readonly TreeRow[], key: string): TreeRow[] {
 }
 
 /**
+ * The row to select in place of one taken away (its key): the nearest row above it there is
+ * something to select of (past a group, which only folds); none where there is none.
+ */
+export function parentRowOf(rows: readonly TreeRow[], key: string): string | null {
+  const shown = (k: string) => rows.some((r) => r.key === k && !r.group);
+  return ancestorsOf(rows, key).find((a) => shown(a.key))?.key ?? null;
+}
+
+/**
  * What is selected taken away by a change of the draft (its Discard, an Undo): its parent in the
  * tree selected in its place, so its properties' panel isn't left empty. Gone: what it shows isn't
  * there any more, or its row is gone though the nearest row above it still shown is unfolded (a

@@ -39,6 +39,7 @@ import type { SceneWrites } from './scene-writes';
 import { overlayViewOf } from '../overlays/overlays';
 import { bodyEdits } from '../editing/body-edits';
 import { Crumb } from '../tree/breadcrumb';
+import { parentRowOf } from '../tree/select-parent-when-gone';
 
 /** What is selected in the tree: its target, the body, material, part or light it is, how the panel heads it, and what can be done with it. */
 export function selectionViews(store: WithSky) {
@@ -348,17 +349,19 @@ export function selectionMethods(store: SceneMethodsStore, w: SceneWrites) {
     /** One of what has been added to what is selected taken out (where it can be). */
     removeAdded(key: string): void {
       const t = targetOf(key);
+      // (Where it is selected: the row above it selected in its place.)
+      const up = store.selected() === key ? parentRowOf(store.rows(), key) : null;
       if (t.kind === 'body') removeBody(t.path);
       else if (t.kind === 'light') {
         const level = levelAt(t.path);
         if (level) bodyEdits.removeLight(level, t.id);
-        if (store.selected() === key) patchState(store, { selected: bodyKey(t.path) });
+        if (store.selected() === key) patchState(store, { selected: up ?? bodyKey(t.path) });
       } else if (t.kind === 'placement') {
         d.setSceneGroups(
           store.scene(),
           store.placements().filter((p, i) => siblingKey(p, i) !== t.key),
         );
-        if (store.selected() === key) patchState(store, { selected: SCENE });
+        if (store.selected() === key) patchState(store, { selected: up ?? SCENE });
       } else if (t.kind === 'camera') {
         if (store.cameraList().some((c) => c.id === t.id && !c.game)) dropCamera(t.id);
       } else if (t.kind === 'scene-light')

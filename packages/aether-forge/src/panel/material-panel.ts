@@ -131,6 +131,7 @@ export class MaterialPanel {
   protected cleared(keys: readonly (keyof LightSettings)[] | undefined): Partial<LightSettings> {
     const all: readonly (keyof LightSettings)[] = keys ?? [
       'from',
+      'range',
       'fade',
       'softness',
       'wrap',

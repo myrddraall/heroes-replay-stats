@@ -4,6 +4,7 @@ import {
   newLight,
   type LightKind,
   sourceIdOf,
+  withLightChanged,
 } from '@myrddraall/heroes-replay-stats-aether/lights';
 import { patchState } from '@ngrx/signals';
 import {
@@ -23,10 +24,12 @@ import { litByOf } from '../lights/lights';
 import type { LinkChange } from '../lights/linking';
 import { groupLightSwitched, linkedLight } from './linking';
 import { pathOf, siblingKey } from '@myrddraall/heroes-replay-stats-aether/scenes';
+import { type LightDrag, lightDragStep } from '../viewport/light-drag';
+import { parentRowOf } from '../tree/select-parent-when-gone';
 
 /** The scene's lights and its bodies', and what lights each body. */
 export function lightMethods(store: SceneMethodsStore, w: SceneWrites) {
-  const { d, selectedPath, lightChange, levelAt, changePlacement } = w;
+  const { d, selectedPath, lightChange, levelAt, changePlacement, materialChange, dragging } = w;
   /** A group put in the scene, by its key as Linking has it (see `placementKey`), and its sibling key. */
   const placementAt = (key: string) => {
     const placements = store.placements();
@@ -37,6 +40,19 @@ export function lightMethods(store: SceneMethodsStore, w: SceneWrites) {
   return {
     setLight(change: Partial<LightSettings>): void {
       lightChange(store.target(), change);
+    },
+    dragLight(drag: LightDrag): void {
+      const view = store.camera();
+      const change = view && lightDragStep(store.markers(), view.eye, drag, dragging);
+      if (!change) return;
+      const t = store.target();
+      // A shield's light: one of its material's.
+      if (t.kind === 'material' && t.view?.kind === 'gridLight') {
+        const lights = store.material()?.values.gridLights ?? [];
+        materialChange(store.selected(), {
+          gridLights: withLightChanged(lights, t.view.id, change),
+        });
+      } else lightChange(t, change);
     },
     /** One of the lights in the selected body's Lit by selected in the tree, its rows unfolded to it. */
     showLight(id: LightId): void {
@@ -118,16 +134,18 @@ export function lightMethods(store: SceneMethodsStore, w: SceneWrites) {
         if (level) bodyEdits.removeLight(level, id);
         return;
       }
+      // (The row above it selected in its place.)
+      const up = parentRowOf(store.rows(), store.selected());
       if (t.kind === 'scene-light') {
         d.setSceneLights(
           store.scene(),
           store.sceneLights().filter((l) => l.id !== t.id),
         );
-        patchState(store, { selected: SCENE });
+        patchState(store, { selected: up ?? SCENE });
       } else if (t.kind === 'light') {
         const level = levelAt(t.path);
         if (level) bodyEdits.removeLight(level, t.id);
-        patchState(store, { selected: bodyKey(t.path) });
+        patchState(store, { selected: up ?? bodyKey(t.path) });
       }
     },
     clearLight(keys?: readonly (keyof LightSettings)[]): void {

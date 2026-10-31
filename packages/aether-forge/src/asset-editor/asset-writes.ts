@@ -26,11 +26,12 @@ import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/space';
 import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies';
 import { variantsOnOf } from '@myrddraall/heroes-replay-stats-aether/variants';
 import { bodyEdits, BodyLevel } from '../editing/body-edits';
+import { parentRowOf } from '../tree/select-parent-when-gone';
 
 /** What the asset editor's methods change the library through: the asset's settings (or the variant edited), its materials, moons and lights, and the stage's sky. */
 export function assetWrites(store: AssetMethodsStore) {
   /** Where the pole being dragged is (see `dragPole`). */
-  const dragging = { pole: null as Vec3 | null };
+  const dragging = { pole: null as Vec3 | null, light: null as Vec3 | null };
   const draft = store._draft;
   const asset = () => store.asset();
   const d = editingVariant(
@@ -130,12 +131,13 @@ export function assetWrites(store: AssetMethodsStore) {
     const worn = change(m.overlays.map((o) => o.id));
     changeMoons((moons) => changeMoon(moons, t.path, (x) => ({ ...x, overlays: worn })));
   };
-  /** One of them taken out (with its own): the planet selected where it was. */
+  /** One of them taken out (with its own): where it was selected, the row above it (its Moons). */
   const removeMoonAt = (path: BodyPath) => {
+    const up = parentRowOf(store.rows(), moonKey(path));
     changeMoons((moons) => changeMoon(moons, path, () => null));
     const t = store.target();
     if (t.kind === 'moon' && pathKey(t.path).startsWith(pathKey(path)))
-      patchState(store, { selected: ASSET });
+      patchState(store, { selected: up ?? ASSET });
   };
   /** One of the planet open's variants switched on or off by default (the last switched on over the others). */
   const variantOn = (id: string, on: boolean) => {

@@ -12,6 +12,7 @@ import { SKY, atBody, bodyKey } from './scene-targets';
 import type { SceneMethodsStore } from './scene-editor.store';
 import type { SceneWrites } from './scene-writes';
 import { bodyEdits } from '../editing/body-edits';
+import { parentRowOf } from '../tree/select-parent-when-gone';
 
 /** The parts of a body or the sky: their settings, those added, their materials, saved as an overlay. */
 export function partMethods(store: SceneMethodsStore, w: SceneWrites) {
@@ -44,13 +45,14 @@ export function partMethods(store: SceneMethodsStore, w: SceneWrites) {
       const reused = host && store._catalog.reusableParts()[host.kind][Number(value)];
       if (host && reused) selectAdded(addReused(host, reused));
     },
-    /** The selected part taken off (one added in the scene): its owner selected. */
+    /** The selected part taken off (one added in the scene): the row above it selected. */
     removePart(): void {
       const at = store._partHost();
       const t = store.target();
       if (!at) return;
+      const up = parentRowOf(store.rows(), store.selected());
       removePart(at.host, at.id);
-      patchState(store, { selected: t.kind === 'part' ? bodyKey(t.path) : SKY });
+      patchState(store, { selected: up ?? (t.kind === 'part' ? bodyKey(t.path) : SKY) });
     },
     addPartMaterial(name: string): void {
       const at = store._partHost();

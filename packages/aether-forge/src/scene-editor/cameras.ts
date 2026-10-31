@@ -27,6 +27,7 @@ import {
 import { patchState } from '@ngrx/signals';
 import type { SceneWrites } from './scene-writes';
 import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/space';
+import { parentRowOf } from '../tree/select-parent-when-gone';
 
 /** The scene's cameras: the game's and those added, the one looked through, the editor's own, and the selected camera's values. */
 export function cameraViews(store: WithScene) {
@@ -221,8 +222,9 @@ export function cameraMethods(store: SceneMethodsStore, w: SceneWrites) {
     removeCamera(): void {
       const c = store.selectedCamera();
       if (!c || c.game) return;
+      const up = parentRowOf(store.rows(), store.selected());
       dropCamera(c.id);
-      patchState(store, { selected: CAMERAS });
+      patchState(store, { selected: up ?? CAMERAS });
     },
     /** The scene shown through the selected camera. */
     makePrimary(): void {

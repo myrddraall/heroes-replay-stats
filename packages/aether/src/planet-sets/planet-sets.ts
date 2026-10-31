@@ -124,13 +124,17 @@ function ownStyle(
   return { ...(style ? { overlays: [style] } : {}), ownOverlays: true };
 }
 
-/** The game's own set, each in its own style (the Play screen's: their shields). */
+/**
+ * The game's own set, each in its own style (the Play screen's: their shields) and with the
+ * variants the game's look has on (lit as the Play screen paints them).
+ */
 export function playSet(index: PlanetIndex): PlanetSet {
   return index.play.map((p) => ({
     id: p.id,
     position: p.position,
     radius: p.radius,
     ...ownStyle(index, p.id),
+    ...(p.variantsOn ? { variantsOn: p.variantsOn } : {}),
   }));
 }
 

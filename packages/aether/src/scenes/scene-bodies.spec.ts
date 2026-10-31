@@ -94,6 +94,14 @@ describe('the Play screen’s planets', () => {
     expect(small!.radius).toBeCloseTo(set[2].radius, 6);
   });
 
+  it('have the variants on that the game’s set has on, the small one’s too', () => {
+    const lit = set.map((p) => ({ ...p, variantsOn: ['nexus'] }));
+    const [large, medium] = playScreenBodies(lit, view);
+    expect(large!.settings).toEqual({ variantsOn: ['nexus'] });
+    expect(medium!.settings).toEqual({ variantsOn: ['nexus'] });
+    expect(medium!.moons![0]!.settings).toEqual({ variantsOn: ['nexus'] });
+  });
+
   it('keep the small one where the game puts it, seen from anywhere: behind the medium one from its far side', () => {
     const medium = playScreenBodies(set, view)[1]!;
     const [, small] = placeBodies(medium, medium.moons!, view);

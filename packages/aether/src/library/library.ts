@@ -5,10 +5,10 @@ import { type CreatedOverlay, mergeAddedParts } from '../overlays/created-overla
 import { overlayOn } from '../overlays/overlays';
 import { variantLayersOf, variantsOf, variantsOnOf } from '../variants/variants';
 import type { SetPlanet } from '../planet-sets/planet-sets';
-import type { BodyShade } from '../formats/planet-files';
+import type { BodyShade, PlanetIndexEntry } from '../formats/planet-files';
 import { mergePartSettings } from '../formats/part-shapes';
 import type { SkySettings } from '../sky/sky-settings';
-import type { BodySettings, BodyVariant } from '../bodies/body-settings';
+import type { BodySettings } from '../bodies/body-settings';
 import { createdOverlay } from '../formats/overlay-files';
 
 /**
@@ -83,27 +83,31 @@ function stacked(levels: readonly (BodySettings | undefined)[]): BodySettings {
  * A planet as the library has it, under what is set for it: what the overlays it wears set (shared,
  * each any of its settings: the later over the earlier), then its own defaults, then its variants
  * that are on (`data`: its data's, with the library's; on as `set` says, else as the library has
- * it for the planet), then what is set for it (a scene's); its materials' settings merged by key
+ * it for the planet), then what is set for it (a scene's); each overlay it wears drawn as the
+ * nearest of those says, else as its data says; its materials' settings merged by key
  * over the materials' base settings. Flattened here, just before it is drawn: each level is kept
  * where it is, linked.
  */
 export function withLibrary(
   set: SetPlanet,
   library: LibraryState,
-  data?: readonly BodyVariant[],
+  data?: Pick<PlanetIndexEntry, 'variants' | 'overlaysEnabled'>,
 ): SetPlanet {
   const own = library.planets[set.id];
   // Its own levels, the lowest first: its own defaults, then its variants that are on.
   const mine = [
     own,
-    ...variantLayersOf(variantsOf(data, own), set.variantsOn ?? variantsOnOf(own)),
+    ...variantLayersOf(variantsOf(data?.variants, own), set.variantsOn ?? variantsOnOf(own)),
   ];
   const nearestFirst = [...mine].reverse();
-  // Each overlay switched off (by the scene, else a variant, else the library): drawn as if it
-  // didn't wear it; one made in the editor that is no longer there, as if it never was.
+  // Each overlay switched off (by the scene, else a variant, else the library, else its data):
+  // drawn as if it didn't wear it; one made in the editor that is no longer there, as if it never was.
   const on = (id: string) =>
     (!createdOverlay(id) || !!library.created?.[id]) &&
-    (set.overlaysEnabled?.[id] ?? set.overlayEnabled ?? overlayOn(id, ...nearestFirst)) !== false;
+    (set.overlaysEnabled?.[id] ??
+      set.overlayEnabled ??
+      overlayOn(id, ...nearestFirst) ??
+      data?.overlaysEnabled?.[id]) !== false;
   // What it wears: as chosen where it is put, else (its own) the library's choice for it, if any.
   const wears = set.ownOverlays && own?.overlays ? own.overlays : set.overlays;
   const overlays = (wears ?? []).filter(on);

@@ -75,6 +75,16 @@
   &--body {
     pointer-events: none;
   }
+
+  // A light's that may be dragged (round its body, or across the view).
+  &.draggable {
+    cursor: grab;
+    touch-action: none;
+
+    &:active {
+      cursor: grabbing;
+    }
+  }
 }
 
 // Left out of the light selected (an exception): a small mark at the top right of its dot, shown
@@ -119,6 +129,23 @@
   pointer-events: auto;
   touch-action: none;
   user-select: none;
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+// A spot's aim's handle (its dot is drawn in the scene): a small round over it, dragged.
+.aim {
+  @include placed;
+  position: absolute;
+  translate: -50% -50%;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  cursor: grab;
+  pointer-events: auto;
+  touch-action: none;
 
   &:active {
     cursor: grabbing;

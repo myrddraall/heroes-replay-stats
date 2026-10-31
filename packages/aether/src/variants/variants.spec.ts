@@ -84,12 +84,12 @@ describe('variants', () => {
       },
       styles: { nexus: { shade: 0.9 } },
     };
-    const plain = withLibrary(korhal, library, [painted]);
+    const plain = withLibrary(korhal, library, { variants: [painted] });
     expect(plain.overlays).toEqual([]); // the shield off, as the planet has it
     expect(plain.turn).toBe(10);
-    const shielded = withLibrary({ ...korhal, variantsOn: ['variant-1', 'painted'] }, library, [
-      painted,
-    ]);
+    const shielded = withLibrary({ ...korhal, variantsOn: ['variant-1', 'painted'] }, library, {
+      variants: [painted],
+    });
     expect(shielded.overlays).toEqual(['nexus']); // switched on by its variant
     expect(shielded.turn).toBe(20); // the variant's over its own
     expect(shielded.shade).toEqual({ strength: 0.5 }); // its own over the overlay's
@@ -101,6 +101,21 @@ describe('variants', () => {
     };
     expect(withLibrary(korhal, byDefault).turn).toBe(20);
     expect(withLibrary({ ...korhal, variantsOn: ['variant-1'], turn: 5 }, library).turn).toBe(5);
+  });
+
+  it('draw an overlay its data switches off only where a level over the data switches it on', () => {
+    const play: SetPlanet = { id: 'play-large', position: [0, 0, 0], radius: 1, overlays: ['nexus'] };
+    const data = {
+      overlaysEnabled: { nexus: false },
+      variants: [{ id: 'nexus', settings: { overlaysEnabled: { nexus: true } } }],
+    };
+    expect(withLibrary(play, EMPTY_LIBRARY, data).overlays).toEqual([]);
+    expect(withLibrary({ ...play, variantsOn: ['nexus'] }, EMPTY_LIBRARY, data).overlays).toEqual([
+      'nexus',
+    ]);
+    const shown = { ...EMPTY_LIBRARY, planets: { 'play-large': { overlaysEnabled: { nexus: true } } } };
+    expect(withLibrary(play, shown, data).overlays).toEqual(['nexus']);
+    expect(withLibrary(play, EMPTY_LIBRARY).overlays).toEqual(['nexus']); // no data: drawn
   });
 
   it("take all of a body's changes but what is its own alone (its name, being drawn, what it can wear, its variants)", () => {

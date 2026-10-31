@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { alongToSphere, beamAcross, beamTube, coneEdges, ringFacing } from './beams';
+import {
+  alongToSphere,
+  beamAcross,
+  beamTube,
+  circleAbout,
+  circleSegments,
+  coneEdges,
+  ringFacing,
+} from './beams';
 
 const dot = (a: readonly number[], b: readonly number[]) =>
   a.reduce((sum, v, i) => sum + v * b[i]!, 0);
@@ -65,13 +73,30 @@ describe('a spot’s cone as seen', () => {
 
 describe('a ring about a point light', () => {
   it('goes round it at its reach, square to the eye', () => {
-    const ring = ringFacing([2, 0, 0], 0.5, [2, -10, 0], 12);
-    expect(ring).toHaveLength(12);
+    const ring = ringFacing([2, 0, 0], 0.5, [2, -10, 0]);
+    expect(ring).toHaveLength(circleSegments(0.5, 10));
     for (const [a] of ring) {
       expect(Math.hypot(a[0] - 2, a[1], a[2])).toBeCloseTo(0.5);
       expect(a[1]).toBeCloseTo(0);
     }
     // (Closed: its last piece ends where its first starts.)
-    ring[11]![1].forEach((v, k) => expect(v).toBeCloseTo(ring[0]![0][k]!));
+    ring.at(-1)![1].forEach((v, k) => expect(v).toBeCloseTo(ring[0]![0][k]!));
+  });
+});
+
+describe('a circle drawn round', () => {
+  it('takes more pieces the bigger it shows, at least 48, at most 512', () => {
+    expect(circleSegments(0.01, 100)).toBe(48);
+    expect(circleSegments(5, 10)).toBeGreaterThan(circleSegments(1, 10));
+    expect(circleSegments(10, 5)).toBe(512);
+  });
+
+  it('goes round its middle square to its normal', () => {
+    const circle = circleAbout([0, 0, 1], [0, 0, 1], 2, 16);
+    expect(circle).toHaveLength(16);
+    for (const [a] of circle) {
+      expect(Math.hypot(a[0], a[1])).toBeCloseTo(2);
+      expect(a[2]).toBeCloseTo(1);
+    }
   });
 });

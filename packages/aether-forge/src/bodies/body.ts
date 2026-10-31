@@ -113,6 +113,8 @@ export interface BodyInfo {
   readonly settings: BodySettings;
   /** Its own defaults, under the layer edited (the library's, under a scene). */
   readonly below?: BodySettings;
+  /** What its data sets for it, under everything else: whether each overlay it wears is drawn. */
+  readonly data?: BodySettings;
   /**
    * Its variants that are on under the level edited, the lowest first: a scene's planet, all of
    * them; one of its variants edited, its data's settings for it and those on before it.
@@ -183,10 +185,12 @@ const latest = <T>(values: readonly (T | undefined)[]): T | undefined =>
   values.filter((v) => v !== undefined).at(-1);
 
 /**
- * A body's own levels under the level edited, the lowest first: its own defaults (the library's),
- * then its variants on under it (over the overlays it wears, which are shared).
+ * A body's own levels under the level edited, the lowest first: what its data sets, its own
+ * defaults (the library's), then its variants on under it (over the overlays it wears, which are
+ * shared).
  */
 export const ownLevels = (b: BodyInfo): readonly SettingsLevel[] => [
+  { name: 'its data', settings: b.data },
   { name: 'the library (planet)', settings: b.below },
   ...(b.variantsBelow ?? []),
 ];

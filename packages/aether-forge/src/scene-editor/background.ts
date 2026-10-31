@@ -9,14 +9,15 @@ import { splitViewKey } from '../materials/material-views';
 import {
   axisAids,
   lightAids,
-  lightMarkerAt,
-  lightSettingLines,
   poleMarkers,
-  spotEdges,
+  lightSettingLines,
 } from '../viewport/markers';
+import { placedLightMarkers } from '../viewport/light-drag';
 import {
   lightsView,
   type LightEntry,
+  bodySurfaceOf,
+  shieldSurfaceOf,
   lightIcon,
   lightsOfBody,
   sceneLightsOf,
@@ -172,29 +173,26 @@ export function backgroundViews(store: WithTree) {
             light.kind === 'environment' ||
             (light.kind === 'rim' && !light.from),
         );
-        const marker = (key: string, light: LightEntry['light'], at: Vec3) => ({
+        const marker = (key: string, light: LightEntry['light']) => ({
           id: `${key}@${i}`,
           key,
           kind: 'light' as const,
           label: light.name,
           icon: lightIcon(light),
-          at,
           selected: store.selected() === key,
           off: !light.enabled,
         });
         round.forEach(({ key, light }, n) =>
-          out.push({ ...marker(key, light, body.position), nudge: n - (round.length - 1) / 2 }),
+          out.push({
+            ...marker(key, light),
+            at: body.position,
+            nudge: n - (round.length - 1) / 2,
+            // (An environment light's: where it reads the sky, about the body.)
+            softLines: lightSettingLines(light, body, from, view.eye).soft,
+          }),
         );
-        for (const { key, light } of lights) {
-          const at = lightMarkerAt(light, body, from);
-          if (at)
-            out.push({
-              ...marker(key, light, at.at),
-              from: at.from,
-              lines: spotEdges(light, body, from, view.eye),
-              softLines: lightSettingLines(light, body, from, view.eye),
-            });
-        }
+        for (const { key, light } of lights)
+          out.push(...placedLightMarkers(marker(key, light), light, body, from, view.eye));
       };
       if (t.kind === 'scene-light') {
         placed.picks.forEach((pick, i) => {
@@ -280,7 +278,14 @@ export function backgroundViews(store: WithTree) {
         light: LightEntry['light'],
         body: SetPlanet,
         b: BodyInfo | undefined,
-      ): EditingAid[] => lightAids(light, body, lightsView(b, scene.camera, view));
+        onShield = false,
+      ): EditingAid[] =>
+        lightAids(
+          light,
+          body,
+          lightsView(b, scene.camera, view),
+          onShield ? shieldSurfaceOf(light) : bodySurfaceOf(b),
+        );
       if (t.kind === 'scene-light') {
         const light = sceneLightsOf(store.sceneLights()).find((l) => l.light.id === t.id)?.light;
         if (!light) return [];
@@ -299,7 +304,7 @@ export function backgroundViews(store: WithTree) {
         const m = b && materialAt(materialsOf(b), t.key);
         const light =
           m && shieldLightsOf('', m.values.gridLights).find((l) => l.light.id === (id as string));
-        return light && body ? beam(light.light, body, b) : [];
+        return light && body ? beam(light.light, body, b, true) : [];
       }
       if (t.kind !== 'light') return [];
       const key = bodyKey(t.path);

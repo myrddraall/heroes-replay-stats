@@ -95,6 +95,11 @@ export function sceneViews(store: SceneStoreBase) {
     const lib = library();
     return (id: string) => overlayFileFor(lib, id);
   });
+  /** What a planet's data sets for it (its overlays' switches), where it sets any. */
+  const dataOf = (bodyId: string): Pick<BodyInfo, 'data'> => {
+    const data = _catalog.dataSettings().get(bodyId);
+    return data ? { data } : {};
+  };
   /**
    * A body's own variants where it is, and which are on: as the level edited sets them (a
    * scene's, a planet's own moon's as its planet sets it), else the library's for its planet;
@@ -152,6 +157,7 @@ export function sceneViews(store: SceneStoreBase) {
       key: keyOf(path),
       id: bodyId,
       ...variantsWhere(bodyId, path, settings, inherited, scene),
+      ...dataOf(bodyId),
       ...(inherited ? { inherited } : {}),
       overlays: worn.map((id) => ({
         id,

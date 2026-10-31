@@ -137,15 +137,17 @@ export const OUTLINE_EXTENT = 1.15;
 
 /**
  * A spot's cone seen from `eye`: its two edges as seen (the cone's generators the line of sight
- * grazes), each from its apex `at` to where it meets the unit sphere about the origin (or, past
- * the sphere, to its nearest point to it). All in a body's frame, in its radii; `cone` the cone's
- * half-angle in degrees. None where the eye is inside the cone (its edges would be all round).
+ * grazes), each from its apex `at` to where it meets the unit sphere about the origin, no further
+ * than it reaches (`reach`); past the sphere, as far as it reaches (none given: to its nearest
+ * point to the sphere). All in a body's frame, in its radii; `cone` the cone's half-angle in
+ * degrees. None where the eye is inside the cone (its edges would be all round).
  */
 export function coneEdges(
   at: Vec3,
   aim: Vec3,
   cone: number,
   eye: Vec3,
+  reach?: number,
 ): readonly (readonly [Vec3, Vec3])[] {
   const a = normalized(aim);
   const [u, v] = beamAcross(a);
@@ -164,29 +166,62 @@ export function coneEdges(
       (k) =>
         Math.cos(rad) * a[k]! + Math.sin(rad) * (u[k]! * Math.cos(phi) + v[k]! * Math.sin(phi)),
     ) as unknown as Vec3;
-    const t = alongToSphere(at, g);
+    // (Where it meets the sphere: its near point, ahead of it.)
+    const b = dot(at, g);
+    const disc = b * b - (dot(at, at) - 1);
+    const meets = disc >= 0 ? -b - Math.sqrt(disc) : -1;
+    const t =
+      meets > 0
+        ? Math.min(meets, reach ?? Infinity)
+        : reach !== undefined
+          ? reach
+          : alongToSphere(at, g);
     return [at, [at[0] + g[0] * t, at[1] + g[1] * t, at[2] + g[2] * t]] as const;
   });
 }
 
 /**
- * A ring about `at` facing `eye` (`radius` round, in the same frame and units), as `segments`
- * straight pieces: how far a point light reaches (half as strong there), shown about it.
+ * How many straight pieces a circle `radius` round, `distance` away from the eye, is drawn as to
+ * look round: about one for every 8 pixels of its edge in a usual view (a 1080-pixel-high view,
+ * 50 degrees high: some 1200 pixels a radian), at least 48 and at most 512.
+ */
+export function circleSegments(radius: number, distance: number): number {
+  const angle = distance > radius ? Math.asin(radius / distance) : Math.PI / 2;
+  return Math.min(512, Math.max(48, Math.round((2 * Math.PI * angle * 1200) / 8)));
+}
+
+/**
+ * A circle about `centre`, square to `normal`, `radius` round (in the same frame and units), as
+ * `segments` straight pieces.
+ */
+export function circleAbout(
+  centre: Vec3,
+  normal: Vec3,
+  radius: number,
+  segments: number,
+): readonly (readonly [Vec3, Vec3])[] {
+  const [u, v] = beamAcross(normal);
+  const point = (i: number): Vec3 => {
+    const phi = (2 * Math.PI * i) / segments;
+    const c = Math.cos(phi) * radius;
+    const s = Math.sin(phi) * radius;
+    return [0, 1, 2].map((k) => centre[k]! + u[k]! * c + v[k]! * s) as unknown as Vec3;
+  };
+  return Array.from({ length: segments }, (_, i) => [point(i), point(i + 1)] as const);
+}
+
+/**
+ * A ring about `at` facing `eye` (`radius` round, in the same frame and units), as enough straight
+ * pieces to look round (see `circleSegments`): how far a point light reaches (none past it), its
+ * reach's outline about it; where an environment light reads the sky, about its body.
  */
 export function ringFacing(
   at: Vec3,
   radius: number,
   eye: Vec3,
-  segments = 48,
 ): readonly (readonly [Vec3, Vec3])[] {
-  const [u, v] = beamAcross([eye[0] - at[0], eye[1] - at[1], eye[2] - at[2]]);
-  const point = (i: number): Vec3 => {
-    const phi = (2 * Math.PI * i) / segments;
-    const c = Math.cos(phi) * radius;
-    const s = Math.sin(phi) * radius;
-    return [0, 1, 2].map((k) => at[k]! + u[k]! * c + v[k]! * s) as unknown as Vec3;
-  };
-  return Array.from({ length: segments }, (_, i) => [point(i), point(i + 1)] as const);
+  const toEye: Vec3 = [eye[0] - at[0], eye[1] - at[1], eye[2] - at[2]];
+  return circleAbout(at, toEye, radius, circleSegments(radius, Math.hypot(...toEye)));
 }
 
 /**

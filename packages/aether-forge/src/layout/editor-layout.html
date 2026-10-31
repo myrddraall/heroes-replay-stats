@@ -120,6 +120,7 @@
       (hover)="ui.hoverMarker($event)"
       (picked)="editor.showMarker($event)"
       (poleDrag)="poleDrag($event)"
+      (lightDrag)="lightDrag($event)"
     />
     } } @if (aids.referenceUrl(); as url) { @if (aids.referenceShown() && !ui.screenshot()) {
     <forge-reference-overlay

@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import type { Editor } from '../editing/editor';
 import type { TargetKind } from '../bodies/body';
 import type { TreeRow } from './scene-tree';
-import { selectParentWhenGone } from './select-parent-when-gone';
+import { parentRowOf, selectParentWhenGone } from './select-parent-when-gone';
 
 const row = (key: string, depth: number, group?: boolean): TreeRow => ({
   key,
@@ -67,5 +67,24 @@ describe('what is selected taken away', () => {
     e.rows.set([{ ...row('body', 0), expandable: true, expanded: true }, row('light', 1)]);
     TestBed.tick();
     expect(e.sel()).toBe('body');
+  });
+});
+
+describe('the row selected in place of one taken out', () => {
+  it('is its parent, past a group that only folds', () => {
+    const rows = [
+      row('scene', 0),
+      row('scene/lights', 1, true),
+      row('scene-light', 2),
+      row('body', 1),
+      row('body/lights', 2),
+      row('light', 3),
+      row('light-2', 3),
+    ];
+    // Its parent, never the row beside it.
+    expect(parentRowOf(rows, 'light-2')).toBe('body/lights');
+    expect(parentRowOf(rows, 'scene-light')).toBe('scene');
+    expect(parentRowOf(rows, 'scene')).toBeNull();
+    expect(parentRowOf(rows, 'gone')).toBeNull();
   });
 });

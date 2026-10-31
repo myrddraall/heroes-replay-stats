@@ -37,7 +37,7 @@
     (valueChange)="settingsChange.emit({ darkens: $event === 'darkens' })"
   />
   <forge-property-colour
-    label="Colour"
+    [label]="l.kind === 'environment' ? 'Tint' : 'Colour'"
     [value]="l.colour"
     [changed]="isSet('colour')"
     [origin]="entry.origins.colour"
@@ -57,7 +57,7 @@
     (resetRequested)="clear.emit(['strength'])"
     (valueChange)="settingsChange.emit({ strength: $event })"
   />
-  @if (l.from; as from) {
+  @if (l.from ?? (l.kind === 'rim' ? newLean : null); as from) {
   <forge-property-direction
     [label]="l.kind === 'hemisphere' ? 'Sky from' : l.kind === 'rim' ? 'Lean' : 'Light from'"
     [sided]="l.kind !== 'rim'"
@@ -89,11 +89,23 @@
     (resetRequested)="clear.emit(['position', 'placement', 'orbitTurn'])"
     (placeChange)="place($event)"
   />
-  } @if (l.position || l.kind === 'environment' || l.kind === 'rim') {
+  } @if (l.position) {
+  <forge-property-number
+    label="Reach"
+    [value]="range()"
+    [min]="0.1"
+    [step]="0.1"
+    [changed]="isSet('range') || isSet('fade')"
+    [origin]="entry.origins.range ?? entry.origins.fade"
+    [overridden]="entry.overrides?.range ?? entry.overrides?.fade"
+    (resetRequested)="clear.emit(['range', 'fade'])"
+    (valueChange)="settingsChange.emit({ range: $event, fade: undefined })"
+  />
+  } @else if (l.kind === 'environment' || l.kind === 'rim') {
   <forge-property-number
     [label]="l.kind === 'rim' ? 'Spread' : 'Reach'"
-    [value]="l.fade ?? (l.kind === 'environment' ? 1.5 : l.kind === 'rim' ? 0 : 3)"
-    [min]="l.kind === 'environment' || l.kind === 'rim' ? 0 : 0.1"
+    [value]="l.fade ?? (l.kind === 'environment' ? 1.5 : 0)"
+    [min]="0"
     [max]="l.kind === 'rim' ? 1 : undefined"
     [step]="l.kind === 'rim' ? 0.05 : 0.1"
     [changed]="isSet('fade')"
@@ -158,19 +170,6 @@
     (resetRequested)="clear.emit(['edge'])"
     (valueChange)="settingsChange.emit({ edge: $event })"
   />
-  } @if (l.kind === 'directional' || l.position) {
-  <forge-property-number
-    label="Wrap"
-    [value]="l.wrap ?? 0"
-    [min]="0"
-    [max]="1"
-    [step]="0.01"
-    [changed]="isSet('wrap')"
-    [origin]="entry.origins.wrap"
-    [overridden]="entry.overrides?.wrap"
-    (resetRequested)="clear.emit(['wrap'])"
-    (valueChange)="settingsChange.emit({ wrap: $event })"
-  />
   } @if (sided()) {
   <forge-property-number
     label="Drop off"
@@ -205,6 +204,7 @@
     (valueChange)="settingsChange.emit({ specularStrength: $event })"
   />
   }
+  <forge-light-guides [kind]="l.kind" />
 </forge-property-section>
 } @if ((links().length || entry.canDown || entry.outs.length) && on('linking')) {
 <forge-property-section
@@ -267,6 +267,14 @@
     label="Activates"
     [checked]="s.activates"
     (checkedChange)="shieldChange({ activates: $event })"
+  />
+  <forge-property-number
+    label="Spread"
+    [value]="spread()"
+    [min]="0"
+    [max]="1"
+    [step]="0.05"
+    (valueChange)="shieldChange({ spread: $event })"
   />
   @if (s.activates) {
   <forge-property-number

@@ -18,7 +18,9 @@ import {
   knownLights,
   aimAtMiddle,
   addedLight,
+  HALF_REACH,
   placedLight,
+  rangeOf,
 } from './lights';
 import { DEFAULT_SHADE, type PlanetLight } from '../formats/planet-files';
 /** Sanctuary's rig as the data has it: a dim fill, a dimmer back, a bright key. */
@@ -310,7 +312,7 @@ describe("a body's rig as tuned", () => {
 describe('lights from a point, a spot, and above and below', () => {
   it('start where new lights of their kind do, named after those there are', () => {
     const point = newLight('point', []);
-    expect(point).toMatchObject({ kind: 'point', name: 'Point light', fade: 3 });
+    expect(point).toMatchObject({ kind: 'point', name: 'Point light', range: 15 });
     expect(point.position).toEqual([1.2, -1.2, 0.8]);
     expect(newLight('spot', [point])).toMatchObject({ kind: 'spot', cone: 15, edge: 0.5 });
     expect(newLight('hemisphere', []).ground).toBe('#000000');
@@ -331,7 +333,7 @@ describe('lights from a point, a spot, and above and below', () => {
     expect(lit.directional[0]).toMatchObject({
       kind: 'point',
       position: [1.2, -1.2, 0.8],
-      fade: 3,
+      fade: 15,
     });
     // A spot points at its body's middle unless aimed.
     expect(lit.directional[1]).toMatchObject({ kind: 'spot', aim: [0, 1, 0], cone: 15, edge: 0.5 });
@@ -379,9 +381,21 @@ describe('lights from a point, a spot, and above and below', () => {
     expect(wrapped.wrap).toBe(0.5);
   });
 
+  it('reach as far as set; one from before, from where it was half as strong, five times as far', () => {
+    const point = newLight('point', []);
+    expect(placedLight(addedLight(point, { range: 4 }))!.fade).toBe(4);
+    // (Set before there was a range: its old reach, where it was half as strong.)
+    const old = { ...point, range: undefined, fade: 2 };
+    expect(rangeOf(old)).toBe(10);
+    expect(placedLight(addedLight(old))!.fade).toBe(10);
+    expect(rangeOf({ fade: 2, range: 3 })).toBe(3);
+    expect(rangeOf({})).toBe(15);
+    expect(HALF_REACH).toBe(1 / 5);
+  });
+
   it('darken from a point too, as far as it reaches', () => {
     const point = { ...newLight('point', []), darkens: true, strength: 0.4 };
     const [d] = bodyDarkenings(undefined, DEFAULT_SHADE, [point], { shadow: { enabled: false } });
-    expect(d).toMatchObject({ kind: 'point', position: [1.2, -1.2, 0.8], fade: 3, strength: 0.4 });
+    expect(d).toMatchObject({ kind: 'point', position: [1.2, -1.2, 0.8], fade: 15, strength: 0.4 });
   });
 });

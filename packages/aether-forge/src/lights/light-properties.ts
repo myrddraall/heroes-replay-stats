@@ -4,6 +4,9 @@ import {
   type LightReach,
   type LightSettings,
   SHIELD_DEFAULTS,
+  NEW_LEAN,
+  rangeOf,
+  shieldSpreadOf,
 } from '@myrddraall/heroes-replay-stats-aether/lights';
 import {
   aimedPoint,
@@ -23,6 +26,7 @@ import { PropertyText } from '../controls/rows/property-text';
 import type { LightEntry } from './lights';
 import { LightLinking } from './light-linking';
 import type { LinkChange, LinkEntry } from './linking';
+import { LightGuides } from './light-guides';
 /** A light's own settings (its name is apart, and its switch: the tree row's). */
 const LIGHT_KEYS: readonly (keyof LightSettings)[] = [
   'darkens',
@@ -35,6 +39,7 @@ const LIGHT_KEYS: readonly (keyof LightSettings)[] = [
   'position',
   'placement',
   'orbitTurn',
+  'range',
   'fade',
   'lookAt',
   'aim',
@@ -94,6 +99,7 @@ const OUT_LABELS: Record<LightOut, string> = {
     PropertyCheck,
     PropertyPlacement,
     LightLinking,
+    LightGuides,
   ],
   templateUrl: './light-properties.html',
   styleUrl: '../panel/properties-panel.scss',
@@ -120,6 +126,8 @@ export class LightProperties {
   protected readonly effects = EFFECTS;
   protected readonly changed = computed(() => LIGHT_KEYS.some((k) => this.isSet(k)));
   /** What kind of light it is (whether it darkens is its Effect). */
+  /** A rim light's lean where none is set (its rim all round, towards the eye): its Lean row starts there. */
+  protected readonly newLean = NEW_LEAN;
   protected readonly kindName = computed(() => LIGHT_KIND_NAMES[this.light().light.kind]);
 
   /**
@@ -181,10 +189,13 @@ export class LightProperties {
     const k = this.light().light.kind;
     return k === 'directional' || k === 'point' || k === 'spot';
   });
-  /** Whether it falls off across what it reaches (a Drop off): one with a shine, an environment light or a rim light. */
+  /**
+   * Whether it has a Drop off of its own: the sky round the body and the rim (how they fall off
+   * is theirs), and a shield's light (its field's); any other's is its material's.
+   */
   protected readonly sided = computed(() => {
     const k = this.light().light.kind;
-    return this.shiny() || k === 'environment' || k === 'rim';
+    return k === 'environment' || k === 'rim' || this.onShield();
   });
   /** What it does to a shield's grid, as set over what a shield's light does unless set. */
   protected readonly shield = computed(() => ({
@@ -192,11 +203,16 @@ export class LightProperties {
     ...this.light().light.shield,
   }));
 
+  /** How far round the grid what it does reaches (see `ShieldEffect.spread`; one from before: its Wrap). */
+  protected readonly spread = computed(() => shieldSpreadOf(this.light().light));
+
   protected shieldChange(change: Partial<typeof SHIELD_DEFAULTS>): void {
     this.settingsChange.emit({ shield: { ...this.light().light.shield, ...change } });
   }
 
   protected readonly aims = AIMS;
+  /** How far a point or spot light reaches (one from before: read from where it was half as strong). */
+  protected readonly range = computed(() => rangeOf(this.light().light));
   /** What a spot light looks at: a spot on its planet (unless aimed along a direction, as set or kept from before). */
   protected readonly aimKind = computed((): LookAt['kind'] => {
     const l = this.light().light;
@@ -205,12 +221,12 @@ export class LightProperties {
   /** The spot on its planet's face a spot light is aimed at (aimed at the middle: the face nearest it). */
   protected readonly aimedPoint = computed((): Vec3 => {
     const l = this.light().light;
-    return aimedPoint(l.position ?? [0, -2.5, 1.5], l.lookAt);
+    return aimedPoint(l.position ?? [0.8, -2, 0.9], l.lookAt);
   });
   /** The way a spot light points. */
   protected readonly aimDirection = computed((): Vec3 => {
     const l = this.light().light;
-    return aimOf(l.position ?? [0, -2.5, 1.5], l.lookAt, l.aim);
+    return aimOf(l.position ?? [0.8, -2, 0.9], l.lookAt, l.aim);
   });
 
   /** A spot light's aim switched between a spot on its planet and a direction (the one it points along now). */

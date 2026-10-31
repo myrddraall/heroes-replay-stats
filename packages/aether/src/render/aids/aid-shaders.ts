@@ -1,13 +1,16 @@
 import { type Node, NodeMaterial, type Texture } from 'three/webgpu';
 import {
   abs,
+  atan,
   attribute,
   bool,
   clamp,
+  cross,
   Discard,
   dot,
   float,
   Fn,
+  fract,
   fwidth,
   If,
   length,
@@ -29,6 +32,8 @@ import {
   vec4,
 } from 'three/tsl';
 import { MAX_BEAM_SPHERES } from '../uniforms/limits';
+import { HALF_REACH } from '../../lights/lights';
+import { seenFrom } from '../materials/material-shader';
 import type { ShaderUniforms } from '../uniforms/shader-uniforms';
 import { cold, coldVertex } from '../cold-shaders';
 import { type ToClip, overlay, pixel, setBlend } from '../passes/pass-shaders';
@@ -111,14 +116,23 @@ export function beamMaterial(
   return m;
 }
 
+/** How many dashes a dashed line has round a spot's aim. */
+const DASHES = 48;
+/** How far a line's value may change across a pixel and still be drawn (more: the sphere's outline). */
+const MAX_STEP = 0.05;
+
 /**
- * A light's outline on its body's sphere, as the body's shader lights it (`reachOf`): where it
- * stops reaching (`uMainAt`: from a side or a point, how squarely the point faces it, its wrap
- * taken in; a spot, its cone's edge; above and below, where its two colours meet; the sky round
- * the body and the rim, where they reach half), and fainter where it reaches half (`uFaintAt`: from
- * a side; a point, by how far away; a spot, where its cone starts to fade) and how far a spot
- * reaches (half as strong); none where the frame has something nearer, nor behind another body's
- * sphere.
+ * A light's outline on its body's sphere, as the body's shader lights it (`reachOf`), for every
+ * kind alike: where it stops reaching (none past it), fainter where it is half as strong, and
+ * dashed what it doesn't stop at. Where it stops: from a side or a point, how squarely the point
+ * faces it, its wrap taken in (`uMainAt`); a spot, its cone's edge, its back cut the same; a point
+ * or a spot, how far it reaches (its range); each of a point's or a spot's ends only where the
+ * others let light through, so they make one outline round what it lights. Where it is half as
+ * strong: from a side, its facing wrapped and sharpened by its softness (`uFaintAt`); a point,
+ * that with how far away it is; a hemisphere, where its two colours meet; the sky round the body
+ * and the rim, where they reach half (`uFaintAt`: they never stop). Dashed: where a spot's cone
+ * starts to fade, as the lines round it are. All of it gone towards the sphere's outline, and
+ * where the frame has something nearer, or behind another body's sphere.
  */
 export function outlineMaterial(
   u: ShaderUniforms,
@@ -147,6 +161,8 @@ export function outlineMaterial(
   const pos = u.vec3('uPos');
   const aim = u.vec3('uAim');
   const fade = u.float('uFade');
+  const wrap = u.float('uWrap');
+  const softness = u.float('uSoftness', 1);
   const cosCone = u.float('uCosCone');
   const cosFade = u.float('uCosFade');
   const mainAt = u.float('uMainAt');
@@ -155,8 +171,16 @@ export function outlineMaterial(
   const rimTurn = u.mat3('uRimTurn');
   const alpha = u.float('uAlpha');
   const colour = u.vec3('uColor');
+  /** How strong a point or a spot is at a distance (as the body's shader has it): none at its range. */
+  const falloff = (distance: Node<'float'>) => {
+    const r2 = distance.mul(distance).div(fade.mul(fade));
+    const ends = clamp(r2.mul(r2).oneMinus(), 0, 1);
+    return ends.mul(ends).div(r2.div(HALF_REACH * HALF_REACH).add(1));
+  };
+  // (A pixel's step capped: at the sphere's outline its neighbours fall off it, their steps are
+  // nothing to go by, and every value there would read as on a line.)
   const line = (fv: Node<'float'>) =>
-    smoothstep(0, 1.5, abs(fv).div(max(fwidth(fv), 1e-6))).oneMinus();
+    smoothstep(0, 1.5, abs(fv).div(clamp(fwidth(fv), 1e-6, MAX_STEP))).oneMinus();
   m.fragmentNode = Fn(() => {
     const d = normalize(vAt.sub(eye)).toVar();
     const t = meets(eye, vec4(centre, radius), d);
@@ -177,35 +201,78 @@ export function outlineMaterial(
     const main = float(1).toVar();
     const faint = float(1).toVar();
     const reach = float(1).toVar();
+    // (A dashed line: where it is, and whether this piece of it shows.)
+    const dashed = float(1).toVar();
+    const dash = float(1).toVar();
+    // (Where each end shows: only where the other ends let light through, one outline round what it lights.)
+    const mainOn = float(1).toVar();
+    const reachOn = float(1).toVar();
+    // (A spot's third end: where its body turns from it, within its cone and its reach.)
+    const side = float(1).toVar();
+    const sideOn = float(0).toVar();
     If(kind.equal(0).or(kind.equal(3)), () => {
       const facing = dot(n, normalize(dir).negate()).toVar();
       main.assign(facing.sub(mainAt));
       faint.assign(facing.sub(faintAt));
     })
       .ElseIf(kind.equal(1), () => {
-        const to = pos.sub(n).toVar();
-        main.assign(dot(n, normalize(to)).sub(mainAt));
-        faint.assign(length(to).sub(fade));
+        const away = pos.sub(n).toVar();
+        const facing = dot(n, normalize(away)).toVar();
+        main.assign(facing.sub(mainAt));
+        reach.assign(length(away).sub(fade));
+        mainOn.assign(select(length(away).lessThan(fade), float(1), float(0)));
+        reachOn.assign(select(facing.greaterThan(mainAt), float(1), float(0)));
+        const lit = pow(clamp(facing.add(wrap).div(wrap.add(1)), 0, 1), softness);
+        faint.assign(lit.mul(falloff(length(away))).sub(0.5));
       })
       .ElseIf(kind.equal(2), () => {
         const away = pos.sub(n).toVar();
         const to = normalize(away).toVar();
-        gone.assign(gone.or(dot(n, to).lessThanEqual(mainAt)));
-        const along = dot(to.negate(), aim).toVar();
+        const facing = dot(n, to).toVar();
+        // (Its cone as the body's shader tests it: at the edge it sees nearest, past its side.)
+        const along = dot(normalize(pos.sub(seenFrom(pos, n))).negate(), aim).toVar();
+        const inReach = length(away).lessThan(fade).toVar();
+        const facesIt = facing.greaterThan(mainAt).toVar();
+        const inCone = along.greaterThan(cosCone).toVar();
         main.assign(along.sub(cosCone));
-        faint.assign(along.sub(cosFade));
         reach.assign(length(away).sub(fade));
+        side.assign(facing.sub(mainAt));
+        mainOn.assign(select(inReach.and(facesIt), float(1), float(0)));
+        reachOn.assign(select(inCone.and(facesIt), float(1), float(0)));
+        sideOn.assign(select(inCone.and(inReach), float(1), float(0)));
+        // Where its cone starts to fade (its Edge in from its edge), dashed as the lines round it
+        // are: pieces round its aim.
+        // (Its value everywhere, shown only where it applies: a value set only there would jump
+        // at its edge, and the jump read as a line.)
+        dashed.assign(along.sub(cosFade));
+        const across = normalize(
+          cross(aim, select(abs(aim.z).lessThan(0.9), vec3(0, 0, 1), vec3(1, 0, 0))),
+        );
+        const round = atan(dot(to, cross(aim, across)), dot(to, across));
+        const on = cosFade.greaterThan(cosCone).and(inReach).and(facesIt);
+        dash.assign(
+          select(on.and(fract(round.mul(DASHES / (2 * Math.PI))).lessThan(0.5)), float(1), float(0)),
+        );
       })
       .ElseIf(kind.equal(5), () => {
         // (The rim: by how far the point turns from the eye, the view leaned by its turn.)
         const view = transpose(rimTurn).mul(normalize(eye.sub(hit)));
-        main.assign(dot(normalize(hit.sub(centre)), normalize(view)).sub(mainAt));
+        const facing = dot(normalize(hit.sub(centre)), normalize(view)).toVar();
+        main.assign(facing.sub(mainAt));
+        faint.assign(facing.sub(faintAt));
       })
       .Else(() => {
         const look = transpose(lightAxes).mul(eye.sub(centre));
-        main.assign(dot(n, normalize(look)).sub(mainAt));
+        const facing = dot(n, normalize(look)).toVar();
+        main.assign(facing.sub(mainAt));
+        faint.assign(facing.sub(faintAt));
       });
-    const a = max(line(main), max(line(faint), line(reach)).mul(0.45))
+    // (Half as strong fainter than where it stops, a third as bright; dashed between; all of it
+    // gone at the sphere's outline, where it turns from the eye too steeply for a line to read.)
+    const edgeOn = smoothstep(0.05, 0.25, dot(normalize(hit.sub(centre)), d.negate()));
+    const ends = max(max(line(main).mul(mainOn), line(reach).mul(reachOn)), line(side).mul(sideOn));
+    const a = max(ends, max(line(faint).mul(0.3), line(dashed).mul(dash).mul(0.6)))
+      .mul(edgeOn)
       .mul(alpha)
       .toVar();
     If(gone.or(a.lessThanEqual(0)), () => {

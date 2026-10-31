@@ -107,6 +107,14 @@ export interface SceneMaterial {
   readonly specular?: SceneLayer;
   readonly specularity?: number;
   readonly specularMult?: number;
+  /**
+   * How far a lit material lets light on round past where its face turns from it (see
+   * `MaterialSettings.wrap`), where its data says (a Play screen planet's, as heroes-capture
+   * fits its painted light).
+   */
+  readonly wrap?: number;
+  /** How sharply its light falls off round it (see `MaterialSettings.dropOff`), where its data says. */
+  readonly dropOff?: number;
 }
 
 /** RGBA, 0-255. */

@@ -18,6 +18,7 @@ import {
   select,
   sign,
   smoothstep,
+  sqrt,
   step,
   texture,
   vec2,
@@ -25,6 +26,7 @@ import {
   vec4,
 } from 'three/tsl';
 import { tintBy } from './blend-shader';
+import { HALF_REACH } from '../../lights/lights';
 import type { ShaderUniforms } from '../uniforms/shader-uniforms';
 
 /**
@@ -97,6 +99,27 @@ export class TextureSlots {
     >;
     this.skyLight = texture(skyLight) as unknown as TextureNode;
   }
+}
+
+/**
+ * The point of a body's sphere (the unit sphere about its middle, in its frame) something at `pos`
+ * sees nearest a point `q`: `q` itself where it faces it; past the side facing it, the nearest of
+ * the edge it sees (where the sphere turns from it). A spot's cone is tested there, so its wrap
+ * carries its light on round the body but never through it.
+ */
+export function seenFrom(pos: Node<'vec3'>, q: Node<'vec3'>): Node<'vec3'> {
+  const out = vec3(q).toVar();
+  const far = length(pos).toVar();
+  const at = normalize(q).toVar();
+  If(far.greaterThan(1).and(dot(at, pos.sub(at)).lessThan(0)), () => {
+    const toward = pos.div(far).toVar();
+    const across = at.sub(toward.mul(dot(at, toward))).toVar();
+    const round = sqrt(float(1).sub(float(1).div(far.mul(far))));
+    out.assign(
+      toward.div(far).add(across.div(max(length(across), 1e-6)).mul(round)),
+    );
+  });
+  return out;
 }
 
 /** What is shaded: the surface under the pixel, each a shader variable. */
@@ -360,7 +383,8 @@ export function shadeMaterial(
    * How much a light reaches the point facing nn, and the way to it: (to, reach). One from a side
    * (kind 0) by how squarely the point faces it (to the power of its softness), wrapped round by
    * wrap (0: the half facing it; 1: on round to the point facing away); one from a point (1) or a
-   * spot (2) by that and how far away it is (half as strong at fade), a spot only within its cone,
+   * spot (2) by that and how far away it is (none at fade, its range: half as strong `HALF_REACH`
+   * of the way, smoothed down to nothing at its range), a spot only within its cone,
    * fading in over its edge; one from above and below (3) by how far the point faces the side it
    * comes from (0 the other way, 1 squarely: its colours mixed by it); the sky round the body (4) by
    * how far the point faces away from the eye (none facing it squarely, all at the edge and behind,
@@ -382,6 +406,7 @@ export function shadeMaterial(
     nn: Node<'vec3'>,
     rimTurned: () => Node<'vec3'>,
     edge: Node<'float'>,
+    coneSoftness: Node<'float'>,
   ) => {
     const out = vec4(0).toVar();
     If(kindOf.equal(0).or(kindOf.equal(3)), () => {
@@ -416,22 +441,27 @@ export function shadeMaterial(
         const to = d.div(dist).toVar();
         const facing = clamp(dot(nn, to).add(wrap).div(wrap.add(1)), 0, 1).toVar();
         const spot = kindOf.equal(2).toVar();
-        const strength = select(spot, facing, pow(facing, softness))
-          .div(dist.mul(dist).div(fade.mul(fade)).add(1))
+        const r2 = dist.mul(dist).div(fade.mul(fade)).toVar();
+        const ends = clamp(r2.mul(r2).oneMinus(), 0, 1).toVar();
+        const strength = pow(facing, softness)
+          .div(r2.div(HALF_REACH * HALF_REACH).add(1))
+          .mul(ends.mul(ends))
           .toVar();
         // A spot's cone: all of it in to where its fade starts (cone.y, its Edge in from its edge),
-        // falling off to nothing at its edge (cone.x), faster the higher its softness; a cone with
-        // no edge to fade over cut at its edge (smoothstep's result is undefined where its edges
-        // meet). (Its softness is its cone's, not its facing's.)
+        // falling off to nothing at its edge (cone.x); a grid's field's faster the higher its
+        // softness (`coneSoftness`; a light's, its Edge alone); a cone with no edge to fade over
+        // cut at its edge (smoothstep's result is undefined where its edges meet).
         If(spot, () => {
-          const along = dot(to.negate(), aim).toVar();
+          // (Its cone where it reaches: past the side facing it, where its wrap carries it on, the
+          // cone is as at the edge it sees nearest, never through the body to its far side.)
+          const along = dot(normalize(pos.sub(seenFrom(pos, s.world))).negate(), aim).toVar();
           const within = float(0).toVar();
           If(cone.y.greaterThan(cone.x), () => {
             within.assign(smoothstep(cone.x, cone.y, along));
           }).Else(() => {
             within.assign(step(cone.x, along));
           });
-          (edge as unknown as { assign(v: Node<'float'>): void }).assign(pow(within, softness));
+          (edge as unknown as { assign(v: Node<'float'>): void }).assign(pow(within, coneSoftness));
         });
         out.assign(vec4(to, strength));
       });
@@ -481,6 +511,12 @@ export function shadeMaterial(
         // (A rim's turn of the view: rows 8 to 10, its matrix's.)
         const rimTurned = () =>
           vec3(dot(row(8).xyz, toEye), dot(row(9).xyz, toEye), dot(row(10).xyz, toEye));
+        // How sharply it falls off round: a light's or a shade's from a side, a point or a spot, as
+        // its material says (Drop off); a grid's field's, and the sky's and the rim's, their own
+        // (a field from a spot shaped by its cone alone).
+        const field = role.greaterThanEqual(2).toVar();
+        const surface = select(field, r0.w, u.float('uDropOff'));
+        const facingSoftness = select(field.and(k.equal(2)), float(1), surface);
         const r = reachOf(
           k,
           r0.xyz,
@@ -488,11 +524,14 @@ export function shadeMaterial(
           r2.w,
           r4.xyz,
           row(6),
-          r0.w,
-          r3.w,
+          select(k.greaterThanEqual(3), r0.w, facingSoftness),
+          // (How far round: a light or a shade, as its material lets it; a grid's field, its own
+          // spread.)
+          select(role.greaterThanEqual(2), r3.w, u.float('uWrap')),
           n,
           rimTurned,
           edge,
+          select(field, r0.w, float(1)),
         ).toVar();
         reach.assign(r.w);
         to.assign(r.xyz);
