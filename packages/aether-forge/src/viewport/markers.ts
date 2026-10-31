@@ -28,6 +28,7 @@ import {
   NO_QUAT,
   type Orientation,
   placementFrame,
+  placementUp,
   pointToLocal,
   pointToWorld,
   poseKept,
@@ -347,7 +348,8 @@ export const axisFrame = (
   body: SetPlanet,
   layout: Viewpoint,
   view: Viewpoint,
-) => (orientation === 'world' ? placementFrame(body.position, layout) : facingFrame(body, view));
+) =>
+  orientation === 'world' ? placementFrame(body.position, layout) : facingFrame(body, layout, view);
 
 /**
  * Where a pole of an axis dragged in the view goes: the point of a sphere about the body's middle
@@ -440,6 +442,15 @@ export function keepingPose(
   return x || y || z ? { ...rest, baseTurn: NO_QUAT } : rest;
 }
 
-/** A body's frame facing the eye of `view` (its billboards' and their lights'). */
-const facingFrame = (body: SetPlanet, view: Viewpoint) =>
-  bodyFrame(body.position, body.radius, view.eye, viewUp(view)).axes;
+/**
+ * A body's frame facing the eye of `view` (its billboards' and their lights'), keeping the way up
+ * of its placement frame (from the scene's own camera, `layout`).
+ */
+const facingFrame = (body: SetPlanet, layout: Viewpoint, view: Viewpoint) =>
+  bodyFrame(
+    body.position,
+    body.radius,
+    view.eye,
+    viewUp(view),
+    placementUp(placementFrame(body.position, layout)),
+  ).axes;

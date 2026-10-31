@@ -485,6 +485,9 @@ export function shadeMaterial(
   const active = float(0).toVar();
   const activeGlow = float(0).toVar();
   const reveal = float(1).toVar();
+  // A grid's rim lights' look: its pattern layer's fresnel as the game draws it, not capped (its
+  // limb goes past white and blooms), apart from what its other lights reveal.
+  const rimLook = float(0).toVar();
   const specMap = vec3(0).toVar();
   if (body) {
     If(L4.used.equal(1), () => {
@@ -575,13 +578,17 @@ export function shadeMaterial(
             edge.mul(sign(strength)).mul(min(abs(strength).mul(reach), 1)),
             strength.mul(select(k.equal(4), reach.mul(dot(sky, vec3(...LUMA))), reach)),
           ).toVar();
-          If(role.equal(2), () => {
-            revealSum.addAssign(f);
-          }).Else(() => {
-            active.addAssign(f);
-            activeGlow.addAssign(amount.z.mul(min(f, 1)));
-            revealSum.addAssign(amount.y.mul(f));
-          });
+          If(role.equal(2).and(k.equal(5)), () => {
+            rimLook.addAssign(f);
+          })
+            .ElseIf(role.equal(2), () => {
+              revealSum.addAssign(f);
+            })
+            .Else(() => {
+              active.addAssign(f);
+              activeGlow.addAssign(amount.z.mul(min(f, 1)));
+              revealSum.addAssign(amount.y.mul(f));
+            });
         });
     });
     active.assign(clamp(active, 0, 1));
@@ -720,10 +727,11 @@ export function shadeMaterial(
     tintsOver(0, rgb);
   });
   // What a grid's lights reveal of it: that much of its look, no brighter than white (what is
-  // brighter blooms, below, as much of it as is revealed).
+  // brighter blooms, below, as much of it as is revealed); and its rim lights' look over that, as
+  // bright as their fresnel makes it.
   if (body) {
     If(revealed, () => {
-      rgb.assign(min(rgb, vec3(1)).mul(reveal));
+      rgb.assign(rgb.mul(rimLook).add(min(rgb, vec3(1)).mul(reveal)));
     });
   }
 
@@ -751,7 +759,7 @@ export function shadeMaterial(
   // bloom would make of this light, so at 0 it glows not at all. The light is the emissive
   // layer's, or the colour it modulates (a grid over a colour glows in that colour); a grid's Glow
   // past 1 blooms it that much more, as much of it as is revealed.
-  const shineOut = select(added, tintedGlow.mul(reveal), rgb).toVar();
+  const shineOut = select(added, tintedGlow.mul(reveal.add(rimLook)), rgb).toVar();
   const boost = u.float('uGlowBoost', 1);
   const glowOut = vec4(
     max(colour.rgb.sub(u.float('uGlowThreshold')), 0)

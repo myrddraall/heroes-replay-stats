@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { forwardOf } from '../camera/camera';
 import { bodyExtent, bodyFrame, partsExtent, projectionMatrix, viewMatrix, viewUp } from './space';
 import type { BodyPart } from '../formats/planet-files';
-import { placementFrame } from './graph';
+import { placementFrame, placementUp } from './graph';
 
 /** A point through a column-major matrix, divided by w: normalized device coordinates. */
 function transform(m: Float32Array, [x, y, z]: [number, number, number]): [number, number, number] {
@@ -140,6 +140,58 @@ describe('a body\u2019s frame', () => {
   it('faces some way, the eye at its centre', () => {
     const { axes, eye } = bodyFrame([1, 2, 3], 1, [1, 2, 3], [0, 0, 1]);
     expect([...axes, ...eye].every(Number.isFinite)).toBe(true);
+  });
+
+  describe('keeping the way up of its placement frame', () => {
+    // The Play screen's camera places the body; another camera looks at it.
+    const layout = { eye: [0, -41.2, 5.6] as V, forward: [0, 0.9997, -0.025] as V, up: UP };
+    const position = inViewOf(layout.eye, layout.forward, 106, -30, 12);
+    const placement = placementFrame(position, layout);
+    const steady = placementUp(placement);
+
+    it('is the placement frame from the scene’s own camera (the game’s look unchanged)', () => {
+      const { axes } = bodyFrame(position, 1, layout.eye, viewUp(layout), steady);
+      expect(apart(axes, placement)).toBeLessThan(1e-6);
+    });
+
+    it('never rolls as the camera rolls or tilts: its up the placement frame’s, square to the way to it', () => {
+      const eye: V = [20, -60, 30];
+      const y = unit(sub(position, eye));
+      const forward = unit(sub(inViewOf(eye, y, 1, 0.1, -0.2), eye));
+      const frames = [0, 35, 90, 170, 260].map((roll) => {
+        // The view's up turned about the way the camera looks by `roll`.
+        const up = viewUp({ forward, up: UP });
+        const right = unit([
+          forward[1] * up[2] - forward[2] * up[1],
+          forward[2] * up[0] - forward[0] * up[2],
+          forward[0] * up[1] - forward[1] * up[0],
+        ]);
+        const a = (roll * Math.PI) / 180;
+        const rolled: V = [0, 1, 2].map(
+          (k) => up[k]! * Math.cos(a) + right[k]! * Math.sin(a),
+        ) as unknown as V;
+        return bodyFrame(position, 2, eye, rolled, steady).axes;
+      });
+      off(steady, y).forEach((v, k) => expect(axis(frames[0]!, 2)[k]).toBeCloseTo(v, 6));
+      for (const f of frames.slice(1)) expect(apart(f, frames[0]!)).toBeLessThan(1e-6);
+    });
+
+    it('seen down its pole takes the view’s up, eased in: no jump, and finite there', () => {
+      const up: V = [0, 0, 1];
+      const above: V = [0, 0, 50];
+      // A camera looking nearly straight up at it, its up across the way the eye slides.
+      const view = viewUp({ forward: unit([0, 0.001, 1]), up: UP });
+      // The eye slid from well off the pole to right under it.
+      const frameAt = (side: number) => bodyFrame(above, 1, [side, 0, 0], view, up).axes;
+      for (let side = 30; side > 0.01; side -= 0.01)
+        expect(apart(frameAt(side), frameAt(side - 0.01))).toBeLessThan(1e-2);
+      const under = bodyFrame(above, 1, [0, 0, 0], view, up).axes;
+      expect(under.every(Number.isFinite)).toBe(true);
+      expect(apart(under, bodyFrame(above, 1, [0, 0, 0], view).axes)).toBeLessThan(1e-6);
+      // Its up and the view's exactly against each other: some way, finite.
+      const against = viewUp({ forward: unit([0.001, 0, 1]), up: UP });
+      expect(bodyFrame(above, 1, [10, 0, 0], against, up).axes.every(Number.isFinite)).toBe(true);
+    });
   });
 });
 

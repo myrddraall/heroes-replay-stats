@@ -59,7 +59,13 @@ import {
   viewUp,
   type Viewpoint,
 } from '../space/space';
-import { DEFAULT_ORIENTATION, isIdentity, placementFrame, surfaceFrame } from '../space/graph';
+import {
+  DEFAULT_ORIENTATION,
+  isIdentity,
+  placementFrame,
+  placementUp,
+  surfaceFrame,
+} from '../space/graph';
 import { particleMaterial } from './particle-shader';
 import type { ToClip } from './passes/pass-shaders';
 import { ShaderUniforms } from './uniforms/shader-uniforms';
@@ -452,11 +458,12 @@ export class ThreeRenderer {
         previous.find(alike);
       if (keep) kept.add(keep);
       if (keep && keep.body === body && !loaded) return keep;
+      const placement = placementFrame(body.position, this.layout);
       const placed: Placed = {
         id: keep?.id ?? nextPlacedId++,
         body,
-        quad: bodyFrame(body.position, body.radius, eye, up),
-        placementFrame: placementFrame(body.position, this.layout),
+        quad: bodyFrame(body.position, body.radius, eye, up, placementUp(placement)),
+        placementFrame: placement,
         extent: 0,
         states: [],
         version: keep?.version ?? 0,
@@ -667,8 +674,8 @@ export class ThreeRenderer {
       const was = placed.body;
       if (position === was.position && radius === was.radius && seen) return;
       placed.body = { ...was, position, radius };
-      placed.quad = bodyFrame(position, radius, eye, up);
       if (position !== was.position) placed.placementFrame = placementFrame(position, this.layout);
+      placed.quad = bodyFrame(position, radius, eye, up, placementUp(placed.placementFrame));
       this.measure(placed);
       placed.version++;
     });

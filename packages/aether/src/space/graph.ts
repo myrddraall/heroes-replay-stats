@@ -198,6 +198,9 @@ export function placementFrame(position: Vec3, layout: Viewpoint): Float32Array 
   return bodyFrame(position, 1, layout.eye, viewUp(layout)).axes;
 }
 
+/** A placement frame's up (its z): the way up its body's billboards keep (see `bodyFrame`). */
+export const placementUp = (frame: ArrayLike<number>): Vec3 => [frame[6]!, frame[7]!, frame[8]!];
+
 /** A vector at length 1 (none: none). */
 const unit = (v: Vec3): Vec3 | null => {
   const l = Math.hypot(v[0], v[1], v[2]);

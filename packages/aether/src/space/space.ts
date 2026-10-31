@@ -203,24 +203,74 @@ export interface BodyFrame {
 const squareTo = (v: Vec3): Vec3 =>
   normalized(cross(v, Math.abs(v[0]) < 0.9 ? [1, 0, 0] : [0, 1, 0]));
 
+/** `v` (any length) square to unit `y`, at length 1, and how far from `y` it was (the angle's sine); none along it. */
+function squareOf(v: Vec3, y: Vec3): { readonly way: Vec3; readonly off: number } | null {
+  const lean = dot(v, y);
+  const off: Vec3 = [v[0] - lean * y[0], v[1] - lean * y[1], v[2] - lean * y[2]];
+  const l = Math.hypot(...off);
+  const length = Math.hypot(...v);
+  return l > 1e-9 && length > 1e-9 ? { way: normalized(off), off: l / length } : null;
+}
+
+/**
+ * How far from the way to a body (the sine of the angle between them) the way up a billboard
+ * keeps (see `bodyFrame`) sets its up alone: nearer than `UP_HELD` the view's up takes over, eased
+ * in, all of it nearer than `UP_LOST` (seen down a pole, the scene's up says nothing of which way
+ * is up on the body).
+ */
+const UP_LOST = 0.1;
+const UP_HELD = 0.3;
+
+/**
+ * A billboard's up, square to `y` (the way from the eye to it): as near `steady` (the way up it
+ * keeps, the scene's) as it can be, but the view's up (`viewUp`) where the way to it is nearly
+ * along `steady` (turned from the view's up toward `steady`'s about `y` the rest of the way, eased:
+ * see `UP_LOST`); with no `steady`, the view's up. (The two exactly against each other, it turns
+ * whichever way the rounding says: a view upside down to the scene, looking nearly down a pole as
+ * the eye goes by, may flip it there.)
+ */
+function billboardUp(y: Vec3, viewUp: Vec3, steady?: Vec3): Vec3 {
+  // (Straight above or below on the screen: never in view.)
+  const seen = squareOf(viewUp, y)?.way ?? squareTo(y);
+  const kept = steady && squareOf(steady, y);
+  if (!kept) return seen;
+  const t = Math.min(Math.max((kept.off - UP_LOST) / (UP_HELD - UP_LOST), 0), 1);
+  if (t === 1) return kept.way;
+  if (t === 0) return seen;
+  const a = t * t * (3 - 2 * t) * Math.atan2(dot(cross(seen, kept.way), y), dot(seen, kept.way));
+  const quarter = cross(y, seen);
+  const [c, s] = [Math.cos(a), Math.sin(a)];
+  return normalized([
+    seen[0] * c + quarter[0] * s,
+    seen[1] * c + quarter[1] * s,
+    seen[2] * c + quarter[2] * s,
+  ]);
+}
+
 /**
  * A planet's body's frame, as the game's billboards turn to face the eye: about its centre, y
- * away from the eye, z as near the view's up (`viewUp`: up on the screen) as it can be, x to the
+ * away from the eye, z as near the way up it keeps (`steady`: the scene's up at the body, its
+ * placement frame's; none, the view's up, `viewUp`: up on the screen) as it can be, x to the
  * right; and the eye in that frame, in units of the body's radius. From the camera drawing it,
- * turned with the camera, it is the frame a billboard surface is drawn in (it keeps its way up on
- * the screen however the camera turns or tilts, straight down or up as well: the view's up is
- * square to the way the camera looks, so for anything in view it is never along the way to it).
- * From the scene's own camera it is the body's placement frame (`placementFrame`), fixed in the
- * world, which its moons and lights are placed in. (The eye at the body's centre, there is no way
- * to face: it faces any way square to the view's up.)
+ * turned with the camera, it is the frame a billboard surface is drawn in: it faces the eye but
+ * keeps its way up in the scene, so it never rolls as the camera turns or tilts; only seen nearly
+ * down its pole does the view's up take over (see `billboardUp`). (The view's up is square to
+ * the way the camera looks, so for anything in view it is never along the way to it.) From the
+ * scene's own camera it is the body's placement frame (`placementFrame`), fixed in the world,
+ * which its moons and lights are placed in. (The eye at the body's centre, there is no way to
+ * face: it faces any way square to the view's up.)
  */
-export function bodyFrame(position: Vec3, radius: number, eye: Vec3, viewUp: Vec3): BodyFrame {
+export function bodyFrame(
+  position: Vec3,
+  radius: number,
+  eye: Vec3,
+  viewUp: Vec3,
+  steady?: Vec3,
+): BodyFrame {
   const to: Vec3 = [eye[0] - position[0], eye[1] - position[1], eye[2] - position[2]];
   const y =
     Math.hypot(...to) > 1e-9 ? normalized([-to[0], -to[1], -to[2]]) : squareTo(normalized(viewUp));
-  const lean = dot(viewUp, y);
-  const off: Vec3 = [viewUp[0] - lean * y[0], viewUp[1] - lean * y[1], viewUp[2] - lean * y[2]];
-  const z = Math.hypot(...off) > 1e-9 ? normalized(off) : squareTo(y); // straight above or below on the screen: never in view
+  const z = billboardUp(y, viewUp, steady);
   const x = cross(y, z);
   return {
     axes: new Float32Array([...x, ...y, ...z]),

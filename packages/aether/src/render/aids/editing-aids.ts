@@ -22,6 +22,7 @@ import {
   type LightOutline,
   OUTLINE_EXTENT,
 } from '../../aids/beams';
+import { placementUp } from '../../space/graph';
 import { bodyFrame } from '../../space/space';
 import { rimTurn } from '../../space/directions';
 import type { AidKind, InstancedAidKind } from '../draw-types';
@@ -359,7 +360,7 @@ export class EditingAids {
         uniforms.apply(shared);
         uniforms.set('uCentre', o.centre);
         // Its square facing the eye; the light it outlines placed as its body is lit (`o.axes`).
-        uniforms.set('uAxes', bodyFrame(o.centre, o.radius, eye, view.up).axes);
+        uniforms.set('uAxes', bodyFrame(o.centre, o.radius, eye, view.up, placementUp(o.axes)).axes);
         uniforms.set('uLightAxes', o.axes);
         uniforms.set('uRadius', o.radius);
         uniforms.set('uExtent', o.radius * OUTLINE_EXTENT);
@@ -379,7 +380,7 @@ export class EditingAids {
           // The rim's turn of the view as the body's shader turns it (see `ShaderUniforms`): its
           // lean (its body's frame) put into the frame facing the eye at the body, its yaw and
           // pitch from that, turned about that frame's across and up; as a matrix's columns.
-          const facing = bodyFrame(o.centre, 1, eye, view.up).axes;
+          const facing = bodyFrame(o.centre, 1, eye, view.up, placementUp(o.axes)).axes;
           const lean = rimLeanFacing(o.axes, facing, o.direction);
           const [yaw, pitch] = rimTurn(lean);
           const rows = viewTurn(facing.subarray(0, 3), facing.subarray(6, 9), -yaw, -pitch);

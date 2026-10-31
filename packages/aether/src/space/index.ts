@@ -9,6 +9,7 @@ export {
   NO_QUAT,
   type Orientation,
   placementFrame,
+  placementUp,
   pointToLocal,
   pointToWorld,
   poseKept,
