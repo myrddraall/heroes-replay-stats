@@ -731,6 +731,10 @@ export function shadeMaterial(
   If(u.int('uVertexAlpha').equal(1), () => {
     alpha.mulAssign(s.color.a);
   });
+  // (Add blends by its colour alone: whatever its alpha, all of its light is added.)
+  If(u.int('uAddsByColour').equal(1), () => {
+    alpha.assign(1);
+  });
   // (A part shown less strongly: its blended materials fainter.)
   If(opaque.not(), () => {
     alpha.mulAssign(u.float('uStrength', 1));

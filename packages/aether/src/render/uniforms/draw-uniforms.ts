@@ -186,6 +186,9 @@ export function materialUniforms(
   u.i1('uVertexColor', material.vertexColor ? 1 : 0);
   u.f1('uEmissiveMult', material.emissiveMult);
   u.i1('uOpaque', blend === 'opaque' ? 1 : 0);
+  // Add's light is added by its colour alone (alphaAdd's by its alpha masks too: m3studio's
+  // material blends, "transparent on the basis of color value").
+  u.i1('uAddsByColour', blend === 'add' ? 1 : 0);
   u.i1('uEmissiveBlend', { mod: 0, mod2x: 1, add: 2 }[material.emissiveBlend ?? 'add']);
   u.f1('uCutout', material.cutout ?? 0);
   // Not a grid unless set as one (`gridUniforms`): its layers' own fresnel, its own colour.
