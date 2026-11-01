@@ -206,12 +206,12 @@ importers:
   packages/analysers:
     dependencies:
       '@myrddraall/heroprotocol-db':
-        specifier: ^0.5.0
-        version: 0.5.0(dexie@4.4.6)
+        specifier: ^0.5.1
+        version: 0.5.1(dexie@4.4.6)
     devDependencies:
       '@myrddraall/heroprotocol':
-        specifier: ^0.5.0
-        version: 0.5.0
+        specifier: ^0.5.1
+        version: 0.5.1
       '@types/node':
         specifier: ^24.0.0
         version: 24.13.6
@@ -267,8 +267,8 @@ importers:
         specifier: ^22.1.0
         version: 22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(rxjs@7.8.2)
       '@myrddraall/hero-data':
-        specifier: ^0.5.0
-        version: 0.5.0
+        specifier: ^0.5.1
+        version: 0.5.1
       '@myrddraall/heroes-replay-stats-aether':
         specifier: workspace:*
         version: link:../aether
@@ -288,11 +288,11 @@ importers:
         specifier: workspace:*
         version: link:../ui
       '@myrddraall/heroprotocol-analysis':
-        specifier: ^0.5.0
-        version: 0.5.0(dexie@4.4.6)
+        specifier: ^0.5.1
+        version: 0.5.1(dexie@4.4.6)
       '@myrddraall/heroprotocol-db':
-        specifier: ^0.5.0
-        version: 0.5.0(dexie@4.4.6)
+        specifier: ^0.5.1
+        version: 0.5.1(dexie@4.4.6)
       '@ngrx/signals':
         specifier: ^22.0.1
         version: 22.0.1(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2)
@@ -1632,24 +1632,24 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@myrddraall/hero-data@0.5.0':
-    resolution: {integrity: sha512-NeiL6ZbmnficSJrMA+FW4+eHnr1N2gHSxtpuRU+8van72LIf5s0uMZMWFT9C+ZqY4wwOjeyucCiu/+iuiANy9w==, tarball: https://npm.pkg.github.com/download/@myrddraall/hero-data/0.5.0/49cb138bf7101fd0cd0b6cb4f851e6641051951e}
+  '@myrddraall/hero-data@0.5.1':
+    resolution: {integrity: sha512-9DaB3UD1X9qdIvtZzQD+0QcbZpWcJxaSl0uam7tX0cxMov4QDCUdUbSC567GUQZ0ros3Edoc3mGFm8xIZYGG/w==, tarball: https://npm.pkg.github.com/download/@myrddraall/hero-data/0.5.1/c5fc9ee34d3623987a4fdbaa3eb0e248895745bf}
     engines: {node: '>=24'}
 
-  '@myrddraall/heroprotocol-analysis@0.5.0':
-    resolution: {integrity: sha512-9V4U55kdGxh2DwoR4/IsBqE+Ps4/RespJ40WNktU+lkGedm3uIJ3pt6H5RraKi2xmbkycr06GRw2Ha5sBcgstQ==, tarball: https://npm.pkg.github.com/download/@myrddraall/heroprotocol-analysis/0.5.0/9003d86a3ed8dc36ebfe42b3421a33d61127ec22}
-    engines: {node: '>=24'}
-    peerDependencies:
-      dexie: ^4.4.6
-
-  '@myrddraall/heroprotocol-db@0.5.0':
-    resolution: {integrity: sha512-Zcn9FMzg6g7SLTcP3T5M0Va9frWcu1j9IFCBcQgEYb+ZtXr99K94E+GfZoE/o/UnI8BMEmm3KEiV/MO79p5vrg==, tarball: https://npm.pkg.github.com/download/@myrddraall/heroprotocol-db/0.5.0/5c8fe450ebd5e14aa1f8534fb571244741d9a1f0}
+  '@myrddraall/heroprotocol-analysis@0.5.1':
+    resolution: {integrity: sha512-qjqX6AWfOLS/quJ3cEBP1HrKY3cs8j+Yp+TnF7jP16QRCoOSNymCPS9DOXZmmfKVnKiVXkyBzUy0IaX30fOiiA==, tarball: https://npm.pkg.github.com/download/@myrddraall/heroprotocol-analysis/0.5.1/9a6e76ae3c94ffcf96c828538d6907dc0e5612f8}
     engines: {node: '>=24'}
     peerDependencies:
       dexie: ^4.4.6
 
-  '@myrddraall/heroprotocol@0.5.0':
-    resolution: {integrity: sha512-tvccmNz5BMtw9EawjORmtRgWc5bQj1WN+xeDFS1AgiFKuh58LaH9xNMAokZdWaQoz/woLP3Tt10kzrNuIpeDJA==, tarball: https://npm.pkg.github.com/download/@myrddraall/heroprotocol/0.5.0/8b419b1b25cdaa5c7d6d773d13ece7d07739b52d}
+  '@myrddraall/heroprotocol-db@0.5.1':
+    resolution: {integrity: sha512-VG6sB6YmcfWjnNCe/JQPm7bdOgzKxIwhgTaAMKi98NpzV2RWfMpoCkcF14JpPs36NlkdG+ryEKOtsT9GEpmNPw==, tarball: https://npm.pkg.github.com/download/@myrddraall/heroprotocol-db/0.5.1/773544f00545009fb4ce2606296202aa81c27fd5}
+    engines: {node: '>=24'}
+    peerDependencies:
+      dexie: ^4.4.6
+
+  '@myrddraall/heroprotocol@0.5.1':
+    resolution: {integrity: sha512-F90Smz15yEdk6eGcvrjUOAv9w8RDqksxIavxbK8TSV3bxJKf7rZeqtNGF+KeRgPdRAghE2XvlTN6lblMzrCSww==, tarball: https://npm.pkg.github.com/download/@myrddraall/heroprotocol/0.5.1/d1b282645da73f592c8851ca2ec1d416f14cd6c8}
     engines: {node: '>=24'}
 
   '@myrddraall/mpq@0.2.0':
@@ -6403,19 +6403,19 @@ snapshots:
   '@msgpackr-extract/msgpackr-extract-win32-x64@3.0.4':
     optional: true
 
-  '@myrddraall/hero-data@0.5.0': {}
+  '@myrddraall/hero-data@0.5.1': {}
 
-  '@myrddraall/heroprotocol-analysis@0.5.0(dexie@4.4.6)':
+  '@myrddraall/heroprotocol-analysis@0.5.1(dexie@4.4.6)':
     dependencies:
-      '@myrddraall/heroprotocol-db': 0.5.0(dexie@4.4.6)
+      '@myrddraall/heroprotocol-db': 0.5.1(dexie@4.4.6)
       dexie: 4.4.6
 
-  '@myrddraall/heroprotocol-db@0.5.0(dexie@4.4.6)':
+  '@myrddraall/heroprotocol-db@0.5.1(dexie@4.4.6)':
     dependencies:
-      '@myrddraall/heroprotocol': 0.5.0
+      '@myrddraall/heroprotocol': 0.5.1
       dexie: 4.4.6
 
-  '@myrddraall/heroprotocol@0.5.0':
+  '@myrddraall/heroprotocol@0.5.1':
     dependencies:
       '@myrddraall/mpq': 0.2.0
 
