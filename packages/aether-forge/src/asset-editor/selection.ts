@@ -14,6 +14,7 @@ import {
   type TargetKind,
 } from '../bodies/body';
 import { skyAnchorView } from '../sky/sky';
+import { overlayChoicesOf } from '../overlays/overlays';
 import {
   adjustmentAt,
   ADJUSTMENTS_TITLE,
@@ -258,7 +259,13 @@ export function assetSelectionViews(store: WithOwn) {
           !!sky.edited.anchor)
       );
     }),
-    overlayOptions: computed((): readonly PickChoice[] => []),
+    /**
+     * The overlays a planet open (or one of its moons) may be given to wear wherever it is put: the
+     * game data's and those made in the editor (an overlay open wears none).
+     */
+    overlayOptions: computed((): readonly PickChoice[] =>
+      asset().kind === 'planet' ? overlayChoicesOf(_catalog.styles(), library()) : [],
+    ),
     sets: computed(() => false),
   };
 }

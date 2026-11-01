@@ -11,14 +11,20 @@ import { type BodyInfo, bodyLabel, overlayEnabled, overlayLabel } from '../bodie
  * the editor (the library's), each as renamed in the library.
  */
 export function overlayChoices(index: PlanetIndex | null, library: LibraryState): PickChoice[] {
-  const ids = [
-    ...(index?.styles.map((s) => s.id) ?? []),
-    ...Object.entries(library.created ?? {})
-      .filter(([, o]) => o.kind === 'planet')
-      .map(([id]) => id),
-  ];
-  return ids.map((id) => ({ value: id, label: overlayName(library, id) }));
+  return overlayChoicesOf(
+    [
+      ...(index?.styles.map((s) => s.id) ?? []),
+      ...Object.entries(library.created ?? {})
+        .filter(([, o]) => o.kind === 'planet')
+        .map(([id]) => id),
+    ],
+    library,
+  );
 }
+
+/** Overlays (by id) as an editor offers them: each by name, as renamed in the library. */
+export const overlayChoicesOf = (ids: readonly string[], library: LibraryState): PickChoice[] =>
+  ids.map((id) => ({ value: id, label: overlayName(library, id) }));
 
 /** A body's name with the overlays it wears. */
 export const wornLabel = (b: BodyInfo) =>
