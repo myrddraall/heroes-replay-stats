@@ -1,0 +1,64 @@
+@if (limits().length > 0) {
+  <ul class="stat-table__legend" aria-label="Starred stats">
+    @for (kind of limits(); track kind) {
+      <li>
+        <span class="stat-table__star" [class]="'stat-table__star--' + kind" aria-hidden="true"
+          >*</span
+        >
+        {{ supportLabels[kind] }}
+      </li>
+    }
+  </ul>
+}
+<div class="stat-table__scroll">
+  <table class="stat-table">
+    <thead>
+      <tr>
+        <th scope="col" class="stat-table__corner">{{ rowHeadLabel() }}</th>
+        @for (column of columns(); track column.id) {
+          <th
+            scope="col"
+            class="stat-table__col"
+            [attr.aria-sort]="ariaSort(column.id)"
+            [matTooltip]="tooltip(column)"
+            matTooltipPosition="above"
+          >
+            <ui-stat-sort-header
+              [column]="column.id"
+              [sort]="sort()"
+              (sortRequested)="toggleSort(column.id)"
+            >
+              {{ column.label }}
+              @if (isLimited(column.support)) {
+                <span
+                  class="stat-table__star"
+                  [class]="'stat-table__star--' + column.support"
+                  aria-hidden="true"
+                  >*</span
+                >
+                <span class="stat-table__hidden">({{ supportLabels[column.support] }})</span>
+              }
+            </ui-stat-sort-header>
+          </th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (line of table(); track line.row.key) {
+        <tr [class]="line.row.class ?? ''">
+          <th scope="row" class="stat-table__head">
+            @if (rowHead(); as head) {
+              <ng-container
+                [ngTemplateOutlet]="head.template"
+                [ngTemplateOutletContext]="{ $implicit: line.row.data, row: line.row }"
+              />
+            }
+          </th>
+          @for (cell of line.cells; track cell.column) {
+            <td class="stat-table__cell">{{ cell.text }}</td>
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

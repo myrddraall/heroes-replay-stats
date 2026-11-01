@@ -10,6 +10,12 @@ const pages: Routes = [
     loadComponent: () => import('./pages/replays/replays-page').then((m) => m.ReplaysPage),
   },
   {
+    path: 'replays/:replayId',
+    title: 'Replay · Heroes Replay Stats',
+    loadComponent: () => import('./pages/replay/replay-page').then((m) => m.ReplayPage),
+    loadChildren: () => import('./pages/replay/replay.routes').then((m) => m.replayRoutes),
+  },
+  {
     path: 'players',
     title: 'Players · Heroes Replay Stats',
     loadComponent: () => import('./pages/players/players-page').then((m) => m.PlayersPage),

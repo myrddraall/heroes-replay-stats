@@ -1,0 +1,10 @@
+<header class="head">
+  <h1 class="head__map">{{ replay().map }}</h1>
+  <span class="head__mode">{{ mode() }}</span>
+  <span class="head__meta">
+    <time [attr.datetime]="replay().playedAt">{{
+      replay().playedAt | date: 'MMM d, y, HH:mm'
+    }}</time>
+    · {{ duration() }} · build {{ replay().build }}
+  </span>
+</header>

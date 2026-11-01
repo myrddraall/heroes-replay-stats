@@ -1,22 +1,25 @@
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { Component, computed, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { Component, computed, inject, signal, viewChild } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NgOptimizedImage } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { map } from 'rxjs';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { filter, map } from 'rxjs';
 import { ReplayImportJobStore } from '../data/import/replay-import-job.store';
 import { GraphicsStore } from '../data/settings/graphics.store';
 // Not in Aether's root entry, which the app loads at once: the shell loads the view deferred.
 import { SceneView } from "@myrddraall/heroes-replay-stats-aether/view";
 import { BACKGROUND_EDITOR_PATH } from '../site-background/background-editor';
 import { injectPlatform } from '../platform/platform';
+import { ShellNavStore } from './shell-nav';
+import { ShellPanelsStore } from './shell-panels';
 
 export interface NavItem {
   readonly path: string;
@@ -45,8 +48,9 @@ export const NAV_ITEMS: readonly NavItem[] = [
 /**
  * The frame: the game's Play screen background behind everything (one for every page, so it keeps
  * running as they change), and over it in glass a toolbar, a rail/sidenav that collapses on small
- * screens, and the routed page. Its theme, and how see-through the glass is and whether it blurs,
- * are the Graphics settings'.
+ * screens (a page can put its own navigation under its parent's item, `hrsShellNavChildren`), the
+ * routed page, and on the right an extra panel the page can fill with its tools (`hrsShellPanel`).
+ * Its theme, and how see-through the glass is and whether it blurs, are the Graphics settings'.
  */
 @Component({
   selector: 'hrs-shell',
@@ -59,6 +63,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
     MatTooltipModule,
     MatProgressSpinnerModule,
     NgOptimizedImage,
+    NgTemplateOutlet,
     RouterOutlet,
     RouterLink,
     RouterLinkActive,
@@ -66,6 +71,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   ],
   templateUrl: './shell.html',
   styleUrl: './shell.scss',
+  providers: [ShellNavStore, ShellPanelsStore],
   host: {
     '[class]': "'hrs-glass-' + graphics.theme()",
     '[style.--hrs-glass-alpha]': 'graphics.glassAlpha()',
@@ -116,6 +122,10 @@ export class Shell {
     );
     if (files.length > 0) void this.imports.import(files);
   }
+  /** What the open page puts under its parent's nav item. */
+  protected readonly subnav = inject(ShellNavStore);
+  /** The extra panel on the right, which the page fills. */
+  protected readonly panels = inject(ShellPanelsStore);
   protected readonly platform = injectPlatform();
   protected readonly imports = inject(ReplayImportJobStore);
   protected readonly items = NAV_ITEMS;
@@ -136,4 +146,18 @@ export class Shell {
       .pipe(map((r) => r.matches)),
     { initialValue: false },
   );
+  private readonly nav = viewChild.required<MatSidenav>('nav');
+
+  constructor() {
+    // On a handset the menu covers the page: any link followed in it (a page's own navigation too)
+    // closes it.
+    inject(Router)
+      .events.pipe(
+        filter((e) => e instanceof NavigationEnd),
+        takeUntilDestroyed(),
+      )
+      .subscribe(() => {
+        if (this.handset()) void this.nav().close();
+      });
+  }
 }

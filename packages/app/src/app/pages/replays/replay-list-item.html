@@ -5,7 +5,9 @@
     </div>
   }
   <header class="replay__head">
-    <h2 class="replay__map">{{ replay().map }}</h2>
+    <h2 class="replay__map">
+      <a class="replay__link" [routerLink]="['/replays', replay().id]">{{ replay().map }}</a>
+    </h2>
     <span class="replay__mode">{{ mode() }}</span>
     <span class="replay__dates">
       <span class="replay__played">

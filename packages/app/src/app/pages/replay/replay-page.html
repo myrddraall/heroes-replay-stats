@@ -1,0 +1,20 @@
+<hrs-layout class="page">
+  @if (store.error(); as error) {
+    <p role="alert">The replay could not be read: {{ error }}</p>
+  } @else if (!store.loaded()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Loading the replay" />
+  } @else if (store.replay(); as replay) {
+    <ng-template hrsShellNavChildren="/replays">
+      <hrs-replay-nav [replay]="replay" [groups]="pages" />
+    </ng-template>
+    <hrs-replay-header hrsLayoutItem="padded" [replay]="replay" />
+    <!-- edge to edge: each section lays itself out -->
+    <div class="page__section" hrsLayoutItem="edge-to-edge">
+      <router-outlet />
+    </div>
+  } @else {
+    <hrs-empty-state icon="search_off" title="Replay not found">
+      It is not in the replay database, or it is still being imported.
+    </hrs-empty-state>
+  }
+</hrs-layout>

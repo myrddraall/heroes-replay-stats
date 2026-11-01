@@ -30,7 +30,8 @@ const towers = {
 export const fakeHeroData: HeroDataProvider = {
   latest: async () =>
     ({
-      hero: (id: string) => (id === 'Barbarian' ? sonya : undefined),
+      hero: (idOrName: string) =>
+        idOrName === 'Barbarian' || idOrName === 'Sonya' ? sonya : undefined,
       map: (name: string) => (name === 'Towers of Doom' ? towers : undefined),
     }) as unknown as HeroDataSet,
   forBuild: async () => {

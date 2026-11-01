@@ -1,0 +1,25 @@
+:host {
+  display: inline-block;
+}
+
+.ui-stat-sort-header {
+  all: unset;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  border-radius: 4px;
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: 2px;
+  }
+}
+.ui-stat-sort-header__arrow {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+  opacity: 0;
+}
+.ui-stat-sort-header__arrow--shown {
+  opacity: 1;
+}

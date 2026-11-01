@@ -1,0 +1,28 @@
+@if (store.playerStats(); as stats) {
+  <hrs-player-stats
+    [title]="store.title()"
+    [players]="stats.players"
+    [icons]="store.icons()"
+    [shownColumns]="store.shownColumns()"
+  />
+} @else {
+  <mat-progress-bar mode="indeterminate" aria-label="Loading the player stats" />
+}
+<ng-template hrsShellPanel="Columns">
+  <ui-side-panel title="Columns" (closeRequested)="panels.setEndOpen(false)">
+    <ui-stat-presets
+      uiSidePanelPinned
+      [builtIn]="store.builtInPresets()"
+      [saved]="store.savedPresets()"
+      [current]="store.preset()"
+      (chosen)="store.choosePreset($event)"
+      (saveRequested)="store.savePreset($event)"
+      (deleteRequested)="store.deletePreset($event)"
+    />
+    <ui-stat-column-picker
+      [columns]="store.columns()"
+      [choices]="store.choices()"
+      (choicesChange)="store.setChoices($event)"
+    />
+  </ui-side-panel>
+</ng-template>

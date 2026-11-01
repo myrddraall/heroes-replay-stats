@@ -13,6 +13,14 @@ describe('heroLookup', () => {
     expect(lookup.heroIcon('NotAHero')).toBeNull();
   });
 
+  it("falls back to the hero's name for an id the data doesn't list", async () => {
+    const lookup = heroLookup(await fakeHeroData.latest(), heroesImages());
+    expect(lookup.heroIcon('BarbarianSpawn', 'Sonya')?.name).toBe('Sonya');
+    expect(lookup.heroIcon('BarbarianSpawn', 'Nobody')).toBeNull();
+    expect(lookup.heroDataId('BarbarianSpawn', 'Sonya')).toBe('Barbarian');
+    expect(lookup.heroDataId('NotAHero')).toBeNull();
+  });
+
   it("finds a map's replay preview", async () => {
     const lookup = heroLookup(await fakeHeroData.latest(), heroesImages());
     expect(lookup.mapPreview('Towers of Doom')).toBe(

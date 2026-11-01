@@ -1,0 +1,21 @@
+// Fills its section: the title, then the table in the rest, padded as the layout pads, the table
+// scrolling in it.
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 16px var(--hrs-layout-padding, 24px) var(--hrs-layout-padding, 24px);
+}
+
+.stats__title {
+  flex: none;
+  margin: 0 0 8px;
+  font: var(--mat-sys-title-large);
+}
+
+ui-stat-table {
+  flex: 1;
+  min-height: 0;
+  --ui-stat-table-max-height: 100%;
+}

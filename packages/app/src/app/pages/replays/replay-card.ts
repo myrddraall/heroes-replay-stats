@@ -22,6 +22,8 @@ export function toReplayCard(
     replay,
     you: resolveYou(replay, me),
     preview: heroes.mapPreview(replay.map),
-    icons: Object.fromEntries(replay.players.map((p) => [p.slot, heroes.heroIcon(p.heroId)])),
+    icons: Object.fromEntries(
+      replay.players.map((p) => [p.slot, heroes.heroIcon(p.heroId, p.hero)]),
+    ),
   };
 }

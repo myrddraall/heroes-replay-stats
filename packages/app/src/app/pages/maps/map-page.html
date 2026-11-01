@@ -2,3 +2,6 @@
   <h1 class="title">Map</h1>
   <hrs-map-explore class="map" hrsLayoutItem="edge-to-edge" [mapId]="mapId()" />
 </hrs-layout>
+<ng-template hrsShellNavChildren="/maps">
+  <hrs-shell-nav-links label="Open map" [links]="navLinks()" />
+</ng-template>

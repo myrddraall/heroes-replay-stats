@@ -1,0 +1,49 @@
+<ui-score-table [columns]="columns" [rows]="rows()">
+  <ng-template [uiStatRowHead]="rows()" let-data>
+    <div class="player">
+      <hrs-player-cell [hero]="data.player.hero" [name]="data.player.name" [icon]="data.icon" />
+      @if (data.player.silenced) {
+        <mat-icon
+          class="material-symbols-outlined player__silence"
+          matTooltip="Silenced"
+          aria-label="Silenced"
+          >speaker_notes_off</mat-icon
+        >
+      }
+      @if (data.player.voiceSilenced) {
+        <mat-icon
+          class="material-symbols-outlined player__silence"
+          matTooltip="Voice silenced"
+          aria-label="Voice silenced"
+          >mic_off</mat-icon
+        >
+      }
+      @if (data.player.awards.length > 0) {
+        <ul class="player__awards" aria-label="Awards">
+          @for (award of data.player.awards; track award) {
+            <li class="award" [class.award--mvp]="award === 'MVP'">{{ awardLabel(award) }}</li>
+          }
+        </ul>
+      }
+    </div>
+  </ng-template>
+</ui-score-table>
+<div class="teams">
+  @for (team of teams(); track team.team; let first = $first) {
+    @if (!first) {
+      <span class="teams__vs">vs</span>
+    }
+    <section class="team hrs-glass" [hrsTeam]="team.team" [attr.aria-label]="team.name">
+      @if (decided()) {
+        <span class="team__result">{{ team.won ? 'Victory' : 'Defeat' }}</span>
+      }
+      @if (team.level !== null) {
+        <span class="team__level">Level {{ team.level }}</span>
+      }
+      <span class="team__kills">
+        <span class="team__kills-number">{{ team.kills }}</span>
+        {{ team.kills === 1 ? 'kill' : 'kills' }}
+      </span>
+    </section>
+  }
+</div>

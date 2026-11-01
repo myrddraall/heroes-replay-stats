@@ -1,0 +1,17 @@
+// The page fills the window below the toolbar and doesn't scroll: the header on top, the section
+// in the rest (the score scrolling in it when taller, the stats filling it).
+:host {
+  display: block;
+  height: calc(100dvh - var(--hrs-toolbar-height, 64px));
+  min-height: 480px;
+}
+
+.page {
+  height: 100%;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.page__section {
+  min-height: 0;
+  overflow: auto;
+}

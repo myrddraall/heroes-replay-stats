@@ -1,0 +1,9 @@
+<button type="button" class="ui-stat-sort-header" (click)="sortRequested.emit()">
+  <ng-content />
+  <mat-icon
+    class="material-symbols-outlined ui-stat-sort-header__arrow"
+    [class.ui-stat-sort-header__arrow--shown]="direction()"
+    aria-hidden="true"
+    >{{ direction() === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon
+  >
+</button>

@@ -1,0 +1,103 @@
+// Colours are Material's system tokens, so a row re-themed by its class (a team's) follows it.
+// The scroll area's height is `--ui-stat-table-max-height` (none by default).
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.stat-table__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.stat-table__scroll {
+  overflow: auto;
+  max-height: var(--ui-stat-table-max-height, none);
+}
+
+.stat-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  font: var(--mat-sys-body-small);
+  font-variant-numeric: tabular-nums;
+}
+
+thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--mat-sys-surface-container-highest);
+  font: var(--mat-sys-label-small);
+  color: var(--mat-sys-on-surface-variant);
+  vertical-align: bottom;
+}
+
+.stat-table__col {
+  min-width: 56px;
+  max-width: 96px;
+  padding: 4px 6px;
+  text-align: end;
+}
+
+.stat-table__corner {
+  left: 0;
+  z-index: 2;
+  padding: 4px 8px;
+  text-align: start;
+}
+
+tbody tr {
+  background: var(--mat-sys-surface-container);
+  &:nth-child(even) {
+    background: var(--mat-sys-surface-container-high);
+  }
+}
+
+.stat-table__head {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  padding: 2px 8px;
+  text-align: start;
+  font-weight: normal;
+  white-space: nowrap;
+  background: var(--mat-sys-surface-container-highest);
+}
+
+.stat-table__cell {
+  padding: 2px 6px;
+  text-align: end;
+  white-space: nowrap;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+}
+
+.stat-table__star {
+  font-weight: 700;
+}
+
+.stat-table__star--partial {
+  color: var(--mat-sys-primary);
+}
+
+.stat-table__star--flawed {
+  color: var(--mat-sys-tertiary);
+}
+
+.stat-table__star--none {
+  color: var(--mat-sys-error);
+}
+
+.stat-table__hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

@@ -1,0 +1,33 @@
+<ul class="picker" cdkDropList (cdkDropListDropped)="dropped($event)" aria-label="Columns">
+  @for (item of items(); track item.choice.id) {
+    <li class="picker__item" cdkDrag cdkDragLockAxis="y">
+      <button
+        type="button"
+        class="picker__handle"
+        cdkDragHandle
+        [attr.data-column]="item.choice.id"
+        [attr.aria-label]="'Move ' + item.column.label + ' (up and down arrow keys)'"
+        (keydown.arrowup)="moveBy($event, item.choice.id, -1)"
+        (keydown.arrowdown)="moveBy($event, item.choice.id, 1)"
+      >
+        <mat-icon class="material-symbols-outlined" aria-hidden="true">drag_indicator</mat-icon>
+      </button>
+      <mat-checkbox
+        class="picker__check"
+        [checked]="item.choice.shown"
+        (change)="setShown(item.choice.id, $event.checked)"
+        [matTooltip]="tooltip(item.column)"
+        [matTooltipDisabled]="!tooltip(item.column)"
+        matTooltipPosition="left"
+        matTooltipShowDelay="800"
+      >
+        {{ item.column.label }}
+        @if (item.column.support && item.column.support !== 'full') {
+          <span class="picker__star" [class]="'picker__star--' + item.column.support"
+            >* <span class="picker__hidden">({{ supportLabels[item.column.support] }})</span></span
+          >
+        }
+      </mat-checkbox>
+    </li>
+  }
+</ul>

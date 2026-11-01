@@ -1,12 +1,13 @@
 import { DatePipe, NgOptimizedImage } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import type { GameMode, Team } from '@myrddraall/heroprotocol-db';
+import { RouterLink } from '@angular/router';
 import { HeroMinimapIcon } from '../../heroes/hero-minimap-icon';
 import { teamColor, type TeamColor, TeamPerspective } from '../../team/team-color';
 import { TeamTheme } from '../../team/team-theme';
 import type { ReplayCard } from './replay-card';
 
-const MODE_LABELS: Readonly<Record<GameMode, string>> = {
+export const MODE_LABELS: Readonly<Record<GameMode, string>> = {
   practice: 'Practice',
   'versus-ai': 'Versus AI',
   brawl: 'Brawl',
@@ -38,7 +39,7 @@ export function formatDuration(seconds: number): string {
  */
 @Component({
   selector: 'hrs-replay-list-item',
-  imports: [DatePipe, HeroMinimapIcon, NgOptimizedImage, TeamTheme],
+  imports: [DatePipe, HeroMinimapIcon, NgOptimizedImage, RouterLink, TeamTheme],
   providers: [TeamPerspective],
   templateUrl: './replay-list-item.html',
   styleUrl: './replay-list-item.scss',

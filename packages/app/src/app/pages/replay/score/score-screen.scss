@@ -1,0 +1,78 @@
+:host {
+  display: grid;
+  gap: 16px;
+  padding-top: 16px;
+}
+
+.player {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+
+.player__silence {
+  color: var(--mat-sys-error);
+}
+
+.player__awards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.award {
+  padding: 2px 8px;
+  border-radius: 999px;
+  box-shadow: 0 0 0 1px rgb(var(--hrs-glass-edge) / 0.5);
+  font: var(--mat-sys-label-small);
+  white-space: nowrap;
+}
+
+.award--mvp {
+  color: var(--hrs-bronze);
+  box-shadow: 0 0 0 1px var(--hrs-bronze);
+}
+
+.teams {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.teams__vs {
+  font: var(--mat-sys-title-large);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.team {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  min-width: 160px;
+  padding: 12px 24px;
+}
+
+.team__result {
+  font: var(--mat-sys-title-large);
+  font-family: 'Exo 2', sans-serif;
+  font-weight: 600;
+}
+
+.team__level {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.team__kills {
+  font: var(--mat-sys-body-medium);
+}
+
+.team__kills-number {
+  font: var(--mat-sys-headline-small);
+  font-variant-numeric: tabular-nums;
+}

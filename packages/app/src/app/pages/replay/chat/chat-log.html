@@ -1,0 +1,27 @@
+<h2 class="title">Chat</h2>
+@if (lines().length === 0) {
+  <p class="empty">No one chatted in this game.</p>
+} @else {
+  <ol class="log hrs-glass">
+    @for (line of lines(); track line.key) {
+      <li class="line" [hrsTeam]="line.team">
+        <time class="line__time">{{ line.time }}</time>
+        <hrs-hero-minimap-icon
+          class="line__icon"
+          [src]="line.icon?.src ?? null"
+          [name]="line.icon?.name ?? line.hero ?? ''"
+        />
+        <span class="line__sender">{{ line.sender }}</span>
+        <span class="line__text">
+          @for (piece of line.pieces; track $index) {
+            @if (piece.kind === 'text') {
+              {{ piece.text }}
+            } @else {
+              <img class="line__emote" [src]="piece.src" [alt]="piece.code" [title]="piece.code" />
+            }
+          }
+        </span>
+      </li>
+    }
+  </ol>
+}
