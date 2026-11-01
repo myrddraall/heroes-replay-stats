@@ -1,5 +1,6 @@
 import { Component, inject, Injector, runInInjectionContext } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { fallBackToGitHubImages } from './data/heroes/image-fallback';
 import { DEV_REPORTS_URL } from './platform/dev-reports';
 
 /** The routed page: the shell around the app's pages, or a page of its own (app.routes.ts). */
@@ -10,6 +11,8 @@ import { DEV_REPORTS_URL } from './platform/dev-reports';
 })
 export class App {
   constructor() {
+    // Game pictures the CDN refuses load from GitHub's copy, on any page.
+    fallBackToGitHubImages();
     // (Where dev reports go: the background's frame stats while they show, on any page. Loaded
     // only then: the stats come with the background's renderer, which the first page doesn't wait
     // for.)
