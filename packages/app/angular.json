@@ -38,7 +38,7 @@
             ],
             "stylePreprocessorOptions": {
               "includePaths": [
-                "src/theme"
+                "../ui/src/theme"
               ]
             },
             "webWorkerTsConfig": "tsconfig.worker.json"

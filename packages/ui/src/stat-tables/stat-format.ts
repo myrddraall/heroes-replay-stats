@@ -38,6 +38,16 @@ export function formatStatDuration(seconds: number, locale: string): string {
   return `${numberFormat(locale, 'decimal', [0, 0]).format(minutes)}m ${String(rest).padStart(2, '0')}s`;
 }
 
+/** Seconds on a clock as `m:ss`, `h:mm:ss` past an hour, with a minus before zero. */
+export function formatStatClock(seconds: number): string {
+  const whole = Math.round(seconds);
+  if (whole < 0) return `-${formatStatClock(-whole)}`;
+  const h = Math.floor(whole / 3600);
+  const m = Math.floor((whole % 3600) / 60);
+  const ss = String(whole % 60).padStart(2, '0');
+  return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${m}:${ss}`;
+}
+
 /** A stat's value as its column shows it; {@link NO_STAT_VALUE} for none. */
 export function formatStat(
   value: number | null | undefined,
@@ -46,6 +56,7 @@ export function formatStat(
 ): string {
   if (value === null || value === undefined || Number.isNaN(value)) return NO_STAT_VALUE;
   if (column.format === 'duration') return formatStatDuration(value, locale);
+  if (column.format === 'clock') return formatStatClock(value);
   const style = column.format === 'percent' ? 'percent' : 'decimal';
   return numberFormat(locale, style, column.digits ?? DEFAULT_DIGITS[column.format]).format(value);
 }

@@ -18,11 +18,18 @@ export const REPLAY_PAGES: readonly ReplayPageGroup[] = [
     title: 'Overview',
     pages: [
       { path: 'score', title: 'Score' },
+      { path: 'teams', title: 'Teams' },
+      { path: 'draft', title: 'Draft' },
+      { path: 'talents', title: 'Talents' },
       { path: 'chat', title: 'Chat' },
     ],
   },
   {
     title: 'Stats',
-    pages: STAT_SECTION_IDS.map((id) => ({ path: `stats/${id}`, title: STAT_SECTIONS[id].title })),
+    pages: [
+      ...STAT_SECTION_IDS.map((id) => ({ path: `stats/${id}`, title: STAT_SECTIONS[id].title })),
+      { path: 'unit-kills', title: 'Unit Kills' },
+      { path: 'xp', title: 'XP' },
+    ],
   },
 ];

@@ -1,0 +1,18 @@
+import { Component, input } from '@angular/core';
+import { HeroMinimapIcon } from '../../../heroes/hero-minimap-icon';
+import { TeamTheme } from '../../../team/team-theme';
+import type { DraftStep } from './draft-steps';
+
+/**
+ * A replay's draft (presentational): its bans and picks in order, each in its team's colour with
+ * the hero and, for a pick, the player.
+ */
+@Component({
+  selector: 'hrs-draft-list',
+  imports: [HeroMinimapIcon, TeamTheme],
+  templateUrl: './draft-list.html',
+  styleUrl: './draft-list.scss',
+})
+export class DraftList {
+  readonly steps = input.required<readonly DraftStep[]>();
+}

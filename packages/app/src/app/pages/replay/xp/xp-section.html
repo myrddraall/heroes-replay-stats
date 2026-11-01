@@ -1,0 +1,9 @@
+<hrs-layout>
+  @if (store.error(); as error) {
+    <p role="alert">The XP could not be read: {{ error }}</p>
+  } @else if (store.points(); as points) {
+    <hrs-xp-tables [points]="points" />
+  } @else {
+    <mat-progress-bar mode="indeterminate" aria-label="Loading the XP" />
+  }
+</hrs-layout>

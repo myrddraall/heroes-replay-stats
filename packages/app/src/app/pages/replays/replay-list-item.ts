@@ -24,8 +24,9 @@ export const MODE_LABELS: Readonly<Record<GameMode, string>> = {
 
 const TEAM_NAMES: Readonly<Record<TeamColor, string>> = { blue: 'Blue team', red: 'Red team' };
 
-/** `m:ss`, or `h:mm:ss` past an hour. */
+/** `m:ss`, or `h:mm:ss` past an hour; `-m:ss` before the game's clock started (pre-game chat). */
 export function formatDuration(seconds: number): string {
+  if (Math.round(seconds) < 0) return `-${formatDuration(-seconds)}`;
   const s = Math.round(seconds);
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);

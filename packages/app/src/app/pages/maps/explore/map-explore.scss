@@ -1,4 +1,4 @@
-@use '../../../../theme/glass-mixins' as glass;
+@use 'glass-mixins' as glass;
 
 // The drawer container fills the host; the viewer fills the content between the panels. Nothing
 // here may scroll sideways: the panels keep to their width, the map clips.

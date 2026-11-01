@@ -6,7 +6,7 @@ export type {
   StatRow,
   StatSupport,
 } from './stat-tables/stat-column';
-export { formatStat, formatStatDuration, NO_STAT_VALUE } from './stat-tables/stat-format';
+export { formatStat, formatStatClock, formatStatDuration, NO_STAT_VALUE } from './stat-tables/stat-format';
 export { nextStatSort, sortStatRows, statAriaSort, type StatSort } from './stat-tables/stat-sort';
 export { statTableRows, type StatCell, type StatTableRow } from './stat-tables/stat-cells';
 export { STAT_SUPPORT_LABELS } from './stat-tables/stat-support';

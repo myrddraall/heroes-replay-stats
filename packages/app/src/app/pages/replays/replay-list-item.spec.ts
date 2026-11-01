@@ -63,6 +63,9 @@ describe('ReplayListItem', () => {
   it('formats durations as m:ss, and h:mm:ss past an hour', () => {
     expect(formatDuration(65)).toBe('1:05');
     expect(formatDuration(1234)).toBe('20:34');
+    // before the game's clock started: pre-game chat
+    expect(formatDuration(-21.4)).toBe('-0:21');
+    expect(formatDuration(-0.3)).toBe('0:00');
     expect(formatDuration(3725.4)).toBe('1:02:05');
   });
 

@@ -1,12 +1,27 @@
 import type { Routes } from '@angular/router';
 import { STAT_SECTION_IDS } from './stats/stat-sections';
 
-/** A replay's pages, under its page: the score screen, the chat and each player stats section. */
+/**
+ * A replay's pages, under its page: the score screen, the team stats, the draft, the talents, the chat, each
+ * player stats section, the unit kills and the XP.
+ */
 export const replayRoutes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'score' },
   {
     path: 'score',
     loadComponent: () => import('./score/score-section').then((m) => m.ScoreSection),
+  },
+  {
+    path: 'teams',
+    loadComponent: () => import('./teams/teams-section').then((m) => m.TeamsSection),
+  },
+  {
+    path: 'draft',
+    loadComponent: () => import('./draft/draft-section').then((m) => m.DraftSection),
+  },
+  {
+    path: 'talents',
+    loadComponent: () => import('./talents/talents-section').then((m) => m.TalentsSection),
   },
   {
     path: 'chat',
@@ -18,5 +33,13 @@ export const replayRoutes: Routes = [
     data: { section },
     loadComponent: () => import('./stats/stats-section').then((m) => m.StatsSection),
   })),
+  {
+    path: 'unit-kills',
+    loadComponent: () => import('./unit-kills/unit-kills-section').then((m) => m.UnitKillsSection),
+  },
+  {
+    path: 'xp',
+    loadComponent: () => import('./xp/xp-section').then((m) => m.XpSection),
+  },
   { path: '**', redirectTo: 'score' },
 ];

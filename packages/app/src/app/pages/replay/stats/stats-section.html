@@ -1,7 +1,12 @@
-@if (store.playerStats(); as stats) {
+@if (store.activityError(); as error) {
+  <p role="alert">The activity could not be read: {{ error }}</p>
+} @else if (store.activityLoading()) {
+  <mat-progress-bar mode="indeterminate" aria-label="Loading the activity" />
+}
+@if (store.players(); as players) {
   <hrs-player-stats
     [title]="store.title()"
-    [players]="stats.players"
+    [players]="players"
     [icons]="store.icons()"
     [shownColumns]="store.shownColumns()"
   />

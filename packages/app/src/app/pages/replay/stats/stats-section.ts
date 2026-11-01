@@ -23,7 +23,11 @@ import { StatsSectionStore } from './stats-section.store';
   templateUrl: './stats-section.html',
   providers: [StatsSectionStore],
   // fills the replay page's section area, so the stats run to the bottom of the window
-  styles: ':host { display: block; height: 100%; }',
+  styles: `
+    :host { display: flex; flex-direction: column; height: 100%; }
+    hrs-player-stats { flex: 1; min-height: 0; }
+    p { margin: 16px var(--hrs-layout-padding, 24px) 0; }
+  `,
 })
 export class StatsSection {
   /** From the route's data. */

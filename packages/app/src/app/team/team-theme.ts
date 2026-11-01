@@ -4,7 +4,7 @@ import { teamColor, TeamPerspective } from './team-color';
 
 /**
  * Themes an element as a team: `<tr [hrsTeam]="player.team">`. Adds the glass theme's team
- * variant, `hrs-glass-blue` or `hrs-glass-red` (see `theme/_glass.scss`), chosen by the
+ * variant, `hrs-glass-blue` or `hrs-glass-red` (see the ui package's `theme/_glass.scss`), chosen by the
  * `TeamPerspective` above it. A null team leaves the element in the theme around it.
  */
 @Directive({

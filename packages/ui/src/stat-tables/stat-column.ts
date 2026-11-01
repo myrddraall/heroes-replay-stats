@@ -1,5 +1,8 @@
-/** How a stat's numbers read: a count, a number with decimals, a share or a time in seconds. */
-export type StatFormat = 'integer' | 'decimal' | 'percent' | 'duration';
+/**
+ * How a stat's numbers read: a count, a number with decimals, a share, a length of time in
+ * seconds, or a moment on the game clock in seconds (`m:ss`).
+ */
+export type StatFormat = 'integer' | 'decimal' | 'percent' | 'duration' | 'clock';
 
 /** How far the data behind a stat can be trusted: all of it, some players, a flawed figure, none. */
 export type StatSupport = 'full' | 'partial' | 'flawed' | 'none';

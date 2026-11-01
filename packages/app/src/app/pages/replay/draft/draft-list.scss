@@ -1,0 +1,55 @@
+:host {
+  display: block;
+  padding-top: 16px;
+}
+
+.title {
+  margin: 0 0 8px;
+  font: var(--mat-sys-title-large);
+}
+
+.draft {
+  border-collapse: collapse;
+  font: var(--mat-sys-body-medium);
+}
+
+th,
+td {
+  padding: 4px 12px;
+  text-align: start;
+}
+
+thead th {
+  font: var(--mat-sys-label-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.draft__order {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+// the team's colour (hrsTeam) shows as a faint band
+.step {
+  background: linear-gradient(90deg, rgb(var(--hrs-glass-edge) / 0.12), transparent 60%);
+}
+
+.step__team {
+  color: color-mix(in srgb, rgb(var(--hrs-glass-edge)) 55%, white);
+}
+
+.step__hero {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+// a banned hero is out of the game: its row is quieter than a pick's
+.step--ban {
+  color: var(--mat-sys-on-surface-variant);
+
+  .step__hero {
+    font-weight: normal;
+  }
+}

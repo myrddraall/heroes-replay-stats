@@ -1,8 +1,144 @@
 import type { StatColumn } from '@myrddraall/heroes-replay-stats-ui';
 
+const perMinute = 'per minute of the game';
+const per10Minutes = 'per 10 minutes of the game';
+const ccSummed =
+  'Summed over every enemy hero affected, so it can be more than 60 seconds a minute.';
+
+/** A points-per-minute column. */
+function pointsPerMinute(id: string, label: string, of: string): StatColumn {
+  return {
+    id,
+    label: `${label} / min`,
+    format: 'decimal',
+    digits: [0, 0],
+    description: `${of} ${perMinute}.`,
+  };
+}
+
+/** A counts-per-10-minutes column. */
+function per10(id: string, label: string, of: string): StatColumn {
+  return {
+    id,
+    label: `${label} / 10 min`,
+    format: 'decimal',
+    digits: [1, 1],
+    description: `${of} ${per10Minutes}.`,
+  };
+}
+
+/** A seconds-of-CC-per-minute column. */
+function ccPerMinute(id: string, label: string, of: string): StatColumn {
+  return {
+    id,
+    label: `${label} s / min`,
+    format: 'decimal',
+    digits: [1, 1],
+    description: `Seconds of ${of} on enemy heroes ${perMinute}. ${ccSummed}`,
+  };
+}
+
+/** The `playerStats` analyser's rates: per minute, per 10 minutes and the damage ratio. */
+const RATE_COLUMNS: readonly StatColumn[] = [
+  pointsPerMinute('HeroDamagePerMinute', 'Hero Damage', 'Hero damage'),
+  pointsPerMinute('TeamfightHeroDamagePerMinute', 'Teamfight Hero Damage', 'Teamfight hero damage'),
+  pointsPerMinute('SiegeDamagePerMinute', 'Siege Damage', 'Siege damage'),
+  pointsPerMinute('StructureDamagePerMinute', 'Structure Damage', 'Structure damage'),
+  pointsPerMinute('MinionDamagePerMinute', 'Minion Damage', 'Minion damage'),
+  pointsPerMinute('HealingPerMinute', 'Healing', 'Healing'),
+  pointsPerMinute('SelfHealingPerMinute', 'Self Healing', 'Self healing'),
+  pointsPerMinute('ShieldingPerMinute', 'Protection', 'Protection given to allies'),
+  pointsPerMinute('DamageTakenPerMinute', 'Damage Taken', 'Damage taken'),
+  pointsPerMinute('DamageSoakedPerMinute', 'Hero Damage Taken', 'Hero damage taken'),
+  pointsPerMinute('XPPerMinute', 'XP', 'XP contributed'),
+  per10('TakedownsPer10Minutes', 'Takedowns', 'Takedowns'),
+  per10('KillsPer10Minutes', 'Kills', 'Killing blows on enemy heroes'),
+  per10('DeathsPer10Minutes', 'Deaths', 'Deaths'),
+  per10('MercCampCapturesPer10Minutes', 'Merc Camps Taken', 'Mercenary camps taken'),
+  {
+    id: 'DamageRatio',
+    label: 'Damage Ratio',
+    format: 'decimal',
+    digits: [2, 2],
+    description: 'Hero damage dealt for each point of damage taken.',
+  },
+  ccPerMinute('CCSecondsPerMinute', 'CC', 'crowd control (stuns, roots, silences and slows)'),
+  ccPerMinute('HardCCSecondsPerMinute', 'Hard CC', 'stuns, roots and silences'),
+  ccPerMinute('SoftCCSecondsPerMinute', 'Soft CC', 'slows'),
+];
+
+/** The `activity` analyser's columns: how the player played and talked, from its own table. */
+const ACTIVITY_COLUMNS: readonly StatColumn[] = [
+  {
+    id: 'apm',
+    label: 'APM',
+    format: 'decimal',
+    digits: [0, 0],
+    description: 'Orders given per minute of the game.',
+  },
+  {
+    id: 'castsPerMinute',
+    label: 'Casts / min',
+    format: 'decimal',
+    digits: [0, 0],
+    description: 'Orders with an ability, such as attacks and hero abilities, per minute of the game.',
+  },
+  { id: 'pings', label: 'Pings', format: 'integer' },
+  {
+    id: 'minimapPings',
+    label: 'Minimap Pings',
+    format: 'integer',
+    description: 'Pings made on the minimap.',
+  },
+  {
+    id: 'chatMessages',
+    label: 'Chat Messages',
+    format: 'integer',
+    description: 'Lines typed in the chat.',
+  },
+  { id: 'sprays', label: 'Sprays', format: 'integer' },
+  { id: 'voiceLines', label: 'Voice Lines', format: 'integer' },
+  {
+    id: 'upvotesGiven',
+    label: 'Votes Given',
+    format: 'integer',
+    description: 'Votes the player gave other players at the end of the game.',
+  },
+];
+
+/** The columns read from the `activity` table rather than from the player stats. */
+export const ACTIVITY_COLUMN_IDS: ReadonlySet<string> = new Set(ACTIVITY_COLUMNS.map((c) => c.id));
+
+/**
+ * Columns worked out from another stat, by the stat they come from: what the replay's build can
+ * tell about that stat holds for them too.
+ */
+export const STAT_SOURCES: Readonly<Record<string, string>> = {
+  HeroDamagePerMinute: 'HeroDamage',
+  TeamfightHeroDamagePerMinute: 'TeamfightHeroDamage',
+  SiegeDamagePerMinute: 'SiegeDamage',
+  StructureDamagePerMinute: 'StructureDamage',
+  MinionDamagePerMinute: 'MinionDamage',
+  HealingPerMinute: 'Healing',
+  SelfHealingPerMinute: 'SelfHealing',
+  ShieldingPerMinute: 'ProtectionGivenToAllies',
+  DamageTakenPerMinute: 'DamageTaken',
+  DamageSoakedPerMinute: 'DamageSoaked',
+  XPPerMinute: 'ExperienceContribution',
+  TakedownsPer10Minutes: 'Takedowns',
+  KillsPer10Minutes: 'SoloKill',
+  DeathsPer10Minutes: 'Deaths',
+  MercCampCapturesPer10Minutes: 'MercCampCaptures',
+  DamageRatio: 'DamageTaken',
+  CCSecondsPerMinute: 'TimeCCdEnemyHeroes',
+  HardCCSecondsPerMinute: 'TimeStunningEnemyHeroes',
+  SoftCCSecondsPerMinute: 'TimeSlowedEnemyHeroes',
+};
+
 /**
  * Every stat the player stats tables can show, by the `playerStats` analyser's column ids, with
- * the labels, descriptions and formats the 2018 viewer gave them.
+ * the labels, descriptions and formats the 2018 viewer gave them, then the rates and the
+ * `activity` analyser's columns.
  */
 export const STAT_COLUMNS: readonly StatColumn[] = [
   { id: 'Takedowns', label: 'Takedowns', format: 'integer' },
@@ -17,6 +153,18 @@ export const STAT_COLUMNS: readonly StatColumn[] = [
     description: 'Number of Player kills without the assistance of team mates',
   },
   { id: 'Assists', label: 'Assists', format: 'integer' },
+  {
+    id: 'Multikill',
+    label: 'Multikills',
+    format: 'integer',
+    description: "The team's multi-kills the player took part in.",
+  },
+  {
+    id: 'TeamTakedowns',
+    label: 'Team Takedowns',
+    format: 'integer',
+    description: "The team's takedowns, the same for every player on the team.",
+  },
   { id: 'MetaExperience', label: 'Total Team XP', format: 'integer' },
   { id: 'ExperienceContribution', label: 'XP', format: 'integer' },
   { id: 'Healing', label: 'Healing', format: 'integer' },
@@ -24,6 +172,20 @@ export const STAT_COLUMNS: readonly StatColumn[] = [
   { id: 'StructureDamage', label: 'Structure Damage', format: 'integer' },
   { id: 'MinionDamage', label: 'Minion Damage', format: 'integer' },
   { id: 'HeroDamage', label: 'Hero Damage', format: 'integer' },
+  {
+    id: 'PhysicalDamage',
+    label: 'Physical Damage (all targets)',
+    format: 'integer',
+    description:
+      'Physical damage the player dealt to all targets: heroes, minions, mercenaries and structures.',
+  },
+  {
+    id: 'SpellDamage',
+    label: 'Spell Damage (all targets)',
+    format: 'integer',
+    description:
+      'Spell damage the player dealt to all targets: heroes, minions, mercenaries and structures.',
+  },
   { id: 'MercCampCaptures', label: 'Merc Camps Taken', format: 'integer' },
   { id: 'WatchTowerCaptures', label: 'Watch Towers Taken', format: 'integer' },
   { id: 'SelfHealing', label: 'Self Healing', format: 'integer' },
@@ -83,13 +245,8 @@ export const STAT_COLUMNS: readonly StatColumn[] = [
   { id: 'TeamfightDamageTaken', label: 'Teamfight Damage Taken', format: 'integer' },
   { id: 'TeamfightHeroDamage', label: 'Teamfight Hero Damage', format: 'integer' },
   {
-    id: 'EndOfMatchAwardMostAltarDamageDone',
-    label: 'EndOfMatchAwardMostAltarDamageDone',
-    format: 'integer',
-  },
-  {
-    id: 'EndOfMatchAwardGivenToNonwinner',
-    label: 'EndOfMatchAwardGivenToNonwinner',
+    id: 'AltarDamageDone',
+    label: 'Altar Damage',
     format: 'integer',
   },
   { id: 'OnFireTimeOnFire', label: 'Time On Fire', format: 'duration' },
@@ -180,4 +337,6 @@ export const STAT_COLUMNS: readonly StatColumn[] = [
       "Number of bosses killed in lane. Only killing blows are counted, it does not mean other players didn't help ",
   },
   { id: 'RegenGlobesCollected', label: 'Regen Globes Colleced', format: 'integer' },
+  ...RATE_COLUMNS,
+  ...ACTIVITY_COLUMNS,
 ];

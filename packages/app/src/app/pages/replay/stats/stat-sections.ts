@@ -1,12 +1,26 @@
 import type { StatColumnChoice } from '@myrddraall/heroes-replay-stats-ui';
 
 /** The player stats sections, in the order the replay's navigation lists them. */
-export const STAT_SECTION_IDS = ['pvp', 'tanking', 'pve', 'cc', 'healing', 'misc'] as const;
+export const STAT_SECTION_IDS = [
+  'pvp',
+  'tanking',
+  'pve',
+  'cc',
+  'healing',
+  'misc',
+  'activity',
+] as const;
 
 export type StatSectionId = (typeof STAT_SECTION_IDS)[number];
 
 /** The preset every section opens with. */
 export const DEFAULT_PRESET = 'Default';
+
+/** The built-in preset of a section's rates (per minute, per 10 minutes). */
+export const PER_MINUTE_PRESET = 'Per Minute';
+
+/** These columns, all shown, in this order. */
+const shown = (...ids: string[]): StatColumnChoice[] => ids.map((id) => ({ id, shown: true }));
 
 export interface StatSection {
   readonly id: StatSectionId;
@@ -15,7 +29,10 @@ export interface StatSection {
   readonly presets: Readonly<Record<string, readonly StatColumnChoice[]>>;
 }
 
-/** The sections and their built-in presets, as the 2018 viewer had them. */
+/**
+ * The sections and their built-in presets, as the 2018 viewer had them, with a preset of rates
+ * where the section has them, and the activity section.
+ */
 export const STAT_SECTIONS: Readonly<Record<StatSectionId, StatSection>> = {
   pvp: {
     id: 'pvp',
@@ -32,6 +49,8 @@ export const STAT_SECTIONS: Readonly<Record<StatSectionId, StatSection>> = {
         { id: 'Assists', shown: true },
         { id: 'Kills', shown: true },
         { id: 'SoloKill', shown: true },
+        { id: 'Multikill', shown: false },
+        { id: 'TeamTakedowns', shown: false },
         { id: 'TimeSpentDead', shown: true },
         { id: 'PercentGameSpentDead', shown: false },
         { id: 'HeroDamage', shown: true },
@@ -40,6 +59,8 @@ export const STAT_SECTIONS: Readonly<Record<StatSectionId, StatSection>> = {
         { id: 'AverageTeamfightHeroDamagePerLife', shown: false },
         { id: 'PercentTeamfightHeroDamage', shown: false },
         { id: 'SummonDamage', shown: false },
+        { id: 'PhysicalDamage', shown: false },
+        { id: 'SpellDamage', shown: false },
         { id: 'DamageSoaked', shown: true },
         { id: 'AverageDamageSoakedPerLife', shown: false },
         { id: 'PercentDamageSoaked', shown: false },
@@ -67,6 +88,8 @@ export const STAT_SECTIONS: Readonly<Record<StatSectionId, StatSection>> = {
         { id: 'Assists', shown: false },
         { id: 'Kills', shown: false },
         { id: 'SoloKill', shown: false },
+        { id: 'Multikill', shown: false },
+        { id: 'TeamTakedowns', shown: false },
         { id: 'TimeSpentDead', shown: false },
         { id: 'PercentGameSpentDead', shown: false },
         { id: 'HeroDamage', shown: true },
@@ -75,6 +98,8 @@ export const STAT_SECTIONS: Readonly<Record<StatSectionId, StatSection>> = {
         { id: 'AverageTeamfightHeroDamagePerLife', shown: false },
         { id: 'PercentTeamfightHeroDamage', shown: false },
         { id: 'SummonDamage', shown: false },
+        { id: 'PhysicalDamage', shown: false },
+        { id: 'SpellDamage', shown: false },
         { id: 'DamageSoaked', shown: true },
         { id: 'AverageDamageSoakedPerLife', shown: true },
         { id: 'PercentDamageSoaked', shown: false },
@@ -102,6 +127,8 @@ export const STAT_SECTIONS: Readonly<Record<StatSectionId, StatSection>> = {
         { id: 'Assists', shown: false },
         { id: 'Kills', shown: false },
         { id: 'SoloKill', shown: false },
+        { id: 'Multikill', shown: false },
+        { id: 'TeamTakedowns', shown: false },
         { id: 'TimeSpentDead', shown: true },
         { id: 'PercentGameSpentDead', shown: true },
         { id: 'HeroDamage', shown: true },
@@ -110,6 +137,8 @@ export const STAT_SECTIONS: Readonly<Record<StatSectionId, StatSection>> = {
         { id: 'AverageTeamfightHeroDamagePerLife', shown: false },
         { id: 'PercentTeamfightHeroDamage', shown: false },
         { id: 'SummonDamage', shown: false },
+        { id: 'PhysicalDamage', shown: false },
+        { id: 'SpellDamage', shown: false },
         { id: 'DamageSoaked', shown: true },
         { id: 'AverageDamageSoakedPerLife', shown: false },
         { id: 'PercentDamageSoaked', shown: true },
@@ -126,6 +155,18 @@ export const STAT_SECTIONS: Readonly<Record<StatSectionId, StatSection>> = {
         { id: 'OnFireTimeOnFire', shown: true },
         { id: 'PercentTimeOnFire', shown: true },
       ],
+      [PER_MINUTE_PRESET]: shown(
+        'KDARatio',
+        'KillParticipation',
+        'TakedownsPer10Minutes',
+        'KillsPer10Minutes',
+        'DeathsPer10Minutes',
+        'HeroDamagePerMinute',
+        'TeamfightHeroDamagePerMinute',
+        'DamageRatio',
+        'DamageSoakedPerMinute',
+        'DamageTakenPerMinute',
+      ),
     },
   },
   tanking: {
@@ -147,6 +188,14 @@ export const STAT_SECTIONS: Readonly<Record<StatSectionId, StatSection>> = {
         { id: 'PercentTeamfightDamageTaken', shown: true },
         { id: 'PercentGameSpentDead', shown: true },
       ],
+      [PER_MINUTE_PRESET]: shown(
+        'DamageTakenPerMinute',
+        'DamageSoakedPerMinute',
+        'DamageRatio',
+        'SelfHealingPerMinute',
+        'DeathsPer10Minutes',
+        'KillParticipation',
+      ),
     },
   },
   pve: {
@@ -175,6 +224,13 @@ export const STAT_SECTIONS: Readonly<Record<StatSectionId, StatSection>> = {
         { id: 'PercentXPContribution', shown: true },
         { id: 'DeathsToNPCs', shown: true },
       ],
+      [PER_MINUTE_PRESET]: shown(
+        'XPPerMinute',
+        'SiegeDamagePerMinute',
+        'StructureDamagePerMinute',
+        'MinionDamagePerMinute',
+        'MercCampCapturesPer10Minutes',
+      ),
     },
   },
   cc: {
@@ -188,6 +244,11 @@ export const STAT_SECTIONS: Readonly<Record<StatSectionId, StatSection>> = {
         { id: 'TimeSlowedEnemyHeroes', shown: true },
         { id: 'TimeCCdEnemyHeroes', shown: true },
       ],
+      [PER_MINUTE_PRESET]: shown(
+        'CCSecondsPerMinute',
+        'HardCCSecondsPerMinute',
+        'SoftCCSecondsPerMinute',
+      ),
     },
   },
   healing: {
@@ -207,6 +268,11 @@ export const STAT_SECTIONS: Readonly<Record<StatSectionId, StatSection>> = {
         { id: 'PercentProtection', shown: true },
         { id: 'PercentTeamfightHealing', shown: true },
       ],
+      [PER_MINUTE_PRESET]: shown(
+        'HealingPerMinute',
+        'SelfHealingPerMinute',
+        'ShieldingPerMinute',
+      ),
     },
   },
   misc: {
@@ -220,6 +286,23 @@ export const STAT_SECTIONS: Readonly<Record<StatSectionId, StatSection>> = {
         { id: 'PercentOfGameDisconnected', shown: true },
         { id: 'VotesReceived', shown: true },
       ],
+    },
+  },
+  activity: {
+    id: 'activity',
+    title: 'Activity',
+    presets: {
+      [DEFAULT_PRESET]: shown(
+        'apm',
+        'castsPerMinute',
+        'pings',
+        'minimapPings',
+        'chatMessages',
+        'sprays',
+        'voiceLines',
+        'upvotesGiven',
+        'VotesReceived',
+      ),
     },
   },
 };
