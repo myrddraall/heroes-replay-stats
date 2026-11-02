@@ -15,7 +15,7 @@ import { heroLookup, type HeroIcon } from '@myrddraall/heroes-replay-stats-heroe
 import { ReplayService } from '../../data/replays/replay.service';
 import { ReplayStatsService } from '../../data/replays/replay-stats.service';
 import { SettingsStore } from '@myrddraall/heroes-replay-stats-settings/data';
-import { resolveYou } from '../../data/you/resolve-you';
+import { resolveYou } from '@myrddraall/heroes-replay-stats-players/model';
 import { errorMessage } from '@myrddraall/heroes-replay-stats-common/model';
 
 /**

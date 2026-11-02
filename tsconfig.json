@@ -25,6 +25,8 @@
       "@myrddraall/heroes-replay-stats-map": ["./packages/map/src/index.ts"],
       "@myrddraall/heroes-replay-stats-platform": ["./packages/platform/index.ts"],
       "@myrddraall/heroes-replay-stats-platform/*": ["./packages/platform/*"],
+      "@myrddraall/heroes-replay-stats-players": ["./packages/players/index.ts"],
+      "@myrddraall/heroes-replay-stats-players/*": ["./packages/players/*"],
       "@myrddraall/heroes-replay-stats-import": ["./packages/import/index.ts"],
       "@myrddraall/heroes-replay-stats-import/*": ["./packages/import/*"],
       "@myrddraall/heroes-replay-stats-heroes": ["./packages/heroes/index.ts"],

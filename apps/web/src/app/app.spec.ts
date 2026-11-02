@@ -11,6 +11,7 @@ import {
   ReplayImportJobStore,
 } from '@myrddraall/heroes-replay-stats-import/data';
 import { provideImportFeature } from '@myrddraall/heroes-replay-stats-import/provide';
+import { providePlayersFeature } from '@myrddraall/heroes-replay-stats-players/provide';
 import { Shell } from '@myrddraall/heroes-replay-stats-shell/feature';
 import { provideSettingsFeature } from '@myrddraall/heroes-replay-stats-settings/provide';
 import { provideAppShellSlots } from './shell-slots';
@@ -39,6 +40,7 @@ describe('App shell', () => {
       imports: [Shell],
       providers: [
         provideImportFeature(),
+        providePlayersFeature(),
         provideSettingsFeature(),
         provideRouter(routes),
         provideAppShellSlots(),

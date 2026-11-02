@@ -1,6 +1,6 @@
 import type { HeroIcon, HeroLookup } from '@myrddraall/heroes-replay-stats-heroes/model';
 import type { ReplaySummary } from '../../data/replays/replay.service';
-import { resolveYou, type You } from '../../data/you/resolve-you';
+import { resolveYou, type You } from '@myrddraall/heroes-replay-stats-players/model';
 
 /** One replay as the list shows it: the replay, who "you" are in it, and its pictures. */
 export interface ReplayCard {

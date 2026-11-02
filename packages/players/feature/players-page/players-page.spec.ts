@@ -2,7 +2,8 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ReplayImportJobStore } from '@myrddraall/heroes-replay-stats-import/data';
-import { PlayerService, type PlayerSummary } from '../../data/players/player.service';
+import { PlayerService } from '../../data';
+import type { PlayerSummary } from '../../model';
 import { SettingsStore } from '@myrddraall/heroes-replay-stats-settings/data';
 import { PlayersPage } from './players-page';
 

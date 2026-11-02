@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { PlayerSummary } from '../../data/players/player.service';
-import { toPlayerRow } from './player-row';
+import type { PlayerSummary } from '../../model';
+import { toPlayerRow } from './players-table.presenter';
 
 const ann: PlayerSummary = {
   id: '2-Hero-1-1',

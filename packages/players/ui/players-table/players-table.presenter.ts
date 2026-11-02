@@ -1,4 +1,4 @@
-import type { PlayerSummary } from '../../data/players/player.service';
+import type { PlayerSummary } from '../../model';
 
 const REGIONS: Readonly<Record<number, string>> = { 1: 'NA', 2: 'EU', 3: 'KR', 5: 'CN' };
 /** How many of a player's heroes the list names; the rest are counted. */

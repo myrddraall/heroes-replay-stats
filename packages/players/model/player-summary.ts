@@ -1,7 +1,4 @@
-import { computed, inject, Service } from '@angular/core';
 import type { PlayerRecord, ReplayRecord } from '@myrddraall/heroprotocol-db';
-import { REPLAY_DB } from '@myrddraall/heroes-replay-stats-import/data';
-import { liveQuerySignals } from '@myrddraall/heroes-replay-stats-import/data';
 
 /** How often a player played one hero. */
 export interface PlayerHero {
@@ -28,7 +25,8 @@ export interface PlayerSummary {
   readonly heroes: readonly PlayerHero[];
 }
 
-interface Rows {
+/** The rows a summary is made from. */
+export interface PlayerRows {
   readonly replays: readonly Pick<ReplayRecord, 'id' | 'playedAt' | 'status'>[];
   readonly players: readonly PlayerRecord[];
 }
@@ -38,7 +36,7 @@ export function playerId(p: Pick<PlayerRecord, 'toon' | 'name'>): string {
 }
 
 /** Group human players of available replays by account. Pure, for the service and tests. */
-export function summarisePlayers(rows: Rows): PlayerSummary[] {
+export function summarisePlayers(rows: PlayerRows): PlayerSummary[] {
   const playedAt = new Map<string, string>();
   for (const r of rows.replays)
     if (r.status === 'ready' || r.status === 'complete') playedAt.set(r.id, r.playedAt);
@@ -82,32 +80,4 @@ export function summarisePlayers(rows: Rows): PlayerSummary[] {
       b.lastPlayedAt.localeCompare(a.lastPlayedAt) ||
       a.name.localeCompare(b.name),
   );
-}
-
-/**
- * The people in the stored replays and their basic numbers: games, wins, losses, when
- * they last played and which heroes. Live, like the replay list. AI and observers are
- * not players here; replays still being imported do not count yet.
- */
-@Service()
-export class PlayerService {
-  private readonly db = inject(REPLAY_DB);
-  private readonly live = liveQuerySignals<Rows>(
-    this.db.ready,
-    async () => {
-      const [replays, players] = await Promise.all([
-        this.db.db.replays.toArray(),
-        this.db.db.players.toArray(),
-      ]);
-      return { replays, players };
-    },
-    { replays: [], players: [] },
-  );
-
-  /** Every player, most games first, then most recently played. */
-  readonly players = computed((): readonly PlayerSummary[] => summarisePlayers(this.live.value()));
-  /** False until the database has answered once. */
-  readonly loaded = this.live.loaded;
-  /** The last error reading the players, or null. */
-  readonly error = this.live.error;
 }

@@ -26,11 +26,6 @@ export const routes: Routes = [
     loadChildren: () => import('./pages/replay/replay.routes').then((m) => m.replayRoutes),
   },
   {
-    path: 'players',
-    title: 'Players · Heroes Replay Stats',
-    loadComponent: () => import('./pages/players/players-page').then((m) => m.PlayersPage),
-  },
-  {
     path: 'maps',
     title: 'Maps · Heroes Replay Stats',
     loadComponent: () => import('./pages/maps/maps-page').then((m) => m.MapsPage),

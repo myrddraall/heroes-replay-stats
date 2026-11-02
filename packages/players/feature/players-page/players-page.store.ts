@@ -1,10 +1,10 @@
 import { computed, inject } from '@angular/core';
 import { signalStore, withComputed, withMethods, withProps } from '@ngrx/signals';
 import { ReplayImportJobStore } from '@myrddraall/heroes-replay-stats-import/data';
-import { PlayerService } from '../../data/players/player.service';
+import { PlayerService } from '../../data';
 import { SettingsStore } from '@myrddraall/heroes-replay-stats-settings/data';
 import { errorMessage } from '@myrddraall/heroes-replay-stats-common/model';
-import { toPlayerRow } from './player-row';
+import { toPlayerRow } from '../../ui';
 
 /** {@link PlayersPage}'s component store: everyone in the stored replays, and who is me. */
 export const PlayersPageStore = signalStore(
