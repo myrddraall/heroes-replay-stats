@@ -1,10 +1,11 @@
-import type { PickedReplay, Platform } from './platform';
-import { APP_VERSION } from './version';
+import type { PickedReplay, Platform } from '../model';
 
 /** The browser: a hidden file input; no filesystem knowledge. */
 export class WebPlatform implements Platform {
   readonly kind = 'web' as const;
-  readonly version = APP_VERSION;
+
+  /** `version`: the app's, as its build knows it. */
+  constructor(readonly version: string) {}
 
   pickReplays(): Promise<readonly PickedReplay[]> {
     return new Promise((resolve) => {

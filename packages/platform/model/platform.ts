@@ -1,5 +1,3 @@
-import { InjectionToken, inject } from '@angular/core';
-
 /** A replay file picked by the user, wherever it came from. */
 export interface PickedReplay {
   readonly name: string;
@@ -21,12 +19,6 @@ export interface Platform {
   pickReplays(): Promise<readonly PickedReplay[]>;
   /** Directory the game writes replays to, when the platform can know it. */
   defaultReplayDirectory(): Promise<string | undefined>;
-}
-
-export const PLATFORM = new InjectionToken<Platform>('hrs.platform');
-
-export function injectPlatform(): Platform {
-  return inject(PLATFORM);
 }
 
 /** What the desktop preload script puts on `window`. */

@@ -11,8 +11,9 @@ import {
 import { provideHeroData } from './data/heroes/hero-data';
 import { GraphicsStore } from './data/settings/graphics.store';
 import { provideReplayDb } from './data/import/provide-replay-db';
-import { DEV_REPORTS_URL } from './platform/dev-reports';
-import { providePlatform } from './platform/provide-platform';
+import { DEV_REPORTS_URL } from '@myrddraall/heroes-replay-stats-platform/data';
+import { providePlatformFeature } from '@myrddraall/heroes-replay-stats-platform/provide';
+import { APP_VERSION } from './version';
 import { BACKGROUND_EDITOR, BACKGROUND_EDITOR_PATH } from './site-background/background-editor';
 import { provideSiteBackground } from './site-background/provide-site-background';
 import { PRESETS } from './site-background/tint-presets';
@@ -51,7 +52,7 @@ export const appConfig: ApplicationConfig = {
         },
       }),
     ),
-    providePlatform(),
+    providePlatformFeature({ version: APP_VERSION }),
     provideReplayDb(),
     provideHeroData(),
     provideSiteBackground(),

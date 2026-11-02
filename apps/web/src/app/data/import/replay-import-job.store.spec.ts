@@ -2,7 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import type { IngestJob, ReplayDbClient } from '@myrddraall/heroprotocol-db/client';
 import type { IngestStatus } from '@myrddraall/heroprotocol-db/ingest';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { PLATFORM, type PickedReplay, type Platform } from '../../platform/platform';
+import { PLATFORM } from '@myrddraall/heroes-replay-stats-platform/data';
+import type { PickedReplay, Platform } from '@myrddraall/heroes-replay-stats-platform/model';
 import { SettingsStore } from '../settings/settings.store';
 import { REPLAY_DB, REPLAY_DB_FACTORY } from './provide-replay-db';
 import {

@@ -9,8 +9,8 @@ import {
   updateEntity,
   withEntities,
 } from '@ngrx/signals/entities';
-import { injectPlatform } from '../../platform/platform';
-import type { PickedReplay } from '../../platform/platform';
+import { injectPlatform } from '@myrddraall/heroes-replay-stats-platform/data';
+import type { PickedReplay } from '@myrddraall/heroes-replay-stats-platform/model';
 import { SettingsStore } from '../settings/settings.store';
 import { IngestPool } from './ingest-pool';
 

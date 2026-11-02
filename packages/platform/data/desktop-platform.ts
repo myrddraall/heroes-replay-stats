@@ -1,4 +1,4 @@
-import type { HeroesDesktopBridge, PickedReplay, Platform } from './platform';
+import type { HeroesDesktopBridge, PickedReplay, Platform } from '../model';
 
 /** The Electron shell, through the preload bridge. */
 export class DesktopPlatform implements Platform {

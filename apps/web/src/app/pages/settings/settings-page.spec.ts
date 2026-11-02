@@ -2,14 +2,17 @@ import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { GraphicsStore } from '../../data/settings/graphics.store';
 import { HARDWARE_ACCELERATION } from '../../data/settings/hardware-acceleration';
-import { providePlatform } from '../../platform/provide-platform';
+import { providePlatformFeature } from '@myrddraall/heroes-replay-stats-platform/provide';
 import { SettingsPage } from './settings-page';
 
 describe('SettingsPage graphics', () => {
   beforeEach(() => {
     localStorage.clear();
     TestBed.configureTestingModule({
-      providers: [providePlatform(), { provide: HARDWARE_ACCELERATION, useValue: true }],
+      providers: [
+        providePlatformFeature({ version: '0.0.0-MAIN' }),
+        { provide: HARDWARE_ACCELERATION, useValue: true },
+      ],
     });
   });
 

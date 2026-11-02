@@ -13,7 +13,7 @@ import {
   MIN_PARALLEL_IMPORTS,
   SettingsStore,
 } from '../../data/settings/settings.store';
-import { injectPlatform } from '../../platform/platform';
+import { injectPlatform } from '@myrddraall/heroes-replay-stats-platform/data';
 
 /** {@link SettingsPanel}'s component store: the settings, the Graphics ones, and this device and app. */
 export const SettingsPageStore = signalStore(

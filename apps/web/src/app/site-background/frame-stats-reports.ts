@@ -1,6 +1,6 @@
 import { DestroyRef, effect, inject } from '@angular/core';
 import { type FrameDetail, FrameStats } from '@myrddraall/heroes-replay-stats-aether/view';
-import { DEV_REPORTS_URL, DevReports } from './dev-reports';
+import { DEV_REPORTS_URL, DevReports } from '@myrddraall/heroes-replay-stats-platform/data';
 
 /** How many of the stats' windows the report keeps (a minute of drawing). */
 const KEPT = 120;

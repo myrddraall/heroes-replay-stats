@@ -17,7 +17,7 @@ import { GraphicsStore } from '../data/settings/graphics.store';
 // Not in Aether's root entry, which the app loads at once: the shell loads the view deferred.
 import { SceneView } from "@myrddraall/heroes-replay-stats-aether/view";
 import { BACKGROUND_EDITOR_PATH } from '../site-background/background-editor';
-import { injectPlatform } from '../platform/platform';
+import { injectPlatform } from '@myrddraall/heroes-replay-stats-platform/data';
 import { ShellNavStore } from './shell-nav';
 import { ShellPanelsStore } from './shell-panels';
 

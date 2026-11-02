@@ -1,7 +1,7 @@
 import { computed, inject } from '@angular/core';
 import { signalStore, withComputed, withMethods, withProps } from '@ngrx/signals';
 import { ReplayImportJobStore } from '../../data/import/replay-import-job.store';
-import { injectPlatform } from '../../platform/platform';
+import { injectPlatform } from '@myrddraall/heroes-replay-stats-platform/data';
 
 /** {@link ImportPage}'s component store: the import jobs, and where the app runs. */
 export const ImportPageStore = signalStore(

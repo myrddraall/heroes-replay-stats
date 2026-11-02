@@ -4,7 +4,8 @@ import { provideAether } from "@myrddraall/heroes-replay-stats-aether";
 import { describe, expect, it, beforeEach } from 'vitest';
 import { routes } from './app.routes';
 import { REPLAY_DB, REPLAY_DB_FACTORY } from './data/import/provide-replay-db';
-import { PLATFORM, type Platform } from './platform/platform';
+import { PLATFORM } from '@myrddraall/heroes-replay-stats-platform/data';
+import type { Platform } from '@myrddraall/heroes-replay-stats-platform/model';
 import { ReplayImportJobStore } from './data/import/replay-import-job.store';
 import { NAV_ITEMS, Shell } from './shell/shell';
 

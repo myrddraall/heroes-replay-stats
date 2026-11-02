@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
-import { DevReports } from '../../platform/dev-reports';
+import { DevReports } from '@myrddraall/heroes-replay-stats-platform/data';
 import { RENDERER } from "@myrddraall/heroes-replay-stats-aether/render";
 import { SceneView } from "@myrddraall/heroes-replay-stats-aether/view";
 import { CheckControls } from './check-controls';

@@ -1,6 +1,6 @@
 import { Component, inject, Injector, runInInjectionContext } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { DEV_REPORTS_URL } from './platform/dev-reports';
+import { DEV_REPORTS_URL } from '@myrddraall/heroes-replay-stats-platform/data';
 
 /** The routed page: the shell around the app's pages, or a page of its own (app.routes.ts). */
 @Component({
@@ -15,7 +15,7 @@ export class App {
     // for.
     if (inject(DEV_REPORTS_URL)) {
       const injector = inject(Injector);
-      void import('./platform/frame-stats-reports').then((m) =>
+      void import('./site-background/frame-stats-reports').then((m) =>
         runInInjectionContext(injector, m.reportFrameStats),
       );
     }
