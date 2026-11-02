@@ -1,5 +1,5 @@
 import { inject, type ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
-import { provideAether } from "@myrddraall/heroes-replay-stats-aether";
+import { provideAether } from '@myrddraall/heroes-replay-stats-aether';
 import { provideAetherForge } from '@myrddraall/heroes-replay-stats-aether-forge';
 import { MAP_PACKS_URL } from '@myrddraall/heroes-replay-stats-map';
 import {
@@ -13,13 +13,14 @@ import { GraphicsStore } from './data/settings/graphics.store';
 import { provideReplayDb } from './data/import/provide-replay-db';
 import { DEV_REPORTS_URL } from '@myrddraall/heroes-replay-stats-platform/data';
 import { providePlatformFeature } from '@myrddraall/heroes-replay-stats-platform/provide';
+import { provideSettingsFeature } from '@myrddraall/heroes-replay-stats-settings/provide';
 import { provideSettingsSection } from '@myrddraall/heroes-replay-stats-settings/ui';
 import { APP_VERSION } from './version';
 import { BACKGROUND_EDITOR, BACKGROUND_EDITOR_PATH } from './site-background/background-editor';
-import { GraphicsSection } from './site-background/graphics-section/graphics-section';
 import { provideSiteBackground } from './site-background/provide-site-background';
 import { PRESETS } from './site-background/tint-presets';
 import { routes } from './app.routes';
+import { provideAppShellSlots } from './shell-slots';
 import { environment } from '../environments/environment';
 
 /** Whether a route is the Background page's (its editor: whatever is open in it). */
@@ -40,8 +41,9 @@ export const appConfig: ApplicationConfig = {
       renderApi: () => inject(GraphicsStore).api,
       tintPresets: PRESETS,
     }),
-    // Before the router: the editor's route comes before the app's own (and their catch-all).
+    // Before the router: the featuresets' routes come before the app's own (and their catch-all).
     provideAetherForge(BACKGROUND_EDITOR),
+    provideSettingsFeature(),
     provideRouter(
       routes,
       withComponentInputBinding(),
@@ -59,6 +61,14 @@ export const appConfig: ApplicationConfig = {
     provideHeroData(),
     provideSiteBackground(),
     // The background's settings, until the background domain adds them itself.
-    provideSettingsSection({ id: 'graphics', order: 10, component: GraphicsSection }),
+    provideSettingsSection({
+      id: 'graphics',
+      order: 10,
+      load: () =>
+        import('./site-background/graphics-section/graphics-section').then(
+          (m) => m.GraphicsSection,
+        ),
+    }),
+    provideAppShellSlots(),
   ],
 };

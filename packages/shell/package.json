@@ -1,0 +1,51 @@
+{
+  "name": "@myrddraall/heroes-replay-stats-shell",
+  "version": "0.0.0-MAIN",
+  "private": true,
+  "description": "Shell: the app's global UI that frames every page (the nav, the toolbar, the right-hand panel, the backdrop) and the slots other domains fill it through",
+  "types": "./index.ts",
+  "sideEffects": false,
+  "scripts": {
+    "format": "prettier --write \"**/*.ts\"",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@myrddraall/heroes-replay-stats-platform": "workspace:*",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@angular/cdk": "^22.1.0",
+    "@angular/common": "^22.1.0",
+    "@angular/compiler": "^22.1.0",
+    "@angular/core": "^22.1.0",
+    "@angular/material": "^22.1.0",
+    "@angular/platform-browser": "^22.1.0",
+    "@angular/router": "^22.1.0",
+    "@eslint/js": "^10.0.1",
+    "@ngrx/signals": "^22.0.1",
+    "angular-eslint": "^22.5.0",
+    "eslint": "^10.9.1",
+    "prettier": "^3.8.1",
+    "rxjs": "^7.8.0",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "^8.69.0"
+  },
+  "peerDependencies": {
+    "@angular/cdk": "^22.1.0",
+    "@angular/common": "^22.1.0",
+    "@angular/core": "^22.1.0",
+    "@angular/material": "^22.1.0",
+    "@angular/router": "^22.1.0",
+    "@ngrx/signals": "^22.0.1",
+    "rxjs": "^7.8.0"
+  },
+  "license": "MIT",
+  "exports": {
+    ".": "./index.ts",
+    "./feature": "./feature/index.ts",
+    "./ui": "./ui/index.ts",
+    "./data": "./data/index.ts"
+  },
+  "type": "module"
+}

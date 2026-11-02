@@ -1,7 +1,12 @@
 import { Component, inject, input } from '@angular/core';
 import { MatProgressBar } from '@angular/material/progress-bar';
-import { SidePanel, StatColumnPicker, StatPresets } from '@myrddraall/heroes-replay-stats-common/ui';
-import { ShellPanelsStore, ShellPanelTemplate } from '../../../shell/shell-panels';
+import {
+  SidePanel,
+  StatColumnPicker,
+  StatPresets,
+} from '@myrddraall/heroes-replay-stats-common/ui';
+import { ShellPanelsStore } from '@myrddraall/heroes-replay-stats-shell/data';
+import { ShellPanelTemplate } from '@myrddraall/heroes-replay-stats-shell/feature';
 import { PlayerStats } from './player-stats';
 import type { StatSectionId } from './stat-sections';
 import { StatsSectionStore } from './stats-section.store';
@@ -24,9 +29,18 @@ import { StatsSectionStore } from './stats-section.store';
   providers: [StatsSectionStore],
   // fills the replay page's section area, so the stats run to the bottom of the window
   styles: `
-    :host { display: flex; flex-direction: column; height: 100%; }
-    hrs-player-stats { flex: 1; min-height: 0; }
-    p { margin: 16px var(--hrs-layout-padding, 24px) 0; }
+    :host {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    hrs-player-stats {
+      flex: 1;
+      min-height: 0;
+    }
+    p {
+      margin: 16px var(--hrs-layout-padding, 24px) 0;
+    }
   `,
 })
 export class StatsSection {

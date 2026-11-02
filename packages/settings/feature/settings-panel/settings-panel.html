@@ -8,7 +8,7 @@
   [kind]="store.platform.kind"
   (parallelImportsChange)="store.setParallelImports($event)"
 >
-  @for (section of sections; track section.id) {
+  @for (section of sections(); track section.id) {
     <ng-container *ngComponentOutlet="section.component" />
   }
 </hrs-settings-form>

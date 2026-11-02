@@ -6,8 +6,11 @@ export interface SettingsSection {
   readonly id: string;
   /** Sections show in ascending order, after the Importing section. */
   readonly order: number;
-  /** The section: a component that injects what it shows. */
-  readonly component: Type<unknown>;
+  /**
+   * The section: a dynamic `import()` of a component that injects what it shows, loaded when the
+   * settings open, so it stays out of the app's first download.
+   */
+  readonly load: () => Promise<Type<unknown>>;
 }
 
 /** The sections other domains add to the settings (`provideSettingsSection`). */

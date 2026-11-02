@@ -1,6 +1,6 @@
 import type { Routes } from '@angular/router';
 
-/** The Settings page's route. Shown inside the shell (the app nests these under it for now). */
+/** The Settings page's route (`provideSettingsFeature` adds it). */
 export const SETTINGS_ROUTES: Routes = [
   {
     path: 'settings',

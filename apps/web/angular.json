@@ -102,6 +102,7 @@
                 "@myrddraall/heroes-replay-stats-map",
                 "@myrddraall/heroes-replay-stats-platform",
                 "@myrddraall/heroes-replay-stats-settings",
+                "@myrddraall/heroes-replay-stats-shell",
                 "@myrddraall/heroes-replay-stats-signals"
               ]
             }

@@ -2,7 +2,7 @@ import { Component, computed, inject, input } from '@angular/core';
 import { MatProgressBar } from '@angular/material/progress-bar';
 import { RouterOutlet } from '@angular/router';
 import { Layout, LayoutItem } from '@myrddraall/heroes-replay-stats-layout/ui';
-import { ShellNavChildren } from '../../shell/shell-nav';
+import { ShellNavChildren } from '@myrddraall/heroes-replay-stats-shell/feature';
 import { TeamPerspective } from '../../team/team-color';
 import { EmptyState } from '@myrddraall/heroes-replay-stats-common/ui';
 import { ReplayHeader } from './replay-header';

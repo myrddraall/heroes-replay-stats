@@ -9,6 +9,7 @@ export const BACKGROUND_EDITOR_PATH = 'edit-background';
 export const BACKGROUND_EDITOR: AetherForgeOptions = {
   path: BACKGROUND_EDITOR_PATH,
   title: 'Play screen background · Heroes Replay Stats',
+  routeData: { shell: false },
   panelClass: () => {
     const graphics = inject(GraphicsStore);
     return computed(() => `hrs-glass-${graphics.theme()}`);

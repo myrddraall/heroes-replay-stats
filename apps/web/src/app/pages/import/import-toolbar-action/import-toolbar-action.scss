@@ -1,0 +1,52 @@
+:host {
+  // In the toolbar as the pod and buttons were: the toolbar lays out its items.
+  display: contents;
+}
+
+.import-pod {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 4px 0 6px;
+  border-radius: 20px;
+  background: rgb(var(--hrs-glass-tint) / var(--hrs-glass-alpha-frame));
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, rgb(var(--hrs-glass-edge)) 76%, white),
+    // a ring: see .hrs-glass
+    0 0 4px rgb(var(--hrs-glass-edge) / 0.6),
+    0 0 14px rgb(var(--hrs-glass-edge) / 0.25);
+}
+
+.import-pod__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 100%;
+  padding: 0 8px 0 4px;
+  border-radius: 20px;
+  color: #fff;
+  text-decoration: none;
+  font: var(--mat-sys-label-large);
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    background: rgba(255, 255, 255, 0.08);
+    outline: none;
+  }
+}
+
+.import-pod__ring {
+  --mat-progress-spinner-active-indicator-color: rgb(var(--hrs-glass-edge));
+  flex: none;
+}
+
+.import-pod__add {
+  --mat-icon-button-icon-color: #fff;
+  --mat-icon-button-state-layer-size: 32px;
+  --mat-icon-button-icon-size: 20px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+}

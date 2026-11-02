@@ -1,12 +1,12 @@
 import { Component, inject, Injector, runInInjectionContext } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Shell } from '@myrddraall/heroes-replay-stats-shell/feature';
 import { DEV_REPORTS_URL } from '@myrddraall/heroes-replay-stats-platform/data';
 
-/** The routed page: the shell around the app's pages, or a page of its own (app.routes.ts). */
+/** The app: the shell, which frames the routed page (or leaves a page to fill the window, app.routes.ts). */
 @Component({
   selector: 'hrs-root',
-  imports: [RouterOutlet],
-  template: '<router-outlet />',
+  imports: [Shell],
+  template: '<hrs-shell />',
 })
 export class App {
   constructor() {

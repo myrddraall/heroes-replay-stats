@@ -1,6 +1,5 @@
-import { DestroyRef, Directive, inject, input, type OnInit, TemplateRef } from '@angular/core';
+import { computed, type TemplateRef } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
-import { computed } from '@angular/core';
 
 /** What a page puts in the shell's right-hand panel: its tools. */
 export interface ShellPanelContent {
@@ -36,23 +35,3 @@ export const ShellPanelsStore = signalStore(
     },
   })),
 );
-
-/**
- * A page's tools for the shell's right-hand panel, shown there while the page (or the part of it
- * that declares them) is: `<ng-template hrsShellPanel="Columns">…</ng-template>`.
- */
-@Directive({ selector: 'ng-template[hrsShellPanel]' })
-export class ShellPanelTemplate implements OnInit {
-  /** What the panel is, for screen readers and the toolbar's toggle. */
-  readonly hrsShellPanel = input.required<string>();
-
-  private readonly panels = inject(ShellPanelsStore);
-  private readonly template = inject(TemplateRef);
-  private readonly destroyRef = inject(DestroyRef);
-
-  ngOnInit(): void {
-    const content = { label: this.hrsShellPanel(), template: this.template };
-    this.panels.show(content);
-    this.destroyRef.onDestroy(() => this.panels.clear(content));
-  }
-}

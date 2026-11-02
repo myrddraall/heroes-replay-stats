@@ -1,13 +1,16 @@
 import { provideRouter } from '@angular/router';
 import { TestBed } from '@angular/core/testing';
-import { provideAether } from "@myrddraall/heroes-replay-stats-aether";
+import { provideAether } from '@myrddraall/heroes-replay-stats-aether';
 import { describe, expect, it, beforeEach } from 'vitest';
 import { routes } from './app.routes';
 import { REPLAY_DB, REPLAY_DB_FACTORY } from './data/import/provide-replay-db';
 import { PLATFORM } from '@myrddraall/heroes-replay-stats-platform/data';
 import type { Platform } from '@myrddraall/heroes-replay-stats-platform/model';
 import { ReplayImportJobStore } from './data/import/replay-import-job.store';
-import { NAV_ITEMS, Shell } from './shell/shell';
+import { Shell } from '@myrddraall/heroes-replay-stats-shell/feature';
+import { provideSettingsFeature } from '@myrddraall/heroes-replay-stats-settings/provide';
+import { APP_NAV_ITEMS, provideAppShellSlots } from './shell-slots';
+import { BACKGROUND_EDITOR } from './site-background/background-editor';
 
 /** A drag event as jsdom cannot make one: a plain event with a fake dataTransfer. */
 function dragEvent(type: string, files: File[]): Event {
@@ -31,7 +34,9 @@ describe('App shell', () => {
     await TestBed.configureTestingModule({
       imports: [Shell],
       providers: [
+        provideSettingsFeature(),
         provideRouter(routes),
+        provideAppShellSlots(),
         provideAether({ dataUrl: 'backgrounds/play/' }),
         { provide: PLATFORM, useValue: fakePlatform },
         {
@@ -61,7 +66,7 @@ describe('App shell', () => {
     const links = [...el.querySelectorAll('mat-nav-list a[mat-list-item]')].map((a) =>
       a.getAttribute('href'),
     );
-    expect(links).toEqual(NAV_ITEMS.map((i) => i.path));
+    expect(links).toEqual([...APP_NAV_ITEMS.map((i) => i.path), '/settings']);
     expect(el.querySelector('.shell__platform')?.textContent).toContain('test');
   });
 
@@ -88,9 +93,9 @@ describe('App shell', () => {
     expect(jobs.map((j) => j.fileName)).toEqual(['game.StormReplay']);
   });
 
-  it('puts the app pages in the shell, the background editor not among them', () => {
-    const shell = routes.find((r) => r.component === Shell);
-    expect(shell?.children?.map((r) => r.path)).toContain('replays');
-    expect(shell?.children?.map((r) => r.path)).not.toContain('edit-background');
+  it('frames the app pages, and leaves the renderer check and the background editor to fill the window', () => {
+    expect(routes.map((r) => r.path)).toContain('replays');
+    expect(routes.find((r) => r.path === 'renderer-check')?.data?.['shell']).toBe(false);
+    expect(BACKGROUND_EDITOR.routeData?.['shell']).toBe(false);
   });
 });
