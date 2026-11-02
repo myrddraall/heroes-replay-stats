@@ -1,7 +1,8 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { describe, expect, it, vi } from 'vitest';
+import { SheetStore, type PictureStatus } from '../sheet/sheet.store';
 import { Sprite, type SpritePicture } from './sprite';
-import { describe, expect, it } from 'vitest';
 
 @Component({
   imports: [Sprite],
@@ -61,5 +62,93 @@ describe('hrsSprite', () => {
     });
     expect(free.style.width).toBe('');
     expect(free.style.height).toBe('');
+  });
+});
+
+@Component({
+  imports: [Sprite],
+  template: `<img [hrsSprite]="name()" [spriteWidth]="16" [loading]="loading()" alt="" />`,
+})
+class Named {
+  readonly name = signal('ui#gear');
+  readonly loading = signal<'lazy' | 'eager'>('eager');
+}
+
+/** A store whose sheets load at once, each holding a gear at [24, 8, 32, 32]. */
+function fakeStore() {
+  const pictures = signal<Record<string, PictureStatus>>({});
+  return {
+    load: vi.fn((url: string) =>
+      pictures.update((p) =>
+        p[url]
+          ? p
+          : {
+              ...p,
+              [url]: {
+                status: 'ready',
+                picture: {
+                  url: `blob:${url}`,
+                  width: 64,
+                  height: 64,
+                  meta: { v: 1, frames: {}, sets: {}, pictures: { gear: [24, 8, 32, 32] } },
+                },
+              },
+            },
+      ),
+    ),
+    status: (url: string) => pictures()[url],
+    sheetUrl: (sheet: string) => `/sheets/${sheet}.webp`,
+  };
+}
+
+describe('hrsSprite by name', () => {
+  const setUp = async (set?: (host: Named) => void) => {
+    const store = fakeStore();
+    TestBed.configureTestingModule({ providers: [{ provide: SheetStore, useValue: store }] });
+    const fixture = TestBed.createComponent(Named);
+    set?.(fixture.componentInstance);
+    await fixture.whenStable();
+    return { store, img: fixture.nativeElement.querySelector('img') as HTMLImageElement };
+  };
+
+  it("shows a sheet's picture by its name, as it would an object", async () => {
+    const { store, img } = await setUp();
+    expect(store.load).toHaveBeenCalledWith('/sheets/ui.webp');
+    expect(img.getAttribute('src')).toBe('blob:/sheets/ui.webp');
+    expect(img.style.width).toBe('32px');
+    expect(img.style.objectPosition).toBe('-24px -8px');
+    expect(img.style.getPropertyValue('zoom')).toBe('0.5');
+  });
+
+  it('loads a lazy sheet only once the image nears the viewport', async () => {
+    let seen: ((entries: { isIntersecting: boolean }[]) => void) | undefined;
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        constructor(callback: (entries: { isIntersecting: boolean }[]) => void) {
+          seen = callback;
+        }
+        readonly observe = vi.fn();
+        readonly disconnect = vi.fn();
+      },
+    );
+    try {
+      const store = fakeStore();
+      TestBed.configureTestingModule({ providers: [{ provide: SheetStore, useValue: store }] });
+      const fixture = TestBed.createComponent(Named);
+      fixture.componentInstance.loading.set('lazy');
+      await fixture.whenStable();
+      expect(store.load).not.toHaveBeenCalled();
+      seen!([{ isIntersecting: true }]);
+      await fixture.whenStable();
+      expect(store.load).toHaveBeenCalledWith('/sheets/ui.webp');
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('shows nothing for a name its sheet lacks', async () => {
+    const { img } = await setUp((host) => host.name.set('ui#nothing'));
+    expect(img.hasAttribute('src')).toBe(false);
   });
 });

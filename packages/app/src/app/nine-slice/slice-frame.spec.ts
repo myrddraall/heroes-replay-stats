@@ -40,7 +40,6 @@ describe('planFrame', () => {
     expect(part(mixed, 'top').fill).toBe('tile');
     expect(part(mixed, 'left').fill).toBe('space');
     expect(part(mixed, 'bottom').fill).toBe('stretch');
-    expect(part({ ...cutFrame, centre: 'none' }, 'centre').fill).toBe('none');
   });
 
   it('mirrors the right column and bottom row from the left and top', () => {

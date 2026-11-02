@@ -52,6 +52,12 @@ figcaption {
   height: 220px;
 }
 
+.sample--clipped {
+  height: 120px;
+  place-items: start;
+  text-align: left;
+}
+
 .sample--small {
   width: 100%;
   height: 100px;
@@ -59,20 +65,33 @@ figcaption {
 
 .buttons,
 .tints,
-.modes {
+.modes,
+.icons {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
 }
 
-.tints > *,
-.modes > * {
+.tints > * {
   flex: 1 1 80px;
 }
 
+.modes {
+  flex-direction: column;
+}
+
+.sample--mode {
+  width: 100%;
+  height: 90px;
+}
+
 .game-button {
-  min-width: 140px;
-  height: 52px;
+  // the top-nav button's art is 323×89: at its own size it looks as the game draws it
+  width: 323px;
+  max-width: 100%;
+  height: 89px;
+  display: grid;
+  place-items: center;
   border: 0;
   background: none;
   color: var(--mat-sys-on-surface);
@@ -88,4 +107,8 @@ figcaption {
     outline: 2px solid var(--mat-sys-primary);
     outline-offset: 4px;
   }
+}
+
+.icons {
+  align-items: center;
 }

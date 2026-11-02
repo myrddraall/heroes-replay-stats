@@ -3,7 +3,8 @@ import { TestBed } from '@angular/core/testing';
 import { describe, expect, it, vi } from 'vitest';
 import type { SheetMeta } from '../sheet/read-sheet';
 import { SheetStore, type PictureStatus } from '../sheet/sheet.store';
-import { NineSlice, type SliceSource } from './nine-slice';
+import { NineSlice, sliceTrack, type SliceSource } from './nine-slice';
+import type { SliceState } from './slice-frame';
 
 const META: SheetMeta = {
   v: 1,
@@ -12,7 +13,6 @@ const META: SheetMeta = {
     border: {
       states: { normal: [0, 40, 30, 30], hover: [0, 70, 30, 30] },
       cuts: [6, 8, 6, 8],
-      centre: 'none',
     },
   },
   sets: { card: { back: 'back', front: 'border' } },
@@ -39,7 +39,12 @@ function fakeStore() {
 
 @Component({
   imports: [NineSlice],
-  template: `<div [hrsSlice]="set()" [hrsSliceBack]="back()" [hrsSliceFront]="front()">
+  template: `<div
+    [hrsSlice]="set()"
+    [hrsSliceBack]="back()"
+    [hrsSliceFront]="front()"
+    [sliceState]="state()"
+  >
     <p>content</p>
   </div>`,
 })
@@ -47,6 +52,7 @@ class Host {
   readonly set = signal<string | undefined>(undefined);
   readonly back = signal<SliceSource | undefined>(undefined);
   readonly front = signal<SliceSource | undefined>(undefined);
+  readonly state = signal<SliceState | undefined>(undefined);
 }
 
 async function setUp() {
@@ -64,46 +70,52 @@ async function setUp() {
 }
 
 describe('NineSlice', () => {
-  it("draws a set's frames around the content: the back first, the front last", async () => {
+  const classesOf = (el: Element) => [...el.classList].filter((c) => !c.startsWith('ng-'));
+
+  it("draws a set's frames around the content: the back first, the content, the front last", async () => {
     const { host, el, settle, store } = await setUp();
     host.set.set('ui#card');
     await settle();
     expect(store.load).toHaveBeenCalledWith('/sheets/ui.webp');
     const children = [...el().children];
-    expect(children.map((c) => c.className)).toEqual([
-      'hrs-slice hrs-slice--back',
-      '',
-      'hrs-slice hrs-slice--front',
-    ]);
+    expect(children.map(classesOf)).toEqual([['layer', 'layer--back'], ['content'], ['layer', 'layer--front']]);
+    expect(children[1]!.querySelector('p')?.textContent).toBe('content');
     for (const layer of [children[0]!, children[2]!]) {
       expect(layer.getAttribute('aria-hidden')).toBe('true');
-      expect(layer.querySelectorAll('.hrs-slice__part')).toHaveLength(9);
+      expect(layer.querySelectorAll('.part')).toHaveLength(9);
     }
   });
 
-  it('sizes the grid from the cuts, pads the content to the front frame and keeps the corners', async () => {
+  it('pads the content in to the front frame, or else the back, as its pad says', async () => {
     const { host, el, settle } = await setUp();
     host.set.set('ui#card');
     await settle();
-    const front = el().querySelector('.hrs-slice--front') as HTMLElement;
-    expect(front.style.gridTemplateColumns).toBe('8px 1fr 8px');
-    expect(front.style.gridTemplateRows).toBe('6px 1fr 6px');
     expect(el().style.padding).toBe('6px 8px');
-    expect(el().style.minWidth).toBe('20px');
-    expect(el().style.minHeight).toBe('20px');
+
+    host.set.set(undefined);
+    host.back.set({ picture: { src: '/art/panel.png' }, cuts: [16, 12, 16, 12] });
+    await settle();
+    expect(el().style.padding).toBe('16px 12px');
+
+    host.back.set({ picture: { src: '/art/panel.png' }, cuts: [16, 12, 16, 12], pad: 4 });
+    await settle();
+    expect(el().style.padding).toBe('20px 16px');
+
+    host.back.set({ picture: { src: '/art/panel.png' }, cuts: [16, 12, 16, 12], pad: false });
+    await settle();
+    expect(el().style.padding).toBe('');
   });
 
-  it("hands each part its pieces for every state, and leaves an empty centre out", async () => {
+  it('hands each part its pieces for every state', async () => {
     const { host, el, settle } = await setUp();
     host.set.set('ui#card');
     await settle();
-    const parts = el().querySelectorAll<HTMLElement>('.hrs-slice--front .hrs-slice__part');
+    const parts = el().querySelectorAll<HTMLElement>('.layer--front .part');
     const topLeft = parts[0]!;
     expect(topLeft.style.getPropertyValue('--hrs-slice-normal')).toBe('url("blob:piece-0-40-8-6")');
     expect(topLeft.style.getPropertyValue('--hrs-slice-hover')).toBe('url("blob:piece-0-70-8-6")');
-    expect(parts[4]!.classList).toContain('hrs-slice__part--empty');
 
-    const backTop = el().querySelectorAll<HTMLElement>('.hrs-slice--back .hrs-slice__part')[1]!;
+    const backTop = el().querySelectorAll<HTMLElement>('.layer--back .part')[1]!;
     expect(backTop.style.getPropertyValue('--hrs-slice-repeat')).toBe('repeat no-repeat');
     expect(backTop.style.getPropertyValue('--hrs-slice-size')).toBe('20px 100%');
   });
@@ -112,24 +124,30 @@ describe('NineSlice', () => {
     const { host, el, settle } = await setUp();
     host.back.set({ picture: { src: '/art/panel.png' }, cuts: [16, 16, 16, 16], mirror: 'x', tint: 'red' });
     await settle();
-    const back = el().querySelector('.hrs-slice--back') as HTMLElement;
-    expect(back.style.gridTemplateColumns).toBe('16px 1fr 16px');
-    expect(back.classList).toContain('hrs-slice--tint');
+    const back = el().querySelector('.layer--back') as HTMLElement;
+    expect(back.classList).toContain('layer--tint');
     expect(back.style.getPropertyValue('--hrs-slice-tint')).toBe('red');
     expect((back.children[2] as HTMLElement).style.scale).toBe('-1 1');
-    // a frame behind doesn't pad unless asked
-    expect(el().style.padding).toBe('');
 
     host.back.set(undefined);
     await settle();
-    expect(el().querySelector('.hrs-slice')).toBeNull();
+    expect(el().querySelector('.layer')).toBeNull();
+    expect(el().querySelector('.content p')?.textContent).toBe('content');
   });
 
-  it('marks the element so the CSS can switch states, with a state it can’t see', async () => {
+  it('keeps the element its own stacking context, and shows a state the CSS can’t see', async () => {
     const { host, el, settle } = await setUp();
     host.set.set('ui#card');
+    host.state.set('selected');
     await settle();
-    expect(el().hasAttribute('data-hrs-slice')).toBe(true);
     expect(el().style.isolation).toBe('isolate');
+    expect(el().getAttribute('data-hrs-slice-state')).toBe('selected');
+  });
+});
+
+describe('sliceTrack', () => {
+  it('keeps the corners their size, and shares a smaller element between them in proportion', () => {
+    expect(sliceTrack([8, 24])).toBe('min(8px, calc(100% * 0.25)) 1fr min(24px, calc(100% * 0.75))');
+    expect(sliceTrack([0, 0])).toBe('0px 1fr 0px');
   });
 });

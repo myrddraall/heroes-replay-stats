@@ -19,6 +19,15 @@
         </figure>
 
         <figure>
+          <div class="sample sample--clipped" hrsSlice="validation#panel">
+            Content goes in the frame's centre, padded in from its edges. When there is more of
+            it than the centre holds, it is cut off at the centre's edge rather than running over
+            the frame: this text is longer than the panel, so its last lines are hidden.
+          </div>
+          <figcaption>Content that doesn't fit is clipped to the centre</figcaption>
+        </figure>
+
+        <figure>
           <div class="buttons">
             <button type="button" class="game-button" hrsSlice="validation#topnav-button">
               Play
@@ -35,7 +44,7 @@
               Disabled
             </button>
           </div>
-          <figcaption>A button's states: hover and press it</figcaption>
+          <figcaption>A button's states, at the art's own size: hover and press it</figcaption>
         </figure>
 
         <figure>
@@ -55,21 +64,28 @@
 
         <figure>
           <div class="modes">
-            <div class="sample sample--small" [hrsSliceBack]="stretched()">Stretch</div>
-            <div class="sample sample--small" [hrsSliceBack]="tiled()">Tile</div>
-            <div class="sample sample--small" [hrsSliceBack]="rounded()">Round</div>
+            <div class="sample sample--mode" [hrsSliceBack]="stretched()">Stretch</div>
+            <div class="sample sample--mode" [hrsSliceBack]="tiled()">Tile</div>
+            <div class="sample sample--mode" [hrsSliceBack]="rounded()">Round</div>
           </div>
-          <figcaption>Repeat modes</figcaption>
-        </figure>
-
-        <figure>
-          <button type="button" class="game-button" [hrsSliceBack]="mirrored()">Mirrored</button>
-          <figcaption>Right column mirrored from the left</figcaption>
+          <figcaption>
+            The game Border's edges stretched, tiled (the last tile cut off) and rounded (whole
+            tiles, squeezed to fit)
+          </figcaption>
         </figure>
 
         <figure>
           <div class="sample sample--wide" [hrsSliceBack]="debug()">Half scale, cuts outlined</div>
           <figcaption>Debug outline</figcaption>
+        </figure>
+
+        <figure>
+          <div class="icons">
+            <img hrsSprite="validation#settings" alt="Settings" />
+            <img hrsSprite="validation#search" [spriteWidth]="32" alt="Search" />
+            <img hrsSprite="validation#close" [spriteWidth]="32" alt="Close" />
+          </div>
+          <figcaption>Pictures from the same sheet, by name (sprites)</figcaption>
         </figure>
       </div>
     }

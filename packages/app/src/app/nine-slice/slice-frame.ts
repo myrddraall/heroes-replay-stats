@@ -21,8 +21,8 @@ export interface SliceOptions {
   readonly edges?:
     | SliceRepeat
     | Readonly<{ top?: SliceRepeat; right?: SliceRepeat; bottom?: SliceRepeat; left?: SliceRepeat }>;
-  /** How the centre fills its space; `none` leaves it empty (a border only). Default stretch. */
-  readonly centre?: SliceRepeat | 'none';
+  /** How the centre fills its space. Default stretch. */
+  readonly centre?: SliceRepeat;
   /** The length of one tile along a tiled edge, and of a tiled centre's tile, in CSS pixels; the picture's own length (scaled) when not set. */
   readonly tile?: number;
   /** Draws the frame in this colour (any CSS colour, `rgb(var(--hrs-glass-edge))` follows the team), its picture as the shape. */
@@ -31,8 +31,12 @@ export interface SliceOptions {
   readonly mirror?: 'x' | 'y' | 'xy';
   /** How far the frame reaches past the element's box, in CSS pixels (a glow, a frame that sits outside). */
   readonly outset?: number;
-  /** Pads the content to the frame's inner area. Default: on for the frame in front, off behind. */
-  readonly pad?: boolean;
+  /**
+   * Whether the content is padded in to the frame's centre (the frame in front's, or else the one
+   * behind's): on by default, `false` leaves it out, a number moves it that many pixels inward
+   * (outward when negative).
+   */
+  readonly pad?: boolean | number;
   /** Outlines each part, to see the cuts. */
   readonly debug?: boolean;
 }
@@ -71,7 +75,7 @@ export function templateFrame(frame: SliceFrame, size: { width: number; height: 
 }
 
 /** How one part fills its cell. `corner` and `stretch` fill it; the others repeat a tile. */
-export type PartFill = 'corner' | SliceRepeat | 'none';
+export type PartFill = 'corner' | SliceRepeat;
 
 /** One part as drawn: its piece in each state, how it fills, its tile's size and its flip. */
 export interface PartPlan {
@@ -188,7 +192,7 @@ export function planFrame(frame: ResolvedFrame): FramePlan {
         : edgeFill(side!);
     const along = (length: number) => frame.tile ?? length * scale;
     const tile: PartPlan['tile'] =
-      fill === 'corner' || fill === 'stretch' || fill === 'none'
+      fill === 'corner' || fill === 'stretch'
         ? [null, null]
         : part === 'centre'
           ? [along(w), frame.tile ? (frame.tile * h) / w : h * scale]

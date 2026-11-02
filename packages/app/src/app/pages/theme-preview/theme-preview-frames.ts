@@ -2,20 +2,22 @@ import { Component, computed, effect, inject, untracked } from '@angular/core';
 import { NineSlice, type SliceSource } from '../../nine-slice/nine-slice';
 import type { SliceOptions } from '../../nine-slice/slice-frame';
 import { SheetStore } from '../../sheet/sheet.store';
+import { Sprite } from '../../sprite/sprite';
 
 /** The sheet the preview draws its frames from: heroes-assets' validation sheet (game frames). */
 const SHEET = 'validation';
 
 /**
- * The 9-slice frames in preview, from the validation sheet: a set (a panel behind and a game Border in
- * front) on panels of two shapes, a button with its states, a game Border (parts placed, side
- * edges turned), the border tinted in the teams' colours, the back's repeat modes side by side, a
- * mirrored button and the debug outline. The variants are the sheet's frames with options of their
- * own, made here from the sheet's metadata.
+ * The 9-slice frames in preview, from the validation sheet: a set (a panel behind and the score
+ * screen's frame in front) on panels of two shapes, a button with its states at the art's own
+ * size, a game Border (parts placed, side edges turned) and its edges in each repeat mode, the
+ * score screen's frame tinted in the teams' colours, the debug outline, and pictures from the same
+ * sheet by name. The variants are the sheet's frames with options of their own, made here from the
+ * sheet's metadata.
  */
 @Component({
   selector: 'hrs-theme-preview-frames',
-  imports: [NineSlice],
+  imports: [NineSlice, Sprite],
   templateUrl: './theme-preview-frames.html',
   styleUrl: './theme-preview-frames.scss',
 })
@@ -41,16 +43,11 @@ export class ThemePreviewFrames {
   }
 
   protected readonly tinted = computed(() =>
-    this.variant('terran-tech', { tint: 'rgb(var(--hrs-glass-edge))' }),
+    this.variant('scorescreen-frame', { tint: 'rgb(var(--hrs-glass-edge))' }),
   );
-  protected readonly stretched = computed(() =>
-    this.variant('context-menu', { edges: 'stretch', centre: 'stretch' }),
-  );
-  protected readonly tiled = computed(() => this.variant('context-menu', { edges: 'tile', centre: 'tile', tile: 40 }));
-  protected readonly rounded = computed(() =>
-    this.variant('context-menu', { edges: 'round', centre: 'round', tile: 40 }),
-  );
-  protected readonly mirrored = computed(() => this.variant('topnav-button', { mirror: 'x' }));
+  protected readonly stretched = computed(() => this.variant('terran-tech', { edges: 'stretch' }));
+  protected readonly tiled = computed(() => this.variant('terran-tech', { edges: 'tile' }));
+  protected readonly rounded = computed(() => this.variant('terran-tech', { edges: 'round' }));
   protected readonly debug = computed(() => this.variant('terran-tech', { debug: true, scale: 0.5 }));
 
   constructor() {
