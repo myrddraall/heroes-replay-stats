@@ -1,0 +1,80 @@
+<section class="hrs-glass panel frames" aria-labelledby="frames-title">
+  <h2 id="frames-title">Frames</h2>
+  @switch (status()?.status) {
+    @case ('error') {
+      <p class="muted" role="alert">The frames' sheet couldn't be loaded.</p>
+    }
+    @case ('ready') {
+      <div class="frames__grid">
+        <figure>
+          <div class="sample sample--wide" hrsSlice="validation#panel">
+            A panel with a game border over it. Drag the corner to resize.
+          </div>
+          <figcaption>Set: back and front</figcaption>
+        </figure>
+
+        <figure>
+          <div class="sample sample--tall" hrsSlice="validation#panel">Tall</div>
+          <figcaption>The same set, tall</figcaption>
+        </figure>
+
+        <figure>
+          <div class="buttons">
+            <button type="button" class="game-button" hrsSlice="validation#topnav-button">
+              Play
+            </button>
+            <button
+              type="button"
+              class="game-button"
+              hrsSlice="validation#topnav-button"
+              aria-pressed="true"
+            >
+              Selected
+            </button>
+            <button type="button" class="game-button" hrsSlice="validation#topnav-button" disabled>
+              Disabled
+            </button>
+          </div>
+          <figcaption>A button's states: hover and press it</figcaption>
+        </figure>
+
+        <figure>
+          <div class="sample sample--wide" hrsSliceBack="validation#terran-tech">
+            A game Border: each part placed, the side edges turned
+          </div>
+          <figcaption>Parts, tiled edges</figcaption>
+        </figure>
+
+        <figure>
+          <div class="tints">
+            <div class="sample sample--small hrs-glass-blue" [hrsSliceFront]="tinted()">Blue</div>
+            <div class="sample sample--small hrs-glass-red" [hrsSliceFront]="tinted()">Red</div>
+          </div>
+          <figcaption>Tinted in the team's colour</figcaption>
+        </figure>
+
+        <figure>
+          <div class="modes">
+            <div class="sample sample--small" [hrsSliceBack]="stretched()">Stretch</div>
+            <div class="sample sample--small" [hrsSliceBack]="tiled()">Tile</div>
+            <div class="sample sample--small" [hrsSliceBack]="rounded()">Round</div>
+          </div>
+          <figcaption>Repeat modes</figcaption>
+        </figure>
+
+        <figure>
+          <button type="button" class="game-button" [hrsSliceBack]="mirrored()">Mirrored</button>
+          <figcaption>Right column mirrored from the left</figcaption>
+        </figure>
+
+        <figure>
+          <div class="sample sample--wide" [hrsSliceBack]="debug()">Half scale, cuts outlined</div>
+          <figcaption>Debug outline</figcaption>
+        </figure>
+      </div>
+    }
+    @default {
+      <p class="muted">Loading the frames' sheet…</p>
+    }
+  }
+</section>

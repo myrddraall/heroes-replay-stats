@@ -1,0 +1,80 @@
+// The 9-slice directive's layers (nine-slice.ts): global, as the directive adds them to any
+// element. Each part holds its piece for every state the frame has (--hrs-slice-<state>); the
+// element's state picks one here, a missing state falling back to normal.
+
+.hrs-slice {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  pointer-events: none;
+}
+
+.hrs-slice--back {
+  z-index: -1;
+}
+
+.hrs-slice--front {
+  z-index: 1;
+}
+
+.hrs-slice__part {
+  --hrs-slice-image: var(--hrs-slice-normal);
+  background-image: var(--hrs-slice-image);
+  background-size: var(--hrs-slice-size);
+  background-repeat: var(--hrs-slice-repeat);
+}
+
+// tinted: the piece is the shape, the tint its colour
+.hrs-slice--tint > .hrs-slice__part {
+  background: var(--hrs-slice-tint);
+  mask-image: var(--hrs-slice-image);
+  mask-size: var(--hrs-slice-size);
+  mask-repeat: var(--hrs-slice-repeat);
+}
+
+.hrs-slice__part--empty {
+  visibility: hidden;
+}
+
+.hrs-slice--debug > .hrs-slice__part {
+  outline: 1px dashed rgb(255 0 255 / 0.8);
+  outline-offset: -1px;
+}
+
+// the states, weakest first: later rules win when several hold (pressed while hovered)
+[data-hrs-slice-state='selected'],
+[data-hrs-slice][aria-pressed='true'],
+[data-hrs-slice][aria-selected='true'] {
+  > .hrs-slice > .hrs-slice__part {
+    --hrs-slice-image: var(--hrs-slice-selected, var(--hrs-slice-normal));
+  }
+}
+
+[data-hrs-slice-state='focus'],
+[data-hrs-slice]:focus-visible {
+  > .hrs-slice > .hrs-slice__part {
+    --hrs-slice-image: var(--hrs-slice-focus, var(--hrs-slice-normal));
+  }
+}
+
+[data-hrs-slice-state='hover'],
+[data-hrs-slice]:hover {
+  > .hrs-slice > .hrs-slice__part {
+    --hrs-slice-image: var(--hrs-slice-hover, var(--hrs-slice-normal));
+  }
+}
+
+[data-hrs-slice-state='pressed'],
+[data-hrs-slice]:active {
+  > .hrs-slice > .hrs-slice__part {
+    --hrs-slice-image: var(--hrs-slice-pressed, var(--hrs-slice-hover, var(--hrs-slice-normal)));
+  }
+}
+
+[data-hrs-slice-state='disabled'],
+[data-hrs-slice]:disabled,
+[data-hrs-slice][aria-disabled='true'] {
+  > .hrs-slice > .hrs-slice__part {
+    --hrs-slice-image: var(--hrs-slice-disabled, var(--hrs-slice-normal));
+  }
+}

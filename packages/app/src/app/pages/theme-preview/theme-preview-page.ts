@@ -9,6 +9,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSliderModule } from '@angular/material/slider';
 import { ViewStore } from "@myrddraall/heroes-replay-stats-aether";
+import { ThemePreviewFrames } from './theme-preview-frames';
 /** The glass opacity below which muted text loses WCAG AA contrast over the background's brightest sky. */
 export const GLASS_ALPHA_FLOOR = 0.06;
 /** How much the glass blurs what is behind it, when it does. */
@@ -51,6 +52,7 @@ interface SampleTeam {
     MatProgressBarModule,
     MatSlideToggleModule,
     MatSliderModule,
+    ThemePreviewFrames,
   ],
   templateUrl: './theme-preview-page.html',
   styleUrl: './theme-preview-page.scss',
