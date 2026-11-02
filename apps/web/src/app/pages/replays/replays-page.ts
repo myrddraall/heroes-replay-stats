@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { ReplayList } from './replay-list';
 import { ReplaysPageStore } from './replays-page.store';
-import { Layout } from '../../layout/layout';
+import { Layout } from '@myrddraall/heroes-replay-stats-layout/ui';
 
 /** The stored replays (container). */
 @Component({

@@ -8,11 +8,12 @@ import { anyTag, sameTag, type SheriffConfig } from '@softarc/sheriff-core';
 
 /** Converted domain packages and the layers each has (packages/<domain>/<layer>/index.ts). */
 const domains: Record<string, readonly string[]> = {
+  layout: ['ui', 'model'],
   platform: ['provide', 'data', 'model'],
 };
 
 /** Shared domains: any domain may use them; a shared domain uses another only through `uses`. */
-const shared = ['platform'];
+const shared = ['layout', 'platform'];
 
 /** The domains each domain may use besides itself, the shared ones and simple libraries; one way only. */
 const uses: Record<string, readonly string[]> = {};

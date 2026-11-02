@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { ImportJobs } from './import-jobs';
 import { ImportPageStore } from './import-page.store';
-import { Layout } from '../../layout/layout';
+import { Layout } from '@myrddraall/heroes-replay-stats-layout/ui';
 
 /** Importing replays (container). */
 @Component({

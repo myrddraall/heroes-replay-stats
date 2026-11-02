@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { MapList } from './map-list';
 import { MapsPageStore } from './maps-page.store';
-import { Layout } from '../../layout/layout';
+import { Layout } from '@myrddraall/heroes-replay-stats-layout/ui';
 
 /** The maps there are packs of (container): choose one to show it. */
 @Component({

@@ -1,8 +1,7 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { MatProgressBar } from '@angular/material/progress-bar';
 import { RouterOutlet } from '@angular/router';
-import { Layout } from '../../layout/layout';
-import { LayoutItem } from '../../layout/layout-item';
+import { Layout, LayoutItem } from '@myrddraall/heroes-replay-stats-layout/ui';
 import { ShellNavChildren } from '../../shell/shell-nav';
 import { TeamPerspective } from '../../team/team-color';
 import { EmptyState } from '../empty-state';

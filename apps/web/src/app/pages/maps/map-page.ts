@@ -1,7 +1,6 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { MapsStore } from '@myrddraall/heroes-replay-stats-map';
-import { Layout } from '../../layout/layout';
-import { LayoutItem } from '../../layout/layout-item';
+import { Layout, LayoutItem } from '@myrddraall/heroes-replay-stats-layout/ui';
 import { ShellNavChildren } from '../../shell/shell-nav';
 import { ShellNavLinks } from '../../shell/shell-nav-links';
 import { MapExplore } from './explore/map-explore';

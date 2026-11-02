@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { MatProgressBar } from '@angular/material/progress-bar';
-import { Layout } from '../../../layout/layout';
+import { Layout } from '@myrddraall/heroes-replay-stats-layout/ui';
 import { XpSectionStore } from './xp-section.store';
 import { XpTables } from './xp-tables';
 

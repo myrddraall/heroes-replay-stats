@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Layout } from '../../layout/layout';
+import { Layout } from '@myrddraall/heroes-replay-stats-layout/ui';
 import { SettingsPanel } from './settings-panel';
 
 /** The Settings page: the settings in the page's layout. */
