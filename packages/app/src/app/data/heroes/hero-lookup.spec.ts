@@ -8,7 +8,7 @@ describe('heroLookup', () => {
     const lookup = heroLookup(await fakeHeroData.latest(), heroesImages());
     expect(lookup.heroIcon('Barbarian')).toEqual({
       picture: {
-        src: 'https://cdn.jsdelivr.net/gh/HeroesToolChest/heroes-images@main/heroesimages/heroportraits/storm_ui_minimapicon_heros_femalebarbarian.png',
+        src: 'https://raw.githubusercontent.com/HeroesToolChest/heroes-images/main/heroesimages/heroportraits/storm_ui_minimapicon_heros_femalebarbarian.png',
       },
       name: 'Sonya',
     });
@@ -26,7 +26,7 @@ describe('heroLookup', () => {
   it("finds a map's replay preview", async () => {
     const lookup = heroLookup(await fakeHeroData.latest(), heroesImages());
     expect(lookup.mapPreview('Towers of Doom')).toEqual({
-      src: 'https://cdn.jsdelivr.net/gh/HeroesToolChest/heroes-images@main/heroesimages/replaypreviews/replayspreviewimage_towersofdoom.png',
+      src: 'https://raw.githubusercontent.com/HeroesToolChest/heroes-images/main/heroesimages/replaypreviews/replayspreviewimage_towersofdoom.png',
     });
     expect(lookup.mapPreview('Nowhere')).toBeNull();
   });

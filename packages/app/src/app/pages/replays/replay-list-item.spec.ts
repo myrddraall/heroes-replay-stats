@@ -111,7 +111,7 @@ describe('ReplayListItem', () => {
     // the map's replay preview sits behind the card, decorative
     const preview = el.querySelector<HTMLImageElement>('.replay__preview img');
     expect(preview?.getAttribute('src')).toBe(
-      'https://cdn.jsdelivr.net/gh/HeroesToolChest/heroes-images@main/heroesimages/replaypreviews/replayspreviewimage_towersofdoom.png',
+      'https://raw.githubusercontent.com/HeroesToolChest/heroes-images/main/heroesimages/replaypreviews/replayspreviewimage_towersofdoom.png',
     );
     expect(preview?.alt).toBe('');
   });
