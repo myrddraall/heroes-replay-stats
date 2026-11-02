@@ -7,8 +7,8 @@ import {
   type ReplayStatus,
   type Team,
 } from '@myrddraall/heroprotocol-db';
-import { REPLAY_DB } from '../import/provide-replay-db';
-import { liveQuerySignals } from '../live-query';
+import { REPLAY_DB } from '@myrddraall/heroes-replay-stats-import/data';
+import { liveQuerySignals } from '@myrddraall/heroes-replay-stats-import/data';
 
 /** A player as a replay list shows them; observers are left out. */
 export type ReplayPlayer = Omit<PlayerSummary, 'kind'> & { readonly kind: 'player' | 'ai' };

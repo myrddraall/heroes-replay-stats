@@ -5,7 +5,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import type { ImportJob, ImportOverall } from '../../data/import/replay-import-job.store';
+import type { ImportJob, ImportOverall } from '../../model';
 
 /** The replay imports (presentational): overall progress, and each job with its analysers. */
 @Component({

@@ -1,6 +1,6 @@
 import { inject, Service } from '@angular/core';
 import type { ReplayDbClient } from '@myrddraall/heroprotocol-db/client';
-import { REPLAY_DB, REPLAY_DB_FACTORY } from './provide-replay-db';
+import { REPLAY_DB, REPLAY_DB_FACTORY } from './replay-db';
 
 /** A worker lent to one import; hand it back with `IngestPool.release()`. */
 export interface IngestSlot {

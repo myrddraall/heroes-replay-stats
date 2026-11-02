@@ -4,7 +4,7 @@ import { HeroDb, NORMALIZE_VERSION, type ReplayRecord } from '@myrddraall/heropr
 import Dexie from 'dexie';
 import type { ReplayDbClient } from '@myrddraall/heroprotocol-db/client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { REPLAY_DB } from '../import/provide-replay-db';
+import { REPLAY_DB } from '@myrddraall/heroes-replay-stats-import/data';
 import { ReplayService } from './replay.service';
 
 /** A stored replay with just the fields the service reads. */

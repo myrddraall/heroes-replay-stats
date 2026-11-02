@@ -3,7 +3,7 @@
 The replay analysers that are specific to Heroes Replay Stats. The generic ones
 (description, score screen, player stats, draft, talents, XP, chat, commands, death
 heatmap) stay in [`@myrddraall/heroprotocol-analysis`](https://github.com/myrddraall/heroprotocol);
-the app's ingest worker (`apps/web/src/app/data/import/replay.worker.ts`) runs both
+the app's ingest worker (`packages/import/data/replay.worker.ts`) runs both
 sets.
 
 | Analyser             | Mode         | Tables (primary key)                                                                                                                                                                 |

@@ -10,7 +10,7 @@ import {
 } from '@angular/router';
 import { provideHeroesFeature } from '@myrddraall/heroes-replay-stats-heroes/provide';
 import { GraphicsStore } from './data/settings/graphics.store';
-import { provideReplayDb } from './data/import/provide-replay-db';
+import { provideImportFeature } from '@myrddraall/heroes-replay-stats-import/provide';
 import { DEV_REPORTS_URL } from '@myrddraall/heroes-replay-stats-platform/data';
 import { providePlatformFeature } from '@myrddraall/heroes-replay-stats-platform/provide';
 import { provideSettingsFeature } from '@myrddraall/heroes-replay-stats-settings/provide';
@@ -43,6 +43,7 @@ export const appConfig: ApplicationConfig = {
     }),
     // Before the router: the featuresets' routes come before the app's own (and their catch-all).
     provideAetherForge(BACKGROUND_EDITOR),
+    provideImportFeature(),
     provideSettingsFeature(),
     provideRouter(
       routes,
@@ -57,7 +58,6 @@ export const appConfig: ApplicationConfig = {
       }),
     ),
     providePlatformFeature({ version: APP_VERSION }),
-    provideReplayDb(),
     provideHeroesFeature(),
     provideSiteBackground(),
     // The background's settings, until the background domain adds them itself.

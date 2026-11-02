@@ -4,7 +4,7 @@ import { HeroDb, type PlayerRecord, type ReplayRecord } from '@myrddraall/heropr
 import type { ReplayDbClient } from '@myrddraall/heroprotocol-db/client';
 import Dexie from 'dexie';
 import { afterEach, describe, expect, it } from 'vitest';
-import { REPLAY_DB } from '../import/provide-replay-db';
+import { REPLAY_DB } from '@myrddraall/heroes-replay-stats-import/data';
 import { PlayerService, summarisePlayers } from './player.service';
 
 // The test bundle loads Dexie before this file runs, so hand it the in-memory IndexedDB directly.

@@ -10,10 +10,20 @@ import { anyTag, sameTag, type SheriffConfig } from '@softarc/sheriff-core';
 const domains: Record<string, readonly string[]> = {
   common: ['ui', 'model'],
   heroes: ['provide', 'data', 'ui', 'model', 'testing'],
+  import: ['provide', 'feature', 'ui', 'data', 'model'],
   layout: ['ui', 'model'],
   platform: ['provide', 'data', 'model'],
   settings: ['provide', 'feature', 'ui', 'data'],
   shell: ['feature', 'ui', 'data'],
+};
+
+/**
+ * Smart components loaded on their own (a routed page, a slot's component shown at startup), each a
+ * module of its own inside its domain's `feature` (packages/<domain>/feature/<name>/index.ts), so
+ * importing one does not bring in the rest of the layer.
+ */
+const featureModules: Record<string, readonly string[]> = {
+  import: ['import-page', 'import-toolbar-action'],
 };
 
 /** Shared domains: any domain may use them; a shared domain uses another only through `uses`. */
@@ -54,7 +64,7 @@ const aetherAreas = [
 export const config: SheriffConfig = {
   entryPoints: {
     web: 'apps/web/src/main.ts',
-    'replay-worker': 'apps/web/src/app/data/import/replay.worker.ts',
+    'replay-worker': 'packages/import/data/replay.worker.ts',
     'desktop-main': 'apps/desktop/src/main.ts',
     'desktop-preload': 'apps/desktop/src/preload.ts',
   },
@@ -67,6 +77,14 @@ export const config: SheriffConfig = {
           [`domain:${domain}`, `type:${layer}`],
         ]),
       ]),
+    ),
+    ...Object.fromEntries(
+      Object.entries(featureModules).flatMap(([domain, names]) =>
+        names.map((name) => [
+          `packages/${domain}/feature/${name}`,
+          [`domain:${domain}`, 'type:feature'],
+        ]),
+      ),
     ),
     'packages/aether/src': ['domain:aether', 'type:engine'],
     ...Object.fromEntries(

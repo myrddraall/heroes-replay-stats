@@ -1,7 +1,7 @@
 import { computed, inject, Service } from '@angular/core';
 import type { PlayerRecord, ReplayRecord } from '@myrddraall/heroprotocol-db';
-import { REPLAY_DB } from '../import/provide-replay-db';
-import { liveQuerySignals } from '../live-query';
+import { REPLAY_DB } from '@myrddraall/heroes-replay-stats-import/data';
+import { liveQuerySignals } from '@myrddraall/heroes-replay-stats-import/data';
 
 /** How often a player played one hero. */
 export interface PlayerHero {

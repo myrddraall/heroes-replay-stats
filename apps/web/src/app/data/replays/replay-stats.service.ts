@@ -17,7 +17,7 @@ import type {
 import type { StatSupportTable } from '@myrddraall/heroprotocol-db';
 import { liveQuery } from 'dexie';
 import { from, type Observable, switchMap } from 'rxjs';
-import { REPLAY_DB } from '../import/provide-replay-db';
+import { REPLAY_DB } from '@myrddraall/heroes-replay-stats-import/data';
 
 /** A replay's score screen: each player's line and each team's totals. */
 export interface ReplayScoreScreen {

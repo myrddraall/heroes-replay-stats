@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { ImportJobs } from './import-jobs';
+import { ImportJobs } from '../../ui';
 import { ImportPageStore } from './import-page.store';
 import { Layout } from '@myrddraall/heroes-replay-stats-layout/ui';
 

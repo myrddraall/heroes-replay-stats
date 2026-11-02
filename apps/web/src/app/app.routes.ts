@@ -41,11 +41,6 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/maps/map-page').then((m) => m.MapPage),
   },
   {
-    path: 'import',
-    title: 'Import · Heroes Replay Stats',
-    loadComponent: () => import('./pages/import/import-page').then((m) => m.ImportPage),
-  },
-  {
     path: 'theme-preview',
     title: 'Theme preview · Heroes Replay Stats',
     loadComponent: () =>

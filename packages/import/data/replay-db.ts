@@ -1,4 +1,4 @@
-import { InjectionToken, type Provider } from '@angular/core';
+import { InjectionToken } from '@angular/core';
 import { createReplayDb, type ReplayDbClient } from '@myrddraall/heroprotocol-db/client';
 
 /** The worker-backed replay database client: reads, and the first import slot. */
@@ -12,15 +12,8 @@ export const REPLAY_DB_FACTORY = new InjectionToken<() => ReplayDbClient>('hrs.r
  * builder. The `new Worker(new URL(...), ...)` shape is what the builder recognises, so
  * it stays inline.
  */
-function createClient(): ReplayDbClient {
+export function createReplayDbClient(): ReplayDbClient {
   return createReplayDb({
     worker: () => new Worker(new URL('./replay.worker', import.meta.url), { type: 'module' }),
   });
-}
-
-export function provideReplayDb(): Provider[] {
-  return [
-    { provide: REPLAY_DB, useFactory: createClient },
-    { provide: REPLAY_DB_FACTORY, useValue: createClient },
-  ];
 }

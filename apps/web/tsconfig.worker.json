@@ -1,4 +1,5 @@
-// The ingest worker (the src tree's *.worker.ts files), built by the Angular builder's web worker support.
+// The compiler options the Angular builder bundles web workers with (the import package's ingest
+// worker); each package type-checks its own workers.
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {

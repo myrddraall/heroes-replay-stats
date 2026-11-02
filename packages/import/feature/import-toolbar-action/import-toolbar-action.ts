@@ -7,7 +7,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
 import { map } from 'rxjs';
-import { ReplayImportJobStore } from '../../../data/import/replay-import-job.store';
+import { ReplayImportJobStore } from '../../data';
 
 /**
  * Importing, at the end of the shell's toolbar (container): the progress pod while imports run,

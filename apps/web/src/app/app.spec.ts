@@ -3,13 +3,17 @@ import { TestBed } from '@angular/core/testing';
 import { provideAether } from '@myrddraall/heroes-replay-stats-aether';
 import { describe, expect, it, beforeEach } from 'vitest';
 import { routes } from './app.routes';
-import { REPLAY_DB, REPLAY_DB_FACTORY } from './data/import/provide-replay-db';
 import { PLATFORM } from '@myrddraall/heroes-replay-stats-platform/data';
 import type { Platform } from '@myrddraall/heroes-replay-stats-platform/model';
-import { ReplayImportJobStore } from './data/import/replay-import-job.store';
+import {
+  REPLAY_DB,
+  REPLAY_DB_FACTORY,
+  ReplayImportJobStore,
+} from '@myrddraall/heroes-replay-stats-import/data';
+import { provideImportFeature } from '@myrddraall/heroes-replay-stats-import/provide';
 import { Shell } from '@myrddraall/heroes-replay-stats-shell/feature';
 import { provideSettingsFeature } from '@myrddraall/heroes-replay-stats-settings/provide';
-import { APP_NAV_ITEMS, provideAppShellSlots } from './shell-slots';
+import { provideAppShellSlots } from './shell-slots';
 import { BACKGROUND_EDITOR } from './site-background/background-editor';
 
 /** A drag event as jsdom cannot make one: a plain event with a fake dataTransfer. */
@@ -34,6 +38,7 @@ describe('App shell', () => {
     await TestBed.configureTestingModule({
       imports: [Shell],
       providers: [
+        provideImportFeature(),
         provideSettingsFeature(),
         provideRouter(routes),
         provideAppShellSlots(),
@@ -66,7 +71,15 @@ describe('App shell', () => {
     const links = [...el.querySelectorAll('mat-nav-list a[mat-list-item]')].map((a) =>
       a.getAttribute('href'),
     );
-    expect(links).toEqual([...APP_NAV_ITEMS.map((i) => i.path), '/settings']);
+    expect(links).toEqual([
+      '/replays',
+      '/players',
+      '/maps',
+      '/import',
+      '/theme-preview',
+      '/edit-background',
+      '/settings',
+    ]);
     expect(el.querySelector('.shell__platform')?.textContent).toContain('test');
   });
 

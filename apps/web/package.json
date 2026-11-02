@@ -7,7 +7,7 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "lint": "ng lint",
-    "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.worker.json && tsc --noEmit -p tsconfig.spec.json",
+    "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.spec.json",
     "format": "prettier --write \"src/**/*.{ts,html,scss}\"",
     "github.actions.build": "pnpm build",
     "github.actions.test": "pnpm test"
@@ -29,6 +29,7 @@
     "@myrddraall/heroes-replay-stats-analysers": "workspace:*",
     "@myrddraall/heroes-replay-stats-common": "workspace:*",
     "@myrddraall/heroes-replay-stats-heroes": "workspace:*",
+    "@myrddraall/heroes-replay-stats-import": "workspace:*",
     "@myrddraall/heroes-replay-stats-layout": "workspace:*",
     "@myrddraall/heroes-replay-stats-map": "workspace:*",
     "@myrddraall/heroes-replay-stats-platform": "workspace:*",

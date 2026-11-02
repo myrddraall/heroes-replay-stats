@@ -99,6 +99,7 @@
                 "@myrddraall/heroes-replay-stats-aether-forge",
                 "@myrddraall/heroes-replay-stats-common",
                 "@myrddraall/heroes-replay-stats-heroes",
+                "@myrddraall/heroes-replay-stats-import",
                 "@myrddraall/heroes-replay-stats-layout",
                 "@myrddraall/heroes-replay-stats-map",
                 "@myrddraall/heroes-replay-stats-platform",

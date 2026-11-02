@@ -1,7 +1,7 @@
 import { computed, inject } from '@angular/core';
 import { signalStore, withComputed, withMethods, withProps } from '@ngrx/signals';
 import { LatestHeroData } from '@myrddraall/heroes-replay-stats-heroes/data';
-import { ReplayImportJobStore } from '../../data/import/replay-import-job.store';
+import { ReplayImportJobStore } from '@myrddraall/heroes-replay-stats-import/data';
 import { ReplayService } from '../../data/replays/replay.service';
 import { SettingsStore } from '@myrddraall/heroes-replay-stats-settings/data';
 import { errorMessage } from '@myrddraall/heroes-replay-stats-common/model';

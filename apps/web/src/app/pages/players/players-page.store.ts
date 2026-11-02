@@ -1,6 +1,6 @@
 import { computed, inject } from '@angular/core';
 import { signalStore, withComputed, withMethods, withProps } from '@ngrx/signals';
-import { ReplayImportJobStore } from '../../data/import/replay-import-job.store';
+import { ReplayImportJobStore } from '@myrddraall/heroes-replay-stats-import/data';
 import { PlayerService } from '../../data/players/player.service';
 import { SettingsStore } from '@myrddraall/heroes-replay-stats-settings/data';
 import { errorMessage } from '@myrddraall/heroes-replay-stats-common/model';
