@@ -44,7 +44,7 @@
             <li class="player">
               <hrs-hero-minimap-icon
                 class="player__icon"
-                [src]="icons()[p.slot]?.src ?? null"
+                [picture]="icons()[p.slot]?.picture ?? null"
                 [name]="icons()[p.slot]?.name ?? p.hero"
               />
               <span class="player__hero">{{ p.hero }}</span>

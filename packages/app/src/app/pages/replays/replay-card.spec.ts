@@ -29,9 +29,9 @@ const replay: ReplaySummary = {
 };
 
 const heroes: HeroLookup = {
-  heroIcon: (id) => (id === 'Barbarian' ? { src: 'sonya.png', name: 'Sonya' } : null),
+  heroIcon: (id) => (id === 'Barbarian' ? { picture: { src: 'sonya.png' }, name: 'Sonya' } : null),
   heroDataId: (id) => (id === 'Barbarian' ? id : null),
-  mapPreview: (map) => (map === 'Towers of Doom' ? 'towers.png' : null),
+  mapPreview: (map) => (map === 'Towers of Doom' ? { src: 'towers.png' } : null),
 };
 
 describe('toReplayCard', () => {
@@ -43,7 +43,7 @@ describe('toReplayCard', () => {
   it("gives the map's preview and each player's hero icon, by slot", () => {
     const card = toReplayCard(replay, new Set(), heroes);
     expect(card.preview).toBe('towers.png');
-    expect(card.icons).toEqual({ 0: { src: 'sonya.png', name: 'Sonya' }, 5: null });
+    expect(card.icons).toEqual({ 0: { picture: { src: 'sonya.png' }, name: 'Sonya' }, 5: null });
     expect(card.replay).toBe(replay);
   });
 });

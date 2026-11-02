@@ -1,7 +1,6 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { signalStore, withComputed, withProps } from '@ngrx/signals';
-import { LatestHeroData } from '../../../data/heroes/hero-data';
 import { ReplayStatsService } from '../../../data/replays/replay-stats.service';
 import { TeamPerspective } from '../../../team/team-color';
 import { errorMessage } from '../../error-message';
@@ -17,7 +16,7 @@ export const DraftSectionStore = signalStore(
     const page = inject(ReplayPageStore);
     const stats = inject(ReplayStatsService);
     return {
-      _heroData: inject(LatestHeroData),
+      _page: page,
       _perspective: inject(TeamPerspective),
       _draft: rxResource({
         params: () => page.replayId() ?? undefined,
@@ -25,13 +24,13 @@ export const DraftSectionStore = signalStore(
       }),
     };
   }),
-  withComputed(({ _heroData, _perspective, _draft }) => ({
+  withComputed(({ _page, _perspective, _draft }) => ({
     /** Null until the draft has been read; empty for a game without a draft. */
     steps: computed(() => {
       if (!_draft.hasValue()) return null;
       const { draft, steps } = _draft.value();
       return draft?.picking === 'draft'
-        ? draftSteps(steps, _heroData.lookup(), _perspective.yourTeam(), _perspective.mode())
+        ? draftSteps(steps, _page.heroes(), _perspective.yourTeam(), _perspective.mode())
         : [];
     }),
     /** How heroes were picked; `unknown` when the replay doesn't say, null until read. */

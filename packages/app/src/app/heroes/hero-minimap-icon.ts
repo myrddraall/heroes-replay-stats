@@ -1,12 +1,12 @@
-import { NgOptimizedImage } from '@angular/common';
 import { Component, input } from '@angular/core';
+import { Sprite, type SpritePicture } from '../sprite/sprite';
 
-/** A hero's minimap icon (`src`), named for the hero; nothing without a picture. */
+/** A hero's minimap icon (`picture`), named for the hero; nothing without a picture. */
 @Component({
   selector: 'hrs-hero-minimap-icon',
-  imports: [NgOptimizedImage],
-  template: `@if (src(); as src) {
-    <img [ngSrc]="src" width="32" height="32" [alt]="name()" />
+  imports: [Sprite],
+  template: `@if (picture(); as picture) {
+    <img [hrsSprite]="picture" [spriteWidth]="32" [alt]="name()" />
   }`,
   styles: `
     :host {
@@ -21,6 +21,6 @@ import { Component, input } from '@angular/core';
   `,
 })
 export class HeroMinimapIcon {
-  readonly src = input<string | null>(null);
+  readonly picture = input<SpritePicture | null>(null);
   readonly name = input.required<string>();
 }

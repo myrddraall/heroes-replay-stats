@@ -2,7 +2,6 @@ import { computed, inject, resource } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { loadEmoticons } from '@myrddraall/hero-data';
 import { signalStore, withComputed, withProps } from '@ngrx/signals';
-import { LatestHeroData } from '../../../data/heroes/hero-data';
 import { ReplayStatsService } from '../../../data/replays/replay-stats.service';
 import { errorMessage } from '../../error-message';
 import { ReplayPageStore } from '../replay-page.store';
@@ -18,7 +17,6 @@ export const ChatSectionStore = signalStore(
     const stats = inject(ReplayStatsService);
     return {
       _page: page,
-      _heroData: inject(LatestHeroData),
       _chat: rxResource({
         params: () => page.replayId() ?? undefined,
         stream: ({ params }) => stats.chat(params),
@@ -26,15 +24,15 @@ export const ChatSectionStore = signalStore(
       _emotes: resource({ loader: () => loadEmoticons() }),
     };
   }),
-  withComputed(({ _page, _heroData, _chat, _emotes }) => ({
+  withComputed(({ _page, _chat, _emotes }) => ({
     /** Null until the chat has been read. */
     lines: computed(() =>
       _chat.hasValue()
         ? chatLogLines(
             _chat.value(),
             _emotes.hasValue() ? _emotes.value() : null,
-            _heroData.lookup(),
-            _heroData.images,
+            _page.heroes(),
+            _page.images(),
             _page.icons(),
           )
         : null,

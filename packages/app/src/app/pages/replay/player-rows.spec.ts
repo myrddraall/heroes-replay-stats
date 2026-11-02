@@ -23,7 +23,7 @@ describe('player rows', () => {
 
   it('puts your team first, in blue, then the rest by slot', () => {
     const players = [player(0, 0, 1), player(5, 1, 2), player(1, 0, null), player(6, 1, 4)];
-    const icon = { src: 'valla.png', name: 'Valla' };
+    const icon = { picture: { src: 'valla.png' }, name: 'Valla' };
     const rows = playerRows(players, { 5: icon }, columns, 1, 'relative');
     expect(rows.map((r) => [r.key, r.group, r.class])).toEqual([
       [5, 1, 'hrs-glass-blue'],

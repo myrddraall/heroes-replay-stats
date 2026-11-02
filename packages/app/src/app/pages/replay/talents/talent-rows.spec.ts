@@ -27,7 +27,7 @@ describe('talent rows', () => {
     icon: 'valla1.png',
   } as TalentInfo;
   const data = { talent: (id: string) => (id === known.id ? known : undefined) };
-  const images = { icon: (t: TalentInfo) => `img/${t.icon}` };
+  const images = { icon: (t: TalentInfo) => ({ src: `img/${t.icon}` }) };
 
   it("puts each pick under its tier, named and pictured from the data, else by the game's id", () => {
     const rows = talentRows(
@@ -40,7 +40,7 @@ describe('talent rows', () => {
       'relative',
     );
     expect(rows[0]!.talents).toEqual([
-      { name: 'Hungering Arrow+', level: 1, icon: 'img/valla1.png' },
+      { name: 'Hungering Arrow+', level: 1, icon: { src: 'img/valla1.png' } },
       null,
       { name: 'ValllaUnknown', level: 3, icon: null },
       null,

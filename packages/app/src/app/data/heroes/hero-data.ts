@@ -1,13 +1,16 @@
 import { computed, inject, InjectionToken, type Provider, resource, Service } from '@angular/core';
 import {
+  heroesAssetsProvider,
   heroesImages,
-  heroesToolChestProvider,
   type HeroDataProvider,
   type TextCache,
 } from '@myrddraall/hero-data';
 import { heroLookup } from './hero-lookup';
 
-/** Hero, talent and award data, loaded from HeroesToolChest at runtime. */
+/**
+ * Hero, talent, award and map data, loaded at runtime: from heroes-assets for builds from 97039
+ * on (each build's own, with its pictures in sheets), and from HeroesToolChest's archive before.
+ */
 export const HERO_DATA = new InjectionToken<HeroDataProvider>('hrs.hero-data');
 
 /** The raw hero-data files in Cache Storage, so each build downloads once. A failing cache is a miss. */
@@ -35,7 +38,7 @@ function cacheStorage(): TextCache | undefined {
 
 export function provideHeroData(): Provider[] {
   return [
-    { provide: HERO_DATA, useFactory: () => heroesToolChestProvider({ cache: cacheStorage() }) },
+    { provide: HERO_DATA, useFactory: () => heroesAssetsProvider({ cache: cacheStorage() }) },
   ];
 }
 
@@ -44,9 +47,12 @@ export function provideHeroData(): Provider[] {
 export class LatestHeroData {
   private readonly provider = inject(HERO_DATA);
   readonly data = resource({ loader: () => this.provider.latest() });
-  readonly images = heroesImages();
+  /** The pictures for this data's file names (heroes-images' until it has loaded). */
+  readonly images = computed(() =>
+    heroesImages({ data: this.data.hasValue() ? this.data.value() : undefined }),
+  );
   /** Heroes' icons and maps' previews from this data; knows nothing until it has loaded. */
   readonly lookup = computed(() =>
-    heroLookup(this.data.hasValue() ? this.data.value() : undefined, this.images),
+    heroLookup(this.data.hasValue() ? this.data.value() : undefined, this.images()),
   );
 }

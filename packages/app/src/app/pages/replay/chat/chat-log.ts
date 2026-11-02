@@ -1,4 +1,5 @@
 import { Component, input } from '@angular/core';
+import { Sprite } from '../../../sprite/sprite';
 import { HeroMinimapIcon } from '../../../heroes/hero-minimap-icon';
 import { TeamTheme } from '../../../team/team-theme';
 import type { ChatLogLine } from './chat-log-lines';
@@ -9,7 +10,7 @@ import type { ChatLogLine } from './chat-log-lines';
  */
 @Component({
   selector: 'hrs-chat-log',
-  imports: [HeroMinimapIcon, TeamTheme],
+  imports: [HeroMinimapIcon, Sprite, TeamTheme],
   templateUrl: './chat-log.html',
   styleUrl: './chat-log.scss',
 })

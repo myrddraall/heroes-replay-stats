@@ -1,8 +1,8 @@
-import type { heroesImages, HeroDataSet } from '@myrddraall/hero-data';
+import type { HeroDataSet, HeroesImages, Picture } from '@myrddraall/hero-data';
 
 /** A hero's minimap icon, and the hero's name for it. */
 export interface HeroIcon {
-  readonly src: string;
+  readonly picture: Picture;
   readonly name: string;
 }
 
@@ -20,13 +20,13 @@ export interface HeroLookup {
    */
   heroDataId(heroId: string, name?: string): string | null;
   /** By the map's name as a replay records it; `null` for a map the data doesn't know. */
-  mapPreview(map: string): string | null;
+  mapPreview(map: string): Picture | null;
 }
 
 /** The lookup over a hero data set, or one that knows nothing while the data loads. */
 export function heroLookup(
   data: HeroDataSet | undefined,
-  images: ReturnType<typeof heroesImages>,
+  images: HeroesImages,
 ): HeroLookup {
   const find = (heroId: string, name?: string) =>
     data?.hero(heroId) ?? (name === undefined ? undefined : data?.hero(name));
@@ -34,8 +34,8 @@ export function heroLookup(
     heroDataId: (heroId, name) => find(heroId, name)?.id ?? null,
     heroIcon: (heroId, name) => {
       const hero = find(heroId, name);
-      const src = hero ? images.portrait(hero, 'minimap') : null;
-      return hero && src ? { src, name: hero.name } : null;
+      const picture = hero ? images.portrait(hero, 'minimap') : null;
+      return hero && picture ? { picture, name: hero.name } : null;
     },
     mapPreview: (map) => {
       const info = data?.map(map);

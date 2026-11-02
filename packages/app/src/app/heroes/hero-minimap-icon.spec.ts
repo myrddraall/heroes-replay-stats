@@ -5,7 +5,7 @@ import { HeroMinimapIcon } from './hero-minimap-icon';
 describe('HeroMinimapIcon', () => {
   it('shows the icon it is given, named for the hero', async () => {
     const fixture = TestBed.createComponent(HeroMinimapIcon);
-    fixture.componentRef.setInput('src', 'https://example.test/sonya.png');
+    fixture.componentRef.setInput('picture', { src: 'https://example.test/sonya.png' });
     fixture.componentRef.setInput('name', 'Sonya');
     await fixture.whenStable();
     const img: HTMLImageElement = fixture.nativeElement.querySelector('img');

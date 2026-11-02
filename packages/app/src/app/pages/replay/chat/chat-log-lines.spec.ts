@@ -23,7 +23,7 @@ const heroes: Pick<HeroLookup, 'heroDataId'> = {
   heroDataId: (id, name) => (id === 'DVaPilot' || name === 'D.Va' ? 'DVa' : null),
 };
 const lookup = heroes as HeroLookup;
-const images = { emoticon: (e: { image: string }) => `img/${e.image}` };
+const images = { emoticon: (e: { image: string }) => ({ src: `img/${e.image}` }) };
 const emotes = createEmoticonSet({
   build: 1,
   emoticons: {
@@ -46,7 +46,7 @@ describe('chatLogLines', () => {
       text: 'gg',
     }),
   ];
-  const icons = { 0: { src: 'dva-icon.png', name: 'D.Va' } };
+  const icons = { 0: { picture: { src: 'dva-icon.png' }, name: 'D.Va' } };
 
   it("lists the chat, not the pings, with the sender's emotes as their hero's", () => {
     const lines = chatLogLines(rows, emotes, lookup, images, icons);
@@ -54,11 +54,11 @@ describe('chatLogLines', () => {
       [0, '1:15', 'Erd', 0],
       [2, '1:00:00', 'Other', 1],
     ]);
-    expect(lines[0]!.icon).toEqual({ src: 'dva-icon.png', name: 'D.Va' });
+    expect(lines[0]!.icon).toEqual({ picture: { src: 'dva-icon.png' }, name: 'D.Va' });
     expect(lines[1]!.icon).toBeNull();
     expect(lines[0]!.pieces).toEqual([
       { kind: 'text', text: 'hi ' },
-      { kind: 'emote', src: 'img/dva.png', code: ':)' },
+      { kind: 'emote', picture: { src: 'img/dva.png' }, code: ':)' },
     ]);
   });
 

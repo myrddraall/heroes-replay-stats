@@ -5,7 +5,7 @@ import { draftSteps } from './draft-steps';
 
 describe('draft steps', () => {
   const heroes: HeroLookup = {
-    heroIcon: (id) => (id === 'Barbarian' ? { src: 'sonya.png', name: 'Sonya' } : null),
+    heroIcon: (id) => (id === 'Barbarian' ? { picture: { src: 'sonya.png' }, name: 'Sonya' } : null),
     heroDataId: () => null,
     mapPreview: () => null,
   };
@@ -40,7 +40,7 @@ describe('draft steps', () => {
         team: 0,
         teamName: 'Blue team',
         hero: 'Sonya',
-        icon: { src: 'sonya.png', name: 'Sonya' },
+        icon: { picture: { src: 'sonya.png' }, name: 'Sonya' },
         player: null,
       },
       {

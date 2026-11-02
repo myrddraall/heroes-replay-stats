@@ -1,4 +1,4 @@
-import type { EmoticonSet, HeroesImages } from '@myrddraall/hero-data';
+import type { EmoticonSet, HeroesImages, Picture } from '@myrddraall/hero-data';
 import type { ChatLineRow } from '@myrddraall/heroprotocol-analysis';
 import type { Team } from '@myrddraall/heroprotocol-db';
 import type { HeroIcon, HeroLookup } from '../../../data/heroes/hero-lookup';
@@ -7,7 +7,7 @@ import { formatDuration } from '../../replays/replay-list-item';
 /** A piece of a chat line as the log shows it: text, or an emote's picture. */
 export type ChatLogPiece =
   | { readonly kind: 'text'; readonly text: string }
-  | { readonly kind: 'emote'; readonly src: string; readonly code: string };
+  | { readonly kind: 'emote'; readonly picture: Picture; readonly code: string };
 
 /** One chat line as the log shows it. */
 export interface ChatLogLine {
@@ -50,7 +50,7 @@ export function chatLogLines(
               .map((p) =>
                 p.kind === 'text'
                   ? p
-                  : { kind: 'emote' as const, src: images.emoticon(p.emoticon), code: p.code },
+                  : { kind: 'emote' as const, picture: images.emoticon(p.emoticon), code: p.code },
               )
           : [{ kind: 'text', text }],
       };

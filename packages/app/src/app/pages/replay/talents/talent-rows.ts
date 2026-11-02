@@ -1,4 +1,4 @@
-import type { HeroDataSet, HeroesImages } from '@myrddraall/hero-data';
+import type { HeroDataSet, HeroesImages, Picture } from '@myrddraall/hero-data';
 import type { TalentPickRow } from '@myrddraall/heroprotocol-analysis';
 import type { Team } from '@myrddraall/heroprotocol-db';
 import type { HeroIcon } from '../../../data/heroes/hero-lookup';
@@ -17,7 +17,7 @@ export interface TalentCell {
   /** The level the player had when they picked it. */
   readonly level: number;
   /** The talent's icon; null when the hero data has none. */
-  readonly icon: string | null;
+  readonly icon: Picture | null;
 }
 
 /** One player's row of the talents table. */

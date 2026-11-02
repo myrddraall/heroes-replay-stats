@@ -1,4 +1,4 @@
-import { NgOptimizedImage } from '@angular/common';
+import { Sprite } from '../../../sprite/sprite';
 import { Component, input } from '@angular/core';
 import { PlayerCell } from '../player-cell';
 import { TALENT_TIERS, type TalentRow } from './talent-rows';
@@ -9,7 +9,7 @@ import { TALENT_TIERS, type TalentRow } from './talent-rows';
  */
 @Component({
   selector: 'hrs-talent-table',
-  imports: [NgOptimizedImage, PlayerCell],
+  imports: [PlayerCell, Sprite],
   templateUrl: './talent-table.html',
   styleUrl: './talent-table.scss',
 })

@@ -6,7 +6,7 @@ import { resolveYou, type You } from '../../data/you/resolve-you';
 export interface ReplayCard {
   readonly replay: ReplaySummary;
   readonly you: You;
-  /** The map's replay preview, behind the card. */
+  /** The map's replay preview (always a file of its own), behind the card. */
   readonly preview: string | null;
   /** Each player's hero icon, by slot; `null` for a hero the data doesn't know. */
   readonly icons: Readonly<Record<number, HeroIcon | null>>;
@@ -21,7 +21,7 @@ export function toReplayCard(
   return {
     replay,
     you: resolveYou(replay, me),
-    preview: heroes.mapPreview(replay.map),
+    preview: heroes.mapPreview(replay.map)?.src ?? null,
     icons: Object.fromEntries(
       replay.players.map((p) => [p.slot, heroes.heroIcon(p.heroId, p.hero)]),
     ),

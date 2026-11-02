@@ -8,7 +8,7 @@
         <time class="line__time">{{ line.time }}</time>
         <hrs-hero-minimap-icon
           class="line__icon"
-          [src]="line.icon?.src ?? null"
+          [picture]="line.icon?.picture ?? null"
           [name]="line.icon?.name ?? line.hero ?? ''"
         />
         <span class="line__sender">{{ line.sender }}</span>
@@ -17,7 +17,13 @@
             @if (piece.kind === 'text') {
               {{ piece.text }}
             } @else {
-              <img class="line__emote" [src]="piece.src" [alt]="piece.code" [title]="piece.code" />
+              <img
+                class="line__emote"
+                [hrsSprite]="piece.picture"
+                [spriteHeight]="28"
+                [alt]="piece.code"
+                [title]="piece.code"
+              />
             }
           }
         </span>

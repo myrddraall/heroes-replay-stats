@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, resource } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import {
   patchState,
@@ -9,8 +9,9 @@ import {
   withProps,
   withState,
 } from '@ngrx/signals';
-import type { HeroIcon } from '../../data/heroes/hero-lookup';
-import { LatestHeroData } from '../../data/heroes/hero-data';
+import { heroesImages } from '@myrddraall/hero-data';
+import { HERO_DATA } from '../../data/heroes/hero-data';
+import { heroLookup, type HeroIcon } from '../../data/heroes/hero-lookup';
 import { ReplayService } from '../../data/replays/replay.service';
 import { ReplayStatsService } from '../../data/replays/replay-stats.service';
 import { SettingsStore } from '../../data/settings/settings.store';
@@ -18,8 +19,8 @@ import { resolveYou } from '../../data/you/resolve-you';
 import { errorMessage } from '../error-message';
 
 /**
- * {@link ReplayPage}'s component store: the replay shown, who "you" are in it, and its stats
- * tables, which the page's sections (its child routes) read.
+ * {@link ReplayPage}'s component store: the replay shown, who "you" are in it, its game build's
+ * hero data and pictures, and its stats tables, which the page's sections (its child routes) read.
  */
 export const ReplayPageStore = signalStore(
   withState({ replayId: null as string | null }),
@@ -29,7 +30,7 @@ export const ReplayPageStore = signalStore(
     return {
       _replays: inject(ReplayService),
       _settings: inject(SettingsStore),
-      _heroData: inject(LatestHeroData),
+      _provider: inject(HERO_DATA),
       _scoreScreen: rxResource({
         params: id,
         stream: ({ params }) => stats.scoreScreen(params),
@@ -40,22 +41,39 @@ export const ReplayPageStore = signalStore(
       }),
     };
   }),
-  withComputed(({ replayId, _replays, _settings, _heroData, _scoreScreen, _playerStats }) => {
-    const replay = computed(() => _replays.replays().find((r) => r.id === replayId()) ?? null);
+  withComputed(({ replayId, _replays }) => ({
+    /** Null until the list has loaded, and for a replay that is not stored (or not ready). */
+    replay: computed(() => _replays.replays().find((r) => r.id === replayId()) ?? null),
+  })),
+  withProps(({ replay, _provider }) => ({
+    /** The hero data of the replay's own game build (the nearest one published). */
+    _heroData: resource({
+      params: () => replay()?.build,
+      loader: ({ params }) => _provider.forBuild(params),
+    }),
+  })),
+  withComputed(({ replay, _replays, _settings, _heroData, _scoreScreen, _playerStats }) => {
+    /** Null until it has loaded. */
+    const heroData = computed(() => (_heroData.hasValue() ? (_heroData.value() ?? null) : null));
+    /** The pictures for its file names (heroes-images' until it has loaded). */
+    const images = computed(() => heroesImages({ data: heroData() ?? undefined }));
+    /** Heroes' icons and maps' previews from it; knows nothing until it has loaded. */
+    const heroes = computed(() => heroLookup(heroData() ?? undefined, images()));
     return {
-      /** Null until the list has loaded, and for a replay that is not stored (or not ready). */
-      replay,
       /** False until the replay list has loaded. */
       loaded: _replays.loaded,
       you: computed(() => {
         const r = replay();
         return r ? resolveYou(r, new Set(_settings.meToonHandles())) : { slots: [], team: null };
       }),
+      heroData,
+      images,
+      heroes,
       /** Each player's hero icon, by slot; `null` for a hero the data doesn't know. */
       icons: computed((): Readonly<Record<number, HeroIcon | null>> => {
-        const heroes = _heroData.lookup();
+        const lookup = heroes();
         return Object.fromEntries(
-          (replay()?.players ?? []).map((p) => [p.slot, heroes.heroIcon(p.heroId, p.hero)]),
+          (replay()?.players ?? []).map((p) => [p.slot, lookup.heroIcon(p.heroId, p.hero)]),
         );
       }),
       scoreScreen: computed(() => (_scoreScreen.hasValue() ? _scoreScreen.value() : null)),

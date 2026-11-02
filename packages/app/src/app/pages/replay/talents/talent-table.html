@@ -20,7 +20,7 @@
               @if (talent) {
                 <span class="talent">
                   @if (talent.icon; as icon) {
-                    <img class="talent__icon" [ngSrc]="icon" width="32" height="32" alt="" />
+                    <img class="talent__icon" [hrsSprite]="icon" [spriteWidth]="32" alt="" />
                   }
                   <span class="talent__text">
                     <span class="talent__name">{{ talent.name }}</span>
