@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { MatButton } from '@angular/material/button';
 import { MatDialogActions, MatDialogClose, MatDialogContent } from '@angular/material/dialog';
-import { SettingsPanel } from './settings-panel';
+import { SettingsPanel } from '../settings-panel/settings-panel';
 
 /** The settings in a dialog (opened from the Background editor, which stays as it is under it). */
 @Component({

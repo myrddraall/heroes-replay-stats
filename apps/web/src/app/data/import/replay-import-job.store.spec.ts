@@ -4,7 +4,7 @@ import type { IngestStatus } from '@myrddraall/heroprotocol-db/ingest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { PLATFORM } from '@myrddraall/heroes-replay-stats-platform/data';
 import type { PickedReplay, Platform } from '@myrddraall/heroes-replay-stats-platform/model';
-import { SettingsStore } from '../settings/settings.store';
+import { SettingsStore } from '@myrddraall/heroes-replay-stats-settings/data';
 import { REPLAY_DB, REPLAY_DB_FACTORY } from './provide-replay-db';
 import {
   IMPORT_JOBS_STORAGE_KEY,

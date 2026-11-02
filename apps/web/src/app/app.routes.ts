@@ -1,5 +1,6 @@
 import type { Routes } from '@angular/router';
 import { Shell } from './shell/shell';
+import { SETTINGS_ROUTES } from '@myrddraall/heroes-replay-stats-settings/provide';
 
 /** The app's pages, in the shell (its toolbar and navigation). */
 const pages: Routes = [
@@ -41,11 +42,7 @@ const pages: Routes = [
     loadComponent: () =>
       import('./pages/theme-preview/theme-preview-page').then((m) => m.ThemePreviewPage),
   },
-  {
-    path: 'settings',
-    title: 'Settings · Heroes Replay Stats',
-    loadComponent: () => import('./pages/settings/settings-page').then((m) => m.SettingsPage),
-  },
+  ...SETTINGS_ROUTES,
   { path: '**', redirectTo: 'replays' },
 ];
 

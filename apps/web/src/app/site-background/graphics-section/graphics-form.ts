@@ -16,7 +16,7 @@ import {
   RESOLUTION_RANGE,
 } from '../../data/settings/graphics.store';
 import type { TintPreset } from "@myrddraall/heroes-replay-stats-aether";
-import { SettingSlider } from './setting-slider';
+import { SettingSlider } from '@myrddraall/heroes-replay-stats-settings/ui';
 
 /** A setting set with a slider. */
 interface SliderSetting {

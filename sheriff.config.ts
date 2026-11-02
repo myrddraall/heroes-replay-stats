@@ -11,13 +11,16 @@ const domains: Record<string, readonly string[]> = {
   common: ['ui', 'model'],
   layout: ['ui', 'model'],
   platform: ['provide', 'data', 'model'],
+  settings: ['provide', 'feature', 'ui', 'data'],
 };
 
 /** Shared domains: any domain may use them; a shared domain uses another only through `uses`. */
-const shared = ['common', 'layout', 'platform'];
+const shared = ['common', 'layout', 'platform', 'settings'];
 
 /** The domains each domain may use besides itself, the shared ones and simple libraries; one way only. */
-const uses: Record<string, readonly string[]> = {};
+const uses: Record<string, readonly string[]> = {
+  settings: ['layout', 'platform'],
+};
 
 /** aether's areas, one barrel each (packages/aether/src/<area>/index.ts). */
 const aetherAreas = [

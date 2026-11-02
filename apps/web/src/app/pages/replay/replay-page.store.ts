@@ -14,7 +14,7 @@ import { HERO_DATA } from '../../data/heroes/hero-data';
 import { heroLookup, type HeroIcon } from '../../data/heroes/hero-lookup';
 import { ReplayService } from '../../data/replays/replay.service';
 import { ReplayStatsService } from '../../data/replays/replay-stats.service';
-import { SettingsStore } from '../../data/settings/settings.store';
+import { SettingsStore } from '@myrddraall/heroes-replay-stats-settings/data';
 import { resolveYou } from '../../data/you/resolve-you';
 import { errorMessage } from '@myrddraall/heroes-replay-stats-common/model';
 

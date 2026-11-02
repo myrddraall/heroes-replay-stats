@@ -31,6 +31,7 @@
     "@myrddraall/heroes-replay-stats-layout": "workspace:*",
     "@myrddraall/heroes-replay-stats-map": "workspace:*",
     "@myrddraall/heroes-replay-stats-platform": "workspace:*",
+    "@myrddraall/heroes-replay-stats-settings": "workspace:*",
     "@myrddraall/heroes-replay-stats-signals": "workspace:*",
     "@myrddraall/heroprotocol-analysis": "^0.5.4",
     "@myrddraall/heroprotocol-db": "^0.5.4",

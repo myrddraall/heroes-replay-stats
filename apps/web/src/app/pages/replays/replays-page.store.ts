@@ -3,7 +3,7 @@ import { signalStore, withComputed, withMethods, withProps } from '@ngrx/signals
 import { LatestHeroData } from '../../data/heroes/hero-data';
 import { ReplayImportJobStore } from '../../data/import/replay-import-job.store';
 import { ReplayService } from '../../data/replays/replay.service';
-import { SettingsStore } from '../../data/settings/settings.store';
+import { SettingsStore } from '@myrddraall/heroes-replay-stats-settings/data';
 import { errorMessage } from '@myrddraall/heroes-replay-stats-common/model';
 import { toReplayCard } from './replay-card';
 

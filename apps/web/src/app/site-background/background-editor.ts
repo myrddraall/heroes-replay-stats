@@ -19,7 +19,7 @@ export const BACKGROUND_EDITOR: AetherForgeOptions = {
     return () =>
       void Promise.all([
         import('@angular/material/dialog'),
-        import('../pages/settings/settings-dialog'),
+        import('@myrddraall/heroes-replay-stats-settings/feature'),
       ]).then(([{ MatDialog }, { SettingsDialog }]) =>
         injector.get(MatDialog).open(SettingsDialog, {
           ariaLabel: 'Settings',

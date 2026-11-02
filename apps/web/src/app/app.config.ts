@@ -13,8 +13,10 @@ import { GraphicsStore } from './data/settings/graphics.store';
 import { provideReplayDb } from './data/import/provide-replay-db';
 import { DEV_REPORTS_URL } from '@myrddraall/heroes-replay-stats-platform/data';
 import { providePlatformFeature } from '@myrddraall/heroes-replay-stats-platform/provide';
+import { provideSettingsSection } from '@myrddraall/heroes-replay-stats-settings/ui';
 import { APP_VERSION } from './version';
 import { BACKGROUND_EDITOR, BACKGROUND_EDITOR_PATH } from './site-background/background-editor';
+import { GraphicsSection } from './site-background/graphics-section/graphics-section';
 import { provideSiteBackground } from './site-background/provide-site-background';
 import { PRESETS } from './site-background/tint-presets';
 import { routes } from './app.routes';
@@ -56,5 +58,7 @@ export const appConfig: ApplicationConfig = {
     provideReplayDb(),
     provideHeroData(),
     provideSiteBackground(),
+    // The background's settings, until the background domain adds them itself.
+    provideSettingsSection({ id: 'graphics', order: 10, component: GraphicsSection }),
   ],
 };

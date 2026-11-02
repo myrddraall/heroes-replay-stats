@@ -2,22 +2,18 @@ import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { GraphicsStore } from '../../data/settings/graphics.store';
 import { HARDWARE_ACCELERATION } from '../../data/settings/hardware-acceleration';
-import { providePlatformFeature } from '@myrddraall/heroes-replay-stats-platform/provide';
-import { SettingsPage } from './settings-page';
+import { GraphicsSection } from './graphics-section';
 
-describe('SettingsPage graphics', () => {
+describe('GraphicsSection', () => {
   beforeEach(() => {
     localStorage.clear();
     TestBed.configureTestingModule({
-      providers: [
-        providePlatformFeature({ version: '0.0.0-MAIN' }),
-        { provide: HARDWARE_ACCELERATION, useValue: true },
-      ],
+      providers: [{ provide: HARDWARE_ACCELERATION, useValue: true }],
     });
   });
 
   async function render() {
-    const fixture = TestBed.createComponent(SettingsPage);
+    const fixture = TestBed.createComponent(GraphicsSection);
     await fixture.whenStable();
     return fixture;
   }
