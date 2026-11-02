@@ -2,11 +2,11 @@ import {
   formatStatClock,
   type StatColumn,
   type StatRow,
-} from '@myrddraall/heroes-replay-stats-common/ui';
+} from '@myrddraall/heroes-replay-stats-replays/ui';
 import type { XpPointRow } from '@myrddraall/heroprotocol-analysis';
 import type { Team } from '@myrddraall/heroprotocol-db';
-import { teamColor, type TeamColorMode } from '../../../team/team-color';
-import { teamName } from '../team-rows';
+import { teamColor, type TeamColorMode } from '@myrddraall/heroes-replay-stats-replays/model';
+import { teamName } from '@myrddraall/heroes-replay-stats-replays/ui';
 
 const since = 'since the previous time';
 

@@ -2,8 +2,8 @@ import { Component, input, output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { EmptyState } from '@myrddraall/heroes-replay-stats-common/ui';
-import type { ReplayCard } from './replay-card';
-import { ReplayListItem } from './replay-list-item';
+import type { ReplayCard } from '../replay-list-item/replay-card';
+import { ReplayListItem } from '../replay-list-item/replay-list-item';
 
 /** The stored replays (presentational): a card each, or why there are none to show. */
 @Component({

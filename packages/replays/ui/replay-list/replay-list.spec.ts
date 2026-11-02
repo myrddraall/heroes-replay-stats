@@ -4,8 +4,8 @@ import { heroesImages } from '@myrddraall/hero-data';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { fakeHeroData } from '@myrddraall/heroes-replay-stats-heroes/testing';
 import { heroLookup, type HeroLookup } from '@myrddraall/heroes-replay-stats-heroes/model';
-import type { ReplaySummary } from '../../data/replays/replay.service';
-import { toReplayCard } from './replay-card';
+import type { ReplaySummary } from '../../model';
+import { toReplayCard } from '../replay-list-item/replay-card';
 import { ReplayList } from './replay-list';
 
 const replay: ReplaySummary = {

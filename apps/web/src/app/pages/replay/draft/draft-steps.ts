@@ -1,8 +1,8 @@
 import type { DraftStepRow } from '@myrddraall/heroprotocol-analysis';
 import type { Team } from '@myrddraall/heroprotocol-db';
 import type { HeroIcon, HeroLookup } from '@myrddraall/heroes-replay-stats-heroes/model';
-import { teamColor, type TeamColorMode } from '../../../team/team-color';
-import { teamName } from '../team-rows';
+import { teamColor, type TeamColorMode } from '@myrddraall/heroes-replay-stats-replays/model';
+import { teamName } from '@myrddraall/heroes-replay-stats-replays/ui';
 
 /** One ban or pick as the draft shows it. */
 export interface DraftStep {

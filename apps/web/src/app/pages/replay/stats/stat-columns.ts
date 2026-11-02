@@ -1,4 +1,4 @@
-import type { StatColumn } from '@myrddraall/heroes-replay-stats-common/ui';
+import type { StatColumn } from '@myrddraall/heroes-replay-stats-replays/ui';
 
 const perMinute = 'per minute of the game';
 const per10Minutes = 'per 10 minutes of the game';
@@ -81,7 +81,8 @@ const ACTIVITY_COLUMNS: readonly StatColumn[] = [
     label: 'Casts / min',
     format: 'decimal',
     digits: [0, 0],
-    description: 'Orders with an ability, such as attacks and hero abilities, per minute of the game.',
+    description:
+      'Orders with an ability, such as attacks and hero abilities, per minute of the game.',
   },
   { id: 'pings', label: 'Pings', format: 'integer' },
   {

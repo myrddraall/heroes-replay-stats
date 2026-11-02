@@ -1,10 +1,14 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { type StatColumn, StatRowHead, StatTable } from '@myrddraall/heroes-replay-stats-common/ui';
+import {
+  type StatColumn,
+  StatRowHead,
+  StatTable,
+} from '@myrddraall/heroes-replay-stats-replays/ui';
 import type { PlayerStatsRow } from '@myrddraall/heroprotocol-analysis';
 import type { HeroIcon } from '@myrddraall/heroes-replay-stats-heroes/model';
-import { TeamPerspective } from '../../../team/team-color';
-import { PlayerCell } from '../player-cell';
-import { playerRows } from '../player-rows';
+import { TeamPerspective } from '@myrddraall/heroes-replay-stats-replays/ui';
+import { PlayerCell } from '@myrddraall/heroes-replay-stats-replays/ui';
+import { playerRows } from '@myrddraall/heroes-replay-stats-replays/ui';
 
 /**
  * A player stats section's table (presentational): the chosen stats, one row per player coloured

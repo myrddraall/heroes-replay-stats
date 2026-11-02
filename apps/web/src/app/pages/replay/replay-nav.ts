@@ -1,8 +1,8 @@
 import { Component, computed, input, signal } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import type { ReplaySummary } from '../../data/replays/replay.service';
-import { MODE_LABELS } from '../replays/replay-list-item';
+import type { ReplaySummary } from '@myrddraall/heroes-replay-stats-replays/model';
+import { MODE_LABELS } from '@myrddraall/heroes-replay-stats-replays/ui';
 import type { ReplayPageGroup } from './replay-pages';
 
 /**

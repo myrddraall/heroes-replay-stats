@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, input } from '@angular/core';
-import type { ReplaySummary } from '../../data/replays/replay.service';
-import { formatDuration, MODE_LABELS } from '../replays/replay-list-item';
+import type { ReplaySummary } from '@myrddraall/heroes-replay-stats-replays/model';
+import { formatDuration, MODE_LABELS } from '@myrddraall/heroes-replay-stats-replays/ui';
 
 /** A replay's title, and when and how long it was played (presentational). */
 @Component({

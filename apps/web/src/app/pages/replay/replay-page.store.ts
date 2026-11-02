@@ -12,8 +12,8 @@ import {
 import { heroesImages } from '@myrddraall/hero-data';
 import { HERO_DATA } from '@myrddraall/heroes-replay-stats-heroes/data';
 import { heroLookup, type HeroIcon } from '@myrddraall/heroes-replay-stats-heroes/model';
-import { ReplayService } from '../../data/replays/replay.service';
-import { ReplayStatsService } from '../../data/replays/replay-stats.service';
+import { ReplayService } from '@myrddraall/heroes-replay-stats-replays/data';
+import { ReplayStatsService } from '@myrddraall/heroes-replay-stats-replays/data';
 import { SettingsStore } from '@myrddraall/heroes-replay-stats-settings/data';
 import { resolveYou } from '@myrddraall/heroes-replay-stats-players/model';
 import { errorMessage } from '@myrddraall/heroes-replay-stats-common/model';

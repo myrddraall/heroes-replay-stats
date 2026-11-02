@@ -1,7 +1,7 @@
 import { Component, input } from '@angular/core';
 import { Sprite } from '@myrddraall/heroes-replay-stats-common/ui';
 import { HeroMinimapIcon } from '@myrddraall/heroes-replay-stats-heroes/ui';
-import { TeamTheme } from '../../../team/team-theme';
+import { TeamTheme } from '@myrddraall/heroes-replay-stats-replays/ui';
 import type { ChatLogLine } from './chat-log-lines';
 
 /**

@@ -1,4 +1,4 @@
-import type { StatColumnChoice } from '@myrddraall/heroes-replay-stats-common/ui';
+import type { StatColumnChoice } from '@myrddraall/heroes-replay-stats-replays/ui';
 
 /** The player stats sections, in the order the replay's navigation lists them. */
 export const STAT_SECTION_IDS = [
@@ -268,11 +268,7 @@ export const STAT_SECTIONS: Readonly<Record<StatSectionId, StatSection>> = {
         { id: 'PercentProtection', shown: true },
         { id: 'PercentTeamfightHealing', shown: true },
       ],
-      [PER_MINUTE_PRESET]: shown(
-        'HealingPerMinute',
-        'SelfHealingPerMinute',
-        'ShieldingPerMinute',
-      ),
+      [PER_MINUTE_PRESET]: shown('HealingPerMinute', 'SelfHealingPerMinute', 'ShieldingPerMinute'),
     },
   },
   misc: {

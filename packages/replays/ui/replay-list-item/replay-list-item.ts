@@ -3,8 +3,9 @@ import { Component, computed, inject, input } from '@angular/core';
 import type { GameMode, Team } from '@myrddraall/heroprotocol-db';
 import { RouterLink } from '@angular/router';
 import { HeroMinimapIcon } from '@myrddraall/heroes-replay-stats-heroes/ui';
-import { teamColor, type TeamColor, TeamPerspective } from '../../team/team-color';
-import { TeamTheme } from '../../team/team-theme';
+import { teamColor, type TeamColor } from '../../model';
+import { TeamPerspective } from '../team-theme/team-perspective';
+import { TeamTheme } from '../team-theme/team-theme';
 import type { ReplayCard } from './replay-card';
 
 export const MODE_LABELS: Readonly<Record<GameMode, string>> = {

@@ -10,7 +10,6 @@ import { BACKGROUND_EDITOR_PATH } from './site-background/background-editor';
 
 /** The shell's nav items for the pages still in the app (each domain adds its own once it moves out). */
 export const APP_NAV_ITEMS: readonly ShellNavItem[] = [
-  { path: '/replays', label: 'Replays', icon: 'history', order: 10 },
   { path: '/maps', label: 'Maps', icon: 'map', order: 30 },
   { path: '/theme-preview', label: 'Theme preview', icon: 'palette', order: 50 },
   { path: `/${BACKGROUND_EDITOR_PATH}`, label: 'Background', icon: 'wallpaper', order: 60 },

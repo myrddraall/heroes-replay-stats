@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { ReplayList } from './replay-list';
+import { ReplayList } from '../../ui';
 import { ReplaysPageStore } from './replays-page.store';
 import { Layout } from '@myrddraall/heroes-replay-stats-layout/ui';
 

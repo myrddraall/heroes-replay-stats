@@ -12,6 +12,7 @@ import {
 } from '@myrddraall/heroes-replay-stats-import/data';
 import { provideImportFeature } from '@myrddraall/heroes-replay-stats-import/provide';
 import { providePlayersFeature } from '@myrddraall/heroes-replay-stats-players/provide';
+import { provideReplaysFeature } from '@myrddraall/heroes-replay-stats-replays/provide';
 import { Shell } from '@myrddraall/heroes-replay-stats-shell/feature';
 import { provideSettingsFeature } from '@myrddraall/heroes-replay-stats-settings/provide';
 import { provideAppShellSlots } from './shell-slots';
@@ -41,6 +42,7 @@ describe('App shell', () => {
       providers: [
         provideImportFeature(),
         providePlayersFeature(),
+        provideReplaysFeature(),
         provideSettingsFeature(),
         provideRouter(routes),
         provideAppShellSlots(),
@@ -109,7 +111,7 @@ describe('App shell', () => {
   });
 
   it('frames the app pages, and leaves the renderer check and the background editor to fill the window', () => {
-    expect(routes.map((r) => r.path)).toContain('replays');
+    expect(routes.map((r) => r.path)).toContain('replays/:replayId');
     expect(routes.find((r) => r.path === 'renderer-check')?.data?.['shell']).toBe(false);
     expect(BACKGROUND_EDITOR.routeData?.['shell']).toBe(false);
   });

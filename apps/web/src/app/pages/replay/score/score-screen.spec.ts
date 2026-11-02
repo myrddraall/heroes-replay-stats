@@ -8,7 +8,7 @@ import {
   statTableRows,
   type StatColumn,
   type StatRow,
-} from '@myrddraall/heroes-replay-stats-common/ui';
+} from '@myrddraall/heroes-replay-stats-replays/ui';
 import { describe, expect, it } from 'vitest';
 import { awardLabel } from './score-screen';
 

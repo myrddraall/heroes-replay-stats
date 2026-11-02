@@ -1,11 +1,11 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { StatRowHead, StatTable } from '@myrddraall/heroes-replay-stats-common/ui';
+import { StatRowHead, StatTable } from '@myrddraall/heroes-replay-stats-replays/ui';
 import type { PlayerKillsRow, TeamKillsRow } from '@myrddraall/heroprotocol-analysis';
 import type { HeroIcon } from '@myrddraall/heroes-replay-stats-heroes/model';
-import { TeamPerspective } from '../../../team/team-color';
-import { PlayerCell } from '../player-cell';
-import { playerRows } from '../player-rows';
-import { teamRows } from '../team-rows';
+import { TeamPerspective } from '@myrddraall/heroes-replay-stats-replays/ui';
+import { PlayerCell } from '@myrddraall/heroes-replay-stats-replays/ui';
+import { playerRows } from '@myrddraall/heroes-replay-stats-replays/ui';
+import { teamRows } from '@myrddraall/heroes-replay-stats-replays/ui';
 import { UNIT_KILL_COLUMNS } from './unit-kill-columns';
 
 /**

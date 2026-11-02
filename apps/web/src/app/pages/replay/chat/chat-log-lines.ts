@@ -2,7 +2,7 @@ import type { EmoticonSet, HeroesImages, Picture } from '@myrddraall/hero-data';
 import type { ChatLineRow } from '@myrddraall/heroprotocol-analysis';
 import type { Team } from '@myrddraall/heroprotocol-db';
 import type { HeroIcon, HeroLookup } from '@myrddraall/heroes-replay-stats-heroes/model';
-import { formatDuration } from '../../replays/replay-list-item';
+import { formatDuration } from '@myrddraall/heroes-replay-stats-replays/ui';
 
 /** A piece of a chat line as the log shows it: text, or an emote's picture. */
 export type ChatLogPiece =

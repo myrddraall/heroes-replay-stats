@@ -1,4 +1,4 @@
-import type { StatColumn } from '@myrddraall/heroes-replay-stats-common/ui';
+import type { StatColumn } from '@myrddraall/heroes-replay-stats-replays/ui';
 
 /** The score screen's columns, as the game's score screen has them. */
 export const SCORE_COLUMNS: readonly StatColumn[] = [

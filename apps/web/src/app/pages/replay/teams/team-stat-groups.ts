@@ -1,8 +1,8 @@
-import type { StatColumn, StatRow } from '@myrddraall/heroes-replay-stats-common/ui';
+import type { StatColumn, StatRow } from '@myrddraall/heroes-replay-stats-replays/ui';
 import type { TeamStatsRow } from '@myrddraall/heroprotocol-analysis';
 import type { Team } from '@myrddraall/heroprotocol-db';
-import type { TeamColorMode } from '../../../team/team-color';
-import { type TeamRowData, teamRows } from '../team-rows';
+import type { TeamColorMode } from '@myrddraall/heroes-replay-stats-replays/model';
+import { type TeamRowData, teamRows } from '@myrddraall/heroes-replay-stats-replays/ui';
 
 /** A group of team stats, shown as its own table. */
 export interface TeamStatGroup {

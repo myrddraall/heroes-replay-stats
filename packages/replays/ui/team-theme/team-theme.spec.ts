@@ -2,7 +2,7 @@ import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { Team } from '@myrddraall/heroprotocol-db';
 import { describe, expect, it } from 'vitest';
-import { TeamPerspective } from './team-color';
+import { TeamPerspective } from './team-perspective';
 import { TeamTheme } from './team-theme';
 
 @Component({

@@ -1,6 +1,6 @@
-import type { StatColumn, StatRow } from '@myrddraall/heroes-replay-stats-common/ui';
+import type { StatColumn, StatRow } from './stat-column';
 import type { Team } from '@myrddraall/heroprotocol-db';
-import { type TeamColor, teamColor, type TeamColorMode } from '../../team/team-color';
+import { type TeamColor, teamColor, type TeamColorMode } from '../../model';
 import { statValues } from './player-rows';
 
 /** A team as its colour names it: `Blue team` or `Red team`. */

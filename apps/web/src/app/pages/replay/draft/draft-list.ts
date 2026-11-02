@@ -1,6 +1,6 @@
 import { Component, input } from '@angular/core';
 import { HeroMinimapIcon } from '@myrddraall/heroes-replay-stats-heroes/ui';
-import { TeamTheme } from '../../../team/team-theme';
+import { TeamTheme } from '@myrddraall/heroes-replay-stats-replays/ui';
 import type { DraftStep } from './draft-steps';
 
 /**

@@ -1,13 +1,14 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { MatTooltip } from '@angular/material/tooltip';
-import { ScoreTable, StatRowHead } from '@myrddraall/heroes-replay-stats-common/ui';
+import { ScoreTable, StatRowHead } from '@myrddraall/heroes-replay-stats-replays/ui';
 import type { HeroIcon } from '@myrddraall/heroes-replay-stats-heroes/model';
-import type { ReplayScoreScreen } from '../../../data/replays/replay-stats.service';
-import { teamColor, TeamPerspective } from '../../../team/team-color';
-import { TeamTheme } from '../../../team/team-theme';
-import { PlayerCell } from '../player-cell';
-import { playerRows } from '../player-rows';
+import type { ReplayScoreScreen } from '@myrddraall/heroes-replay-stats-replays/model';
+import { teamColor } from '@myrddraall/heroes-replay-stats-replays/model';
+import { TeamPerspective } from '@myrddraall/heroes-replay-stats-replays/ui';
+import { TeamTheme } from '@myrddraall/heroes-replay-stats-replays/ui';
+import { PlayerCell } from '@myrddraall/heroes-replay-stats-replays/ui';
+import { playerRows } from '@myrddraall/heroes-replay-stats-replays/ui';
 import { SCORE_COLUMNS } from './score-columns';
 
 /** `MostXPContribution` as `Most XP contribution`. */

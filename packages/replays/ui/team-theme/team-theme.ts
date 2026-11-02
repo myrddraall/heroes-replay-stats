@@ -1,6 +1,7 @@
 import { computed, Directive, inject, input } from '@angular/core';
 import type { Team } from '@myrddraall/heroprotocol-db';
-import { teamColor, TeamPerspective } from './team-color';
+import { teamColor } from '../../model';
+import { TeamPerspective } from './team-perspective';
 
 /**
  * Themes an element as a team: `<tr [hrsTeam]="player.team">`. Adds the glass theme's team

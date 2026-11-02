@@ -1,6 +1,6 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import type { StatColumn, StatColumnChoice } from '@myrddraall/heroes-replay-stats-common/ui';
+import type { StatColumn, StatColumnChoice } from '@myrddraall/heroes-replay-stats-replays/ui';
 import type { StatSupportTable } from '@myrddraall/heroprotocol-db';
 import {
   patchState,
@@ -11,7 +11,7 @@ import {
   withProps,
   withState,
 } from '@ngrx/signals';
-import { ReplayStatsService } from '../../../data/replays/replay-stats.service';
+import { ReplayStatsService } from '@myrddraall/heroes-replay-stats-replays/data';
 import { errorMessage } from '@myrddraall/heroes-replay-stats-common/model';
 import { ReplayPageStore } from '../replay-page.store';
 import { withActivity } from './activity-stats';

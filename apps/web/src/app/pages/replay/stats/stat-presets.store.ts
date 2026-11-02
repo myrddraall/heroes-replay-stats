@@ -1,5 +1,5 @@
 import { patchState, signalStore, withHooks, withMethods, withState } from '@ngrx/signals';
-import type { StatColumnChoice } from '@myrddraall/heroes-replay-stats-common/ui';
+import type { StatColumnChoice } from '@myrddraall/heroes-replay-stats-replays/ui';
 import { STAT_SECTION_IDS, type StatSectionId } from './stat-sections';
 
 export const STAT_PRESETS_STORAGE_KEY = 'hrs.stat-presets';

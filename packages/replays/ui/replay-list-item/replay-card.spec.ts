@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { HeroLookup } from '@myrddraall/heroes-replay-stats-heroes/model';
-import type { ReplaySummary } from '../../data/replays/replay.service';
+import type { ReplaySummary } from '../../model';
 import { toReplayCard } from './replay-card';
 
 const player = (slot: number, team: 0 | 1, toonHandle: string, heroId: string) => ({

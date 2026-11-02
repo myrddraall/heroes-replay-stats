@@ -2,8 +2,8 @@ import type { HeroDataSet, HeroesImages, Picture } from '@myrddraall/hero-data';
 import type { TalentPickRow } from '@myrddraall/heroprotocol-analysis';
 import type { Team } from '@myrddraall/heroprotocol-db';
 import type { HeroIcon } from '@myrddraall/heroes-replay-stats-heroes/model';
-import type { TeamColorMode } from '../../../team/team-color';
-import { type PlayerIdentity, playerRows } from '../player-rows';
+import type { TeamColorMode } from '@myrddraall/heroes-replay-stats-replays/model';
+import { type PlayerIdentity, playerRows } from '@myrddraall/heroes-replay-stats-replays/ui';
 
 /**
  * The talent tiers, in order. The level a tier opens at differs by hero (Chromie's open earlier),

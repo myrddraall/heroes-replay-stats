@@ -2,10 +2,10 @@ import { computed, inject } from '@angular/core';
 import { signalStore, withComputed, withMethods, withProps } from '@ngrx/signals';
 import { LatestHeroData } from '@myrddraall/heroes-replay-stats-heroes/data';
 import { ReplayImportJobStore } from '@myrddraall/heroes-replay-stats-import/data';
-import { ReplayService } from '../../data/replays/replay.service';
+import { ReplayService } from '../../data';
 import { SettingsStore } from '@myrddraall/heroes-replay-stats-settings/data';
 import { errorMessage } from '@myrddraall/heroes-replay-stats-common/model';
-import { toReplayCard } from './replay-card';
+import { toReplayCard } from '../../ui';
 
 /** {@link ReplaysPage}'s component store: the stored replays as cards. */
 export const ReplaysPageStore = signalStore(

@@ -1,10 +1,7 @@
 import { Component, inject, input } from '@angular/core';
 import { MatProgressBar } from '@angular/material/progress-bar';
-import {
-  SidePanel,
-  StatColumnPicker,
-  StatPresets,
-} from '@myrddraall/heroes-replay-stats-common/ui';
+import { SidePanel } from '@myrddraall/heroes-replay-stats-common/ui';
+import { StatColumnPicker, StatPresets } from '@myrddraall/heroes-replay-stats-replays/ui';
 import { ShellPanelsStore } from '@myrddraall/heroes-replay-stats-shell/data';
 import { ShellPanelTemplate } from '@myrddraall/heroes-replay-stats-shell/feature';
 import { PlayerStats } from './player-stats';

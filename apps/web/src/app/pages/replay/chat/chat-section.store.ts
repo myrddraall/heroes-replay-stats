@@ -2,7 +2,7 @@ import { computed, inject, resource } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { loadEmoticons } from '@myrddraall/hero-data';
 import { signalStore, withComputed, withProps } from '@ngrx/signals';
-import { ReplayStatsService } from '../../../data/replays/replay-stats.service';
+import { ReplayStatsService } from '@myrddraall/heroes-replay-stats-replays/data';
 import { errorMessage } from '@myrddraall/heroes-replay-stats-common/model';
 import { ReplayPageStore } from '../replay-page.store';
 import { chatLogLines } from './chat-log-lines';

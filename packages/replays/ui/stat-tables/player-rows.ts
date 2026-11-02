@@ -1,7 +1,7 @@
-import type { StatColumn, StatRow } from '@myrddraall/heroes-replay-stats-common/ui';
+import type { StatColumn, StatRow } from './stat-column';
 import type { Team } from '@myrddraall/heroprotocol-db';
 import type { HeroIcon } from '@myrddraall/heroes-replay-stats-heroes/model';
-import { teamColor, type TeamColorMode } from '../../team/team-color';
+import { teamColor, type TeamColorMode } from '../../model';
 
 /** Who a player is, as a stats table's row identifies them. */
 export interface PlayerIdentity {
