@@ -21,6 +21,7 @@ export const ReplaysPageStore = signalStore(
       const heroes = _heroData.lookup();
       return _replays.replays().map((replay) => toReplayCard(replay, me, heroes));
     }),
+    outdated: _replays.outdated,
     loaded: _replays.loaded,
     error: computed(() => errorMessage(_replays.error())),
   })),

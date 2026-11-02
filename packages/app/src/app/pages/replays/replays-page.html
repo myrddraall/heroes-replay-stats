@@ -1,6 +1,7 @@
 <hrs-layout>
   <hrs-replay-list
     [cards]="store.cards()"
+    [outdated]="store.outdated()"
     [loaded]="store.loaded()"
     [error]="store.error()"
     (importRequested)="store.importReplays()"

@@ -14,6 +14,8 @@ import { ReplayListItem } from './replay-list-item';
 })
 export class ReplayList {
   readonly cards = input.required<readonly ReplayCard[]>();
+  /** How many of them an earlier version of the app imported (their details may be out of date). */
+  readonly outdated = input(0);
   /** The replays have been read at least once. */
   readonly loaded = input(false);
   /** Why the replays couldn't be read. */

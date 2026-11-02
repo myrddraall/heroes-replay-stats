@@ -1,10 +1,11 @@
 import { computed, inject, Service } from '@angular/core';
-import type {
-  GameMode,
-  PlayerSummary,
-  ReplayRecord,
-  ReplayStatus,
-  Team,
+import {
+  NORMALIZE_VERSION,
+  type GameMode,
+  type PlayerSummary,
+  type ReplayRecord,
+  type ReplayStatus,
+  type Team,
 } from '@myrddraall/heroprotocol-db';
 import { REPLAY_DB } from '../import/provide-replay-db';
 import { liveQuerySignals } from '../live-query';
@@ -73,6 +74,13 @@ export class ReplayService {
 
   /** Every available replay, most recently played first. */
   readonly replays = computed((): readonly ReplaySummary[] => this.live.value().map(toSummary));
+  /**
+   * How many of them an earlier version of the importer stored: their details may be out of
+   * date, and importing their files again brings them up to date.
+   */
+  readonly outdated = computed(
+    () => this.live.value().filter((r) => r.normalizeVersion !== NORMALIZE_VERSION).length,
+  );
   /** False until the database has answered once. */
   readonly loaded = this.live.loaded;
   /** The last error reading the list, or null. */

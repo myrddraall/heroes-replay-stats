@@ -1,6 +1,6 @@
 import { IDBKeyRange, indexedDB } from 'fake-indexeddb';
 import { TestBed } from '@angular/core/testing';
-import { HeroDb, type ReplayRecord } from '@myrddraall/heroprotocol-db';
+import { HeroDb, NORMALIZE_VERSION, type ReplayRecord } from '@myrddraall/heroprotocol-db';
 import Dexie from 'dexie';
 import type { ReplayDbClient } from '@myrddraall/heroprotocol-db/client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -19,6 +19,7 @@ function record(id: string, over: Partial<ReplayRecord> = {}): ReplayRecord {
     winningTeam: 0,
     version: { baseBuild: 85267, build: 85267, major: 2, minor: 55, revision: 0 },
     status: 'complete',
+    normalizeVersion: NORMALIZE_VERSION,
     players: [
       { slot: 1, name: 'B', hero: 'Jaina', heroId: 'Jaina', team: 0, won: true, kind: 'player' },
       { slot: 0, name: 'A', hero: 'Sonya', heroId: 'Barbarian', team: 0, won: true, kind: 'ai' },
@@ -107,6 +108,19 @@ describe('ReplayService', () => {
     await db.replays.delete('b');
     await until(() => service.replays().length === 1);
     expect(service.replays()[0]!.id).toBe('a');
+  });
+
+  it('counts the replays an earlier version of the importer stored', async () => {
+    await db.replays.bulkPut([
+      record('current'),
+      record('older', { normalizeVersion: NORMALIZE_VERSION - 1 }),
+      record('oldest', { normalizeVersion: 1 }),
+      record('importing', { normalizeVersion: 1, status: 'analysing' }),
+    ]);
+    const service = TestBed.inject(ReplayService);
+    open(undefined);
+    await until(() => service.loaded());
+    expect(service.outdated()).toBe(2);
   });
 
   it('reports a database that fails to open', async () => {

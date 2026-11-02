@@ -18,6 +18,20 @@
     </button>
   </hrs-empty-state>
 } @else {
+  @if (outdated() > 0) {
+    <div class="outdated hrs-glass" role="status">
+      <p>
+        @if (outdated() === 1) {
+          1 replay was imported by an earlier version of the app, so some of its details may be
+          out of date. Import its file again to update it.
+        } @else {
+          {{ outdated() }} replays were imported by an earlier version of the app, so some of their
+          details may be out of date. Import their files again to update them.
+        }
+      </p>
+      <button mat-stroked-button (click)="importRequested.emit()">Import again</button>
+    </div>
+  }
   <ul class="list">
     @for (card of cards(); track card.replay.id) {
       <li><hrs-replay-list-item [card]="card" /></li>
