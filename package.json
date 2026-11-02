@@ -6,6 +6,7 @@
   "scripts": {
     "build": "devutil run build",
     "check": "wireit",
+    "check.boundaries": "sheriff verify web,replay-worker,desktop-main,desktop-preload",
     "clean": "wireit",
     "fix": "wireit",
     "format": "wireit",
@@ -28,6 +29,8 @@
     "@cpdevtools/git-flow": "^1.1.1",
     "@cpdevtools/git-flow-cli": "^1.1.1",
     "@cpdevtools/ts-dev-utilities-cli": "^1.1.6",
+    "@softarc/eslint-plugin-sheriff": "^0.20.0",
+    "@softarc/sheriff-core": "^0.20.0",
     "@types/node": "^24.0.0",
     "@typescript-eslint/eslint-plugin": "^8.20.0",
     "@typescript-eslint/parser": "^8.20.0",

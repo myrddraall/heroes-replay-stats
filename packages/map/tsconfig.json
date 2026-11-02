@@ -2,6 +2,9 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "rootDir": ".",
+    // The root's `paths` are for Sheriff; this package resolves the others through their workspace
+    // links, so `rootDir` keeps it to its own sources.
+    "paths": {},
     "noEmit": true,
     // Angular components and directives drawn in the browser; the tests run the plain
     // functions in Node.

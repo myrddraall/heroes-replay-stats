@@ -1,8 +1,18 @@
 /* To learn more about Typescript configuration file: https://www.typescriptlang.org/docs/handbook/tsconfig-json.html. */
 /* To learn more about Angular compiler options: https://angular.dev/reference/configs/angular-compiler-options. */
 {
+  // Extends the workspace root so Sheriff finds sheriff.config.ts and the packages' `paths`. The
+  // options below restore what the app had before it extended anything: the root's are for
+  // source-only packages (no emit, declarations, ES2022 lib without the DOM).
+  "extends": "../../tsconfig.json",
   "compileOnSave": false,
   "compilerOptions": {
+    "lib": ["es2022", "dom", "dom.iterable", "dom.asynciterable", "webworker.importscripts", "scripthost"],
+    "noEmit": false,
+    "allowImportingTsExtensions": false,
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": false,
     "strict": true,
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
@@ -21,6 +31,8 @@
     "strictInputAccessModifiers": true
   },
   "files": [],
+  // Restated: the root's `exclude` lists `packages`, which would exclude the whole app.
+  "exclude": ["node_modules"],
   "references": [
     {
       "path": "./tsconfig.app.json"

@@ -2,6 +2,9 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "rootDir": ".",
+    // The root's `paths` are for Sheriff; this package resolves the others through their workspace
+    // links, so `rootDir` keeps it to its own sources.
+    "paths": {},
     "noEmit": true,
     // Runs in the ingest worker and in Node for tests: no DOM.
     "lib": ["ES2022"],

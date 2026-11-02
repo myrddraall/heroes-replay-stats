@@ -4,6 +4,7 @@ import { defineConfig } from 'eslint/config';
 import tseslint from 'typescript-eslint';
 import angular from 'angular-eslint';
 import { packageBoundaries } from '../../tools/eslint-boundaries.mjs';
+import { sheriffBoundaries } from '../../tools/eslint-sheriff.mjs';
 
 export default defineConfig([
   {
@@ -49,4 +50,5 @@ export default defineConfig([
       ['view'],
     ],
   }),
+  ...sheriffBoundaries,
 ]);
