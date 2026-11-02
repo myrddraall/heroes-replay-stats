@@ -111,7 +111,7 @@ describe('App shell', () => {
   });
 
   it('frames the app pages, and leaves the renderer check and the background editor to fill the window', () => {
-    expect(routes.map((r) => r.path)).toContain('replays/:replayId');
+    expect(routes.map((r) => r.path)).toContain('maps');
     expect(routes.find((r) => r.path === 'renderer-check')?.data?.['shell']).toBe(false);
     expect(BACKGROUND_EDITOR.routeData?.['shell']).toBe(false);
   });

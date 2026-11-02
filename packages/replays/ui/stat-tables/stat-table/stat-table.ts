@@ -1,7 +1,7 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, contentChild, inject, input, LOCALE_ID, model } from '@angular/core';
 import { MatTooltip } from '@angular/material/tooltip';
-import type { StatColumn, StatRow, StatSupport } from '../stat-column';
+import type { StatColumn, StatRow, StatSupport } from '../../../model';
 import { statTableRows } from '../stat-cells';
 import { StatRowHead } from '../stat-row-head';
 import { nextStatSort, statAriaSort, type StatSort } from '../stat-sort';

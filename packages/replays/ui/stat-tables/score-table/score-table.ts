@@ -16,7 +16,7 @@ import {
 import { MatIcon } from '@angular/material/icon';
 import { MatTooltip } from '@angular/material/tooltip';
 import { ScoreCards } from '../score-cards/score-cards';
-import type { StatColumn, StatRow } from '../stat-column';
+import type { StatColumn, StatRow } from '../../../model';
 import { statTableRows } from '../stat-cells';
 import { StatRowHead } from '../stat-row-head';
 import { nextStatSort, statAriaSort, statBestFirst, type StatSort } from '../stat-sort';

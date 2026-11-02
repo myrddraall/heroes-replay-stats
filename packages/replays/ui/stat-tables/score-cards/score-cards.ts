@@ -2,7 +2,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, input, output } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { MatTooltip } from '@angular/material/tooltip';
-import type { StatColumn } from '../stat-column';
+import type { StatColumn } from '../../../model';
 import type { StatTableRow } from '../stat-cells';
 import type { StatRowHead } from '../stat-row-head';
 import { statRanks } from '../stat-sort';

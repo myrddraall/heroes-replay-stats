@@ -1,10 +1,3 @@
-export type {
-  StatColumn,
-  StatColumnChoice,
-  StatFormat,
-  StatRow,
-  StatSupport,
-} from './stat-tables/stat-column';
 export {
   formatStat,
   formatStatClock,
@@ -37,3 +30,24 @@ export * from './player-cell/player-cell';
 export * from './replay-list/replay-list';
 export * from './replay-list-item/replay-card';
 export * from './replay-list-item/replay-list-item';
+export * from './replay-header/replay-header';
+export * from './replay-nav/replay-nav';
+export * from './replay-nav/replay-pages';
+export * from './chat-log/chat-log';
+export * from './chat-log/chat-log-lines';
+export * from './draft-list/draft-list';
+export * from './draft-list/draft-steps';
+export * from './score-screen/score-screen';
+export * from './score-screen/score-columns';
+export * from './player-stats/player-stats';
+export * from './player-stats/stat-columns';
+export * from './player-stats/stat-choices';
+export * from './player-stats/activity-stats';
+export * from './talent-table/talent-table';
+export * from './talent-table/talent-rows';
+export * from './team-stats/team-stats';
+export * from './team-stats/team-stat-groups';
+export * from './unit-kill-tables/unit-kill-tables';
+export * from './unit-kill-tables/unit-kill-columns';
+export * from './xp-tables/xp-tables';
+export * from './xp-tables/xp-rows';

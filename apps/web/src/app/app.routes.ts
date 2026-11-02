@@ -15,12 +15,6 @@ export const routes: Routes = [
   },
   { path: '', pathMatch: 'full', redirectTo: 'replays' },
   {
-    path: 'replays/:replayId',
-    title: 'Replay · Heroes Replay Stats',
-    loadComponent: () => import('./pages/replay/replay-page').then((m) => m.ReplayPage),
-    loadChildren: () => import('./pages/replay/replay.routes').then((m) => m.replayRoutes),
-  },
-  {
     path: 'maps',
     title: 'Maps · Heroes Replay Stats',
     loadComponent: () => import('./pages/maps/maps-page').then((m) => m.MapsPage),

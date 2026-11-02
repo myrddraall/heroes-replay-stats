@@ -1,4 +1,4 @@
-import type { StatColumn, StatRow } from './stat-column';
+import type { StatColumn, StatRow } from '../../model';
 
 /** A stat table's order: by one column, highest or lowest first. */
 export interface StatSort {

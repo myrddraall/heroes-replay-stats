@@ -1,4 +1,4 @@
-import type { StatColumn, StatRow } from './stat-column';
+import type { StatColumn, StatRow } from '../../model';
 import { formatStat, formatStatCompact } from './stat-format';
 import { sortStatRows, type StatSort } from './stat-sort';
 

@@ -1,5 +1,5 @@
 import { Directive, inject, input, TemplateRef } from '@angular/core';
-import type { StatRow } from './stat-column';
+import type { StatRow } from '../../model';
 
 export interface StatRowHeadContext<T> {
   /** The row's `data`. */

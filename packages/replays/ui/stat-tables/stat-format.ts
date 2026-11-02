@@ -1,4 +1,4 @@
-import type { StatColumn } from './stat-column';
+import type { StatColumn } from '../../model';
 
 /** What a cell shows for a stat with no value. */
 export const NO_STAT_VALUE = '–';

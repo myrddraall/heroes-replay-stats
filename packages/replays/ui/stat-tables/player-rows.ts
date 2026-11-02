@@ -1,4 +1,4 @@
-import type { StatColumn, StatRow } from './stat-column';
+import type { StatColumn, StatRow } from '../../model';
 import type { Team } from '@myrddraall/heroprotocol-db';
 import type { HeroIcon } from '@myrddraall/heroes-replay-stats-heroes/model';
 import { teamColor, type TeamColorMode } from '../../model';

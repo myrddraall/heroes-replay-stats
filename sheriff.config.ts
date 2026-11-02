@@ -27,7 +27,18 @@ const domains: Record<string, readonly string[]> = {
 const featureModules: Record<string, readonly string[]> = {
   import: ['import-page', 'import-toolbar-action'],
   players: ['players-page'],
-  replays: ['replays-page'],
+  replays: [
+    'replays-page',
+    'replay-page',
+    'score-section',
+    'teams-section',
+    'draft-section',
+    'talents-section',
+    'chat-section',
+    'stats-section',
+    'unit-kills-section',
+    'xp-section',
+  ],
 };
 
 /** Shared domains: any domain may use them; a shared domain uses another only through `uses`. */

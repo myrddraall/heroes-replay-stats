@@ -12,7 +12,7 @@ import {
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MatIcon } from '@angular/material/icon';
 import { MatTooltip } from '@angular/material/tooltip';
-import type { StatColumn, StatColumnChoice } from '../stat-column';
+import type { StatColumn, StatColumnChoice } from '../../../model';
 import { STAT_SUPPORT_LABELS } from '../stat-support';
 
 /**
