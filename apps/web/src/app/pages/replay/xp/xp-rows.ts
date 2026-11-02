@@ -1,4 +1,8 @@
-import { formatStatClock, type StatColumn, type StatRow } from '@myrddraall/heroes-replay-stats-ui';
+import {
+  formatStatClock,
+  type StatColumn,
+  type StatRow,
+} from '@myrddraall/heroes-replay-stats-common/ui';
 import type { XpPointRow } from '@myrddraall/heroprotocol-analysis';
 import type { Team } from '@myrddraall/heroprotocol-db';
 import { teamColor, type TeamColorMode } from '../../../team/team-color';

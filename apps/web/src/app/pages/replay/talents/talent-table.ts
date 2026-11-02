@@ -1,4 +1,4 @@
-import { Sprite } from '../../../sprite/sprite';
+import { Sprite } from '@myrddraall/heroes-replay-stats-common/ui';
 import { Component, input } from '@angular/core';
 import { PlayerCell } from '../player-cell';
 import { TALENT_TIERS, type TalentRow } from './talent-rows';

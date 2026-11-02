@@ -1,4 +1,4 @@
-import type { StatColumnChoice } from '@myrddraall/heroes-replay-stats-ui';
+import type { StatColumnChoice } from '@myrddraall/heroes-replay-stats-common/ui';
 
 /**
  * A section's choice of columns over every column: its own choices of known columns, in their

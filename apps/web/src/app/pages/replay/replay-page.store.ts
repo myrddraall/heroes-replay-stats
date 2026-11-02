@@ -16,7 +16,7 @@ import { ReplayService } from '../../data/replays/replay.service';
 import { ReplayStatsService } from '../../data/replays/replay-stats.service';
 import { SettingsStore } from '../../data/settings/settings.store';
 import { resolveYou } from '../../data/you/resolve-you';
-import { errorMessage } from '../error-message';
+import { errorMessage } from '@myrddraall/heroes-replay-stats-common/model';
 
 /**
  * {@link ReplayPage}'s component store: the replay shown, who "you" are in it, its game build's

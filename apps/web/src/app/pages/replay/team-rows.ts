@@ -1,4 +1,4 @@
-import type { StatColumn, StatRow } from '@myrddraall/heroes-replay-stats-ui';
+import type { StatColumn, StatRow } from '@myrddraall/heroes-replay-stats-common/ui';
 import type { Team } from '@myrddraall/heroprotocol-db';
 import { type TeamColor, teamColor, type TeamColorMode } from '../../team/team-color';
 import { statValues } from './player-rows';

@@ -1,4 +1,4 @@
-import type { StatColumn } from '@myrddraall/heroes-replay-stats-ui';
+import type { StatColumn } from '@myrddraall/heroes-replay-stats-common/ui';
 
 const perMinute = 'per minute of the game';
 const per10Minutes = 'per 10 minutes of the game';

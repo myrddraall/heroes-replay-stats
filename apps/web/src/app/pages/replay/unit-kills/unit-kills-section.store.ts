@@ -2,7 +2,7 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { signalStore, withComputed, withProps } from '@ngrx/signals';
 import { ReplayStatsService } from '../../../data/replays/replay-stats.service';
-import { errorMessage } from '../../error-message';
+import { errorMessage } from '@myrddraall/heroes-replay-stats-common/model';
 import { ReplayPageStore } from '../replay-page.store';
 
 /** {@link UnitKillsSection}'s component store: the unit kills of the replay its page shows. */

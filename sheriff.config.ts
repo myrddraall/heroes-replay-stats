@@ -8,12 +8,13 @@ import { anyTag, sameTag, type SheriffConfig } from '@softarc/sheriff-core';
 
 /** Converted domain packages and the layers each has (packages/<domain>/<layer>/index.ts). */
 const domains: Record<string, readonly string[]> = {
+  common: ['ui', 'model'],
   layout: ['ui', 'model'],
   platform: ['provide', 'data', 'model'],
 };
 
 /** Shared domains: any domain may use them; a shared domain uses another only through `uses`. */
-const shared = ['layout', 'platform'];
+const shared = ['common', 'layout', 'platform'];
 
 /** The domains each domain may use besides itself, the shared ones and simple libraries; one way only. */
 const uses: Record<string, readonly string[]> = {};
@@ -62,7 +63,6 @@ export const config: SheriffConfig = {
     ),
     'packages/aether-forge/src': ['domain:aether-forge', 'type:engine'],
     'packages/map/src': ['domain:maps', 'type:package'],
-    'packages/ui/src': ['domain:common', 'type:package'],
     'libs/signals/src': ['type:lib'],
     'libs/analysers/src': ['type:lib'],
   },
@@ -94,7 +94,6 @@ export const config: SheriffConfig = {
     'domain:aether': [sameTag, 'type:lib'],
     'domain:aether-forge': [sameTag, 'domain:aether', 'domain:common', 'type:lib'],
     'domain:maps': [sameTag],
-    'domain:common': [sameTag],
     'type:engine': anyTag,
     'type:package': anyTag,
     noTag: ['noTag', 'root'],

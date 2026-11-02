@@ -1,4 +1,4 @@
-import type { StatColumn } from '@myrddraall/heroes-replay-stats-ui';
+import type { StatColumn } from '@myrddraall/heroes-replay-stats-common/ui';
 
 const killingBlows = 'Only killing blows count.';
 

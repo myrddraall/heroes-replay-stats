@@ -1,7 +1,7 @@
 import { Component, input, output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { EmptyState } from '../empty-state';
+import { EmptyState } from '@myrddraall/heroes-replay-stats-common/ui';
 import type { ReplayCard } from './replay-card';
 import { ReplayListItem } from './replay-list-item';
 

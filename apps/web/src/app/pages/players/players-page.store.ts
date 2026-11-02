@@ -3,7 +3,7 @@ import { signalStore, withComputed, withMethods, withProps } from '@ngrx/signals
 import { ReplayImportJobStore } from '../../data/import/replay-import-job.store';
 import { PlayerService } from '../../data/players/player.service';
 import { SettingsStore } from '../../data/settings/settings.store';
-import { errorMessage } from '../error-message';
+import { errorMessage } from '@myrddraall/heroes-replay-stats-common/model';
 import { toPlayerRow } from './player-row';
 
 /** {@link PlayersPage}'s component store: everyone in the stored replays, and who is me. */

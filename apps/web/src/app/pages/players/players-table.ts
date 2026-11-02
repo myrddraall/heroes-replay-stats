@@ -3,7 +3,7 @@ import { Component, input, output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { EmptyState } from '../empty-state';
+import { EmptyState } from '@myrddraall/heroes-replay-stats-common/ui';
 import type { PlayerRow } from './player-row';
 
 /** Everyone in the stored replays (presentational): a row each, and which accounts are me. */

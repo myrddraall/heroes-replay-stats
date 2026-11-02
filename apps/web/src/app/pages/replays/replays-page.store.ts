@@ -4,7 +4,7 @@ import { LatestHeroData } from '../../data/heroes/hero-data';
 import { ReplayImportJobStore } from '../../data/import/replay-import-job.store';
 import { ReplayService } from '../../data/replays/replay.service';
 import { SettingsStore } from '../../data/settings/settings.store';
-import { errorMessage } from '../error-message';
+import { errorMessage } from '@myrddraall/heroes-replay-stats-common/model';
 import { toReplayCard } from './replay-card';
 
 /** {@link ReplaysPage}'s component store: the stored replays as cards. */

@@ -4,7 +4,7 @@ import { RouterOutlet } from '@angular/router';
 import { Layout, LayoutItem } from '@myrddraall/heroes-replay-stats-layout/ui';
 import { ShellNavChildren } from '../../shell/shell-nav';
 import { TeamPerspective } from '../../team/team-color';
-import { EmptyState } from '../empty-state';
+import { EmptyState } from '@myrddraall/heroes-replay-stats-common/ui';
 import { ReplayHeader } from './replay-header';
 import { ReplayNav } from './replay-nav';
 import { ReplayPageStore } from './replay-page.store';

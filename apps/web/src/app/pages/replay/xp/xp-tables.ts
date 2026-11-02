@@ -1,5 +1,5 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { StatRowHead, StatTable } from '@myrddraall/heroes-replay-stats-ui';
+import { StatRowHead, StatTable } from '@myrddraall/heroes-replay-stats-common/ui';
 import type { XpPointRow } from '@myrddraall/heroprotocol-analysis';
 import { TeamPerspective } from '../../../team/team-color';
 import { XP_COLUMNS, xpTables } from './xp-rows';

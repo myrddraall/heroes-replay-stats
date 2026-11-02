@@ -2,7 +2,7 @@
   "lib": {
     "entryFile": "src/index.ts",
     "styleIncludePaths": [
-      "../ui/src/theme"
+      "../common/assets/styles"
     ]
   }
 }

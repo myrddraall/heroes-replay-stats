@@ -40,6 +40,6 @@ export default defineConfig([
     extends: [angular.configs.templateRecommended, angular.configs.templateAccessibility],
     rules: {},
   },
-  ...packageBoundaries({ allowed: ['@myrddraall/heroes-replay-stats-aether', '@myrddraall/heroes-replay-stats-signals', '@myrddraall/heroes-replay-stats-ui'] }),
+  ...packageBoundaries({ allowed: ['@myrddraall/heroes-replay-stats-aether', '@myrddraall/heroes-replay-stats-signals', '@myrddraall/heroes-replay-stats-common'] }),
   ...sheriffBoundaries,
 ]);

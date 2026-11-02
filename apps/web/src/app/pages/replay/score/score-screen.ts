@@ -1,7 +1,7 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { MatTooltip } from '@angular/material/tooltip';
-import { ScoreTable, StatRowHead } from '@myrddraall/heroes-replay-stats-ui';
+import { ScoreTable, StatRowHead } from '@myrddraall/heroes-replay-stats-common/ui';
 import type { HeroIcon } from '../../../data/heroes/hero-lookup';
 import type { ReplayScoreScreen } from '../../../data/replays/replay-stats.service';
 import { teamColor, TeamPerspective } from '../../../team/team-color';

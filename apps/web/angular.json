@@ -38,7 +38,7 @@
             ],
             "stylePreprocessorOptions": {
               "includePaths": [
-                "../../packages/ui/src/theme"
+                "../../packages/common/assets/styles"
               ]
             },
             "webWorkerTsConfig": "tsconfig.worker.json"
@@ -97,9 +97,11 @@
               "exclude": [
                 "@myrddraall/heroes-replay-stats-aether",
                 "@myrddraall/heroes-replay-stats-aether-forge",
+                "@myrddraall/heroes-replay-stats-common",
+                "@myrddraall/heroes-replay-stats-layout",
                 "@myrddraall/heroes-replay-stats-map",
-                "@myrddraall/heroes-replay-stats-signals",
-                "@myrddraall/heroes-replay-stats-ui"
+                "@myrddraall/heroes-replay-stats-platform",
+                "@myrddraall/heroes-replay-stats-signals"
               ]
             }
           }

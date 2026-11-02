@@ -1,5 +1,5 @@
 import { Component, input } from '@angular/core';
-import { Sprite } from '../../../sprite/sprite';
+import { Sprite } from '@myrddraall/heroes-replay-stats-common/ui';
 import { HeroMinimapIcon } from '../../../heroes/hero-minimap-icon';
 import { TeamTheme } from '../../../team/team-theme';
 import type { ChatLogLine } from './chat-log-lines';

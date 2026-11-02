@@ -13,7 +13,9 @@ login and no server.
 | [`@myrddraall/heroes-replay-stats-map`](./packages/map)                   | the map viewer: a map pack drawn by a viewer and its layer directives                     |
 | [`@myrddraall/heroes-replay-stats-aether`](./packages/aether)             | Aether, the 3D engine: scene data, settings stacking, the three.js renderer, the view     |
 | [`@myrddraall/heroes-replay-stats-aether-forge`](./packages/aether-forge) | Aether Forge, its editor: the library, the asset and scene editors (`provideAetherForge`) |
-| [`@myrddraall/heroes-replay-stats-ui`](./packages/ui)                     | shared interface pieces (the side panel)                                                  |
+| [`@myrddraall/heroes-replay-stats-common`](./packages/common)             | shared interface pieces: the glass theme, the side panel, sprites, masks, empty states    |
+| [`@myrddraall/heroes-replay-stats-layout`](./packages/layout)             | the page layout containers                                                                |
+| [`@myrddraall/heroes-replay-stats-platform`](./packages/platform)         | the seam to the browser or the desktop shell, and the dev reports                         |
 | [`@myrddraall/heroes-replay-stats-signals`](./libs/signals)               | shared signal store features (state kept in `localStorage`)                               |
 
 Aether's root entry is what an app sets it up with (`provideAether`: where the game data is, the

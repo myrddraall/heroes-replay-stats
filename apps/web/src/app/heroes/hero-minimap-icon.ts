@@ -1,5 +1,5 @@
 import { Component, input } from '@angular/core';
-import { Sprite, type SpritePicture } from '../sprite/sprite';
+import { Sprite, type SpritePicture } from '@myrddraall/heroes-replay-stats-common/ui';
 
 /** A hero's minimap icon (`picture`), named for the hero; nothing without a picture. */
 @Component({

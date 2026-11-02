@@ -1,4 +1,4 @@
-import type { StatColumnChoice } from '@myrddraall/heroes-replay-stats-ui';
+import type { StatColumnChoice } from '@myrddraall/heroes-replay-stats-common/ui';
 
 /** The player stats sections, in the order the replay's navigation lists them. */
 export const STAT_SECTION_IDS = [
