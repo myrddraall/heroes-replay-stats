@@ -1,6 +1,6 @@
 /**
  * The maps rendered on this machine, served the way heroes-maps serves its published ones, for
- * the app's `local` configuration (packages/app/tools/ng.ts): a catalog at /maps/index.json, each
+ * the app's `local` configuration (apps/web/tools/ng.mts): a catalog at /maps/index.json, each
  * map's pack at /maps/<map id>/, byte ranges (the viewer reads PMTiles in ranges) and CORS.
  *
  *   pnpm run serve.maps [folder] [port]

@@ -52,7 +52,7 @@ A custom layer is a directive placed inside the viewer, in the container's templ
 </hrs-map-viewer>
 ```
 
-The package is private and consumed from source, as `packages/analysers` is. The app's dev
+The package is private and consumed from source, as `libs/analysers` is. The app's dev
 server keeps it out of Vite's dependency pre-bundling (`prebundle.exclude` in `angular.json`)
 so that the Angular compiler compiles it. The app also lists its runtime dependency
 (`pmtiles`), so that pre-bundling finds it.

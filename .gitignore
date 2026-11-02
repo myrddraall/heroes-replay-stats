@@ -22,5 +22,5 @@ tmp/
 # Angular
 .angular/
 # Electron
-packages/desktop/out/
-packages/desktop/release/
+apps/desktop/out/
+apps/desktop/release/

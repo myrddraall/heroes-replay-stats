@@ -29,10 +29,10 @@ const aetherAreas = [
 
 export const config: SheriffConfig = {
   entryPoints: {
-    web: 'packages/app/src/main.ts',
-    'replay-worker': 'packages/app/src/app/data/import/replay.worker.ts',
-    'desktop-main': 'packages/desktop/src/main.ts',
-    'desktop-preload': 'packages/desktop/src/preload.ts',
+    web: 'apps/web/src/main.ts',
+    'replay-worker': 'apps/web/src/app/data/import/replay.worker.ts',
+    'desktop-main': 'apps/desktop/src/main.ts',
+    'desktop-preload': 'apps/desktop/src/preload.ts',
   },
   modules: {
     'packages/aether/src': ['domain:aether', 'type:engine'],
@@ -42,8 +42,8 @@ export const config: SheriffConfig = {
     'packages/aether-forge/src': ['domain:aether-forge', 'type:engine'],
     'packages/map/src': ['domain:maps', 'type:package'],
     'packages/ui/src': ['domain:common', 'type:package'],
-    'packages/signals/src': ['type:lib'],
-    'packages/analysers/src': ['type:lib'],
+    'libs/signals/src': ['type:lib'],
+    'libs/analysers/src': ['type:lib'],
   },
   depRules: {
     // The app's own files: unrestricted until its domains move out.

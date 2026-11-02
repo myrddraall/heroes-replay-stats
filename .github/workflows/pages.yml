@@ -48,7 +48,7 @@ jobs:
       # a deep link (a map's page, refreshed) working: Pages serves it for a path it has no file
       # for, and the router takes it from there.
       - name: Build
-        working-directory: packages/app
+        working-directory: apps/web
         run: |
           pnpm build --base-href /heroes-replay-stats/
           cp dist/heroes-replay-stats/browser/index.html dist/heroes-replay-stats/browser/404.html
@@ -56,7 +56,7 @@ jobs:
       - name: Upload
         uses: actions/upload-pages-artifact@v5
         with:
-          path: packages/app/dist/heroes-replay-stats/browser
+          path: apps/web/dist/heroes-replay-stats/browser
 
   deploy:
     name: Deploy

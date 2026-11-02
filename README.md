@@ -7,14 +7,14 @@ login and no server.
 
 | Package                                                                   | What it is                                                                                |
 | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| [`@myrddraall/heroes-replay-stats`](./packages/app)                       | the Angular 22 + Material app, themed after the game                                      |
-| [`@myrddraall/heroes-replay-stats-desktop`](./packages/desktop)           | the Electron shell: a window, and a preload bridge for the filesystem                     |
-| [`@myrddraall/heroes-replay-stats-analysers`](./packages/analysers)       | the app's own replay analysers: timeline and points of interest                           |
+| [`@myrddraall/heroes-replay-stats`](./apps/web)                           | the Angular 22 + Material app, themed after the game                                      |
+| [`@myrddraall/heroes-replay-stats-desktop`](./apps/desktop)               | the Electron shell: a window, and a preload bridge for the filesystem                     |
+| [`@myrddraall/heroes-replay-stats-analysers`](./libs/analysers)           | the app's own replay analysers: timeline and points of interest                           |
 | [`@myrddraall/heroes-replay-stats-map`](./packages/map)                   | the map viewer: a map pack drawn by a viewer and its layer directives                     |
 | [`@myrddraall/heroes-replay-stats-aether`](./packages/aether)             | Aether, the 3D engine: scene data, settings stacking, the three.js renderer, the view     |
 | [`@myrddraall/heroes-replay-stats-aether-forge`](./packages/aether-forge) | Aether Forge, its editor: the library, the asset and scene editors (`provideAetherForge`) |
 | [`@myrddraall/heroes-replay-stats-ui`](./packages/ui)                     | shared interface pieces (the side panel)                                                  |
-| [`@myrddraall/heroes-replay-stats-signals`](./packages/signals)           | shared signal store features (state kept in `localStorage`)                               |
+| [`@myrddraall/heroes-replay-stats-signals`](./libs/signals)               | shared signal store features (state kept in `localStorage`)                               |
 
 Aether's root entry is what an app sets it up with (`provideAether`: where the game data is, the
 storage names, the graphics API and tint presets) and its shared state (`ViewStore`); everything else
@@ -24,7 +24,7 @@ what an app loads at once stays small. Each package's lint config keeps its impo
 
 The replay parsing, the model and the generic analysers come from
 [myrddraall/heroprotocol](https://github.com/myrddraall/heroprotocol). The app's ingest
-worker runs those next to its own analysers from `packages/analysers`.
+worker runs those next to its own analysers from `libs/analysers`.
 
 The tool that renders the battleground maps (transparent map images, sky layers, a parallax
 viewer), which began here as `tools/map-capture`, is now
@@ -46,7 +46,7 @@ pnpm check          # pinned dependency versions agree
 pnpm run generate.analysis-goldens  # after changing an app analyser's output
 ```
 
-The app talks to its host through one seam, `Platform` (`packages/app/src/app/platform`):
+The app talks to its host through one seam, `Platform` (`apps/web/src/app/platform`):
 the browser build picks files with an `<input type=file>`, the desktop build through
 Electron's dialog and knows the game's replay folder. Nothing else in the app knows
 where it runs.
@@ -535,7 +535,7 @@ Ctrl+Z, Ctrl+Shift+Z or Ctrl+Y outside a text field). Changes coming within `HIS
 each other are one step, and so is all of a drag (`holdHistory`/`releaseHistory`). The history is
 kept while the page is open, not saved.
 
-The Graphics settings (Settings page; `GraphicsStore`, `packages/app/src/app/data/settings/graphics.store.ts`,
+The Graphics settings (Settings page; `GraphicsStore`, `apps/web/src/app/data/settings/graphics.store.ts`,
 kept in `localStorage`: `hrs.graphics.quality` holds the preset's id, or all the quality settings as
 JSON when they are Custom; `hrs.graphics.custom` the last custom settings, as JSON; `hrs.graphics`
 the look's settings the user chose) set it, through `provideSiteBackground()`: a quality
@@ -548,10 +548,10 @@ random or the next in turn each page; the site always opens untinted and fades t
 glass panels' and the frame's opacity.
 The scene comes
 from [heroes-capture](https://github.com/myrddraall/heroes-capture) and is checked in under
-`packages/app/public/backgrounds/play` (about 1 MB); after a game update, export it again:
+`apps/web/public/backgrounds/play` (about 1 MB); after a game update, export it again:
 
 ```bash
-pnpm run generate.play-background   # heroes-capture ui background into packages/app/public/backgrounds/play
+pnpm run generate.play-background   # heroes-capture ui background into apps/web/public/backgrounds/play
 ```
 
 It needs `heroes-capture` on the path (its release executable, or `pip install -e .` in
