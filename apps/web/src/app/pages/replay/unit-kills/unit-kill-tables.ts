@@ -1,7 +1,7 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { StatRowHead, StatTable } from '@myrddraall/heroes-replay-stats-common/ui';
 import type { PlayerKillsRow, TeamKillsRow } from '@myrddraall/heroprotocol-analysis';
-import type { HeroIcon } from '../../../data/heroes/hero-lookup';
+import type { HeroIcon } from '@myrddraall/heroes-replay-stats-heroes/model';
 import { TeamPerspective } from '../../../team/team-color';
 import { PlayerCell } from '../player-cell';
 import { playerRows } from '../player-rows';

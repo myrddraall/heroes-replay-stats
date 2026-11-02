@@ -28,6 +28,7 @@
     "@myrddraall/heroes-replay-stats-aether-forge": "workspace:*",
     "@myrddraall/heroes-replay-stats-analysers": "workspace:*",
     "@myrddraall/heroes-replay-stats-common": "workspace:*",
+    "@myrddraall/heroes-replay-stats-heroes": "workspace:*",
     "@myrddraall/heroes-replay-stats-layout": "workspace:*",
     "@myrddraall/heroes-replay-stats-map": "workspace:*",
     "@myrddraall/heroes-replay-stats-platform": "workspace:*",

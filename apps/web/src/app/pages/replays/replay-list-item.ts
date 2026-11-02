@@ -2,7 +2,7 @@ import { DatePipe, NgOptimizedImage } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import type { GameMode, Team } from '@myrddraall/heroprotocol-db';
 import { RouterLink } from '@angular/router';
-import { HeroMinimapIcon } from '../../heroes/hero-minimap-icon';
+import { HeroMinimapIcon } from '@myrddraall/heroes-replay-stats-heroes/ui';
 import { teamColor, type TeamColor, TeamPerspective } from '../../team/team-color';
 import { TeamTheme } from '../../team/team-theme';
 import type { ReplayCard } from './replay-card';

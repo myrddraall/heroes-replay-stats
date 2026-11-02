@@ -1,6 +1,6 @@
 import { heroesImages } from '@myrddraall/hero-data';
 import { describe, expect, it } from 'vitest';
-import { fakeHeroData } from './hero-data.fake';
+import { fakeHeroData } from '../testing';
 import { heroLookup } from './hero-lookup';
 
 describe('heroLookup', () => {

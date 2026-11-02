@@ -1,6 +1,6 @@
 import type { DraftStepRow } from '@myrddraall/heroprotocol-analysis';
 import type { Team } from '@myrddraall/heroprotocol-db';
-import type { HeroIcon, HeroLookup } from '../../../data/heroes/hero-lookup';
+import type { HeroIcon, HeroLookup } from '@myrddraall/heroes-replay-stats-heroes/model';
 import { teamColor, type TeamColorMode } from '../../../team/team-color';
 import { teamName } from '../team-rows';
 

@@ -8,7 +8,7 @@ import {
   withComponentInputBinding,
   withViewTransitions,
 } from '@angular/router';
-import { provideHeroData } from './data/heroes/hero-data';
+import { provideHeroesFeature } from '@myrddraall/heroes-replay-stats-heroes/provide';
 import { GraphicsStore } from './data/settings/graphics.store';
 import { provideReplayDb } from './data/import/provide-replay-db';
 import { DEV_REPORTS_URL } from '@myrddraall/heroes-replay-stats-platform/data';
@@ -58,7 +58,7 @@ export const appConfig: ApplicationConfig = {
     ),
     providePlatformFeature({ version: APP_VERSION }),
     provideReplayDb(),
-    provideHeroData(),
+    provideHeroesFeature(),
     provideSiteBackground(),
     // The background's settings, until the background domain adds them itself.
     provideSettingsSection({

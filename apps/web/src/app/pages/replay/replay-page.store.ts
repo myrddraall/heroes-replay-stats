@@ -10,8 +10,8 @@ import {
   withState,
 } from '@ngrx/signals';
 import { heroesImages } from '@myrddraall/hero-data';
-import { HERO_DATA } from '../../data/heroes/hero-data';
-import { heroLookup, type HeroIcon } from '../../data/heroes/hero-lookup';
+import { HERO_DATA } from '@myrddraall/heroes-replay-stats-heroes/data';
+import { heroLookup, type HeroIcon } from '@myrddraall/heroes-replay-stats-heroes/model';
 import { ReplayService } from '../../data/replays/replay.service';
 import { ReplayStatsService } from '../../data/replays/replay-stats.service';
 import { SettingsStore } from '@myrddraall/heroes-replay-stats-settings/data';

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { HeroLookup } from '../../data/heroes/hero-lookup';
+import type { HeroLookup } from '@myrddraall/heroes-replay-stats-heroes/model';
 import type { ReplaySummary } from '../../data/replays/replay.service';
 import { toReplayCard } from './replay-card';
 

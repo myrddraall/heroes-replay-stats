@@ -1,11 +1,11 @@
-import { computed, inject, InjectionToken, type Provider, resource, Service } from '@angular/core';
+import { computed, inject, InjectionToken, resource, Service } from '@angular/core';
 import {
   heroesAssetsProvider,
   heroesImages,
   type HeroDataProvider,
   type TextCache,
 } from '@myrddraall/hero-data';
-import { heroLookup } from './hero-lookup';
+import { heroLookup } from '../model';
 
 /**
  * Hero, talent, award and map data, loaded at runtime: from heroes-assets for builds from 97039
@@ -36,10 +36,9 @@ function cacheStorage(): TextCache | undefined {
   };
 }
 
-export function provideHeroData(): Provider[] {
-  return [
-    { provide: HERO_DATA, useFactory: () => heroesAssetsProvider({ cache: cacheStorage() }) },
-  ];
+/** heroes-assets' hero data, its raw files kept in Cache Storage. */
+export function cachedHeroData(): HeroDataProvider {
+  return heroesAssetsProvider({ cache: cacheStorage() });
 }
 
 /** Hero data for the newest build: what the app shows outside a single replay. */

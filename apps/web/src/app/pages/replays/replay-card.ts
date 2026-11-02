@@ -1,4 +1,4 @@
-import type { HeroIcon, HeroLookup } from '../../data/heroes/hero-lookup';
+import type { HeroIcon, HeroLookup } from '@myrddraall/heroes-replay-stats-heroes/model';
 import type { ReplaySummary } from '../../data/replays/replay.service';
 import { resolveYou, type You } from '../../data/you/resolve-you';
 

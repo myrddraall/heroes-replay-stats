@@ -23,8 +23,8 @@ import {
   type Poi,
 } from '@myrddraall/heroes-replay-stats-map';
 import { map } from 'rxjs';
-import { LatestHeroData } from '../../../data/heroes/hero-data';
-import { type Release, ViewStore } from "@myrddraall/heroes-replay-stats-aether";
+import { LatestHeroData } from '@myrddraall/heroes-replay-stats-heroes/data';
+import { type Release, ViewStore } from '@myrddraall/heroes-replay-stats-aether';
 import { mapArtOf, mapExtraInfoOf } from './map-info';
 
 export type PanelPosition = 'start' | 'end';

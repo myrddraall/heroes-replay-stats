@@ -1,7 +1,7 @@
 import type { HeroDataSet, HeroesImages, Picture } from '@myrddraall/hero-data';
 import type { TalentPickRow } from '@myrddraall/heroprotocol-analysis';
 import type { Team } from '@myrddraall/heroprotocol-db';
-import type { HeroIcon } from '../../../data/heroes/hero-lookup';
+import type { HeroIcon } from '@myrddraall/heroes-replay-stats-heroes/model';
 import type { TeamColorMode } from '../../../team/team-color';
 import { type PlayerIdentity, playerRows } from '../player-rows';
 

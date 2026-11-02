@@ -1,6 +1,6 @@
 import type { MapPack, MapViewModel } from '@myrddraall/heroes-replay-stats-map';
 import { describe, expect, it } from 'vitest';
-import { fakeHeroData } from '../../../data/heroes/hero-data.fake';
+import { fakeHeroData } from '@myrddraall/heroes-replay-stats-heroes/testing';
 import { iconName, mapArtOf, mapExtraInfoOf } from './map-info';
 
 /** A map whose pack has a loading screen (and it smaller) and two of its icons, served from packs/. */

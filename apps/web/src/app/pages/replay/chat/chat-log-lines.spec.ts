@@ -1,7 +1,7 @@
 import { createEmoticonSet } from '@myrddraall/hero-data';
 import type { ChatLineRow } from '@myrddraall/heroprotocol-analysis';
 import { describe, expect, it } from 'vitest';
-import type { HeroLookup } from '../../../data/heroes/hero-lookup';
+import type { HeroLookup } from '@myrddraall/heroes-replay-stats-heroes/model';
 import { chatLogLines } from './chat-log-lines';
 
 const row = (seq: number, over: Partial<ChatLineRow>): ChatLineRow => ({

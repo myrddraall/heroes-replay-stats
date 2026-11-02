@@ -8,8 +8,8 @@ import {
 } from '@myrddraall/heroes-replay-stats-map';
 import { of } from 'rxjs';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { HERO_DATA } from '../../../data/heroes/hero-data';
-import { fakeHeroData } from '../../../data/heroes/hero-data.fake';
+import { HERO_DATA } from '@myrddraall/heroes-replay-stats-heroes/data';
+import { fakeHeroData } from '@myrddraall/heroes-replay-stats-heroes/testing';
 import { MapExploreStore } from './map-explore.store';
 
 const cut = { rect: [0, 0, 10, 10], atlas: 'standing', at: [0, 0], small: [0, 0] } as const;

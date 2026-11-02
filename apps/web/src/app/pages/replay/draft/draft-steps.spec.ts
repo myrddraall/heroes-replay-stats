@@ -1,11 +1,12 @@
 import type { DraftStepRow } from '@myrddraall/heroprotocol-analysis';
 import { describe, expect, it } from 'vitest';
-import type { HeroLookup } from '../../../data/heroes/hero-lookup';
+import type { HeroLookup } from '@myrddraall/heroes-replay-stats-heroes/model';
 import { draftSteps } from './draft-steps';
 
 describe('draft steps', () => {
   const heroes: HeroLookup = {
-    heroIcon: (id) => (id === 'Barbarian' ? { picture: { src: 'sonya.png' }, name: 'Sonya' } : null),
+    heroIcon: (id) =>
+      id === 'Barbarian' ? { picture: { src: 'sonya.png' }, name: 'Sonya' } : null,
     heroDataId: () => null,
     mapPreview: () => null,
   };

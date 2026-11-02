@@ -9,6 +9,7 @@ import { anyTag, sameTag, type SheriffConfig } from '@softarc/sheriff-core';
 /** Converted domain packages and the layers each has (packages/<domain>/<layer>/index.ts). */
 const domains: Record<string, readonly string[]> = {
   common: ['ui', 'model'],
+  heroes: ['provide', 'data', 'ui', 'model', 'testing'],
   layout: ['ui', 'model'],
   platform: ['provide', 'data', 'model'],
   settings: ['provide', 'feature', 'ui', 'data'],
@@ -23,6 +24,11 @@ const uses: Record<string, readonly string[]> = {
   settings: ['layout', 'platform', 'shell'],
   shell: ['platform'],
 };
+
+/** A domain's `testing` entry point (test doubles) is for spec files only. */
+const isSpec = (path: string) => path.endsWith('.spec.ts');
+const testingInSpecs = ({ to, fromFilePath }: { to: string; fromFilePath: string }) =>
+  to === 'type:testing' && isSpec(fromFilePath);
 
 /** aether's areas, one barrel each (packages/aether/src/<area>/index.ts). */
 const aetherAreas = [
@@ -72,8 +78,9 @@ export const config: SheriffConfig = {
     'libs/analysers/src': ['type:lib'],
   },
   depRules: {
-    // The app's own files: unrestricted until its domains move out.
-    root: anyTag,
+    // The app's own files: unrestricted until its domains move out, but for `testing` outside specs.
+    root: ({ toTags, fromFilePath }: { toTags: string[]; fromFilePath: string }) =>
+      !toTags.includes('type:testing') || isSpec(fromFilePath),
     ...Object.fromEntries(
       Object.keys(domains).map((domain) => [
         `domain:${domain}`,
@@ -89,11 +96,26 @@ export const config: SheriffConfig = {
       ]),
     ),
     'type:main': [],
-    'type:provide': ['type:feature', 'type:ui', 'type:data', 'type:model', 'type:lib'],
-    'type:feature': ['type:feature', 'type:ui', 'type:data', 'type:model', 'type:lib'],
-    'type:ui': ['type:ui', 'type:model', 'type:lib'],
-    'type:data': ['type:data', 'type:model', 'type:lib'],
-    'type:model': ['type:model', 'type:lib'],
+    'type:provide': [
+      'type:feature',
+      'type:ui',
+      'type:data',
+      'type:model',
+      'type:lib',
+      testingInSpecs,
+    ],
+    'type:feature': [
+      'type:feature',
+      'type:ui',
+      'type:data',
+      'type:model',
+      'type:lib',
+      testingInSpecs,
+    ],
+    'type:ui': ['type:ui', 'type:model', 'type:lib', testingInSpecs],
+    'type:data': ['type:data', 'type:model', 'type:lib', testingInSpecs],
+    'type:model': ['type:model', 'type:lib', testingInSpecs],
+    'type:testing': ['type:testing', 'type:data', 'type:model', 'type:lib'],
     'type:lib': ['type:lib'],
     // Packages not yet converted.
     'domain:aether': [sameTag, 'type:lib'],
