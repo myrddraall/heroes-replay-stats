@@ -1,7 +1,41 @@
 // Colours are Material's system tokens, so a row re-themed by its class (a team's) follows it.
+// It never scrolls sideways: the component measures the table and squeezes it (below) or shows
+// ranking cards when it doesn't fit (see score-table.ts). The clip only hides the one frame in
+// which a too-wide table is measured.
 :host {
   display: block;
-  overflow-x: auto;
+  min-width: 0;
+  overflow-x: clip;
+}
+
+.score-table__compact {
+  display: none;
+}
+
+// Squeezed: short numbers, tighter cells, smaller header icons.
+:host(.score-table--squeezed) {
+  .score-table__full {
+    display: none;
+  }
+
+  .score-table__compact {
+    display: inline;
+  }
+
+  tbody th,
+  tbody td {
+    padding: 6px;
+  }
+
+  thead th {
+    padding: 4px;
+  }
+
+  .score-table__icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
 }
 
 .score-table {

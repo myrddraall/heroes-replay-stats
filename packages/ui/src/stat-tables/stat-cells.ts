@@ -1,11 +1,13 @@
 import type { StatColumn, StatRow } from './stat-column';
-import { formatStat } from './stat-format';
+import { formatStat, formatStatCompact } from './stat-format';
 import { sortStatRows, type StatSort } from './stat-sort';
 
 /** One cell as a table draws it. */
 export interface StatCell {
   readonly column: string;
   readonly text: string;
+  /** The text in short form, for tight spaces (`89.3K`). */
+  readonly compactText: string;
   /** The best value of its column in the table. */
   readonly best: boolean;
   /** The best value of its column in its row's group. */
@@ -87,6 +89,7 @@ export function statTableRows<T>(
       return {
         column: column.id,
         text: formatStat(value, column, locale),
+        compactText: formatStatCompact(value, column, locale),
         best: b?.all != null && value === b.all,
         bestInGroup:
           row.group !== null &&

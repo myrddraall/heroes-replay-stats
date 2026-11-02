@@ -48,6 +48,28 @@ export function formatStatClock(seconds: number): string {
   return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${m}:${ss}`;
 }
 
+/**
+ * A stat's value in short form for tight spaces: a count or number of 1,000 and up as `89.3K` (in
+ * the locale's form), anything else as {@link formatStat} has it.
+ */
+export function formatStatCompact(
+  value: number | null | undefined,
+  column: Pick<StatColumn, 'format' | 'digits'>,
+  locale: string,
+): string {
+  const short = column.format === 'integer' || column.format === 'decimal';
+  if (!short || value === null || value === undefined || !(Math.abs(value) >= 1_000)) {
+    return formatStat(value, column, locale);
+  }
+  const key = `${locale}|compact`;
+  let format = formats.get(key);
+  if (!format) {
+    format = new Intl.NumberFormat(locale, { notation: 'compact', maximumFractionDigits: 1 });
+    formats.set(key, format);
+  }
+  return format.format(value);
+}
+
 /** A stat's value as its column shows it; {@link NO_STAT_VALUE} for none. */
 export function formatStat(
   value: number | null | undefined,

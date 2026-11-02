@@ -2,9 +2,11 @@
 @use './rows/property-row';
 
 // A flyout's panel: the frame's glass, near opaque (readable over the list or the background it
-// opens over), its parts in a column, only its list scrolling.
+// opens over), its parts in a column, only its list scrolling. It does not clip (its edge's light
+// leaks outside it).
 @mixin panel {
-  @include glass.frame-glass(top, 0, 1);
+  @include glass.frame-glass(top);
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -12,7 +14,6 @@
   width: 280px;
   max-height: min(70vh, 520px);
   padding: 12px;
-  overflow: hidden;
   color: var(--mat-sys-on-surface);
   background: rgb(var(--hrs-glass-tint) / 0.97);
   backdrop-filter: blur(12px);

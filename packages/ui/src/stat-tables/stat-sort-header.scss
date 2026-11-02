@@ -14,10 +14,11 @@
     outline-offset: 2px;
   }
 }
+// sized to the header's text, so it scales with the table
 .ui-stat-sort-header__arrow {
-  font-size: 14px;
-  width: 14px;
-  height: 14px;
+  font-size: 1.15em;
+  width: 1.15em;
+  height: 1.15em;
   opacity: 0;
 }
 .ui-stat-sort-header__arrow--shown {

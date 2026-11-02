@@ -19,7 +19,6 @@
 
 .layout__drawer {
   width: min(var(--ui-side-panel-width, 320px), 90vw);
-  overflow: hidden;
   border-radius: 0;
 
   // Only the panel's body may scroll.
@@ -29,12 +28,12 @@
 
   // the frame's glass over the scene, lit along the edge facing it
   &.mat-drawer-end {
-    @include glass.frame-glass(left, 1, 0);
+    @include glass.frame-glass(left);
   }
 
   // (Material marks only an end drawer: a start one is any other.)
   &:not(.mat-drawer-end) {
-    @include glass.frame-glass(right, -1, 0);
+    @include glass.frame-glass(right);
   }
 }
 

@@ -12,11 +12,18 @@
 .error {
   color: var(--mat-sys-error);
 }
+// A glass panel (hrs-glass); it does not clip (its edge's light leaks outside it), so the header's
+// corners are rounded to it.
 .players {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  overflow: hidden; // a glass panel (hrs-glass)
+}
+thead th:first-child {
+  border-top-left-radius: var(--hrs-glass-radius);
+}
+thead th:last-child {
+  border-top-right-radius: var(--hrs-glass-radius);
 }
 th,
 td {

@@ -16,10 +16,12 @@
   margin-bottom: 6px;
   color: var(--mat-sys-on-surface-variant);
 }
-.jobs {
+// One glass panel (hrs-glass): the jobs lie flat in it, a faint line between each. The panel does
+// not clip (its edge's light leaks outside it); the list in it does.
+.jobs__list {
   display: block;
   overflow: hidden;
-  // One glass panel (hrs-glass): the jobs lie flat in it, a faint line between each.
+  border-radius: var(--hrs-glass-radius);
   --mat-expansion-container-background-color: transparent;
   --mat-expansion-container-shape: 0;
   --mat-expansion-container-elevation-shadow: none;

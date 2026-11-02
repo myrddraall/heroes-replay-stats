@@ -1,60 +1,71 @@
-<table class="score-table">
-  <thead>
-    <tr>
-      <th scope="col" class="score-table__head-col">
-        <span class="score-table__hidden">{{ rowHeadLabel() }}</span>
-      </th>
-      @for (column of columns(); track column.id) {
-        <th
-          scope="col"
-          [attr.aria-sort]="ariaSort(column.id)"
-          [matTooltip]="column.description ?? column.label"
-          matTooltipPosition="above"
-        >
-          <ui-stat-sort-header
-            [column]="column.id"
-            [sort]="sort()"
-            (sortRequested)="toggleSort(column.id)"
-          >
-            @if (column.icon) {
-              <mat-icon class="material-symbols-outlined score-table__icon" aria-hidden="true">{{
-                column.icon
-              }}</mat-icon>
-              <span class="score-table__hidden">{{ column.label }}</span>
-            } @else {
-              {{ column.label }}
-            }
-          </ui-stat-sort-header>
+@if (asCards()) {
+  <ui-score-cards
+    [columns]="columns()"
+    [table]="cards()"
+    [rankBy]="rankBy()"
+    [rowHead]="rowHead()"
+    (rankRequested)="rankByColumn($event)"
+  />
+} @else {
+  <table class="score-table">
+    <thead>
+      <tr>
+        <th scope="col" class="score-table__head-col">
+          <span class="score-table__hidden">{{ rowHeadLabel() }}</span>
         </th>
-      }
-    </tr>
-  </thead>
-  <tbody>
-    @for (line of table(); track line.row.key) {
-      <tr [class]="line.row.class ?? ''">
-        <th scope="row" class="score-table__head">
-          @if (rowHead(); as head) {
-            <ng-container
-              [ngTemplateOutlet]="head.template"
-              [ngTemplateOutletContext]="{ $implicit: line.row.data, row: line.row }"
-            />
-          }
-        </th>
-        @for (cell of line.cells; track cell.column) {
-          <td
-            class="score-table__cell"
-            [class.score-table__cell--best]="cell.best"
-            [class.score-table__cell--best-in-group]="cell.bestInGroup"
+        @for (column of columns(); track column.id) {
+          <th
+            scope="col"
+            [attr.aria-sort]="ariaSort(column.id)"
+            [matTooltip]="column.description ?? column.label"
+            matTooltipPosition="above"
           >
-            {{ cell.text }}
-            @if (cell.best) {
-              <span class="score-table__hidden">(best)</span>
-            } @else if (cell.bestInGroup) {
-              <span class="score-table__hidden">(best on the team)</span>
-            }
-          </td>
+            <ui-stat-sort-header
+              [column]="column.id"
+              [sort]="sort()"
+              (sortRequested)="toggleSort(column.id)"
+            >
+              @if (column.icon) {
+                <mat-icon class="material-symbols-outlined score-table__icon" aria-hidden="true">{{
+                  column.icon
+                }}</mat-icon>
+                <span class="score-table__hidden">{{ column.label }}</span>
+              } @else {
+                {{ column.label }}
+              }
+            </ui-stat-sort-header>
+          </th>
         }
       </tr>
-    }
-  </tbody>
-</table>
+    </thead>
+    <tbody>
+      @for (line of table(); track line.row.key) {
+        <tr [class]="line.row.class ?? ''">
+          <th scope="row" class="score-table__head">
+            @if (rowHead(); as head) {
+              <ng-container
+                [ngTemplateOutlet]="head.template"
+                [ngTemplateOutletContext]="{ $implicit: line.row.data, row: line.row }"
+              />
+            }
+          </th>
+          @for (cell of line.cells; track cell.column) {
+            <td
+              class="score-table__cell"
+              [class.score-table__cell--best]="cell.best"
+              [class.score-table__cell--best-in-group]="cell.bestInGroup"
+            >
+              <span class="score-table__full">{{ cell.text }}</span>
+              <span class="score-table__compact">{{ cell.compactText }}</span>
+              @if (cell.best) {
+                <span class="score-table__hidden">(best)</span>
+              } @else if (cell.bestInGroup) {
+                <span class="score-table__hidden">(best on the team)</span>
+              }
+            </td>
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+}

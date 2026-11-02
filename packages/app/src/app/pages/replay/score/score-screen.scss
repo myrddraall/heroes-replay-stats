@@ -32,6 +32,11 @@
   white-space: nowrap;
 }
 
+// a squeezed table has no room for long awards on one line
+.score-table--squeezed .award {
+  white-space: normal;
+}
+
 .award--mvp {
   color: var(--hrs-bronze);
   box-shadow: 0 0 0 1px var(--hrs-bronze);

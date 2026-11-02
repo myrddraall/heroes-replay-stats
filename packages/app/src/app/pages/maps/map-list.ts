@@ -3,11 +3,12 @@ import { Component, input } from '@angular/core';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { RouterLink } from '@angular/router';
 import type { MapCatalogItem } from '@myrddraall/heroes-replay-stats-map';
+import { Mask } from '../../mask/mask';
 
 /** The maps there are packs of (presentational): each one links to its map. */
 @Component({
   selector: 'hrs-map-list',
-  imports: [MatProgressBarModule, NgOptimizedImage, RouterLink],
+  imports: [Mask, MatProgressBarModule, NgOptimizedImage, RouterLink],
   templateUrl: './map-list.html',
   styleUrl: './map-list.scss',
 })

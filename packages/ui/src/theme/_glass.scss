@@ -3,10 +3,12 @@
 @use './glass/blue-colors' as glass-blue;
 @use './glass/red-colors' as glass-red;
 @use './glass/nexus-colors' as glass-nexus;
+@use './glass-mixins' as mixins;
 
 // The glass look (in preview at /theme-preview): the Play screen background shows through every
-// surface, panels are dark tinted glass, and their edges are lit in the variant's highlight colour,
-// like light leaking out of the edge of a fibre-optic sheet rather than a neon tube.
+// surface, panels are dark tinted glass whose face is a film that only tints toward the variant's
+// highlight colour, and their bare edges leak that light, like the edge of a fibre-optic sheet
+// rather than a neon tube (how, in _glass-mixins.scss).
 //
 // Two neutrals and the two teams, mixed as the team themes are (an element with one re-themes
 // everything inside): neutral (the game's purples, magenta for highlights), nexus (the dark blue
@@ -37,6 +39,17 @@
   --hrs-glass-line: rgb(var(--hrs-glass-edge) / 0.15);
   // How rounded a pane of glass is.
   --hrs-glass-radius: 10px;
+  // How far the light leaks out of an edge.
+  --hrs-glass-leak: 26px;
+  // The leak's light, resolved here so a nested variant (a team's row) carries its own colour:
+  // the even haze, and the stops of the three streak sets in it (the longest set first).
+  --_hrs-leak-haze: rgb(var(--hrs-glass-edge) / 0.34);
+  --_hrs-leak-s1: rgb(var(--hrs-glass-edge) / 0.18) 0, rgb(var(--hrs-glass-edge) / 0.07) 45%,
+    rgb(var(--hrs-glass-edge) / 0) 75%;
+  --_hrs-leak-s2: rgb(var(--hrs-glass-edge) / 0.14) 0, rgb(var(--hrs-glass-edge) / 0.05) 45%,
+    rgb(var(--hrs-glass-edge) / 0) 75%;
+  --_hrs-leak-s3: rgb(var(--hrs-glass-edge) / 0.12) 0, rgb(var(--hrs-glass-edge) / 0.04) 45%,
+    rgb(var(--hrs-glass-edge) / 0) 75%;
   // Material's surfaces become the glass.
   --mat-sys-surface: rgb(var(--hrs-glass-tint) / var(--hrs-glass-alpha));
   --mat-sys-surface-container-lowest: transparent;
@@ -80,25 +93,23 @@
   @include _variant(glass-red.$primary-palette, glass-red.$tertiary-palette, 34 4 12, 255 0 0);
 }
 
-// A glass panel: the tint, and an edge lit all the way round, as if light ran through the edge
-// of the glass: a bright hairline (the highlight colour pushed towards white), light spilling out
-// of it (a tight bright halo and a wide faint one) and bleeding into the glass just inside.
+// A glass panel: the face, an edge lit all the way round (a 1px ring in the light's colour with
+// a soft shoulder: a border thins where it curves round the corners, in Chrome most, its light
+// falling to about 0.7 there at 1x; a ring keeps its weight at 1x, 1.25x and 1.5x) and the light
+// leaking out of it, on its ::after (so a panel must not clip itself; see _glass-mixins.scss).
 .hrs-glass {
-  --_edge: var(--hrs-glass-edge);
-
   position: relative;
   border-radius: var(--hrs-glass-radius);
-  background: rgb(var(--hrs-glass-tint) / var(--hrs-glass-alpha));
+  @include mixins.glass-face(var(--hrs-glass-alpha));
   backdrop-filter: var(--hrs-glass-backdrop, none);
   box-shadow:
-    // The hairline, a 1px ring: a border thins where it curves round the corners (in Chrome most:
-    // its light falls to about 0.7 there at 1x), a ring keeps its weight at 1x, 1.25x and 1.5x.
-    0 0 0 1px color-mix(in srgb, rgb(var(--_edge)) 76%, white),
-    0 0 4px rgb(var(--_edge) / 0.75),
-    0 0 14px rgb(var(--_edge) / 0.37),
-    0 0 36px rgb(var(--_edge) / 0.16),
-    inset 0 0 6px rgb(var(--_edge) / 0.45),
-    inset 0 0 22px rgb(var(--_edge) / 0.15);
+    0 0 0 1px rgb(var(--hrs-glass-edge) / 0.8),
+    0 0 4px rgb(var(--hrs-glass-edge) / 0.3),
+    0 0 10px 1px rgb(var(--hrs-glass-edge) / 0.1);
+
+  &::after {
+    @include mixins.leak-ring;
+  }
 }
 
 @media (forced-colors: active) {
@@ -106,5 +117,9 @@
   .hrs-glass {
     border: 1px solid CanvasText;
     box-shadow: none;
+
+    &::after {
+      display: none;
+    }
   }
 }

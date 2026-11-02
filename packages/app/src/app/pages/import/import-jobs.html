@@ -39,7 +39,8 @@
     />
   </section>
 
-  <mat-accordion multi class="jobs hrs-glass">
+  <div class="jobs hrs-glass">
+  <mat-accordion multi class="jobs__list">
     @for (job of jobs(); track job.id) {
       <mat-expansion-panel [class]="'job job--' + job.status">
         <mat-expansion-panel-header>
@@ -90,4 +91,5 @@
       </mat-expansion-panel>
     }
   </mat-accordion>
+</div>
 }

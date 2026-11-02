@@ -42,6 +42,8 @@
 }
 
 .line__sender {
+  min-width: 0;
+  overflow-wrap: anywhere;
   font-weight: 600;
   color: color-mix(in srgb, rgb(var(--hrs-glass-edge)) 55%, white);
 }

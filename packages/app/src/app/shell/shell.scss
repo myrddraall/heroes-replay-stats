@@ -49,6 +49,12 @@
   background: transparent;
 }
 
+// The page scrolls up and down only, never sideways: pages fit its width, and the glass panels'
+// leak past its edges (their ::after) would otherwise count as width to scroll to.
+.shell__main {
+  overflow-x: hidden;
+}
+
 // At the top of the panel's edge (the content's corner), over the page, as the map's panel toggles;
 // it stays put as the page scrolls and moves with the panel.
 .shell__panel-toggle {
@@ -73,9 +79,8 @@
 // Only the panel's own body scrolls (a ui-side-panel fills it).
 .shell__panel {
   width: var(--ui-side-panel-width, min(320px, 90vw));
-  overflow: hidden;
   border-radius: 0;
-  @include glass.frame-glass-edge(left, 1, 0);
+  @include glass.frame-glass-edge(left);
 
   ::ng-deep .mat-drawer-inner-container {
     overflow: hidden;
@@ -84,7 +89,7 @@
 
 .shell__nav {
   width: 248px;
-  @include glass.frame-glass-edge(right, -1, 0);
+  @include glass.frame-glass-edge(right);
   display: flex;
   flex-direction: column;
 }
@@ -147,7 +152,7 @@ mat-nav-list {
   top: 0;
   z-index: 2;
   flex: none;
-  @include glass.frame-glass-edge(bottom, 0, -1);
+  @include glass.frame-glass-edge(bottom);
   gap: 8px;
 }
 

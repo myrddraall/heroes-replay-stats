@@ -1,17 +1,19 @@
 @use 'glass-mixins' as glass;
 
-// A glass panel (hrs-glass).
+// A glass panel (hrs-glass); it does not clip (its edge's light leaks outside it).
 .replay {
   isolation: isolate;
-  overflow: hidden;
   padding: 16px 20px;
 }
-// the map's replay preview: full card height, square, fading out into the glass
+// the map's replay preview: full card height, square, fading out into the glass, clipped to the
+// card's corners
 .replay__preview {
   position: absolute;
   inset: 0 auto 0 0;
   z-index: -1;
   aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: var(--hrs-glass-radius) 0 0 var(--hrs-glass-radius);
   mask-image: linear-gradient(to right, black, transparent);
   img {
     object-fit: cover;

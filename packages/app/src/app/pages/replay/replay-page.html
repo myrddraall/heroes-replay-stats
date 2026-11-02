@@ -1,4 +1,4 @@
-<hrs-layout class="page">
+<hrs-layout>
   @if (store.error(); as error) {
     <p role="alert">The replay could not be read: {{ error }}</p>
   } @else if (!store.loaded()) {
@@ -9,7 +9,7 @@
     </ng-template>
     <hrs-replay-header hrsLayoutItem="padded" [replay]="replay" />
     <!-- edge to edge: each section lays itself out -->
-    <div class="page__section" hrsLayoutItem="edge-to-edge">
+    <div hrsLayoutItem="edge-to-edge">
       <router-outlet />
     </div>
   } @else {
