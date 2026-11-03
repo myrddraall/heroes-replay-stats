@@ -17,6 +17,12 @@ importers:
       '@cpdevtools/ts-dev-utilities-cli':
         specifier: ^1.1.6
         version: 1.2.0
+      '@softarc/eslint-plugin-sheriff':
+        specifier: ^0.20.0
+        version: 0.20.0(@softarc/sheriff-core@0.20.0(typescript@6.0.3))(@typescript-eslint/utils@8.70.1(eslint@10.11.0(jiti@2.7.0)(supports-color@8.1.1))(typescript@6.0.3))(eslint@10.11.0(jiti@2.7.0)(supports-color@8.1.1))
+      '@softarc/sheriff-core':
+        specifier: ^0.20.0
+        version: 0.20.0(typescript@6.0.3)
       '@types/node':
         specifier: ^24.0.0
         version: 24.13.6
@@ -45,18 +51,276 @@ importers:
         specifier: ^0.14.13
         version: 0.14.13
 
+  apps/desktop:
+    devDependencies:
+      '@types/node':
+        specifier: ^24.0.0
+        version: 24.13.6
+      '@typescript-eslint/eslint-plugin':
+        specifier: ^8.20.0
+        version: 8.70.1(@typescript-eslint/parser@8.70.1(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)
+      '@typescript-eslint/parser':
+        specifier: ^8.20.0
+        version: 8.70.1(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)
+      electron:
+        specifier: ^44.4.5
+        version: 44.4.5(supports-color@8.1.1)
+      electron-builder:
+        specifier: ^26.15.3
+        version: 26.15.3(electron-builder-squirrel-windows@26.15.3)
+      eslint:
+        specifier: ^10.9.1
+        version: 10.11.0(jiti@2.7.0)
+      prettier:
+        specifier: ^3.8.1
+        version: 3.9.8
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.28)(supports-color@8.1.1)(tsx@4.23.15)(typescript@6.0.3)(yaml@2.9.1)
+      typescript:
+        specifier: ~6.0.2
+        version: 6.0.3
+
+  apps/web:
+    dependencies:
+      '@angular/cdk':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/forms@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(rxjs@7.8.2)
+      '@angular/common':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2)
+      '@angular/compiler':
+        specifier: ^22.1.0
+        version: 22.1.7
+      '@angular/core':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)
+      '@angular/forms':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(rxjs@7.8.2)
+      '@angular/material':
+        specifier: ^22.1.0
+        version: 22.1.7(dc20dbc5de65617d3ba614f3080c025f)
+      '@angular/platform-browser':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/animations@22.2.3(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))
+      '@angular/router':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(rxjs@7.8.2)
+      '@myrddraall/hero-data':
+        specifier: ^0.5.4
+        version: 0.5.4
+      '@myrddraall/heroes-replay-stats-aether':
+        specifier: workspace:*
+        version: link:../../packages/aether
+      '@myrddraall/heroes-replay-stats-aether-forge':
+        specifier: workspace:*
+        version: link:../../packages/aether-forge
+      '@myrddraall/heroes-replay-stats-analysers':
+        specifier: workspace:*
+        version: link:../../libs/analysers
+      '@myrddraall/heroes-replay-stats-background':
+        specifier: workspace:*
+        version: link:../../packages/background
+      '@myrddraall/heroes-replay-stats-common':
+        specifier: workspace:*
+        version: link:../../packages/common
+      '@myrddraall/heroes-replay-stats-dev':
+        specifier: workspace:*
+        version: link:../../packages/dev
+      '@myrddraall/heroes-replay-stats-heroes':
+        specifier: workspace:*
+        version: link:../../packages/heroes
+      '@myrddraall/heroes-replay-stats-import':
+        specifier: workspace:*
+        version: link:../../packages/import
+      '@myrddraall/heroes-replay-stats-layout':
+        specifier: workspace:*
+        version: link:../../packages/layout
+      '@myrddraall/heroes-replay-stats-maps':
+        specifier: workspace:*
+        version: link:../../packages/maps
+      '@myrddraall/heroes-replay-stats-platform':
+        specifier: workspace:*
+        version: link:../../packages/platform
+      '@myrddraall/heroes-replay-stats-players':
+        specifier: workspace:*
+        version: link:../../packages/players
+      '@myrddraall/heroes-replay-stats-replays':
+        specifier: workspace:*
+        version: link:../../packages/replays
+      '@myrddraall/heroes-replay-stats-settings':
+        specifier: workspace:*
+        version: link:../../packages/settings
+      '@myrddraall/heroes-replay-stats-sheets':
+        specifier: workspace:*
+        version: link:../../packages/sheets
+      '@myrddraall/heroes-replay-stats-shell':
+        specifier: workspace:*
+        version: link:../../packages/shell
+      '@myrddraall/heroes-replay-stats-signals':
+        specifier: workspace:*
+        version: link:../../libs/signals
+      '@myrddraall/heroes-replay-stats-theme':
+        specifier: workspace:*
+        version: link:../../packages/theme
+      '@myrddraall/heroprotocol-analysis':
+        specifier: ^0.5.4
+        version: 0.5.4(dexie@4.4.6)
+      '@myrddraall/heroprotocol-db':
+        specifier: ^0.5.4
+        version: 0.5.4(dexie@4.4.6)
+      '@ngrx/signals':
+        specifier: ^22.0.1
+        version: 22.0.1(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2)
+      dexie:
+        specifier: ^4.4.6
+        version: 4.4.6
+      fflate:
+        specifier: ^0.8.3
+        version: 0.8.3
+      pmtiles:
+        specifier: ^4.5.0
+        version: 4.5.0
+      rxjs:
+        specifier: ^7.8.0
+        version: 7.8.2
+      three:
+        specifier: ^0.186.1
+        version: 0.186.1
+      tslib:
+        specifier: ^2.3.0
+        version: 2.8.1
+    devDependencies:
+      '@angular-eslint/builder':
+        specifier: ^22.5.0
+        version: 22.5.0(chokidar@5.0.0)(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)
+      '@angular/build':
+        specifier: ^22.1.8
+        version: 22.1.8(@angular/compiler-cli@22.1.7(@angular/compiler@22.1.7)(typescript@6.0.3))(@angular/compiler@22.1.7)(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(@types/node@24.13.6)(chokidar@5.0.0)(jiti@2.7.0)(postcss@8.5.28)(rollup@4.63.4)(supports-color@8.1.1)(tslib@2.8.1)(tsx@4.23.15)(typescript@6.0.3)(vitest@4.1.11(@types/node@24.13.6)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.101.0)(tsx@4.23.15)(yaml@2.9.1)))(yaml@2.9.1)
+      '@angular/cli':
+        specifier: ^22.1.8
+        version: 22.1.8(@types/node@24.13.6)(chokidar@5.0.0)(supports-color@8.1.1)
+      '@angular/compiler-cli':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/compiler@22.1.7)(typescript@6.0.3)
+      '@eslint/js':
+        specifier: ^10.0.1
+        version: 10.0.1(eslint@10.11.0(jiti@2.7.0))
+      '@types/three':
+        specifier: ^0.186.0
+        version: 0.186.0
+      angular-eslint:
+        specifier: ^22.5.0
+        version: 22.5.0(chokidar@5.0.0)(eslint@10.11.0(jiti@2.7.0))(typescript-eslint@8.69.0(eslint@10.11.0(jiti@2.7.0))(supports-color@8.1.1)(typescript@6.0.3))(typescript@6.0.3)
+      eslint:
+        specifier: ^10.9.1
+        version: 10.11.0(jiti@2.7.0)
+      fake-indexeddb:
+        specifier: ^6.0.0
+        version: 6.2.5
+      jsdom:
+        specifier: ^28.0.0
+        version: 28.1.0(@noble/hashes@2.4.0)
+      prettier:
+        specifier: ^3.8.1
+        version: 3.9.8
+      typescript:
+        specifier: ~6.0.2
+        version: 6.0.3
+      typescript-eslint:
+        specifier: ^8.69.0
+        version: 8.69.0(eslint@10.11.0(jiti@2.7.0))(supports-color@8.1.1)(typescript@6.0.3)
+      vitest:
+        specifier: ^4.0.8
+        version: 4.1.11(@types/node@24.13.6)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.101.0)(tsx@4.23.15)(yaml@2.9.1))
+
+  libs/analysers:
+    dependencies:
+      '@myrddraall/heroprotocol-db':
+        specifier: ^0.5.4
+        version: 0.5.4(dexie@4.4.6)
+    devDependencies:
+      '@myrddraall/heroprotocol':
+        specifier: ^0.5.4
+        version: 0.5.4
+      '@types/node':
+        specifier: ^24.0.0
+        version: 24.13.6
+      '@typescript-eslint/eslint-plugin':
+        specifier: ^8.20.0
+        version: 8.70.1(@typescript-eslint/parser@8.70.1(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)
+      '@typescript-eslint/parser':
+        specifier: ^8.20.0
+        version: 8.70.1(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)
+      dexie:
+        specifier: ^4.4.6
+        version: 4.4.6
+      eslint:
+        specifier: ^10.9.1
+        version: 10.11.0(jiti@2.7.0)
+      prettier:
+        specifier: ^3.8.1
+        version: 3.9.8
+      tsx:
+        specifier: ^4.19.2
+        version: 4.23.15
+      typescript:
+        specifier: ~6.0.2
+        version: 6.0.3
+      vitest:
+        specifier: ^4.0.8
+        version: 4.1.11(@types/node@24.13.6)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.101.0)(tsx@4.23.15)(yaml@2.9.1))
+
+  libs/signals:
+    dependencies:
+      tslib:
+        specifier: ^2.3.0
+        version: 2.8.1
+    devDependencies:
+      '@angular/compiler':
+        specifier: ^22.1.0
+        version: 22.1.7
+      '@angular/core':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)
+      '@eslint/js':
+        specifier: ^10.0.1
+        version: 10.0.1(eslint@10.11.0(jiti@2.7.0))
+      '@ngrx/signals':
+        specifier: ^22.0.1
+        version: 22.0.1(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2)
+      angular-eslint:
+        specifier: ^22.5.0
+        version: 22.5.0(chokidar@5.0.0)(eslint@10.11.0(jiti@2.7.0))(typescript-eslint@8.69.0(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(typescript@6.0.3)
+      eslint:
+        specifier: ^10.9.1
+        version: 10.11.0(jiti@2.7.0)
+      prettier:
+        specifier: ^3.8.1
+        version: 3.9.8
+      rxjs:
+        specifier: ^7.8.0
+        version: 7.8.2
+      typescript:
+        specifier: ~6.0.2
+        version: 6.0.3
+      typescript-eslint:
+        specifier: ^8.69.0
+        version: 8.69.0(eslint@10.11.0(jiti@2.7.0))(supports-color@8.1.1)(typescript@6.0.3)
+
   packages/aether:
     dependencies:
       '@myrddraall/heroes-replay-stats-signals':
         specifier: workspace:*
-        version: link:../signals
+        version: link:../../libs/signals
       tslib:
         specifier: ^2.3.0
         version: 2.8.1
     devDependencies:
       '@angular/build':
         specifier: ^22.1.8
-        version: 22.1.8(@angular/compiler-cli@22.1.7(@angular/compiler@22.1.7)(typescript@6.0.3))(@angular/compiler@22.1.7)(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(@types/node@24.13.6)(chokidar@5.0.0)(jiti@2.7.0)(postcss@8.5.28)(rollup@4.63.4)(supports-color@8.1.1)(tslib@2.8.1)(tsx@4.23.15)(typescript@6.0.3)(vitest@4.1.11(@types/node@24.13.6)(jsdom@28.1.0(@noble/hashes@2.4.0)(supports-color@8.1.1))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.101.0)(tsx@4.23.15)(yaml@2.9.1)))(yaml@2.9.1)
+        version: 22.1.8(@angular/compiler-cli@22.1.7(@angular/compiler@22.1.7)(typescript@6.0.3))(@angular/compiler@22.1.7)(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(@types/node@24.13.6)(chokidar@5.0.0)(jiti@2.7.0)(postcss@8.5.28)(rollup@4.63.4)(tslib@2.8.1)(tsx@4.23.15)(typescript@6.0.3)(vitest@4.1.11(@types/node@24.13.6)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.101.0)(tsx@4.23.15)(yaml@2.9.1)))(yaml@2.9.1)
       '@angular/cli':
         specifier: ^22.1.8
         version: 22.1.8(@types/node@24.13.6)(chokidar@5.0.0)(supports-color@8.1.1)
@@ -92,7 +356,7 @@ importers:
         version: 10.11.0(jiti@2.7.0)
       jsdom:
         specifier: ^28.0.0
-        version: 28.1.0(@noble/hashes@2.4.0)(supports-color@8.1.1)
+        version: 28.1.0(@noble/hashes@2.4.0)
       prettier:
         specifier: ^3.8.1
         version: 3.9.8
@@ -117,12 +381,12 @@ importers:
       '@myrddraall/heroes-replay-stats-aether':
         specifier: workspace:*
         version: link:../aether
+      '@myrddraall/heroes-replay-stats-common':
+        specifier: workspace:*
+        version: link:../common
       '@myrddraall/heroes-replay-stats-signals':
         specifier: workspace:*
-        version: link:../signals
-      '@myrddraall/heroes-replay-stats-ui':
-        specifier: workspace:*
-        version: link:../ui
+        version: link:../../libs/signals
       tslib:
         specifier: ^2.3.0
         version: 2.8.1
@@ -183,7 +447,7 @@ importers:
         version: 6.2.5
       jsdom:
         specifier: ^28.0.0
-        version: 28.1.0(@noble/hashes@2.4.0)(supports-color@8.1.1)
+        version: 28.1.0(@noble/hashes@2.4.0)
       prettier:
         specifier: ^3.8.1
         version: 3.9.8
@@ -203,54 +467,729 @@ importers:
         specifier: ^4.0.8
         version: 4.1.11(@types/node@24.13.6)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.101.0)(tsx@4.23.15)(yaml@2.9.1))
 
-  packages/analysers:
+  packages/background:
     dependencies:
-      '@myrddraall/heroprotocol-db':
-        specifier: ^0.5.4
-        version: 0.5.4(dexie@4.4.6)
+      '@myrddraall/heroes-replay-stats-aether':
+        specifier: workspace:*
+        version: link:../aether
+      '@myrddraall/heroes-replay-stats-aether-forge':
+        specifier: workspace:*
+        version: link:../aether-forge
+      '@myrddraall/heroes-replay-stats-settings':
+        specifier: workspace:*
+        version: link:../settings
+      '@myrddraall/heroes-replay-stats-sheets':
+        specifier: workspace:*
+        version: link:../sheets
+      '@myrddraall/heroes-replay-stats-shell':
+        specifier: workspace:*
+        version: link:../shell
+      '@myrddraall/heroes-replay-stats-theme':
+        specifier: workspace:*
+        version: link:../theme
+      tslib:
+        specifier: ^2.3.0
+        version: 2.8.1
     devDependencies:
-      '@myrddraall/heroprotocol':
-        specifier: ^0.5.4
-        version: 0.5.4
-      '@types/node':
-        specifier: ^24.0.0
-        version: 24.13.6
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^8.20.0
-        version: 8.70.1(@typescript-eslint/parser@8.70.1(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)
-      '@typescript-eslint/parser':
-        specifier: ^8.20.0
-        version: 8.70.1(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)
-      dexie:
-        specifier: ^4.4.6
-        version: 4.4.6
-      eslint:
-        specifier: ^10.9.1
-        version: 10.11.0(jiti@2.7.0)
-      prettier:
-        specifier: ^3.8.1
-        version: 3.9.8
-      tsx:
-        specifier: ^4.19.2
-        version: 4.23.15
-      typescript:
-        specifier: ~6.0.2
-        version: 6.0.3
-      vitest:
-        specifier: ^4.0.8
-        version: 4.1.11(@types/node@24.13.6)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.101.0)(tsx@4.23.15)(yaml@2.9.1))
-
-  packages/app:
-    dependencies:
+      '@angular/build':
+        specifier: ^22.1.8
+        version: 22.1.8(@angular/compiler-cli@22.1.7(@angular/compiler@22.1.7)(typescript@6.0.3))(@angular/compiler@22.1.7)(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(@types/node@24.13.6)(chokidar@5.0.0)(jiti@2.7.0)(postcss@8.5.28)(rollup@4.63.4)(tslib@2.8.1)(tsx@4.23.15)(typescript@6.0.3)(vitest@4.1.11(@types/node@24.13.6)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.101.0)(tsx@4.23.15)(yaml@2.9.1)))(yaml@2.9.1)
       '@angular/cdk':
         specifier: ^22.1.0
         version: 22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/forms@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(rxjs@7.8.2)
+      '@angular/cli':
+        specifier: ^22.1.8
+        version: 22.1.8(@types/node@24.13.6)(chokidar@5.0.0)(supports-color@8.1.1)
       '@angular/common':
         specifier: ^22.1.0
         version: 22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2)
       '@angular/compiler':
         specifier: ^22.1.0
         version: 22.1.7
+      '@angular/compiler-cli':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/compiler@22.1.7)(typescript@6.0.3)
+      '@angular/core':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)
+      '@angular/material':
+        specifier: ^22.1.0
+        version: 22.1.7(dc20dbc5de65617d3ba614f3080c025f)
+      '@angular/platform-browser':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/animations@22.2.3(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))
+      '@angular/router':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(rxjs@7.8.2)
+      '@eslint/js':
+        specifier: ^10.0.1
+        version: 10.0.1(eslint@10.11.0(jiti@2.7.0))
+      '@myrddraall/heroes-replay-stats-layout':
+        specifier: workspace:*
+        version: link:../layout
+      '@myrddraall/heroes-replay-stats-platform':
+        specifier: workspace:*
+        version: link:../platform
+      '@ngrx/signals':
+        specifier: ^22.0.1
+        version: 22.0.1(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2)
+      angular-eslint:
+        specifier: ^22.5.0
+        version: 22.5.0(chokidar@5.0.0)(eslint@10.11.0(jiti@2.7.0))(typescript-eslint@8.69.0(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(typescript@6.0.3)
+      eslint:
+        specifier: ^10.9.1
+        version: 10.11.0(jiti@2.7.0)
+      jsdom:
+        specifier: ^28.0.0
+        version: 28.1.0(@noble/hashes@2.4.0)
+      prettier:
+        specifier: ^3.8.1
+        version: 3.9.8
+      rxjs:
+        specifier: ^7.8.0
+        version: 7.8.2
+      typescript:
+        specifier: ~6.0.2
+        version: 6.0.3
+      typescript-eslint:
+        specifier: ^8.69.0
+        version: 8.69.0(eslint@10.11.0(jiti@2.7.0))(supports-color@8.1.1)(typescript@6.0.3)
+      vitest:
+        specifier: ^4.0.8
+        version: 4.1.11(@types/node@24.13.6)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.101.0)(tsx@4.23.15)(yaml@2.9.1))
+
+  packages/common:
+    dependencies:
+      tslib:
+        specifier: ^2.3.0
+        version: 2.8.1
+    devDependencies:
+      '@angular/build':
+        specifier: ^22.1.8
+        version: 22.1.8(@angular/compiler-cli@22.1.7(@angular/compiler@22.1.7)(typescript@6.0.3))(@angular/compiler@22.1.7)(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(@types/node@24.13.6)(chokidar@5.0.0)(jiti@2.7.0)(postcss@8.5.28)(rollup@4.63.4)(tslib@2.8.1)(tsx@4.23.15)(typescript@6.0.3)(vitest@4.1.11(@types/node@24.13.6)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.101.0)(tsx@4.23.15)(yaml@2.9.1)))(yaml@2.9.1)
+      '@angular/cdk':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/forms@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(rxjs@7.8.2)
+      '@angular/cli':
+        specifier: ^22.1.8
+        version: 22.1.8(@types/node@24.13.6)(chokidar@5.0.0)(supports-color@8.1.1)
+      '@angular/common':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2)
+      '@angular/compiler':
+        specifier: ^22.1.0
+        version: 22.1.7
+      '@angular/compiler-cli':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/compiler@22.1.7)(typescript@6.0.3)
+      '@angular/core':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)
+      '@angular/forms':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(rxjs@7.8.2)
+      '@angular/material':
+        specifier: ^22.1.0
+        version: 22.1.7(dc20dbc5de65617d3ba614f3080c025f)
+      '@angular/platform-browser':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/animations@22.2.3(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))
+      '@eslint/js':
+        specifier: ^10.0.1
+        version: 10.0.1(eslint@10.11.0(jiti@2.7.0))
+      angular-eslint:
+        specifier: ^22.5.0
+        version: 22.5.0(chokidar@5.0.0)(eslint@10.11.0(jiti@2.7.0))(typescript-eslint@8.69.0(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(typescript@6.0.3)
+      eslint:
+        specifier: ^10.9.1
+        version: 10.11.0(jiti@2.7.0)
+      jsdom:
+        specifier: ^28.0.0
+        version: 28.1.0(@noble/hashes@2.4.0)
+      prettier:
+        specifier: ^3.8.1
+        version: 3.9.8
+      rxjs:
+        specifier: ^7.8.0
+        version: 7.8.2
+      typescript:
+        specifier: ~6.0.2
+        version: 6.0.3
+      typescript-eslint:
+        specifier: ^8.69.0
+        version: 8.69.0(eslint@10.11.0(jiti@2.7.0))(supports-color@8.1.1)(typescript@6.0.3)
+      vitest:
+        specifier: ^4.0.8
+        version: 4.1.11(@types/node@24.13.6)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.101.0)(tsx@4.23.15)(yaml@2.9.1))
+
+  packages/dev:
+    dependencies:
+      '@myrddraall/heroes-replay-stats-aether':
+        specifier: workspace:*
+        version: link:../aether
+      '@myrddraall/heroes-replay-stats-platform':
+        specifier: workspace:*
+        version: link:../platform
+      tslib:
+        specifier: ^2.3.0
+        version: 2.8.1
+    devDependencies:
+      '@angular/common':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2)
+      '@angular/compiler-cli':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/compiler@22.1.7)(typescript@6.0.3)
+      '@angular/core':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)
+      '@angular/router':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(rxjs@7.8.2)
+      '@eslint/js':
+        specifier: ^10.0.1
+        version: 10.0.1(eslint@10.11.0(jiti@2.7.0))
+      '@ngrx/signals':
+        specifier: ^22.0.1
+        version: 22.0.1(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2)
+      angular-eslint:
+        specifier: ^22.5.0
+        version: 22.5.0(chokidar@5.0.0)(eslint@10.11.0(jiti@2.7.0))(typescript-eslint@8.69.0(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(typescript@6.0.3)
+      eslint:
+        specifier: ^10.9.1
+        version: 10.11.0(jiti@2.7.0)
+      prettier:
+        specifier: ^3.8.1
+        version: 3.9.8
+      rxjs:
+        specifier: ^7.8.0
+        version: 7.8.2
+      typescript:
+        specifier: ~6.0.2
+        version: 6.0.3
+      typescript-eslint:
+        specifier: ^8.69.0
+        version: 8.69.0(eslint@10.11.0(jiti@2.7.0))(supports-color@8.1.1)(typescript@6.0.3)
+
+  packages/heroes:
+    dependencies:
+      '@myrddraall/hero-data':
+        specifier: ^0.5.4
+        version: 0.5.4
+      '@myrddraall/heroes-replay-stats-common':
+        specifier: workspace:*
+        version: link:../common
+      '@myrddraall/heroes-replay-stats-sheets':
+        specifier: workspace:*
+        version: link:../sheets
+      tslib:
+        specifier: ^2.3.0
+        version: 2.8.1
+    devDependencies:
+      '@angular/build':
+        specifier: ^22.1.8
+        version: 22.1.8(@angular/compiler-cli@22.1.7(@angular/compiler@22.1.7)(typescript@6.0.3))(@angular/compiler@22.1.7)(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(@types/node@24.13.6)(chokidar@5.0.0)(jiti@2.7.0)(postcss@8.5.28)(rollup@4.63.4)(tslib@2.8.1)(tsx@4.23.15)(typescript@6.0.3)(vitest@4.1.11(@types/node@24.13.6)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.101.0)(tsx@4.23.15)(yaml@2.9.1)))(yaml@2.9.1)
+      '@angular/cli':
+        specifier: ^22.1.8
+        version: 22.1.8(@types/node@24.13.6)(chokidar@5.0.0)(supports-color@8.1.1)
+      '@angular/common':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2)
+      '@angular/compiler':
+        specifier: ^22.1.0
+        version: 22.1.7
+      '@angular/compiler-cli':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/compiler@22.1.7)(typescript@6.0.3)
+      '@angular/core':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)
+      '@angular/platform-browser':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/animations@22.2.3(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))
+      '@eslint/js':
+        specifier: ^10.0.1
+        version: 10.0.1(eslint@10.11.0(jiti@2.7.0))
+      angular-eslint:
+        specifier: ^22.5.0
+        version: 22.5.0(chokidar@5.0.0)(eslint@10.11.0(jiti@2.7.0))(typescript-eslint@8.69.0(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(typescript@6.0.3)
+      eslint:
+        specifier: ^10.9.1
+        version: 10.11.0(jiti@2.7.0)
+      jsdom:
+        specifier: ^28.0.0
+        version: 28.1.0(@noble/hashes@2.4.0)
+      prettier:
+        specifier: ^3.8.1
+        version: 3.9.8
+      rxjs:
+        specifier: ^7.8.0
+        version: 7.8.2
+      typescript:
+        specifier: ~6.0.2
+        version: 6.0.3
+      typescript-eslint:
+        specifier: ^8.69.0
+        version: 8.69.0(eslint@10.11.0(jiti@2.7.0))(supports-color@8.1.1)(typescript@6.0.3)
+      vitest:
+        specifier: ^4.0.8
+        version: 4.1.11(@types/node@24.13.6)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.101.0)(tsx@4.23.15)(yaml@2.9.1))
+
+  packages/import:
+    dependencies:
+      '@myrddraall/heroes-replay-stats-analysers':
+        specifier: workspace:*
+        version: link:../../libs/analysers
+      '@myrddraall/heroes-replay-stats-layout':
+        specifier: workspace:*
+        version: link:../layout
+      '@myrddraall/heroes-replay-stats-platform':
+        specifier: workspace:*
+        version: link:../platform
+      '@myrddraall/heroes-replay-stats-settings':
+        specifier: workspace:*
+        version: link:../settings
+      '@myrddraall/heroes-replay-stats-shell':
+        specifier: workspace:*
+        version: link:../shell
+      '@myrddraall/heroprotocol-analysis':
+        specifier: ^0.5.4
+        version: 0.5.4(dexie@4.4.6)
+      '@myrddraall/heroprotocol-db':
+        specifier: ^0.5.4
+        version: 0.5.4(dexie@4.4.6)
+      dexie:
+        specifier: ^4.4.6
+        version: 4.4.6
+      tslib:
+        specifier: ^2.3.0
+        version: 2.8.1
+    devDependencies:
+      '@angular/build':
+        specifier: ^22.1.8
+        version: 22.1.8(@angular/compiler-cli@22.1.7(@angular/compiler@22.1.7)(typescript@6.0.3))(@angular/compiler@22.1.7)(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(@types/node@24.13.6)(chokidar@5.0.0)(jiti@2.7.0)(postcss@8.5.28)(rollup@4.63.4)(tslib@2.8.1)(tsx@4.23.15)(typescript@6.0.3)(vitest@4.1.11(@types/node@24.13.6)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.101.0)(tsx@4.23.15)(yaml@2.9.1)))(yaml@2.9.1)
+      '@angular/cdk':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/forms@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(rxjs@7.8.2)
+      '@angular/cli':
+        specifier: ^22.1.8
+        version: 22.1.8(@types/node@24.13.6)(chokidar@5.0.0)(supports-color@8.1.1)
+      '@angular/common':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2)
+      '@angular/compiler':
+        specifier: ^22.1.0
+        version: 22.1.7
+      '@angular/compiler-cli':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/compiler@22.1.7)(typescript@6.0.3)
+      '@angular/core':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)
+      '@angular/material':
+        specifier: ^22.1.0
+        version: 22.1.7(dc20dbc5de65617d3ba614f3080c025f)
+      '@angular/platform-browser':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/animations@22.2.3(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))
+      '@angular/router':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(rxjs@7.8.2)
+      '@eslint/js':
+        specifier: ^10.0.1
+        version: 10.0.1(eslint@10.11.0(jiti@2.7.0))
+      '@ngrx/signals':
+        specifier: ^22.0.1
+        version: 22.0.1(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2)
+      angular-eslint:
+        specifier: ^22.5.0
+        version: 22.5.0(chokidar@5.0.0)(eslint@10.11.0(jiti@2.7.0))(typescript-eslint@8.69.0(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(typescript@6.0.3)
+      eslint:
+        specifier: ^10.9.1
+        version: 10.11.0(jiti@2.7.0)
+      jsdom:
+        specifier: ^28.0.0
+        version: 28.1.0(@noble/hashes@2.4.0)
+      prettier:
+        specifier: ^3.8.1
+        version: 3.9.8
+      rxjs:
+        specifier: ^7.8.0
+        version: 7.8.2
+      typescript:
+        specifier: ~6.0.2
+        version: 6.0.3
+      typescript-eslint:
+        specifier: ^8.69.0
+        version: 8.69.0(eslint@10.11.0(jiti@2.7.0))(supports-color@8.1.1)(typescript@6.0.3)
+      vitest:
+        specifier: ^4.0.8
+        version: 4.1.11(@types/node@24.13.6)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.101.0)(tsx@4.23.15)(yaml@2.9.1))
+
+  packages/layout:
+    dependencies:
+      tslib:
+        specifier: ^2.3.0
+        version: 2.8.1
+    devDependencies:
+      '@angular/build':
+        specifier: ^22.1.8
+        version: 22.1.8(@angular/compiler-cli@22.1.7(@angular/compiler@22.1.7)(typescript@6.0.3))(@angular/compiler@22.1.7)(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(@types/node@24.13.6)(chokidar@5.0.0)(jiti@2.7.0)(postcss@8.5.28)(rollup@4.63.4)(tslib@2.8.1)(tsx@4.23.15)(typescript@6.0.3)(vitest@4.1.11(@types/node@24.13.6)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.101.0)(tsx@4.23.15)(yaml@2.9.1)))(yaml@2.9.1)
+      '@angular/cli':
+        specifier: ^22.1.8
+        version: 22.1.8(@types/node@24.13.6)(chokidar@5.0.0)(supports-color@8.1.1)
+      '@angular/common':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2)
+      '@angular/compiler':
+        specifier: ^22.1.0
+        version: 22.1.7
+      '@angular/compiler-cli':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/compiler@22.1.7)(typescript@6.0.3)
+      '@angular/core':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)
+      '@angular/platform-browser':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/animations@22.2.3(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))
+      '@eslint/js':
+        specifier: ^10.0.1
+        version: 10.0.1(eslint@10.11.0(jiti@2.7.0))
+      angular-eslint:
+        specifier: ^22.5.0
+        version: 22.5.0(chokidar@5.0.0)(eslint@10.11.0(jiti@2.7.0))(typescript-eslint@8.69.0(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(typescript@6.0.3)
+      eslint:
+        specifier: ^10.9.1
+        version: 10.11.0(jiti@2.7.0)
+      jsdom:
+        specifier: ^28.0.0
+        version: 28.1.0(@noble/hashes@2.4.0)
+      prettier:
+        specifier: ^3.8.1
+        version: 3.9.8
+      rxjs:
+        specifier: ^7.8.0
+        version: 7.8.2
+      typescript:
+        specifier: ~6.0.2
+        version: 6.0.3
+      typescript-eslint:
+        specifier: ^8.69.0
+        version: 8.69.0(eslint@10.11.0(jiti@2.7.0))(supports-color@8.1.1)(typescript@6.0.3)
+      vitest:
+        specifier: ^4.0.8
+        version: 4.1.11(@types/node@24.13.6)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.101.0)(tsx@4.23.15)(yaml@2.9.1))
+
+  packages/maps:
+    dependencies:
+      '@myrddraall/hero-data':
+        specifier: ^0.5.4
+        version: 0.5.4
+      '@myrddraall/heroes-replay-stats-background':
+        specifier: workspace:*
+        version: link:../background
+      '@myrddraall/heroes-replay-stats-common':
+        specifier: workspace:*
+        version: link:../common
+      '@myrddraall/heroes-replay-stats-heroes':
+        specifier: workspace:*
+        version: link:../heroes
+      '@myrddraall/heroes-replay-stats-layout':
+        specifier: workspace:*
+        version: link:../layout
+      '@myrddraall/heroes-replay-stats-shell':
+        specifier: workspace:*
+        version: link:../shell
+      pmtiles:
+        specifier: ^4.5.0
+        version: 4.5.0
+      tslib:
+        specifier: ^2.3.0
+        version: 2.8.1
+    devDependencies:
+      '@angular/build':
+        specifier: ^22.1.8
+        version: 22.1.8(@angular/compiler-cli@22.1.7(@angular/compiler@22.1.7)(typescript@6.0.3))(@angular/compiler@22.1.7)(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(@types/node@24.13.6)(chokidar@5.0.0)(jiti@2.7.0)(postcss@8.5.28)(rollup@4.63.4)(tslib@2.8.1)(tsx@4.23.15)(typescript@6.0.3)(vitest@4.1.11(@types/node@24.13.6)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.101.0)(tsx@4.23.15)(yaml@2.9.1)))(yaml@2.9.1)
+      '@angular/cdk':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/forms@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(rxjs@7.8.2)
+      '@angular/cli':
+        specifier: ^22.1.8
+        version: 22.1.8(@types/node@24.13.6)(chokidar@5.0.0)(supports-color@8.1.1)
+      '@angular/common':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2)
+      '@angular/compiler':
+        specifier: ^22.1.0
+        version: 22.1.7
+      '@angular/compiler-cli':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/compiler@22.1.7)(typescript@6.0.3)
+      '@angular/core':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)
+      '@angular/material':
+        specifier: ^22.1.0
+        version: 22.1.7(dc20dbc5de65617d3ba614f3080c025f)
+      '@angular/platform-browser':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/animations@22.2.3(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))
+      '@angular/router':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(rxjs@7.8.2)
+      '@eslint/js':
+        specifier: ^10.0.1
+        version: 10.0.1(eslint@10.11.0(jiti@2.7.0))
+      '@myrddraall/heroes-replay-stats-aether':
+        specifier: workspace:*
+        version: link:../aether
+      '@myrddraall/heroes-replay-stats-platform':
+        specifier: workspace:*
+        version: link:../platform
+      '@myrddraall/heroes-replay-stats-settings':
+        specifier: workspace:*
+        version: link:../settings
+      '@myrddraall/heroes-replay-stats-sheets':
+        specifier: workspace:*
+        version: link:../sheets
+      '@myrddraall/heroes-replay-stats-theme':
+        specifier: workspace:*
+        version: link:../theme
+      '@ngrx/signals':
+        specifier: ^22.0.1
+        version: 22.0.1(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2)
+      angular-eslint:
+        specifier: ^22.5.0
+        version: 22.5.0(chokidar@5.0.0)(eslint@10.11.0(jiti@2.7.0))(typescript-eslint@8.69.0(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(typescript@6.0.3)
+      eslint:
+        specifier: ^10.9.1
+        version: 10.11.0(jiti@2.7.0)
+      jsdom:
+        specifier: ^28.0.0
+        version: 28.1.0(@noble/hashes@2.4.0)
+      prettier:
+        specifier: ^3.8.1
+        version: 3.9.8
+      rxjs:
+        specifier: ^7.8.0
+        version: 7.8.2
+      typescript:
+        specifier: ~6.0.2
+        version: 6.0.3
+      typescript-eslint:
+        specifier: ^8.69.0
+        version: 8.69.0(eslint@10.11.0(jiti@2.7.0))(supports-color@8.1.1)(typescript@6.0.3)
+      vitest:
+        specifier: ^4.0.8
+        version: 4.1.11(@types/node@24.13.6)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.101.0)(tsx@4.23.15)(yaml@2.9.1))
+
+  packages/platform:
+    dependencies:
+      tslib:
+        specifier: ^2.3.0
+        version: 2.8.1
+    devDependencies:
+      '@angular/build':
+        specifier: ^22.1.8
+        version: 22.1.8(@angular/compiler-cli@22.1.7(@angular/compiler@22.1.7)(typescript@6.0.3))(@angular/compiler@22.1.7)(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(@types/node@24.13.6)(chokidar@5.0.0)(jiti@2.7.0)(postcss@8.5.28)(rollup@4.63.4)(tslib@2.8.1)(tsx@4.23.15)(typescript@6.0.3)(vitest@4.1.11(@types/node@24.13.6)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.101.0)(tsx@4.23.15)(yaml@2.9.1)))(yaml@2.9.1)
+      '@angular/cli':
+        specifier: ^22.1.8
+        version: 22.1.8(@types/node@24.13.6)(chokidar@5.0.0)(supports-color@8.1.1)
+      '@angular/common':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2)
+      '@angular/compiler':
+        specifier: ^22.1.0
+        version: 22.1.7
+      '@angular/compiler-cli':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/compiler@22.1.7)(typescript@6.0.3)
+      '@angular/core':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)
+      '@angular/platform-browser':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/animations@22.2.3(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))
+      '@eslint/js':
+        specifier: ^10.0.1
+        version: 10.0.1(eslint@10.11.0(jiti@2.7.0))
+      angular-eslint:
+        specifier: ^22.5.0
+        version: 22.5.0(chokidar@5.0.0)(eslint@10.11.0(jiti@2.7.0))(typescript-eslint@8.69.0(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(typescript@6.0.3)
+      eslint:
+        specifier: ^10.9.1
+        version: 10.11.0(jiti@2.7.0)
+      jsdom:
+        specifier: ^28.0.0
+        version: 28.1.0(@noble/hashes@2.4.0)
+      prettier:
+        specifier: ^3.8.1
+        version: 3.9.8
+      rxjs:
+        specifier: ^7.8.0
+        version: 7.8.2
+      typescript:
+        specifier: ~6.0.2
+        version: 6.0.3
+      typescript-eslint:
+        specifier: ^8.69.0
+        version: 8.69.0(eslint@10.11.0(jiti@2.7.0))(supports-color@8.1.1)(typescript@6.0.3)
+      vitest:
+        specifier: ^4.0.8
+        version: 4.1.11(@types/node@24.13.6)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.101.0)(tsx@4.23.15)(yaml@2.9.1))
+
+  packages/players:
+    dependencies:
+      '@myrddraall/heroes-replay-stats-common':
+        specifier: workspace:*
+        version: link:../common
+      '@myrddraall/heroes-replay-stats-import':
+        specifier: workspace:*
+        version: link:../import
+      '@myrddraall/heroes-replay-stats-layout':
+        specifier: workspace:*
+        version: link:../layout
+      '@myrddraall/heroes-replay-stats-settings':
+        specifier: workspace:*
+        version: link:../settings
+      '@myrddraall/heroes-replay-stats-shell':
+        specifier: workspace:*
+        version: link:../shell
+      '@myrddraall/heroprotocol-db':
+        specifier: ^0.5.4
+        version: 0.5.4(dexie@4.4.6)
+      tslib:
+        specifier: ^2.3.0
+        version: 2.8.1
+    devDependencies:
+      '@angular/build':
+        specifier: ^22.1.8
+        version: 22.1.8(@angular/compiler-cli@22.1.7(@angular/compiler@22.1.7)(typescript@6.0.3))(@angular/compiler@22.1.7)(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(@types/node@24.13.6)(chokidar@5.0.0)(jiti@2.7.0)(postcss@8.5.28)(rollup@4.63.4)(tslib@2.8.1)(tsx@4.23.15)(typescript@6.0.3)(vitest@4.1.11(@types/node@24.13.6)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.101.0)(tsx@4.23.15)(yaml@2.9.1)))(yaml@2.9.1)
+      '@angular/cli':
+        specifier: ^22.1.8
+        version: 22.1.8(@types/node@24.13.6)(chokidar@5.0.0)(supports-color@8.1.1)
+      '@angular/common':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2)
+      '@angular/compiler':
+        specifier: ^22.1.0
+        version: 22.1.7
+      '@angular/compiler-cli':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/compiler@22.1.7)(typescript@6.0.3)
+      '@angular/core':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)
+      '@angular/material':
+        specifier: ^22.1.0
+        version: 22.1.7(dc20dbc5de65617d3ba614f3080c025f)
+      '@angular/platform-browser':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/animations@22.2.3(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))
+      '@angular/router':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(rxjs@7.8.2)
+      '@eslint/js':
+        specifier: ^10.0.1
+        version: 10.0.1(eslint@10.11.0(jiti@2.7.0))
+      '@myrddraall/heroes-replay-stats-platform':
+        specifier: workspace:*
+        version: link:../platform
+      '@ngrx/signals':
+        specifier: ^22.0.1
+        version: 22.0.1(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2)
+      angular-eslint:
+        specifier: ^22.5.0
+        version: 22.5.0(chokidar@5.0.0)(eslint@10.11.0(jiti@2.7.0))(typescript-eslint@8.69.0(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(typescript@6.0.3)
+      dexie:
+        specifier: ^4.4.6
+        version: 4.4.6
+      eslint:
+        specifier: ^10.9.1
+        version: 10.11.0(jiti@2.7.0)
+      fake-indexeddb:
+        specifier: ^6.0.0
+        version: 6.2.5
+      jsdom:
+        specifier: ^28.0.0
+        version: 28.1.0(@noble/hashes@2.4.0)
+      prettier:
+        specifier: ^3.8.1
+        version: 3.9.8
+      rxjs:
+        specifier: ^7.8.0
+        version: 7.8.2
+      typescript:
+        specifier: ~6.0.2
+        version: 6.0.3
+      typescript-eslint:
+        specifier: ^8.69.0
+        version: 8.69.0(eslint@10.11.0(jiti@2.7.0))(supports-color@8.1.1)(typescript@6.0.3)
+      vitest:
+        specifier: ^4.0.8
+        version: 4.1.11(@types/node@24.13.6)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.101.0)(tsx@4.23.15)(yaml@2.9.1))
+
+  packages/replays:
+    dependencies:
+      '@myrddraall/hero-data':
+        specifier: ^0.5.4
+        version: 0.5.4
+      '@myrddraall/heroes-replay-stats-common':
+        specifier: workspace:*
+        version: link:../common
+      '@myrddraall/heroes-replay-stats-heroes':
+        specifier: workspace:*
+        version: link:../heroes
+      '@myrddraall/heroes-replay-stats-import':
+        specifier: workspace:*
+        version: link:../import
+      '@myrddraall/heroes-replay-stats-layout':
+        specifier: workspace:*
+        version: link:../layout
+      '@myrddraall/heroes-replay-stats-players':
+        specifier: workspace:*
+        version: link:../players
+      '@myrddraall/heroes-replay-stats-settings':
+        specifier: workspace:*
+        version: link:../settings
+      '@myrddraall/heroes-replay-stats-sheets':
+        specifier: workspace:*
+        version: link:../sheets
+      '@myrddraall/heroes-replay-stats-shell':
+        specifier: workspace:*
+        version: link:../shell
+      '@myrddraall/heroprotocol-analysis':
+        specifier: ^0.5.4
+        version: 0.5.4(dexie@4.4.6)
+      '@myrddraall/heroprotocol-db':
+        specifier: ^0.5.4
+        version: 0.5.4(dexie@4.4.6)
+      dexie:
+        specifier: ^4.4.6
+        version: 4.4.6
+      tslib:
+        specifier: ^2.3.0
+        version: 2.8.1
+    devDependencies:
+      '@angular/build':
+        specifier: ^22.1.8
+        version: 22.1.8(@angular/compiler-cli@22.1.7(@angular/compiler@22.1.7)(typescript@6.0.3))(@angular/compiler@22.1.7)(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(@types/node@24.13.6)(chokidar@5.0.0)(jiti@2.7.0)(postcss@8.5.28)(rollup@4.63.4)(tslib@2.8.1)(tsx@4.23.15)(typescript@6.0.3)(vitest@4.1.11(@types/node@24.13.6)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.101.0)(tsx@4.23.15)(yaml@2.9.1)))(yaml@2.9.1)
+      '@angular/cdk':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/forms@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(rxjs@7.8.2)
+      '@angular/cli':
+        specifier: ^22.1.8
+        version: 22.1.8(@types/node@24.13.6)(chokidar@5.0.0)(supports-color@8.1.1)
+      '@angular/common':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2)
+      '@angular/compiler':
+        specifier: ^22.1.0
+        version: 22.1.7
+      '@angular/compiler-cli':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/compiler@22.1.7)(typescript@6.0.3)
       '@angular/core':
         specifier: ^22.1.0
         version: 22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)
@@ -266,73 +1205,15 @@ importers:
       '@angular/router':
         specifier: ^22.1.0
         version: 22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(rxjs@7.8.2)
-      '@myrddraall/hero-data':
-        specifier: ^0.5.4
-        version: 0.5.4
-      '@myrddraall/heroes-replay-stats-aether':
-        specifier: workspace:*
-        version: link:../aether
-      '@myrddraall/heroes-replay-stats-aether-forge':
-        specifier: workspace:*
-        version: link:../aether-forge
-      '@myrddraall/heroes-replay-stats-analysers':
-        specifier: workspace:*
-        version: link:../analysers
-      '@myrddraall/heroes-replay-stats-map':
-        specifier: workspace:*
-        version: link:../map
-      '@myrddraall/heroes-replay-stats-signals':
-        specifier: workspace:*
-        version: link:../signals
-      '@myrddraall/heroes-replay-stats-ui':
-        specifier: workspace:*
-        version: link:../ui
-      '@myrddraall/heroprotocol-analysis':
-        specifier: ^0.5.4
-        version: 0.5.4(dexie@4.4.6)
-      '@myrddraall/heroprotocol-db':
-        specifier: ^0.5.4
-        version: 0.5.4(dexie@4.4.6)
-      '@ngrx/signals':
-        specifier: ^22.0.1
-        version: 22.0.1(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2)
-      dexie:
-        specifier: ^4.4.6
-        version: 4.4.6
-      fflate:
-        specifier: ^0.8.3
-        version: 0.8.3
-      pmtiles:
-        specifier: ^4.5.0
-        version: 4.5.0
-      rxjs:
-        specifier: ^7.8.0
-        version: 7.8.2
-      three:
-        specifier: ^0.186.1
-        version: 0.186.1
-      tslib:
-        specifier: ^2.3.0
-        version: 2.8.1
-    devDependencies:
-      '@angular-eslint/builder':
-        specifier: ^22.5.0
-        version: 22.5.0(chokidar@5.0.0)(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)
-      '@angular/build':
-        specifier: ^22.1.8
-        version: 22.1.8(@angular/compiler-cli@22.1.7(@angular/compiler@22.1.7)(typescript@6.0.3))(@angular/compiler@22.1.7)(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(@types/node@24.13.6)(chokidar@5.0.0)(jiti@2.7.0)(postcss@8.5.28)(rollup@4.63.4)(tslib@2.8.1)(tsx@4.23.15)(typescript@6.0.3)(vitest@4.1.11(@types/node@24.13.6)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.101.0)(tsx@4.23.15)(yaml@2.9.1)))(yaml@2.9.1)
-      '@angular/cli':
-        specifier: ^22.1.8
-        version: 22.1.8(@types/node@24.13.6)(chokidar@5.0.0)(supports-color@8.1.1)
-      '@angular/compiler-cli':
-        specifier: ^22.1.0
-        version: 22.1.7(@angular/compiler@22.1.7)(typescript@6.0.3)
       '@eslint/js':
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.11.0(jiti@2.7.0))
-      '@types/three':
-        specifier: ^0.186.0
-        version: 0.186.0
+      '@myrddraall/heroes-replay-stats-platform':
+        specifier: workspace:*
+        version: link:../platform
+      '@ngrx/signals':
+        specifier: ^22.0.1
+        version: 22.0.1(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2)
       angular-eslint:
         specifier: ^22.5.0
         version: 22.5.0(chokidar@5.0.0)(eslint@10.11.0(jiti@2.7.0))(typescript-eslint@8.69.0(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(typescript@6.0.3)
@@ -344,10 +1225,13 @@ importers:
         version: 6.2.5
       jsdom:
         specifier: ^28.0.0
-        version: 28.1.0(@noble/hashes@2.4.0)(supports-color@8.1.1)
+        version: 28.1.0(@noble/hashes@2.4.0)
       prettier:
         specifier: ^3.8.1
         version: 3.9.8
+      rxjs:
+        specifier: ^7.8.0
+        version: 7.8.2
       typescript:
         specifier: ~6.0.2
         version: 6.0.3
@@ -358,54 +1242,51 @@ importers:
         specifier: ^4.0.8
         version: 4.1.11(@types/node@24.13.6)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.101.0)(tsx@4.23.15)(yaml@2.9.1))
 
-  packages/desktop:
-    devDependencies:
-      '@types/node':
-        specifier: ^24.0.0
-        version: 24.13.6
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^8.20.0
-        version: 8.70.1(@typescript-eslint/parser@8.70.1(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)
-      '@typescript-eslint/parser':
-        specifier: ^8.20.0
-        version: 8.70.1(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)
-      electron:
-        specifier: ^44.4.5
-        version: 44.4.5(supports-color@8.1.1)
-      electron-builder:
-        specifier: ^26.15.3
-        version: 26.15.3(electron-builder-squirrel-windows@26.15.3)
-      eslint:
-        specifier: ^10.9.1
-        version: 10.11.0(jiti@2.7.0)
-      prettier:
-        specifier: ^3.8.1
-        version: 3.9.8
-      tsup:
-        specifier: ^8.5.1
-        version: 8.5.1(jiti@2.7.0)(postcss@8.5.28)(supports-color@8.1.1)(tsx@4.23.15)(typescript@6.0.3)(yaml@2.9.1)
-      typescript:
-        specifier: ~6.0.2
-        version: 6.0.3
-
-  packages/map:
+  packages/settings:
     dependencies:
-      pmtiles:
-        specifier: ^4.5.0
-        version: 4.5.0
+      '@myrddraall/heroes-replay-stats-layout':
+        specifier: workspace:*
+        version: link:../layout
+      '@myrddraall/heroes-replay-stats-platform':
+        specifier: workspace:*
+        version: link:../platform
+      '@myrddraall/heroes-replay-stats-shell':
+        specifier: workspace:*
+        version: link:../shell
       tslib:
         specifier: ^2.3.0
         version: 2.8.1
     devDependencies:
+      '@angular/build':
+        specifier: ^22.1.8
+        version: 22.1.8(@angular/compiler-cli@22.1.7(@angular/compiler@22.1.7)(typescript@6.0.3))(@angular/compiler@22.1.7)(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(@types/node@24.13.6)(chokidar@5.0.0)(jiti@2.7.0)(postcss@8.5.28)(rollup@4.63.4)(tslib@2.8.1)(tsx@4.23.15)(typescript@6.0.3)(vitest@4.1.11(@types/node@24.13.6)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.101.0)(tsx@4.23.15)(yaml@2.9.1)))(yaml@2.9.1)
+      '@angular/cdk':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/forms@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(rxjs@7.8.2)
+      '@angular/cli':
+        specifier: ^22.1.8
+        version: 22.1.8(@types/node@24.13.6)(chokidar@5.0.0)(supports-color@8.1.1)
       '@angular/common':
         specifier: ^22.1.0
         version: 22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2)
       '@angular/compiler':
         specifier: ^22.1.0
         version: 22.1.7
+      '@angular/compiler-cli':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/compiler@22.1.7)(typescript@6.0.3)
       '@angular/core':
         specifier: ^22.1.0
         version: 22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)
+      '@angular/material':
+        specifier: ^22.1.0
+        version: 22.1.7(dc20dbc5de65617d3ba614f3080c025f)
+      '@angular/platform-browser':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/animations@22.2.3(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))
+      '@angular/router':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(rxjs@7.8.2)
       '@eslint/js':
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.11.0(jiti@2.7.0))
@@ -418,6 +1299,9 @@ importers:
       eslint:
         specifier: ^10.9.1
         version: 10.11.0(jiti@2.7.0)
+      jsdom:
+        specifier: ^28.0.0
+        version: 28.1.0(@noble/hashes@2.4.0)
       prettier:
         specifier: ^3.8.1
         version: 3.9.8
@@ -434,18 +1318,33 @@ importers:
         specifier: ^4.0.8
         version: 4.1.11(@types/node@24.13.6)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.101.0)(tsx@4.23.15)(yaml@2.9.1))
 
-  packages/signals:
+  packages/sheets:
     dependencies:
       tslib:
         specifier: ^2.3.0
         version: 2.8.1
     devDependencies:
+      '@angular/build':
+        specifier: ^22.1.8
+        version: 22.1.8(@angular/compiler-cli@22.1.7(@angular/compiler@22.1.7)(typescript@6.0.3))(@angular/compiler@22.1.7)(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(@types/node@24.13.6)(chokidar@5.0.0)(jiti@2.7.0)(postcss@8.5.28)(rollup@4.63.4)(tslib@2.8.1)(tsx@4.23.15)(typescript@6.0.3)(vitest@4.1.11(@types/node@24.13.6)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.101.0)(tsx@4.23.15)(yaml@2.9.1)))(yaml@2.9.1)
+      '@angular/cli':
+        specifier: ^22.1.8
+        version: 22.1.8(@types/node@24.13.6)(chokidar@5.0.0)(supports-color@8.1.1)
+      '@angular/common':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2)
       '@angular/compiler':
         specifier: ^22.1.0
         version: 22.1.7
+      '@angular/compiler-cli':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/compiler@22.1.7)(typescript@6.0.3)
       '@angular/core':
         specifier: ^22.1.0
         version: 22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)
+      '@angular/platform-browser':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/animations@22.2.3(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))
       '@eslint/js':
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.11.0(jiti@2.7.0))
@@ -458,6 +1357,9 @@ importers:
       eslint:
         specifier: ^10.9.1
         version: 10.11.0(jiti@2.7.0)
+      jsdom:
+        specifier: ^28.0.0
+        version: 28.1.0(@noble/hashes@2.4.0)
       prettier:
         specifier: ^3.8.1
         version: 3.9.8
@@ -470,9 +1372,15 @@ importers:
       typescript-eslint:
         specifier: ^8.69.0
         version: 8.69.0(eslint@10.11.0(jiti@2.7.0))(supports-color@8.1.1)(typescript@6.0.3)
+      vitest:
+        specifier: ^4.0.8
+        version: 4.1.11(@types/node@24.13.6)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.101.0)(tsx@4.23.15)(yaml@2.9.1))
 
-  packages/ui:
+  packages/shell:
     dependencies:
+      '@myrddraall/heroes-replay-stats-platform':
+        specifier: workspace:*
+        version: link:../platform
       tslib:
         specifier: ^2.3.0
         version: 2.8.1
@@ -489,15 +1397,21 @@ importers:
       '@angular/core':
         specifier: ^22.1.0
         version: 22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)
-      '@angular/forms':
-        specifier: ^22.1.0
-        version: 22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(rxjs@7.8.2)
       '@angular/material':
         specifier: ^22.1.0
         version: 22.1.7(dc20dbc5de65617d3ba614f3080c025f)
+      '@angular/platform-browser':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/animations@22.2.3(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))
+      '@angular/router':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(rxjs@7.8.2)
       '@eslint/js':
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.11.0(jiti@2.7.0))
+      '@ngrx/signals':
+        specifier: ^22.0.1
+        version: 22.0.1(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2)
       angular-eslint:
         specifier: ^22.5.0
         version: 22.5.0(chokidar@5.0.0)(eslint@10.11.0(jiti@2.7.0))(typescript-eslint@8.69.0(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(typescript@6.0.3)
@@ -516,6 +1430,79 @@ importers:
       typescript-eslint:
         specifier: ^8.69.0
         version: 8.69.0(eslint@10.11.0(jiti@2.7.0))(supports-color@8.1.1)(typescript@6.0.3)
+
+  packages/theme:
+    dependencies:
+      '@myrddraall/heroes-replay-stats-settings':
+        specifier: workspace:*
+        version: link:../settings
+      '@myrddraall/heroes-replay-stats-shell':
+        specifier: workspace:*
+        version: link:../shell
+      tslib:
+        specifier: ^2.3.0
+        version: 2.8.1
+    devDependencies:
+      '@angular/build':
+        specifier: ^22.1.8
+        version: 22.1.8(@angular/compiler-cli@22.1.7(@angular/compiler@22.1.7)(typescript@6.0.3))(@angular/compiler@22.1.7)(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(@types/node@24.13.6)(chokidar@5.0.0)(jiti@2.7.0)(postcss@8.5.28)(rollup@4.63.4)(tslib@2.8.1)(tsx@4.23.15)(typescript@6.0.3)(vitest@4.1.11(@types/node@24.13.6)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.101.0)(tsx@4.23.15)(yaml@2.9.1)))(yaml@2.9.1)
+      '@angular/cli':
+        specifier: ^22.1.8
+        version: 22.1.8(@types/node@24.13.6)(chokidar@5.0.0)(supports-color@8.1.1)
+      '@angular/common':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2)
+      '@angular/compiler':
+        specifier: ^22.1.0
+        version: 22.1.7
+      '@angular/compiler-cli':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/compiler@22.1.7)(typescript@6.0.3)
+      '@angular/core':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)
+      '@angular/material':
+        specifier: ^22.1.0
+        version: 22.1.7(dc20dbc5de65617d3ba614f3080c025f)
+      '@angular/platform-browser':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/animations@22.2.3(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))
+      '@eslint/js':
+        specifier: ^10.0.1
+        version: 10.0.1(eslint@10.11.0(jiti@2.7.0))
+      '@myrddraall/heroes-replay-stats-layout':
+        specifier: workspace:*
+        version: link:../layout
+      '@myrddraall/heroes-replay-stats-platform':
+        specifier: workspace:*
+        version: link:../platform
+      '@ngrx/signals':
+        specifier: ^22.0.1
+        version: 22.0.1(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2)
+      angular-eslint:
+        specifier: ^22.5.0
+        version: 22.5.0(chokidar@5.0.0)(eslint@10.11.0(jiti@2.7.0))(typescript-eslint@8.69.0(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(typescript@6.0.3)
+      eslint:
+        specifier: ^10.9.1
+        version: 10.11.0(jiti@2.7.0)
+      jsdom:
+        specifier: ^28.0.0
+        version: 28.1.0(@noble/hashes@2.4.0)
+      prettier:
+        specifier: ^3.8.1
+        version: 3.9.8
+      rxjs:
+        specifier: ^7.8.0
+        version: 7.8.2
+      typescript:
+        specifier: ~6.0.2
+        version: 6.0.3
+      typescript-eslint:
+        specifier: ^8.69.0
+        version: 8.69.0(eslint@10.11.0(jiti@2.7.0))(supports-color@8.1.1)(typescript@6.0.3)
+      vitest:
+        specifier: ^4.0.8
+        version: 4.1.11(@types/node@24.13.6)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.101.0)(tsx@4.23.15)(yaml@2.9.1))
 
 packages:
 
@@ -2447,6 +3434,19 @@ packages:
   '@sindresorhus/merge-streams@2.3.0':
     resolution: {integrity: sha512-LtoMMhxAlorcGhmFYI+LhPgbPZCkgP6ra1YL604EeF6U98pLlQ3iWIGMdWSC+vWmPBWBNgmDBAhnAobLROJmwg==}
     engines: {node: '>=18'}
+
+  '@softarc/eslint-plugin-sheriff@0.20.0':
+    resolution: {integrity: sha512-l0PiMLANwigPtTTPuOQUzQFbgXrmnhZhFWpTCmOfwO9aADorZoY9NdU0FJkq5G5O9Dg+Xnu0oIkMHrxFwQYDog==}
+    peerDependencies:
+      '@softarc/sheriff-core': 0.20.0
+      '@typescript-eslint/utils': ^5.48.2 || ^6.0.0 || ^7.0.0 || ^8.0.0-alpha.20
+      eslint: ^8.0.0 || ^9.0.0 || ^10.0.0
+
+  '@softarc/sheriff-core@0.20.0':
+    resolution: {integrity: sha512-dTm5dOUMOGTV3ql7ZIuI8rE+gZawIcJLEluqRYX3KDVJ215vfUzpC9LlSL4pTW0lAAeNLelmPZBzY57jLvOPpg==}
+    hasBin: true
+    peerDependencies:
+      typescript: '>=4.8'
 
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
@@ -5340,6 +6340,18 @@ snapshots:
 
   '@angular-eslint/bundled-angular-compiler@22.5.0': {}
 
+  '@angular-eslint/eslint-plugin-template@22.5.0(@angular-eslint/template-parser@22.5.0(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(@typescript-eslint/types@8.70.1)(@typescript-eslint/utils@8.70.1(eslint@10.11.0(jiti@2.7.0)(supports-color@8.1.1))(typescript@6.0.3))(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)':
+    dependencies:
+      '@angular-eslint/bundled-angular-compiler': 22.5.0
+      '@angular-eslint/template-parser': 22.5.0(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)
+      '@angular-eslint/utils': 22.5.0(@typescript-eslint/utils@8.70.1(eslint@10.11.0(jiti@2.7.0)(supports-color@8.1.1))(typescript@6.0.3))(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)
+      '@typescript-eslint/types': 8.70.1
+      '@typescript-eslint/utils': 8.70.1(eslint@10.11.0(jiti@2.7.0)(supports-color@8.1.1))(typescript@6.0.3)
+      aria-query: 5.3.2
+      axobject-query: 4.1.0
+      eslint: 10.11.0(jiti@2.7.0)
+      typescript: 6.0.3
+
   '@angular-eslint/eslint-plugin-template@22.5.0(@angular-eslint/template-parser@22.5.0(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(@typescript-eslint/types@8.70.1)(@typescript-eslint/utils@8.70.1(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)':
     dependencies:
       '@angular-eslint/bundled-angular-compiler': 22.5.0
@@ -5352,6 +6364,15 @@ snapshots:
       eslint: 10.11.0(jiti@2.7.0)
       typescript: 6.0.3
 
+  '@angular-eslint/eslint-plugin@22.5.0(@typescript-eslint/utils@8.70.1(eslint@10.11.0(jiti@2.7.0)(supports-color@8.1.1))(typescript@6.0.3))(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)':
+    dependencies:
+      '@angular-eslint/bundled-angular-compiler': 22.5.0
+      '@angular-eslint/utils': 22.5.0(@typescript-eslint/utils@8.70.1(eslint@10.11.0(jiti@2.7.0)(supports-color@8.1.1))(typescript@6.0.3))(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)
+      '@typescript-eslint/utils': 8.70.1(eslint@10.11.0(jiti@2.7.0)(supports-color@8.1.1))(typescript@6.0.3)
+      eslint: 10.11.0(jiti@2.7.0)
+      ts-api-utils: 2.5.0(typescript@6.0.3)
+      typescript: 6.0.3
+
   '@angular-eslint/eslint-plugin@22.5.0(@typescript-eslint/utils@8.70.1(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)':
     dependencies:
       '@angular-eslint/bundled-angular-compiler': 22.5.0
@@ -5360,6 +6381,23 @@ snapshots:
       eslint: 10.11.0(jiti@2.7.0)
       ts-api-utils: 2.5.0(typescript@6.0.3)
       typescript: 6.0.3
+
+  '@angular-eslint/schematics@22.5.0(@angular-eslint/template-parser@22.5.0(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(@typescript-eslint/types@8.70.1)(@typescript-eslint/utils@8.70.1(eslint@10.11.0(jiti@2.7.0)(supports-color@8.1.1))(typescript@6.0.3))(chokidar@5.0.0)(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)':
+    dependencies:
+      '@angular-devkit/core': 22.1.8(chokidar@5.0.0)
+      '@angular-devkit/schematics': 22.1.8(chokidar@5.0.0)
+      '@angular-eslint/eslint-plugin': 22.5.0(@typescript-eslint/utils@8.70.1(eslint@10.11.0(jiti@2.7.0)(supports-color@8.1.1))(typescript@6.0.3))(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)
+      '@angular-eslint/eslint-plugin-template': 22.5.0(@angular-eslint/template-parser@22.5.0(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(@typescript-eslint/types@8.70.1)(@typescript-eslint/utils@8.70.1(eslint@10.11.0(jiti@2.7.0)(supports-color@8.1.1))(typescript@6.0.3))(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)
+      ignore: 7.0.8
+      semver: 7.8.5
+      strip-json-comments: 3.1.1
+    transitivePeerDependencies:
+      - '@angular-eslint/template-parser'
+      - '@typescript-eslint/types'
+      - '@typescript-eslint/utils'
+      - chokidar
+      - eslint
+      - typescript
 
   '@angular-eslint/schematics@22.5.0(@angular-eslint/template-parser@22.5.0(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(@typescript-eslint/types@8.70.1)(@typescript-eslint/utils@8.70.1(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(chokidar@5.0.0)(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)':
     dependencies:
@@ -5385,6 +6423,13 @@ snapshots:
       eslint-scope: 9.1.2
       typescript: 6.0.3
 
+  '@angular-eslint/utils@22.5.0(@typescript-eslint/utils@8.70.1(eslint@10.11.0(jiti@2.7.0)(supports-color@8.1.1))(typescript@6.0.3))(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)':
+    dependencies:
+      '@angular-eslint/bundled-angular-compiler': 22.5.0
+      '@typescript-eslint/utils': 8.70.1(eslint@10.11.0(jiti@2.7.0)(supports-color@8.1.1))(typescript@6.0.3)
+      eslint: 10.11.0(jiti@2.7.0)
+      typescript: 6.0.3
+
   '@angular-eslint/utils@22.5.0(@typescript-eslint/utils@8.70.1(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)':
     dependencies:
       '@angular-eslint/bundled-angular-compiler': 22.5.0
@@ -5397,7 +6442,7 @@ snapshots:
       '@angular/core': 22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)
       tslib: 2.8.1
 
-  '@angular/build@22.1.8(@angular/compiler-cli@22.1.7(@angular/compiler@22.1.7)(typescript@6.0.3))(@angular/compiler@22.1.7)(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(@types/node@24.13.6)(chokidar@5.0.0)(jiti@2.7.0)(postcss@8.5.28)(rollup@4.63.4)(supports-color@8.1.1)(tslib@2.8.1)(tsx@4.23.15)(typescript@6.0.3)(vitest@4.1.11(@types/node@24.13.6)(jsdom@28.1.0(@noble/hashes@2.4.0)(supports-color@8.1.1))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.101.0)(tsx@4.23.15)(yaml@2.9.1)))(yaml@2.9.1)':
+  '@angular/build@22.1.8(@angular/compiler-cli@22.1.7(@angular/compiler@22.1.7)(typescript@6.0.3))(@angular/compiler@22.1.7)(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(@types/node@24.13.6)(chokidar@5.0.0)(jiti@2.7.0)(postcss@8.5.28)(rollup@4.63.4)(supports-color@8.1.1)(tslib@2.8.1)(tsx@4.23.15)(typescript@6.0.3)(vitest@4.1.11(@types/node@24.13.6)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.101.0)(tsx@4.23.15)(yaml@2.9.1)))(yaml@2.9.1)':
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@angular-devkit/architect': 0.2201.8(chokidar@5.0.0)
@@ -6964,6 +8009,16 @@ snapshots:
 
   '@sindresorhus/merge-streams@2.3.0': {}
 
+  '@softarc/eslint-plugin-sheriff@0.20.0(@softarc/sheriff-core@0.20.0(typescript@6.0.3))(@typescript-eslint/utils@8.70.1(eslint@10.11.0(jiti@2.7.0)(supports-color@8.1.1))(typescript@6.0.3))(eslint@10.11.0(jiti@2.7.0)(supports-color@8.1.1))':
+    dependencies:
+      '@softarc/sheriff-core': 0.20.0(typescript@6.0.3)
+      '@typescript-eslint/utils': 8.70.1(eslint@10.11.0(jiti@2.7.0)(supports-color@8.1.1))(typescript@6.0.3)
+      eslint: 10.11.0(jiti@2.7.0)(supports-color@8.1.1)
+
+  '@softarc/sheriff-core@0.20.0(typescript@6.0.3)':
+    dependencies:
+      typescript: 6.0.3
+
   '@standard-schema/spec@1.1.0': {}
 
   '@szmarczak/http-timer@4.0.6':
@@ -7355,7 +8410,7 @@ snapshots:
       json-schema-traverse: 1.0.0
       require-from-string: 2.0.2
 
-  angular-eslint@22.5.0(chokidar@5.0.0)(eslint@10.11.0(jiti@2.7.0))(typescript-eslint@8.69.0(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(typescript@6.0.3):
+  angular-eslint@22.5.0(chokidar@5.0.0)(eslint@10.11.0(jiti@2.7.0))(typescript-eslint@8.69.0(eslint@10.11.0(jiti@2.7.0))(supports-color@8.1.1)(typescript@6.0.3))(typescript@6.0.3):
     dependencies:
       '@angular-devkit/core': 22.1.8(chokidar@5.0.0)
       '@angular-devkit/schematics': 22.1.8(chokidar@5.0.0)
@@ -7363,6 +8418,24 @@ snapshots:
       '@angular-eslint/eslint-plugin': 22.5.0(@typescript-eslint/utils@8.70.1(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)
       '@angular-eslint/eslint-plugin-template': 22.5.0(@angular-eslint/template-parser@22.5.0(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(@typescript-eslint/types@8.70.1)(@typescript-eslint/utils@8.70.1(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)
       '@angular-eslint/schematics': 22.5.0(@angular-eslint/template-parser@22.5.0(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(@typescript-eslint/types@8.70.1)(@typescript-eslint/utils@8.70.1(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(chokidar@5.0.0)(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)
+      '@angular-eslint/template-parser': 22.5.0(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)
+      '@typescript-eslint/types': 8.70.1
+      '@typescript-eslint/utils': 8.70.1(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)
+      eslint: 10.11.0(jiti@2.7.0)
+      typescript: 6.0.3
+      typescript-eslint: 8.69.0(eslint@10.11.0(jiti@2.7.0))(supports-color@8.1.1)(typescript@6.0.3)
+    transitivePeerDependencies:
+      - chokidar
+      - supports-color
+
+  angular-eslint@22.5.0(chokidar@5.0.0)(eslint@10.11.0(jiti@2.7.0))(typescript-eslint@8.69.0(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(typescript@6.0.3):
+    dependencies:
+      '@angular-devkit/core': 22.1.8(chokidar@5.0.0)
+      '@angular-devkit/schematics': 22.1.8(chokidar@5.0.0)
+      '@angular-eslint/builder': 22.5.0(chokidar@5.0.0)(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)
+      '@angular-eslint/eslint-plugin': 22.5.0(@typescript-eslint/utils@8.70.1(eslint@10.11.0(jiti@2.7.0)(supports-color@8.1.1))(typescript@6.0.3))(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)
+      '@angular-eslint/eslint-plugin-template': 22.5.0(@angular-eslint/template-parser@22.5.0(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(@typescript-eslint/types@8.70.1)(@typescript-eslint/utils@8.70.1(eslint@10.11.0(jiti@2.7.0)(supports-color@8.1.1))(typescript@6.0.3))(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)
+      '@angular-eslint/schematics': 22.5.0(@angular-eslint/template-parser@22.5.0(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(@typescript-eslint/types@8.70.1)(@typescript-eslint/utils@8.70.1(eslint@10.11.0(jiti@2.7.0)(supports-color@8.1.1))(typescript@6.0.3))(chokidar@5.0.0)(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)
       '@angular-eslint/template-parser': 22.5.0(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)
       '@typescript-eslint/types': 8.70.1
       '@typescript-eslint/utils': 8.70.1(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)
@@ -7567,8 +8640,8 @@ snapshots:
       cross-spawn: 7.0.6
       debug: 4.4.3(supports-color@8.1.1)
       fs-extra: 10.1.0
-      http-proxy-agent: 7.0.2(supports-color@8.1.1)
-      https-proxy-agent: 7.0.6(supports-color@8.1.1)
+      http-proxy-agent: 7.0.2
+      https-proxy-agent: 7.0.6
       js-yaml: 4.3.2
       sanitize-filename: 1.6.4
       source-map-support: 0.5.21
@@ -8537,7 +9610,7 @@ snapshots:
       statuses: 2.0.2
       toidentifier: 1.0.1
 
-  http-proxy-agent@7.0.2(supports-color@8.1.1):
+  http-proxy-agent@7.0.2:
     dependencies:
       agent-base: 7.1.4
       debug: 4.4.3(supports-color@8.1.1)
@@ -8549,7 +9622,7 @@ snapshots:
       quick-lru: 5.1.1
       resolve-alpn: 1.2.1
 
-  https-proxy-agent@7.0.6(supports-color@8.1.1):
+  https-proxy-agent@7.0.6:
     dependencies:
       agent-base: 7.1.4
       debug: 4.4.3(supports-color@8.1.1)
@@ -8673,7 +9746,7 @@ snapshots:
     dependencies:
       argparse: 2.0.1
 
-  jsdom@28.1.0(@noble/hashes@2.4.0)(supports-color@8.1.1):
+  jsdom@28.1.0(@noble/hashes@2.4.0):
     dependencies:
       '@acemir/cssom': 0.9.31
       '@asamuzakjp/dom-selector': 6.8.1
@@ -8683,8 +9756,8 @@ snapshots:
       data-urls: 7.0.0(@noble/hashes@2.4.0)
       decimal.js: 10.6.0
       html-encoding-sniffer: 6.0.0(@noble/hashes@2.4.0)
-      http-proxy-agent: 7.0.2(supports-color@8.1.1)
-      https-proxy-agent: 7.0.6(supports-color@8.1.1)
+      http-proxy-agent: 7.0.2
+      https-proxy-agent: 7.0.6
       is-potential-custom-element-name: 1.0.1
       parse5: 8.0.1
       saxes: 6.0.0
@@ -9963,7 +11036,7 @@ snapshots:
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 24.13.6
-      jsdom: 28.1.0(@noble/hashes@2.4.0)(supports-color@8.1.1)
+      jsdom: 28.1.0(@noble/hashes@2.4.0)
     transitivePeerDependencies:
       - msw
 

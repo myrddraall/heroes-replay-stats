@@ -1,6 +1,6 @@
 /**
  * The interface sheets built on this machine, served the way heroes-assets publishes its
- * channel's ones, for the app's `local` configuration (packages/app/tools/ng.ts): each sheet at
+ * channel's ones, for the app's `local` configuration (apps/web/tools/ng.ts): each sheet at
  * /ui/<sheet>.webp, with CORS and never cached, so a new build shows on the next reload.
  *
  *   pnpm run serve.sheets [folder] [port]

@@ -13,7 +13,45 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "noEmit": true
+    "noEmit": true,
+    // The workspace packages from their sources, mirroring each package's `exports`. Sheriff
+    // reads these to follow imports between packages (through node_modules it would treat them as
+    // external libraries); every package's tsconfig extends this file so Sheriff finds them.
+    "paths": {
+      "@myrddraall/heroes-replay-stats-aether": ["./packages/aether/src/index.ts"],
+      "@myrddraall/heroes-replay-stats-aether/*": ["./packages/aether/src/*"],
+      "@myrddraall/heroes-replay-stats-aether-forge": ["./packages/aether-forge/src/index.ts"],
+      "@myrddraall/heroes-replay-stats-analysers": ["./libs/analysers/src/index.ts"],
+      "@myrddraall/heroes-replay-stats-platform": ["./packages/platform/index.ts"],
+      "@myrddraall/heroes-replay-stats-platform/*": ["./packages/platform/*"],
+      "@myrddraall/heroes-replay-stats-sheets": ["./packages/sheets/index.ts"],
+      "@myrddraall/heroes-replay-stats-sheets/*": ["./packages/sheets/*"],
+      "@myrddraall/heroes-replay-stats-background": ["./packages/background/index.ts"],
+      "@myrddraall/heroes-replay-stats-background/*": ["./packages/background/*"],
+      "@myrddraall/heroes-replay-stats-dev": ["./packages/dev/index.ts"],
+      "@myrddraall/heroes-replay-stats-dev/*": ["./packages/dev/*"],
+      "@myrddraall/heroes-replay-stats-theme": ["./packages/theme/index.ts"],
+      "@myrddraall/heroes-replay-stats-theme/*": ["./packages/theme/*"],
+      "@myrddraall/heroes-replay-stats-maps": ["./packages/maps/index.ts"],
+      "@myrddraall/heroes-replay-stats-maps/*": ["./packages/maps/*"],
+      "@myrddraall/heroes-replay-stats-replays": ["./packages/replays/index.ts"],
+      "@myrddraall/heroes-replay-stats-replays/*": ["./packages/replays/*"],
+      "@myrddraall/heroes-replay-stats-players": ["./packages/players/index.ts"],
+      "@myrddraall/heroes-replay-stats-players/*": ["./packages/players/*"],
+      "@myrddraall/heroes-replay-stats-import": ["./packages/import/index.ts"],
+      "@myrddraall/heroes-replay-stats-import/*": ["./packages/import/*"],
+      "@myrddraall/heroes-replay-stats-heroes": ["./packages/heroes/index.ts"],
+      "@myrddraall/heroes-replay-stats-heroes/*": ["./packages/heroes/*"],
+      "@myrddraall/heroes-replay-stats-shell": ["./packages/shell/index.ts"],
+      "@myrddraall/heroes-replay-stats-shell/*": ["./packages/shell/*"],
+      "@myrddraall/heroes-replay-stats-settings": ["./packages/settings/index.ts"],
+      "@myrddraall/heroes-replay-stats-settings/*": ["./packages/settings/*"],
+      "@myrddraall/heroes-replay-stats-common": ["./packages/common/index.ts"],
+      "@myrddraall/heroes-replay-stats-common/*": ["./packages/common/*"],
+      "@myrddraall/heroes-replay-stats-layout": ["./packages/layout/index.ts"],
+      "@myrddraall/heroes-replay-stats-layout/*": ["./packages/layout/*"],
+      "@myrddraall/heroes-replay-stats-signals": ["./libs/signals/src/index.ts"]
+    }
   },
   "exclude": ["node_modules", "dist", "packages"]
 }

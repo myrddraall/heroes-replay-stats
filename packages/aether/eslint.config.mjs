@@ -3,7 +3,8 @@ import eslint from '@eslint/js';
 import { defineConfig } from 'eslint/config';
 import tseslint from 'typescript-eslint';
 import angular from 'angular-eslint';
-import { packageBoundaries } from '../../tools/eslint-boundaries.mjs';
+import { packageBoundaries } from './tools/eslint-boundaries.mjs';
+import { sheriffBoundaries } from '../../tools/eslint-sheriff.mjs';
 
 export default defineConfig([
   {
@@ -40,13 +41,19 @@ export default defineConfig([
     rules: {},
   },
   ...packageBoundaries({
+    scope: '@myrddraall/heroes-replay-stats',
     allowed: ['@myrddraall/heroes-replay-stats-signals'],
-    // Game data and maths, then the renderer, then the saved designs, then the view.
+    // Game data and maths, then the renderer, then the saved designs, then the view, then the
+    // graphics settings over it.
     layers: [
       ['formats', 'space', 'camera', 'materials', 'tints', 'lights', 'sky', 'effects', 'aids', 'storage'],
       ['render'],
       ['library', 'scenes', 'overlays', 'variants', 'planet-sets', 'design'],
       ['view'],
+      ['graphics'],
     ],
   }),
+  ...sheriffBoundaries,
+  // Its areas import each other's files; an error once Aether is in its own repo.
+  { files: ['**/*.ts'], rules: { '@softarc/sheriff/encapsulation': 'warn' } },
 ]);

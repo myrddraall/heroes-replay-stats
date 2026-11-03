@@ -14,8 +14,8 @@
   },
   "dependencies": {
     "@myrddraall/heroes-replay-stats-aether": "workspace:*",
+    "@myrddraall/heroes-replay-stats-common": "workspace:*",
     "@myrddraall/heroes-replay-stats-signals": "workspace:*",
-    "@myrddraall/heroes-replay-stats-ui": "workspace:*",
     "tslib": "^2.3.0"
   },
   "devDependencies": {

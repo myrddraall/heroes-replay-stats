@@ -3,7 +3,8 @@ import eslint from '@eslint/js';
 import { defineConfig } from 'eslint/config';
 import tseslint from 'typescript-eslint';
 import angular from 'angular-eslint';
-import { packageBoundaries } from '../../tools/eslint-boundaries.mjs';
+import { packageBoundaries } from '../aether/tools/eslint-boundaries.mjs';
+import { sheriffBoundaries } from '../../tools/eslint-sheriff.mjs';
 
 export default defineConfig([
   {
@@ -39,5 +40,6 @@ export default defineConfig([
     extends: [angular.configs.templateRecommended, angular.configs.templateAccessibility],
     rules: {},
   },
-  ...packageBoundaries({ allowed: ['@myrddraall/heroes-replay-stats-aether', '@myrddraall/heroes-replay-stats-signals', '@myrddraall/heroes-replay-stats-ui'] }),
+  ...packageBoundaries({ scope: '@myrddraall/heroes-replay-stats', allowed: ['@myrddraall/heroes-replay-stats-aether', '@myrddraall/heroes-replay-stats-signals', '@myrddraall/heroes-replay-stats-common'] }),
+  ...sheriffBoundaries,
 ]);

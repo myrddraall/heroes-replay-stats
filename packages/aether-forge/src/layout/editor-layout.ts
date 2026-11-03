@@ -20,7 +20,7 @@ import { Router } from '@angular/router';
 import { FORGE_OPTIONS } from '../forge-options';
 import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/space';
 import { SceneView } from '@myrddraall/heroes-replay-stats-aether/view';
-import { SidePanel } from '@myrddraall/heroes-replay-stats-ui';
+import { SidePanel } from '@myrddraall/heroes-replay-stats-common/ui';
 import { AssetBrowser } from '../library/asset-browser';
 import { AssetCatalogStore } from '../library/asset-catalog.store';
 import { AssetInfo } from '../library/asset-info';

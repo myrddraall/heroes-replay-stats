@@ -1,4 +1,6 @@
 packages:
+  - 'apps/*'
+  - 'libs/*'
   - 'packages/*'
 
 # The git-flow toolchain ships on a prerelease cadence, so its packages are

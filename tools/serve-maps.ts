@@ -1,6 +1,6 @@
 /**
  * The maps rendered on this machine, served the way heroes-maps serves its published ones, for
- * the app's `local` configuration (packages/app/tools/ng.ts): a catalog at /maps/index.json, each
+ * the app's `local` configuration (apps/web/tools/ng.mts): a catalog at /maps/index.json, each
  * map's pack at /maps/<map id>/, byte ranges (the viewer reads PMTiles in ranges) and CORS.
  *
  *   pnpm run serve.maps [folder] [port]
@@ -15,7 +15,7 @@ import { createReadStream } from 'node:fs';
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { extname, join, normalize, resolve } from 'node:path';
-import { MAP_PACK_FORMAT } from '../packages/map/src/lib/pack/map-pack.ts';
+import { MAP_PACK_FORMAT } from '../packages/maps/model/pack/map-pack.ts';
 
 const [folderArg, portArg] = process.argv.slice(2);
 const folder = resolve(

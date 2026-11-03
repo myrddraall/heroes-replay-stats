@@ -4,7 +4,7 @@ import {
   type Signal,
   signal,
 } from '@angular/core';
-import { ROUTES } from '@angular/router';
+import { type Data, ROUTES } from '@angular/router';
 import { FORGE_OPTIONS, type ForgeOptions } from './forge-options';
 import { forgeMatcher } from './page/forge-matcher';
 
@@ -16,6 +16,8 @@ export interface AetherForgeOptions {
   readonly exit?: string;
   /** The page's title. */
   readonly title?: string;
+  /** Data for the editor's route, read by what frames the app's pages (whether to frame this one). */
+  readonly routeData?: Data;
   /** The class the app's theme styles glass panels with, read where the editor is injected. */
   readonly panelClass?: () => Signal<string>;
   /** Makes what opens the app's settings, where the editor is injected (none: no Settings item). */
@@ -36,6 +38,7 @@ export function provideAetherForge(options: AetherForgeOptions): EnvironmentProv
         {
           matcher: forgeMatcher(options.path),
           title: options.title,
+          data: options.routeData,
           loadComponent: () => import('./page/forge-page').then((m) => m.ForgePage),
         },
       ],
