@@ -1,0 +1,11 @@
+// The theme's TopBar (nexus.css) is the host; the nav wraps its list for landmarks.
+.top-bar__nav {
+  display: flex;
+  align-items: stretch;
+}
+
+// The app's logo where the game has its home logo, at the mark's size (2.6em of 16px).
+.top-bar__logo {
+  width: 2.6rem;
+  height: 2.6rem;
+}

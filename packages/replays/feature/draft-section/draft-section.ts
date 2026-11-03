@@ -5,7 +5,7 @@ import { EmptyState } from '@myrddraall/heroes-replay-stats-common/ui';
 import { DraftList } from '../../ui';
 import { DraftSectionStore } from './draft-section.store';
 
-/** The replay's draft (container): `/replays/<id>/draft`. */
+/** The replay's draft (container): `/matches/<id>/draft`. */
 @Component({
   selector: 'hrs-draft-section',
   imports: [DraftList, EmptyState, Layout, MatProgressBar],

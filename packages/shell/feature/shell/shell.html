@@ -1,78 +1,86 @@
 @if (!bare() && backdropComponent(); as backdrop) {
   <div class="shell__backdrop"><ng-container *ngComponentOutlet="backdrop" /></div>
 }
+@let shellNav = nav();
 <mat-sidenav-container class="shell">
   @if (!bare()) {
+    <!-- a handset's navigation: every level as one tree -->
     <mat-sidenav
-      #nav
-      class="shell__nav"
-      [mode]="handset() ? 'over' : 'side'"
-      [opened]="!handset()"
-      [fixedInViewport]="handset()"
+      #navDrawer
+      id="shell-nav"
+      class="hrs-drawer hrs-drawer--nav"
+      mode="over"
+      fixedInViewport
+      aria-label="Navigation"
+      (openedChange)="navOpen.set($event)"
     >
-      <a class="shell__brand" routerLink="/replays" (click)="handset() && nav.close()">
-        <img
-          class="shell__brand-mark"
-          ngSrc="heroes-icon.svg"
-          alt=""
-          width="40"
-          height="40"
-          priority
-        />
-        <span class="shell__brand-text">Heroes<br />Replay Stats</span>
-      </a>
-      <mat-nav-list>
-        @for (item of items; track item.path) {
-          <a
-            mat-list-item
-            [routerLink]="item.path"
-            routerLinkActive="shell__link--active"
-            [activated]="false"
-            (click)="handset() && nav.close()"
-          >
-            <mat-icon matListItemIcon class="material-symbols-outlined">{{ item.icon }}</mat-icon>
-            <span matListItemTitle>{{ item.label }}</span>
-          </a>
-          @if (subnav.children()[item.path]; as children) {
-            <!-- the open page's own navigation, under its parent's item -->
-            <div class="shell__children">
-              <ng-container [ngTemplateOutlet]="children" />
-            </div>
-          }
-        }
-      </mat-nav-list>
-      <div class="shell__nav-footer">
-        <span class="shell__platform" [matTooltip]="'Running as ' + platform.kind">
-          <mat-icon class="material-symbols-outlined" inline>{{
-            platform.kind === 'desktop' ? 'desktop_windows' : 'public'
-          }}</mat-icon>
-          {{ platform.version }}
-        </span>
+      <div class="hrs-drawer__header">
+        Heroes Replay Stats
+        <span class="hrs-spacer"></span>
+        <button
+          type="button"
+          class="hrs-btn hrs-btn--icon hrs-btn--sm"
+          aria-label="Close navigation"
+          (click)="navDrawer.close()"
+        >
+          <mat-icon class="material-symbols-outlined" aria-hidden="true">close</mat-icon>
+        </button>
       </div>
+      <nav class="hrs-drawer__body hrs-scroll" aria-label="All pages">
+        <hrs-nav-tree [nodes]="shellNav.tree" />
+      </nav>
     </mat-sidenav>
   }
 
   <mat-sidenav-content class="shell__content">
     @if (!bare()) {
-      <mat-toolbar class="shell__toolbar">
-        @if (handset()) {
-          <button mat-icon-button (click)="toggleNav()" aria-label="Toggle navigation">
-            <mat-icon class="material-symbols-outlined">menu</mat-icon>
-          </button>
-        }
-        <span class="shell__toolbar-title">Heroes Replay Stats</span>
-        <span class="shell__spacer"></span>
+      <hrs-top-bar
+        [areas]="shellNav.areas"
+        [menu]="handset()"
+        [title]="title()"
+        [menuOpen]="navOpen()"
+        (menuRequested)="toggleNav()"
+      >
         @for (action of toolbarActions; track $index) {
           <ng-container *ngComponentOutlet="action" />
         }
-      </mat-toolbar>
+        <button
+          type="button"
+          class="hrs-btn hrs-btn--icon"
+          aria-label="Settings"
+          matTooltip="Settings"
+          [matMenuTriggerFor]="settingsMenu"
+        >
+          <mat-icon class="material-symbols-outlined" aria-hidden="true">settings</mat-icon>
+        </button>
+      </hrs-top-bar>
+      @if (handset()) {
+        @if (shellNav.crumbs.length) {
+          <hrs-crumbs [crumbs]="shellNav.crumbs" />
+        }
+      } @else if (shellNav.level2.length > 1) {
+        <hrs-sub-bar [sections]="shellNav.level2" />
+      }
+      <mat-menu #settingsMenu="matMenu" xPosition="before">
+        @for (item of menu; track item.label) {
+          <a mat-menu-item [routerLink]="item.link" [fragment]="item.fragment">{{ item.label }}</a>
+        }
+        @if (devMenu.length) {
+          <div class="shell__menu-group" role="group" aria-labelledby="shell-menu-dev">
+            <span class="shell__menu-heading" id="shell-menu-dev">Dev</span>
+            @for (item of devMenu; track item.label) {
+              <a mat-menu-item [routerLink]="item.link" [fragment]="item.fragment">{{ item.label }}</a>
+            }
+          </div>
+        }
+      </mat-menu>
     }
-    <!-- Below the toolbar: the page, and the extra panel the page fills against the right edge. -->
+    <!-- Below the bars: the page, and the tool drawer the page fills against the right edge. -->
     <div class="shell__body">
       <mat-drawer-container class="shell__panels">
         <mat-drawer
           id="shell-panel"
-          class="shell__panel"
+          class="hrs-drawer hrs-drawer--shell shell__panel"
           position="end"
           disableClose
           [mode]="handset() ? 'over' : 'side'"
@@ -92,8 +100,8 @@
       @if (!bare() && panels.end(); as panel) {
         <!-- on the panel's edge, at the top, so it moves with it -->
         <button
-          mat-icon-button
-          class="shell__panel-toggle"
+          type="button"
+          class="hrs-btn hrs-btn--icon shell__panel-toggle"
           [class.shell__panel-toggle--open]="panels.endShown()"
           aria-controls="shell-panel"
           [attr.aria-expanded]="panels.endOpen()"
@@ -102,7 +110,7 @@
           matTooltipPosition="left"
           (click)="panels.setEndOpen(!panels.endOpen())"
         >
-          <mat-icon class="material-symbols-outlined">{{
+          <mat-icon class="material-symbols-outlined" aria-hidden="true">{{
             panels.endOpen() ? 'right_panel_close' : 'right_panel_open'
           }}</mat-icon>
         </button>
@@ -112,7 +120,7 @@
 </mat-sidenav-container>
 @if (dragging() && drop) {
   <div class="shell__drop" aria-hidden="true">
-    <div class="shell__drop-card hrs-glass">
+    <div class="shell__drop-card hrs-panel hrs-panel--raised">
       <mat-icon class="material-symbols-outlined">{{ drop.icon }}</mat-icon>
       <span>{{ drop.label }}</span>
     </div>

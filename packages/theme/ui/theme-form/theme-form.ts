@@ -2,21 +2,9 @@ import { Component, computed, input, output } from '@angular/core';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { SettingSlider } from '@myrddraall/heroes-replay-stats-settings/ui';
-import { GLASS_ALPHA_RANGE, type ThemeName, type ThemeSettings } from '../../model';
+import type { NeutralTheme, ThemeSettings } from '../../model';
 
-/** A glass setting set with a slider. */
-interface GlassSlider {
-  readonly key: 'glassAlpha' | 'frameAlpha';
-  readonly label: string;
-  readonly hint: string;
-}
-
-const GLASS_SLIDERS: readonly GlassSlider[] = [
-  { key: 'glassAlpha', label: 'Panel opacity', hint: 'How much the glass panels hide the background.' },
-  { key: 'frameAlpha', label: 'Frame opacity', hint: 'The same for the menu and the header.' },
-];
-
-/** The theme's settings (presentational): the theme, the glass's opacity, and the blur behind it. */
+/** The theme's settings (presentational): the theme, how solid the panels are, and the blur behind them. */
 @Component({
   selector: 'hrs-theme-form',
   imports: [MatButtonToggleModule, MatSlideToggleModule, SettingSlider],
@@ -28,22 +16,11 @@ export class ThemeForm {
   /** The user changed settings. */
   readonly changed = output<Partial<ThemeSettings>>();
 
-  protected readonly range = GLASS_ALPHA_RANGE;
-  protected readonly themes: readonly { value: ThemeName; label: string }[] = [
-    { value: 'neutral', label: 'Purple' },
-    { value: 'nexus', label: 'Nexus' },
+  protected readonly themes: readonly { value: NeutralTheme; label: string }[] = [
+    { value: 'purple', label: 'Purple' },
+    { value: 'magenta', label: 'Magenta' },
+    { value: 'cyan', label: 'Cyan' },
   ];
-  /** The sliders with their values, as shown. */
-  protected readonly glassSliders = computed(() => {
-    const settings = this.settings();
-    return GLASS_SLIDERS.map((slider) => ({
-      ...slider,
-      value: settings[slider.key],
-      shown: settings[slider.key].toFixed(2),
-    }));
-  });
-
-  protected change(key: GlassSlider['key'], value: number): void {
-    this.changed.emit({ [key]: value });
-  }
+  /** The opacity as shown. */
+  protected readonly opacity = computed(() => `${Math.round(this.settings().opacity * 100)}%`);
 }

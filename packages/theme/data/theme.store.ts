@@ -3,47 +3,20 @@ import { DEFAULT_THEME, type ThemeSettings, validTheme } from '../model';
 
 /** Where the theme's settings the user chose are kept, as JSON. */
 export const THEME_STORAGE_KEY = 'hrs.theme';
-/**
- * Where the Graphics settings kept the theme before it had its own: the look's settings, as JSON,
- * and the quality, whose Ultra and Extreme presets blurred the glass.
- */
-const EARLIER_LOOK_KEY = 'hrs.graphics';
-const EARLIER_QUALITY_KEY = 'hrs.graphics.quality';
-const EARLIER_BLURRED = ['ultra', 'extreme'];
 
-function read(key: string): string | null {
+/** The settings the user chose on this device. */
+function load(): Partial<ThemeSettings> {
   try {
-    return localStorage.getItem(key);
-  } catch {
-    return null;
-  }
-}
-
-function parse(raw: string | null): Record<string, unknown> {
-  try {
-    const v: unknown = raw === null ? null : JSON.parse(raw);
-    return typeof v === 'object' && v !== null ? (v as Record<string, unknown>) : {};
+    const v: unknown = JSON.parse(localStorage.getItem(THEME_STORAGE_KEY) ?? 'null');
+    return typeof v === 'object' && v !== null ? validTheme(v as Record<string, unknown>) : {};
   } catch {
     return {};
   }
 }
 
-/** The settings the user chose; until any is, what the Graphics settings had for them. */
-function load(): Partial<ThemeSettings> {
-  const saved = read(THEME_STORAGE_KEY);
-  if (saved !== null) return validTheme(parse(saved));
-  const quality = read(EARLIER_QUALITY_KEY);
-  const blur =
-    quality === null
-      ? undefined
-      : EARLIER_BLURRED.includes(quality) || parse(quality)['blur'] === true;
-  return validTheme({ ...parse(read(EARLIER_LOOK_KEY)), blur });
-}
-
 /**
- * The theme's settings: the theme, the glass and the frame's opacity, and the blur behind the
- * glass, kept in `localStorage` once the user changes one. Until then, what the Graphics settings
- * had for them, or the defaults.
+ * The theme's settings: the neutral theme, how solid the films are, and the blur behind them,
+ * kept in `localStorage` once the user changes one; the defaults until then.
  */
 export const ThemeStore = signalStore(
   { providedIn: 'root' },

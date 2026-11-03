@@ -1,5 +1,13 @@
 import { NgComponentOutlet } from '@angular/common';
-import { Component, inject, signal, type Type } from '@angular/core';
+import {
+  afterRenderEffect,
+  Component,
+  ElementRef,
+  inject,
+  input,
+  signal,
+  type Type,
+} from '@angular/core';
 import { SettingsPageStore } from '../../data';
 import { SETTINGS_SECTIONS, SettingsForm } from '../../ui';
 
@@ -15,14 +23,25 @@ import { SETTINGS_SECTIONS, SettingsForm } from '../../ui';
   providers: [SettingsPageStore],
 })
 export class SettingsPanel {
+  /** A part to show (`about`), scrolled to once every section is in. */
+  readonly show = input<string | null>(null);
   protected readonly store = inject(SettingsPageStore);
   /** The other domains' sections, in order, once loaded. */
   protected readonly sections = signal<readonly { id: string; component: Type<unknown> }[]>([]);
 
   constructor() {
     const sections = [...inject(SETTINGS_SECTIONS)].sort((a, b) => a.order - b.order);
+    const loaded = signal(false);
     void Promise.all(sections.map(async ({ id, load }) => ({ id, component: await load() }))).then(
-      (loaded) => this.sections.set(loaded),
+      (all) => {
+        this.sections.set(all);
+        loaded.set(true);
+      },
     );
+    const host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
+    afterRenderEffect(() => {
+      const part = this.show();
+      if (part && loaded()) host.querySelector(`#${CSS.escape(part)}`)?.scrollIntoView({ block: 'start' });
+    });
   }
 }

@@ -28,11 +28,11 @@
   }
 
   .pois__team--order &::before {
-    background: var(--hrs-blue-soft);
+    background: var(--hrs-team-blue);
   }
 
   .pois__team--chaos &::before {
-    background: var(--hrs-bronze-hot);
+    background: var(--hrs-team-red);
   }
 
   .pois__team--neutral &::before {
@@ -105,11 +105,11 @@
   }
 
   &.poi--order::before {
-    background: var(--hrs-blue-soft);
+    background: var(--hrs-team-blue);
   }
 
   &.poi--chaos::before {
-    background: var(--hrs-bronze-hot);
+    background: var(--hrs-team-red);
   }
 
   &.poi--neutral::before {
@@ -136,7 +136,7 @@
   margin-inline-end: 4px;
   padding: 0;
   border: 0;
-  border-radius: var(--hrs-button-radius, 6px);
+  border-radius: var(--hrs-radius-0);
   background: transparent;
   color: var(--mat-sys-on-surface-variant);
   cursor: pointer;

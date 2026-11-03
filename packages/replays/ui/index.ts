@@ -31,8 +31,6 @@ export * from './replay-list/replay-list';
 export * from './replay-list-item/replay-card';
 export * from './replay-list-item/replay-list-item';
 export * from './replay-header/replay-header';
-export * from './replay-nav/replay-nav';
-export * from './replay-nav/replay-pages';
 export * from './chat-log/chat-log';
 export * from './chat-log/chat-log-lines';
 export * from './draft-list/draft-list';

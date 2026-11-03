@@ -19,6 +19,7 @@ import { DEV_REPORTS_URL } from '@myrddraall/heroes-replay-stats-platform/data';
 import { providePlatformFeature } from '@myrddraall/heroes-replay-stats-platform/provide';
 import { provideSettingsFeature } from '@myrddraall/heroes-replay-stats-settings/provide';
 import { provideSheets } from '@myrddraall/heroes-replay-stats-sheets/provide';
+import { provideShellArea } from '@myrddraall/heroes-replay-stats-shell/ui';
 import { provideThemeFeature } from '@myrddraall/heroes-replay-stats-theme/provide';
 import { APP_VERSION } from './version';
 import { routes } from './app.routes';
@@ -44,6 +45,9 @@ export const appConfig: ApplicationConfig = {
     provideReplaysFeature(),
     provideSettingsFeature(),
     provideThemeFeature(),
+    // The game in general, apart from what the matches tell: its sections come from the domains
+    // whose pages they open (Maps).
+    provideShellArea({ path: '/game', label: 'Game', family: 'game', order: 10 }),
     provideRouter(
       routes,
       withComponentInputBinding(),

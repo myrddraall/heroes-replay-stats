@@ -1,0 +1,28 @@
+<ng-template #branch let-nodes>
+  @for (node of nodes; track node.link) {
+    <li [class.hrs-tree__family]="node.breaks">
+      <a
+        class="hrs-tree__item"
+        [class.is-trail]="node.active && !node.current"
+        [routerLink]="node.link"
+        [attr.aria-expanded]="node.children.length ? node.active : null"
+        [attr.aria-current]="node.current ? 'page' : null"
+      >
+        <!-- the chevron's space on every row, so the labels line up -->
+        <span class="hrs-tree__chev" aria-hidden="true">{{ node.children.length ? '›' : '' }}</span>
+        <span class="hrs-tree__label">{{ node.label }}</span>
+        @if (node.count) {
+          <span class="hrs-badge hrs-badge--count">{{ node.count }}</span>
+        }
+      </a>
+      @if (node.children.length) {
+        <ul>
+          <ng-container *ngTemplateOutlet="branch; context: { $implicit: node.children }" />
+        </ul>
+      }
+    </li>
+  }
+</ng-template>
+<ul class="hrs-tree">
+  <ng-container *ngTemplateOutlet="branch; context: { $implicit: nodes() }" />
+</ul>

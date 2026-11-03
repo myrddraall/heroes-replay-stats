@@ -1,14 +1,15 @@
 .card {
   padding: 20px;
-  margin-bottom: 16px; // a glass panel (hrs-glass)
+  margin-bottom: 16px; // a panel (hrs-panel)
 }
 .setting {
   display: flex;
   justify-content: space-between;
-  font: var(--mat-sys-body-large);
+  font: var(--hrs-font-body);
+  color: var(--hrs-text);
 }
 .setting__value {
-  color: var(--hrs-bronze);
+  color: var(--hrs-accent);
   font-variant-numeric: tabular-nums;
 }
 .slider {
@@ -16,6 +17,6 @@
   max-width: 480px;
 }
 .hint {
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--hrs-text-muted);
   margin: 8px 0 0;
 }

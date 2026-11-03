@@ -6,11 +6,15 @@
   "types": "./index.ts",
   "sideEffects": false,
   "scripts": {
+    "check.contrast": "node design-system/build/contrast.ts",
     "format": "prettier --write \"**/*.ts\"",
+    "generate.design-system": "node design-system/build/generate.ts",
+    "generate.design-system-previews": "node design-system/build/previews.ts",
+    "generate.theme": "node tools/generate-theme.ts",
     "github.actions.test": "pnpm test",
     "lint": "eslint .",
     "test": "ng test --watch=false",
-    "typecheck": "tsc --noEmit -p ."
+    "typecheck": "tsc --noEmit -p . && tsc --noEmit -p tools && tsc --noEmit -p design-system/build"
   },
   "dependencies": {
     "tslib": "^2.3.0"
@@ -27,9 +31,11 @@
     "@angular/material": "^22.1.0",
     "@angular/platform-browser": "^22.1.0",
     "@eslint/js": "^10.0.1",
+    "@types/node": "^24.0.0",
     "angular-eslint": "^22.5.0",
     "eslint": "^10.9.1",
     "jsdom": "^28.0.0",
+    "postcss": "^8.5.32",
     "prettier": "^3.8.1",
     "rxjs": "^7.8.0",
     "typescript": "~6.0.2",

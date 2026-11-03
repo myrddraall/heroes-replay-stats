@@ -1,0 +1,20 @@
+<nav [attr.aria-label]="title()">
+  <h2 class="hrs-sidenav__title">{{ title() }}</h2>
+  <ul class="hrs-list">
+    @for (section of sections(); track section.link) {
+      <li>
+        <a
+          class="hrs-list__item"
+          [class.is-selected]="section.active"
+          [routerLink]="section.link"
+          [attr.aria-current]="section.active ? 'page' : null"
+        >
+          {{ section.label }}
+          @if (section.count) {
+            <span class="hrs-count">{{ section.count }}</span>
+          }
+        </a>
+      </li>
+    }
+  </ul>
+</nav>
