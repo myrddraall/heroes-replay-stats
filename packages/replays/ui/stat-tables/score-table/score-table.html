@@ -40,7 +40,7 @@
     </thead>
     <tbody>
       @for (line of table(); track line.row.key) {
-        <tr [attr.data-theme]="line.row.theme ?? null">
+        <tr [class]="line.row.class ?? ''">
           <th scope="row" class="score-table__head">
             @if (rowHead(); as head) {
               <ng-container

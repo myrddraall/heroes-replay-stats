@@ -1,4 +1,4 @@
-// Colours are the theme's tokens, so a card themed as its row's team (`data-theme`) takes the team's film.
+// Colours are Material's system tokens, so a card re-themed by its row's class (a team's) follows it.
 :host {
   display: grid;
   gap: 12px;
@@ -6,16 +6,42 @@
 }
 
 .chips {
-  // the theme's ToggleGroup, sized by its font size (a toggle is 2.33em of 0.8em)
+  display: flex;
   flex-wrap: wrap;
-  font-size: 1.25rem;
+  gap: 6px;
 }
 
-// an icon is 1em of its toggle
-.chips__icon {
-  width: 1em;
-  height: 1em;
-  font-size: 1em;
+.chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--mat-sys-surface-container);
+  box-shadow: 0 0 0 1px var(--mat-sys-outline-variant);
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-label-large);
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: 2px;
+  }
+}
+
+.chip--on {
+  background: var(--mat-sys-secondary-container);
+  box-shadow: 0 0 0 1px var(--mat-sys-primary);
+  color: var(--mat-sys-on-secondary-container);
+}
+
+.chip__icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
 }
 
 .cards {
@@ -36,17 +62,17 @@
   align-items: center;
   gap: 8px 10px;
   padding: 8px 12px;
-  background: var(--hrs-film);
-  border: var(--hrs-line);
+  border-radius: 8px;
+  background: var(--mat-sys-surface-container);
 }
 
 .card__rank {
   grid-area: rank;
   min-width: 1.5em;
-  font: var(--hrs-font-section);
+  font: var(--mat-sys-title-medium);
   font-variant-numeric: tabular-nums;
   text-align: center;
-  color: var(--hrs-text-muted);
+  color: var(--mat-sys-on-surface-variant);
 }
 
 .card__head {
@@ -69,25 +95,25 @@
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  font: var(--hrs-font-small);
+  font: var(--mat-sys-body-medium);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
-  color: var(--hrs-text);
+  color: var(--mat-sys-on-surface);
 }
 
 .stat--main {
   grid-area: main;
-  font: var(--hrs-font-title);
+  font: var(--mat-sys-title-large);
   font-variant-numeric: tabular-nums;
 }
 
 .stat--best-in-group {
-  color: var(--hrs-accent);
+  color: var(--mat-sys-primary);
   font-weight: 600;
 }
 
 .stat--best {
-  color: var(--hrs-gold);
+  color: var(--mat-sys-tertiary);
   font-weight: 700;
 }
 
@@ -95,7 +121,7 @@
   font-size: 16px;
   width: 16px;
   height: 16px;
-  color: var(--hrs-text-muted);
+  color: var(--mat-sys-on-surface-variant);
 }
 
 .stat--main .stat__icon {

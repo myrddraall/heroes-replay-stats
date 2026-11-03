@@ -5,18 +5,18 @@
 
 .title {
   margin: 0 0 8px;
-  font: var(--hrs-font-title);
+  font: var(--mat-sys-title-large);
 }
 
 .scroll {
   overflow: auto;
 }
 
-// colours are the theme's tokens, so a row themed as its team (`data-theme`) takes the team's film
+// colours are Material's system tokens, so a row re-themed by its team's class follows it
 .talents {
   border-collapse: separate;
   border-spacing: 0;
-  font: var(--hrs-font-caption);
+  font: var(--mat-sys-body-small);
 }
 
 thead th {
@@ -25,12 +25,9 @@ thead th {
   z-index: 1;
   padding: 4px 8px;
   text-align: start;
-  background: var(--hrs-film-raised);
-  border-bottom: var(--hrs-line);
-  font: var(--hrs-font-label);
-  letter-spacing: var(--hrs-tracking-label);
-  text-transform: uppercase;
-  color: var(--hrs-text-muted);
+  background: var(--mat-sys-surface-container-highest);
+  font: var(--mat-sys-label-small);
+  color: var(--mat-sys-on-surface-variant);
 }
 
 .talents__corner {
@@ -39,7 +36,10 @@ thead th {
 }
 
 tbody tr {
-  background: var(--hrs-film);
+  background: var(--mat-sys-surface-container);
+  &:nth-child(even) {
+    background: var(--mat-sys-surface-container-high);
+  }
 }
 
 .talents__player {
@@ -50,14 +50,14 @@ tbody tr {
   text-align: start;
   font-weight: normal;
   white-space: nowrap;
-  background: var(--hrs-film-raised);
+  background: var(--mat-sys-surface-container-highest);
 }
 
 .talents__cell {
   min-width: 112px;
   max-width: 160px;
   padding: 4px 8px;
-  border-top: 1px solid oklch(from var(--hrs-border) l c h / 0.35);
+  border-top: 1px solid var(--mat-sys-outline-variant);
 }
 
 .talent {
@@ -68,10 +68,11 @@ tbody tr {
 
 .talent__icon {
   flex: none;
+  border-radius: 4px;
 }
 
 .talents__none {
-  color: var(--hrs-text-muted);
+  color: var(--mat-sys-on-surface-variant);
 }
 
 .talent__text {
@@ -79,6 +80,6 @@ tbody tr {
 }
 
 .talent__level {
-  font: var(--hrs-font-caption);
-  color: var(--hrs-text-muted);
+  font: var(--mat-sys-label-small);
+  color: var(--mat-sys-on-surface-variant);
 }

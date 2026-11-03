@@ -5,11 +5,11 @@
 
 .title {
   margin: 0 0 8px;
-  font: var(--hrs-font-title);
+  font: var(--mat-sys-title-large);
 }
 
 .empty {
-  color: var(--hrs-text-muted);
+  color: var(--mat-sys-on-surface-variant);
 }
 
 .log {
@@ -25,14 +25,14 @@
   align-items: center;
   gap: 4px 10px;
   padding: 3px 16px;
-  // the team's theme (hrsTeam) shows as a faint band, and the sender in the team's colour
-  background: linear-gradient(in oklab 90deg, oklch(from var(--hrs-glow) l c h / 0.12), transparent 40%);
+  // the team's colour (hrsTeam) shows as a faint band and the sender's name
+  background: linear-gradient(90deg, rgb(var(--hrs-glass-edge) / 0.12), transparent 40%);
 }
 
 .line__time {
-  font: var(--hrs-font-caption);
+  font: var(--mat-sys-body-small);
   font-variant-numeric: tabular-nums;
-  color: var(--hrs-text-muted);
+  color: var(--mat-sys-on-surface-variant);
   text-align: end;
 }
 
@@ -45,15 +45,7 @@
   min-width: 0;
   overflow-wrap: anywhere;
   font-weight: 600;
-  color: var(--hrs-text);
-
-  [data-theme='blue'] > & {
-    color: var(--hrs-team-blue);
-  }
-
-  [data-theme='red'] > & {
-    color: var(--hrs-team-red);
-  }
+  color: color-mix(in srgb, rgb(var(--hrs-glass-edge)) 55%, white);
 }
 
 .line__text {

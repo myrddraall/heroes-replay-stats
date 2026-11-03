@@ -12,8 +12,9 @@
   display: flex;
   align-items: center;
   gap: 2px;
-  background: var(--hrs-film);
-  --mat-checkbox-label-text-size: 13px; // the theme's small text
+  background: var(--mat-sys-surface-container);
+  border-radius: 4px;
+  --mat-checkbox-label-text-size: var(--mat-sys-body-small-size);
 }
 
 .picker__handle {
@@ -21,9 +22,10 @@
   display: flex;
   flex: none;
   cursor: grab;
-  color: var(--hrs-text-muted);
+  border-radius: 4px;
+  color: var(--mat-sys-on-surface-variant);
   &:focus-visible {
-    outline: 2px solid var(--hrs-focus);
+    outline: 2px solid var(--mat-sys-primary);
   }
 }
 
@@ -37,15 +39,15 @@
 }
 
 .picker__star--partial {
-  color: var(--hrs-accent);
+  color: var(--mat-sys-primary);
 }
 
 .picker__star--flawed {
-  color: var(--hrs-gold);
+  color: var(--mat-sys-tertiary);
 }
 
 .picker__star--none {
-  color: var(--hrs-error);
+  color: var(--mat-sys-error);
 }
 
 .picker__hidden {
@@ -58,7 +60,7 @@
 }
 
 .cdk-drag-preview {
-  box-shadow: var(--hrs-shade);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.5);
 }
 
 .cdk-drag-placeholder {

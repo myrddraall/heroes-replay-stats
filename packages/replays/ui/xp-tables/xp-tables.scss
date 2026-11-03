@@ -5,14 +5,14 @@
 
 .title {
   margin: 0 0 8px;
-  font: var(--hrs-font-title);
+  font: var(--mat-sys-title-large);
 }
 
 .subtitle {
   margin: 16px 0 8px;
-  font: var(--hrs-font-section);
+  font: var(--mat-sys-title-medium);
 }
 
 .empty {
-  color: var(--hrs-text-muted);
+  color: var(--mat-sys-on-surface-variant);
 }

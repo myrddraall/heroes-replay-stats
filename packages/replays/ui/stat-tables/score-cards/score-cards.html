@@ -1,14 +1,15 @@
-<div class="hrs-toggle-group chips" role="group" aria-label="Rank by">
+<div class="chips" role="group" aria-label="Rank by">
   @for (column of columns(); track column.id) {
     <button
       type="button"
-      class="hrs-toggle"
+      class="chip"
+      [class.chip--on]="column.id === rankBy()"
       [attr.aria-pressed]="column.id === rankBy()"
       [matTooltip]="column.description ?? column.label"
       (click)="rankRequested.emit(column.id)"
     >
       @if (column.icon) {
-        <mat-icon class="material-symbols-outlined chips__icon" aria-hidden="true">{{
+        <mat-icon class="material-symbols-outlined chip__icon" aria-hidden="true">{{
           column.icon
         }}</mat-icon>
         <span class="hidden">{{ column.label }}</span>
@@ -21,7 +22,7 @@
 
 <ol class="cards">
   @for (card of cards(); track card.line.row.key) {
-    <li class="card" [attr.data-theme]="card.line.row.theme ?? null">
+    <li class="card" [class]="card.line.row.class ?? ''">
       <span class="card__rank">{{ card.rank }}</span>
       <div class="card__head">
         @if (rowHead(); as head) {

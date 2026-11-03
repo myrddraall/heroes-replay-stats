@@ -21,7 +21,7 @@
       @if (data.player.awards.length > 0) {
         <ul class="player__awards" aria-label="Awards">
           @for (award of data.player.awards; track award) {
-            <li class="hrs-chip award" [class.award--mvp]="award === 'MVP'">{{ awardLabel(award) }}</li>
+            <li class="award" [class.award--mvp]="award === 'MVP'">{{ awardLabel(award) }}</li>
           }
         </ul>
       }
@@ -33,17 +33,15 @@
     @if (!first) {
       <span class="teams__vs">vs</span>
     }
-    <section class="team hrs-panel" [hrsTeam]="team.team" [attr.aria-label]="team.name">
+    <section class="team hrs-glass" [hrsTeam]="team.team" [attr.aria-label]="team.name">
       @if (decided()) {
-        <span class="team__result" hrsStyledText="glow">{{
-          team.won ? 'Victory' : 'Defeat'
-        }}</span>
+        <span class="team__result">{{ team.won ? 'Victory' : 'Defeat' }}</span>
       }
       @if (team.level !== null) {
         <span class="team__level">Level {{ team.level }}</span>
       }
       <span class="team__kills">
-        <span class="team__kills-number" hrsStyledText="glow">{{ team.kills }}</span>
+        <span class="team__kills-number">{{ team.kills }}</span>
         {{ team.kills === 1 ? 'kill' : 'kills' }}
       </span>
     </section>

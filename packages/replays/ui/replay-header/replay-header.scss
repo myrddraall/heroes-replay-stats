@@ -11,17 +11,18 @@
 
 .head__map {
   margin: 0;
-  font: var(--hrs-font-display);
-  letter-spacing: var(--hrs-tracking-display);
+  font: var(--mat-sys-headline-medium);
+  font-family: 'Exo 2', sans-serif;
+  font-weight: 600;
 }
 
 .head__mode {
   color: var(--hrs-accent);
-  font: var(--hrs-font-body-strong);
+  font: var(--mat-sys-label-large);
 }
 
 .head__meta {
   margin-left: auto;
-  color: var(--hrs-text-muted);
-  font: var(--hrs-font-small);
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-medium);
 }

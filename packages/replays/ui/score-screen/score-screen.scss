@@ -12,7 +12,7 @@
 }
 
 .player__silence {
-  color: var(--hrs-error);
+  color: var(--mat-sys-error);
 }
 
 .player__awards {
@@ -24,8 +24,11 @@
   list-style: none;
 }
 
-// a Chip (hrs-chip)
 .award {
+  padding: 2px 8px;
+  border-radius: 999px;
+  box-shadow: 0 0 0 1px rgb(var(--hrs-glass-edge) / 0.5);
+  font: var(--mat-sys-label-small);
   white-space: nowrap;
 }
 
@@ -36,7 +39,7 @@
 
 .award--mvp {
   color: var(--hrs-gold);
-  border-color: var(--hrs-gold);
+  box-shadow: 0 0 0 1px var(--hrs-gold);
 }
 
 .teams {
@@ -48,8 +51,8 @@
 }
 
 .teams__vs {
-  font: var(--hrs-font-title);
-  color: var(--hrs-text-muted);
+  font: var(--mat-sys-title-large);
+  color: var(--mat-sys-on-surface-variant);
 }
 
 .team {
@@ -60,19 +63,21 @@
   padding: 12px 24px;
 }
 
-// the game's team label and kill count treatments (StyledText glow), in the team's theme
 .team__result {
-  font-size: 24px;
+  font: var(--mat-sys-title-large);
+  font-family: 'Exo 2', sans-serif;
+  font-weight: 600;
 }
 
 .team__level {
-  color: var(--hrs-text-muted);
+  color: var(--mat-sys-on-surface-variant);
 }
 
 .team__kills {
-  font: var(--hrs-font-small);
+  font: var(--mat-sys-body-medium);
 }
 
 .team__kills-number {
-  font-size: 40px;
+  font: var(--mat-sys-headline-small);
+  font-variant-numeric: tabular-nums;
 }

@@ -2,7 +2,7 @@
 @if (lines().length === 0) {
   <p class="empty">No one chatted in this game.</p>
 } @else {
-  <ol class="log hrs-panel">
+  <ol class="log hrs-glass">
     @for (line of lines(); track line.key) {
       <li class="line" [hrsTeam]="line.team">
         <time class="line__time">{{ line.time }}</time>

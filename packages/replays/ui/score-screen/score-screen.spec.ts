@@ -79,13 +79,13 @@ function places(el: HTMLElement): string[] {
 }
 
 describe('ScoreCards', () => {
-  it('ranks the rows by the chosen stat, best first, and re-ranks from its toggles', async () => {
+  it('ranks the rows by the chosen stat, best first, and re-ranks from its chips', async () => {
     const fixture = TestBed.createComponent(Cards);
     await fixture.whenStable();
     const el: HTMLElement = fixture.nativeElement;
     expect(places(el)).toEqual(['1 Kills 8 (best)', '1 Kills 8 (best)', '3 Kills 2']);
 
-    const chips = el.querySelectorAll<HTMLButtonElement>('.hrs-toggle');
+    const chips = el.querySelectorAll<HTMLButtonElement>('.chip');
     expect(chips[0].getAttribute('aria-pressed')).toBe('true');
     chips[1].click();
     await fixture.whenStable();
