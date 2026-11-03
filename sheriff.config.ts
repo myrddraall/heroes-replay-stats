@@ -18,6 +18,7 @@ const domains: Record<string, readonly string[]> = {
   replays: ['provide', 'feature', 'ui', 'data', 'model'],
   settings: ['provide', 'feature', 'ui', 'data'],
   shell: ['feature', 'ui', 'data'],
+  theme: ['provide', 'feature', 'ui', 'data', 'model'],
 };
 
 /**
@@ -44,7 +45,7 @@ const featureModules: Record<string, readonly string[]> = {
 };
 
 /** Shared domains: any domain may use them; a shared domain uses another only through `uses`. */
-const shared = ['common', 'layout', 'platform', 'settings', 'shell'];
+const shared = ['common', 'layout', 'platform', 'settings', 'shell', 'theme'];
 
 /** The domains each domain may use besides itself, the shared ones and simple libraries; one way only. */
 const uses: Record<string, readonly string[]> = {
@@ -54,6 +55,7 @@ const uses: Record<string, readonly string[]> = {
   replays: ['heroes', 'import', 'players'],
   settings: ['layout', 'platform', 'shell'],
   shell: ['platform'],
+  theme: ['settings', 'shell'],
 };
 
 /** A domain's `testing` entry point (test doubles) is for spec files only. */

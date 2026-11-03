@@ -6,22 +6,19 @@ import {
   type ColourMode,
   FPS_RANGE,
   type GraphicsApi,
-  GLASS_ALPHA_RANGE,
   type GraphicsSettings,
-  type GraphicsTheme,
   INTERACTING_FPS_RANGE,
   QUALITIES,
   QUALITY_LABELS,
   type Quality,
   RESOLUTION_RANGE,
 } from '../../data/settings/graphics.store';
-import type { TintPreset } from "@myrddraall/heroes-replay-stats-aether";
+import type { TintPreset } from '@myrddraall/heroes-replay-stats-aether';
 import { SettingSlider } from '@myrddraall/heroes-replay-stats-settings/ui';
 
 /** A setting set with a slider. */
 interface SliderSetting {
-  readonly key:
-    'idleFps' | 'animationFps' | 'interactingFps' | 'resolution' | 'glassAlpha' | 'frameAlpha';
+  readonly key: 'idleFps' | 'animationFps' | 'interactingFps' | 'resolution';
   readonly label: string;
   readonly range: { readonly min: number; readonly max: number };
   readonly step: number;
@@ -65,28 +62,9 @@ const QUALITY_SLIDERS: readonly SliderSetting[] = [
   },
 ];
 
-const GLASS_SLIDERS: readonly SliderSetting[] = [
-  {
-    key: 'glassAlpha',
-    label: 'Panel opacity',
-    range: GLASS_ALPHA_RANGE,
-    step: 0.01,
-    unit: '',
-    hint: 'How much the glass panels hide the background.',
-  },
-  {
-    key: 'frameAlpha',
-    label: 'Frame opacity',
-    range: GLASS_ALPHA_RANGE,
-    step: 0.01,
-    unit: '',
-    hint: 'The same for the menu and the header.',
-  },
-];
-
 /**
- * The Graphics settings (presentational): a quality preset, its values, the look (the theme,
- * the background's colour and the glass), and what the background draws with.
+ * The Graphics settings (presentational): a quality preset, its values, the background's colour,
+ * and what the background draws with.
  */
 @Component({
   selector: 'hrs-graphics-form',
@@ -110,11 +88,6 @@ export class GraphicsForm {
   protected readonly qualities = QUALITIES;
   protected readonly qualityLabels = QUALITY_LABELS;
   protected readonly qualitySliders = computed(() => this.rows(QUALITY_SLIDERS));
-  protected readonly glassSliders = computed(() => this.rows(GLASS_SLIDERS));
-  protected readonly themes: readonly { value: GraphicsTheme; label: string }[] = [
-    { value: 'neutral', label: 'Purple' },
-    { value: 'nexus', label: 'Nexus' },
-  ];
   protected readonly apis: readonly { value: GraphicsApi; label: string }[] = [
     { value: 'auto', label: 'Automatic' },
     { value: 'webgpu', label: 'WebGPU' },

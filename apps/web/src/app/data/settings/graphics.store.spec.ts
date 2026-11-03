@@ -26,7 +26,6 @@ describe('GraphicsStore', () => {
   it('starts at High, saving nothing until the user chooses', () => {
     const store = TestBed.inject(GraphicsStore);
     expect(store.quality()).toBe('high');
-    expect(store.theme()).toBe('neutral');
     expect(store.colourMode()).toBe('fixed');
     expect(localStorage.length).toBe(0);
   });
@@ -42,8 +41,10 @@ describe('GraphicsStore', () => {
     store.setQuality('ultra');
     expect(localStorage.getItem(QUALITY_STORAGE_KEY)).toBe('ultra');
     expect(JSON.parse(localStorage.getItem(CUSTOM_STORAGE_KEY)!)).toEqual(custom);
-    store.set({ theme: 'nexus' });
-    expect(JSON.parse(localStorage.getItem(GRAPHICS_STORAGE_KEY)!)).toEqual({ theme: 'nexus' });
+    store.set({ colourMode: 'random' });
+    expect(JSON.parse(localStorage.getItem(GRAPHICS_STORAGE_KEY)!)).toEqual({
+      colourMode: 'random',
+    });
     expect(localStorage.getItem(QUALITY_STORAGE_KEY)).toBe('ultra');
   });
 
@@ -78,14 +79,20 @@ describe('GraphicsStore', () => {
 
   it('remembers what was chosen, each value within its range', () => {
     const store = TestBed.inject(GraphicsStore);
-    store.set({ idleFps: 500, interactingFps: -3, glassAlpha: 0, theme: 'nexus', colour: 'gold' });
+    store.set({
+      idleFps: 500,
+      interactingFps: -3,
+      resolution: 0.1,
+      colourMode: 'in-turn',
+      colour: 'gold',
+    });
     TestBed.resetTestingModule();
     accelerated();
     const again = TestBed.inject(GraphicsStore);
     expect(again.idleFps()).toBe(120);
     expect(again.interactingFps()).toBe(0);
-    expect(again.glassAlpha()).toBe(0.06);
-    expect(again.theme()).toBe('nexus');
+    expect(again.resolution()).toBe(0.25);
+    expect(again.colourMode()).toBe('in-turn');
     expect(again.colour()).toBe('gold');
   });
 
@@ -108,13 +115,13 @@ describe('GraphicsStore', () => {
   it('ignores broken storage and values that are not values', () => {
     localStorage.setItem(
       GRAPHICS_STORAGE_KEY,
-      JSON.stringify({ theme: 'pink', colour: 'nope', glassAlpha: 0.3 }),
+      JSON.stringify({ colourMode: 'pink', colour: 'nope', api: 'webgl2' }),
     );
     localStorage.setItem(QUALITY_STORAGE_KEY, 'superb');
     const store = TestBed.inject(GraphicsStore);
-    expect(store.theme()).toBe(DEFAULT_GRAPHICS.theme);
+    expect(store.colourMode()).toBe(DEFAULT_GRAPHICS.colourMode);
     expect(store.colour()).toBe(DEFAULT_GRAPHICS.colour);
-    expect(store.glassAlpha()).toBe(0.3);
+    expect(store.api()).toBe('webgl2');
     expect(store.quality()).toBe('high');
 
     localStorage.setItem(GRAPHICS_STORAGE_KEY, '{nope');
@@ -123,7 +130,7 @@ describe('GraphicsStore', () => {
     accelerated();
     const again = TestBed.inject(GraphicsStore);
     expect(again.quality()).toBe('high');
-    expect(again.glassAlpha()).toBe(DEFAULT_GRAPHICS.glassAlpha);
+    expect(again.api()).toBe(DEFAULT_GRAPHICS.api);
   });
 
   it('keeps the last custom quality through presets, and a change at no preset replaces it', () => {
@@ -131,7 +138,7 @@ describe('GraphicsStore', () => {
     expect(store.custom()).toBeNull();
     store.set({ idleFps: 20 });
     store.setQuality('medium');
-    store.set({ theme: 'nexus' }); // not the quality: still Medium, the custom one kept
+    store.set({ colourMode: 'random' }); // not the quality: still Medium, the custom one kept
     store.set({ resolution: 0.75 }); // a value, but still Medium: kept
     expect(store.custom()?.idleFps).toBe(20);
 

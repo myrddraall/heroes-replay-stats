@@ -16,6 +16,7 @@ import { provideReplaysFeature } from '@myrddraall/heroes-replay-stats-replays/p
 import { DEV_REPORTS_URL } from '@myrddraall/heroes-replay-stats-platform/data';
 import { providePlatformFeature } from '@myrddraall/heroes-replay-stats-platform/provide';
 import { provideSettingsFeature } from '@myrddraall/heroes-replay-stats-settings/provide';
+import { provideThemeFeature } from '@myrddraall/heroes-replay-stats-theme/provide';
 import { provideSettingsSection } from '@myrddraall/heroes-replay-stats-settings/ui';
 import { APP_VERSION } from './version';
 import { BACKGROUND_EDITOR, BACKGROUND_EDITOR_PATH } from './site-background/background-editor';
@@ -49,6 +50,7 @@ export const appConfig: ApplicationConfig = {
     providePlayersFeature(),
     provideReplaysFeature(),
     provideSettingsFeature(),
+    provideThemeFeature(),
     provideRouter(
       routes,
       withComponentInputBinding(),

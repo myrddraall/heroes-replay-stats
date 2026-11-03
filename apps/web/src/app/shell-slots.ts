@@ -1,11 +1,9 @@
-import { inject, type Provider } from '@angular/core';
+import type { Provider } from '@angular/core';
 import {
   provideShellBackdrop,
-  provideShellLook,
   provideShellNavItem,
   type ShellNavItem,
 } from '@myrddraall/heroes-replay-stats-shell/ui';
-import { GraphicsStore } from './data/settings/graphics.store';
 import { BACKGROUND_EDITOR_PATH } from './site-background/background-editor';
 
 /** The shell's nav items for the pages still in the app (each domain adds its own once it moves out). */
@@ -15,8 +13,8 @@ export const APP_NAV_ITEMS: readonly ShellNavItem[] = [
 ];
 
 /**
- * What the shell shows of the parts still in the app: their nav items, the site's background
- * behind the pages, and the glass's look from the Graphics settings. Each moves to its domain's featureset as the domain moves out of the app.
+ * What the shell shows of the parts still in the app: their nav items and the site's background
+ * behind the pages. Each moves to its domain's featureset as the domain moves out of the app.
  */
 export function provideAppShellSlots(): Provider[] {
   return [
@@ -24,14 +22,5 @@ export function provideAppShellSlots(): Provider[] {
     provideShellBackdrop(() =>
       import('./site-background/site-backdrop').then((m) => m.SiteBackdrop),
     ),
-    provideShellLook(() => {
-      const graphics = inject(GraphicsStore);
-      return {
-        theme: graphics.theme,
-        glassAlpha: graphics.glassAlpha,
-        frameAlpha: graphics.frameAlpha,
-        blur: graphics.blur,
-      };
-    }),
   ];
 }

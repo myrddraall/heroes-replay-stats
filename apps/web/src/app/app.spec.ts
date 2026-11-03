@@ -16,6 +16,7 @@ import { providePlayersFeature } from '@myrddraall/heroes-replay-stats-players/p
 import { provideReplaysFeature } from '@myrddraall/heroes-replay-stats-replays/provide';
 import { Shell } from '@myrddraall/heroes-replay-stats-shell/feature';
 import { provideSettingsFeature } from '@myrddraall/heroes-replay-stats-settings/provide';
+import { provideThemeFeature } from '@myrddraall/heroes-replay-stats-theme/provide';
 import { provideAppShellSlots } from './shell-slots';
 import { BACKGROUND_EDITOR } from './site-background/background-editor';
 
@@ -46,6 +47,7 @@ describe('App shell', () => {
         providePlayersFeature(),
         provideReplaysFeature(),
         provideSettingsFeature(),
+        provideThemeFeature(),
         provideRouter(routes),
         provideAppShellSlots(),
         provideAether({ dataUrl: 'backgrounds/play/' }),

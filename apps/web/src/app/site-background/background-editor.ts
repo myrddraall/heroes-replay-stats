@@ -1,18 +1,18 @@
 import { computed, inject, Injector } from '@angular/core';
 import { type AetherForgeOptions } from '@myrddraall/heroes-replay-stats-aether-forge';
-import { GraphicsStore } from '../data/settings/graphics.store';
+import { ThemeStore } from '@myrddraall/heroes-replay-stats-theme/data';
 
 /** The background editor's URL under the app's root. */
 export const BACKGROUND_EDITOR_PATH = 'edit-background';
 
-/** The background editor in the app: its page, styled as the Graphics settings' theme. */
+/** The background editor in the app: its page, styled in the site's theme. */
 export const BACKGROUND_EDITOR: AetherForgeOptions = {
   path: BACKGROUND_EDITOR_PATH,
   title: 'Play screen background · Heroes Replay Stats',
   routeData: { shell: false },
   panelClass: () => {
-    const graphics = inject(GraphicsStore);
-    return computed(() => `hrs-glass-${graphics.theme()}`);
+    const theme = inject(ThemeStore);
+    return computed(() => `hrs-glass-${theme.theme()}`);
   },
   openSettings: () => {
     const injector = inject(Injector);

@@ -24,6 +24,8 @@
       "@myrddraall/heroes-replay-stats-analysers": ["./libs/analysers/src/index.ts"],
       "@myrddraall/heroes-replay-stats-platform": ["./packages/platform/index.ts"],
       "@myrddraall/heroes-replay-stats-platform/*": ["./packages/platform/*"],
+      "@myrddraall/heroes-replay-stats-theme": ["./packages/theme/index.ts"],
+      "@myrddraall/heroes-replay-stats-theme/*": ["./packages/theme/*"],
       "@myrddraall/heroes-replay-stats-maps": ["./packages/maps/index.ts"],
       "@myrddraall/heroes-replay-stats-maps/*": ["./packages/maps/*"],
       "@myrddraall/heroes-replay-stats-replays": ["./packages/replays/index.ts"],

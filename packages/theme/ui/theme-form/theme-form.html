@@ -1,0 +1,40 @@
+@let s = settings();
+<section class="card hrs-glass" aria-labelledby="theme-heading">
+  <h2 id="theme-heading">Theme</h2>
+
+  <span class="label" id="theme-label">Theme</span>
+  <mat-button-toggle-group
+    class="choice"
+    aria-labelledby="theme-label"
+    hideSingleSelectionIndicator
+    [value]="s.theme"
+    (change)="changed.emit({ theme: $event.value })"
+  >
+    @for (theme of themes; track theme.value) {
+      <mat-button-toggle [value]="theme.value">{{ theme.label }}</mat-button-toggle>
+    }
+  </mat-button-toggle-group>
+  <p class="hint">The game's purples with magenta, or the Nexus blue with cyan. Teams keep their colours.</p>
+
+  @for (slider of glassSliders(); track slider.key) {
+    <hrs-setting-slider
+      [inputId]="slider.key"
+      [label]="slider.label"
+      [value]="slider.value"
+      [shown]="slider.shown"
+      [min]="range.min"
+      [max]="range.max"
+      [step]="0.01"
+      [hint]="slider.hint"
+      (valueChange)="change(slider.key, $event)"
+    />
+  }
+
+  <mat-slide-toggle class="toggle" [checked]="s.blur" (change)="changed.emit({ blur: $event.checked })">
+    Blur behind the glass
+  </mat-slide-toggle>
+  <p class="hint">
+    Costly: the browser blurs again for every frame of the background, which can make dragging a
+    map stutter even on a fast machine.
+  </p>
+</section>

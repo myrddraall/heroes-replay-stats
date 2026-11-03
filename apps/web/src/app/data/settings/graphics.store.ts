@@ -7,7 +7,7 @@ import {
   withMethods,
   withState,
 } from '@ngrx/signals';
-import { DEFAULT_DRAWING } from "@myrddraall/heroes-replay-stats-aether";
+import { DEFAULT_DRAWING } from '@myrddraall/heroes-replay-stats-aether';
 import { PRESETS } from '../../site-background/tint-presets';
 import { HARDWARE_ACCELERATION } from './hardware-acceleration';
 
@@ -30,12 +30,8 @@ export interface GraphicsQuality {
   readonly interactingFps: number;
   /** The share of the display's resolution the background is drawn at. */
   readonly resolution: number;
-  /** Whether the glass blurs what is behind it: redone for every frame of the background. */
-  readonly blur: boolean;
 }
 
-/** The neutral the site is in. */
-export type GraphicsTheme = 'neutral' | 'nexus';
 /** The background's colour: the one chosen, or a preset at random or the next one, each page. */
 export type ColourMode = 'fixed' | 'random' | 'in-turn';
 /**
@@ -46,14 +42,9 @@ export type GraphicsApi = 'auto' | 'webgpu' | 'webgl2';
 export const GRAPHICS_APIS: readonly GraphicsApi[] = ['auto', 'webgpu', 'webgl2'];
 
 export interface GraphicsSettings extends GraphicsQuality {
-  readonly theme: GraphicsTheme;
   readonly colourMode: ColourMode;
   /** The tint preset (by id) the background is in, when fixed. */
   readonly colour: string;
-  /** How see-through the glass panels are (their opacity). */
-  readonly glassAlpha: number;
-  /** How see-through the frame is (the menu and the header). */
-  readonly frameAlpha: number;
   /** What the background draws with. */
   readonly api: GraphicsApi;
 }
@@ -77,7 +68,6 @@ export const QUALITY_PRESETS: Readonly<Record<Quality, GraphicsQuality>> = {
     animationFps: 30,
     interactingFps: 0,
     resolution: 0.5,
-    blur: false,
   },
   medium: {
     animate: true,
@@ -85,16 +75,14 @@ export const QUALITY_PRESETS: Readonly<Record<Quality, GraphicsQuality>> = {
     animationFps: 30,
     interactingFps: 0,
     resolution: 0.75,
-    blur: false,
   },
-  high: { ...DEFAULT_DRAWING, blur: false },
+  high: DEFAULT_DRAWING,
   ultra: {
     animate: true,
     idleFps: 30,
     animationFps: 60,
     interactingFps: 15,
     resolution: 1,
-    blur: true,
   },
   extreme: {
     animate: true,
@@ -102,7 +90,6 @@ export const QUALITY_PRESETS: Readonly<Record<Quality, GraphicsQuality>> = {
     animationFps: 120,
     interactingFps: 60,
     resolution: 1,
-    blur: true,
   },
 };
 
@@ -110,16 +97,11 @@ export const FPS_RANGE = { min: 1, max: 120 } as const;
 /** Down to none: the background stops while something interactive has the page. */
 export const INTERACTING_FPS_RANGE = { min: 0, max: 120 } as const;
 export const RESOLUTION_RANGE = { min: 0.25, max: 1 } as const;
-/** The glass opacity below which muted text loses WCAG AA contrast over the background's brightest sky. */
-export const GLASS_ALPHA_RANGE = { min: 0.06, max: 1 } as const;
 
 export const DEFAULT_GRAPHICS: GraphicsSettings = {
   ...QUALITY_PRESETS.high,
-  theme: 'neutral',
   colourMode: 'fixed',
   colour: PRESETS[0]!.id,
-  glassAlpha: 0.5,
-  frameAlpha: 0.55,
   api: 'auto',
 };
 
@@ -155,15 +137,11 @@ function valid(saved: Partial<Record<keyof GraphicsSettings, unknown>>): Partial
     animationFps: number(saved.animationFps, FPS_RANGE, 1),
     interactingFps: number(saved.interactingFps, INTERACTING_FPS_RANGE, 1),
     resolution: number(saved.resolution, RESOLUTION_RANGE, 0.05),
-    blur: typeof saved.blur === 'boolean' ? saved.blur : undefined,
-    theme: oneOf(saved.theme, ['neutral', 'nexus'] as const),
     colourMode: oneOf(saved.colourMode, ['fixed', 'random', 'in-turn'] as const),
     colour: oneOf(
       saved.colour,
       PRESETS.map((p) => p.id),
     ),
-    glassAlpha: number(saved.glassAlpha, GLASS_ALPHA_RANGE, 0.01),
-    frameAlpha: number(saved.frameAlpha, GLASS_ALPHA_RANGE, 0.01),
     api: oneOf(saved.api, GRAPHICS_APIS),
   };
   return Object.fromEntries(
@@ -232,8 +210,9 @@ function loadLook(): Partial<GraphicsLook> {
 
 /**
  * The Graphics settings: the quality (a preset, or custom as soon as one of its values is changed),
- * the theme, the background's colour and the glass, kept in `localStorage`: the quality as its
- * preset's id, or all its settings when custom; the look's settings the user chose. Until chosen,
+ * the background's colour and what it draws with (the theme and the glass are the theme domain's),
+ * kept in `localStorage`: the quality as its preset's id, or all its settings when custom; the
+ * look's settings the user chose. Until chosen,
  * they are the defaults: High, or Low where the browser draws without hardware acceleration (it
  * costs the CPU dearly then). Until a quality is chosen it is detected again on each load, so
  * turning acceleration on or off shows; once chosen, never.
@@ -253,7 +232,6 @@ export const GraphicsStore = signalStore(
       animationFps: store.animationFps(),
       interactingFps: store.interactingFps(),
       resolution: store.resolution(),
-      blur: store.blur(),
     }));
     return {
       /** The quality's values as they are. */
