@@ -2,10 +2,8 @@ import { Component, computed, effect, inject, signal, untracked } from '@angular
 import { DevReports } from '@myrddraall/heroes-replay-stats-platform/data';
 import { RENDERER } from "@myrddraall/heroes-replay-stats-aether/render";
 import { SceneView } from "@myrddraall/heroes-replay-stats-aether/view";
-import { CheckControls } from './check-controls';
-import { CheckDifference } from './check-difference';
-import { CheckPictures } from './check-pictures';
-import { CheckTableView, tableText } from './check-table';
+import { tableText } from '../../model';
+import { CheckControls, CheckDifference, CheckPictures, CheckTableView } from '../../ui';
 import { RendererCheckStore } from './renderer-check.store';
 
 /**

@@ -1,5 +1,3 @@
-import { Component, input } from '@angular/core';
-
 /** A table of the renderer check's results: its title, its columns' headings, its rows' cells. */
 export interface CheckTable {
   readonly title: string;
@@ -17,14 +15,4 @@ export function tableText(table: CheckTable): string {
     table.columns.map(flat).join('\t'),
     ...table.rows.map((r) => r.map(flat).join('\t')),
   ].join('\n');
-}
-
-/** One of the renderer check's tables (presentational). */
-@Component({
-  selector: 'hrs-check-table',
-  templateUrl: './check-table.html',
-  styleUrl: './check-table.scss',
-})
-export class CheckTableView {
-  readonly table = input.required<CheckTable>();
 }

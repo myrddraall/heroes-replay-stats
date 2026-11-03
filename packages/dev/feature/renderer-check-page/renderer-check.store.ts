@@ -10,36 +10,22 @@ import {
 } from '@ngrx/signals';
 import { ViewStore } from "@myrddraall/heroes-replay-stats-aether";
 import { coldShaders, type RendererFactory } from "@myrddraall/heroes-replay-stats-aether/render";
-import type { CheckTable } from './check-table';
-import { compare, type Difference } from './compare';
 import {
+  CHECK_TESTS,
+  type CheckTable,
+  type CheckTest,
+  compare,
+  type Difference,
+  SLOT_LABELS,
+} from '../../model';
+import {
+  type CheckSlot,
   CompileTimeline,
+  DualRenderer,
   type PageCosts,
   type PipelineRecord,
   type ProgramRecord,
-} from './compile-timeline';
-import { type CheckMode, type CheckSlot, DualRenderer, SLOT_LABELS } from './dual-renderer';
-
-/** One of the check's tests drawing the background: which of three.js's backends draw. */
-export interface CheckTest {
-  readonly id: string;
-  readonly label: string;
-  readonly mode: CheckMode;
-  /**
-   * A warm-up: each backend's first run in the page load (its JavaScript, and WebGPU, starting
-   * cold, as on a first visit), so the tests after it all start alike.
-   */
-  readonly warmUp: boolean;
-}
-
-/** The tests drawing the background, run in this order. */
-export const CHECK_TESTS: readonly CheckTest[] = [
-  { id: 'warm-webgpu', label: `Warm-up: ${SLOT_LABELS.webgpu}`, mode: 'webgpu', warmUp: true },
-  { id: 'warm-webgl', label: `Warm-up: ${SLOT_LABELS.webgl}`, mode: 'webgl', warmUp: true },
-  { id: 'webgpu', label: SLOT_LABELS.webgpu, mode: 'webgpu', warmUp: false },
-  { id: 'webgl', label: SLOT_LABELS.webgl, mode: 'webgl', warmUp: false },
-  { id: 'both', label: 'Both at once, compared', mode: 'both', warmUp: false },
-];
+} from '../../data';
 
 /** One renderer's times in a test, ms from when its renderers were made. */
 interface RendererTimes {

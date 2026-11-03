@@ -1,0 +1,48 @@
+{
+  "name": "@myrddraall/heroes-replay-stats-dev",
+  "version": "0.0.0-MAIN",
+  "private": true,
+  "description": "Dev: developer tools that aren't part of HRS itself: the renderer check and the background's frame-stats reports",
+  "types": "./index.ts",
+  "sideEffects": false,
+  "scripts": {
+    "format": "prettier --write \"**/*.ts\"",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@myrddraall/heroes-replay-stats-aether": "workspace:*",
+    "@myrddraall/heroes-replay-stats-platform": "workspace:*",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@angular/common": "^22.1.0",
+    "@angular/compiler-cli": "^22.1.0",
+    "@angular/core": "^22.1.0",
+    "@angular/router": "^22.1.0",
+    "@eslint/js": "^10.0.1",
+    "@ngrx/signals": "^22.0.1",
+    "angular-eslint": "^22.5.0",
+    "eslint": "^10.9.1",
+    "prettier": "^3.8.1",
+    "rxjs": "^7.8.0",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "^8.69.0"
+  },
+  "peerDependencies": {
+    "@angular/common": "^22.1.0",
+    "@angular/core": "^22.1.0",
+    "@angular/router": "^22.1.0",
+    "@ngrx/signals": "^22.0.1"
+  },
+  "license": "MIT",
+  "exports": {
+    ".": "./index.ts",
+    "./provide": "./provide/index.ts",
+    "./feature": "./feature/index.ts",
+    "./ui": "./ui/index.ts",
+    "./data": "./data/index.ts",
+    "./model": "./model/index.ts"
+  },
+  "type": "module"
+}

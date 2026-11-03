@@ -1,4 +1,5 @@
 import type { EditingAid } from '@myrddraall/heroes-replay-stats-aether/aids';
+import { type CheckMode, SLOT_LABELS } from '../model';
 import type {
   LoadedPlayScene,
   SceneCameraSet,
@@ -14,12 +15,6 @@ import type { Backdrop } from '@myrddraall/heroes-replay-stats-aether/space';
 import type { DrawnBody } from '@myrddraall/heroes-replay-stats-aether/bodies';
 import { type Grading, NO_GRADING } from '@myrddraall/heroes-replay-stats-aether/tints';
 import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/space';
-
-/** Which of three.js's backends the check draws with: WebGPU, WebGL 2, or both at once. */
-export type CheckMode = 'webgpu' | 'webgl' | 'both';
-
-/** Each backend's renderer as the check's tables and pictures name it. */
-export const SLOT_LABELS = { webgpu: 'three.js on WebGPU', webgl: 'three.js on WebGL 2' } as const;
 
 /** One of the check's renderers, and its times (from when the check's renderers were made, ms). */
 export interface CheckSlot {

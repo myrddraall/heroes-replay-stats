@@ -5,14 +5,6 @@ import type { Routes } from '@angular/router';
  * before `provideRouter`). A route with `data: { shell: false }` fills the window on its own.
  */
 export const routes: Routes = [
-  // Both renderers drawing the site's background at once, their pictures compared.
-  {
-    path: 'renderer-check',
-    title: 'Renderer check · Heroes Replay Stats',
-    data: { shell: false },
-    loadComponent: () =>
-      import('./pages/renderer-check/renderer-check-page').then((m) => m.RendererCheckPage),
-  },
   { path: '', pathMatch: 'full', redirectTo: 'replays' },
   {
     path: 'theme-preview',

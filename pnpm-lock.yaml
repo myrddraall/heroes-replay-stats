@@ -122,6 +122,9 @@ importers:
       '@myrddraall/heroes-replay-stats-common':
         specifier: workspace:*
         version: link:../../packages/common
+      '@myrddraall/heroes-replay-stats-dev':
+        specifier: workspace:*
+        version: link:../../packages/dev
       '@myrddraall/heroes-replay-stats-heroes':
         specifier: workspace:*
         version: link:../../packages/heroes
@@ -521,6 +524,55 @@ importers:
       vitest:
         specifier: ^4.0.8
         version: 4.1.11(@types/node@24.13.6)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.101.0)(tsx@4.23.15)(yaml@2.9.1))
+
+  packages/dev:
+    dependencies:
+      '@myrddraall/heroes-replay-stats-aether':
+        specifier: workspace:*
+        version: link:../aether
+      '@myrddraall/heroes-replay-stats-platform':
+        specifier: workspace:*
+        version: link:../platform
+      tslib:
+        specifier: ^2.3.0
+        version: 2.8.1
+    devDependencies:
+      '@angular/common':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2)
+      '@angular/compiler-cli':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/compiler@22.1.7)(typescript@6.0.3)
+      '@angular/core':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)
+      '@angular/router':
+        specifier: ^22.1.0
+        version: 22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(rxjs@7.8.2)
+      '@eslint/js':
+        specifier: ^10.0.1
+        version: 10.0.1(eslint@10.11.0(jiti@2.7.0))
+      '@ngrx/signals':
+        specifier: ^22.0.1
+        version: 22.0.1(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2)
+      angular-eslint:
+        specifier: ^22.5.0
+        version: 22.5.0(chokidar@5.0.0)(eslint@10.11.0(jiti@2.7.0))(typescript-eslint@8.69.0(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(typescript@6.0.3)
+      eslint:
+        specifier: ^10.9.1
+        version: 10.11.0(jiti@2.7.0)
+      prettier:
+        specifier: ^3.8.1
+        version: 3.9.8
+      rxjs:
+        specifier: ^7.8.0
+        version: 7.8.2
+      typescript:
+        specifier: ~6.0.2
+        version: 6.0.3
+      typescript-eslint:
+        specifier: ^8.69.0
+        version: 8.69.0(eslint@10.11.0(jiti@2.7.0))(supports-color@8.1.1)(typescript@6.0.3)
 
   packages/heroes:
     dependencies:

@@ -9,6 +9,7 @@ import {
 } from '@angular/router';
 import { provideHeroesFeature } from '@myrddraall/heroes-replay-stats-heroes/provide';
 import { GraphicsStore } from './data/settings/graphics.store';
+import { provideDevFeature } from '@myrddraall/heroes-replay-stats-dev/provide';
 import { provideImportFeature } from '@myrddraall/heroes-replay-stats-import/provide';
 import { provideMapsFeature } from '@myrddraall/heroes-replay-stats-maps/provide';
 import { providePlayersFeature } from '@myrddraall/heroes-replay-stats-players/provide';
@@ -45,6 +46,7 @@ export const appConfig: ApplicationConfig = {
     }),
     // Before the router: the featuresets' routes come before the app's own (and their catch-all).
     provideAetherForge(BACKGROUND_EDITOR),
+    provideDevFeature(),
     provideImportFeature(),
     provideMapsFeature({ packsUrl: environment.mapPacksUrl }),
     providePlayersFeature(),

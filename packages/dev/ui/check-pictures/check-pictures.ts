@@ -1,6 +1,5 @@
 import { afterRenderEffect, Component, type ElementRef, input, viewChild } from '@angular/core';
-import { SLOT_LABELS } from './dual-renderer';
-import type { CheckTest } from './renderer-check.store';
+import { type CheckTest, SLOT_LABELS } from '../../model';
 
 /**
  * The renderer check's pictures while a test runs (presentational): the background (projected, the

@@ -9,6 +9,7 @@ import { anyTag, sameTag, type SheriffConfig } from '@softarc/sheriff-core';
 /** Converted domain packages and the layers each has (packages/<domain>/<layer>/index.ts). */
 const domains: Record<string, readonly string[]> = {
   common: ['ui', 'model'],
+  dev: ['provide', 'feature', 'ui', 'data', 'model'],
   heroes: ['provide', 'data', 'ui', 'model', 'testing'],
   import: ['provide', 'feature', 'ui', 'data', 'model'],
   layout: ['ui', 'model'],
@@ -28,6 +29,7 @@ const domains: Record<string, readonly string[]> = {
  */
 const featureModules: Record<string, readonly string[]> = {
   import: ['import-page', 'import-toolbar-action'],
+  dev: ['renderer-check-page'],
   maps: ['maps-page', 'map-page'],
   players: ['players-page'],
   replays: [
@@ -49,6 +51,8 @@ const shared = ['common', 'layout', 'platform', 'settings', 'shell', 'theme'];
 
 /** The domains each domain may use besides itself, the shared ones and simple libraries; one way only. */
 const uses: Record<string, readonly string[]> = {
+  // Developer tools for aether itself, which reach into its areas.
+  dev: ['aether'],
   // aether until the background domain gives maps the background control.
   maps: ['aether', 'heroes'],
   players: ['import'],
@@ -151,11 +155,12 @@ export const config: SheriffConfig = {
       'type:model',
       'type:lib',
       testingInSpecs,
-      // aether, for the domains whose `uses` list it, until the background domain wraps it.
+      // aether, for the domains whose `uses` list it (dev's tools; maps until background wraps it).
       'type:engine',
     ],
     'type:ui': ['type:ui', 'type:model', 'type:lib', testingInSpecs],
-    'type:data': ['type:data', 'type:model', 'type:lib', testingInSpecs],
+    // aether, as for feature.
+    'type:data': ['type:data', 'type:model', 'type:lib', testingInSpecs, 'type:engine'],
     'type:model': ['type:model', 'type:lib', testingInSpecs],
     'type:testing': ['type:testing', 'type:data', 'type:model', 'type:lib'],
     'type:lib': ['type:lib'],

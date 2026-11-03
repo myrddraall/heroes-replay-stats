@@ -10,6 +10,7 @@ import {
   REPLAY_DB_FACTORY,
   ReplayImportJobStore,
 } from '@myrddraall/heroes-replay-stats-import/data';
+import { DEV_ROUTES, provideDevFeature } from '@myrddraall/heroes-replay-stats-dev/provide';
 import { provideImportFeature } from '@myrddraall/heroes-replay-stats-import/provide';
 import { provideMapsFeature } from '@myrddraall/heroes-replay-stats-maps/provide';
 import { providePlayersFeature } from '@myrddraall/heroes-replay-stats-players/provide';
@@ -42,6 +43,7 @@ describe('App shell', () => {
     await TestBed.configureTestingModule({
       imports: [Shell],
       providers: [
+        provideDevFeature(),
         provideImportFeature(),
         provideMapsFeature({ packsUrl: 'maps/' }),
         providePlayersFeature(),
@@ -116,7 +118,7 @@ describe('App shell', () => {
 
   it('frames the app pages, and leaves the renderer check and the background editor to fill the window', () => {
     expect(routes.map((r) => r.path)).toContain('theme-preview');
-    expect(routes.find((r) => r.path === 'renderer-check')?.data?.['shell']).toBe(false);
+    expect(DEV_ROUTES.find((r) => r.path === 'renderer-check')?.data?.['shell']).toBe(false);
     expect(BACKGROUND_EDITOR.routeData?.['shell']).toBe(false);
   });
 });
