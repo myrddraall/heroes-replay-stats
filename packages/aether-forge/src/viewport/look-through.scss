@@ -7,8 +7,8 @@
 // Dark and firm behind them, as the view's other controls, so they read over the brightest sky.
 .look,
 .reset {
-  background: rgb(var(--hrs-glass-tint) / 0.85);
-  backdrop-filter: var(--hrs-glass-backdrop-frame);
+  background: var(--mat-sys-surface-container);
+  backdrop-filter: var(--hrs-backdrop-raised);
 }
 
 .look {

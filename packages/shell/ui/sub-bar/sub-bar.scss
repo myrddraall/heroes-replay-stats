@@ -1,0 +1,30 @@
+@use '@angular/material' as mat;
+
+// Above the page, which the bar's texture shadow falls over.
+:host {
+  display: block;
+  position: relative;
+  z-index: 2;
+
+  // The theme's SubBar (nexus.css) draws the band and the selected underline; Material's tab
+  // labels take the bar's label colours (the game's TaskBarSubNavigation: resting, hover,
+  // selected), and its own indicator and divider give way to the underline.
+  @include mat.tabs-overrides(
+    (
+      container-height: var(--hrs-bar-2),
+      active-indicator-height: 0,
+      divider-height: 0,
+      label-text-font: var(--font-brand),
+      label-text-size: 16px,
+      label-text-weight: 700,
+      label-text-tracking: 0,
+      inactive-label-text-color: var(--hrs-nav-text-bot),
+      inactive-hover-label-text-color: var(--hrs-nav-hover-top),
+      inactive-focus-label-text-color: var(--hrs-nav-hover-top),
+      active-label-text-color: var(--hrs-nav-sel-top),
+      active-hover-label-text-color: var(--hrs-nav-sel-top),
+      active-focus-label-text-color: var(--hrs-nav-sel-top),
+      pagination-icon-color: var(--mat-sys-on-surface),
+    )
+  );
+}

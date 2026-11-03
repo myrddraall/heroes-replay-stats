@@ -41,7 +41,7 @@ export class ThemePreviewFrames {
   }
 
   protected readonly tinted = computed(() =>
-    this.variant('scorescreen-frame', { tint: 'rgb(var(--hrs-glass-edge))' }),
+    this.variant('scorescreen-frame', { tint: 'var(--mat-sys-primary)' }),
   );
   protected readonly stretched = computed(() => this.variant('terran-tech', { edges: 'stretch' }));
   protected readonly tiled = computed(() => this.variant('terran-tech', { edges: 'tile' }));

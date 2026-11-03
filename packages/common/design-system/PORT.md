@@ -16,9 +16,9 @@ port it when a page needs it).
 | ThemeSettings model, store and form (README "Settings") | done | `packages/theme` (model `NeutralTheme`, `ThemeName`, `validTheme` with the glass carry-over; `ThemeStore`; `ThemeForm`: Colour, Opacity, blur) |
 | Shell applies `data-theme`, the film alphas and blur (CDK overlay container too) | done | `packages/shell/feature/shell` (`shell.ts` host bindings and overlay effect; floors and blurs in `films.ts`); `ShellLook` = theme, opacity, blur |
 | Team panels via `data-theme` (`hrsTeam`) | done | `packages/replays/ui/team-theme` |
-| Material M3 mapping replaces the overrides in `apps/web/src/styles.scss` | done | the mapping at the end of `nexus.css` (`:root, [data-theme]`, so it wins over `mat.theme` on `html`); `styles.scss` keeps `mat.theme` for type, density and the system tokens the mapping leaves (built-in violet palette). Old `--hrs-*` palette and `.hrs-cta` gone; their users moved to `hrs-team-*`, `hrs-accent`, `hrs-gold`, `hrs-radius-0` |
-| Glass bridge: `hrs-glass*` classes and mixins drawn as Nexus films | done | `assets/styles/_glass.scss` + `_glass-mixins.scss`: `.hrs-glass` = film + outside hairline; `--hrs-glass-tint`/`-edge` = each theme's tint/glow as sRGB channels; `.hrs-glass-<variant>` re-tint those; mixins = films and hairlines, no leak |
-| Glass files removed (`_glass*.scss`, `_theme-colors.scss`, `glass/`) | todo | when the table below is all done |
+| Material M3 mapping replaces the overrides in `apps/web/src/styles.scss` | done | as a Material theme: `assets/styles/nexus/_material-theme.scss`, generated from bundle.css's mapping (`mat.theme-overrides` + `mat.<component>-overrides` on `:root` and every `[data-theme]`), `@use`d by `styles.scss` after `mat.theme` (type, density). Components keep Material's components and `--mat-sys-*` tokens |
+| Glass bridge: `hrs-glass*` classes and mixins drawn as Nexus films | removed | served until every package was converted, then deleted with the files below |
+| Glass files removed (`_glass*.scss`, `_theme-colors.scss`, `glass/`) | done | 2026-11-03; the background editor's `panelClass` option went with them (the editor sits in the shell, which carries `data-theme`) |
 | Self theme directive (`green`, the user's own player) | later | no consumer yet |
 | Rarity theme directive | later | no consumer yet |
 | Game font | later | licence check first; Exo 2 + Source Sans 3 meanwhile |
@@ -29,15 +29,15 @@ Design: **settled** = the user approved it; **changing** = not reviewed yet, may
 
 | Component | Design | Status | Where / notes |
 |---|---|---|---|
-| TopBar | settled | done | `packages/shell/ui/top-bar` (areas by family, the family break `hrs-nav1__family`, utility cluster projected); the app's logo stands where the game's home logo would |
-| SubBar | settled | done | `packages/shell/ui/sub-bar` (level 2 from the nav model; hidden with one section) |
+| TopBar | settled | done | `packages/shell/ui/top-bar`: a `mat-toolbar` (toolbar overrides: transparent, bar height) over the bar's textures; `mat-icon-button`s |
+| SubBar | settled | done | `packages/shell/ui/sub-bar`: `mat-tab-nav-bar` + `mat-tab-link` (no tab panel: `aria-current="page"`), `mat.tabs-overrides` for the bar's label colours, indicator hidden |
 | ShellLayout | settled | done | `packages/shell/feature/shell` (bars over the page, tool Drawer flush right); nav model in `packages/shell/model/nav`, `ShellNavStore`, pages hand over what is open with `showShellItem()` |
 | ShellMobile | settled | done | `hrs-shell--handset` from the shell's BreakpointObserver; title + breadcrumb (`packages/shell/ui/crumbs`), nav drawer with the NavTree |
-| NavTree | settled | done | `packages/shell/ui/nav-tree` (every level, the current branch open and lit) |
+| NavTree | settled | done | `packages/shell/ui/nav-tree`: `mat-tree` with nested nodes (`isExpanded` from the active branch, Enter follows the link), links as `.hrs-tree__item` |
 | SideNav | settled | done | `packages/shell/ui/side-nav`, placed by a page as `hrs-shell-side-nav` (`packages/shell/feature/shell-side-nav`); flat sections for now (no groups or sub-items yet) |
-| StyledText | settled | done | `packages/common/ui/styled-text` (`hrsStyledText`); the score screen's team results and kill counts |
+| StyledText | settled | done | `packages/common/ui/styled-text` (`hrsStyledText`); no page uses it yet |
 | ThemeVariants, Rarity | settled | n/a | previews only |
-| IconButton | changing | done | the top bar's menu and settings, the tool drawer's toggle; icons 1em of the button (`.hrs-btn .material-symbols-outlined`) |
+| IconButton | changing | done | `mat-icon-button` with icon-button overrides (square, 36px, 16px icon, no state layer) and the outline ring in nexus.css |
 | Badge | changing | done | CSS in `nexus.css`; the import pod's "+" |
 | UtilityPod | changing | done | `packages/import/feature/import-toolbar-action` (button while idle; link + "+" badge + progress bar while importing) |
 | Tabs | changing | done | the SubBar's tabs (`hrs-tab`); no in-page tabs yet |
@@ -47,17 +47,17 @@ Design: **settled** = the user approved it; **changing** = not reviewed yet, may
 | Translucency | changing | done | the films in `nexus.css`, set by the Theme settings through the shell |
 | TeamColours | changing | done | `hrs-team-*` tokens; the maps' team dots use them |
 | Button | changing | later | |
-| ToggleGroup | changing | done | the score cards' rank-by row (`hrs-toggle-group`, `aria-pressed`), sized by font-size |
+| ToggleGroup | changing | later | |
 | Popover | changing | later | |
 | Modal | changing | later | |
 | Tooltip | changing | later | |
 | BackLink | changing | later | |
-| Table | changing | done | the replays' stat, score, talent and draft tables: label headers on a hairline, muted cells, faint row lines, hover film, rows themed by team (`data-theme`); dense headers at 0.72em of the table |
-| ListRow | changing | done | the match list's team rows (film, half-strength hairline, team theme) |
+| Table | changing | later | replays' tables keep their own styles on Material tokens |
+| ListRow | changing | later | |
 | KeyValue | changing | later | |
 | Card | changing | later | |
 | ProductCard | changing | later | |
-| Chip | changing | done | the score screen's awards (MVP in gold) |
+| Chip | changing | later | |
 | ProgressBar | changing | later | |
 | Divider | changing | later | |
 | SectionHeading | changing | later | |
@@ -73,19 +73,20 @@ Design: **settled** = the user approved it; **changing** = not reviewed yet, may
 
 ## Glass conversion
 
-Files still using `hrs-glass*` classes or the glass mixins, per package (recounted 2026-11-03 after
-the foundation port). A package is done when it uses only Nexus classes and tokens.
+Files that used `hrs-glass*` classes or the glass mixins, per package (counted 2026-11-03 after the
+foundation port; all converted the same day). A package is done when it has no glass left: Material components and
+`--mat-sys-*` tokens, `.hrs-*` classes only for what Material has no component for.
 
 | Package | Files | Status |
 |---|---|---|
-| replays | 0 | done (rows carry `theme`, not a class; Material's `--mat-sys-*` moved to Nexus tokens too) |
-| aether-forge | 17 | todo |
-| background | 9 | todo |
-| maps | 7 | todo |
+| replays | 0 | done (glass gone: `.hrs-panel` for its panels, team rows by `data-theme`; its styles stay on Material's `--mat-sys-*` tokens) |
+| aether-forge | 17 | done (Material drawers with a hairline, fields and flyouts on `--mat-sys-surface-container*`, accents on `--mat-sys-primary`, markers from `--mat-sys-secondary`/`-primary`) |
+| background | 9 | done (Theme preview: a panel per `data-theme`, its opacity and blur the site's) |
+| maps | 7 | done (Material drawers, `.hrs-panel` map cards, lines `--mat-sys-outline-variant`) |
 | shell | 0 | done |
-| import | 2 | in progress (the pod) |
-| common | 2 | todo |
-| players | 2 | todo |
+| import | 2 | done |
+| common | 2 | done |
+| players | 2 | done |
 | settings | 0 | done |
 | theme | 0 | done |
-| sheets | 1 | todo (a doc comment) |
+| sheets | 1 | done (a doc comment) |

@@ -2114,78 +2114,14 @@ a:hover {
   --hrs-glow-modal: 0 0 40px oklch(68% 0.17 53 / 0.45), 0 0 120px oklch(68% 0.17 53 / 0.2);
   --hrs-glow-k: 1.15;
 }
-
-/* ---------- Angular Material mapping (M3 system tokens realised from HRS tokens) ---------- */
-:root,
-[data-theme] {
-  --mat-sys-background: var(--hrs-ground);
-  --mat-sys-surface: var(--hrs-film);
-  --mat-sys-surface-container-lowest: var(--hrs-film);
-  --mat-sys-surface-container-low: var(--hrs-film);
-  --mat-sys-surface-container: var(--hrs-film-raised);
-  --mat-sys-surface-container-high: var(--hrs-film-raised);
-  --mat-sys-surface-container-highest: var(--hrs-selection);
-  --mat-sys-on-surface: var(--hrs-text);
-  --mat-sys-on-surface-variant: var(--hrs-text-muted);
-  --mat-sys-outline: var(--hrs-border);
-  --mat-sys-outline-variant: var(--hrs-border);
-  --mat-sys-primary: var(--hrs-accent);
-  --mat-sys-on-primary: var(--hrs-on-accent);
-  --mat-sys-primary-container: var(--hrs-selection);
-  --mat-sys-on-primary-container: var(--hrs-text);
-  --mat-sys-secondary: var(--hrs-border-strong);
-  --mat-sys-tertiary: var(--hrs-gold);
-  --mat-sys-error: var(--hrs-error);
-  --mat-sys-corner-none: var(--hrs-radius-0);
-  --mat-sys-corner-extra-small: var(--hrs-radius-1);
-  --mat-sys-corner-small: var(--hrs-radius-0);
-  --mat-sys-corner-medium: var(--hrs-radius-0);
-  --mat-sys-corner-large: var(--hrs-radius-0);
-  --mat-sys-corner-extra-large: var(--hrs-radius-0);
-  --mat-sys-corner-full: var(--hrs-radius-1);
-  --mat-sys-body-large-font: var(--font-plain);
-  --mat-sys-label-large-font: var(--font-brand);
-  --mat-sys-title-medium-font: var(--font-brand);
-  --mat-sys-level1: var(--hrs-shade);
-  --mat-sys-level2: var(--hrs-shade);
-  --mat-sys-level3: var(--hrs-shade);
-  --mat-menu-container-color: var(--hrs-film-raised);
-  --mat-select-panel-background-color: var(--hrs-film-raised);
-  --mat-autocomplete-background-color: var(--hrs-film-raised);
-  --mat-dialog-container-color: var(--hrs-film-modal);
-  --mat-sidenav-container-background-color: var(--hrs-film-raised);
-  --mat-sidenav-container-shape: var(--hrs-radius-0);
-  --mat-tooltip-container-color: var(--hrs-film-raised);
-  --mat-tooltip-supporting-text-color: var(--hrs-text-muted);
-  --mat-tab-active-indicator-color: var(--hrs-accent);
-  --mat-tab-active-indicator-height: 2px;
-  --mat-tab-divider-color: var(--hrs-border);
-  --mat-form-field-outlined-outline-color: var(--hrs-border);
-  --mat-form-field-outlined-focus-outline-color: var(--hrs-border-strong);
-  --mat-form-field-outlined-container-shape: var(--hrs-radius-0);
-  --mat-button-outlined-outline-color: var(--hrs-border);
-  --mat-button-outlined-container-shape: var(--hrs-radius-0);
-  --mat-button-filled-container-shape: var(--hrs-radius-0);
-  --mat-slider-active-track-color: var(--hrs-accent);
-  --mat-slider-inactive-track-color: var(--hrs-border);
-  --mat-slider-handle-color: var(--hrs-text);
-  --mat-checkbox-selected-icon-color: var(--hrs-accent);
-  --mat-checkbox-selected-checkmark-color: var(--hrs-on-accent);
-  --mat-checkbox-unselected-icon-color: var(--hrs-border);
-  --mat-slide-toggle-selected-track-color: var(--hrs-selection);
-  --mat-slide-toggle-selected-handle-color: var(--hrs-accent);
-  --mat-slide-toggle-track-shape: var(--hrs-radius-0);
-  --mat-slide-toggle-handle-shape: var(--hrs-radius-0);
-  --mat-progress-bar-active-indicator-color: var(--hrs-accent);
-  --mat-progress-bar-track-color: var(--hrs-border);
-  --mat-table-header-headline-color: var(--hrs-text-muted);
-  --mat-table-row-item-outline-color: var(--hrs-border);
-  --mat-table-background-color: transparent;
-  --mat-chip-outline-color: var(--hrs-border);
-  --mat-chip-container-shape-radius: var(--hrs-radius-1);
-  --mat-list-active-indicator-shape: var(--hrs-radius-0);
-  --mat-button-toggle-shape: var(--hrs-radius-0);
-  --mat-button-toggle-selected-state-background-color: var(--hrs-selection);
+/* IconButton's hairline, which Material's icon button has no token for: the ring; strong with the hover glow */
+.mat-mdc-icon-button {
+  box-shadow: inset 0 0 0 1px var(--hrs-border);
+}
+.mat-mdc-icon-button:hover {
+  box-shadow:
+    inset 0 0 0 1px var(--hrs-border-strong),
+    var(--hrs-glow-hover);
 }
 
 /* ---------- handset form: a class the shell sets from its breakpoint signal (never a viewport media query, so previews and embedded frames show the real layout) ----------
@@ -2299,14 +2235,16 @@ a:hover {
   filter: drop-shadow(0 0 2px var(--hrs-nav-sel-glow));
 }
 
-/* ---------- NavTree: every navigation level as one tree (the handset nav Drawer; also usable as a desktop side panel) ---------- */
+/* ---------- NavTree: every navigation level as one tree (the handset nav Drawer; also usable as a desktop side panel).
+   Nested lists (ul > li) or mat-tree's nested nodes with role="group" children; the node's aria-expanded opens its group. ---------- */
 .hrs-tree,
-.hrs-tree ul {
+.hrs-tree :is(ul, [role='group']) {
+  display: block;
   margin: 0;
   padding: 0;
   list-style: none;
 }
-.hrs-tree ul {
+.hrs-tree :is(ul, [role='group']) {
   margin: 0 0 var(--hrs-space-1) var(--hrs-space-5);
   padding-left: var(--hrs-space-2);
   border-left: 1px solid oklch(from var(--hrs-border) l c h / 0.6);
@@ -2336,17 +2274,17 @@ a:hover {
   -webkit-background-clip: text;
   background-clip: text;
 }
-.hrs-tree > li > .hrs-tree__item .hrs-tree__label {
+.hrs-tree > * > .hrs-tree__item .hrs-tree__label {
   font: 700 18px/22px var(--font-brand);
   text-transform: uppercase;
 }
-.hrs-tree ul .hrs-tree__item {
+.hrs-tree :is(ul, [role='group']) .hrs-tree__item {
   min-height: 34px;
 }
-.hrs-tree ul .hrs-tree__label {
+.hrs-tree :is(ul, [role='group']) .hrs-tree__label {
   font: 700 15px/20px var(--font-brand);
 }
-.hrs-tree ul ul .hrs-tree__label {
+.hrs-tree :is(ul, [role='group']) :is(ul, [role='group']) .hrs-tree__label {
   font: 600 14px/18px var(--font-brand);
 }
 .hrs-tree__item:hover .hrs-tree__label {
@@ -2381,7 +2319,7 @@ a:hover {
     oklch(from var(--hrs-selection) l c h / 0.25)
   );
 }
-.hrs-tree > li > .hrs-tree__item[aria-current='page']::after {
+.hrs-tree > * > .hrs-tree__item[aria-current='page']::after {
   left: 0;
 }
 .hrs-tree__item[aria-current='page']::before {
@@ -2398,7 +2336,7 @@ a:hover {
   mix-blend-mode: plus-lighter;
   filter: var(--hrs-tex-filter);
 }
-.hrs-tree > li > .hrs-tree__item[aria-current='page']::before {
+.hrs-tree > * > .hrs-tree__item[aria-current='page']::before {
   left: -11px;
 }
 /* a branch that holds the current page: lit label, open */
@@ -2413,17 +2351,22 @@ a:hover {
   color: var(--hrs-nav-text-bot);
   transition: rotate 0.15s;
 }
-.hrs-tree__item[aria-expanded='true'] .hrs-tree__chev {
+.hrs-tree__item[aria-expanded='true'] .hrs-tree__chev,
+[aria-expanded='true'] > .hrs-tree__item .hrs-tree__chev {
   rotate: 90deg;
 }
-.hrs-tree__item[aria-expanded='false'] + ul {
+.hrs-tree__item[aria-expanded='false'] + ul,
+[aria-expanded='false'] > [role='group'] {
   display: none;
 }
 .hrs-tree .hrs-badge {
   flex: none;
 }
 /* the break before another family of top-level items (the game's, then the utilities): a hairline with room round it, as the top bar's separator */
-.hrs-tree > li.hrs-tree__family {
+.hrs-tree [role='treeitem'] {
+  display: block;
+}
+.hrs-tree > .hrs-tree__family {
   margin-top: var(--hrs-space-2);
   padding-top: var(--hrs-space-2);
   border-top: var(--hrs-line);

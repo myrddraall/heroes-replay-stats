@@ -1,7 +1,7 @@
 .details {
   margin-bottom: 12px;
   padding-bottom: 12px;
-  border-bottom: 1px solid var(--hrs-glass-line);
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
 }
 
 .details__heading {
@@ -40,7 +40,7 @@
   width: var(--hrs-state-control-width, 140px);
   margin-bottom: 8px;
   border: 1px solid var(--mat-sys-outline);
-  border-radius: var(--hrs-radius-0);
+  border-radius: var(--mat-sys-corner-small);
   overflow: hidden;
   font: var(--mat-sys-label-large);
   color: var(--mat-sys-primary);
@@ -62,7 +62,7 @@
   }
 
   &:focus-visible {
-    outline: 2px solid rgb(var(--hrs-glass-edge));
+    outline: 2px solid var(--mat-sys-primary);
     outline-offset: -2px;
   }
 }

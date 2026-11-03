@@ -7,9 +7,12 @@
  *   `:root`; the type styles as font shorthands (`--hrs-font-<style>`) and trackings
  *   (`--hrs-tracking-<style>`), not classes, so they never clash with the app's own class names.
  * - `nexus.css`: bundle.css without the preview-only helpers (the scene stand-in and the preview
- *   rows), without its font import (the app's index.html loads the fonts), and with the game
- *   textures it embeds as data URIs read from custom properties instead (`--hrs-tex-<texture>`),
- *   which the shell sets from the interface sheet.
+ *   rows), without its font import (the app's index.html loads the fonts), without its Angular
+ *   Material mapping (below), and with the game textures it embeds as data URIs read from custom
+ *   properties instead (`--hrs-tex-<texture>`), which the shell sets from the interface sheet.
+ * - `_material-theme.scss`: bundle.css's Angular Material mapping as a Material theme, on `:root`
+ *   and every `[data-theme]`: the system tokens through `mat.theme-overrides`, each component's
+ *   through its `mat.<component>-overrides` (Material checks every name as it compiles).
  *
  *   pnpm run generate.theme
  *
@@ -89,8 +92,76 @@ function tokensCss(t: Tokens): string {
   return `${HEADER(`${t.name} tokens`)}${blocks.join('\n')}\n:root {\n${[...once, ...families, ...styles].join('\n')}\n}\n`;
 }
 
+/** Where bundle.css's Angular Material mapping starts: a comment, then one rule. */
+const MATERIAL_MAPPING = '---------- Angular Material mapping';
+
+/** Material's component token prefixes (`--mat-<prefix>-<token>`) and the mixins that set them. */
+const MATERIAL_COMPONENTS: Readonly<Record<string, string>> = {
+  autocomplete: 'autocomplete',
+  button: 'button',
+  'button-toggle': 'button-toggle',
+  checkbox: 'checkbox',
+  chip: 'chips',
+  dialog: 'dialog',
+  'form-field': 'form-field',
+  'icon-button': 'icon-button',
+  list: 'list',
+  menu: 'menu',
+  'progress-bar': 'progress-bar',
+  select: 'select',
+  sidenav: 'sidenav',
+  'slide-toggle': 'slide-toggle',
+  slider: 'slider',
+  tab: 'tabs',
+  table: 'table',
+  toolbar: 'toolbar',
+  tooltip: 'tooltip',
+  tree: 'tree',
+};
+
+/** bundle.css's Angular Material mapping as Sass: `mat.theme-overrides` and `mat.<component>-overrides`. */
+function materialTheme(css: string): string {
+  const tree = postcss.parse(css);
+  let rule: postcss.Rule | undefined;
+  tree.each((node) => {
+    if (node.type === 'comment' && node.text.includes(MATERIAL_MAPPING)) {
+      const next = node.next();
+      if (next?.type === 'rule') rule = next;
+    }
+  });
+  if (!rule) throw new Error("bundle.css has no Angular Material mapping");
+  const system: string[] = [];
+  const components = new Map<string, string[]>();
+  rule.walkDecls((decl) => {
+    const name = decl.prop.replace(/^--mat-/, '');
+    if (name.startsWith('sys-')) {
+      system.push(`${name.slice(4)}: ${decl.value}`);
+      return;
+    }
+    const prefix = Object.keys(MATERIAL_COMPONENTS)
+      .filter((p) => name.startsWith(`${p}-`))
+      .sort((a, b) => b.length - a.length)[0];
+    if (!prefix) throw new Error(`no Material component for ${decl.prop}`);
+    const mixin = MATERIAL_COMPONENTS[prefix]!;
+    components.set(mixin, [...(components.get(mixin) ?? []), `${name.slice(prefix.length + 1)}: ${decl.value}`]);
+  });
+  const map = (entries: readonly string[]) => `(\n${entries.map((e) => `    ${e},`).join('\n')}\n  )`;
+  const body = [
+    `  @include mat.theme-overrides(${map(system)});`,
+    ...[...components].map(([mixin, entries]) => `  @include mat.${mixin}-overrides(${map(entries)});`),
+  ];
+  return `${HEADER("HRS Nexus UI's Angular Material theme")}@use '@angular/material' as mat;\n\n${rule.selector} {\n${body.join('\n')}\n}\n`;
+}
+
 function bundleCss(css: string, textures: ReadonlyMap<string, string>): string {
   const tree = postcss.parse(css);
+  // the Material mapping goes into the Material theme instead
+  tree.each((node) => {
+    if (node.type === 'comment' && node.text.includes(MATERIAL_MAPPING)) {
+      node.next()?.remove();
+      node.remove();
+    }
+  });
   tree.walkAtRules('import', (rule) => {
     rule.remove();
   });
@@ -139,6 +210,7 @@ await mkdir(out, { recursive: true });
 for (const [name, css] of [
   ['tokens.css', tokensCss(tokens)],
   ['nexus.css', bundleCss(bundle, textures)],
+  ['_material-theme.scss', materialTheme(bundle)],
 ] as const) {
   const file = join(out, name);
   await writeFile(file, await format(file, css));

@@ -2,7 +2,7 @@
   display: block;
   height: 100%;
   // The tool drawer's width, which the side panel inside it and the toggle on its edge read.
-  --ui-side-panel-width: min(var(--hrs-side-panel), 90vw);
+  --ui-side-panel-width: min(320px, 90vw);
 }
 
 // The background, fixed behind everything; the pages scroll over it.
@@ -14,14 +14,8 @@
 .shell {
   height: 100%;
   background: transparent;
+  // the page shows the scene through it; the drawers keep the theme's (Material's sidenav colour)
   --mat-sidenav-content-background-color: transparent;
-  // Material paints its drawers with this, after the theme's own rules: the theme's Drawer film.
-  --mat-sidenav-container-background-color: var(--hrs-film-raised);
-}
-
-// The handset's nav drawer: nearly solid over the page (nexus.css .hrs-drawer--nav).
-.hrs-drawer--nav {
-  --mat-sidenav-container-background-color: oklch(from var(--hrs-tint-raised) l c h / 0.97);
 }
 
 // The bars, then the page and the tool drawer, for the rest of the window's height. Each bar's
@@ -74,27 +68,25 @@
 // scrolls and moves with the panel.
 .shell__panel-toggle {
   position: absolute;
-  top: var(--hrs-space-2);
-  inset-inline-end: var(--hrs-space-2);
+  top: 8px;
+  inset-inline-end: 8px;
   z-index: 10;
-  background: var(--hrs-film-raised);
-  backdrop-filter: var(--hrs-backdrop-raised);
+  background: var(--mat-sys-surface-container);
   transition: inset-inline-end 400ms cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 .shell__panel-toggle--open {
-  inset-inline-end: calc(var(--ui-side-panel-width) + var(--hrs-space-2));
+  inset-inline-end: calc(var(--ui-side-panel-width) + 8px);
 }
 
 // The settings menu's Dev group: a small heading over its pages.
 .shell__menu-heading {
   display: block;
-  padding: var(--hrs-space-2) var(--hrs-space-4) var(--hrs-space-1);
-  border-top: var(--hrs-line);
-  font: var(--hrs-font-label);
-  letter-spacing: var(--hrs-tracking-label);
+  padding: 8px 16px 4px;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+  font: var(--mat-sys-label-small);
   text-transform: uppercase;
-  color: var(--hrs-text-muted);
+  color: var(--mat-sys-on-surface-variant);
 }
 
 .shell__drop {
@@ -104,20 +96,19 @@
   pointer-events: none;
   display: grid;
   place-items: center;
-  background: var(--hrs-scrim);
-  backdrop-filter: var(--hrs-backdrop-modal);
-  outline: 2px dashed var(--hrs-border-strong);
+  background: color-mix(in srgb, var(--mat-sys-background) 60%, transparent);
+  outline: 2px dashed var(--mat-sys-secondary);
   outline-offset: -16px;
 }
 
 .shell__drop-card {
   display: flex;
   align-items: center;
-  gap: var(--hrs-space-3);
-  padding: var(--hrs-space-5) var(--hrs-space-6);
-  font: var(--hrs-font-title);
+  gap: 12px;
+  padding: 20px 24px;
+  font: var(--mat-sys-title-medium);
 
   mat-icon {
-    color: var(--hrs-accent);
+    color: var(--mat-sys-primary);
   }
 }

@@ -1,4 +1,11 @@
-// The theme's TopBar (nexus.css) is the host; the nav wraps its list for landmarks.
+// Above the sub-bar and the page, which the bar's texture shadow falls over.
+:host {
+  display: block;
+  position: relative;
+  z-index: 3;
+}
+
+// The theme's TopBar (nexus.css) is the toolbar; the nav wraps its list for landmarks.
 .top-bar__nav {
   display: flex;
   align-items: stretch;

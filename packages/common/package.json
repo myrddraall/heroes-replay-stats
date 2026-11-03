@@ -2,7 +2,7 @@
   "name": "@myrddraall/heroes-replay-stats-common",
   "version": "0.0.0-MAIN",
   "private": true,
-  "description": "Common: the app's general UI pieces (the glass theme, the side panel, sprites, masks, empty states) and, until the replays domain takes them, the stat tables",
+  "description": "Common: the app's general UI pieces (the theme's styles, the side panel, sprites, masks, empty states) and, until the replays domain takes them, the stat tables",
   "types": "./index.ts",
   "sideEffects": false,
   "scripts": {

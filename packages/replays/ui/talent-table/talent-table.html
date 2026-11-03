@@ -11,7 +11,7 @@
     </thead>
     <tbody>
       @for (row of rows(); track row.key) {
-        <tr [class]="row.class ?? ''">
+        <tr [attr.data-theme]="row.theme ?? null">
           <th scope="row" class="talents__player">
             <hrs-player-cell [hero]="row.player.hero" [name]="row.player.name" [icon]="row.icon" />
           </th>

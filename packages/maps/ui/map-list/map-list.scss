@@ -19,16 +19,16 @@
   flex-direction: column;
   gap: 4px;
   padding: 10px;
-  color: inherit; // a glass panel (hrs-glass)
+  color: inherit; // a panel (hrs-panel)
   text-decoration: none;
 
   &:hover .map__name,
   &:focus-visible .map__name {
-    color: rgb(var(--hrs-glass-edge));
+    color: var(--mat-sys-primary);
   }
 
   &:focus-visible {
-    outline: 2px solid rgb(var(--hrs-glass-edge));
+    outline: 2px solid var(--mat-sys-primary);
     outline-offset: 2px;
   }
 }

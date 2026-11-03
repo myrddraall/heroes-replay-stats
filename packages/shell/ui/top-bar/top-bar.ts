@@ -1,21 +1,23 @@
 import { Component, input, output } from '@angular/core';
 import { NgOptimizedImage } from '@angular/common';
+import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatToolbarModule } from '@angular/material/toolbar';
 import { RouterLink } from '@angular/router';
 import type { ShellNav } from '../../model';
 
 /**
- * Level 1 of the shell (presentational; the theme's TopBar): the logo, the areas with the game's
+ * Level 1 of the shell (presentational; the theme's TopBar, a `mat-toolbar` over the bar's
+ * textures): the logo, the areas with the game's
  * separator between their families, and the utility cluster (projected). On a handset (`menu`;
  * the shell's `hrs-shell--handset` shows the title) the logo and areas give way to the menu
  * button and the current area's title.
  */
 @Component({
   selector: 'hrs-top-bar',
-  imports: [MatIconModule, NgOptimizedImage, RouterLink],
+  imports: [MatButtonModule, MatIconModule, MatToolbarModule, NgOptimizedImage, RouterLink],
   templateUrl: './top-bar.html',
   styleUrl: './top-bar.scss',
-  host: { class: 'hrs-topbar' },
 })
 export class TopBar {
   readonly areas = input.required<ShellNav['areas']>();

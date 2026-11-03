@@ -18,8 +18,8 @@
         Heroes Replay Stats
         <span class="hrs-spacer"></span>
         <button
+          mat-icon-button
           type="button"
-          class="hrs-btn hrs-btn--icon hrs-btn--sm"
           aria-label="Close navigation"
           (click)="navDrawer.close()"
         >
@@ -45,8 +45,8 @@
           <ng-container *ngComponentOutlet="action" />
         }
         <button
+          mat-icon-button
           type="button"
-          class="hrs-btn hrs-btn--icon"
           aria-label="Settings"
           matTooltip="Settings"
           [matMenuTriggerFor]="settingsMenu"
@@ -100,8 +100,9 @@
       @if (!bare() && panels.end(); as panel) {
         <!-- on the panel's edge, at the top, so it moves with it -->
         <button
+          mat-icon-button
           type="button"
-          class="hrs-btn hrs-btn--icon shell__panel-toggle"
+          class="shell__panel-toggle"
           [class.shell__panel-toggle--open]="panels.endShown()"
           aria-controls="shell-panel"
           [attr.aria-expanded]="panels.endOpen()"

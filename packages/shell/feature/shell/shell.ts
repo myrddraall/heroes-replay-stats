@@ -12,6 +12,7 @@ import {
 } from '@angular/core';
 import { NgComponentOutlet, NgTemplateOutlet } from '@angular/common';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
@@ -78,6 +79,7 @@ function pageTitle(state: RouterStateSnapshot): string | null {
   selector: 'hrs-shell',
   imports: [
     Crumbs,
+    MatButtonModule,
     MatIconModule,
     MatMenuModule,
     MatSidenavModule,

@@ -1,27 +1,30 @@
 import { Component, input } from '@angular/core';
+import { MatTabsModule } from '@angular/material/tabs';
 import { RouterLink } from '@angular/router';
 import type { ShellNavEntry } from '../../model';
 
-/** Level 2 of the shell (presentational; the theme's SubBar): the sections as a tab row. */
+/**
+ * Level 2 of the shell (presentational; the theme's SubBar): the sections as a `mat-tab-nav-bar`
+ * on the bar's band, the current one marked `aria-current="page"` (no tab panel: the sections are
+ * pages).
+ */
 @Component({
   selector: 'hrs-sub-bar',
-  imports: [RouterLink],
-  template: `<nav class="hrs-subbar" [attr.aria-label]="label()">
-    <div class="hrs-subbar__scroll">
-      @for (section of sections(); track section.link) {
-        <a class="hrs-tab" [routerLink]="section.link" [attr.aria-current]="section.active ? 'page' : null">{{
-          section.label
-        }}</a>
-      }
-    </div>
-  </nav>`,
-  styles: `
-    :host {
-      display: block;
-      position: relative;
-      z-index: 2;
+  imports: [MatTabsModule, RouterLink],
+  template: `<nav
+    mat-tab-nav-bar
+    class="hrs-subbar"
+    mat-stretch-tabs="false"
+    mat-align-tabs="start"
+    disableRipple
+    [attr.aria-label]="label()">
+    @for (section of sections(); track section.link) {
+      <a mat-tab-link class="hrs-tab" [routerLink]="section.link" [active]="section.active">{{
+        section.label
+      }}</a>
     }
-  `,
+  </nav>`,
+  styleUrl: './sub-bar.scss',
 })
 export class SubBar {
   readonly sections = input.required<readonly ShellNavEntry[]>();
