@@ -1,4 +1,4 @@
-import { inject, type ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { type ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideAether } from '@myrddraall/heroes-replay-stats-aether';
 import { provideAetherForge } from '@myrddraall/heroes-replay-stats-aether-forge';
 import {
@@ -8,7 +8,6 @@ import {
   withViewTransitions,
 } from '@angular/router';
 import { provideHeroesFeature } from '@myrddraall/heroes-replay-stats-heroes/provide';
-import { GraphicsStore } from './data/settings/graphics.store';
 import { provideDevFeature } from '@myrddraall/heroes-replay-stats-dev/provide';
 import { provideImportFeature } from '@myrddraall/heroes-replay-stats-import/provide';
 import { provideMapsFeature } from '@myrddraall/heroes-replay-stats-maps/provide';
@@ -21,6 +20,7 @@ import { provideThemeFeature } from '@myrddraall/heroes-replay-stats-theme/provi
 import { provideSettingsSection } from '@myrddraall/heroes-replay-stats-settings/ui';
 import { APP_VERSION } from './version';
 import { BACKGROUND_EDITOR, BACKGROUND_EDITOR_PATH } from './site-background/background-editor';
+import { provideGraphicsCarryOver } from './site-background/carry-over-graphics';
 import { provideSiteBackground } from './site-background/provide-site-background';
 import { PRESETS } from './site-background/tint-presets';
 import { routes } from './app.routes';
@@ -38,10 +38,11 @@ export const appConfig: ApplicationConfig = {
   providers: [
     { provide: DEV_REPORTS_URL, useValue: environment.devReportsUrl },
     provideBrowserGlobalErrorListeners(),
+    // Before provideAether: the graphics settings saved earlier, where it reads them.
+    provideGraphicsCarryOver(),
     provideAether({
       dataUrl: 'backgrounds/play/',
       storage: { keyPrefix: 'hrs.background-', databasePrefix: 'hrs-background-' },
-      renderApi: () => inject(GraphicsStore).api,
       tintPresets: PRESETS,
     }),
     // Before the router: the featuresets' routes come before the app's own (and their catch-all).

@@ -2,19 +2,28 @@ import { Component, computed, input, output } from '@angular/core';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import type { RenderApi, TintPreset } from '@myrddraall/heroes-replay-stats-aether';
 import {
-  type ColourMode,
   FPS_RANGE,
-  type GraphicsApi,
-  type GraphicsSettings,
+  type GraphicsSettings as EngineSettings,
   INTERACTING_FPS_RANGE,
   QUALITIES,
-  QUALITY_LABELS,
   type Quality,
   RESOLUTION_RANGE,
-} from '../../data/settings/graphics.store';
-import type { TintPreset } from '@myrddraall/heroes-replay-stats-aether';
+} from '@myrddraall/heroes-replay-stats-aether/graphics';
+import type { BackgroundColour, ColourMode } from '../../data/settings/background-colour.store';
 import { SettingSlider } from '@myrddraall/heroes-replay-stats-settings/ui';
+
+/** What the Graphics settings show: the engine's, and the background's colour. */
+export type GraphicsSettings = EngineSettings & BackgroundColour;
+
+export const QUALITY_LABELS: Readonly<Record<Quality, string>> = {
+  low: 'Low',
+  medium: 'Medium',
+  high: 'High',
+  ultra: 'Ultra',
+  extreme: 'Extreme',
+};
 
 /** A setting set with a slider. */
 interface SliderSetting {
@@ -88,7 +97,7 @@ export class GraphicsForm {
   protected readonly qualities = QUALITIES;
   protected readonly qualityLabels = QUALITY_LABELS;
   protected readonly qualitySliders = computed(() => this.rows(QUALITY_SLIDERS));
-  protected readonly apis: readonly { value: GraphicsApi; label: string }[] = [
+  protected readonly apis: readonly { value: RenderApi; label: string }[] = [
     { value: 'auto', label: 'Automatic' },
     { value: 'webgpu', label: 'WebGPU' },
     { value: 'webgl2', label: 'WebGL 2' },

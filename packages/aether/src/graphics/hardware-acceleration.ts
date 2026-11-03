@@ -34,7 +34,7 @@ export function detectHardwareAcceleration(): boolean {
 }
 
 /** Whether the browser draws on the GPU: detected once, when first asked. */
-export const HARDWARE_ACCELERATION = new InjectionToken<boolean>('hrs.hardware-acceleration', {
+export const HARDWARE_ACCELERATION = new InjectionToken<boolean>('aether.hardware-acceleration', {
   providedIn: 'root',
   factory: detectHardwareAcceleration,
 });

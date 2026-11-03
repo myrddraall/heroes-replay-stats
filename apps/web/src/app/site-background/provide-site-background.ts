@@ -8,8 +8,8 @@ import {
 } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs';
-import { presetTints, ViewStore } from "@myrddraall/heroes-replay-stats-aether";
-import { GraphicsStore } from '../data/settings/graphics.store';
+import { presetTints, ViewStore } from '@myrddraall/heroes-replay-stats-aether';
+import { BackgroundColourStore } from '../data/settings/background-colour.store';
 import { presetById, PRESETS } from './tint-presets';
 
 /** The page a URL is of: its path, without the query or the fragment. */
@@ -18,7 +18,7 @@ function pageOf(url: string): string {
 }
 
 /**
- * The site's background follows the Graphics settings: how it is drawn, and its colour. The site
+ * The site's background takes its colour from the Graphics settings (how it is drawn is Aether's own). The site
  * loads untinted; a fixed colour fades in, and a random one or the next in turn comes with each
  * page after the first. Each new page asks for a new picture (drawn when the background doesn't
  * move) and the next set of planets (flown to, when it does). The tint shown is on the root
@@ -27,7 +27,7 @@ function pageOf(url: string): string {
  */
 export function provideSiteBackground(): EnvironmentProviders {
   return provideEnvironmentInitializer(() => {
-    const graphics = inject(GraphicsStore);
+    const colour = inject(BackgroundColourStore);
     const background = inject(ViewStore);
     const root = inject(DOCUMENT).documentElement;
     /** The preset the site's background is in, by its place in PRESETS (0: untinted). */
@@ -47,18 +47,9 @@ export function provideSiteBackground(): EnvironmentProviders {
         root.style.removeProperty('--hrs-background-tint-blend');
       }
     });
-    effect(() =>
-      background.setDrawing({
-        animate: graphics.animate(),
-        idleFps: graphics.idleFps(),
-        animationFps: graphics.animationFps(),
-        interactingFps: graphics.interactingFps(),
-        resolution: graphics.resolution(),
-      }),
-    );
     effect(() => {
-      if (graphics.colourMode() !== 'fixed') return;
-      const index = PRESETS.indexOf(presetById(graphics.colour()));
+      if (colour.colourMode() !== 'fixed') return;
+      const index = PRESETS.indexOf(presetById(colour.colour()));
       untracked(() => show(index));
     });
 
@@ -71,7 +62,7 @@ export function provideSiteBackground(): EnvironmentProviders {
         if (now === page) return;
         page = now;
         if (first) return; // the site loads as it is
-        const mode = untracked(graphics.colourMode);
+        const mode = untracked(colour.colourMode);
         if (mode === 'in-turn') show((shown + 1) % PRESETS.length);
         else if (mode === 'random') {
           // Any other than the one shown.

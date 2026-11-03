@@ -51,6 +51,7 @@
     "./camera": "./src/camera/index.ts",
     "./design": "./src/design/index.ts",
     "./formats": "./src/formats/index.ts",
+    "./graphics": "./src/graphics/index.ts",
     "./library": "./src/library/index.ts",
     "./lights": "./src/lights/index.ts",
     "./materials": "./src/materials/index.ts",

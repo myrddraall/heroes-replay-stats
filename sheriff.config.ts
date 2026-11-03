@@ -74,6 +74,7 @@ const aetherAreas = [
   'camera',
   'design',
   'formats',
+  'graphics',
   'library',
   'lights',
   'materials',

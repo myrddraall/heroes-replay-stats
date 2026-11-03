@@ -1,7 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { GraphicsStore } from '../../data/settings/graphics.store';
-import { HARDWARE_ACCELERATION } from '../../data/settings/hardware-acceleration';
+import {
+  GraphicsSettingsStore,
+  HARDWARE_ACCELERATION,
+} from '@myrddraall/heroes-replay-stats-aether/graphics';
+import { BackgroundColourStore } from '../../data/settings/background-colour.store';
 import { GraphicsSection } from './graphics-section';
 
 describe('GraphicsSection', () => {
@@ -25,7 +28,7 @@ describe('GraphicsSection', () => {
   it('sets a quality preset, and shows when it is custom', async () => {
     const fixture = await render();
     const el: HTMLElement = fixture.nativeElement;
-    const graphics = TestBed.inject(GraphicsStore);
+    const graphics = TestBed.inject(GraphicsSettingsStore);
     const quality = buttons(el, 'quality-label');
     expect(quality[5]!.disabled).toBe(true); // no custom quality yet
     expect(quality.map((b) => b.textContent?.trim())).toEqual([
@@ -62,7 +65,7 @@ describe('GraphicsSection', () => {
     expect(el.querySelector('mat-select')).not.toBeNull();
     buttons(el, 'colour-mode-label')[1]!.click(); // Random
     await fixture.whenStable();
-    expect(TestBed.inject(GraphicsStore).colourMode()).toBe('random');
+    expect(TestBed.inject(BackgroundColourStore).colourMode()).toBe('random');
     expect(el.querySelector('mat-select')).toBeNull();
   });
 });
