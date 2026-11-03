@@ -9,19 +9,14 @@
   color: var(--mat-sys-on-surface);
 }
 
-.map-panel__head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 8px 8px 16px;
-  border-bottom: 1px solid var(--mat-sys-outline-variant);
-}
-
-.map-panel__title {
+// The theme's Drawer header (hrs-drawer__header): its title in the header's type, not a heading's.
+.side-panel__title {
   flex: 1;
   margin: 0;
-  font: var(--mat-sys-title-medium);
-  font-family: 'Exo 2', sans-serif;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
 }
 
 // What is pinned stays put above the body; only the body scrolls.
@@ -43,5 +38,5 @@
   overflow-wrap: anywhere;
   // Its padding at the sides, for what reaches its edges (a properties panel's pods) to undo.
   --hrs-panel-inline: 16px;
-  padding: 12px var(--hrs-panel-inline) 24px;
+  padding: 16px var(--hrs-panel-inline);
 }

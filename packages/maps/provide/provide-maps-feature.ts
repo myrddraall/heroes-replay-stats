@@ -10,13 +10,13 @@ export interface MapsFeatureOptions {
 }
 
 /**
- * The maps in an app: the Maps page and each map's page, the Game area's Maps section. List it
+ * The maps in an app: the Maps page and each map's page, the Game Info area's Maps section. List it
  * before `provideRouter`.
  */
 export function provideMapsFeature({ packsUrl }: MapsFeatureOptions): Provider[] {
   return [
     { provide: MAP_PACKS_URL, useValue: packsUrl },
     { provide: ROUTES, multi: true, useValue: MAPS_ROUTES },
-    provideShellSection({ area: '/game', label: 'Maps', link: '/game/maps', order: 10 }),
+    provideShellSection({ area: '/game-info', label: 'Maps', link: '/game-info/maps', order: 10 }),
   ];
 }

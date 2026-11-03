@@ -30,18 +30,18 @@ Design: **settled** = the user approved it; **changing** = not reviewed yet, may
 | Component | Design | Status | Where / notes |
 |---|---|---|---|
 | TopBar | settled | done | `packages/shell/ui/top-bar`: a `mat-toolbar` (toolbar overrides: transparent, bar height) over the bar's textures; `mat-icon-button`s |
-| SubBar | settled | done | `packages/shell/ui/sub-bar`: `mat-tab-nav-bar` + `mat-tab-link` (no tab panel: `aria-current="page"`), `mat.tabs-overrides` for the bar's label colours, indicator hidden |
+| SubBar | settled | done | `packages/shell/ui/sub-bar`: `mat-tab-nav-bar` + `mat-tab-link` controlling the shell's `mat-tab-nav-panel` around the page (Material 22 requires one; the current tab is `aria-selected`); `mat.tabs-overrides` for the type, transparent label colours (the theme's gradients show) and the indicator hidden; bundle.css adapts the theme's tab to Material's markup (label in flow for the text clip, separator on the content box since the focus indicator owns `::before`, no 90px minimum or flex gap) |
 | ShellLayout | settled | done | `packages/shell/feature/shell` (bars over the page, tool Drawer flush right); nav model in `packages/shell/model/nav`, `ShellNavStore`, pages hand over what is open with `showShellItem()` |
 | ShellMobile | settled | done | `hrs-shell--handset` from the shell's BreakpointObserver; title + breadcrumb (`packages/shell/ui/crumbs`), nav drawer with the NavTree |
-| NavTree | settled | done | `packages/shell/ui/nav-tree`: `mat-tree` with nested nodes (`isExpanded` from the active branch, Enter follows the link), links as `.hrs-tree__item` |
-| SideNav | settled | done | `packages/shell/ui/side-nav`, placed by a page as `hrs-shell-side-nav` (`packages/shell/feature/shell-side-nav`); flat sections for now (no groups or sub-items yet) |
+| NavTree | settled | done | `packages/shell/ui/nav-tree`: `mat-tree` with nested nodes (`isExpanded` from the active branch, Enter follows the link), links as `.hrs-tree__item`, the chevron only on rows with children |
+| SideNav | settled | done | `packages/shell/ui/side-nav`, placed by a page as `hrs-shell-side-nav` (`packages/shell/feature/shell-side-nav`); one folding group (`hrs-sidenav__heading`) headed by what is open (a match), its sections with their sub-items (Stats') |
 | StyledText | settled | done | `packages/common/ui/styled-text` (`hrsStyledText`); no page uses it yet |
 | ThemeVariants, Rarity | settled | n/a | previews only |
-| IconButton | changing | done | `mat-icon-button` with icon-button overrides (square, 36px, 16px icon, no state layer) and the outline ring in nexus.css |
+| IconButton | changing | done | `mat-icon-button` with icon-button overrides (square, 36px, 16px icon, no state layer) and the outline ring in nexus.css; a `mat-icon` takes the icon-size token; in a Drawer header it is the small one (0.78) |
 | Badge | changing | done | CSS in `nexus.css`; the import pod's "+" |
 | UtilityPod | changing | done | `packages/import/feature/import-toolbar-action` (button while idle; link + "+" badge + progress bar while importing) |
 | Tabs | changing | done | the SubBar's tabs (`hrs-tab`); no in-page tabs yet |
-| Drawer | changing | done | the shell's tool drawer (`hrs-drawer--shell`) and handset nav drawer (`hrs-drawer--nav`), Material's drawer colour set to the films |
+| Drawer | changing | done | the shell's tool drawer (`hrs-drawer--shell`) and handset nav drawer (`hrs-drawer--nav`), Material's drawer colour set to the films; the side panel (`ui-side-panel`) uses the Drawer header |
 | SelectionList | changing | done | the SideNav's items |
 | Panel | changing | done | CSS in `nexus.css`; settings and theme sections are `hrs-panel` |
 | Translucency | changing | done | the films in `nexus.css`, set by the Theme settings through the shell |

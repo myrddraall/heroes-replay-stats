@@ -6,7 +6,7 @@ import type { ShellNavEntry } from '../../model';
 /**
  * Level 2 of the shell (presentational; the theme's SubBar): the sections as a `mat-tab-nav-bar`
  * on the bar's band, controlling the panel the page is shown in (the shell's), the current one
- * marked active.
+ * marked active. Where the page has no sections the band slides up behind the top bar and hides.
  */
 @Component({
   selector: 'hrs-sub-bar',
@@ -21,12 +21,19 @@ import type { ShellNavEntry } from '../../model';
     [attr.aria-label]="label()"
   >
     @for (section of sections(); track section.link) {
-      <a mat-tab-link class="hrs-tab" [routerLink]="section.link" [active]="section.active">{{
-        section.label
-      }}</a>
+      <a
+        mat-tab-link
+        class="hrs-tab"
+        [routerLink]="section.disabled ? null : section.link"
+        [active]="section.active"
+        [disabled]="section.disabled ?? false"
+        >{{ section.label }}</a
+      >
     }
   </nav>`,
   styleUrl: './sub-bar.scss',
+  // with no sections it slides up behind the top bar and hides
+  host: { '[class.sub-bar--hidden]': 'sections().length === 0' },
 })
 export class SubBar {
   readonly sections = input.required<readonly ShellNavEntry[]>();

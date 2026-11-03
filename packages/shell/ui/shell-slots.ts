@@ -10,7 +10,7 @@ import {
   type ShellUtilityLink,
 } from '../model';
 
-/** An area on the top bar, added by the domain whose pages it holds (or the app, for a family's). */
+/** An area on the top bar, added by the domain whose pages it holds (or the app, for one that gathers several). */
 export function provideShellArea(area: ShellArea): Provider {
   return { provide: SHELL_AREAS, useValue: area, multi: true };
 }

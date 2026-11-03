@@ -10,6 +10,7 @@
     [class.hrs-tree__family]="node.breaks"
     [isExpandable]="node.children.length > 0"
     [isExpanded]="node.active"
+    [isDisabled]="node.disabled ?? false"
     (activation)="link.click()"
   >
     <a
@@ -17,11 +18,13 @@
       class="hrs-tree__item"
       tabindex="-1"
       [class.is-trail]="node.active && !node.current"
-      [routerLink]="node.link"
+      [routerLink]="node.disabled ? null : node.link"
+      [attr.aria-disabled]="node.disabled || null"
       [attr.aria-current]="node.current ? 'page' : null"
     >
-      <!-- the chevron's space on every row, so the labels line up -->
-      <span class="hrs-tree__chev" aria-hidden="true">{{ node.children.length ? '›' : '' }}</span>
+      @if (node.children.length) {
+        <span class="hrs-tree__chev" aria-hidden="true">›</span>
+      }
       <span class="hrs-tree__label">{{ node.label }}</span>
       @if (node.count) {
         <span class="hrs-badge hrs-badge--count">{{ node.count }}</span>

@@ -5,7 +5,7 @@ import { EmptyState } from '@myrddraall/heroes-replay-stats-common/ui';
 import { TeamStats } from '../../ui';
 import { TeamsSectionStore } from './teams-section.store';
 
-/** The replay's team stats (container): `/matches/<id>/teams`. */
+/** The replay's team stats (container): `/replays/matches/<id>/teams`. */
 @Component({
   selector: 'hrs-teams-section',
   imports: [EmptyState, Layout, MatProgressBar, TeamStats],

@@ -61,8 +61,8 @@ The game's face is **Metronic for Blizzard** (`UI/Fonts/MetronicforBlizzard-Bold
 
 Three navigation levels, then the page:
 
-1. **TopBar** (level 1, `hrs-bar-1` 52px): brand mark, the areas (see Navigation) with dividers and count badges where something needs attention, then the utility cluster: the import UtilityPod (count, progress bar while importing, "+" corner badge to import more), and a settings IconButton (whose menu holds Settings, About and the Dev pages). No account portrait: HRS has no profile or login. The bar is built as the game's TopNavContainer in `standardtemplates.stormlayout`: the triangle mask tiled across the whole bar with a shimmer glow scrolling through it on an 8 s loop; the selected button's glow pulse (4 s), underline and rising sparkle triangles, with the label styles from `fontstyles.stormstyle` (TaskBarNavigation / TaskBarSubNavigation). Every colour comes from the theme's accent, text and glow tokens, so it follows `data-theme`.
-2. **SubBar** (level 2, `hrs-bar-2` 30px): the second horizontal nav, directly under the first: the sections of the current area as a scrolling tab row on the game's darker band, the selected one underlined with a glow; hidden when the area has one section.
+1. **TopBar** (level 1, `hrs-bar-1` 52px): brand mark, the areas (see Navigation) with dividers and count badges where something needs attention, then the utility cluster: the import UtilityPod (count, progress bar while importing, "+" corner badge to import more), and a settings IconButton (whose menu holds Settings and the Dev pages). No account portrait: HRS has no profile or login. The bar is built as the game's TopNavContainer in `standardtemplates.stormlayout`: the triangle mask tiled across the whole bar with a shimmer glow scrolling through it on an 8 s loop; the selected button's glow pulse (4 s), underline and rising sparkle triangles, with the label styles from `fontstyles.stormstyle` (TaskBarNavigation / TaskBarSubNavigation). Every colour comes from the theme's accent, text and glow tokens, so it follows `data-theme`.
+2. **SubBar** (level 2, `hrs-bar-2` 30px): the second horizontal nav, directly under the first: the sections of the current area as a scrolling tab row on the game's darker band, the selected one underlined with a glow; where the page has no sections (About, Settings) it slides up behind the TopBar and hides, and slides back down with the next page that has them.
 3. **SideNav** (level 3, `hrs-side-nav` 240px): the page's categories / filters / presets as a SelectionList in a column at the left of the content, inside the page's own layout (constrained / padded / edge-to-edge as today).
 4. **Content** in Panels; the right **Drawer** (`hrs-side-panel` 320px) for tools such as the column picker. An optional **StatusBar** on the desktop shell.
 
@@ -70,22 +70,22 @@ Three navigation levels, then the page:
 
 ## Navigation
 
-Replays are how HRS gets match data, so the site is organised around matches, what adds up across them, and the game itself. Level 1 holds two families of areas with the game's separator between them:
+Replays are how HRS gets match data; the site is organised around what the replays tell, the game itself, and the app. Level 1 holds three areas, the game's separator between each:
 
-**MATCHES · PLAYERS · MAPS │ GAME**
+**REPLAYS · GAME INFO · ABOUT**
 
-| Area | Its list | Level 2, inside an item | Level 3 (SideNav) |
-|---|---|---|---|
-| Matches (from replays; "replays" stays the word for the files) | the matches | Score, Teams, Draft, Talents, Chat, Stats, Unit Kills, XP | on Stats: the stat sections |
-| Players: across matches | the players | the player's own sections, as they are built | as those pages need |
-| Maps: across matches | the maps with the user's results | the map's own sections, as they are built (not built yet; the area shows once it is) | as those pages need |
-| Game: the game in general | — | Maps (the map viewer; Heroes later) | the page's own lists |
+| Area | Level 2 (SubBar) | Inside an item: its SideNav (level 3) |
+|---|---|---|
+| Replays | Matches · Players · Maps (disabled until built) · Import | a match: Score, Teams, Draft, Talents, Chat, Stats (its stat sections as sub-items), Unit Kills, XP; the SubBar stays on Matches |
+| Game Info | Maps · Heroes (disabled until built) | a map: none yet |
+| About | — | — |
 
-- Import is the UtilityPod (its page is reached from the pod). On a handset, where the pod has no room, Import is an entry in the NavTree after Game, outside the families.
-- The settings menu: Settings, About, then a Dev group (Theme preview, Background, Renderer check and future test pages). Dev has no place on the bars.
-- The SubBar hides when the area or page has one section. Breadcrumbs follow the same path: Matches › Blackheart's Bay › Stats › PvP; Game › Maps › Cursed Hollow.
-- Routes follow the areas: `/matches/:id/…` (old `/replays` URLs redirect), `/game/maps/:id` (old `/maps/:id` redirect while Maps has no aggregate pages).
-- Navigation is data, not templates: each area is declared with its family and order; fixed sections come with the area; a page whose sections depend on what is open (a match, a player) hands the shell its levels 2–3 as data. The TopBar and SubBar, the page's SideNav and the handset NavTree all draw from that one model.
+- A section still to be built shows disabled (dim, not a link) on the SubBar and in the NavTree.
+- Import is Replays' last section; the UtilityPod in the TopBar leads to it as well.
+- The settings menu: Settings, then a Dev group (Theme preview, Background, Renderer check and future test pages). Dev has no place on the bars.
+- The SubBar slides up behind the TopBar and hides where there are no sections (About, Settings). Breadcrumbs follow the same path: Replays › Matches › Blackheart's Bay › Stats › PvP; Game Info › Maps › Cursed Hollow.
+- Routes follow the areas: `/replays/matches/:id/…`, `/replays/players`, `/replays/import`, `/game-info/maps/:id`, `/about`. Older URLs redirect (`/matches/…`, `/players`, `/import`, `/game/maps/…`, `/maps/…`, `/replays/:id/…`).
+- Navigation is data, not templates: each area is declared with its order; fixed sections come with the area (from the domains whose pages they open); a page whose sections depend on what is open (a match) hands the shell its SideNav as data. The TopBar and SubBar, the page's SideNav and the handset NavTree all draw from that one model.
 
 ## Components
 

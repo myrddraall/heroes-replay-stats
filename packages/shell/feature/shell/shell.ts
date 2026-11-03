@@ -4,7 +4,9 @@ import {
   afterNextRender,
   Component,
   computed,
+  DestroyRef,
   effect,
+  ElementRef,
   inject,
   signal,
   type Type,
@@ -113,7 +115,17 @@ export class Shell {
   private readonly films = computed(() => filmStyle(this.look.opacity(), this.look.blur()));
   /** The game textures the bars draw with, once loaded. */
   private readonly textures = injectNavigationTextures();
-  protected readonly style = computed(() => ({ ...this.films(), ...this.textures() }));
+  /** The height the page has below the bars (`--hrs-page-height`), for pages that fill it (a map). */
+  private readonly pageHeight = signal<number | null>(null);
+  private readonly main = viewChild.required('main', { read: ElementRef });
+  protected readonly style = computed(() => {
+    const height = this.pageHeight();
+    return {
+      ...this.films(),
+      ...this.textures(),
+      ...(height === null ? {} : { '--hrs-page-height': `${height}px` }),
+    };
+  });
   /** The backdrop's component, once loaded. */
   protected readonly backdropComponent = signal<Type<unknown> | null>(null);
   /** Whether the page shows without the frame. */
@@ -214,6 +226,14 @@ export class Shell {
         // The nav drawer covers the page: any link followed in it (or anywhere) closes it.
         void this.navDrawer()?.close();
       });
+    // The page's height below the bars, which change with the area (a sub-bar or not) and the window.
+    const destroyRef = inject(DestroyRef);
+    afterNextRender(() => {
+      const main = this.main().nativeElement as HTMLElement;
+      const sized = new ResizeObserver(() => this.pageHeight.set(main.clientHeight));
+      sized.observe(main);
+      destroyRef.onDestroy(() => sized.disconnect());
+    });
     // The backdrop's chunk, fetched once the page is up: it fades in when its scene has loaded anyway.
     const load = inject(SHELL_BACKDROP);
     if (load) {

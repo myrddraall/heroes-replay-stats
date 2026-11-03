@@ -429,7 +429,6 @@ a:hover {
   inset: 0 0 calc(-1 * var(--_shadow)) 0;
   z-index: 0;
   pointer-events: none;
-  backdrop-filter: var(--hrs-backdrop-raised);
   background:
     var(--hrs-tex-mainnavigation-background) 0 0 / auto 100% repeat-x,
     linear-gradient(
@@ -549,6 +548,10 @@ a:hover {
   padding: 0 var(--hrs-space-4);
   text-decoration: none;
 }
+/* no underline on hover (the base a:hover would win over the class) */
+.hrs-nav1__link:hover {
+  text-decoration: none;
+}
 /* the label: TaskBarNavigation (Uppercase, gradient 9d90ff→8f99fb, glow 010a14); hover c9c2ff→b3baff; selected cbe8ff→ffffff, glow 0063c8 */
 .hrs-nav1__text {
   position: relative;
@@ -597,13 +600,13 @@ a:hover {
     opacity: 0;
   }
 }
-/* UnderlineImage: Storm_UI_MainNavigation_Hover_Underline (268×108), the button's width (label + 60 units a side), placed so its bright row (59 of 108) lies on the background texture's edge row (76 of 82); fades in over 0.2 s */
+/* UnderlineImage: Storm_UI_MainNavigation_Hover_Underline (268×108), the button's width (label + 60 units a side), placed so its bright row (59 of 108) lies on the background texture's edge row (76 of 82), 2px lower to sit on the drawn line; fades in over 0.2 s */
 .hrs-nav1__link::after {
   content: '';
   position: absolute;
   left: calc(16px - var(--hrs-bar-1) * 0.73);
   right: calc(16px - var(--hrs-bar-1) * 0.73);
-  top: 20.8%;
+  top: calc(20.8% + 2px);
   height: 131.7%;
   z-index: 1;
   pointer-events: none;
@@ -616,7 +619,7 @@ a:hover {
 .hrs-nav1__link[aria-current='page']::after {
   opacity: 1;
 }
-/* ShapesContainer: Storm_UI_MainNavigation_Hover_Particle triangles rising from the label (1.8 s), spinning (3 s), alpha 130 at most */
+/* ShapesContainer: Storm_UI_MainNavigation_Hover_Particle triangles rising from the label (1.8 s), spinning (3 s), alpha 130 at most; masked under the line (the underline's bright row: its top 20.8% + 2px + 59/108 of its 131.7%, from the sparks' bottom at 75%) */
 .hrs-nav1__sparks {
   position: absolute;
   left: 50%;
@@ -627,6 +630,9 @@ a:hover {
   z-index: 2;
   pointer-events: none;
   display: none;
+  clip-path: inset(
+    -100vh -100vw calc(var(--hrs-bar-1) * (0.208 + 1.317 * 59 / 108 - 0.75) * -1 - 2px) -100vw
+  );
 }
 .hrs-nav1__link[aria-current='page'] .hrs-nav1__sparks {
   display: block;
@@ -807,7 +813,6 @@ a:hover {
   inset: 0 0 calc(-1 * var(--_shadow)) 0;
   z-index: 0;
   pointer-events: none;
-  backdrop-filter: var(--hrs-backdrop);
   background:
     var(--hrs-tex-mainnavigation-subbackground) 0 0 / auto 100% repeat-x,
     linear-gradient(
@@ -921,6 +926,41 @@ a:hover {
 .hrs-subbar .hrs-tab[aria-selected='true']::after {
   opacity: 1;
 }
+/* a section not open yet: dim, no hover */
+.hrs-subbar .hrs-tab[aria-disabled='true'] {
+  background-image: linear-gradient(var(--hrs-text-dim), var(--hrs-text-dim));
+  filter: none;
+  cursor: default;
+}
+/* On Material's tab links (mat-tab-nav-bar): its label is a positioned child, which the tab's text clip would skip, so it stays in flow; its focus indicator owns the tab's ::before, so the separator is drawn by the content box (in flow too, so it sits on the tab's left edge); the tab is as wide as its label (no gap: Material's ripple and content are its children) */
+.hrs-subbar .mat-mdc-tab-link.hrs-tab {
+  min-width: 0;
+  gap: 0;
+}
+.hrs-subbar .mat-mdc-tab-link .mdc-tab__content,
+.hrs-subbar .mat-mdc-tab-link .mdc-tab__text-label {
+  position: static;
+  z-index: auto;
+}
+.hrs-subbar .mat-mdc-tab-link.hrs-tab::before {
+  width: auto;
+  height: auto;
+  top: 0;
+  transform: none;
+  opacity: 1;
+  background: none;
+}
+.hrs-subbar .mat-mdc-tab-link.hrs-tab + .hrs-tab .mdc-tab__content::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 2px;
+  height: 46%;
+  transform: translateY(-50%);
+  opacity: 0.4;
+  background: var(--hrs-tex-mainnavigation-separator-sub) 0 0 / 100% 100%;
+}
 @media (prefers-reduced-motion: reduce) {
   .hrs-topbar::after,
   .hrs-nav1__link::before {
@@ -1007,7 +1047,6 @@ a:hover {
   align-self: flex-start;
   max-height: calc(100vh - var(--hrs-bar-1) - var(--hrs-bar-2) - var(--hrs-space-8));
   overflow-y: auto;
-  scrollbar-width: thin;
 }
 .hrs-sidenav__group {
   display: flex;
@@ -1688,22 +1727,66 @@ a:hover {
   );
 }
 
+/* Scrollbar: the game's Storm_ScrollBar_Background (16×28: 3 clear, a 2px border rgb(66 49 130), a dark fill rgb(26 16 55) 6 wide; its clear ends and outer side dropped, so the track runs the scrolling area's full length flush against its edge, the 3 clear only on the content side) holding Storm_ScrollBar_Button (16×33: a 6-wide bar rgb(139 166 255) at 70%, 5 clear on every side; hover 85%, pressed rgb(218 212 250)), built from the textures' own pixels; purple is the game's colours, other themes rotate them to their hue. Every scrolling area takes it, Material's included (drawers, the page, select and menu panels, dialogs); .hrs-scroll only adds the scrolling. The standard scrollbar-width and scrollbar-color are left unset where these parts work: Chrome ignores the parts once either is set */
+:root,
+[data-theme] {
+  --hrs-scroll-line: oklch(
+    from rgb(66 49 130) l calc(c * var(--hrs-chroma-k)) calc(h + var(--hrs-hue-delta))
+  );
+  --hrs-scroll-fill: oklch(
+    from rgb(26 16 55) l calc(c * var(--hrs-chroma-k)) calc(h + var(--hrs-hue-delta))
+  );
+  --hrs-scroll-thumb: oklch(
+    from rgb(139 166 255) l calc(c * var(--hrs-chroma-k)) calc(h + var(--hrs-hue-delta))
+  );
+  --hrs-scroll-thumb-down: oklch(
+    from rgb(218 212 250) l calc(c * var(--hrs-chroma-k)) calc(h + var(--hrs-hue-delta))
+  );
+}
 .hrs-scroll {
   overflow: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--hrs-border-strong) oklch(from var(--hrs-tint) l c h / 0.6);
 }
-.hrs-scroll::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+::-webkit-scrollbar {
+  width: 13px;
+  height: 13px;
+  background: transparent;
 }
-.hrs-scroll::-webkit-scrollbar-track {
-  background: oklch(from var(--hrs-tint) l c h / 0.6);
-  border-left: var(--hrs-line);
+::-webkit-scrollbar-track {
+  border: solid transparent;
+  border-width: 0 0 0 3px;
+  background: var(--hrs-scroll-fill) padding-box;
+  box-shadow: inset 0 0 0 2px var(--hrs-scroll-line);
 }
-.hrs-scroll::-webkit-scrollbar-thumb {
-  background: var(--hrs-border-strong);
-  border: 1px solid var(--hrs-tint);
+::-webkit-scrollbar-track:horizontal {
+  border-width: 3px 0 0;
+}
+::-webkit-scrollbar-thumb {
+  border: solid transparent;
+  border-width: 5px 2px 5px 5px;
+  border-radius: 0;
+  background: oklch(from var(--hrs-scroll-thumb) l c h / 0.7) padding-box;
+}
+::-webkit-scrollbar-thumb:horizontal {
+  border-width: 5px 5px 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: oklch(from var(--hrs-scroll-thumb) l c h / 0.85);
+}
+::-webkit-scrollbar-thumb:active {
+  background-color: var(--hrs-scroll-thumb-down);
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+/* no arrow buttons: styling them at all makes Chrome draw them, an empty 16px box at each end */
+::-webkit-scrollbar-button {
+  display: none;
+}
+@supports not selector(::-webkit-scrollbar) {
+  :root,
+  [data-theme] {
+    scrollbar-color: oklch(from var(--hrs-scroll-thumb) l c h / 0.7) var(--hrs-scroll-fill);
+  }
 }
 
 /* ---------- inputs ---------- */
@@ -2130,6 +2213,11 @@ a:hover {
   font-size: inherit;
   line-height: 1;
 }
+/* a Drawer header's Close is the small IconButton: its icon 0.78 of the header's 14px type, its frame 2.25 times the icon */
+.hrs-drawer__header .mat-mdc-icon-button {
+  --mat-icon-button-icon-size: calc(14px * 0.78);
+  --mat-icon-button-state-layer-size: calc(14px * 0.78 * 2.25);
+}
 
 /* ---------- handset form: a class the shell sets from its breakpoint signal (never a viewport media query, so previews and embedded frames show the real layout) ----------
    No horizontal navs on handset: the TopBar holds the menu button, the current area's title and settings; the SubBar band holds a breadcrumb;
@@ -2198,7 +2286,6 @@ a:hover {
   inset: 0 0 calc(-1 * var(--_shadow)) 0;
   z-index: -1;
   pointer-events: none;
-  backdrop-filter: var(--hrs-backdrop);
   background:
     var(--hrs-tex-mainnavigation-subbackground) 0 0 / auto 100% repeat-x,
     linear-gradient(
@@ -2350,6 +2437,14 @@ a:hover {
 .hrs-tree__item.is-trail .hrs-tree__label {
   background-image: linear-gradient(180deg, var(--hrs-nav-hover-top), var(--hrs-nav-hover-bot));
 }
+/* a page not open yet: dim, no hover */
+.hrs-tree__item[aria-disabled='true'] {
+  cursor: default;
+  background: none;
+}
+.hrs-tree__item[aria-disabled='true'] .hrs-tree__label {
+  background-image: linear-gradient(var(--hrs-text-dim), var(--hrs-text-dim));
+}
 .hrs-tree__chev {
   flex: none;
   width: 1em;
@@ -2394,4 +2489,13 @@ a:hover {
 }
 .hrs-drawer--nav .hrs-drawer__body {
   padding: var(--hrs-space-2) 0;
+}
+
+/* The bars' backdrop blur sits on each bar's own box, never on its texture layer: that layer reaches below the bar for the drop shadow, and a blur there smears whatever is at the bar's edge (the scene, a bright planet) into those rows, a line of light under the bar */
+.hrs-topbar {
+  backdrop-filter: var(--hrs-backdrop-raised);
+}
+.hrs-subbar,
+.hrs-crumbs {
+  backdrop-filter: var(--hrs-backdrop);
 }

@@ -18,7 +18,7 @@
     <nav class="top-bar__nav" aria-label="Main">
       <ul class="hrs-nav1">
         @for (area of areas(); track area.link) {
-          <li [class.hrs-nav1__family]="area.breaks">
+          <li>
             <a
               class="hrs-nav1__link"
               [routerLink]="area.link"

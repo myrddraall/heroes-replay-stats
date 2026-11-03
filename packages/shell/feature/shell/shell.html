@@ -54,11 +54,11 @@
           <mat-icon class="material-symbols-outlined" aria-hidden="true">settings</mat-icon>
         </button>
       </hrs-top-bar>
+      <!-- the band under the top bar: the breadcrumb on a handset, else the area's sections (sliding up
+           behind the top bar where the page has none) -->
       @if (handset()) {
-        @if (shellNav.crumbs.length) {
-          <hrs-crumbs [crumbs]="shellNav.crumbs" />
-        }
-      } @else if (shellNav.level2.length > 1) {
+        <hrs-crumbs [crumbs]="shellNav.crumbs" />
+      } @else {
         <hrs-sub-bar [sections]="shellNav.level2" [panel]="sectionPanel" />
       }
       <mat-menu #settingsMenu="matMenu" xPosition="before">
@@ -91,7 +91,7 @@
             <ng-container [ngTemplateOutlet]="panel.template" />
           }
         </mat-drawer>
-        <mat-drawer-content class="shell__main">
+        <mat-drawer-content #main class="shell__main">
           <main class="shell__page" [class.shell__page--panel-toggle]="panels.end() !== null">
             <!-- the panel the sub-bar's sections show the page in -->
             <mat-tab-nav-panel #sectionPanel="matTabNavPanel" class="shell__sections">

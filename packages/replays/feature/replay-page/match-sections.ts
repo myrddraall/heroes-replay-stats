@@ -1,9 +1,9 @@
 import type { ShellNavLink } from '@myrddraall/heroes-replay-stats-shell/model';
 import { STAT_SECTION_IDS, STAT_SECTIONS } from '../../model';
 
-/** A match's sections, as the shell's navigation lists them: level 2, and Stats' level 3. */
+/** A match's sections, as the shell's navigation lists them: its side nav, with Stats' sections under Stats. */
 export function matchSections(id: string): ShellNavLink[] {
-  const at = (path: string) => `/matches/${id}/${path}`;
+  const at = (path: string) => `/replays/matches/${id}/${path}`;
   return [
     { label: 'Score', link: at('score') },
     { label: 'Teams', link: at('teams') },

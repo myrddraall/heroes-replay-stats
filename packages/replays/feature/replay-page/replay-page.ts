@@ -10,11 +10,11 @@ import { matchSections } from './match-sections';
 import { ReplayPageStore } from './replay-page.store';
 
 /**
- * One match, by its replay's id in the address (`/matches/<id>`) (container): its header and the
- * section its child route shows (the score screen, a player stats table), with the side nav of the
- * section's own sections beside it. While it is open the shell's navigation has it under Matches,
- * with its sections. The sections read the replay from {@link ReplayPageStore}; teams are coloured
- * from your point of view.
+ * One match, by its replay's id in the address (`/replays/matches/<id>`) (container): its header
+ * and the section its child route shows (the score screen, a player stats table), with the side nav
+ * of its sections (Stats' own under Stats) beside it. While it is open the shell's navigation has
+ * it under Replays › Matches, with its sections. The sections read the replay from
+ * {@link ReplayPageStore}; teams are coloured from your point of view.
  */
 @Component({
   selector: 'hrs-replay-page',
@@ -42,9 +42,9 @@ export class ReplayPage {
       const replay = this.store.replay();
       return replay
         ? {
-            under: '/matches',
+            under: '/replays/matches',
             label: replay.map,
-            link: `/matches/${replay.id}`,
+            link: `/replays/matches/${replay.id}`,
             sections: matchSections(replay.id),
           }
         : null;

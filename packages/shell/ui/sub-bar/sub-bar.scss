@@ -1,14 +1,48 @@
 @use '@angular/material' as mat;
 
-// Above the page, which the bar's texture shadow falls over.
+// Above the page, which the bar's texture shadow falls over; 1px up, closing the seam under the
+// top bar's edge line. Its height is the band's, so the page moves with it as it hides.
 :host {
   display: block;
   position: relative;
   z-index: 2;
+  margin-top: -1px;
+  height: var(--hrs-bar-2);
+  transition: height 0.25s ease;
 
-  // The theme's SubBar (nexus.css) draws the band and the selected underline; Material's tab
-  // labels take the bar's label colours (the game's TaskBarSubNavigation: resting, hover,
-  // selected), and its own indicator and divider give way to the underline.
+  > .hrs-subbar {
+    transition:
+      transform 0.25s ease,
+      visibility 0s;
+  }
+}
+
+// No sections: the band slides up behind the top bar, its shadow too, and the page takes its place;
+// hidden once there, so nothing in it can be reached.
+:host(.sub-bar--hidden) {
+  height: 0;
+
+  > .hrs-subbar {
+    transform: translateY(calc(-100% - 3px));
+    visibility: hidden;
+    transition:
+      transform 0.25s ease,
+      visibility 0s 0.25s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host,
+  :host > .hrs-subbar {
+    transition: none !important;
+  }
+}
+
+:host {
+  // The theme's SubBar (nexus.css) draws the band, the labels' gradients, the separators and the
+  // selected underline; Material's tab labels take its type and leave their colour to it
+  // (transparent, so the gradients show), and its own indicator and divider give way to the
+  // underline.
   @include mat.tabs-overrides(
     (
       container-height: var(--hrs-bar-2),
@@ -16,14 +50,15 @@
       divider-height: 0,
       label-text-font: var(--font-brand),
       label-text-size: 16px,
+      label-text-line-height: 20px,
       label-text-weight: 700,
       label-text-tracking: 0,
-      inactive-label-text-color: var(--hrs-nav-text-bot),
-      inactive-hover-label-text-color: var(--hrs-nav-hover-top),
-      inactive-focus-label-text-color: var(--hrs-nav-hover-top),
-      active-label-text-color: var(--hrs-nav-sel-top),
-      active-hover-label-text-color: var(--hrs-nav-sel-top),
-      active-focus-label-text-color: var(--hrs-nav-sel-top),
+      inactive-label-text-color: transparent,
+      inactive-hover-label-text-color: transparent,
+      inactive-focus-label-text-color: transparent,
+      active-label-text-color: transparent,
+      active-hover-label-text-color: transparent,
+      active-focus-label-text-color: transparent,
       pagination-icon-color: var(--mat-sys-on-surface),
     )
   );

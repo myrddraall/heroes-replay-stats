@@ -9,7 +9,7 @@ import type { StatSectionId } from '../../model';
 import { StatsSectionStore } from './stats-section.store';
 
 /**
- * One player stats section of the replay (container): `/matches/<id>/stats/<section>`. The table
+ * One player stats section of the replay (container): `/replays/matches/<id>/stats/<section>`. The table
  * in the page; the presets and the column choice in the shell's right-hand panel.
  */
 @Component({
