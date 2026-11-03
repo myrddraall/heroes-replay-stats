@@ -3,6 +3,7 @@ import { provideRouter } from '@angular/router';
 import { heroesImages } from '@myrddraall/hero-data';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { fakeHeroData } from '@myrddraall/heroes-replay-stats-heroes/testing';
+import { provideFakeSheets } from '@myrddraall/heroes-replay-stats-sheets/testing';
 import { heroLookup, type HeroLookup } from '@myrddraall/heroes-replay-stats-heroes/model';
 import type { ReplaySummary } from '../../model';
 import { toReplayCard } from './replay-card';
@@ -54,7 +55,7 @@ async function render(r: ReplaySummary, me: readonly string[] = []) {
 }
 
 describe('ReplayListItem', () => {
-  beforeEach(() => TestBed.configureTestingModule({ providers: [provideRouter([])] }));
+  beforeEach(() => TestBed.configureTestingModule({ providers: [provideRouter([]), provideFakeSheets()] }));
 
   beforeAll(async () => {
     heroes = heroLookup(await fakeHeroData.latest(), heroesImages());

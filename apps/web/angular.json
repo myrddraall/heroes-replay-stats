@@ -108,6 +108,7 @@
                 "@myrddraall/heroes-replay-stats-players",
                 "@myrddraall/heroes-replay-stats-replays",
                 "@myrddraall/heroes-replay-stats-settings",
+                "@myrddraall/heroes-replay-stats-sheets",
                 "@myrddraall/heroes-replay-stats-shell",
                 "@myrddraall/heroes-replay-stats-signals",
                 "@myrddraall/heroes-replay-stats-theme"

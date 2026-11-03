@@ -1,8 +1,11 @@
 import { TestBed } from '@angular/core/testing';
-import { describe, expect, it, vi } from 'vitest';
+import { provideFakeSheets } from '@myrddraall/heroes-replay-stats-sheets/testing';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GLASS_ALPHA_FLOOR, ThemePreviewPage } from './theme-preview-page';
 
 describe('ThemePreviewPage', () => {
+  beforeEach(() => TestBed.configureTestingModule({ providers: [provideFakeSheets()] }));
+
   async function render() {
     // The background's scene isn't served here: it stays black, as it does when it can't load.
     vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('not in this test'));

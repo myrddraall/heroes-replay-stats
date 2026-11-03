@@ -26,6 +26,9 @@
       ],
       "@myrddraall/heroes-replay-stats-settings/*": [
         "../settings/*/index.ts"
+      ],
+      "@myrddraall/heroes-replay-stats-sheets/*": [
+        "../sheets/*/index.ts"
       ]
     }
   }

@@ -18,6 +18,7 @@ import { provideReplaysFeature } from '@myrddraall/heroes-replay-stats-replays/p
 import { DEV_REPORTS_URL } from '@myrddraall/heroes-replay-stats-platform/data';
 import { providePlatformFeature } from '@myrddraall/heroes-replay-stats-platform/provide';
 import { provideSettingsFeature } from '@myrddraall/heroes-replay-stats-settings/provide';
+import { provideSheets } from '@myrddraall/heroes-replay-stats-sheets/provide';
 import { provideThemeFeature } from '@myrddraall/heroes-replay-stats-theme/provide';
 import { APP_VERSION } from './version';
 import { routes } from './app.routes';
@@ -57,5 +58,6 @@ export const appConfig: ApplicationConfig = {
     ),
     providePlatformFeature({ version: APP_VERSION }),
     provideHeroesFeature(),
+    provideSheets({ url: environment.uiSheetsUrl }),
   ],
 };

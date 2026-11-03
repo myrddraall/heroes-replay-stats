@@ -37,6 +37,7 @@
     "@myrddraall/heroes-replay-stats-aether": "workspace:*",
     "@myrddraall/heroes-replay-stats-platform": "workspace:*",
     "@myrddraall/heroes-replay-stats-settings": "workspace:*",
+    "@myrddraall/heroes-replay-stats-sheets": "workspace:*",
     "@myrddraall/heroes-replay-stats-theme": "workspace:*",
     "@ngrx/signals": "^22.0.1",
     "angular-eslint": "^22.5.0",

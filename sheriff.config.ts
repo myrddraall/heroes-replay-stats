@@ -19,6 +19,7 @@ const domains: Record<string, readonly string[]> = {
   players: ['provide', 'feature', 'ui', 'data', 'model'],
   replays: ['provide', 'feature', 'ui', 'data', 'model'],
   settings: ['provide', 'feature', 'ui', 'data'],
+  sheets: ['provide', 'data', 'ui', 'model', 'testing'],
   shell: ['feature', 'ui', 'data'],
   theme: ['provide', 'feature', 'ui', 'data', 'model'],
 };
@@ -49,7 +50,7 @@ const featureModules: Record<string, readonly string[]> = {
 };
 
 /** Shared domains: any domain may use them; a shared domain uses another only through `uses`. */
-const shared = ['common', 'layout', 'platform', 'settings', 'shell', 'theme'];
+const shared = ['common', 'layout', 'platform', 'settings', 'sheets', 'shell', 'theme'];
 
 /** The domains each domain may use besides itself, the shared ones and simple libraries; one way only. */
 const uses: Record<string, readonly string[]> = {

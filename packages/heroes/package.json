@@ -15,6 +15,7 @@
   "dependencies": {
     "@myrddraall/hero-data": "^0.5.4",
     "@myrddraall/heroes-replay-stats-common": "workspace:*",
+    "@myrddraall/heroes-replay-stats-sheets": "workspace:*",
     "tslib": "^2.3.0"
   },
   "devDependencies": {

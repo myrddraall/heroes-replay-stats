@@ -1,8 +1,11 @@
 import { TestBed } from '@angular/core/testing';
-import { describe, expect, it } from 'vitest';
+import { provideFakeSheets } from '@myrddraall/heroes-replay-stats-sheets/testing';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { HeroMinimapIcon } from './hero-minimap-icon';
 
 describe('HeroMinimapIcon', () => {
+  beforeEach(() => TestBed.configureTestingModule({ providers: [provideFakeSheets()] }));
+
   it('shows the icon it is given, named for the hero', async () => {
     const fixture = TestBed.createComponent(HeroMinimapIcon);
     fixture.componentRef.setInput('picture', { src: 'https://example.test/sonya.png' });

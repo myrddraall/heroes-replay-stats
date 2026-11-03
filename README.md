@@ -17,6 +17,7 @@ login and no server.
 | [`@myrddraall/heroes-replay-stats-background`](./packages/background)     | the site's Play-screen background (Aether, its editor, the Graphics settings) and the theme preview |
 | [`@myrddraall/heroes-replay-stats-theme`](./packages/theme)               | the look every page shares (theme, glass and frame opacity, blur) and its settings section          |
 | [`@myrddraall/heroes-replay-stats-settings`](./packages/settings)         | the settings store, the Settings page and dialog, and the slot for other domains' sections          |
+| [`@myrddraall/heroes-replay-stats-sheets`](./packages/sheets)             | the game's interface sheets: the sprites cut from them and the 9-slice frames drawn from them       |
 | [`@myrddraall/heroes-replay-stats-shell`](./packages/shell)               | the frame round every page (nav, toolbar, side panel, backdrop) and the slots others fill           |
 | [`@myrddraall/heroes-replay-stats-dev`](./packages/dev)                   | developer tools that aren't part of HRS itself: the renderer check, the frame-stats reports         |
 | [`@myrddraall/heroes-replay-stats-maps`](./packages/maps)                 | maps: the Maps and map pages, and the map viewer with its layer directives                          |
