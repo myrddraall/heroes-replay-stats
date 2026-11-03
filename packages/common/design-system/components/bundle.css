@@ -584,6 +584,8 @@ a:hover { text-decoration: underline; }
 /* IconButton's hairline, which Material's icon button has no token for: the ring; strong with the hover glow */
 .mat-mdc-icon-button { box-shadow: inset 0 0 0 1px var(--hrs-border); }
 .mat-mdc-icon-button:hover { box-shadow: inset 0 0 0 1px var(--hrs-border-strong), var(--hrs-glow-hover); }
+/* a mat-icon glyph takes the icon size as Material's images and svgs do (the button's font-size is the icon-size token); the icon font's class would hold it at 24px */
+.mat-mdc-icon-button .mat-icon { width: 1em; height: 1em; font-size: inherit; line-height: 1; }
 
 /* ---------- handset form: a class the shell sets from its breakpoint signal (never a viewport media query, so previews and embedded frames show the real layout) ----------
    No horizontal navs on handset: the TopBar holds the menu button, the current area's title and settings; the SubBar band holds a breadcrumb;

@@ -59,7 +59,7 @@
           <hrs-crumbs [crumbs]="shellNav.crumbs" />
         }
       } @else if (shellNav.level2.length > 1) {
-        <hrs-sub-bar [sections]="shellNav.level2" />
+        <hrs-sub-bar [sections]="shellNav.level2" [panel]="sectionPanel" />
       }
       <mat-menu #settingsMenu="matMenu" xPosition="before">
         @for (item of menu; track item.label) {
@@ -93,7 +93,10 @@
         </mat-drawer>
         <mat-drawer-content class="shell__main">
           <main class="shell__page" [class.shell__page--panel-toggle]="panels.end() !== null">
-            <router-outlet />
+            <!-- the panel the sub-bar's sections show the page in -->
+            <mat-tab-nav-panel #sectionPanel="matTabNavPanel" class="shell__sections">
+              <router-outlet />
+            </mat-tab-nav-panel>
           </main>
         </mat-drawer-content>
       </mat-drawer-container>

@@ -5,7 +5,15 @@
   z-index: 3;
 }
 
-// The theme's TopBar (nexus.css) is the toolbar; the nav wraps its list for landmarks.
+// The theme's TopBar (nexus.css) on Material's toolbar: its children fill the bar's height (the
+// selected link's glow and underline are placed by it) and keep the TopBar's padding, which
+// Material's single-row toolbar would centre and pad (no tokens for either).
+.hrs-topbar {
+  align-items: stretch;
+  padding: 0 var(--hrs-space-4) 0 var(--hrs-space-3);
+}
+
+// The nav wraps the theme's list for the landmark, filling the bar as the list does.
 .top-bar__nav {
   display: flex;
   align-items: stretch;

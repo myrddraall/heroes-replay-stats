@@ -16,6 +16,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
+import { MatTabNavPanel } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import {
   type ActivatedRouteSnapshot,
@@ -83,6 +84,7 @@ function pageTitle(state: RouterStateSnapshot): string | null {
     MatIconModule,
     MatMenuModule,
     MatSidenavModule,
+    MatTabNavPanel,
     MatTooltipModule,
     NavTree,
     NgComponentOutlet,
