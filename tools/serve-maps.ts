@@ -15,7 +15,7 @@ import { createReadStream } from 'node:fs';
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { extname, join, normalize, resolve } from 'node:path';
-import { MAP_PACK_FORMAT } from '../packages/map/src/lib/pack/map-pack.ts';
+import { MAP_PACK_FORMAT } from '../packages/maps/model/pack/map-pack.ts';
 
 const [folderArg, portArg] = process.argv.slice(2);
 const folder = resolve(

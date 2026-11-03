@@ -1,7 +1,6 @@
 import { inject, type ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideAether } from '@myrddraall/heroes-replay-stats-aether';
 import { provideAetherForge } from '@myrddraall/heroes-replay-stats-aether-forge';
-import { MAP_PACKS_URL } from '@myrddraall/heroes-replay-stats-map';
 import {
   type ActivatedRouteSnapshot,
   provideRouter,
@@ -11,6 +10,7 @@ import {
 import { provideHeroesFeature } from '@myrddraall/heroes-replay-stats-heroes/provide';
 import { GraphicsStore } from './data/settings/graphics.store';
 import { provideImportFeature } from '@myrddraall/heroes-replay-stats-import/provide';
+import { provideMapsFeature } from '@myrddraall/heroes-replay-stats-maps/provide';
 import { providePlayersFeature } from '@myrddraall/heroes-replay-stats-players/provide';
 import { provideReplaysFeature } from '@myrddraall/heroes-replay-stats-replays/provide';
 import { DEV_REPORTS_URL } from '@myrddraall/heroes-replay-stats-platform/data';
@@ -34,7 +34,6 @@ function onBackgroundPage(route: ActivatedRouteSnapshot | null): boolean {
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    { provide: MAP_PACKS_URL, useValue: environment.mapPacksUrl },
     { provide: DEV_REPORTS_URL, useValue: environment.devReportsUrl },
     provideBrowserGlobalErrorListeners(),
     provideAether({
@@ -46,6 +45,7 @@ export const appConfig: ApplicationConfig = {
     // Before the router: the featuresets' routes come before the app's own (and their catch-all).
     provideAetherForge(BACKGROUND_EDITOR),
     provideImportFeature(),
+    provideMapsFeature({ packsUrl: environment.mapPacksUrl }),
     providePlayersFeature(),
     provideReplaysFeature(),
     provideSettingsFeature(),

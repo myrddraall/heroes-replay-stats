@@ -1,0 +1,28 @@
+import { Component, computed, inject, input } from '@angular/core';
+import { MapsStore } from '../../data';
+import { Layout, LayoutItem } from '@myrddraall/heroes-replay-stats-layout/ui';
+import { ShellNavChildren } from '@myrddraall/heroes-replay-stats-shell/feature';
+import { ShellNavLinks } from '@myrddraall/heroes-replay-stats-shell/ui';
+import { MapExplore } from '..';
+
+/**
+ * One map, by its id in the address (`/maps/battlefield-of-eternity`), in explore mode; listed in
+ * the main nav under Maps while it is open.
+ */
+@Component({
+  selector: 'hrs-map-page',
+  imports: [MapExplore, Layout, LayoutItem, ShellNavChildren, ShellNavLinks],
+  templateUrl: './map-page.html',
+  styleUrl: './map-page.scss',
+})
+export class MapPage {
+  /** From the route. */
+  readonly mapId = input.required<string>();
+
+  private readonly catalog = inject(MapsStore);
+  /** The open map, for the main nav; none until the catalog has loaded. */
+  protected readonly navLinks = computed(() => {
+    const map = this.catalog.maps().find((m) => m.id === this.mapId());
+    return map ? [{ path: `/maps/${map.id}`, title: map.name }] : [];
+  });
+}

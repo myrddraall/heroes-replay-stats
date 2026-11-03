@@ -12,6 +12,7 @@ const domains: Record<string, readonly string[]> = {
   heroes: ['provide', 'data', 'ui', 'model', 'testing'],
   import: ['provide', 'feature', 'ui', 'data', 'model'],
   layout: ['ui', 'model'],
+  maps: ['provide', 'feature', 'ui', 'data', 'model', 'testing'],
   platform: ['provide', 'data', 'model'],
   players: ['provide', 'feature', 'ui', 'data', 'model'],
   replays: ['provide', 'feature', 'ui', 'data', 'model'],
@@ -26,6 +27,7 @@ const domains: Record<string, readonly string[]> = {
  */
 const featureModules: Record<string, readonly string[]> = {
   import: ['import-page', 'import-toolbar-action'],
+  maps: ['maps-page', 'map-page'],
   players: ['players-page'],
   replays: [
     'replays-page',
@@ -46,6 +48,8 @@ const shared = ['common', 'layout', 'platform', 'settings', 'shell'];
 
 /** The domains each domain may use besides itself, the shared ones and simple libraries; one way only. */
 const uses: Record<string, readonly string[]> = {
+  // aether until the background domain gives maps the background control.
+  maps: ['aether', 'heroes'],
   players: ['import'],
   replays: ['heroes', 'import', 'players'],
   settings: ['layout', 'platform', 'shell'],
@@ -108,7 +112,6 @@ export const config: SheriffConfig = {
       aetherAreas.map((area) => [`packages/aether/src/${area}`, ['domain:aether', 'type:engine']]),
     ),
     'packages/aether-forge/src': ['domain:aether-forge', 'type:engine'],
-    'packages/map/src': ['domain:maps', 'type:package'],
     'libs/signals/src': ['type:lib'],
     'libs/analysers/src': ['type:lib'],
   },
@@ -146,6 +149,8 @@ export const config: SheriffConfig = {
       'type:model',
       'type:lib',
       testingInSpecs,
+      // aether, for the domains whose `uses` list it, until the background domain wraps it.
+      'type:engine',
     ],
     'type:ui': ['type:ui', 'type:model', 'type:lib', testingInSpecs],
     'type:data': ['type:data', 'type:model', 'type:lib', testingInSpecs],
@@ -155,9 +160,7 @@ export const config: SheriffConfig = {
     // Packages not yet converted.
     'domain:aether': [sameTag, 'type:lib'],
     'domain:aether-forge': [sameTag, 'domain:aether', 'domain:common', 'type:lib'],
-    'domain:maps': [sameTag],
     'type:engine': anyTag,
-    'type:package': anyTag,
     noTag: ['noTag', 'root'],
   },
 };

@@ -10,7 +10,7 @@ login and no server.
 | [`@myrddraall/heroes-replay-stats`](./apps/web)                           | the Angular 22 + Material app, themed after the game                                      |
 | [`@myrddraall/heroes-replay-stats-desktop`](./apps/desktop)               | the Electron shell: a window, and a preload bridge for the filesystem                     |
 | [`@myrddraall/heroes-replay-stats-analysers`](./libs/analysers)           | the app's own replay analysers: timeline and points of interest                           |
-| [`@myrddraall/heroes-replay-stats-map`](./packages/map)                   | the map viewer: a map pack drawn by a viewer and its layer directives                     |
+| [`@myrddraall/heroes-replay-stats-maps`](./packages/maps)                 | maps: the Maps and map pages, and the map viewer with its layer directives                |
 | [`@myrddraall/heroes-replay-stats-aether`](./packages/aether)             | Aether, the 3D engine: scene data, settings stacking, the three.js renderer, the view     |
 | [`@myrddraall/heroes-replay-stats-aether-forge`](./packages/aether-forge) | Aether Forge, its editor: the library, the asset and scene editors (`provideAetherForge`) |
 | [`@myrddraall/heroes-replay-stats-common`](./packages/common)             | shared interface pieces: the glass theme, the side panel, sprites, masks, empty states    |

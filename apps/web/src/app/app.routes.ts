@@ -15,16 +15,6 @@ export const routes: Routes = [
   },
   { path: '', pathMatch: 'full', redirectTo: 'replays' },
   {
-    path: 'maps',
-    title: 'Maps · Heroes Replay Stats',
-    loadComponent: () => import('./pages/maps/maps-page').then((m) => m.MapsPage),
-  },
-  {
-    path: 'maps/:mapId',
-    title: 'Map · Heroes Replay Stats',
-    loadComponent: () => import('./pages/maps/map-page').then((m) => m.MapPage),
-  },
-  {
     path: 'theme-preview',
     title: 'Theme preview · Heroes Replay Stats',
     loadComponent: () =>
