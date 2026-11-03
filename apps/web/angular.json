@@ -97,6 +97,7 @@
               "exclude": [
                 "@myrddraall/heroes-replay-stats-aether",
                 "@myrddraall/heroes-replay-stats-aether-forge",
+                "@myrddraall/heroes-replay-stats-background",
                 "@myrddraall/heroes-replay-stats-common",
                 "@myrddraall/heroes-replay-stats-dev",
                 "@myrddraall/heroes-replay-stats-heroes",

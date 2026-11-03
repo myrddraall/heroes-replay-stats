@@ -16,7 +16,7 @@ import { withElementStates, withMapPack } from '../../data';
 import { type CentreRequest } from '../../ui';
 import { map } from 'rxjs';
 import { LatestHeroData } from '@myrddraall/heroes-replay-stats-heroes/data';
-import { type Release, ViewStore } from '@myrddraall/heroes-replay-stats-aether';
+import { BackgroundControl, type Release } from '@myrddraall/heroes-replay-stats-background/data';
 import { mapArtOf, mapExtraInfoOf } from '../../model';
 
 export type PanelPosition = 'start' | 'end';
@@ -69,7 +69,7 @@ export const MapExploreStore = signalStore(
   }),
   withProps(() => ({
     _heroData: inject(LatestHeroData),
-    _background: inject(ViewStore),
+    _background: inject(BackgroundControl),
     /** Gives back the background's interacting frame rate, while the map is in use. */
     _release: { current: null as Release | null },
     _handset: toSignal(

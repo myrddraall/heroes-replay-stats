@@ -9,8 +9,8 @@ import {
 import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs';
 import { presetTints, ViewStore } from '@myrddraall/heroes-replay-stats-aether';
-import { BackgroundColourStore } from '../data/settings/background-colour.store';
-import { presetById, PRESETS } from './tint-presets';
+import { BackgroundColourStore } from '../data';
+import { presetById, PRESETS } from '../model';
 
 /** The page a URL is of: its path, without the query or the fragment. */
 function pageOf(url: string): string {

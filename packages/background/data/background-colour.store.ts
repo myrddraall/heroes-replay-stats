@@ -1,20 +1,13 @@
 import { patchState, signalStore, withHooks, withMethods, withState } from '@ngrx/signals';
-import { PRESETS } from '../../site-background/tint-presets';
+import {
+  type BackgroundColour,
+  COLOUR_MODES,
+  DEFAULT_COLOUR,
+  PRESETS,
+} from '../model';
 
 /** Where the colour the user chose is kept, as JSON: where the Graphics settings kept it. */
 export const COLOUR_STORAGE_KEY = 'hrs.graphics';
-
-/** The background's colour: the one chosen, or a preset at random or the next one, each page. */
-export type ColourMode = 'fixed' | 'random' | 'in-turn';
-export const COLOUR_MODES: readonly ColourMode[] = ['fixed', 'random', 'in-turn'];
-
-export interface BackgroundColour {
-  readonly colourMode: ColourMode;
-  /** The tint preset (by id) the background is in, when fixed. */
-  readonly colour: string;
-}
-
-export const DEFAULT_COLOUR: BackgroundColour = { colourMode: 'fixed', colour: PRESETS[0]!.id };
 
 /** What the user chose; one that isn't a value is left out. */
 function valid(saved: Partial<Record<keyof BackgroundColour, unknown>>): Partial<BackgroundColour> {

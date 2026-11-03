@@ -11,7 +11,7 @@ import {
   type Quality,
   RESOLUTION_RANGE,
 } from '@myrddraall/heroes-replay-stats-aether/graphics';
-import type { BackgroundColour, ColourMode } from '../../data/settings/background-colour.store';
+import type { BackgroundColour, ColourMode } from '../../model';
 import { SettingSlider } from '@myrddraall/heroes-replay-stats-settings/ui';
 
 /** What the Graphics settings show: the engine's, and the background's colour. */

@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { GraphicsForm } from './graphics-form';
+import { GraphicsForm } from '../../ui';
 import { GraphicsSectionStore } from './graphics-section.store';
 
 /** The Graphics section of the settings (container), added through `provideSettingsSection`. */

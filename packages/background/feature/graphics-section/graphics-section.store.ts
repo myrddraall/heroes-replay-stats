@@ -4,9 +4,9 @@ import {
   type Quality,
 } from '@myrddraall/heroes-replay-stats-aether/graphics';
 import { getState, signalStore, withComputed, withMethods, withProps } from '@ngrx/signals';
-import { BackgroundColourStore } from '../../data/settings/background-colour.store';
-import { PRESETS } from '../tint-presets';
-import type { GraphicsSettings } from './graphics-form';
+import { BackgroundColourStore } from '../../data';
+import { PRESETS } from '../../model';
+import type { GraphicsSettings } from '../../ui';
 
 /**
  * {@link GraphicsSection}'s component store: the engine's graphics settings (Aether's), the

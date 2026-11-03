@@ -1,10 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
-import {
-  BackgroundColourStore,
-  COLOUR_STORAGE_KEY,
-  DEFAULT_COLOUR,
-} from './background-colour.store';
+import { DEFAULT_COLOUR } from '../model';
+import { BackgroundColourStore, COLOUR_STORAGE_KEY } from './background-colour.store';
 
 describe('BackgroundColourStore', () => {
   beforeEach(() => localStorage.clear());

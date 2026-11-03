@@ -1,6 +1,5 @@
 import { provideRouter } from '@angular/router';
 import { TestBed } from '@angular/core/testing';
-import { provideAether } from '@myrddraall/heroes-replay-stats-aether';
 import { describe, expect, it, beforeEach } from 'vitest';
 import { routes } from './app.routes';
 import { PLATFORM } from '@myrddraall/heroes-replay-stats-platform/data';
@@ -18,8 +17,10 @@ import { provideReplaysFeature } from '@myrddraall/heroes-replay-stats-replays/p
 import { Shell } from '@myrddraall/heroes-replay-stats-shell/feature';
 import { provideSettingsFeature } from '@myrddraall/heroes-replay-stats-settings/provide';
 import { provideThemeFeature } from '@myrddraall/heroes-replay-stats-theme/provide';
-import { provideAppShellSlots } from './shell-slots';
-import { BACKGROUND_EDITOR } from './site-background/background-editor';
+import {
+  BACKGROUND_EDITOR,
+  provideBackgroundFeature,
+} from '@myrddraall/heroes-replay-stats-background/provide';
 
 /** A drag event as jsdom cannot make one: a plain event with a fake dataTransfer. */
 function dragEvent(type: string, files: File[]): Event {
@@ -43,6 +44,7 @@ describe('App shell', () => {
     await TestBed.configureTestingModule({
       imports: [Shell],
       providers: [
+        provideBackgroundFeature(),
         provideDevFeature(),
         provideImportFeature(),
         provideMapsFeature({ packsUrl: 'maps/' }),
@@ -51,8 +53,6 @@ describe('App shell', () => {
         provideSettingsFeature(),
         provideThemeFeature(),
         provideRouter(routes),
-        provideAppShellSlots(),
-        provideAether({ dataUrl: 'backgrounds/play/' }),
         { provide: PLATFORM, useValue: fakePlatform },
         {
           provide: REPLAY_DB_FACTORY,
@@ -117,7 +117,7 @@ describe('App shell', () => {
   });
 
   it('frames the app pages, and leaves the renderer check and the background editor to fill the window', () => {
-    expect(routes.map((r) => r.path)).toContain('theme-preview');
+    expect(routes.map((r) => r.path)).toEqual(['', '**']);
     expect(DEV_ROUTES.find((r) => r.path === 'renderer-check')?.data?.['shell']).toBe(false);
     expect(BACKGROUND_EDITOR.routeData?.['shell']).toBe(false);
   });

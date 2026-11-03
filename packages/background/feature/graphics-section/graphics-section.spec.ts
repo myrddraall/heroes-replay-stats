@@ -4,7 +4,7 @@ import {
   GraphicsSettingsStore,
   HARDWARE_ACCELERATION,
 } from '@myrddraall/heroes-replay-stats-aether/graphics';
-import { BackgroundColourStore } from '../../data/settings/background-colour.store';
+import { BackgroundColourStore } from '../../data';
 import { GraphicsSection } from './graphics-section';
 
 describe('GraphicsSection', () => {

@@ -17,6 +17,15 @@
       ],
       "@myrddraall/heroes-replay-stats-platform/*": [
         "../platform/*/index.ts"
+      ],
+      "@myrddraall/heroes-replay-stats-background/*": [
+        "../background/*/index.ts"
+      ],
+      "@myrddraall/heroes-replay-stats-theme/*": [
+        "../theme/*/index.ts"
+      ],
+      "@myrddraall/heroes-replay-stats-settings/*": [
+        "../settings/*/index.ts"
       ]
     }
   }

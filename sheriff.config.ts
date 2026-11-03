@@ -8,6 +8,7 @@ import { anyTag, sameTag, type SheriffConfig } from '@softarc/sheriff-core';
 
 /** Converted domain packages and the layers each has (packages/<domain>/<layer>/index.ts). */
 const domains: Record<string, readonly string[]> = {
+  background: ['provide', 'feature', 'ui', 'data', 'model'],
   common: ['ui', 'model'],
   dev: ['provide', 'feature', 'ui', 'data', 'model'],
   heroes: ['provide', 'data', 'ui', 'model', 'testing'],
@@ -28,6 +29,7 @@ const domains: Record<string, readonly string[]> = {
  * importing one does not bring in the rest of the layer.
  */
 const featureModules: Record<string, readonly string[]> = {
+  background: ['site-backdrop', 'graphics-section', 'theme-preview-page'],
   import: ['import-page', 'import-toolbar-action'],
   dev: ['renderer-check-page'],
   maps: ['maps-page', 'map-page'],
@@ -51,10 +53,11 @@ const shared = ['common', 'layout', 'platform', 'settings', 'shell', 'theme'];
 
 /** The domains each domain may use besides itself, the shared ones and simple libraries; one way only. */
 const uses: Record<string, readonly string[]> = {
+  // Everything else reaches aether through background.
+  background: ['aether', 'aether-forge'],
   // Developer tools for aether itself, which reach into its areas.
   dev: ['aether'],
-  // aether until the background domain gives maps the background control.
-  maps: ['aether', 'heroes'],
+  maps: ['background', 'heroes'],
   players: ['import'],
   replays: ['heroes', 'import', 'players'],
   settings: ['layout', 'platform', 'shell'],
@@ -141,6 +144,8 @@ export const config: SheriffConfig = {
       ]),
     ),
     'type:main': [],
+    // 'type:engine' in each layer: aether, for the domains whose `uses` list it (background, and
+    // dev's tools), is their engine.
     'type:provide': [
       'type:feature',
       'type:ui',
@@ -148,6 +153,7 @@ export const config: SheriffConfig = {
       'type:model',
       'type:lib',
       testingInSpecs,
+      'type:engine',
     ],
     'type:feature': [
       'type:feature',
@@ -156,13 +162,11 @@ export const config: SheriffConfig = {
       'type:model',
       'type:lib',
       testingInSpecs,
-      // aether, for the domains whose `uses` list it (dev's tools; maps until background wraps it).
       'type:engine',
     ],
-    'type:ui': ['type:ui', 'type:model', 'type:lib', testingInSpecs],
-    // aether, as for feature.
+    'type:ui': ['type:ui', 'type:model', 'type:lib', testingInSpecs, 'type:engine'],
     'type:data': ['type:data', 'type:model', 'type:lib', testingInSpecs, 'type:engine'],
-    'type:model': ['type:model', 'type:lib', testingInSpecs],
+    'type:model': ['type:model', 'type:lib', testingInSpecs, 'type:engine'],
     'type:testing': ['type:testing', 'type:data', 'type:model', 'type:lib'],
     'type:lib': ['type:lib'],
     // Packages not yet converted.
