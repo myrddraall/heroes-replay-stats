@@ -5,24 +5,35 @@ browser and, through a thin Electron shell, on the desktop. Everything happens o
 device: replays are parsed locally and stored in IndexedDB; there is no account, no
 login and no server.
 
-| Package                                                                   | What it is                                                                                |
-| ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| [`@myrddraall/heroes-replay-stats`](./apps/web)                           | the Angular 22 + Material app, themed after the game                                      |
-| [`@myrddraall/heroes-replay-stats-desktop`](./apps/desktop)               | the Electron shell: a window, and a preload bridge for the filesystem                     |
-| [`@myrddraall/heroes-replay-stats-analysers`](./libs/analysers)           | the app's own replay analysers: timeline and points of interest                           |
-| [`@myrddraall/heroes-replay-stats-maps`](./packages/maps)                 | maps: the Maps and map pages, and the map viewer with its layer directives                |
-| [`@myrddraall/heroes-replay-stats-aether`](./packages/aether)             | Aether, the 3D engine: scene data, settings stacking, the three.js renderer, the view     |
-| [`@myrddraall/heroes-replay-stats-aether-forge`](./packages/aether-forge) | Aether Forge, its editor: the library, the asset and scene editors (`provideAetherForge`) |
-| [`@myrddraall/heroes-replay-stats-common`](./packages/common)             | shared interface pieces: the glass theme, the side panel, sprites, masks, empty states    |
-| [`@myrddraall/heroes-replay-stats-layout`](./packages/layout)             | the page layout containers                                                                |
-| [`@myrddraall/heroes-replay-stats-platform`](./packages/platform)         | the seam to the browser or the desktop shell, and the dev reports                         |
-| [`@myrddraall/heroes-replay-stats-signals`](./libs/signals)               | shared signal store features (state kept in `localStorage`)                               |
+| Package                                                                   | What it is                                                                                          |
+| ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| [`@myrddraall/heroes-replay-stats`](./apps/web)                           | the Angular 22 + Material app, themed after the game                                                |
+| [`@myrddraall/heroes-replay-stats-desktop`](./apps/desktop)               | the Electron shell: a window, and a preload bridge for the filesystem                               |
+| [`@myrddraall/heroes-replay-stats-analysers`](./libs/analysers)           | the app's own replay analysers: timeline and points of interest                                     |
+| [`@myrddraall/heroes-replay-stats-heroes`](./packages/heroes)             | hero, talent and map data for each build, the lookups the app shows from it, the hero icon          |
+| [`@myrddraall/heroes-replay-stats-import`](./packages/import)             | importing replays on ingest workers into the replay database, the import jobs, the Import page      |
+| [`@myrddraall/heroes-replay-stats-players`](./packages/players)           | everyone in the stored replays with their numbers, the Players page, who "you" are in a replay      |
+| [`@myrddraall/heroes-replay-stats-replays`](./packages/replays)           | the stored replays, the replay list, and each replay's page with its sections                       |
+| [`@myrddraall/heroes-replay-stats-background`](./packages/background)     | the site's Play-screen background (Aether, its editor, the Graphics settings) and the theme preview |
+| [`@myrddraall/heroes-replay-stats-theme`](./packages/theme)               | the look every page shares (theme, glass and frame opacity, blur) and its settings section          |
+| [`@myrddraall/heroes-replay-stats-settings`](./packages/settings)         | the settings store, the Settings page and dialog, and the slot for other domains' sections          |
+| [`@myrddraall/heroes-replay-stats-shell`](./packages/shell)               | the frame round every page (nav, toolbar, side panel, backdrop) and the slots others fill           |
+| [`@myrddraall/heroes-replay-stats-dev`](./packages/dev)                   | developer tools that aren't part of HRS itself: the renderer check, the frame-stats reports         |
+| [`@myrddraall/heroes-replay-stats-maps`](./packages/maps)                 | maps: the Maps and map pages, and the map viewer with its layer directives                          |
+| [`@myrddraall/heroes-replay-stats-aether`](./packages/aether)             | Aether, the 3D engine: scene data, settings stacking, the three.js renderer, the view               |
+| [`@myrddraall/heroes-replay-stats-aether-forge`](./packages/aether-forge) | Aether Forge, its editor: the library, the asset and scene editors (`provideAetherForge`)           |
+| [`@myrddraall/heroes-replay-stats-common`](./packages/common)             | shared interface pieces: the glass theme, the side panel, sprites, masks, empty states              |
+| [`@myrddraall/heroes-replay-stats-layout`](./packages/layout)             | the page layout containers                                                                          |
+| [`@myrddraall/heroes-replay-stats-platform`](./packages/platform)         | the seam to the browser or the desktop shell, and the dev reports                                   |
+| [`@myrddraall/heroes-replay-stats-signals`](./libs/signals)               | shared signal store features (state kept in `localStorage`)                                         |
 
 Aether's root entry is what an app sets it up with (`provideAether`: where the game data is, the
-storage names, the graphics API and tint presets) and its shared state (`ViewStore`); everything else
-is in an entry per area (`@myrddraall/heroes-replay-stats-aether/design`, `/render`, `/view`, …), so
-what an app loads at once stays small. Each package's lint config keeps its imports inside it
-(`tools/eslint-boundaries.mjs`): Aether uses only `signals`, Aether Forge also Aether and `ui`.
+storage names and tint presets, with its graphics settings applied) and its shared state
+(`ViewStore`); everything else is in an entry per area (`@myrddraall/heroes-replay-stats-aether/design`,
+`/graphics`, `/render`, `/view`, …), so what an app loads at once stays small. Sheriff
+(`sheriff.config.ts`) keeps every package's imports to its domain's rules; Aether's and Aether Forge's
+lint configs also keep their imports inside them (`packages/aether/tools/eslint-boundaries.mjs`):
+Aether uses only `signals`, Aether Forge also Aether and `common`.
 
 The replay parsing, the model and the generic analysers come from
 [myrddraall/heroprotocol](https://github.com/myrddraall/heroprotocol). The app's ingest
