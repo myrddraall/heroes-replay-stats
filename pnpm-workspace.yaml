@@ -18,6 +18,7 @@ minimumReleaseAgeExclude:
   # day; the release-age policy would block every bump.
   - '@myrddraall/*'
   - electron@44.4.5
+  - '@cpdevtools/schematics'
 
 # pnpm blocks dependency install scripts by default and fails the install until
 # each one is answered explicitly. esbuild (pulled in by tsup) is answered
