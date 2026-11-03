@@ -5,12 +5,12 @@
 
 .title {
   margin: 0 0 8px;
-  font: var(--mat-sys-title-large);
+  font: var(--hrs-font-title);
 }
 
 .draft {
   border-collapse: collapse;
-  font: var(--mat-sys-body-medium);
+  font: var(--hrs-font-small);
 }
 
 th,
@@ -20,8 +20,11 @@ td {
 }
 
 thead th {
-  font: var(--mat-sys-label-medium);
-  color: var(--mat-sys-on-surface-variant);
+  font: var(--hrs-font-label);
+  letter-spacing: var(--hrs-tracking-label);
+  text-transform: uppercase;
+  color: var(--hrs-text-muted);
+  border-bottom: var(--hrs-line);
 }
 
 .draft__order {
@@ -29,13 +32,21 @@ thead th {
   font-variant-numeric: tabular-nums;
 }
 
-// the team's colour (hrsTeam) shows as a faint band
+// the team's theme (hrsTeam) shows as a faint band, and its name in the team's colour
 .step {
-  background: linear-gradient(90deg, rgb(var(--hrs-glass-edge) / 0.12), transparent 60%);
+  background: linear-gradient(in oklab 90deg, oklch(from var(--hrs-glow) l c h / 0.12), transparent 60%);
 }
 
 .step__team {
-  color: color-mix(in srgb, rgb(var(--hrs-glass-edge)) 55%, white);
+  color: var(--hrs-text);
+
+  [data-theme='blue'] > & {
+    color: var(--hrs-team-blue);
+  }
+
+  [data-theme='red'] > & {
+    color: var(--hrs-team-red);
+  }
 }
 
 .step__hero {
@@ -47,7 +58,7 @@ thead th {
 
 // a banned hero is out of the game: its row is quieter than a pick's
 .step--ban {
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--hrs-text-muted);
 
   .step__hero {
     font-weight: normal;

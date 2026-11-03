@@ -1,6 +1,7 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { MatTooltip } from '@angular/material/tooltip';
+import { StyledText } from '@myrddraall/heroes-replay-stats-common/ui';
 import { ScoreTable } from '../stat-tables/score-table/score-table';
 import { StatRowHead } from '../stat-tables/stat-row-head';
 import type { HeroIcon } from '@myrddraall/heroes-replay-stats-heroes/model';
@@ -25,7 +26,7 @@ export function awardLabel(award: string): string {
  */
 @Component({
   selector: 'hrs-score-screen',
-  imports: [MatIcon, MatTooltip, PlayerCell, ScoreTable, StatRowHead, TeamTheme],
+  imports: [MatIcon, MatTooltip, PlayerCell, ScoreTable, StatRowHead, StyledText, TeamTheme],
   templateUrl: './score-screen.html',
   styleUrl: './score-screen.scss',
 })

@@ -12,7 +12,7 @@ port it when a page needs it).
 | Piece | Status | Where / notes |
 |---|---|---|
 | Generated stylesheet in `packages/common/assets/styles` (tokens + bundle, one source here) | done | `assets/styles/nexus/tokens.css` + `nexus.css`, written by `pnpm run generate.theme` (`packages/common/tools/generate-theme.ts`), loaded before `styles.scss` in `apps/web/angular.json`. Type styles become `--hrs-font-<style>` / `--hrs-tracking-<style>` properties (not classes); the preview helpers and the font `@import` are left out; the embedded textures become `var(--hrs-tex-<texture>)` |
-| Header textures as sheet entries (heroes-assets `ui-sheets`), not data URIs | in progress | heroes-assets `ui-sheets/navigation.json` (9 pictures; uncommitted); the shell sets `--hrs-tex-*` from it through `SHEET_PICTURES` (`packages/shell/data/navigation-textures.ts`; the vertical underline is `hover-underline` cut with `rotate: 90`). Built and served locally; left: a heroes-assets release so Pages has `live/ui/navigation.webp` (until then the production app gets a 404 and the bars draw without textures) |
+| Header textures as sheet entries (heroes-assets `ui-sheets`), not data URIs | done | heroes-assets `ui-sheets/navigation.json` (9 pictures), published in release 2.57.9834810 (`live/ui/navigation.webp` on Pages); the shell sets `--hrs-tex-*` from it through `SHEET_PICTURES` (`packages/shell/data/navigation-textures.ts`; the vertical underline is `hover-underline` cut with `rotate: 90`) |
 | ThemeSettings model, store and form (README "Settings") | done | `packages/theme` (model `NeutralTheme`, `ThemeName`, `validTheme` with the glass carry-over; `ThemeStore`; `ThemeForm`: Colour, Opacity, blur) |
 | Shell applies `data-theme`, the film alphas and blur (CDK overlay container too) | done | `packages/shell/feature/shell` (`shell.ts` host bindings and overlay effect; floors and blurs in `films.ts`); `ShellLook` = theme, opacity, blur |
 | Team panels via `data-theme` (`hrsTeam`) | done | `packages/replays/ui/team-theme` |
@@ -35,7 +35,7 @@ Design: **settled** = the user approved it; **changing** = not reviewed yet, may
 | ShellMobile | settled | done | `hrs-shell--handset` from the shell's BreakpointObserver; title + breadcrumb (`packages/shell/ui/crumbs`), nav drawer with the NavTree |
 | NavTree | settled | done | `packages/shell/ui/nav-tree` (every level, the current branch open and lit) |
 | SideNav | settled | done | `packages/shell/ui/side-nav`, placed by a page as `hrs-shell-side-nav` (`packages/shell/feature/shell-side-nav`); flat sections for now (no groups or sub-items yet) |
-| StyledText | settled | done | `packages/common/ui/styled-text` (`hrsStyledText`); no page uses it yet |
+| StyledText | settled | done | `packages/common/ui/styled-text` (`hrsStyledText`); the score screen's team results and kill counts |
 | ThemeVariants, Rarity | settled | n/a | previews only |
 | IconButton | changing | done | the top bar's menu and settings, the tool drawer's toggle; icons 1em of the button (`.hrs-btn .material-symbols-outlined`) |
 | Badge | changing | done | CSS in `nexus.css`; the import pod's "+" |
@@ -47,17 +47,17 @@ Design: **settled** = the user approved it; **changing** = not reviewed yet, may
 | Translucency | changing | done | the films in `nexus.css`, set by the Theme settings through the shell |
 | TeamColours | changing | done | `hrs-team-*` tokens; the maps' team dots use them |
 | Button | changing | later | |
-| ToggleGroup | changing | later | |
+| ToggleGroup | changing | done | the score cards' rank-by row (`hrs-toggle-group`, `aria-pressed`), sized by font-size |
 | Popover | changing | later | |
 | Modal | changing | later | |
 | Tooltip | changing | later | |
 | BackLink | changing | later | |
-| Table | changing | later | |
-| ListRow | changing | later | |
+| Table | changing | done | the replays' stat, score, talent and draft tables: label headers on a hairline, muted cells, faint row lines, hover film, rows themed by team (`data-theme`); dense headers at 0.72em of the table |
+| ListRow | changing | done | the match list's team rows (film, half-strength hairline, team theme) |
 | KeyValue | changing | later | |
 | Card | changing | later | |
 | ProductCard | changing | later | |
-| Chip | changing | later | |
+| Chip | changing | done | the score screen's awards (MVP in gold) |
 | ProgressBar | changing | later | |
 | Divider | changing | later | |
 | SectionHeading | changing | later | |
@@ -78,7 +78,7 @@ the foundation port). A package is done when it uses only Nexus classes and toke
 
 | Package | Files | Status |
 |---|---|---|
-| replays | 18 | in progress (team theme, colours, the match nav as data) |
+| replays | 0 | done (rows carry `theme`, not a class; Material's `--mat-sys-*` moved to Nexus tokens too) |
 | aether-forge | 17 | todo |
 | background | 9 | todo |
 | maps | 7 | todo |

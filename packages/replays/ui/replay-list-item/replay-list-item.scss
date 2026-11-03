@@ -1,19 +1,16 @@
-@use 'glass-mixins' as glass;
-
-// A glass panel (hrs-glass); it does not clip (its edge's light leaks outside it).
+// A panel (hrs-panel), the positioned box its preview and the link's cover sit in.
 .replay {
+  position: relative;
   isolation: isolate;
   padding: 16px 20px;
 }
-// the map's replay preview: full card height, square, fading out into the glass, clipped to the
-// card's corners
+// the map's replay preview: full card height, square, fading out into the film
 .replay__preview {
   position: absolute;
   inset: 0 auto 0 0;
   z-index: -1;
   aspect-ratio: 1;
   overflow: hidden;
-  border-radius: var(--hrs-glass-radius) 0 0 var(--hrs-glass-radius);
   mask-image: linear-gradient(to right, black, transparent);
   img {
     object-fit: cover;
@@ -27,10 +24,8 @@
 }
 .replay__map {
   margin: 0;
-  font: var(--mat-sys-title-large);
-  font-family: 'Exo 2', sans-serif;
-  font-weight: 600;
-  color: #fff;
+  font: var(--hrs-font-title);
+  color: var(--hrs-text);
 }
 .replay__link {
   color: inherit;
@@ -48,27 +43,27 @@
 }
 .replay__mode {
   color: var(--hrs-accent);
-  font: var(--mat-sys-label-large);
+  font: var(--hrs-font-body-strong);
 }
 .replay__dates {
   display: grid;
   justify-items: end;
   margin-left: auto;
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--hrs-text-muted);
 }
 .replay__played {
-  font: var(--mat-sys-body-medium);
+  font: var(--hrs-font-small);
 }
 .replay__imported {
-  font: var(--mat-sys-body-small);
+  font: var(--hrs-font-caption);
 }
 .replay__meta {
   margin: 4px 0 12px;
-  color: var(--mat-sys-on-surface-variant);
-  font: var(--mat-sys-body-small);
+  color: var(--hrs-text-muted);
+  font: var(--hrs-font-caption);
 }
 .replay__analysing {
-  color: rgb(var(--hrs-glass-edge));
+  color: var(--hrs-accent);
 }
 .replay__teams {
   display: grid;
@@ -80,19 +75,21 @@
   align-items: center;
   gap: 8px 12px;
   padding: 8px 12px;
-  // the team's colour washing in from its lit edge; the map preview still shows behind the rows
-  @include glass.lit-row;
+  // a slot row in the team's theme (hrsTeam): its film and a half-strength hairline, so the map
+  // preview still shows behind the rows
+  background: var(--hrs-film);
+  border: 1px solid oklch(from var(--hrs-border) l c h / 0.5);
 }
 .team__name {
   display: grid;
-  font: var(--mat-sys-label-large);
-  color: var(--mat-sys-on-surface);
+  font: var(--hrs-font-body-strong);
+  color: var(--hrs-text);
 }
 .team__result {
-  font: var(--mat-sys-label-small);
-  color: var(--mat-sys-on-surface-variant);
+  font: var(--hrs-font-caption);
+  color: var(--hrs-text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: var(--hrs-tracking-label);
 }
 .team--won .team__result {
   color: var(--hrs-gold);
@@ -116,12 +113,12 @@
   grid-row: span 2;
 }
 .player__hero {
-  font: var(--mat-sys-body-medium);
-  color: var(--mat-sys-on-surface);
+  font: var(--hrs-font-small);
+  color: var(--hrs-text);
 }
 .player__name {
-  font: var(--mat-sys-body-small);
-  color: var(--mat-sys-on-surface-variant);
+  font: var(--hrs-font-caption);
+  color: var(--hrs-text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

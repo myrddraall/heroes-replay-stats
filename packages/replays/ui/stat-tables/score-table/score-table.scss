@@ -1,4 +1,4 @@
-// Colours are Material's system tokens, so a row re-themed by its class (a team's) follows it.
+// Colours are the theme's tokens, so a row themed as its team (`data-theme`) takes the team's film.
 // It never scrolls sideways: the component measures the table and squeezes it (below) or shows
 // ranking cards when it doesn't fit (see score-table.ts). The clip only hides the one frame in
 // which a too-wide table is measured.
@@ -46,14 +46,30 @@
 
 thead th {
   padding: 4px 8px;
-  font: var(--mat-sys-label-large);
-  color: var(--mat-sys-on-surface-variant);
+  font: var(--hrs-font-label);
+  letter-spacing: var(--hrs-tracking-label);
+  text-transform: uppercase;
+  color: var(--hrs-text-muted);
   text-align: center;
   white-space: nowrap;
 }
 
 tbody tr {
-  background: var(--mat-sys-surface-container);
+  background: var(--hrs-film);
+}
+
+// each row a square film with the theme's hairline round it (cells draw it: rows can't)
+tbody th,
+tbody td {
+  border-block: var(--hrs-line);
+}
+
+tbody th {
+  border-inline-start: var(--hrs-line);
+}
+
+tbody td:last-child {
+  border-inline-end: var(--hrs-line);
 }
 
 tbody th,
@@ -68,28 +84,23 @@ tbody td {
 .score-table__head {
   text-align: start;
   font-weight: normal;
-  border-radius: 8px 0 0 8px;
 }
 
 .score-table__cell {
-  font: var(--mat-sys-title-medium);
+  font: var(--hrs-font-body-strong);
   font-variant-numeric: tabular-nums;
   text-align: center;
   white-space: nowrap;
-  color: var(--mat-sys-on-surface);
-
-  &:last-child {
-    border-radius: 0 8px 8px 0;
-  }
+  color: var(--hrs-text);
 }
 
 .score-table__cell--best-in-group {
-  color: var(--mat-sys-primary);
+  color: var(--hrs-accent);
   font-weight: 600;
 }
 
 .score-table__cell--best {
-  color: var(--mat-sys-tertiary);
+  color: var(--hrs-gold);
   font-weight: 700;
 }
 

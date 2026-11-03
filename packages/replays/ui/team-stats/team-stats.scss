@@ -5,12 +5,12 @@
 
 .title {
   margin: 0 0 8px;
-  font: var(--mat-sys-title-large);
+  font: var(--hrs-font-title);
 }
 
 .subtitle {
   margin: 16px 0 8px;
-  font: var(--mat-sys-title-medium);
+  font: var(--hrs-font-section);
 }
 
 .team {
@@ -21,7 +21,7 @@
 }
 
 .team__result {
-  font: var(--mat-sys-label-medium);
+  font: var(--hrs-font-caption);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }

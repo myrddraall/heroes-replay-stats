@@ -1,6 +1,7 @@
-// Colours are Material's system tokens, so a row re-themed by its class (a team's) follows it.
-// Sizes are em of the table's font size, 1rem (16px) unless its page sets another, so the whole
-// table scales with it: the text is 1em, the header's labels 0.85em.
+// The theme's Table (nexus.css): label headers on a hairline, muted cells with the row's head in
+// text colour, faint row hairlines, the hover film. Colours are the theme's tokens, so a row
+// themed as its team (`data-theme`) takes the team's film. Sizes are em of the table's font size, 1rem (16px) unless its page sets another, so the whole
+// table scales with it: the text is 1em, the header's labels 0.72em.
 // The scroll area's height is `--ui-stat-table-max-height` (none by default).
 :host {
   display: block;
@@ -15,10 +16,10 @@
   margin: 0 0 0.5em;
   padding: 0;
   list-style: none;
-  font: var(--mat-sys-body-small);
+  font: var(--hrs-font-caption);
   font-size: 0.75em;
   line-height: 1.35;
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--hrs-text-muted);
 }
 
 .stat-table__scroll {
@@ -29,10 +30,11 @@
 .stat-table {
   border-collapse: separate;
   border-spacing: 0;
-  font: var(--mat-sys-body-small);
+  font: var(--hrs-font-small);
   font-size: 1em;
   line-height: 1.3;
   font-variant-numeric: tabular-nums;
+  color: var(--hrs-text-muted);
 }
 
 tbody {
@@ -43,17 +45,22 @@ thead th {
   position: sticky;
   top: 0;
   z-index: 1;
-  background: var(--mat-sys-surface-container-highest);
-  font: var(--mat-sys-label-small);
-  font-size: 0.85em;
+  background: var(--hrs-film-raised);
+  border-bottom: var(--hrs-line);
+  font: var(--hrs-font-label);
+  // the label's 11px at the table's default 15px, scaling with the table
+  font-size: 0.72em;
   line-height: 1.3;
-  color: var(--mat-sys-on-surface-variant);
+  letter-spacing: var(--hrs-tracking-label);
+  text-transform: uppercase;
+  color: var(--hrs-text-muted);
   vertical-align: bottom;
 }
 
 .stat-table__col {
-  min-width: 4.5em;
-  max-width: 8em;
+  // em of the header's small uppercase labels: room for a long word on one line
+  min-width: 5.5em;
+  max-width: 11em;
   padding: 0.5em 0.7em;
   text-align: end;
 }
@@ -66,9 +73,9 @@ thead th {
 }
 
 tbody tr {
-  background: var(--mat-sys-surface-container);
-  &:nth-child(even) {
-    background: var(--mat-sys-surface-container-high);
+  background: var(--hrs-film);
+  &:hover > * {
+    background-image: linear-gradient(var(--hrs-film-hover) 0 0);
   }
 }
 
@@ -80,14 +87,17 @@ tbody tr {
   text-align: start;
   font-weight: normal;
   white-space: nowrap;
-  background: var(--mat-sys-surface-container-highest);
+  color: var(--hrs-text);
+  // solid enough to hide the cells scrolling under it
+  background: var(--hrs-film-raised);
+  border-top: 1px solid oklch(from var(--hrs-border) l c h / 0.35);
 }
 
 .stat-table__cell {
   padding: 0.3em 0.65em;
   text-align: end;
   white-space: nowrap;
-  border-top: 1px solid var(--mat-sys-outline-variant);
+  border-top: 1px solid oklch(from var(--hrs-border) l c h / 0.35);
 }
 
 .stat-table__star {
@@ -95,15 +105,15 @@ tbody tr {
 }
 
 .stat-table__star--partial {
-  color: var(--mat-sys-primary);
+  color: var(--hrs-accent);
 }
 
 .stat-table__star--flawed {
-  color: var(--mat-sys-tertiary);
+  color: var(--hrs-gold);
 }
 
 .stat-table__star--none {
-  color: var(--mat-sys-error);
+  color: var(--hrs-error);
 }
 
 .stat-table__hidden {

@@ -12,9 +12,8 @@
   display: flex;
   align-items: center;
   gap: 2px;
-  background: var(--mat-sys-surface-container);
-  border-radius: 4px;
-  --mat-checkbox-label-text-size: var(--mat-sys-body-small-size);
+  background: var(--hrs-film);
+  --mat-checkbox-label-text-size: 13px; // the theme's small text
 }
 
 .picker__handle {
@@ -22,10 +21,9 @@
   display: flex;
   flex: none;
   cursor: grab;
-  border-radius: 4px;
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--hrs-text-muted);
   &:focus-visible {
-    outline: 2px solid var(--mat-sys-primary);
+    outline: 2px solid var(--hrs-focus);
   }
 }
 
@@ -39,15 +37,15 @@
 }
 
 .picker__star--partial {
-  color: var(--mat-sys-primary);
+  color: var(--hrs-accent);
 }
 
 .picker__star--flawed {
-  color: var(--mat-sys-tertiary);
+  color: var(--hrs-gold);
 }
 
 .picker__star--none {
-  color: var(--mat-sys-error);
+  color: var(--hrs-error);
 }
 
 .picker__hidden {
@@ -60,7 +58,7 @@
 }
 
 .cdk-drag-preview {
-  box-shadow: 0 4px 12px rgb(0 0 0 / 0.5);
+  box-shadow: var(--hrs-shade);
 }
 
 .cdk-drag-placeholder {
