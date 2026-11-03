@@ -5,7 +5,6 @@ import {
 } from '@angular/cdk/overlay';
 import { Component, computed, inject, signal } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
-import { FORGE_OPTIONS } from '../forge-options';
 import { AssetCatalogStore } from './asset-catalog.store';
 import { EditorUiStore } from '../layout/editor-ui.store';
 import { LIBRARY_TYPES } from './library-types';
@@ -28,7 +27,6 @@ export class LibraryHead {
   protected readonly catalog = inject(AssetCatalogStore);
   private readonly ui = inject(EditorUiStore);
   protected readonly types = LIBRARY_TYPES;
-  protected readonly options = inject(FORGE_OPTIONS);
   /** Whether the new scene's flyout is open. */
   protected readonly flyout = signal(false);
   /** Under the button, or above it where there is no room below. */

@@ -7,9 +7,10 @@
   justify-content: space-between;
   max-width: 480px;
   font: var(--mat-sys-body-large);
+  color: var(--mat-sys-on-surface);
 }
 .setting__value {
-  color: var(--hrs-bronze);
+  color: var(--mat-sys-primary);
   font-variant-numeric: tabular-nums;
 }
 .slider {

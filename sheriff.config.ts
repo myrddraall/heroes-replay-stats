@@ -20,7 +20,7 @@ const domains: Record<string, readonly string[]> = {
   replays: ['provide', 'feature', 'ui', 'data', 'model'],
   settings: ['provide', 'feature', 'ui', 'data'],
   sheets: ['provide', 'data', 'ui', 'model', 'testing'],
-  shell: ['feature', 'ui', 'data'],
+  shell: ['feature', 'ui', 'data', 'model'],
   theme: ['provide', 'feature', 'ui', 'data', 'model'],
 };
 
@@ -62,7 +62,7 @@ const uses: Record<string, readonly string[]> = {
   players: ['import'],
   replays: ['heroes', 'import', 'players'],
   settings: ['layout', 'platform', 'shell'],
-  shell: ['platform'],
+  shell: ['platform', 'sheets'],
   theme: ['settings', 'shell'],
 };
 

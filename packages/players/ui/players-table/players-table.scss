@@ -12,25 +12,18 @@
 .error {
   color: var(--mat-sys-error);
 }
-// A glass panel (hrs-glass); it does not clip (its edge's light leaks outside it), so the header's
-// corners are rounded to it.
+// A panel (hrs-panel).
 .players {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-}
-thead th:first-child {
-  border-top-left-radius: var(--hrs-glass-radius);
-}
-thead th:last-child {
-  border-top-right-radius: var(--hrs-glass-radius);
 }
 th,
 td {
   padding: 10px 16px;
   text-align: left;
   vertical-align: middle;
-  border-bottom: 1px solid var(--hrs-glass-line);
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
 }
 tbody tr:last-child > * {
   border-bottom: none;
@@ -71,7 +64,7 @@ thead th {
   color: var(--mat-sys-on-surface-variant);
 }
 .record__rate--good {
-  color: var(--hrs-bronze);
+  color: var(--mat-sys-tertiary);
 }
 time {
   color: var(--mat-sys-on-surface-variant);
@@ -84,13 +77,13 @@ time {
 .hero {
   padding: 2px 8px;
   border-radius: 999px;
-  background: rgb(var(--hrs-glass-edge) / 0.16);
+  background: color-mix(in srgb, var(--mat-sys-primary) 16%, transparent);
   font: var(--mat-sys-body-small);
   color: #fff;
   white-space: nowrap;
 }
 .hero__games {
-  color: rgb(var(--hrs-glass-edge));
+  color: var(--mat-sys-primary);
 }
 .hero--more {
   background: transparent;
@@ -118,9 +111,8 @@ time {
   }
   .players tr {
     padding: 12px 14px;
-    border: 1px solid var(--hrs-glass-line);
-    border-radius: var(--hrs-glass-radius);
-    background: rgb(var(--hrs-glass-tint) / var(--hrs-glass-alpha));
+    border: 1px solid var(--mat-sys-outline-variant);
+    background: var(--mat-sys-surface);
   }
   .players th,
   .players td {

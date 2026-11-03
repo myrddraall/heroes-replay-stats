@@ -4,7 +4,7 @@ import { Layout } from '@myrddraall/heroes-replay-stats-layout/ui';
 import { XpSectionStore } from './xp-section.store';
 import { XpTables } from '../../ui';
 
-/** The replay's XP by team (container): `/replays/<id>/xp`. */
+/** The replay's XP by team (container): `/replays/matches/<id>/xp`. */
 @Component({
   selector: 'hrs-xp-section',
   imports: [Layout, MatProgressBar, XpTables],

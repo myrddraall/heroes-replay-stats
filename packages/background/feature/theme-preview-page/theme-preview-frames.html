@@ -1,4 +1,4 @@
-<section class="hrs-glass panel frames" aria-labelledby="frames-title">
+<section class="hrs-panel panel frames" aria-labelledby="frames-title">
   <h2 id="frames-title">Frames</h2>
   @switch (status()?.status) {
     @case ('error') {
@@ -56,8 +56,8 @@
 
         <figure>
           <div class="tints">
-            <div class="sample sample--small hrs-glass-blue" [hrsSliceFront]="tinted()">Blue</div>
-            <div class="sample sample--small hrs-glass-red" [hrsSliceFront]="tinted()">Red</div>
+            <div class="sample sample--small" data-theme="blue" [hrsSliceFront]="tinted()">Blue</div>
+            <div class="sample sample--small" data-theme="red" [hrsSliceFront]="tinted()">Red</div>
           </div>
           <figcaption>Tinted in the team's colour</figcaption>
         </figure>

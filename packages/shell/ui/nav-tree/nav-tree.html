@@ -1,0 +1,39 @@
+<mat-tree
+  class="hrs-tree"
+  [dataSource]="data()"
+  [childrenAccessor]="children"
+  [expansionKey]="key"
+  [trackBy]="sameNode"
+>
+  <mat-nested-tree-node
+    *matTreeNodeDef="let node"
+    [class.hrs-tree__family]="node.breaks"
+    [isExpandable]="node.children.length > 0"
+    [isExpanded]="node.active"
+    [isDisabled]="node.disabled ?? false"
+    (activation)="link.click()"
+  >
+    <a
+      #link
+      class="hrs-tree__item"
+      tabindex="-1"
+      [class.is-trail]="node.active && !node.current"
+      [routerLink]="node.disabled ? null : node.link"
+      [attr.aria-disabled]="node.disabled || null"
+      [attr.aria-current]="node.current ? 'page' : null"
+    >
+      @if (node.children.length) {
+        <span class="hrs-tree__chev" aria-hidden="true">›</span>
+      }
+      <span class="hrs-tree__label">{{ node.label }}</span>
+      @if (node.count) {
+        <span class="hrs-badge hrs-badge--count">{{ node.count }}</span>
+      }
+    </a>
+    @if (node.children.length) {
+      <div role="group">
+        <ng-container matTreeNodeOutlet />
+      </div>
+    }
+  </mat-nested-tree-node>
+</mat-tree>

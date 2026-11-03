@@ -25,8 +25,8 @@
   align-items: center;
   gap: 4px 10px;
   padding: 3px 16px;
-  // the team's colour (hrsTeam) shows as a faint band and the sender's name
-  background: linear-gradient(90deg, rgb(var(--hrs-glass-edge) / 0.12), transparent 40%);
+  // the team's theme (hrsTeam) shows as a faint band and the sender's name
+  background: linear-gradient(90deg, color-mix(in srgb, var(--mat-sys-primary) 12%, transparent), transparent 40%);
 }
 
 .line__time {
@@ -45,7 +45,7 @@
   min-width: 0;
   overflow-wrap: anywhere;
   font-weight: 600;
-  color: color-mix(in srgb, rgb(var(--hrs-glass-edge)) 55%, white);
+  color: var(--mat-sys-primary);
 }
 
 .line__text {

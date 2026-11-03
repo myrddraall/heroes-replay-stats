@@ -8,12 +8,7 @@ export function provideThemeFeature(): Provider[] {
   return [
     provideShellLook(() => {
       const theme = inject(ThemeStore);
-      return {
-        theme: theme.theme,
-        glassAlpha: theme.glassAlpha,
-        frameAlpha: theme.frameAlpha,
-        blur: theme.blur,
-      };
+      return { theme: theme.theme, opacity: theme.opacity, blur: theme.blur };
     }),
     provideSettingsSection({
       id: 'theme',

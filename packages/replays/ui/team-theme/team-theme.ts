@@ -4,15 +4,14 @@ import { teamColor } from '../../model';
 import { TeamPerspective } from './team-perspective';
 
 /**
- * Themes an element as a team: `<tr [hrsTeam]="player.team">`. Adds the glass theme's team
- * variant, `hrs-glass-blue` or `hrs-glass-red` (see the ui package's `theme/_glass.scss`), chosen by the
+ * Themes an element as a team: `<tr [hrsTeam]="player.team">`. Sets its theme, `data-theme="blue"`
+ * or `"red"` (the theme's team themes, which re-tint everything inside), chosen by the
  * `TeamPerspective` above it. A null team leaves the element in the theme around it.
  */
 @Directive({
   selector: '[hrsTeam]',
   host: {
-    '[class.hrs-glass-blue]': "color() === 'blue'",
-    '[class.hrs-glass-red]': "color() === 'red'",
+    '[attr.data-theme]': 'color()',
   },
 })
 export class TeamTheme {

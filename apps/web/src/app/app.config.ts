@@ -19,6 +19,7 @@ import { DEV_REPORTS_URL } from '@myrddraall/heroes-replay-stats-platform/data';
 import { providePlatformFeature } from '@myrddraall/heroes-replay-stats-platform/provide';
 import { provideSettingsFeature } from '@myrddraall/heroes-replay-stats-settings/provide';
 import { provideSheets } from '@myrddraall/heroes-replay-stats-sheets/provide';
+import { provideShellArea, provideShellSection } from '@myrddraall/heroes-replay-stats-shell/ui';
 import { provideThemeFeature } from '@myrddraall/heroes-replay-stats-theme/provide';
 import { APP_VERSION } from './version';
 import { routes } from './app.routes';
@@ -44,6 +45,25 @@ export const appConfig: ApplicationConfig = {
     provideReplaysFeature(),
     provideSettingsFeature(),
     provideThemeFeature(),
+    // The areas that gather several domains' pages: what the replays tell (Matches, Players), and
+    // the game in general (Maps). Their sections come from the domains whose pages they open; the
+    // ones still to be built show disabled.
+    provideShellArea({ path: '/replays', label: 'Replays', order: 10 }),
+    provideShellSection({
+      area: '/replays',
+      label: 'Maps',
+      link: '/replays/maps',
+      order: 30,
+      disabled: true,
+    }),
+    provideShellArea({ path: '/game-info', label: 'Game Info', order: 20 }),
+    provideShellSection({
+      area: '/game-info',
+      label: 'Heroes',
+      link: '/game-info/heroes',
+      order: 20,
+      disabled: true,
+    }),
     provideRouter(
       routes,
       withComponentInputBinding(),

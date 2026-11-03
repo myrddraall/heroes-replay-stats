@@ -86,7 +86,7 @@ export function xpTables(
               gained: point.gained,
               total: point.total,
             },
-            class: `hrs-glass-${color}`,
+            theme: color,
             data: { time: formatStatClock(point.seconds) },
           };
         }),

@@ -45,7 +45,7 @@
     </thead>
     <tbody>
       @for (line of table(); track line.row.key) {
-        <tr [class]="line.row.class ?? ''">
+        <tr [attr.data-theme]="line.row.theme ?? null">
           <th scope="row" class="stat-table__head">
             @if (rowHead(); as head) {
               <ng-container

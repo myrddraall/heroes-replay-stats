@@ -4,7 +4,7 @@
   gap: 10px;
   padding-bottom: 12px;
   margin-bottom: 4px;
-  border-bottom: 1px solid var(--hrs-glass-line);
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
 }
 
 .controls__heading {
@@ -63,10 +63,10 @@
   flex: none;
 
   &--order {
-    background: var(--hrs-blue-soft);
+    background: var(--hrs-team-blue);
   }
 
   &--chaos {
-    background: var(--hrs-bronze-hot);
+    background: var(--hrs-team-red);
   }
 }

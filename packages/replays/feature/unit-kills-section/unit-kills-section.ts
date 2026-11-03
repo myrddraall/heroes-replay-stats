@@ -4,7 +4,7 @@ import { Layout } from '@myrddraall/heroes-replay-stats-layout/ui';
 import { UnitKillTables } from '../../ui';
 import { UnitKillsSectionStore } from './unit-kills-section.store';
 
-/** The replay's unit kills (container): `/replays/<id>/unit-kills`. */
+/** The replay's unit kills (container): `/replays/matches/<id>/unit-kills`. */
 @Component({
   selector: 'hrs-unit-kills-section',
   imports: [Layout, MatProgressBar, UnitKillTables],

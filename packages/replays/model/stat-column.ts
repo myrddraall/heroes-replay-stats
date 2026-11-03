@@ -1,3 +1,4 @@
+import type { TeamColor } from './team-color';
 /**
  * How a stat's numbers read: a count, a number with decimals, a share, a length of time in
  * seconds, or a moment on the game clock in seconds (`m:ss`).
@@ -32,8 +33,8 @@ export interface StatRow<T> {
   /** Rows with the same group (a team) are compared with each other for the best in the group. */
   readonly group: string | number | null;
   readonly values: Readonly<Record<string, number | null | undefined>>;
-  /** Classes for the row, such as a team's theme. */
-  readonly class?: string;
+  /** The row's theme (`data-theme`): its team's. */
+  readonly theme?: TeamColor;
   readonly data: T;
 }
 

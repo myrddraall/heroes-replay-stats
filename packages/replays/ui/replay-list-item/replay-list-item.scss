@@ -1,11 +1,10 @@
-@use 'glass-mixins' as glass;
-
-// A glass panel (hrs-glass); it does not clip (its edge's light leaks outside it).
+// A panel (hrs-panel), the positioned box its preview and the link's cover sit in.
 .replay {
+  position: relative;
   isolation: isolate;
   padding: 16px 20px;
 }
-// the map's replay preview: full card height, square, fading out into the glass, clipped to the
+// the map's replay preview: full card height, square, fading out into the panel, clipped to the
 // card's corners
 .replay__preview {
   position: absolute;
@@ -13,7 +12,6 @@
   z-index: -1;
   aspect-ratio: 1;
   overflow: hidden;
-  border-radius: var(--hrs-glass-radius) 0 0 var(--hrs-glass-radius);
   mask-image: linear-gradient(to right, black, transparent);
   img {
     object-fit: cover;
@@ -47,7 +45,7 @@
   }
 }
 .replay__mode {
-  color: var(--hrs-bronze);
+  color: var(--mat-sys-primary);
   font: var(--mat-sys-label-large);
 }
 .replay__dates {
@@ -68,7 +66,7 @@
   font: var(--mat-sys-body-small);
 }
 .replay__analysing {
-  color: rgb(var(--hrs-glass-edge));
+  color: var(--mat-sys-primary);
 }
 .replay__teams {
   display: grid;
@@ -80,8 +78,9 @@
   align-items: center;
   gap: 8px 12px;
   padding: 8px 12px;
-  // the team's colour washing in from its lit edge; the map preview still shows behind the rows
-  @include glass.lit-row;
+  // a row in the team's theme (hrsTeam), the map preview still showing behind it
+  background: var(--mat-sys-surface-container-low);
+  border: 1px solid var(--mat-sys-outline-variant);
 }
 .team__name {
   display: grid;
@@ -95,7 +94,7 @@
   letter-spacing: 0.06em;
 }
 .team--won .team__result {
-  color: var(--hrs-bronze);
+  color: var(--mat-sys-tertiary);
 }
 .team__players {
   list-style: none;

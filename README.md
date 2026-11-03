@@ -15,7 +15,7 @@ login and no server.
 | [`@myrddraall/heroes-replay-stats-players`](./packages/players)           | everyone in the stored replays with their numbers, the Players page, who "you" are in a replay      |
 | [`@myrddraall/heroes-replay-stats-replays`](./packages/replays)           | the stored replays, the replay list, and each replay's page with its sections                       |
 | [`@myrddraall/heroes-replay-stats-background`](./packages/background)     | the site's Play-screen background (Aether, its editor, the Graphics settings) and the theme preview |
-| [`@myrddraall/heroes-replay-stats-theme`](./packages/theme)               | the look every page shares (theme, glass and frame opacity, blur) and its settings section          |
+| [`@myrddraall/heroes-replay-stats-theme`](./packages/theme)               | the look every page shares (theme, panel opacity, blur) and its settings section                    |
 | [`@myrddraall/heroes-replay-stats-settings`](./packages/settings)         | the settings store, the Settings page and dialog, and the slot for other domains' sections          |
 | [`@myrddraall/heroes-replay-stats-sheets`](./packages/sheets)             | the game's interface sheets: the sprites cut from them and the 9-slice frames drawn from them       |
 | [`@myrddraall/heroes-replay-stats-shell`](./packages/shell)               | the frame round every page (nav, toolbar, side panel, backdrop) and the slots others fill           |
@@ -23,7 +23,7 @@ login and no server.
 | [`@myrddraall/heroes-replay-stats-maps`](./packages/maps)                 | maps: the Maps and map pages, and the map viewer with its layer directives                          |
 | [`@myrddraall/heroes-replay-stats-aether`](./packages/aether)             | Aether, the 3D engine: scene data, settings stacking, the three.js renderer, the view               |
 | [`@myrddraall/heroes-replay-stats-aether-forge`](./packages/aether-forge) | Aether Forge, its editor: the library, the asset and scene editors (`provideAetherForge`)           |
-| [`@myrddraall/heroes-replay-stats-common`](./packages/common)             | shared interface pieces: the glass theme, the side panel, sprites, masks, empty states              |
+| [`@myrddraall/heroes-replay-stats-common`](./packages/common)             | shared interface pieces: the theme's styles, the side panel, sprites, masks, empty states           |
 | [`@myrddraall/heroes-replay-stats-layout`](./packages/layout)             | the page layout containers                                                                          |
 | [`@myrddraall/heroes-replay-stats-platform`](./packages/platform)         | the seam to the browser or the desktop shell, and the dev reports                                   |
 | [`@myrddraall/heroes-replay-stats-signals`](./libs/signals)               | shared signal store features (state kept in `localStorage`)                                         |
@@ -556,10 +556,10 @@ the look's settings the user chose) set it, through `provideSiteBackground()`: a
 preset (Low, Medium, High, Ultra, Extreme; until one is chosen it is High, or Low where the
 browser draws without hardware acceleration, detected on each load; Custom shows when the values
 match none, and is the last such values kept, so choosing it after trying a preset brings them
-back; a change that matches no preset replaces them) over the animation, the three frame rates, the resolution and the glass's blur; and the
-look, which presets don't touch: the theme (purple or Nexus), the background's colour (fixed, or
+back; a change that matches no preset replaces them) over the animation, the three frame rates, the resolution and the blur behind the panels; and the
+look, which presets don't touch: the theme (purple, magenta or cyan), the background's colour (fixed, or
 random or the next in turn each page; the site always opens untinted and fades to it) and the
-glass panels' and the frame's opacity.
+panels' opacity.
 The scene comes
 from [heroes-capture](https://github.com/myrddraall/heroes-capture) and is checked in under
 `apps/web/public/backgrounds/play` (about 1 MB); after a game update, export it again:

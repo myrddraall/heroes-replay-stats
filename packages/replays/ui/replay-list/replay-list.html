@@ -1,17 +1,17 @@
 <header class="head">
-  <h1>Replays</h1>
+  <h1>Matches</h1>
   @if (cards().length > 0) {
     <span class="count"
-      >{{ cards().length }} {{ cards().length === 1 ? 'replay' : 'replays' }}</span
+      >{{ cards().length }} {{ cards().length === 1 ? 'match' : 'matches' }}</span
     >
   }
 </header>
 @if (error(); as error) {
   <p class="error" role="alert">The replay database could not be read: {{ error }}</p>
 } @else if (!loaded()) {
-  <mat-progress-bar mode="indeterminate" aria-label="Loading replays" />
+  <mat-progress-bar mode="indeterminate" aria-label="Loading matches" />
 } @else if (cards().length === 0) {
-  <hrs-empty-state icon="history" title="No replays yet">
+  <hrs-empty-state icon="history" title="No matches yet">
     Import a few .StormReplay files and they will be parsed, stored locally and listed here.
     <br /><button mat-stroked-button class="cta" (click)="importRequested.emit()">
       Import replays
@@ -19,7 +19,7 @@
   </hrs-empty-state>
 } @else {
   @if (outdated() > 0) {
-    <div class="outdated hrs-glass" role="status">
+    <div class="outdated hrs-panel" role="status">
       <p>
         @if (outdated() === 1) {
           1 replay was imported by an earlier version of the app, so some of its details may be

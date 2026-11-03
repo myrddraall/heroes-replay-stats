@@ -29,13 +29,13 @@ thead th {
   font-variant-numeric: tabular-nums;
 }
 
-// the team's colour (hrsTeam) shows as a faint band
+// the team's theme (hrsTeam) shows as a faint band
 .step {
-  background: linear-gradient(90deg, rgb(var(--hrs-glass-edge) / 0.12), transparent 60%);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--mat-sys-primary) 12%, transparent), transparent 60%);
 }
 
 .step__team {
-  color: color-mix(in srgb, rgb(var(--hrs-glass-edge)) 55%, white);
+  color: var(--mat-sys-primary);
 }
 
 .step__hero {

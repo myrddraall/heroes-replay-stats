@@ -1,22 +1,49 @@
-import type { TemplateRef } from '@angular/core';
-import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
+import { computed, inject, type Signal, signal } from '@angular/core';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import {
+  resolveShellNav,
+  SHELL_AREAS,
+  SHELL_SECTIONS,
+  SHELL_UTILITY_LINKS,
+  type ShellItem,
+} from '../model';
+
+
+const NONE: Signal<ShellItem | null> = signal(null);
 
 /**
- * What the pages put under the shell's main nav items, by the item's path (`/replays`): a page's
- * own navigation, shown under its parent's item while the page is open. Provided by the shell, so
- * the pages under it reach it.
+ * The shell's navigation for the page shown: the areas and their sections (`provideShellArea`,
+ * `provideShellSection`), the utilities' pages (`provideShellUtilityLink`), what the open page has open (a match, a map: `follow`), and the URL
+ * (`at`), resolved into the top bar, the sub-bar, the page's side nav, the breadcrumb and the tree.
+ * Provided by the shell, so the pages under it reach it.
  */
 export const ShellNavStore = signalStore(
-  withState({ children: {} as Readonly<Record<string, TemplateRef<unknown>>> }),
+  withState({ url: '/' }),
+  withProps(() => ({
+    areas: inject(SHELL_AREAS),
+    sections: inject(SHELL_SECTIONS),
+    utilities: inject(SHELL_UTILITY_LINKS),
+    /** Where what is open comes from: the open page's signal. */
+    source: signal(NONE),
+  })),
+  withComputed((store) => ({
+    item: computed(() => store.source()()),
+  })),
+  withComputed((store) => ({
+    nav: computed(() => resolveShellNav(store.areas, store.sections, store.utilities, store.item(), store.url())),
+  })),
   withMethods((store) => ({
-    show(path: string, template: TemplateRef<unknown>): void {
-      patchState(store, { children: { ...store.children(), [path]: template } });
+    /** The page shown is now at `url`. */
+    at(url: string): void {
+      patchState(store, { url });
     },
-    /** Stop showing `template` under `path`, unless another page's has replaced it. */
-    clear(path: string, template: TemplateRef<unknown>): void {
-      if (store.children()[path] !== template) return;
-      const rest = Object.entries(store.children()).filter(([p]) => p !== path);
-      patchState(store, { children: Object.fromEntries(rest) });
+    /** Take what is open from `item` from now on. */
+    follow(item: Signal<ShellItem | null>): void {
+      store.source.set(item);
+    },
+    /** Stop following `item`, unless another page's has replaced it. */
+    unfollow(item: Signal<ShellItem | null>): void {
+      if (store.source() === item) store.source.set(NONE);
     },
   })),
 );

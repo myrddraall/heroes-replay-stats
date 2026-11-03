@@ -1,3 +1,4 @@
 export * from './shell/shell';
-export * from './shell-nav-children/shell-nav-children';
+export * from './shell-item/show-shell-item';
 export * from './shell-panel/shell-panel-template';
+export * from './shell-side-nav/shell-side-nav';

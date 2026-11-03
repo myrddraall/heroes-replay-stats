@@ -3,10 +3,9 @@ import {
   CdkOverlayOrigin,
   type ConnectedPosition,
 } from '@angular/cdk/overlay';
-import { Component, computed, inject, input, output, signal } from '@angular/core';
+import { Component, computed, input, output, signal } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
-import { FORGE_OPTIONS } from '../forge-options';
 import { PickFlyout, type PickItem } from './pick-flyout';
 
 /**
@@ -51,7 +50,6 @@ export class SplitButton {
   readonly menuLabel = input('More');
   readonly chosen = output<string>();
   readonly picked = output<{ readonly option: string; readonly item: string }>();
-  protected readonly forge = inject(FORGE_OPTIONS);
   /** The one done last (none yet: the first that can be done). */
   private readonly last = signal<string | null>(null);
   /** The one picking now (its flyout open), by id. */

@@ -1,0 +1,29 @@
+// Above the sub-bar and the page, which the bar's texture shadow falls over. Exactly the bar's
+// height, the toolbar filling it, so nothing of the host shows below what the toolbar draws.
+:host {
+  display: block;
+  position: relative;
+  z-index: 3;
+  height: var(--hrs-bar-1);
+}
+
+// The theme's TopBar (nexus.css) on Material's toolbar: its children fill the bar's height (the
+// selected link's glow and underline are placed by it) and keep the TopBar's padding, which
+// Material's single-row toolbar would centre and pad (no tokens for either).
+.hrs-topbar {
+  height: 100%;
+  align-items: stretch;
+  padding: 0 var(--hrs-space-4) 0 var(--hrs-space-3);
+}
+
+// The nav wraps the theme's list for the landmark, filling the bar as the list does.
+.top-bar__nav {
+  display: flex;
+  align-items: stretch;
+}
+
+// The app's logo where the game has its home logo, at the mark's size (2.6em of 16px).
+.top-bar__logo {
+  width: 2.6rem;
+  height: 2.6rem;
+}
