@@ -44,7 +44,7 @@ const value = (token: Token, theme: string) =>
 
 const css = [`/* ${t.name} — generated from tokens.json (local harness copy) */`];
 for (const theme of themes) {
-  const selector = theme === first ? `:root, [data-theme="${theme}"]` : `[data-theme="${theme}"]`;
+  const selector = theme === first ? `:root, [theme="${theme}"]` : `[theme="${theme}"]`;
   const lines = [...t.color.tokens, ...t.shadow.tokens].map((x) => `  --${x.name}: ${value(x, theme)};`);
   css.push(`${selector} {\n${lines.join('\n')}\n}`);
 }
@@ -83,7 +83,7 @@ for (const name of names) {
     join(out, `${name}.html`),
     html
       .replace('<head>', '<head><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="bundle.css">')
-      .replace('<html lang="en">', `<html lang="en" data-theme="${first}">`),
+      .replace('<html lang="en">', `<html lang="en" theme="${first}">`),
   );
   frames.push(
     `<h3>${name}</h3><iframe src="${name}.html" style="width:100%;height:${heightOf(html) + 40}px;border:0"></iframe>`,

@@ -8,7 +8,7 @@
 
   <div class="variants">
     @for (variant of variants; track variant.theme) {
-      <section class="hrs-panel panel" [attr.data-theme]="variant.theme" [attr.aria-label]="variant.label">
+      <section class="hrs-panel panel" [attr.theme]="variant.theme" [attr.aria-label]="variant.label">
         <h2>{{ variant.label }}</h2>
         <p>Body text over the panel: the match summary, a hero's name, a talent's description.</p>
         <p class="muted">Muted text: dates, durations, the map's name.</p>
@@ -44,7 +44,7 @@
     <h2 id="match-title">Mixed: a match on a neutral panel</h2>
     <p class="muted">Cursed Hollow · Quick Match · 18:42</p>
     @for (team of teams; track team.theme) {
-      <table [attr.data-theme]="team.theme">
+      <table [attr.theme]="team.theme">
         <caption>
           {{
             team.label

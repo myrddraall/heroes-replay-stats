@@ -4,14 +4,14 @@ import { teamColor } from '../../model';
 import { TeamPerspective } from './team-perspective';
 
 /**
- * Themes an element as a team: `<tr [hrsTeam]="player.team">`. Sets its theme, `data-theme="blue"`
+ * Themes an element as a team: `<tr [hrsTeam]="player.team">`. Sets its theme, `theme="blue"`
  * or `"red"` (the theme's team themes, which re-tint everything inside), chosen by the
  * `TeamPerspective` above it. A null team leaves the element in the theme around it.
  */
 @Directive({
   selector: '[hrsTeam]',
   host: {
-    '[attr.data-theme]': 'color()',
+    '[attr.theme]': 'color()',
   },
 })
 export class TeamTheme {

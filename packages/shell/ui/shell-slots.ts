@@ -80,7 +80,7 @@ export function provideShellBackdrop(load: () => Promise<Type<unknown>>): Provid
 
 /** How the shell looks: its theme, how solid its films are, and whether they blur. */
 export interface ShellLook {
-  /** The neutral theme the shell carries (`data-theme`). */
+  /** The neutral theme the shell carries (`theme`). */
   readonly theme: Signal<string>;
   /** How solid every film is, from its legibility floor (0) to solid (1). */
   readonly opacity: Signal<number>;

@@ -115,7 +115,7 @@ function fillStyle(plan: PartPlan): { size: string; repeat: string } {
   templateUrl: './nine-slice.html',
   styleUrl: './nine-slice.scss',
   host: {
-    '[attr.data-hrs-slice-state]': 'sliceState() ?? null',
+    '[attr.slice-state]': 'sliceState() ?? null',
     '[style.padding]': 'padding()',
   },
 })

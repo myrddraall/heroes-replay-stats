@@ -50,7 +50,7 @@ describe('DataGrid', () => {
       ['Li Li', '3 kills'],
       ['Genji', '7 kills'],
     ]);
-    expect(rows.map((r) => r.getAttribute('data-theme'))).toEqual(['blue', 'red']);
+    expect(rows.map((r) => r.getAttribute('theme'))).toEqual(['blue', 'red']);
     expect(rows[0]!.children[0]!.getAttribute('role')).toBe('rowheader');
     expect(rows[0]!.children[1]!.classList.contains('hrs-num')).toBe(true);
   });

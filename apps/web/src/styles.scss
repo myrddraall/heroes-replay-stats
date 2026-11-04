@@ -1,7 +1,7 @@
 @use '@angular/material' as mat;
 // The HRS Nexus UI theme as Angular Material's (generated from packages/common/design-system by
 // `pnpm run generate.theme`): its system tokens and each component's, on `:root` and every
-// `[data-theme]`, so nested themes (a team's) re-theme Material inside them. Its tokens and its own
+// `[theme]`, so nested themes (a team's) re-theme Material inside them. Its tokens and its own
 // components (nexus/tokens.css, nexus.css) load before this file.
 @use 'nexus/material-theme';
 

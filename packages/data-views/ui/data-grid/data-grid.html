@@ -86,7 +86,7 @@
           role="row"
           [attr.row-index]="row.index"
           [attr.aria-rowindex]="row.index + 2"
-          [attr.data-theme]="row.theme"
+          [attr.theme]="row.theme"
         >
           @if (row.item !== null) {
             @for (column of columns(); track column.name()) {
