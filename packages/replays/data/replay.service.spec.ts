@@ -70,6 +70,12 @@ describe('ReplayService', () => {
       ['new', 'complete'],
       ['old', 'ready'],
     ]);
+    // the list of every stored one also has those still importing, but never a failed one
+    expect(service.listed().map((r) => [r.id, r.status])).toEqual([
+      ['importing', 'analysing'],
+      ['new', 'complete'],
+      ['old', 'ready'],
+    ]);
     const [latest] = service.replays();
     expect(latest).toEqual({
       id: 'new',

@@ -6,7 +6,7 @@ import { fakeHeroData } from '@myrddraall/heroes-replay-stats-heroes/testing';
 import { provideFakeSheets } from '@myrddraall/heroes-replay-stats-sheets/testing';
 import { heroLookup, type HeroLookup } from '@myrddraall/heroes-replay-stats-heroes/model';
 import type { ReplaySummary } from '../../model';
-import { toReplayCard, type ReplayCard } from './replay-card';
+import { toReplayCard, type ReplayCard, type ReplayCardJob } from './replay-card';
 import { formatDuration, ReplayListItem } from './replay-list-item';
 
 const replay: ReplaySummary = {
@@ -85,7 +85,7 @@ describe('ReplayListItem', () => {
     expect(text('.replay__map')).toBe('Towers of Doom');
     expect(text('.replay__mode')).toBe('Storm League');
     expect(text('.replay__length')).toBe('20:34');
-    expect(text('.replay__analysing')).toBe('analysing…');
+    expect(text('.replay__activity')).toBe('analysing…'); // ready: its background analysers run
     expect(el.querySelector('.replay__played time')?.getAttribute('datetime')).toBe(
       replay.playedAt,
     );
@@ -232,5 +232,47 @@ describe('ReplayListItem', () => {
       ['Blue team', 'No result', false, null, 1],
       ['Red team', 'No result', false, 'No players', 0],
     ]);
+  });
+
+  it('shows an import and its analysers in progress, after the chips, and opens once imported', async () => {
+    const state = async (r: ReplaySummary, job: ReplayCardJob | null) => {
+      const el: HTMLElement = (await renderCard(toReplayCard(r, new Set(), heroes, undefined, job)))
+        .nativeElement;
+      const head = [...el.querySelector('.replay__head')!.children].map((c) => c.className);
+      return {
+        activity: el.querySelector('.replay__activity')?.textContent?.trim() ?? null,
+        afterChips:
+          head.indexOf('replay__activity') === head.findIndex((c) => c.includes('replay__marks')) + 1,
+        bar: el.querySelector('mat-progress-bar')?.getAttribute('aria-valuenow') ?? null,
+        label: el.querySelector('mat-progress-bar')?.getAttribute('aria-label') ?? null,
+        opens: el.querySelector('.replay__link') !== null,
+      };
+    };
+    const importing = { stage: 'importing', progress: 0.42 } as const;
+    expect(await state({ ...replay, status: 'ingesting' }, importing)).toEqual({
+      activity: 'importing…',
+      afterChips: true,
+      bar: '42',
+      label: 'Importing Towers of Doom',
+      opens: false,
+    });
+    // re-imported: still listed as ready, but its job is importing it again
+    expect((await state({ ...replay, status: 'complete' }, importing)).opens).toBe(false);
+    expect(await state(replay, { stage: 'analysing', progress: 0.9 })).toEqual({
+      activity: 'analysing…',
+      afterChips: true,
+      bar: '90',
+      label: 'Analysing Towers of Doom',
+      opens: true,
+    });
+    // a job's start, 0%, still shows its bar
+    expect((await state(replay, { stage: 'analysing', progress: 0 })).bar).toBe('0');
+    // without a job, from its stored status: ready is analysing, without progress
+    expect(await state(replay, null)).toMatchObject({ activity: 'analysing…', bar: null, opens: true });
+    expect(await state({ ...replay, status: 'complete' }, null)).toMatchObject({
+      activity: null,
+      bar: null,
+      opens: true,
+    });
   });
 });

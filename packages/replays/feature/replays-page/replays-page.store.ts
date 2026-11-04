@@ -7,7 +7,7 @@ import { SettingsStore } from '@myrddraall/heroes-replay-stats-settings/data';
 import { errorMessage } from '@myrddraall/heroes-replay-stats-common/model';
 import { toReplayCard } from '../../ui';
 
-/** {@link ReplaysPage}'s component store: the stored replays as cards. */
+/** {@link ReplaysPage}'s component store: the stored replays as cards, importing ones included. */
 export const ReplaysPageStore = signalStore(
   withProps(() => ({
     _replays: inject(ReplayService),
@@ -16,12 +16,19 @@ export const ReplaysPageStore = signalStore(
     _imports: inject(ReplayImportJobStore),
     _viewed: inject(ViewedReplaysStore),
   })),
-  withComputed(({ _replays, _settings, _heroData, _viewed }) => ({
+  withComputed(({ _replays, _settings, _heroData, _viewed, _imports }) => ({
     cards: computed(() => {
       const me = new Set(_settings.meToonHandles());
       const heroes = _heroData.lookup();
       const seen = _viewed.seen();
-      return _replays.replays().map((replay) => toReplayCard(replay, me, heroes, seen[replay.id]));
+      const jobs = _imports.progressByReplay();
+      return (
+        _replays
+          .listed()
+          // one still importing only while its import runs: one that stopped part-way stays hidden
+          .filter((r) => r.status === 'ready' || r.status === 'complete' || jobs.has(r.id))
+          .map((r) => toReplayCard(r, me, heroes, seen[r.id], jobs.get(r.id) ?? null))
+      );
     }),
     outdated: _replays.outdated,
     loaded: _replays.loaded,

@@ -56,7 +56,8 @@
   color: var(--mat-sys-on-surface);
   font: var(--mat-sys-label-large);
 }
-.replay__analysing {
+// importing… or analysing…, after the chips
+.replay__activity {
   color: var(--mat-sys-primary);
   font: var(--mat-sys-label-large);
 }
@@ -72,6 +73,11 @@
   --mat-chip-outline-color: var(--mat-sys-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.06em;
+}
+// the import job's progress along the card's bottom edge, analysers included
+.replay__progress {
+  position: absolute;
+  inset: auto 0 0;
 }
 .replay__dates {
   display: grid;

@@ -12,13 +12,15 @@
   }
   <header class="replay__head">
     <h2 class="replay__map">
-      <a class="replay__link" hrsItemFocus [routerLink]="['/replays/matches', replay().id]">{{ replay().map }}</a>
+      @if (opens()) {
+        <a class="replay__link" hrsItemFocus [routerLink]="['/replays/matches', replay().id]">{{ replay().map }}</a>
+      } @else {
+        <!-- it opens once imported -->
+        {{ replay().map }}
+      }
     </h2>
     <span class="replay__mode">{{ mode() }}</span>
     <span class="replay__length">{{ duration() }}</span>
-    @if (replay().status === 'ready') {
-      <span class="replay__analysing">analysing…</span>
-    }
     @if (viewed() || replay().outdated) {
       <mat-chip-set class="replay__marks">
         @if (viewed(); as viewed) {
@@ -28,6 +30,9 @@
           <mat-chip>Out of date</mat-chip>
         }
       </mat-chip-set>
+    }
+    @if (activity(); as activity) {
+      <span class="replay__activity">{{ activity }}</span>
     }
     <span class="replay__dates">
       <span class="replay__played">
@@ -82,4 +87,12 @@
       </div>
     }
   </div>
+  @if (progress() !== null) {
+    <mat-progress-bar
+      class="replay__progress"
+      mode="determinate"
+      [value]="progress()"
+      [attr.aria-label]="(opens() ? 'Analysing ' : 'Importing ') + replay().map"
+    />
+  }
 </article>

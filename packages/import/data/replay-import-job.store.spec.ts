@@ -154,6 +154,7 @@ describe('ReplayImportJobStore', () => {
 
     scripted[0]!.status(
       status({
+        replayId: 'r-a', // every snapshot after the first carries it, as the worker's do
         phase: 'analysing-ready',
         analysers: {
           x: { state: 'done', mode: 'ready', ms: 3 },
@@ -170,9 +171,16 @@ describe('ReplayImportJobStore', () => {
     ]);
     expect(a.progress).toBeCloseTo(0.7 + 0.15 * 0.5, 5);
 
+    // by replay id while it imports: what a match card shows
+    expect([...store.progressByReplay()]).toEqual([
+      ['r-a', { stage: 'importing', progress: a.progress }],
+    ]);
+
     scripted[0]!.ready('r-a');
     await tick();
     expect(byName('a.StormReplay').status).toBe('ready');
+    // it opens now; its background analysers still run
+    expect(store.progressByReplay().get('r-a')?.stage).toBe('analysing');
     scripted[0]!.complete('r-a');
     await tick();
     await tick();
@@ -181,6 +189,7 @@ describe('ReplayImportJobStore', () => {
       phase: 'complete',
       progress: 1,
     });
+    expect(store.progressByReplay().has('r-a')).toBe(false);
     expect(byName('b.StormReplay').status).toBe('running'); // b started only after a finished
     // a finished, so b (running) stays on top even though a was queued first.
     expect(store.jobs().map((j) => j.fileName)).toEqual(['b.StormReplay', 'a.StormReplay']);

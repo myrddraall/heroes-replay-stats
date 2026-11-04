@@ -3,6 +3,7 @@ import { Component, computed, inject, input } from '@angular/core';
 import type { GameMode, Team } from '@myrddraall/heroprotocol-db';
 import { RouterLink } from '@angular/router';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { ItemFocus } from '@myrddraall/heroes-replay-stats-data-views/ui';
 import { Sprite } from '@myrddraall/heroes-replay-stats-sheets/ui';
 import { StyledText } from '@myrddraall/heroes-replay-stats-common/ui';
@@ -58,6 +59,7 @@ export function formatDuration(seconds: number): string {
     HeroMinimapIcon,
     ItemFocus,
     MatChipsModule,
+    MatProgressBarModule,
     RouterLink,
     Sprite,
     StyledText,
@@ -81,6 +83,18 @@ export class ReplayListItem {
 
   protected readonly mode = computed(() => MODE_LABELS[this.replay().mode]);
   protected readonly viewed = computed(() => VIEWED_LABELS[this.card().viewed]);
+  /** What is happening to it ("importing…", "analysing…"); null once fully analysed. */
+  protected readonly activity = computed(() => {
+    const activity = this.card().activity;
+    return activity === null ? null : `${activity}…`;
+  });
+  /** It opens once imported. */
+  protected readonly opens = computed(() => this.card().activity !== 'importing');
+  /** Its import job's progress, 0..100, while the job runs. */
+  protected readonly progress = computed(() => {
+    const progress = this.card().progress;
+    return progress === null ? null : progress * 100;
+  });
   /** Its length on the game's clock; a replay that ends before the gates open has none. */
   protected readonly duration = computed(() => {
     const seconds = this.replay().durationSeconds;

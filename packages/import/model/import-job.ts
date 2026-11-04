@@ -35,6 +35,16 @@ export interface ImportJob {
   readonly finishedAt: number | null;
 }
 
+/**
+ * Where one replay's import job is: `importing` until it can be opened (reading, writing, its
+ * first analysers), then `analysing` while its background analysers run; `progress` is the
+ * job's, 0..1.
+ */
+export interface ReplayImportProgress {
+  readonly stage: 'importing' | 'analysing';
+  readonly progress: number;
+}
+
 export interface ImportOverall {
   readonly total: number;
   readonly queued: number;
