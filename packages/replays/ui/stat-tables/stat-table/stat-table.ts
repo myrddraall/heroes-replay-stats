@@ -1,23 +1,23 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, contentChild, inject, input, LOCALE_ID, model } from '@angular/core';
 import { MatTooltip } from '@angular/material/tooltip';
+import { CellTemplate, DataGrid, GridColumn, HeaderTemplate } from '@myrddraall/heroes-replay-stats-data-views/ui';
 import type { StatColumn, StatRow, StatSupport } from '../../../model';
-import { statTableRows } from '../stat-cells';
+import { statTableRows, type StatTableRow } from '../stat-cells';
 import { StatRowHead } from '../stat-row-head';
-import { nextStatSort, statAriaSort, type StatSort } from '../stat-sort';
-import { StatSortHeader } from '../stat-sort-header';
+import type { StatSort } from '../stat-sort';
 import { STAT_SUPPORT_LABELS } from '../stat-support';
 
 /**
- * A dense stat table (presentational): many stats in small type, one row per player, the header
- * and the row heads staying in view as it scrolls. A stat whose figure is partial, flawed or not
+ * A dense stat table (presentational, on the data grid): many stats in small type, one row per
+ * player, the header and the row heads staying in view as the page and the table scroll. A stat whose figure is partial, flawed or not
  * recorded is starred, with a legend, and its notes are in its header's tooltip with its
  * description. The row head comes from a `uiStatRowHead` template inside. Unsorted, the rows
  * keep their given order.
  */
 @Component({
   selector: 'ui-stat-table',
-  imports: [MatTooltip, NgTemplateOutlet, StatSortHeader],
+  imports: [CellTemplate, DataGrid, GridColumn, HeaderTemplate, MatTooltip, NgTemplateOutlet],
   templateUrl: './stat-table.html',
   styleUrl: './stat-table.scss',
 })
@@ -51,11 +51,6 @@ export class StatTable<T> {
     return support !== undefined && support !== 'full';
   }
 
-  protected ariaSort(column: string): 'ascending' | 'descending' | null {
-    return statAriaSort(this.sort(), column);
-  }
-
-  protected toggleSort(column: string): void {
-    this.sort.update((sort) => nextStatSort(sort, column));
-  }
+  protected readonly byKey = (line: StatTableRow<T>) => line.row.key;
+  protected readonly themeOf = (line: StatTableRow<T>) => line.row.theme ?? null;
 }

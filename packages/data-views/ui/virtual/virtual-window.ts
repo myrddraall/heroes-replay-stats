@@ -41,7 +41,7 @@ export interface VirtualWindow {
 }
 
 /**
- * The window of a long list on its host (`host`): only the rows in the page's view (and a few
+ * The window of a long list on its host (`host`, or what gives it once drawn): only the rows in the page's view (and a few
  * either side) are drawn. It scrolls with whatever scrolls it on the page, found once it is on
  * the page: the nearest of its parents that scrolls (a panel's body), else the app's scroller
  * (`CdkScrollable`, the shell's page); the window's own scroll when there is none. It follows where the
@@ -49,7 +49,10 @@ export interface VirtualWindow {
  * not drawn yet, and when the page comes back returns it to where it was. Call it in a
  * component's injection context.
  */
-export function injectVirtualWindow(host: HTMLElement, options: () => VirtualWindowOptions): VirtualWindow {
+export function injectVirtualWindow(
+  host: HTMLElement | (() => HTMLElement),
+  options: () => VirtualWindowOptions,
+): VirtualWindow {
   if (inject(WHOLE_LISTS)) return wholeWindow(options);
   const outer = inject(CdkScrollable, { optional: true })?.getElementRef().nativeElement ?? null;
   /** What scrolls the list, once it is on the page. */
@@ -74,6 +77,9 @@ export function injectVirtualWindow(host: HTMLElement, options: () => VirtualWin
       overscan: 4,
       scrollMargin: start(),
       indexAttribute: ROW_INDEX,
+      // the exact height, not rounded: rows of 31.4px add up
+      measureElement: (element: Element, entry: ResizeObserverEntry | undefined) =>
+        entry?.borderBoxSize[0]?.blockSize ?? element.getBoundingClientRect().height,
       // only the list is drawn again as it scrolls, not the whole app
       useApplicationRefTick: false,
       // measured on the next frame, so a row resizing while measured never loops the observer
@@ -89,7 +95,7 @@ export function injectVirtualWindow(host: HTMLElement, options: () => VirtualWin
   // What scrolls it can change as the page around it does (a panel that opens gets more in it than
   // it shows): looked for again each time.
   const place = () => {
-    const box = outer ? scrollingParent(host, outer) : undefined;
+    const box = outer ? scrollingParent(hostOf(), outer) : undefined;
     const was = untracked(scroller);
     if (box && box !== was) {
       sized.observe(box);
@@ -97,14 +103,15 @@ export function injectVirtualWindow(host: HTMLElement, options: () => VirtualWin
       scroller.set(box);
     }
     inset.set(box ? parseFloat(getComputedStyle(box).paddingTop) || 0 : 0);
-    const top = host.getBoundingClientRect().top;
+    const top = hostOf().getBoundingClientRect().top;
     start.set(box ? top - box.getBoundingClientRect().top + box.scrollTop : top + window.scrollY);
   };
+  const hostOf = () => (typeof host === 'function' ? host() : host);
   const sized = new ResizeObserver(place);
-  sized.observe(host);
   afterNextRender(() => {
+    sized.observe(hostOf());
     // its parents too: one of them taking on more than it shows makes it the scroller
-    for (let parent = host.parentElement; outer && parent && parent !== outer; parent = parent.parentElement) {
+    for (let parent = hostOf().parentElement; outer && parent && parent !== outer; parent = parent.parentElement) {
       sized.observe(parent);
     }
     place();

@@ -1,39 +1,28 @@
 <h2 class="title">Talents</h2>
-<div class="scroll">
-  <table class="talents">
-    <thead>
-      <tr>
-        <th scope="col" class="talents__corner">Player</th>
-        @for (tier of tiers; track tier) {
-          <th scope="col" class="talents__tier">Tier {{ tier }}</th>
+<hrs-data-grid class="talents" [items]="rows()" [trackBy]="byKey" [rowTheme]="themeOf">
+  <hrs-column name="player" header="Player" width="max-content">
+    <ng-template hrsCell let-row>
+      <hrs-player-cell [hero]="row.player.hero" [name]="row.player.name" [icon]="row.icon" />
+    </ng-template>
+  </hrs-column>
+  @for (tier of tiers; track tier; let i = $index) {
+    <hrs-column [name]="'tier-' + tier" [header]="'Tier ' + tier" width="minmax(min-content, 160px)">
+      <ng-template hrsCell let-row>
+        @let talent = row.talents[i];
+        @if (talent) {
+          <span class="talent">
+            @if (talent.icon; as icon) {
+              <img class="talent__icon" [hrsSprite]="icon" [spriteWidth]="32" alt="" />
+            }
+            <span class="talent__text">
+              <span class="talent__name">{{ talent.name }}</span>
+              <span class="talent__level">Level {{ talent.level }}</span>
+            </span>
+          </span>
+        } @else {
+          <span class="talents__none">None</span>
         }
-      </tr>
-    </thead>
-    <tbody>
-      @for (row of rows(); track row.key) {
-        <tr [attr.data-theme]="row.theme ?? null">
-          <th scope="row" class="talents__player">
-            <hrs-player-cell [hero]="row.player.hero" [name]="row.player.name" [icon]="row.icon" />
-          </th>
-          @for (talent of row.talents; track $index) {
-            <td class="talents__cell">
-              @if (talent) {
-                <span class="talent">
-                  @if (talent.icon; as icon) {
-                    <img class="talent__icon" [hrsSprite]="icon" [spriteWidth]="32" alt="" />
-                  }
-                  <span class="talent__text">
-                    <span class="talent__name">{{ talent.name }}</span>
-                    <span class="talent__level">Level {{ talent.level }}</span>
-                  </span>
-                </span>
-              } @else {
-                <span class="talents__none">None</span>
-              }
-            </td>
-          }
-        </tr>
-      }
-    </tbody>
-  </table>
-</div>
+      </ng-template>
+    </hrs-column>
+  }
+</hrs-data-grid>

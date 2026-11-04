@@ -4,15 +4,19 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { EmptyState } from '@myrddraall/heroes-replay-stats-common/ui';
+import { CellTemplate, DataGrid, GridColumn } from '@myrddraall/heroes-replay-stats-data-views/ui';
 import type { PlayerRow } from './players-table.presenter';
 
-/** Everyone in the stored replays (presentational): a row each, and which accounts are me. */
+/** Everyone in the stored replays (presentational, on the data grid): a row each, and which accounts are me. */
 @Component({
   selector: 'hrs-players-table',
   imports: [
     DatePipe,
     PercentPipe,
+    CellTemplate,
+    DataGrid,
     EmptyState,
+    GridColumn,
     MatButtonModule,
     MatCheckboxModule,
     MatProgressBarModule,
@@ -30,4 +34,6 @@ export class PlayersTable {
   readonly meChange = output<{ id: string; isMe: boolean }>();
   /** The user asked to import replays. */
   readonly importRequested = output<void>();
+
+  protected readonly byId = (row: PlayerRow) => row.id;
 }

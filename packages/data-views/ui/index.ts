@@ -1,3 +1,5 @@
+export * from './data-grid/data-grid';
+export * from './data-grid/grid-column';
 export * from './item-list/item-list';
 export * from './templates/list-templates';
 export * from './virtual/virtual-scroll-memory';

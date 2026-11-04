@@ -3,6 +3,9 @@
   "compilerOptions": {
     "rootDir": "../..",
     "paths": {
+      "@myrddraall/heroes-replay-stats-data-views/*": [
+        "../data-views/*/index.ts"
+      ],
       "@myrddraall/heroes-replay-stats-common/*": [
         "../common/*/index.ts"
       ],
