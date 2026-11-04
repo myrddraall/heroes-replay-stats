@@ -25,12 +25,15 @@ export const ChatSectionStore = signalStore(
     };
   }),
   withComputed(({ _page, _chat, _emotes }) => ({
-    /** Null until the chat has been read. */
+    /**
+     * Null until the chat has been read. Its emotes show once the hero data has loaded too: until
+     * then the page has no pictures to name them by.
+     */
     lines: computed(() =>
       _chat.hasValue()
         ? chatLogLines(
             _chat.value(),
-            _emotes.hasValue() ? _emotes.value() : null,
+            _emotes.hasValue() && _page.heroData() ? _emotes.value() : null,
             _page.heroes(),
             _page.images(),
             _page.icons(),
