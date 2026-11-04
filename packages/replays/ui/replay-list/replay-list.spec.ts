@@ -22,6 +22,7 @@ const replay: ReplaySummary = {
   status: 'ready',
   players: [],
   recorderToonHandle: null,
+  outdated: false,
 };
 
 let heroes: HeroLookup;
@@ -29,7 +30,7 @@ let heroes: HeroLookup;
 /** The list showing one replay, `outdated` of them imported by an earlier version. */
 async function render(outdated: number) {
   const fixture = TestBed.createComponent(ReplayList);
-  fixture.componentRef.setInput('cards', [toReplayCard(replay, new Set(), heroes)]);
+  fixture.componentRef.setInput('cards', [toReplayCard(replay, new Set(), heroes, undefined)]);
   fixture.componentRef.setInput('loaded', true);
   fixture.componentRef.setInput('outdated', outdated);
   await fixture.whenStable();
