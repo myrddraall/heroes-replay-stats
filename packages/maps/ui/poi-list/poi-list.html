@@ -1,49 +1,58 @@
-<section class="pois" aria-label="Points of interest">
-  @for (team of teams(); track team.id) {
-    <section
-      class="pois__team"
-      [class.pois__team--order]="team.owner === 'order'"
-      [class.pois__team--chaos]="team.owner === 'chaos'"
-      [class.pois__team--neutral]="team.owner === null"
-      [attr.aria-labelledby]="'pois-team-' + team.id"
-    >
-      <h3 class="pois__team-heading" [id]="'pois-team-' + team.id">{{ team.label }}</h3>
-      @for (group of team.groups; track group.id) {
-        <h4 class="pois__group">{{ group.label }}</h4>
-        <ul class="pois__list">
-          @for (poi of group.pois; track poi.key) {
-            @let state = states()[poi.key];
-            <li class="poi-row" [class.poi-row--picked]="poi.key === selected()">
-              <button
-                #poi
-                type="button"
-                class="poi"
-                [class.poi--order]="poi.owner === 'order'"
-                [class.poi--chaos]="poi.owner === 'chaos'"
-                [class.poi--neutral]="poi.owner === null"
-                [class.poi--off]="state === 'off'"
-                [attr.aria-pressed]="poi.key === selected()"
-                (click)="poiSelect.emit(poi.key)"
-              >
-                <span class="poi__label">{{ poi.label }}</span>
-              </button>
-              <button
-                type="button"
-                class="poi-toggle"
-                [attr.aria-label]="toggleLabel(poi, state)"
-                [title]="toggleLabel(poi, state)"
-                (click)="stateToggle.emit(poi.key)"
-              >
-                <mat-icon class="material-symbols-outlined" aria-hidden="true">{{
-                  stateIcon(state)
-                }}</mat-icon>
-              </button>
-            </li>
-          }
-        </ul>
+<hrs-item-list
+  class="pois"
+  aria-label="Points of interest"
+  selectable
+  [items]="pois()"
+  [trackBy]="byKey"
+  [groupBy]="groupOf"
+  [selected]="picked()"
+  (selectedChange)="$event && poiSelect.emit($event.key)"
+>
+  <ng-template hrsGroupHeader let-key>
+    @if (heads().get(key); as head) {
+      @if (head.first) {
+        <div
+          class="pois__team-heading"
+          [class.pois__team-heading--top]="head.top"
+          [class.pois__team-heading--order]="head.team.owner === 'order'"
+          [class.pois__team-heading--chaos]="head.team.owner === 'chaos'"
+          [class.pois__team-heading--neutral]="head.team.owner === null"
+        >
+          {{ head.team.label }}
+        </div>
       }
-    </section>
-  } @empty {
+      <div class="pois__group">{{ head.group.label }}</div>
+    }
+  </ng-template>
+
+  <ng-template hrsItem let-poi>
+    @let state = states()[poi.key];
+    <div class="poi-row" [class.poi-row--picked]="poi.key === selected()">
+      <button
+        hrsItemFocus
+        type="button"
+        class="poi"
+        [class.poi--order]="poi.owner === 'order'"
+        [class.poi--chaos]="poi.owner === 'chaos'"
+        [class.poi--neutral]="poi.owner === null"
+        [class.poi--off]="state === 'off'"
+        [attr.aria-pressed]="poi.key === selected()"
+      >
+        <span class="poi__label">{{ poi.label }}</span>
+      </button>
+      <button
+        type="button"
+        class="poi-toggle"
+        [attr.aria-label]="toggleLabel(poi, state)"
+        [title]="toggleLabel(poi, state)"
+        (click)="stateToggle.emit(poi.key)"
+      >
+        <mat-icon class="material-symbols-outlined" aria-hidden="true">{{ stateIcon(state) }}</mat-icon>
+      </button>
+    </div>
+  </ng-template>
+
+  <ng-template hrsEmpty>
     <p class="pois__none">This render has no structures or camps on their own.</p>
-  }
-</section>
+  </ng-template>
+</hrs-item-list>

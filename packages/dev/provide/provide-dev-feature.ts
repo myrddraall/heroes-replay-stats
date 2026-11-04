@@ -20,6 +20,7 @@ export function provideDevFeature(): EnvironmentProviders {
   return makeEnvironmentProviders([
     { provide: ROUTES, multi: true, useValue: DEV_ROUTES },
     provideShellMenuItem({ label: 'Renderer check', link: '/renderer-check', order: 30, group: 'dev' }),
+    provideShellMenuItem({ label: 'Lists check', link: '/lists-check', order: 40, group: 'dev' }),
     provideEnvironmentInitializer(() => {
       if (!inject(DEV_REPORTS_URL)) return;
       const injector = inject(Injector);

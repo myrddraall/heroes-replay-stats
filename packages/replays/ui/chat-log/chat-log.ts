@@ -1,4 +1,5 @@
 import { Component, input } from '@angular/core';
+import { ItemList, ItemTemplate } from '@myrddraall/heroes-replay-stats-data-views/ui';
 import { Sprite } from '@myrddraall/heroes-replay-stats-sheets/ui';
 import { HeroMinimapIcon } from '@myrddraall/heroes-replay-stats-heroes/ui';
 import { TeamTheme } from '../team-theme/team-theme';
@@ -10,10 +11,12 @@ import type { ChatLogLine } from './chat-log-lines';
  */
 @Component({
   selector: 'hrs-chat-log',
-  imports: [HeroMinimapIcon, Sprite, TeamTheme],
+  imports: [HeroMinimapIcon, ItemList, ItemTemplate, Sprite, TeamTheme],
   templateUrl: './chat-log.html',
   styleUrl: './chat-log.scss',
 })
 export class ChatLog {
   readonly lines = input.required<readonly ChatLogLine[]>();
+
+  protected readonly byKey = (line: ChatLogLine) => line.key;
 }

@@ -7,12 +7,8 @@
   color: var(--mat-sys-error);
 }
 .maps {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 16px;
+  --hrs-list-item-min-width: 260px;
+  --hrs-list-gap: 16px;
 }
 .map {
   display: flex;

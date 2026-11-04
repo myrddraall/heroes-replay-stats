@@ -8,56 +8,53 @@
   font: var(--mat-sys-title-large);
 }
 
-.scroll {
-  overflow: auto;
-}
-
-// colours are Material's system tokens, so a row re-themed by its team's class follows it
+// Colours are Material's system tokens, so a row re-themed by its team follows it. The tiers
+// are 112px to 160px wide, the talents' names wrapping.
 .talents {
-  border-collapse: separate;
-  border-spacing: 0;
-  font: var(--mat-sys-body-small);
-}
+  width: fit-content;
+  max-width: 100%;
+  --hrs-grid-row-height: 0px;
+  --hrs-grid-cell-padding: 4px 8px;
+  --hrs-grid-cell-wrap: normal;
+  --hrs-grid-font: var(--mat-sys-body-small);
+  --hrs-grid-text: var(--mat-sys-on-surface);
+  --hrs-grid-first-text: var(--mat-sys-on-surface);
+  --hrs-grid-header-height: 0px;
+  --hrs-grid-header-font: var(--mat-sys-label-small);
+  --hrs-grid-header-text: var(--mat-sys-on-surface-variant);
+  --hrs-grid-header-case: none;
+  --hrs-grid-header-tracking: var(--mat-sys-label-small-tracking);
+  --hrs-grid-header-line: none;
+  --hrs-grid-header-background: var(--mat-sys-surface-container-highest);
 
-thead th {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  padding: 4px 8px;
-  text-align: start;
-  background: var(--mat-sys-surface-container-highest);
-  font: var(--mat-sys-label-small);
-  color: var(--mat-sys-on-surface-variant);
-}
-
-.talents__corner {
-  left: 0;
-  z-index: 2;
-}
-
-tbody tr {
-  background: var(--mat-sys-surface-container);
-  &:nth-child(even) {
-    background: var(--mat-sys-surface-container-high);
+  // Each row's own colours, its team's: set on the rows, where its theme is.
+  ::ng-deep .hrs-grid__body .hrs-grid__row {
+    --hrs-grid-themed-row-background: var(--mat-sys-surface-container);
+    --hrs-grid-sticky-background: var(--mat-sys-surface-container-highest);
+    --hrs-grid-row-hover: var(--mat-sys-surface-container-high);
+    --hrs-grid-row-line: none;
   }
-}
 
-.talents__player {
-  position: sticky;
-  left: 0;
-  z-index: 1;
-  padding: 2px 8px;
-  text-align: start;
-  font-weight: normal;
-  white-space: nowrap;
-  background: var(--mat-sys-surface-container-highest);
-}
+  ::ng-deep .hrs-grid__body .hrs-grid__cell {
+    border-top: 1px solid var(--mat-sys-outline-variant);
+  }
 
-.talents__cell {
-  min-width: 112px;
-  max-width: 160px;
-  padding: 4px 8px;
-  border-top: 1px solid var(--mat-sys-outline-variant);
+  ::ng-deep .hrs-grid__cell:not(:first-child) {
+    min-width: 112px;
+  }
+
+  // The players stay put as it scrolls sideways.
+  ::ng-deep :is(.hrs-grid__header, .hrs-grid__cell):first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    padding: 2px 8px;
+    background: var(--hrs-grid-sticky-background, var(--mat-sys-surface-container-highest));
+  }
+
+  ::ng-deep .hrs-grid__header {
+    padding: 4px 8px;
+  }
 }
 
 .talent {

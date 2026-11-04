@@ -1,22 +1,21 @@
+// The list: no gaps between rows; a group's header (the team's over its first group) has no
+// padding of its own.
 .pois {
   margin-bottom: 20px;
+  --hrs-list-gap: 0px;
+  --hrs-list-group-padding: 0;
 }
 
-// A team: its heading carries the team's colour; its groups sit under it.
-.pois__team {
-  & ~ .pois__team {
-    margin-top: 20px;
-  }
-}
-
+// A team's heading carries the team's colour; its groups sit under it.
 .pois__team-heading {
   display: flex;
   align-items: center;
   gap: 8px;
   margin: 0 0 8px;
-  padding-bottom: 4px;
+  padding: 20px 0 4px;
   border-bottom: 1px solid var(--mat-sys-outline-variant);
   font: var(--mat-sys-title-small);
+  color: var(--mat-sys-on-surface);
 
   &::before {
     content: '';
@@ -27,35 +26,27 @@
     flex: none;
   }
 
-  .pois__team--order &::before {
+  &.pois__team-heading--top {
+    padding-top: 0;
+  }
+
+  &.pois__team-heading--order::before {
     background: var(--hrs-team-blue);
   }
 
-  .pois__team--chaos &::before {
+  &.pois__team-heading--chaos::before {
     background: var(--hrs-team-red);
   }
 
-  .pois__team--neutral &::before {
+  &.pois__team-heading--neutral::before {
     background: #ffdc6e;
   }
 }
 
 .pois__group {
-  margin: 0 0 4px;
-  padding-inline-start: 12px;
-
-  & ~ .pois__group {
-    margin-top: 12px;
-  }
-
+  padding: 8px 0 4px 12px;
   font: var(--mat-sys-label-large);
   color: var(--mat-sys-on-surface-variant);
-}
-
-.pois__list {
-  margin: 0;
-  padding: 0 0 0 12px;
-  list-style: none;
 }
 
 .pois__none {
@@ -67,6 +58,7 @@
 // A row: the point's button (it picks it) and its state toggle, highlighted together.
 .poi-row {
   display: flex;
+  margin-inline-start: 12px;
   align-items: center;
   border-radius: 8px;
 

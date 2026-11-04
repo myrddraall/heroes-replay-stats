@@ -2,6 +2,7 @@ import { DatePipe, NgOptimizedImage } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import type { GameMode, Team } from '@myrddraall/heroprotocol-db';
 import { RouterLink } from '@angular/router';
+import { ItemFocus } from '@myrddraall/heroes-replay-stats-data-views/ui';
 import { HeroMinimapIcon } from '@myrddraall/heroes-replay-stats-heroes/ui';
 import { teamColor, type TeamColor } from '../../model';
 import { TeamPerspective } from '../team-theme/team-perspective';
@@ -41,7 +42,7 @@ export function formatDuration(seconds: number): string {
  */
 @Component({
   selector: 'hrs-replay-list-item',
-  imports: [DatePipe, HeroMinimapIcon, NgOptimizedImage, RouterLink, TeamTheme],
+  imports: [DatePipe, HeroMinimapIcon, ItemFocus, NgOptimizedImage, RouterLink, TeamTheme],
   providers: [TeamPerspective],
   templateUrl: './replay-list-item.html',
   styleUrl: './replay-list-item.scss',
