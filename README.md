@@ -577,3 +577,21 @@ This repository follows the [cpdevtools git-flow](https://github.com/cpdevtools/
 conventions: manifests carry the `0.0.0-MAIN` placeholder and the real version lives in
 `.publish/versions.yml`. Packaging the desktop app and publishing the web build are not
 wired yet; both are built and tested on every push.
+
+## Legal
+
+Heroes Replay Stats is a free, non-commercial fan project. It is not affiliated with, endorsed,
+sponsored or approved by Blizzard Entertainment.
+
+Heroes of the Storm is a trademark of Blizzard Entertainment, Inc., in the U.S. and/or other
+countries. Blizzard Entertainment is a trademark or registered trademark of Blizzard
+Entertainment, Inc., in the U.S. and/or other countries. All other trademarks are the property
+of their respective owners. Blizzard's own notices are on its
+[copyright notices page](https://www.blizzard.com/en-us/legal/9c9cb70b-d1ed-4e17-998a-16c6df46be7b/copyright-notices).
+
+The game art, map images, hero and talent pictures and game data the app shows come from Heroes
+of the Storm and belong to Blizzard Entertainment, Inc., as do replay files and the match data in
+them. The app reads replays only on the user's own device, to describe their own matches.
+
+The code is MIT licensed: see [LICENSE](LICENSE). The licence covers this project's own code,
+not Blizzard's game content.
