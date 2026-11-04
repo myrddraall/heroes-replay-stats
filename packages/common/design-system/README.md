@@ -89,7 +89,7 @@ Replays are how HRS gets match data; the site is organised around what the repla
 
 ## Components
 
-Shell: TopBar, SubBar, SideNav, UtilityPod, Portrait, StatusBar, ShellLayout, ShellMobile. Surfaces: Panel, Popover, Modal, Tooltip, Drawer, Divider. Actions: Button, IconButton, ToggleGroup, SelectionList, Tabs, BackLink, SectionHeading. Data: Table, ListRow, Card, ProductCard, Badge, Chip, ProgressBar, KeyValue, Scrollbar. Inputs: Select, SearchField, TextField, Checkbox, SlideToggle, Slider. Colour: ThemeVariants (all twelve), Rarity, TeamColours, Translucency, StyledText (the game's gradient and glow text treatments, per theme).
+Shell: TopBar, SubBar, SideNav, UtilityPod, Portrait, StatusBar, ShellLayout, ShellMobile. Surfaces: Panel, Popover, Modal, Tooltip, Drawer, Divider. Actions: Button, IconButton, ToggleGroup, SelectionList, Tabs, BackLink, SectionHeading. Data: DataGrid, ItemList, Table, ListRow, Card, ProductCard, Badge, Chip, ProgressBar, KeyValue, Scrollbar. Inputs: Select, SearchField, TextField, Checkbox, SlideToggle, Slider. Colour: ThemeVariants (all twelve), Rarity, TeamColours, Translucency, StyledText (the game's gradient and glow text treatments, per theme).
 
 Each component's README says what the consumer provides, its states, and the Angular Material mapping. Every preview is plain HTML on `components/bundle.css`; that stylesheet is the theme and ports to `packages/ui/src/theme` as is.
 

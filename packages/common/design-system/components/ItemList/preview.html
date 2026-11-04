@@ -1,0 +1,41 @@
+<!-- @dsCard group="Data" height=700 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>ItemList — preview</title></head>
+<body>
+<div class="hrs-stage">
+<div class="hrs-col" style="gap:24px;width:760px">
+
+<!-- Cards in columns: the page sets --hrs-list-item-min-width: 150px; the component works out --hrs-list-columns -->
+<hrs-item-list role="list" aria-label="Maps" style="--hrs-list-item-min-width:150px;--hrs-list-columns:4">
+  <div class="hrs-items__row">
+    <div class="hrs-items__item" role="listitem" aria-posinset="1" aria-setsize="6"><a class="hrs-card" href="#" style="width:auto"><div class="hrs-card__art">BE</div><div class="hrs-card__body"><div class="hrs-card__name">Battlefield of Eternity</div><div class="hrs-card__status">Battleground</div></div></a></div>
+    <div class="hrs-items__item" role="listitem" aria-posinset="2" aria-setsize="6" aria-current="true"><a class="hrs-card is-selected" href="#" style="width:auto"><div class="hrs-card__art">DS</div><div class="hrs-card__body"><div class="hrs-card__name">Dragon Shire</div><div class="hrs-card__status">Battleground</div></div></a></div>
+    <div class="hrs-items__item" role="listitem" aria-posinset="3" aria-setsize="6"><a class="hrs-card" href="#" style="width:auto"><div class="hrs-card__art">PA</div><div class="hrs-card__body"><div class="hrs-card__name">Punisher Arena</div><div class="hrs-card__status">Arena</div></div></a></div>
+    <div class="hrs-items__item" role="listitem" aria-posinset="4" aria-setsize="6"><div class="hrs-items__placeholder" aria-busy="true" style="height:100%;min-height:200px"></div></div>
+  </div>
+</hrs-item-list>
+
+<!-- Rows in groups: ListRows under sticky group headers (points of interest by town) -->
+<hrs-item-list role="list" aria-label="Points of interest" style="--hrs-list-gap:4px">
+  <div class="hrs-items__group">Town 1</div>
+  <div class="hrs-items__row"><div class="hrs-items__item" role="listitem" aria-posinset="1" aria-setsize="5"><div class="hrs-row"><span class="hrs-row__slot"></span>Keep<span class="hrs-spacer"></span>Standing</div></div></div>
+  <div class="hrs-items__row"><div class="hrs-items__item" role="listitem" aria-posinset="2" aria-setsize="5"><div class="hrs-row is-selected"><span class="hrs-row__slot"></span>Tower<span class="hrs-spacer"></span>Standing</div></div></div>
+  <div class="hrs-items__group">Town 2</div>
+  <div class="hrs-items__row"><div class="hrs-items__item" role="listitem" aria-posinset="3" aria-setsize="5"><div class="hrs-row"><span class="hrs-row__slot"></span>Fort<span class="hrs-spacer"></span>Rubble</div></div></div>
+  <div class="hrs-items__row"><div class="hrs-items__item" role="listitem" aria-posinset="4" aria-setsize="5"><div class="hrs-row hrs-row--empty"><span class="hrs-row__slot"></span>Healing fountain</div></div></div>
+</hrs-item-list>
+
+<!-- A log: lines of any height, no gap (chat). The page sets --hrs-list-gap: 0 -->
+<section class="hrs-panel" style="padding:8px 0">
+<hrs-item-list role="list" aria-label="Chat" style="--hrs-list-gap:0">
+  <div class="hrs-items__row"><div class="hrs-items__item" role="listitem" aria-posinset="1" aria-setsize="3"><div style="display:grid;grid-template-columns:3.5em 1fr;gap:10px;padding:3px 16px"><span class="hrs-muted">0:42</span><span><b>Erd</b> glhf</span></div></div></div>
+  <div class="hrs-items__row"><div class="hrs-items__item" role="listitem" aria-posinset="2" aria-setsize="3"><div style="display:grid;grid-template-columns:3.5em 1fr;gap:10px;padding:3px 16px"><span class="hrs-muted">3:10</span><span><b>SpeedyRogue</b> a longer line that wraps onto a second line because it says rather more than the others do, so this item is taller and is measured as it is drawn</span></div></div></div>
+  <div class="hrs-items__row"><div class="hrs-items__item" role="listitem" aria-posinset="3" aria-setsize="3"><div style="display:grid;grid-template-columns:3.5em 1fr;gap:10px;padding:3px 16px"><span class="hrs-muted">3:12</span><span><b>Facepalm</b> ok</span></div></div></div>
+</hrs-item-list>
+</section>
+
+</div>
+</div>
+</body>
+</html>

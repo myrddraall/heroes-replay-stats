@@ -12,11 +12,15 @@
   },
   "dependencies": {
     "@myrddraall/heroes-replay-stats-aether": "workspace:*",
+    "@myrddraall/heroes-replay-stats-data-views": "workspace:*",
+    "@myrddraall/heroes-replay-stats-layout": "workspace:*",
     "@myrddraall/heroes-replay-stats-platform": "workspace:*",
     "@myrddraall/heroes-replay-stats-shell": "workspace:*",
     "tslib": "^2.3.0"
   },
   "devDependencies": {
+    "@angular/cdk": "^22.1.0",
+    "@angular/material": "^22.1.0",
     "@angular/common": "^22.1.0",
     "@angular/compiler-cli": "^22.1.0",
     "@angular/core": "^22.1.0",
@@ -31,6 +35,8 @@
     "typescript-eslint": "^8.69.0"
   },
   "peerDependencies": {
+    "@angular/cdk": "^22.1.0",
+    "@angular/material": "^22.1.0",
     "@angular/common": "^22.1.0",
     "@angular/core": "^22.1.0",
     "@angular/router": "^22.1.0",
