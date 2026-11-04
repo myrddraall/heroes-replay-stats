@@ -33,7 +33,7 @@ export interface StatRow<T> {
   /** Rows with the same group (a team) are compared with each other for the best in the group. */
   readonly group: string | number | null;
   readonly values: Readonly<Record<string, number | null | undefined>>;
-  /** The row's theme (`data-theme`): its team's. */
+  /** The row's theme (`theme`): its team's. */
   readonly theme?: TeamColor;
   readonly data: T;
 }

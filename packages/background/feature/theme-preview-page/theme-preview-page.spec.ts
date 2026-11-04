@@ -24,7 +24,7 @@ describe('ThemePreviewPage', () => {
       'Blue team',
       'Red team',
     ]);
-    expect(panels.map((p) => p.getAttribute('data-theme'))).toEqual([
+    expect(panels.map((p) => p.getAttribute('theme'))).toEqual([
       'purple',
       'magenta',
       'cyan',
@@ -32,6 +32,6 @@ describe('ThemePreviewPage', () => {
       'red',
     ]);
     const tables = [...el.querySelectorAll('.match table')];
-    expect(tables.map((t) => t.getAttribute('data-theme'))).toEqual(['blue', 'red']);
+    expect(tables.map((t) => t.getAttribute('theme'))).toEqual(['blue', 'red']);
   });
 });

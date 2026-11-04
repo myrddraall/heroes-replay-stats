@@ -2,7 +2,7 @@
 @use '@angular/material' as mat;
 
 :root,
-[data-theme] {
+[theme] {
   @include mat.theme-overrides(
     (
       background: var(--hrs-ground),

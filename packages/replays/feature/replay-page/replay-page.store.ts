@@ -1,10 +1,11 @@
-import { computed, inject, resource } from '@angular/core';
+import { computed, effect, inject, resource, untracked } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import {
   patchState,
   signalMethod,
   signalStore,
   withComputed,
+  withHooks,
   withMethods,
   withProps,
   withState,
@@ -12,8 +13,7 @@ import {
 import { heroesImages } from '@myrddraall/hero-data';
 import { HERO_DATA, LatestHeroData } from '@myrddraall/heroes-replay-stats-heroes/data';
 import { heroLookup, type HeroIcon } from '@myrddraall/heroes-replay-stats-heroes/model';
-import { ReplayService } from '../../data';
-import { ReplayStatsService } from '../../data';
+import { ReplayService, ReplayStatsService, ViewedReplaysStore } from '../../data';
 import { SettingsStore } from '@myrddraall/heroes-replay-stats-settings/data';
 import { resolveYou } from '@myrddraall/heroes-replay-stats-players/model';
 import { errorMessage } from '@myrddraall/heroes-replay-stats-common/model';
@@ -21,6 +21,7 @@ import { errorMessage } from '@myrddraall/heroes-replay-stats-common/model';
 /**
  * {@link ReplayPage}'s component store: the replay shown, who "you" are in it, its game build's
  * hero data and pictures, and its stats tables, which the page's sections (its child routes) read.
+ * The replay shown counts as viewed, as it is imported now.
  */
 export const ReplayPageStore = signalStore(
   withState({ replayId: null as string | null }),
@@ -96,4 +97,14 @@ export const ReplayPageStore = signalStore(
     /** Show the replay with this id, following it as it changes. */
     show: signalMethod<string>((replayId) => patchState(store, { replayId })),
   })),
+  withHooks({
+    onInit(store) {
+      const viewed = inject(ViewedReplaysStore);
+      // the match open, and each import of it while open, counts as viewed
+      effect(() => {
+        const r = store.replay();
+        if (r) untracked(() => viewed.markViewed(r.id, r.importedAt));
+      });
+    },
+  }),
 );

@@ -14,11 +14,11 @@ port it when a page needs it).
 | Generated stylesheet in `packages/common/assets/styles` (tokens + bundle, one source here) | done | `assets/styles/nexus/tokens.css` + `nexus.css`, written by `pnpm run generate.theme` (`packages/common/tools/generate-theme.ts`), loaded before `styles.scss` in `apps/web/angular.json`. Type styles become `--hrs-font-<style>` / `--hrs-tracking-<style>` properties (not classes); the preview helpers and the font `@import` are left out; the embedded textures become `var(--hrs-tex-<texture>)` |
 | Header textures as sheet entries (heroes-assets `ui-sheets`), not data URIs | done | heroes-assets `ui-sheets/navigation.json` (9 pictures), published in release 2.57.9834810 (`live/ui/navigation.webp` on Pages); the shell sets `--hrs-tex-*` from it through `SHEET_PICTURES` (`packages/shell/data/navigation-textures.ts`; the vertical underline is `hover-underline` cut with `rotate: 90`) |
 | ThemeSettings model, store and form (README "Settings") | done | `packages/theme` (model `NeutralTheme`, `ThemeName`, `validTheme` with the glass carry-over; `ThemeStore`; `ThemeForm`: Colour, Opacity, blur) |
-| Shell applies `data-theme`, the film alphas and blur (CDK overlay container too) | done | `packages/shell/feature/shell` (`shell.ts` host bindings and overlay effect; floors and blurs in `films.ts`); `ShellLook` = theme, opacity, blur |
-| Team panels via `data-theme` (`hrsTeam`) | done | `packages/replays/ui/team-theme` |
-| Material M3 mapping replaces the overrides in `apps/web/src/styles.scss` | done | as a Material theme: `assets/styles/nexus/_material-theme.scss`, generated from bundle.css's mapping (`mat.theme-overrides` + `mat.<component>-overrides` on `:root` and every `[data-theme]`), `@use`d by `styles.scss` after `mat.theme` (type, density). Components keep Material's components and `--mat-sys-*` tokens |
+| Shell applies `theme`, the film alphas and blur (CDK overlay container too) | done | `packages/shell/feature/shell` (`shell.ts` host bindings and overlay effect; floors and blurs in `films.ts`); `ShellLook` = theme, opacity, blur |
+| Team panels via `theme` (`hrsTeam`) | done | `packages/replays/ui/team-theme` |
+| Material M3 mapping replaces the overrides in `apps/web/src/styles.scss` | done | as a Material theme: `assets/styles/nexus/_material-theme.scss`, generated from bundle.css's mapping (`mat.theme-overrides` + `mat.<component>-overrides` on `:root` and every `[theme]`), `@use`d by `styles.scss` after `mat.theme` (type, density). Components keep Material's components and `--mat-sys-*` tokens |
 | Glass bridge: `hrs-glass*` classes and mixins drawn as Nexus films | removed | served until every package was converted, then deleted with the files below |
-| Glass files removed (`_glass*.scss`, `_theme-colors.scss`, `glass/`) | done | 2026-11-03; the background editor's `panelClass` option went with them (the editor sits in the shell, which carries `data-theme`) |
+| Glass files removed (`_glass*.scss`, `_theme-colors.scss`, `glass/`) | done | 2026-11-03; the background editor's `panelClass` option went with them (the editor sits in the shell, which carries `theme`) |
 | Self theme directive (`green`, the user's own player) | later | no consumer yet |
 | Rarity theme directive | later | no consumer yet |
 | Game font | later | licence check first; Exo 2 + Source Sans 3 meanwhile |
@@ -80,9 +80,9 @@ foundation port; all converted the same day). A package is done when it has no g
 
 | Package | Files | Status |
 |---|---|---|
-| replays | 0 | done (glass gone: `.hrs-panel` for its panels, team rows by `data-theme`; its styles stay on Material's `--mat-sys-*` tokens) |
+| replays | 0 | done (glass gone: `.hrs-panel` for its panels, team rows by `theme`; its styles stay on Material's `--mat-sys-*` tokens) |
 | aether-forge | 17 | done (Material drawers with a hairline, fields and flyouts on `--mat-sys-surface-container*`, accents on `--mat-sys-primary`, markers from `--mat-sys-secondary`/`-primary`) |
-| background | 9 | done (Theme preview: a panel per `data-theme`, its opacity and blur the site's) |
+| background | 9 | done (Theme preview: a panel per `theme`, its opacity and blur the site's) |
 | maps | 7 | done (Material drawers, `.hrs-panel` map cards, lines `--mat-sys-outline-variant`) |
 | shell | 0 | done |
 | import | 2 | done |

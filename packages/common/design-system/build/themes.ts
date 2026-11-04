@@ -121,7 +121,7 @@ export function themeShadows(theme: Theme): Record<string, string> {
 export function rarityCss(): string {
   const out = [
     '/* ---------- rarity themes: the same roles as the five base themes (tokens.json), generated from one role table;',
-    '   they live here only because the tokens page holds at most 8 themes. data-theme="poor|common|uncommon|rare|epic|legendary". ---------- */',
+    '   they live here only because the tokens page holds at most 8 themes. theme="poor|common|uncommon|rare|epic|legendary". ---------- */',
   ];
   for (const theme of RARITY_THEMES) {
     const lines = [
@@ -129,7 +129,7 @@ export function rarityCss(): string {
       ...Object.entries(themeShadows(theme)).map(([k, v]) => `  --${k}: ${v};`),
       `  --hrs-glow-k: ${GLOW_K[theme]};`,
     ];
-    out.push(`[data-theme="${theme}"] {\n${lines.join('\n')}\n}`);
+    out.push(`[theme="${theme}"] {\n${lines.join('\n')}\n}`);
   }
   return `${out.join('\n')}\n`;
 }

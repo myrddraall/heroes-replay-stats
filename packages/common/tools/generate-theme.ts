@@ -3,7 +3,7 @@
  * (../design-system: tokens.json and components/bundle.css), into ../assets/styles/nexus:
  *
  * - `tokens.css`: every token as a CSS custom property. The colour and shadow roles per theme
- *   (`:root` and `[data-theme="purple"]` first, then one block per base theme), the rest once on
+ *   (`:root` and `[theme="purple"]` first, then one block per base theme), the rest once on
  *   `:root`; the type styles as font shorthands (`--hrs-font-<style>`) and trackings
  *   (`--hrs-tracking-<style>`), not classes, so they never clash with the app's own class names.
  * - `nexus.css`: bundle.css without the preview-only helpers (the scene stand-in and the preview
@@ -11,7 +11,7 @@
  *   Material mapping (below), and with the game textures it embeds as data URIs read from custom
  *   properties instead (`--hrs-tex-<texture>`), which the shell sets from the interface sheet.
  * - `_material-theme.scss`: bundle.css's Angular Material mapping as a Material theme, on `:root`
- *   and every `[data-theme]`: the system tokens through `mat.theme-overrides`, each component's
+ *   and every `[theme]`: the system tokens through `mat.theme-overrides`, each component's
  *   through its `mat.<component>-overrides` (Material checks every name as it compiles).
  *
  *   pnpm run generate.theme
@@ -71,7 +71,7 @@ function tokensCss(t: Tokens): string {
   const value = (token: Token, theme: string) =>
     typeof token.value === 'string' ? token.value : (token.value[theme] ?? token.value[first]);
   const blocks = themes.map((theme) => {
-    const selector = theme === first ? `:root, [data-theme="${theme}"]` : `[data-theme="${theme}"]`;
+    const selector = theme === first ? `:root, [theme="${theme}"]` : `[theme="${theme}"]`;
     const lines = [...t.color.tokens, ...t.shadow.tokens].map(
       (token) => `  --${token.name}: ${value(token, theme)};`,
     );

@@ -3,6 +3,12 @@
   position: relative;
   isolation: isolate;
   padding: 16px 20px;
+  // hovered, it glows: strong border and the design system's strong glow (its 6px hover glow is
+  // lost around a card this size)
+  &:hover {
+    border-color: var(--mat-sys-secondary);
+    box-shadow: var(--hrs-glow-selected);
+  }
 }
 // the map's replay preview: full card height, square, fading out into the panel, clipped to the
 // card's corners
@@ -19,6 +25,7 @@
   flex-wrap: wrap;
   align-items: baseline;
   gap: 4px 12px;
+  margin-bottom: 12px;
 }
 .replay__map {
   margin: 0;
@@ -45,6 +52,27 @@
   color: var(--mat-sys-primary);
   font: var(--mat-sys-label-large);
 }
+.replay__length {
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-label-large);
+}
+.replay__analysing {
+  color: var(--mat-sys-primary);
+  font: var(--mat-sys-label-large);
+}
+// small hairline chips on the title's baseline
+.replay__marks {
+  --mat-chip-container-height: 22px;
+  --mat-chip-label-text-size: var(--mat-sys-label-medium-size);
+  --mat-chip-label-text-weight: 600;
+}
+// New or Updated: in capitals, in the design system's emphasis gold (its cards' NEW)
+.replay__mark--new {
+  --mat-chip-label-text-color: var(--mat-sys-tertiary);
+  --mat-chip-outline-color: var(--mat-sys-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
 .replay__dates {
   display: grid;
   justify-items: end;
@@ -57,41 +85,39 @@
 .replay__imported {
   font: var(--mat-sys-body-small);
 }
-.replay__meta {
-  margin: 4px 0 12px;
-  color: var(--mat-sys-on-surface-variant);
-  font: var(--mat-sys-body-small);
-}
-.replay__analysing {
-  color: var(--mat-sys-primary);
-}
 .replay__teams {
   display: grid;
   gap: 8px;
 }
 .team {
+  position: relative;
+  isolation: isolate;
   display: grid;
-  grid-template-columns: 9rem minmax(0, 1fr);
+  grid-template-columns: 6.5rem minmax(0, 1fr);
   align-items: center;
   gap: 8px 12px;
-  padding: 8px 12px;
-  // a row in the team's theme (hrsTeam), the map preview still showing behind it
-  background: var(--mat-sys-surface-container-low);
-  border: 1px solid var(--mat-sys-outline-variant);
+  // the 1px of the bar's border on top, bottom and left
+  padding: 9px 12px 9px 13px;
+  // a bar in the team's theme (hrsTeam): its fill and border opaque at the left, fading out to
+  // nothing at the right; drawn behind the row so the players stay solid
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: oklch(from var(--mat-sys-surface-container-low) l c h / 1);
+    border: 1px solid var(--mat-sys-outline-variant);
+    border-right: 0;
+    mask-image: linear-gradient(to right, black, transparent);
+  }
 }
-.team__name {
-  display: grid;
-  font: var(--mat-sys-label-large);
-  color: var(--mat-sys-on-surface);
-}
+// Victory glowing in the legendary theme (hrsStyledText glow); Defeat in the team's colour (base)
 .team__result {
-  font: var(--mat-sys-label-small);
-  color: var(--mat-sys-on-surface-variant);
+  font-size: 15px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-}
-.team--won .team__result {
-  color: var(--mat-sys-tertiary);
+  // capitals have no descenders, so they sit above the line's middle: brought down onto it
+  translate: 0 0.12em;
 }
 .team__players {
   list-style: none;
@@ -122,6 +148,25 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 12ch;
+}
+// you, in your own colour (hrs-self) wherever you appear
+.player.hrs-self {
+  .player__hero,
+  .player__name {
+    color: inherit;
+  }
+  .player__hero {
+    font-weight: 600;
+  }
+}
+// "(you)" for screen readers: the colour says it on screen
+.player__you {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 @media (max-width: 600px) {
   .replay {

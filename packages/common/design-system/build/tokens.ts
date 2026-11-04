@@ -34,9 +34,9 @@ const color: Token[] = [
   { name: 'hrs-on-accent', value: role('hrs-on-accent'), usage: 'Text on a solid hrs-accent fill (filled checkbox, slider thumb, count badge). Dark, never white.' },
   { name: 'hrs-focus', value: hex('#ffd166'), usage: "Keyboard focus ring (2px solid, 2px offset) on every surface in every theme; the game has none, this is the web's." },
   // semantic, theme independent
-  { name: 'hrs-team-blue', value: hex('#4a95ff'), usage: 'Ally / team-1 player names and markers (lifted from game LabelYourTeam #3184ff for 4.5:1 on hrs-selection). Text on hrs-tint. Pair with data-theme="blue" for whole panels.' },
-  { name: 'hrs-team-red', value: hex('#ff6471'), usage: 'Enemy / team-2 player names and markers (lifted from game LabelEnemyTeam #f70b21 for 4.5:1 on hrs-tint). Panels: data-theme="red".' },
-  { name: 'hrs-self', value: hex('#4ee36b'), usage: 'The user\'s own player wherever they appear in a list (the Watch roster green). Panels about the user: data-theme="green".' },
+  { name: 'hrs-team-blue', value: hex('#4a95ff'), usage: 'Ally / team-1 player names and markers (lifted from game LabelYourTeam #3184ff for 4.5:1 on hrs-selection). Text on hrs-tint. Pair with theme="blue" for whole panels.' },
+  { name: 'hrs-team-red', value: hex('#ff6471'), usage: 'Enemy / team-2 player names and markers (lifted from game LabelEnemyTeam #f70b21 for 4.5:1 on hrs-tint). Panels: theme="red".' },
+  { name: 'hrs-self', value: hex('#4ee36b'), usage: 'The user\'s own player wherever they appear in a list (the Watch roster green). Panels about the user: theme="green".' },
   { name: 'hrs-gold', value: hex('#f2b632'), usage: 'Ownership and heroic marks: OWNED lines, heroic key outlines, the active section heading, the portrait frame fallback.' },
   { name: 'hrs-error', value: hex('#ff6b6b'), usage: "Error lines and failed imports (the chat's red). Text on hrs-tint; always with a word, never colour alone." },
   { name: 'hrs-info', value: hex('#6ca7ff'), usage: "System and informational lines (the chat's blue): 'has come online', import finished." },
