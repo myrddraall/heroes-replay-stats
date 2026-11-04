@@ -33,8 +33,8 @@
     </div>
   }
   <hrs-item-list class="list" aria-label="Matches" [items]="cards()" [trackBy]="byId">
-    <ng-template hrsItem let-card>
-      <hrs-replay-list-item [card]="card" />
+    <ng-template hrsItem let-card let-index="index">
+      <hrs-replay-list-item [card]="card" [priority]="index === 0" />
     </ng-template>
   </hrs-item-list>
 }

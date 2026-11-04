@@ -54,7 +54,7 @@
             @if (entry.item !== null) {
               <ng-container
                 [ngTemplateOutlet]="itemTemplate().template"
-                [ngTemplateOutletContext]="{ $implicit: entry.item, index: entry.index, count: count() }"
+                [ngTemplateOutletContext]="{ $implicit: entry.item, index: entry.index, count: count(), columns: columns() }"
               />
             } @else if (placeholderTemplate(); as placeholder) {
               <ng-container [ngTemplateOutlet]="placeholder.template" [ngTemplateOutletContext]="{ $implicit: entry.index }" />

@@ -22,8 +22,28 @@
   align-items: stretch;
 }
 
-// The app's logo where the game has its home logo, at the mark's size (2.6em of 16px).
+// The game's home button icon where the game has it (navigation#home, 74×78 at 42px high), its
+// lit state over it while the link is pointed at or focused.
 .top-bar__logo {
-  width: 2.6rem;
-  height: 2.6rem;
+  display: grid;
+  place-items: center;
+
+  > img {
+    grid-area: 1 / 1;
+  }
+}
+
+.top-bar__logo-hover {
+  opacity: 0;
+  transition: opacity 0.15s;
+
+  .hrs-topbar__brand:is(:hover, :focus-visible) & {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .top-bar__logo-hover {
+    transition: none;
+  }
 }

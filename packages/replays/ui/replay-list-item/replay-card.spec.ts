@@ -42,7 +42,7 @@ describe('toReplayCard', () => {
 
   it("gives the map's preview and each player's hero icon, by slot", () => {
     const card = toReplayCard(replay, new Set(), heroes);
-    expect(card.preview).toBe('towers.png');
+    expect(card.preview).toEqual({ src: 'towers.png' });
     expect(card.icons).toEqual({ 0: { picture: { src: 'sonya.png' }, name: 'Sonya' }, 5: null });
     expect(card.replay).toBe(replay);
   });

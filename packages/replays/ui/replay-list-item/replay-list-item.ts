@@ -1,8 +1,9 @@
-import { DatePipe, NgOptimizedImage } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import type { GameMode, Team } from '@myrddraall/heroprotocol-db';
 import { RouterLink } from '@angular/router';
 import { ItemFocus } from '@myrddraall/heroes-replay-stats-data-views/ui';
+import { Sprite } from '@myrddraall/heroes-replay-stats-sheets/ui';
 import { HeroMinimapIcon } from '@myrddraall/heroes-replay-stats-heroes/ui';
 import { teamColor, type TeamColor } from '../../model';
 import { TeamPerspective } from '../team-theme/team-perspective';
@@ -42,13 +43,15 @@ export function formatDuration(seconds: number): string {
  */
 @Component({
   selector: 'hrs-replay-list-item',
-  imports: [DatePipe, HeroMinimapIcon, ItemFocus, NgOptimizedImage, RouterLink, TeamTheme],
+  imports: [DatePipe, HeroMinimapIcon, ItemFocus, RouterLink, Sprite, TeamTheme],
   providers: [TeamPerspective],
   templateUrl: './replay-list-item.html',
   styleUrl: './replay-list-item.scss',
 })
 export class ReplayListItem {
   readonly card = input.required<ReplayCard>();
+  /** Its picture is among the first the page shows: loaded first. */
+  readonly priority = input(false);
   private readonly perspective = inject(TeamPerspective);
   protected readonly replay = computed(() => this.card().replay);
   private readonly you = computed(() => this.card().you);

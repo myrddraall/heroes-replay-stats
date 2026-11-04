@@ -1,7 +1,13 @@
 <article class="replay hrs-panel" [attr.aria-label]="label()">
   @if (preview(); as src) {
     <div class="replay__preview">
-      <img [ngSrc]="src" fill alt="" />
+      <img
+        [hrsSprite]="src"
+        spriteCover
+        [loading]="priority() ? 'eager' : 'lazy'"
+        [attr.fetchpriority]="priority() ? 'high' : null"
+        alt=""
+      />
     </div>
   }
   <header class="replay__head">

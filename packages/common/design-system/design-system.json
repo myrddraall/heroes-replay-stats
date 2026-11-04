@@ -18,8 +18,8 @@
  },
  "lastChange": {
   "by": "Erd",
-  "at": "2026-11-03T02:42:37Z",
+  "at": "2026-11-04T16:31:00Z",
   "via": "Claude Code",
-  "note": "Settings section: ThemeSettings (theme purple|magenta|cyan, one Opacity slider from the floor to solid, blur). Translucency shows opacity 0, 0.5, 1 and blur; nothing below the floor."
+  "note": "DataGrid and ItemList added (every table and list, drawn only where the view is); Table removed, the shell previews' tables now DataGrid markup; NavTree: every area has its chevron; scrollbar, nav and sub-bar updates from the app."
  }
 }
