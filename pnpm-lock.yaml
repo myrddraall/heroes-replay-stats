@@ -108,8 +108,8 @@ importers:
         specifier: ^22.1.0
         version: 22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(rxjs@7.8.2)
       '@myrddraall/hero-data':
-        specifier: ^0.5.4
-        version: 0.5.4
+        specifier: ^0.5.5
+        version: 0.5.5
       '@myrddraall/heroes-replay-stats-aether':
         specifier: workspace:*
         version: link:../../packages/aether
@@ -765,8 +765,8 @@ importers:
   packages/heroes:
     dependencies:
       '@myrddraall/hero-data':
-        specifier: ^0.5.4
-        version: 0.5.4
+        specifier: ^0.5.5
+        version: 0.5.5
       '@myrddraall/heroes-replay-stats-common':
         specifier: workspace:*
         version: link:../common
@@ -975,8 +975,8 @@ importers:
   packages/maps:
     dependencies:
       '@myrddraall/hero-data':
-        specifier: ^0.5.4
-        version: 0.5.4
+        specifier: ^0.5.5
+        version: 0.5.5
       '@myrddraall/heroes-replay-stats-background':
         specifier: workspace:*
         version: link:../background
@@ -1239,8 +1239,8 @@ importers:
   packages/replays:
     dependencies:
       '@myrddraall/hero-data':
-        specifier: ^0.5.4
-        version: 0.5.4
+        specifier: ^0.5.5
+        version: 0.5.5
       '@myrddraall/heroes-replay-stats-common':
         specifier: workspace:*
         version: link:../common
@@ -2749,8 +2749,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@myrddraall/hero-data@0.5.4':
-    resolution: {integrity: sha512-blhkdFFf9FNeAUNwoA17Fb2ekM7cKsO6Ic/tNyi+HvlfTOCYX1zYK3uH4FFZ03gZOANpbjd16wYy5N85aZrcfQ==, tarball: https://npm.pkg.github.com/download/@myrddraall/hero-data/0.5.4/76f6fa5b1c1e5f83fa386b42140486e02d434c8f}
+  '@myrddraall/hero-data@0.5.5':
+    resolution: {integrity: sha512-B4jsa7agq4tJnUFzN4DdMXAh60qWh32Sb8WSncMIA3tKlAtqE2fTOd5B2/mSCIH7YK69WvjNtI3ksIHDfQdUcg==, tarball: https://npm.pkg.github.com/download/@myrddraall/hero-data/0.5.5/8ece706b609a89fde634148d3554df300501dcb0}
     engines: {node: '>=24'}
 
   '@myrddraall/heroprotocol-analysis@0.5.4':
@@ -7599,7 +7599,7 @@ snapshots:
   '@msgpackr-extract/msgpackr-extract-win32-x64@3.0.4':
     optional: true
 
-  '@myrddraall/hero-data@0.5.4': {}
+  '@myrddraall/hero-data@0.5.5': {}
 
   '@myrddraall/heroprotocol-analysis@0.5.4(dexie@4.4.6)':
     dependencies:
