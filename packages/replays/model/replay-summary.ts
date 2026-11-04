@@ -22,4 +22,9 @@ export interface ReplaySummary {
   readonly players: readonly ReplayPlayer[];
   /** The account that recorded the replay, when known. */
   readonly recorderToonHandle: string | null;
+  /**
+   * An earlier version of the importer stored it: some details may be out of date until its
+   * file is imported again.
+   */
+  readonly outdated: boolean;
 }
