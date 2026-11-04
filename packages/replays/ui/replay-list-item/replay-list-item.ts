@@ -81,7 +81,11 @@ export class ReplayListItem {
 
   protected readonly mode = computed(() => MODE_LABELS[this.replay().mode]);
   protected readonly viewed = computed(() => VIEWED_LABELS[this.card().viewed]);
-  protected readonly duration = computed(() => formatDuration(this.replay().durationSeconds));
+  /** Its length on the game's clock; a replay that ends before the gates open has none. */
+  protected readonly duration = computed(() => {
+    const seconds = this.replay().durationSeconds;
+    return seconds === 0 ? 'Before the gates opened' : formatDuration(seconds);
+  });
   protected readonly teams = computed(() => {
     const r = this.replay();
     const yourTeam = this.perspective.yourTeam();

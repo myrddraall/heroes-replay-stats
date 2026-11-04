@@ -207,4 +207,30 @@ describe('ReplayListItem', () => {
       ['Bob', false, null],
     ]);
   });
+
+  it('says when there is no result, nobody on a side, or no game clock yet', async () => {
+    const [alice] = replay.players;
+    // left during loading: no winner, the gates never opened, and only Alice on her side
+    const fixture = await render({
+      ...replay,
+      winningTeam: null,
+      durationSeconds: 0,
+      players: [alice!],
+      recorderToonHandle: alice!.toonHandle,
+    });
+    const el: HTMLElement = fixture.nativeElement;
+    const t = (node: ParentNode, sel: string) => node.querySelector(sel)?.textContent?.trim();
+    expect(t(el, '.replay__length')).toBe('Before the gates opened');
+    const teams = [...el.querySelectorAll('.team')].map((team) => [
+      team.getAttribute('aria-label'),
+      t(team, '.team__result'),
+      team.querySelector('[hrsStyledText], .hrs-styled--glow, .hrs-styled--base') !== null,
+      t(team, '.team__empty') ?? null,
+      team.querySelectorAll('.player').length,
+    ]);
+    expect(teams).toEqual([
+      ['Blue team', 'No result', false, null, 1],
+      ['Red team', 'No result', false, 'No players', 0],
+    ]);
+  });
 });

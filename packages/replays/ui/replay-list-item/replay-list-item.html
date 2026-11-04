@@ -49,7 +49,9 @@
     @for (team of teams(); track team.team) {
       <div class="team" role="group" [attr.aria-label]="team.name" [hrsTeam]="team.team">
         <span class="team__result">
-          @if (team.won !== null) {
+          @if (team.won === null) {
+            <span class="team__no-result">No result</span>
+          } @else {
             <span
               [hrsStyledText]="team.won ? 'glow' : 'base'"
               [attr.theme]="team.won ? 'legendary' : null"
@@ -57,22 +59,26 @@
             >
           }
         </span>
-        <ul class="team__players">
-          @for (p of team.players; track p.slot) {
-            <li class="player" [class.hrs-self]="p.you">
-              <hrs-hero-minimap-icon
-                class="player__icon"
-                [picture]="icons()[p.slot]?.picture ?? null"
-                [name]="icons()[p.slot]?.name ?? p.hero"
-              />
-              <span class="player__hero">{{ p.hero }}</span>
-              <span class="player__name">{{ p.name }}</span>
-              @if (p.you) {
-                <span class="player__you">(you)</span>
-              }
-            </li>
-          }
-        </ul>
+        @if (team.players.length === 0) {
+          <p class="team__empty">No players</p>
+        } @else {
+          <ul class="team__players">
+            @for (p of team.players; track p.slot) {
+              <li class="player" [class.hrs-self]="p.you">
+                <hrs-hero-minimap-icon
+                  class="player__icon"
+                  [picture]="icons()[p.slot]?.picture ?? null"
+                  [name]="icons()[p.slot]?.name ?? p.hero"
+                />
+                <span class="player__hero">{{ p.hero }}</span>
+                <span class="player__name">{{ p.name }}</span>
+                @if (p.you) {
+                  <span class="player__you">(you)</span>
+                }
+              </li>
+            }
+          </ul>
+        }
       </div>
     }
   </div>

@@ -119,6 +119,17 @@
   // capitals have no descenders, so they sit above the line's middle: brought down onto it
   translate: 0 0.12em;
 }
+// the replay ends before the game did: no winner, so neither side glows
+.team__no-result {
+  color: var(--mat-sys-on-surface-variant);
+  font-weight: 600;
+}
+// a side nobody played on
+.team__empty {
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-medium);
+}
 .team__players {
   list-style: none;
   margin: 0;
