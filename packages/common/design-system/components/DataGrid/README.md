@@ -32,6 +32,6 @@ Every table of data: stat tables, the score table, talents, the draft, unit kill
 **Row colours that follow a row's theme** (a team's) are set on the rows (`.hrs-grid__body .hrs-grid__row`), where its theme is: a custom property set on the grid takes the grid's colours.
 
 **Parts** (theme classes): `.hrs-grid__head`, `.hrs-grid__body`, `.hrs-grid__row`, `.hrs-grid__header`, `.hrs-grid__cell`, `.hrs-grid__group`, `.hrs-grid__placeholder`; numeric columns (`align="end"`) put `.hrs-num` on their header and cells.
-**Consumer provides:** items, columns and their templates, sort and selection state, the look. **Material:** `matSort` on the header row; no `mat-table` (see Table).
+**Consumer provides:** items, columns and their templates, sort and selection state, the look. **Material:** `matSort` and its sort headers; no `mat-table`.
 
 **Tests:** `provideWholeLists()` (`data-views/testing`) draws every row unmeasured, where there is no layout.

@@ -52,9 +52,8 @@ Design: **settled** = the user approved it; **changing** = not reviewed yet, may
 | Modal | changing | later | |
 | Tooltip | changing | later | |
 | BackLink | changing | later | |
-| DataGrid | new | spec | every table; `hrs-data-grid` in `packages/data-views` to come (TanStack Virtual, page scroll, look by custom properties) |
-| ItemList | new | spec | every list of cards or rows; `hrs-item-list` in `packages/data-views` to come |
-| Table | changing | later | replays' tables keep their own styles on Material tokens |
+| DataGrid | new | done | `hrs-data-grid` in `packages/data-views` (TanStack Virtual, page scroll, look by custom properties, Material sort): score, stat tables (team stats, player stats, unit kills, XP), talents, draft, players |
+| ItemList | new | done | `hrs-item-list` in `packages/data-views`: matches, maps, points of interest, chat; Dev › Lists check |
 | ListRow | changing | later | |
 | KeyValue | changing | later | |
 | Card | changing | later | |

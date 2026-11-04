@@ -327,20 +327,6 @@ a:hover { text-decoration: underline; }
 .hrs-kv dt { color: var(--hrs-text-muted); font-weight: 600; } .hrs-kv dd { margin: 0; color: var(--hrs-text); font-variant-numeric: tabular-nums; }
 
 /* ---------- data ---------- */
-.hrs-table { width: 100%; border-collapse: collapse; font-size: 13px; line-height: 18px; }
-.hrs-table th { padding: var(--hrs-space-2) var(--hrs-space-3); text-align: left; font: 700 11px/14px var(--font-brand); letter-spacing: 0.08em; text-transform: uppercase;
-  color: var(--hrs-text-muted); border-bottom: var(--hrs-line); white-space: nowrap; }
-.hrs-table th[aria-sort] { color: var(--hrs-text); cursor: pointer; }
-.hrs-table th[aria-sort]::after { content: " ▾"; color: var(--hrs-border-strong); } .hrs-table th[aria-sort="ascending"]::after { content: " ▴"; }
-.hrs-table td { padding: var(--hrs-space-2) var(--hrs-space-3); border-bottom: 1px solid oklch(from var(--hrs-border) l c h / 0.35); color: var(--hrs-text-muted); }
-.hrs-table td.hrs-num, .hrs-table th.hrs-num { text-align: right; }
-.hrs-table td:first-child { color: var(--hrs-text); }
-.hrs-table tbody tr { border: 1px solid transparent; }
-.hrs-table tbody tr:hover td { background: var(--hrs-film-hover); }
-.hrs-table tbody tr.is-selected td { background: var(--hrs-selection); color: var(--hrs-text); box-shadow: inset 0 1px var(--hrs-border-strong), inset 0 -1px var(--hrs-border-strong); }
-.hrs-table tbody tr.is-selected td:first-child { box-shadow: inset 1px 1px var(--hrs-border-strong), inset 0 -1px var(--hrs-border-strong); }
-.hrs-table tbody tr.is-selected td:last-child { box-shadow: inset -1px 1px var(--hrs-border-strong), inset 0 -1px var(--hrs-border-strong); }
-.hrs-table td.hrs-team-blue { color: var(--hrs-team-blue); } .hrs-table td.hrs-team-red { color: var(--hrs-team-red); } .hrs-table td.hrs-self { color: var(--hrs-self); }
 .hrs-team-blue { color: var(--hrs-team-blue); } .hrs-team-red { color: var(--hrs-team-red); } .hrs-self { color: var(--hrs-self); }
 .hrs-gold { color: var(--hrs-gold); } .hrs-error { color: var(--hrs-error); } .hrs-info { color: var(--hrs-info); } .hrs-warning { color: var(--hrs-warning); }
 
@@ -378,6 +364,11 @@ hrs-data-grid { display: block; max-width: 100%; }
 .hrs-grid__cell { min-height: var(--hrs-grid-row-height, 40px); white-space: var(--hrs-grid-cell-wrap, nowrap); font: var(--hrs-grid-font, 400 13px/18px var(--font-plain)); color: var(--hrs-grid-text, var(--hrs-text-muted)); border-bottom: var(--hrs-grid-row-line, 1px solid oklch(from var(--hrs-border) l c h / 0.35)); }
 .hrs-grid__cell:first-child { color: var(--hrs-grid-first-text, var(--hrs-text)); }
 .hrs-grid__header.hrs-num, .hrs-grid__cell.hrs-num { justify-content: flex-end; text-align: right; font-variant-numeric: tabular-nums; }
+/* a player's name in their colour */
+.hrs-grid__cell.hrs-team-blue { color: var(--hrs-team-blue); } .hrs-grid__cell.hrs-team-red { color: var(--hrs-team-red); } .hrs-grid__cell.hrs-self { color: var(--hrs-self); }
+/* static markup (the previews): rows straight in the body, apart by the gap; a sorted header's arrow where Material's sort header doesn't draw one */
+.hrs-grid__body > .hrs-grid__row + .hrs-grid__row { margin-top: var(--hrs-grid-row-gap, 0); }
+.hrs-grid__header[aria-sort="descending"]:not(.mat-sort-header)::after { content: "▾"; color: var(--hrs-border-strong); } .hrs-grid__header[aria-sort="ascending"]:not(.mat-sort-header)::after { content: "▴"; color: var(--hrs-border-strong); }
 .hrs-grid__body .hrs-grid__row:hover { background: var(--hrs-grid-row-hover, var(--hrs-film-hover)); }
 .hrs-grid__body .hrs-grid__row[aria-selected="true"] { background: var(--hrs-grid-row-selected, var(--hrs-selection)); box-shadow: inset 0 0 0 1px var(--hrs-border-strong); }
 .hrs-grid__group { grid-column: 1 / -1; display: flex; align-items: center; height: var(--hrs-grid-header-height, 32px); padding: var(--hrs-grid-cell-padding, 0 var(--hrs-space-3)); font: 700 11px/14px var(--font-brand); letter-spacing: 0.08em; text-transform: uppercase; color: var(--hrs-text); }
