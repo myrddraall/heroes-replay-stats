@@ -25,7 +25,7 @@ export interface TalentRow {
   readonly key: number;
   readonly player: PlayerIdentity;
   readonly icon: HeroIcon | null;
-  /** The team's theme (`data-theme`); none for a player without a team. */
+  /** The team's theme (`theme`); none for a player without a team. */
   readonly theme: TeamColor | undefined;
   /** By tier, in {@link TALENT_TIERS}' order; null for a tier not picked. */
   readonly talents: readonly (TalentCell | null)[];

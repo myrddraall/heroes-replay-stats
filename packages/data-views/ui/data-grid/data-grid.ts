@@ -67,7 +67,7 @@ export class DataGrid<T> {
   readonly trackBy = input<(item: T, index: number) => unknown>();
   /** The group an item is in, null for none: each group starts with its header row. */
   readonly groupBy = input<(item: T, index: number) => string | null>();
-  /** A row's theme (a team's), its `data-theme`: its colours follow it. */
+  /** A row's theme (a team's), its `theme`: its colours follow it. */
   readonly rowTheme = input<(item: T, index: number) => string | null>();
   /** The order the items are in; the page sorts them. Pressing a sortable header changes it. */
   readonly sort = model<GridSort | null>(null);

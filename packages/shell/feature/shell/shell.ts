@@ -100,7 +100,7 @@ function pageTitle(state: RouterStateSnapshot): string | null {
   styleUrl: './shell.scss',
   providers: [ShellNavStore, ShellPanelsStore],
   host: {
-    '[attr.data-theme]': 'look.theme()',
+    '[attr.theme]': 'look.theme()',
     '[style]': 'style()',
     '[class.hrs-shell--handset]': 'handset()',
     '(document:dragenter)': 'onDragEnter($event)',
@@ -204,7 +204,7 @@ export class Shell {
     // What opens over the page (menus, selects, dialogs) wears the same theme and films.
     const overlay = inject(OverlayContainer).getContainerElement();
     effect(() => {
-      overlay.setAttribute('data-theme', this.look.theme());
+      overlay.setAttribute('theme', this.look.theme());
       for (const [property, value] of Object.entries(this.films()))
         overlay.style.setProperty(property, value);
     });

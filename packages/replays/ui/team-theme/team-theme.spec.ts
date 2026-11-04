@@ -24,7 +24,7 @@ class Rows {
 class Screen {}
 
 function themes(el: HTMLElement): (string | null)[] {
-  return [...el.querySelectorAll('div')].map((d) => d.getAttribute('data-theme'));
+  return [...el.querySelectorAll('div')].map((d) => d.getAttribute('theme'));
 }
 
 describe('TeamTheme', () => {

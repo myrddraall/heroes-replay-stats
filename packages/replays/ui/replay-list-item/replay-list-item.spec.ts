@@ -126,7 +126,7 @@ describe('ReplayListItem', () => {
     const rows = (el: HTMLElement) =>
       [...el.querySelectorAll('.team')].map((t) => [
         t.querySelector('.team__name')!.firstChild!.textContent!.trim(),
-        t.getAttribute('data-theme'),
+        t.getAttribute('theme'),
         t.querySelector('.player__name')!.textContent!.trim(),
       ]);
     // Bob recorded it, so his team (1) is blue, and blue is on top

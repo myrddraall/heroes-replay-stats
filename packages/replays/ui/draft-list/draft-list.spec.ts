@@ -21,7 +21,7 @@ describe('DraftList', () => {
       ['1', 'Blue team', 'Ban', 'Genji', ''],
       ['2', 'Red team', 'Pick', 'Li Li', 'Ann'],
     ]);
-    expect(rows.map((r) => r.getAttribute('data-theme'))).toEqual(['blue', 'red']);
+    expect(rows.map((r) => r.getAttribute('theme'))).toEqual(['blue', 'red']);
     expect([...rows[0]!.children].map((c) => c.getAttribute('role'))).toEqual(['cell', 'cell', 'cell', 'rowheader', 'cell']);
     expect(rows[0]!.querySelector('.step__hero')!.classList.contains('step--ban')).toBe(true);
     expect(rows[1]!.querySelector('.step__hero')!.classList.contains('step--ban')).toBe(false);

@@ -15,7 +15,7 @@ interface Variant {
   readonly theme: Theme;
 }
 
-/** The themes a page can be in (`data-theme`). */
+/** The themes a page can be in (`theme`). */
 type Theme = 'purple' | 'magenta' | 'cyan' | 'blue' | 'red';
 
 interface SamplePlayer {

@@ -21,7 +21,7 @@ body {
   background: var(--hrs-ground);
 }
 :root,
-[data-theme] {
+[theme] {
   /* the films: tint composed with the alpha the user controls */
   --hrs-film: oklch(from var(--hrs-tint) l c h / var(--hrs-surface-alpha));
   --hrs-film-raised: oklch(from var(--hrs-tint-raised) l c h / var(--hrs-surface-alpha-raised));
@@ -308,74 +308,74 @@ a:hover {
 /* The TopBar and SubBar are drawn with the game's own navigation textures (core.stormmod ui/layout/common/standardtemplates.stormlayout:
    TopNavContainer, ScreenNavigationButtonTemplate, SubNavContainer, Top_Navigation). Purple shows them exactly as shipped; every other theme
    moves them to its hue with --hrs-tex-filter, and the label colours (fontstyles.stormstyle TaskBarNavigation) rotate by --hrs-hue-delta. */
-[data-theme='purple'],
+[theme='purple'],
 :root {
   --hrs-tex-filter: none;
   --hrs-hue-delta: 0;
   --hrs-chroma-k: 1;
 }
-[data-theme='magenta'] {
+[theme='magenta'] {
   --hrs-tex-filter: hue-rotate(41deg);
   --hrs-hue-delta: 42;
   --hrs-chroma-k: 1;
 }
-[data-theme='cyan'] {
+[theme='cyan'] {
   --hrs-tex-filter: hue-rotate(-66deg);
   --hrs-hue-delta: -56;
   --hrs-chroma-k: 1;
 }
-[data-theme='blue'] {
+[theme='blue'] {
   --hrs-tex-filter: hue-rotate(-20deg);
   --hrs-hue-delta: -20;
   --hrs-chroma-k: 1;
 }
-[data-theme='red'] {
+[theme='red'] {
   --hrs-tex-filter: hue-rotate(88deg);
   --hrs-hue-delta: -268;
   --hrs-chroma-k: 1;
 }
-[data-theme='green'] {
+[theme='green'] {
   --hrs-tex-filter: hue-rotate(-95deg);
   --hrs-hue-delta: -128;
   --hrs-chroma-k: 1;
 }
-[data-theme='poor'] {
+[theme='poor'] {
   --hrs-tex-filter: grayscale(1) brightness(0.8);
   --hrs-nav-l-shift: -10%;
   --hrs-hue-delta: 0;
   --hrs-chroma-k: 0;
 }
-[data-theme='common'] {
+[theme='common'] {
   --hrs-tex-filter: grayscale(1) brightness(1.35);
   --hrs-nav-l-shift: 22%;
   --hrs-hue-delta: 0;
   --hrs-chroma-k: 0;
 }
-[data-theme='uncommon'] {
+[theme='uncommon'] {
   --hrs-tex-filter: hue-rotate(-157deg) saturate(1.3);
   --hrs-hue-delta: -144;
   --hrs-chroma-k: 1.35;
 }
-[data-theme='rare'] {
+[theme='rare'] {
   --hrs-tex-filter: hue-rotate(-53deg) saturate(1.25);
   --hrs-nav-l-shift: -5%;
   --hrs-hue-delta: -37;
   --hrs-chroma-k: 1.15;
 }
-[data-theme='epic'] {
+[theme='epic'] {
   --hrs-tex-filter: hue-rotate(22deg) saturate(1.35);
   --hrs-nav-l-shift: 0%;
   --hrs-hue-delta: 19;
   --hrs-chroma-k: 1.35;
 }
-[data-theme='legendary'] {
+[theme='legendary'] {
   --hrs-tex-filter: hue-rotate(149deg) saturate(1.2);
   --hrs-nav-l-shift: 0%;
   --hrs-hue-delta: -234;
   --hrs-chroma-k: 1.2;
 }
 :root,
-[data-theme] {
+[theme] {
   --hrs-nav-text-top: oklch(
     calc(71.2% + var(--hrs-nav-l-shift, 0%)) calc(0.158 * var(--hrs-chroma-k))
       calc(287 + var(--hrs-hue-delta))
@@ -1602,7 +1602,7 @@ hrs-data-grid {
   background: var(--hrs-grid-row-background, transparent);
 }
 /* a row with a theme of its own (a team's) takes its theme's film */
-.hrs-grid__body .hrs-grid__row[data-theme] {
+.hrs-grid__body .hrs-grid__row[theme] {
   background: var(--hrs-grid-themed-row-background, var(--hrs-film));
 }
 .hrs-grid__header,
@@ -1854,7 +1854,7 @@ hrs-item-list {
 
 /* Scrollbar: the game's Storm_ScrollBar_Background (16×28: 3 clear, a 2px border rgb(66 49 130), a dark fill rgb(26 16 55) 6 wide; its clear ends and outer side dropped, so the track runs the scrolling area's full length flush against its edge, the 3 clear only on the content side) holding Storm_ScrollBar_Button (16×33: a 6-wide bar rgb(139 166 255) at 70%, 5 clear on every side; hover 85%, pressed rgb(218 212 250)), built from the textures' own pixels; purple is the game's colours, other themes rotate them to their hue. Every scrolling area takes it, Material's included (drawers, the page, select and menu panels, dialogs); .hrs-scroll only adds the scrolling. The standard scrollbar-width and scrollbar-color are left unset where these parts work: Chrome ignores the parts once either is set */
 :root,
-[data-theme] {
+[theme] {
   --hrs-scroll-line: oklch(
     from rgb(66 49 130) l calc(c * var(--hrs-chroma-k)) calc(h + var(--hrs-hue-delta))
   );
@@ -1909,7 +1909,7 @@ hrs-item-list {
 }
 @supports not selector(::-webkit-scrollbar) {
   :root,
-  [data-theme] {
+  [theme] {
     scrollbar-color: oklch(from var(--hrs-scroll-thumb) l c h / 0.7) var(--hrs-scroll-fill);
   }
 }
@@ -2213,8 +2213,8 @@ hrs-item-list {
 }
 
 /* ---------- rarity themes: the same roles as the five base themes (tokens.json), generated from one role table;
-   they live here only because the tokens page holds at most 8 themes. data-theme="poor|common|uncommon|rare|epic|legendary". ---------- */
-[data-theme='poor'] {
+   they live here only because the tokens page holds at most 8 themes. theme="poor|common|uncommon|rare|epic|legendary". ---------- */
+[theme='poor'] {
   --hrs-ground: oklch(16% 0 286);
   --hrs-tint: oklch(19.5% 0 286);
   --hrs-tint-raised: oklch(24% 0 286);
@@ -2232,7 +2232,7 @@ hrs-item-list {
   --hrs-glow-modal: 0 0 40px oklch(52% 0 286 / 0.45), 0 0 120px oklch(52% 0 286 / 0.2);
   --hrs-glow-k: 0.25;
 }
-[data-theme='common'] {
+[theme='common'] {
   --hrs-ground: oklch(16% 0 286);
   --hrs-tint: oklch(19.5% 0 286);
   --hrs-tint-raised: oklch(24% 0 286);
@@ -2250,7 +2250,7 @@ hrs-item-list {
   --hrs-glow-modal: 0 0 40px oklch(92% 0 286 / 0.45), 0 0 120px oklch(92% 0 286 / 0.2);
   --hrs-glow-k: 0.6;
 }
-[data-theme='uncommon'] {
+[theme='uncommon'] {
   --hrs-ground: oklch(16% 0.045 142);
   --hrs-tint: oklch(19.5% 0.06 142);
   --hrs-tint-raised: oklch(24% 0.075 142);
@@ -2268,7 +2268,7 @@ hrs-item-list {
   --hrs-glow-modal: 0 0 40px oklch(68% 0.21 142 / 0.45), 0 0 120px oklch(68% 0.21 142 / 0.2);
   --hrs-glow-k: 0.7;
 }
-[data-theme='rare'] {
+[theme='rare'] {
   --hrs-ground: oklch(16% 0.045 250);
   --hrs-tint: oklch(19.5% 0.06 250);
   --hrs-tint-raised: oklch(24% 0.075 250);
@@ -2286,7 +2286,7 @@ hrs-item-list {
   --hrs-glow-modal: 0 0 40px oklch(64% 0.18 250 / 0.45), 0 0 120px oklch(64% 0.18 250 / 0.2);
   --hrs-glow-k: 0.85;
 }
-[data-theme='epic'] {
+[theme='epic'] {
   --hrs-ground: oklch(16% 0.045 306);
   --hrs-tint: oklch(19.5% 0.06 306);
   --hrs-tint-raised: oklch(24% 0.075 306);
@@ -2304,7 +2304,7 @@ hrs-item-list {
   --hrs-glow-modal: 0 0 40px oklch(64% 0.24 306 / 0.45), 0 0 120px oklch(64% 0.24 306 / 0.2);
   --hrs-glow-k: 1;
 }
-[data-theme='legendary'] {
+[theme='legendary'] {
   --hrs-ground: oklch(16% 0.045 53);
   --hrs-tint: oklch(19.5% 0.06 53);
   --hrs-tint-raised: oklch(24% 0.075 53);
