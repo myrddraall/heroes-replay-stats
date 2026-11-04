@@ -22,7 +22,7 @@
       [attr.aria-disabled]="node.disabled || null"
       [attr.aria-current]="node.current ? 'page' : null"
     >
-      @if (node.children.length) {
+      @if (node.children.length || areas().has(node)) {
         <span class="hrs-tree__chev" aria-hidden="true">›</span>
       }
       <span class="hrs-tree__label">{{ node.label }}</span>

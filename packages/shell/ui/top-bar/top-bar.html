@@ -13,7 +13,17 @@
     </button>
   } @else {
     <a class="hrs-topbar__brand" routerLink="/" aria-label="Heroes Replay Stats, home">
-      <img class="top-bar__logo" ngSrc="heroes-icon.svg" alt="" width="40" height="40" priority />
+      <!-- the game's home button: its icon, lit while pointed at -->
+      <span class="top-bar__logo">
+        <img hrsSprite="navigation#home" [spriteHeight]="42" loading="eager" alt="" />
+        <img
+          class="top-bar__logo-hover"
+          hrsSprite="navigation#home-hover"
+          [spriteHeight]="42"
+          loading="eager"
+          alt=""
+        />
+      </span>
     </a>
     <nav class="top-bar__nav" aria-label="Main">
       <ul class="hrs-nav1">

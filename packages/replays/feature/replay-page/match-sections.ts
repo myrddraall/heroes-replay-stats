@@ -1,7 +1,7 @@
 import type { ShellNavLink } from '@myrddraall/heroes-replay-stats-shell/model';
 import { STAT_SECTION_IDS, STAT_SECTIONS } from '../../model';
 
-/** A match's sections, as the shell's navigation lists them: its side nav, with Stats' sections under Stats. */
+/** A match's sections, as the shell's navigation lists them: its side nav, with Stats' sections, Unit Kills and XP under Stats. */
 export function matchSections(id: string): ShellNavLink[] {
   const at = (path: string) => `/replays/matches/${id}/${path}`;
   return [
@@ -13,9 +13,11 @@ export function matchSections(id: string): ShellNavLink[] {
     {
       label: 'Stats',
       link: at('stats'),
-      children: STAT_SECTION_IDS.map((s) => ({ label: STAT_SECTIONS[s].title, link: at(`stats/${s}`) })),
+      children: [
+        ...STAT_SECTION_IDS.map((s) => ({ label: STAT_SECTIONS[s].title, link: at(`stats/${s}`) })),
+        { label: 'Unit Kills', link: at('stats/unit-kills') },
+        { label: 'XP', link: at('stats/xp') },
+      ],
     },
-    { label: 'Unit Kills', link: at('unit-kills') },
-    { label: 'XP', link: at('xp') },
   ];
 }

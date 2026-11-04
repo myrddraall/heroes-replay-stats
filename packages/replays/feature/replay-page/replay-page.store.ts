@@ -10,7 +10,7 @@ import {
   withState,
 } from '@ngrx/signals';
 import { heroesImages } from '@myrddraall/hero-data';
-import { HERO_DATA } from '@myrddraall/heroes-replay-stats-heroes/data';
+import { HERO_DATA, LatestHeroData } from '@myrddraall/heroes-replay-stats-heroes/data';
 import { heroLookup, type HeroIcon } from '@myrddraall/heroes-replay-stats-heroes/model';
 import { ReplayService } from '../../data';
 import { ReplayStatsService } from '../../data';
@@ -31,6 +31,7 @@ export const ReplayPageStore = signalStore(
       _replays: inject(ReplayService),
       _settings: inject(SettingsStore),
       _provider: inject(HERO_DATA),
+      _latest: inject(LatestHeroData),
       _scoreScreen: rxResource({
         params: id,
         stream: ({ params }) => stats.scoreScreen(params),
@@ -52,11 +53,19 @@ export const ReplayPageStore = signalStore(
       loader: ({ params }) => _provider.forBuild(params),
     }),
   })),
-  withComputed(({ replay, _replays, _settings, _heroData, _scoreScreen, _playerStats }) => {
-    /** Null until it has loaded. */
-    const heroData = computed(() => (_heroData.hasValue() ? (_heroData.value() ?? null) : null));
-    /** The pictures for its file names (heroes-images' until it has loaded). */
-    const images = computed(() => heroesImages({ data: heroData() ?? undefined }));
+  withComputed(({ replay, _replays, _settings, _heroData, _latest, _scoreScreen, _playerStats }) => {
+    /** The newest build's data: the pictures a build before heroes-assets has none of. */
+    const latest = computed(() => (_latest.data.hasValue() ? _latest.data.value() : undefined));
+    /**
+     * Null until it has loaded, and for a build without pictures of its own until the newest
+     * build's have: its pictures are those.
+     */
+    const heroData = computed(() => {
+      const own = _heroData.hasValue() ? (_heroData.value() ?? null) : null;
+      return own && (own.pictures || latest()) ? own : null;
+    });
+    /** The pictures for its file names: its own, else the newest build's. */
+    const images = computed(() => heroesImages({ data: heroData() ?? undefined, fallback: latest() }));
     /** Heroes' icons and maps' previews from it; knows nothing until it has loaded. */
     const heroes = computed(() => heroLookup(heroData() ?? undefined, images()));
     return {

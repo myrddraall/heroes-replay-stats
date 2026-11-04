@@ -62,7 +62,7 @@ Design: **settled** = the user approved it; **changing** = not reviewed yet, may
 | ProgressBar | changing | later | |
 | Divider | changing | later | |
 | SectionHeading | changing | later | |
-| Scrollbar | changing | later | |
+| Scrollbar | changing | done | every scrolling area, Material's included: the `::-webkit-scrollbar` parts in nexus.css, built from the game's Storm_ScrollBar_Background and Storm_ScrollBar_Button |
 | Select | changing | later | |
 | SearchField | changing | later | |
 | TextField | changing | later | |

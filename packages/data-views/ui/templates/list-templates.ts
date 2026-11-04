@@ -5,6 +5,8 @@ export interface ItemContext<T> {
   readonly $implicit: T;
   readonly index: number;
   readonly count: number;
+  /** How many items a row holds now: the first row is `index < columns`. */
+  readonly columns: number;
 }
 
 /** How each item is drawn (`*hrsItem="let item"`). */

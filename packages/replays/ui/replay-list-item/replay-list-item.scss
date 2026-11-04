@@ -13,9 +13,6 @@
   aspect-ratio: 1;
   overflow: hidden;
   mask-image: linear-gradient(to right, black, transparent);
-  img {
-    object-fit: cover;
-  }
 }
 .replay__head {
   display: flex;
