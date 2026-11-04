@@ -8,8 +8,8 @@
   }
 } @else {
   @if (stuck(); as stuck) {
-    <div class="item-list__stuck" aria-hidden="true">
-      <div class="hrs-items__group" [style.transform]="'translateY(' + stuck.push + 'px)'">
+    <div class="item-list__stuck" aria-hidden="true" [style.top.px]="-window.inset()">
+      <div #stuckHeader class="hrs-items__group" [style.transform]="'translateY(' + stuck.push + 'px)'">
         <ng-container
           [ngTemplateOutlet]="groupTemplate()?.template ?? plainGroup"
           [ngTemplateOutletContext]="{ $implicit: stuck.group }"
@@ -49,8 +49,7 @@
             [attr.aria-posinset]="entry.index + 1"
             [attr.aria-setsize]="count()"
             [attr.aria-current]="isSelected(entry) ? 'true' : null"
-            [tabIndex]="entry.index === focusIndex() ? 0 : -1"
-            (click)="choose(entry)"
+            (click)="onClick($event, entry)"
           >
             @if (entry.item !== null) {
               <ng-container
@@ -69,4 +68,4 @@
   }
 }
 
-<ng-template #plainGroup let-group>{{ group }}</ng-template>
+<ng-template #plainGroup let-group><span class="hrs-items__group-label">{{ group }}</span></ng-template>

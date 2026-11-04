@@ -1769,20 +1769,22 @@ hrs-item-list {
   position: sticky;
   top: 0;
   z-index: 1;
+  margin-bottom: var(--hrs-list-gap, var(--hrs-space-3));
+  padding: var(--hrs-list-group-padding, 0 var(--hrs-space-1));
+  color: var(--hrs-list-group-text, var(--hrs-text-muted));
+  background: var(--hrs-list-group-background, oklch(from var(--hrs-film-raised) l c h / 1));
+}
+/* the group name as the list draws it without the page's own header template */
+.hrs-items__group-label {
   display: flex;
   align-items: center;
   gap: var(--hrs-space-3);
   min-height: 32px;
-  margin-bottom: var(--hrs-list-gap, var(--hrs-space-3));
-  padding: 0 var(--hrs-space-1);
   font: var(--hrs-list-group-font, 700 11px/14px var(--font-brand));
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--hrs-list-group-text, var(--hrs-text-muted));
-  background: var(--hrs-list-group-background, var(--hrs-film-raised));
-  backdrop-filter: var(--hrs-backdrop-raised);
 }
-.hrs-items__group::after {
+.hrs-items__group-label::after {
   content: '';
   flex: 1;
   height: 1px;

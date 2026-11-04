@@ -20,6 +20,12 @@ describe('stuckGroup', () => {
     expect(stuckGroup(rows, places, 300)).toEqual({ group: 'b', push: 0 });
   });
 
+  it('pushes it by its own height when that is given (headers can differ)', () => {
+    // the drawn headers are 20px; this one 30px: the next header (at 270) reaches it 10px sooner
+    expect(stuckGroup(rows, places, 250)).toEqual({ group: 'a', push: 0 });
+    expect(stuckGroup(rows, places, 250, 30)).toEqual({ group: 'a', push: -10 });
+  });
+
   it('has none without groups', () => {
     const plain = listRows(3, 1);
     expect(stuckGroup(plain, plain.map((_, i) => ({ index: i, start: i * 100, size: 100 })), 150)).toBeNull();

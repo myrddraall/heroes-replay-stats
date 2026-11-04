@@ -64,3 +64,13 @@ export class PlaceholderTemplate {
     return true;
   }
 }
+
+/**
+ * Marks what in an item takes the focus (its link or main button), when it has one: the arrow
+ * keys move between these, and only the current one is a Tab stop. Without it, the item itself.
+ */
+@Directive({ selector: '[hrsItemFocus]' })
+export class ItemFocus {}
+
+/** The attribute `ItemFocus` leaves on its element, to find it by. */
+export const ITEM_FOCUS = 'hrsitemfocus';

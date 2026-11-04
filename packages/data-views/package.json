@@ -47,7 +47,8 @@
   "exports": {
     ".": "./index.ts",
     "./ui": "./ui/index.ts",
-    "./model": "./model/index.ts"
+    "./model": "./model/index.ts",
+    "./testing": "./testing/index.ts"
   },
   "type": "module"
 }

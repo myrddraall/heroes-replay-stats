@@ -1,6 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ElementShown, PoiTeam } from '../../model';
+import { provideWholeLists } from '@myrddraall/heroes-replay-stats-data-views/testing';
 import { describe, expect, it } from 'vitest';
 import { PoiList } from './poi-list';
 
@@ -101,6 +102,7 @@ class Host {
 }
 
 async function render() {
+  TestBed.configureTestingModule({ providers: [provideWholeLists()] });
   const fixture = TestBed.createComponent(Host);
   await fixture.whenStable();
   return { fixture, el: fixture.nativeElement as HTMLElement };
@@ -109,16 +111,16 @@ async function render() {
 describe('the list of points of interest', () => {
   it('shows each team, its groups under it, and a button per point, the picked one pressed', async () => {
     const { el } = await render();
-    expect([...el.querySelectorAll('h3')].map((h) => h.textContent)).toEqual(['Order', 'Neutral']);
-    expect([...el.querySelectorAll('h4')].map((h) => h.textContent)).toEqual([
+    // the headers in order: each team's over its first group
+    const heads = [...el.querySelectorAll('.item-list__row .pois__team-heading, .item-list__row .pois__group')];
+    expect(heads.map((h) => h.textContent!.trim())).toEqual([
+      'Order',
       'Town 1',
       'Outpost 1',
+      'Neutral',
       'Mercenary camps',
     ]);
-    expect([...el.querySelectorAll('.pois__team--order h4')].map((h) => h.textContent)).toEqual([
-      'Town 1',
-      'Outpost 1',
-    ]);
+    expect(heads[0]!.classList.contains('pois__team-heading--order')).toBe(true);
     const buttons = [...el.querySelectorAll<HTMLButtonElement>('button.poi')];
     expect(buttons.map((b) => b.querySelector('.poi__label')!.textContent)).toEqual([
       'Fort',
@@ -151,9 +153,10 @@ describe('the list of points of interest', () => {
 
   it('picks the next and the previous point with the arrow keys, and moves focus to it', async () => {
     const { fixture, el } = await render(); // structure-2 is picked
-    const list = el.querySelector('hrs-poi-list')!;
+    // from the focused point's button, as a key press comes
     const press = (key: string) =>
-      list.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+      (document.activeElement ?? el).dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+    el.querySelectorAll<HTMLButtonElement>('button.poi')[1]!.focus();
     press('ArrowDown');
     expect(fixture.componentInstance.picked()).toBe('camp-1');
     expect(document.activeElement?.textContent?.trim()).toBe('Siege camp');

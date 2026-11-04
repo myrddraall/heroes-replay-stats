@@ -13,7 +13,7 @@ const domains: Record<string, readonly string[]> = {
   dev: ['provide', 'feature', 'ui', 'data', 'model'],
   heroes: ['provide', 'data', 'ui', 'model', 'testing'],
   import: ['provide', 'feature', 'ui', 'data', 'model'],
-  'data-views': ['ui', 'model'],
+  'data-views': ['ui', 'model', 'testing'],
   layout: ['ui', 'model'],
   maps: ['provide', 'feature', 'ui', 'data', 'model', 'testing'],
   platform: ['provide', 'data', 'model'],

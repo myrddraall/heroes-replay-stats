@@ -32,9 +32,9 @@
       <button mat-stroked-button (click)="importRequested.emit()">Import again</button>
     </div>
   }
-  <ul class="list">
-    @for (card of cards(); track card.replay.id) {
-      <li><hrs-replay-list-item [card]="card" /></li>
-    }
-  </ul>
+  <hrs-item-list class="list" aria-label="Matches" [items]="cards()" [trackBy]="byId">
+    <ng-template hrsItem let-card>
+      <hrs-replay-list-item [card]="card" />
+    </ng-template>
+  </hrs-item-list>
 }

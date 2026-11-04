@@ -27,7 +27,8 @@
   margin: 0;
 }
 
-// The header of the group at the top of the view, over its items as they pass under it.
+// The header of the group at the top of the view, over its items as they pass under it: at the
+// scroller's very top, over its padding (the list sets how far up that is).
 .item-list__stuck {
   position: sticky;
   top: 0;

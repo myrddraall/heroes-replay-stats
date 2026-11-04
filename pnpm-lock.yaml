@@ -980,6 +980,9 @@ importers:
       '@myrddraall/heroes-replay-stats-common':
         specifier: workspace:*
         version: link:../common
+      '@myrddraall/heroes-replay-stats-data-views':
+        specifier: workspace:*
+        version: link:../data-views
       '@myrddraall/heroes-replay-stats-heroes':
         specifier: workspace:*
         version: link:../heroes
@@ -1047,6 +1050,9 @@ importers:
       '@ngrx/signals':
         specifier: ^22.0.1
         version: 22.0.1(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2)
+      '@tanstack/angular-virtual':
+        specifier: ^6.1.12
+        version: 6.1.12(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))
       angular-eslint:
         specifier: ^22.5.0
         version: 22.5.0(chokidar@5.0.0)(eslint@10.11.0(jiti@2.7.0))(typescript-eslint@8.69.0(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(typescript@6.0.3)
@@ -1226,6 +1232,9 @@ importers:
       '@myrddraall/heroes-replay-stats-common':
         specifier: workspace:*
         version: link:../common
+      '@myrddraall/heroes-replay-stats-data-views':
+        specifier: workspace:*
+        version: link:../data-views
       '@myrddraall/heroes-replay-stats-heroes':
         specifier: workspace:*
         version: link:../heroes
@@ -1302,6 +1311,9 @@ importers:
       '@ngrx/signals':
         specifier: ^22.0.1
         version: 22.0.1(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2)
+      '@tanstack/angular-virtual':
+        specifier: ^6.1.12
+        version: 6.1.12(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))
       angular-eslint:
         specifier: ^22.5.0
         version: 22.5.0(chokidar@5.0.0)(eslint@10.11.0(jiti@2.7.0))(typescript-eslint@8.69.0(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(typescript@6.0.3)

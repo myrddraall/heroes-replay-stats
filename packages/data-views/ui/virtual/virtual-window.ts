@@ -2,6 +2,7 @@ import { CdkScrollable } from '@angular/cdk/scrolling';
 import { Location } from '@angular/common';
 import { afterNextRender, computed, DestroyRef, inject, type Signal, signal, untracked } from '@angular/core';
 import { injectVirtualizer, injectWindowVirtualizer, type VirtualItem } from '@tanstack/angular-virtual';
+import { WHOLE_LISTS } from '../../model';
 import { VirtualScrollMemory } from './virtual-scroll-memory';
 
 /** The attribute a drawn row carries its index in, for measuring it. */
@@ -28,6 +29,8 @@ export interface VirtualWindow {
   readonly start: Signal<number>;
   /** How far the scroller is scrolled. */
   readonly offset: Signal<number>;
+  /** The scroller's padding at the top: a sticky header set this far up sits at its very top. */
+  readonly inset: Signal<number>;
   /**
    * Measures a drawn row (it carries its index in `ROW_INDEX`); unless `typical` is false (a group's
    * header), its size stands for the rows not drawn yet until they are.
@@ -39,17 +42,24 @@ export interface VirtualWindow {
 
 /**
  * The window of a long list on its host (`host`): only the rows in the page's view (and a few
- * either side) are drawn. It scrolls with the page's own scroller (the shell's, found through
- * `CdkScrollable`; the window's without one), follows where the list sits on the page as what is
- * above it changes, takes the first row it measures as the size of the rows not drawn yet, and
- * when the page comes back returns it to where it was. Call it in a component's injection context.
+ * either side) are drawn. It scrolls with whatever scrolls it on the page, found once it is on
+ * the page: the nearest of its parents that scrolls (a panel's body), else the app's scroller
+ * (`CdkScrollable`, the shell's page); the window's own scroll when there is none. It follows where the
+ * list sits as what is above it changes, takes the first row it measures as the size of the rows
+ * not drawn yet, and when the page comes back returns it to where it was. Call it in a
+ * component's injection context.
  */
 export function injectVirtualWindow(host: HTMLElement, options: () => VirtualWindowOptions): VirtualWindow {
-  const scroller = inject(CdkScrollable, { optional: true })?.getElementRef().nativeElement ?? null;
+  if (inject(WHOLE_LISTS)) return wholeWindow(options);
+  const outer = inject(CdkScrollable, { optional: true })?.getElementRef().nativeElement ?? null;
+  /** What scrolls the list, once it is on the page. */
+  const scroller = signal<HTMLElement | undefined>(undefined);
   const memory = inject(VirtualScrollMemory);
   const key = memory.keyFor(inject(Location).path());
   const saved = memory.get(key);
   const start = signal(0);
+  /** The scroller's padding at the top, which something sticky stays below. */
+  const inset = signal(0);
   /** The first drawn row's height: the size of the rows not drawn yet. */
   const firstSize = signal<number | null>(saved?.size ?? null);
 
@@ -71,26 +81,37 @@ export function injectVirtualWindow(host: HTMLElement, options: () => VirtualWin
       ...(saved ? { initialMeasurementsCache: [...saved.measurements], initialOffset: saved.offset } : {}),
     };
   };
-  const virtualizer = scroller
-    ? injectVirtualizer(() => ({ ...common(), scrollElement: scroller }))
+  const virtualizer = outer
+    ? injectVirtualizer(() => ({ ...common(), scrollElement: scroller() }))
     : injectWindowVirtualizer(() => common());
 
   // Where the list starts on the page: again whenever it, its scroller or the page in it changes size.
+  // What scrolls it can change as the page around it does (a panel that opens gets more in it than
+  // it shows): looked for again each time.
   const place = () => {
+    const box = outer ? scrollingParent(host, outer) : undefined;
+    const was = untracked(scroller);
+    if (box && box !== was) {
+      sized.observe(box);
+      for (const child of Array.from(box.children)) sized.observe(child);
+      scroller.set(box);
+    }
+    inset.set(box ? parseFloat(getComputedStyle(box).paddingTop) || 0 : 0);
     const top = host.getBoundingClientRect().top;
-    start.set(scroller ? top - scroller.getBoundingClientRect().top + scroller.scrollTop : top + window.scrollY);
+    start.set(box ? top - box.getBoundingClientRect().top + box.scrollTop : top + window.scrollY);
   };
   const sized = new ResizeObserver(place);
   sized.observe(host);
-  if (scroller) {
-    sized.observe(scroller);
-    for (const child of Array.from(scroller.children)) sized.observe(child);
-  }
   afterNextRender(() => {
+    // its parents too: one of them taking on more than it shows makes it the scroller
+    for (let parent = host.parentElement; outer && parent && parent !== outer; parent = parent.parentElement) {
+      sized.observe(parent);
+    }
     place();
+    const box = untracked(scroller);
     // back where the page was
     if (saved) {
-      if (scroller) scroller.scrollTop = saved.offset;
+      if (box) box.scrollTop = saved.offset;
       else window.scrollTo({ top: saved.offset });
     }
   });
@@ -118,6 +139,7 @@ export function injectVirtualWindow(host: HTMLElement, options: () => VirtualWin
     totalSize: virtualizer.getTotalSize,
     start,
     offset: computed(() => virtualizer.scrollOffset() ?? 0),
+    inset,
     measure: (row, typical = true) => {
       virtualizer.measureElement(row);
       if (typical && firstSize() === null && row.offsetHeight > 0) firstSize.set(row.offsetHeight);
@@ -133,4 +155,37 @@ export function injectVirtualWindow(host: HTMLElement, options: () => VirtualWin
       else if (row.end > offset + view) virtualizer.scrollToOffset(row.end - view);
     },
   };
+}
+
+/** Every row drawn, each the estimated height (`WHOLE_LISTS`: where there is no layout). */
+function wholeWindow(options: () => VirtualWindowOptions): VirtualWindow {
+  const rows = computed(() => {
+    const { count, gap, estimate, key } = options();
+    return Array.from({ length: count }, (_, index): VirtualItem => {
+      const start = index * (estimate + gap);
+      return { index, key: key?.(index) ?? index, start, end: start + estimate, size: estimate, lane: 0 };
+    });
+  });
+  return {
+    rows,
+    totalSize: computed(() => rows().at(-1)?.end ?? 0),
+    start: signal(0),
+    offset: signal(0),
+    inset: signal(0),
+    measure: () => undefined,
+    scrollToIndex: () => undefined,
+  };
+}
+
+/**
+ * The nearest of `element`'s parents that scrolls up and down, up to `outer` (the app's scroller,
+ * which it falls back to). An element that only hides what overflows sideways also says it
+ * scrolls up and down, so only one with more in it than it shows counts.
+ */
+function scrollingParent(element: HTMLElement, outer: HTMLElement): HTMLElement {
+  for (let parent = element.parentElement; parent && parent !== outer; parent = parent.parentElement) {
+    const scrolls = /(auto|scroll|overlay)/.test(getComputedStyle(parent).overflowY);
+    if (scrolls && parent.scrollHeight > parent.clientHeight) return parent;
+  }
+  return outer;
 }

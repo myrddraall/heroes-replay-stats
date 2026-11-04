@@ -13,9 +13,8 @@
 }
 
 .log {
-  margin: 0;
   padding: 8px 0;
-  list-style: none;
+  --hrs-list-gap: 0px;
 }
 
 // time, icon, sender, text; the text wraps under itself
