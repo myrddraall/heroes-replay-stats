@@ -22,7 +22,7 @@
 
   &:hover,
   &.number--scrubbing {
-    border-color: rgb(var(--hrs-glass-edge) / 0.8);
+    border-color: color-mix(in srgb, var(--mat-sys-primary) 80%, transparent);
   }
 
   &:focus {

@@ -28,6 +28,7 @@ function toSummary(r: ReplayRecord & { status: 'ready' | 'complete' }): ReplaySu
       .sort((a, b) => a.slot - b.slot),
     // absent on replays imported before the recorder was stored
     recorderToonHandle: r.recorderToonHandle ?? null,
+    outdated: r.normalizeVersion !== NORMALIZE_VERSION,
   };
 }
 
@@ -51,9 +52,7 @@ export class ReplayService {
    * How many of them an earlier version of the importer stored: their details may be out of
    * date, and importing their files again brings them up to date.
    */
-  readonly outdated = computed(
-    () => this.live.value().filter((r) => r.normalizeVersion !== NORMALIZE_VERSION).length,
-  );
+  readonly outdated = computed(() => this.replays().filter((r) => r.outdated).length);
   /** False until the database has answered once. */
   readonly loaded = this.live.loaded;
   /** The last error reading the list, or null. */

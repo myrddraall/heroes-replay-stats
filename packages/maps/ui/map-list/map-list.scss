@@ -7,28 +7,24 @@
   color: var(--mat-sys-error);
 }
 .maps {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 16px;
+  --hrs-list-item-min-width: 260px;
+  --hrs-list-gap: 16px;
 }
 .map {
   display: flex;
   flex-direction: column;
   gap: 4px;
   padding: 10px;
-  color: inherit; // a glass panel (hrs-glass)
+  color: inherit; // a panel (hrs-panel)
   text-decoration: none;
 
   &:hover .map__name,
   &:focus-visible .map__name {
-    color: rgb(var(--hrs-glass-edge));
+    color: var(--mat-sys-primary);
   }
 
   &:focus-visible {
-    outline: 2px solid rgb(var(--hrs-glass-edge));
+    outline: 2px solid var(--mat-sys-primary);
     outline-offset: 2px;
   }
 }

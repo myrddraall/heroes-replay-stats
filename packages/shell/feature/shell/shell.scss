@@ -1,10 +1,8 @@
-@use 'glass-mixins' as glass;
-
 :host {
   display: block;
   height: 100%;
-  // The glass's opacity and blur, the panels' and the frame's (the menu and the header), are set
-  // on the host from the Graphics settings.
+  // The tool drawer's width, which the side panel inside it and the toggle on its edge read.
+  --ui-side-panel-width: min(320px, 90vw);
 }
 
 // The background, fixed behind everything; the pages scroll over it.
@@ -16,22 +14,12 @@
 .shell {
   height: 100%;
   background: transparent;
+  // the page shows the scene through it; the drawers keep the theme's (Material's sidenav colour)
   --mat-sidenav-content-background-color: transparent;
-  --mat-sidenav-container-background-color: transparent;
-  // Square, so the lit edge runs straight down the whole side.
-  --mat-sidenav-container-shape: 0;
 }
 
-
-// The frame: the menu, the header and the extra panel, one pane of glass each.
-.shell__nav,
-.shell__toolbar,
-.shell__panel {
-  @include glass.frame-glass-pane;
-}
-
-// Below the toolbar the page and, against the window's right edge for the rest of its height, the
-// page's tools. The page scrolls here, under the toolbar.
+// The bars, then the page and the tool drawer, for the rest of the window's height. Each bar's
+// texture shadow falls over the layer below it (nexus.css), so the bars stack above the page.
 .shell__content {
   display: flex;
   flex-direction: column;
@@ -40,6 +28,7 @@
 
 .shell__body {
   position: relative;
+  z-index: 1;
   flex: 1;
   min-height: 0;
 }
@@ -49,22 +38,18 @@
   background: transparent;
 }
 
-// The page scrolls up and down only, never sideways: pages fit its width, and the glass panels'
-// leak past its edges (their ::after) would otherwise count as width to scroll to.
+// The page scrolls up and down only, never sideways: pages fit its width.
 .shell__main {
   overflow-x: hidden;
 }
 
-// At the top of the panel's edge (the content's corner), over the page, as the map's panel toggles;
-// it stays put as the page scrolls and moves with the panel.
-.shell__panel-toggle {
-  position: absolute;
-  top: 8px;
-  inset-inline-end: 8px;
-  transition: inset-inline-end 400ms cubic-bezier(0.25, 0.8, 0.25, 1);
-  z-index: 10;
-  background: rgb(var(--hrs-glass-tint) / var(--hrs-glass-alpha-frame));
-  backdrop-filter: var(--hrs-glass-backdrop-frame);
+// Each page lays itself out (hrs-layout: the constraints are its).
+.shell__page {
+  display: block;
+}
+
+.shell__sections {
+  display: block;
 }
 
 .shell__page--panel-toggle {
@@ -72,109 +57,40 @@
   padding-inline-end: 48px;
 }
 
-.shell__panel-toggle--open {
-  inset-inline-end: calc(var(--ui-side-panel-width, min(320px, 90vw)) + 8px);
-}
-
-// Only the panel's own body scrolls (a ui-side-panel fills it).
+// The tool drawer (the theme's Drawer, hrs-drawer--shell): flush against the window's right edge,
+// from under the bars to the bottom; only the side panel inside it scrolls.
 .shell__panel {
-  width: var(--ui-side-panel-width, min(320px, 90vw));
-  border-radius: 0;
-  @include glass.frame-glass-edge(left);
+  width: var(--ui-side-panel-width);
+  min-height: 0;
 
   ::ng-deep .mat-drawer-inner-container {
     overflow: hidden;
   }
 }
 
-.shell__nav {
-  width: 248px;
-  @include glass.frame-glass-edge(right);
-  display: flex;
-  flex-direction: column;
+// At the top of the panel's edge (the content's corner), over the page; it stays put as the page
+// scrolls and moves with the panel.
+.shell__panel-toggle {
+  position: absolute;
+  top: 8px;
+  inset-inline-end: 8px;
+  z-index: 10;
+  background: var(--mat-sys-surface-container);
+  transition: inset-inline-end 400ms cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-.shell__brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 20px 16px 12px;
-  text-decoration: none;
-  color: #fff;
-  font-family: 'Exo 2', sans-serif;
-  font-weight: 600;
-  font-size: 15px;
-  line-height: 1.15;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
+.shell__panel-toggle--open {
+  inset-inline-end: calc(var(--ui-side-panel-width) + 8px);
 }
 
-.shell__brand-mark {
-  width: 40px;
-  height: 40px;
-  flex: none;
-  filter: drop-shadow(0 0 10px rgba(54, 174, 234, 0.55));
-}
-
-// Square links, their hover and press too, so the lit edge of the active one runs straight.
-mat-nav-list {
-  padding-top: 8px;
-  --mat-list-active-indicator-shape: 0;
-}
-
-.shell__children {
-  padding: 2px 0 8px;
-}
-
-.shell__link--active {
-  --mat-list-list-item-label-text-color: #fff;
-  --mat-list-list-item-leading-icon-color: rgb(var(--hrs-glass-edge));
-  background: linear-gradient(90deg, rgb(var(--hrs-glass-edge) / 0.16), transparent);
-  box-shadow: inset 2px 0 rgb(var(--hrs-glass-edge) / 0.9);
-}
-
-.shell__nav-footer {
-  margin-top: auto;
-  padding: 12px 16px;
-  border-top: 1px solid rgb(var(--hrs-glass-edge) / 0.15);
-  font: var(--mat-sys-label-small);
-  color: var(--mat-sys-on-surface-variant);
-}
-
-.shell__platform {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.shell__toolbar {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  flex: none;
-  @include glass.frame-glass-edge(bottom);
-  gap: 8px;
-}
-
-.shell__toolbar-title {
-  font-family: 'Exo 2', sans-serif;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  color: #fff;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.shell__spacer {
-  flex: 1;
-}
-
-// Each page lays itself out (hrs-layout: the constraints are its).
-.shell__page {
+// The settings menu's Dev group: a small heading over its pages.
+.shell__menu-heading {
   display: block;
+  padding: 8px 16px 4px;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+  font: var(--mat-sys-label-small);
+  text-transform: uppercase;
+  color: var(--mat-sys-on-surface-variant);
 }
 
 .shell__drop {
@@ -184,9 +100,8 @@ mat-nav-list {
   pointer-events: none;
   display: grid;
   place-items: center;
-  background: rgb(var(--hrs-glass-tint) / 0.7);
-  backdrop-filter: blur(4px);
-  outline: 3px dashed rgb(var(--hrs-glass-edge));
+  background: color-mix(in srgb, var(--mat-sys-background) 60%, transparent);
+  outline: 2px dashed var(--mat-sys-secondary);
   outline-offset: -16px;
 }
 
@@ -194,12 +109,10 @@ mat-nav-list {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 20px 28px;
-  --hrs-glass-alpha: 0.7; // a glass panel (hrs-glass), dense enough over the dimmed page
-  color: #fff;
+  padding: 20px 24px;
   font: var(--mat-sys-title-medium);
 
   mat-icon {
-    color: rgb(var(--hrs-glass-edge));
+    color: var(--mat-sys-primary);
   }
 }

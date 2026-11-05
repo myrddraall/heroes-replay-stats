@@ -15,18 +15,18 @@ import {
 } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { MatTooltip } from '@angular/material/tooltip';
+import { CellTemplate, DataGrid, GridColumn, HeaderTemplate } from '@myrddraall/heroes-replay-stats-data-views/ui';
 import { ScoreCards } from '../score-cards/score-cards';
 import type { StatColumn, StatRow } from '../../../model';
-import { statTableRows } from '../stat-cells';
+import { statTableRows, type StatTableRow } from '../stat-cells';
 import { StatRowHead } from '../stat-row-head';
-import { nextStatSort, statAriaSort, statBestFirst, type StatSort } from '../stat-sort';
-import { StatSortHeader } from '../stat-sort-header';
+import { statBestFirst, type StatSort } from '../stat-sort';
 
 /** How the table fits its width: as it is, squeezed (short numbers, tighter cells), or as cards. */
 type Fit = 'full' | 'squeezed' | 'cards';
 
 /**
- * A score-screen table (presentational): a few stats in large type, one row per player, the
+ * A score-screen table (presentational, on the data grid): a few stats in large type, one row per player, the
  * headers as icons (or labels) named in tooltips, and each column's best marked, in the whole
  * table and within each row's group. The row head comes from a `uiStatRowHead` template inside.
  * Unsorted, the rows keep their given order.
@@ -38,7 +38,7 @@ type Fit = 'full' | 'squeezed' | 'cards';
  */
 @Component({
   selector: 'ui-score-table',
-  imports: [MatIcon, MatTooltip, NgTemplateOutlet, ScoreCards, StatSortHeader],
+  imports: [CellTemplate, DataGrid, GridColumn, HeaderTemplate, MatIcon, MatTooltip, NgTemplateOutlet, ScoreCards],
   templateUrl: './score-table.html',
   styleUrl: './score-table.scss',
   host: { '[class.score-table--squeezed]': "fit() === 'squeezed'" },
@@ -95,13 +95,8 @@ export class ScoreTable<T> {
     inject(DestroyRef).onDestroy(() => observer.disconnect());
   }
 
-  protected ariaSort(column: string): 'ascending' | 'descending' | null {
-    return statAriaSort(this.sort(), column);
-  }
-
-  protected toggleSort(column: string): void {
-    this.sort.update((sort) => nextStatSort(sort, column));
-  }
+  protected readonly byKey = (line: StatTableRow<T>) => line.row.key;
+  protected readonly themeOf = (line: StatTableRow<T>) => line.row.theme ?? null;
 
   protected rankByColumn(id: string): void {
     const column = this.columns().find((c) => c.id === id);
@@ -128,9 +123,10 @@ export class ScoreTable<T> {
         return;
       }
     }
-    const table = this.host.querySelector('table');
-    if (table && table.offsetWidth > this.host.clientWidth) {
-      this.needs[fit] = table.offsetWidth;
+    // the grid's body (a theme part): wider inside than it shows, it doesn't fit
+    const body = this.host.querySelector<HTMLElement>('.hrs-grid__body');
+    if (body && body.scrollWidth > this.host.clientWidth) {
+      this.needs[fit] = body.scrollWidth;
       this.fit.set(fit === 'full' ? 'squeezed' : 'cards');
     } else if (fit !== 'full' && width >= (this.needs.full ?? Infinity)) {
       this.fit.set('full');

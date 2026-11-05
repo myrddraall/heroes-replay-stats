@@ -31,13 +31,13 @@ export function teamRows(
         key: row.team,
         group: null,
         values: statValues(row, columns),
-        class: `hrs-glass-${color}`,
+        theme: color,
         data: { team: row.team, name: teamName(color) },
       };
     })
     .sort(
       (a, b) =>
-        Number(a.class !== 'hrs-glass-blue') - Number(b.class !== 'hrs-glass-blue') ||
+        Number(a.theme !== 'blue') - Number(b.theme !== 'blue') ||
         a.key - b.key,
     );
 }

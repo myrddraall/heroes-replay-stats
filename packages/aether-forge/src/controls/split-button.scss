@@ -9,11 +9,11 @@
 .split {
   display: inline-flex;
   align-items: stretch;
-  border: 1px solid rgb(var(--hrs-glass-edge) / 0.4);
-  background: rgb(var(--hrs-glass-tint) / 0.5);
+  border: 1px solid color-mix(in srgb, var(--mat-sys-primary) 40%, transparent);
+  background: var(--mat-sys-surface-container-low);
 
   &:hover {
-    border-color: rgb(var(--hrs-glass-edge) / 0.8);
+    border-color: color-mix(in srgb, var(--mat-sys-primary) 80%, transparent);
   }
 }
 
@@ -26,7 +26,7 @@
 
 .split__arrow {
   padding: 0 2px;
-  border-inline-start: 1px solid rgb(var(--hrs-glass-edge) / 0.4);
+  border-inline-start: 1px solid color-mix(in srgb, var(--mat-sys-primary) 40%, transparent);
 
   mat-icon {
     width: 18px;

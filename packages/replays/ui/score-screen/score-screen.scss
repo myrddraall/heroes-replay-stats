@@ -27,7 +27,7 @@
 .award {
   padding: 2px 8px;
   border-radius: 999px;
-  box-shadow: 0 0 0 1px rgb(var(--hrs-glass-edge) / 0.5);
+  box-shadow: 0 0 0 1px var(--mat-sys-outline-variant);
   font: var(--mat-sys-label-small);
   white-space: nowrap;
 }
@@ -38,8 +38,8 @@
 }
 
 .award--mvp {
-  color: var(--hrs-bronze);
-  box-shadow: 0 0 0 1px var(--hrs-bronze);
+  color: var(--mat-sys-tertiary);
+  box-shadow: 0 0 0 1px var(--mat-sys-tertiary);
 }
 
 .teams {

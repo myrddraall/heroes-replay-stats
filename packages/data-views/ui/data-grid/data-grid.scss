@@ -1,0 +1,73 @@
+// The header row, then the rows: one grid whose columns every drawn row shares (subgrid), the
+// rows not drawn standing in as space above and below. The header row copies the columns' widths.
+:host {
+  position: relative;
+  min-width: 0;
+}
+
+// Reads what the custom properties come to: a row's height and the gap between rows.
+.data-grid__probe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  visibility: hidden;
+  pointer-events: none;
+  height: var(--hrs-grid-row-height, 40px);
+  margin-left: var(--hrs-grid-row-gap, 0px);
+}
+
+.hrs-grid__body {
+  // sideways only: the page scrolls it up and down
+  overflow-y: hidden;
+}
+
+.data-grid__rows {
+  display: grid;
+  align-content: start;
+  row-gap: var(--hrs-grid-row-gap, 0px);
+  box-sizing: border-box;
+  // its space's width: the columns shrink towards their narrowest (as a table's do) before it
+  // grows wider than its space and scrolls sideways
+  width: 100%;
+  min-width: min-content;
+
+  > .hrs-grid__row {
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+    width: auto;
+  }
+}
+
+// The headers again, unseen and taking no room (no overflow clip: that would stop their widths
+// counting towards the columns).
+.data-grid__sizer {
+  visibility: hidden;
+  pointer-events: none;
+  height: 0;
+  margin-bottom: calc(-1 * var(--hrs-grid-row-gap, 0px));
+
+  > .hrs-grid__header {
+    border: 0;
+  }
+}
+
+// What a sort arrow takes beside a header, so the column fits it.
+.data-grid__arrow-room {
+  flex: none;
+  width: 18px;
+}
+
+.hrs-grid__group {
+  display: flex;
+}
+
+.data-grid__group-cell {
+  display: contents;
+}
+
+.hrs-grid__head {
+  // the header row's widths follow the rows'; the body's sideways scroll moves it
+  .hrs-grid__row {
+    min-width: 100%;
+  }
+}

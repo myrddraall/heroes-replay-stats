@@ -1,12 +1,16 @@
 import type { Provider } from '@angular/core';
 import { ROUTES } from '@angular/router';
-import { provideShellNavItem } from '@myrddraall/heroes-replay-stats-shell/ui';
+import { provideShellArea, provideShellMenuItem } from '@myrddraall/heroes-replay-stats-shell/ui';
 import { SETTINGS_ROUTES } from './routes';
 
-/** The settings in an app: the Settings page and its nav item. List it before `provideRouter`. */
+/**
+ * The settings in an app: the Settings page, in the settings menu, and the About page, an area of
+ * its own. List it before `provideRouter`.
+ */
 export function provideSettingsFeature(): Provider[] {
   return [
     { provide: ROUTES, multi: true, useValue: SETTINGS_ROUTES },
-    provideShellNavItem({ path: '/settings', label: 'Settings', icon: 'settings', order: 70 }),
+    provideShellMenuItem({ label: 'Settings', link: '/settings', order: 10 }),
+    provideShellArea({ path: '/about', label: 'About', order: 30 }),
   ];
 }

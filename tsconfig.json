@@ -48,6 +48,8 @@
       "@myrddraall/heroes-replay-stats-settings/*": ["./packages/settings/*"],
       "@myrddraall/heroes-replay-stats-common": ["./packages/common/index.ts"],
       "@myrddraall/heroes-replay-stats-common/*": ["./packages/common/*"],
+      "@myrddraall/heroes-replay-stats-data-views": ["./packages/data-views/index.ts"],
+      "@myrddraall/heroes-replay-stats-data-views/*": ["./packages/data-views/*"],
       "@myrddraall/heroes-replay-stats-layout": ["./packages/layout/index.ts"],
       "@myrddraall/heroes-replay-stats-layout/*": ["./packages/layout/*"],
       "@myrddraall/heroes-replay-stats-signals": ["./libs/signals/src/index.ts"]

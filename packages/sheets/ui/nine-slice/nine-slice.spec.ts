@@ -139,7 +139,7 @@ describe('NineSlice', () => {
     host.state.set('selected');
     await settle();
     expect(el().style.isolation).toBe('isolate');
-    expect(el().getAttribute('data-hrs-slice-state')).toBe('selected');
+    expect(el().getAttribute('slice-state')).toBe('selected');
   });
 });
 

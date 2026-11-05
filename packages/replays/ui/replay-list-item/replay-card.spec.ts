@@ -26,6 +26,7 @@ const replay: ReplaySummary = {
   status: 'complete',
   players: [player(0, 0, 'a', 'Barbarian'), player(5, 1, 'b', 'Jaina')],
   recorderToonHandle: 'b',
+  outdated: false,
 };
 
 const heroes: HeroLookup = {
@@ -36,14 +37,25 @@ const heroes: HeroLookup = {
 
 describe('toReplayCard', () => {
   it("resolves you: the recorder, or your account once it's marked as me", () => {
-    expect(toReplayCard(replay, new Set(), heroes).you).toEqual({ slots: [5], team: 1 });
-    expect(toReplayCard(replay, new Set(['a']), heroes).you).toEqual({ slots: [0], team: 0 });
+    expect(toReplayCard(replay, new Set(), heroes, undefined).you).toEqual({ slots: [5], team: 1 });
+    expect(toReplayCard(replay, new Set(['a']), heroes, undefined).you).toEqual({
+      slots: [0],
+      team: 0,
+    });
   });
 
   it("gives the map's preview and each player's hero icon, by slot", () => {
-    const card = toReplayCard(replay, new Set(), heroes);
-    expect(card.preview).toBe('towers.png');
+    const card = toReplayCard(replay, new Set(), heroes, undefined);
+    expect(card.preview).toEqual({ src: 'towers.png' });
     expect(card.icons).toEqual({ 0: { picture: { src: 'sonya.png' }, name: 'Sonya' }, 5: null });
     expect(card.replay).toBe(replay);
+  });
+
+  it('is new until you open it, and updated once imported again after', () => {
+    expect(toReplayCard(replay, new Set(), heroes, undefined).viewed).toBe('new');
+    expect(toReplayCard(replay, new Set(), heroes, replay.importedAt).viewed).toBe('viewed');
+    expect(toReplayCard(replay, new Set(), heroes, '2024-06-01T00:00:00.000Z').viewed).toBe(
+      'updated',
+    );
   });
 });

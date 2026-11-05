@@ -17,6 +17,8 @@ import { provideReplaysFeature } from '@myrddraall/heroes-replay-stats-replays/p
 import { Shell } from '@myrddraall/heroes-replay-stats-shell/feature';
 import { provideSettingsFeature } from '@myrddraall/heroes-replay-stats-settings/provide';
 import { provideThemeFeature } from '@myrddraall/heroes-replay-stats-theme/provide';
+import { provideFakeSheets } from '@myrddraall/heroes-replay-stats-sheets/testing';
+import { provideShellArea } from '@myrddraall/heroes-replay-stats-shell/ui';
 import {
   BACKGROUND_EDITOR,
   provideBackgroundFeature,
@@ -52,6 +54,9 @@ describe('App shell', () => {
         provideReplaysFeature(),
         provideSettingsFeature(),
         provideThemeFeature(),
+        provideFakeSheets(),
+        provideShellArea({ path: '/replays', label: 'Replays', order: 10 }),
+        provideShellArea({ path: '/game-info', label: 'Game Info', order: 20 }),
         provideRouter(routes),
         { provide: PLATFORM, useValue: fakePlatform },
         {
@@ -73,24 +78,14 @@ describe('App shell', () => {
     }).compileComponents();
   });
 
-  it('renders the brand, one nav link per section, and the platform badge', async () => {
+  it('renders the areas on the top bar, and the settings menu button', async () => {
     const fixture = TestBed.createComponent(Shell);
     await fixture.whenStable();
     const el: HTMLElement = fixture.nativeElement;
-    expect(el.querySelector('.shell__toolbar-title')?.textContent).toContain('Heroes Replay Stats');
-    const links = [...el.querySelectorAll('mat-nav-list a[mat-list-item]')].map((a) =>
-      a.getAttribute('href'),
-    );
-    expect(links).toEqual([
-      '/replays',
-      '/players',
-      '/maps',
-      '/import',
-      '/theme-preview',
-      '/edit-background',
-      '/settings',
-    ]);
-    expect(el.querySelector('.shell__platform')?.textContent).toContain('test');
+    const areas = [...el.querySelectorAll('.hrs-nav1 > li a')].map((a) => a.getAttribute('href'));
+    expect(areas).toEqual(['/replays', '/game-info', '/about']);
+    expect(el.querySelector('.hrs-topbar__tools button[aria-label="Settings"]')).not.toBeNull();
+    expect(el.querySelector('.import-pod a')?.getAttribute('href')).toBe('/replays/import');
   });
 
   it('shows a drop overlay while files are dragged over the page and imports dropped replays', async () => {
@@ -117,7 +112,7 @@ describe('App shell', () => {
   });
 
   it('frames the app pages, and leaves the renderer check and the background editor to fill the window', () => {
-    expect(routes.map((r) => r.path)).toEqual(['', '**']);
+    expect(routes.map((r) => r.path)).toEqual(['', 'replays', 'game-info', 'game', '**']);
     expect(DEV_ROUTES.find((r) => r.path === 'renderer-check')?.data?.['shell']).toBe(false);
     expect(BACKGROUND_EDITOR.routeData?.['shell']).toBe(false);
   });

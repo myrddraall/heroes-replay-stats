@@ -25,11 +25,11 @@ describe('player rows', () => {
     const players = [player(0, 0, 1), player(5, 1, 2), player(1, 0, null), player(6, 1, 4)];
     const icon = { picture: { src: 'valla.png' }, name: 'Valla' };
     const rows = playerRows(players, { 5: icon }, columns, 1, 'relative');
-    expect(rows.map((r) => [r.key, r.group, r.class])).toEqual([
-      [5, 1, 'hrs-glass-blue'],
-      [6, 1, 'hrs-glass-blue'],
-      [0, 0, 'hrs-glass-red'],
-      [1, 0, 'hrs-glass-red'],
+    expect(rows.map((r) => [r.key, r.group, r.theme])).toEqual([
+      [5, 1, 'blue'],
+      [6, 1, 'blue'],
+      [0, 0, 'red'],
+      [1, 0, 'red'],
     ]);
     expect(rows[0]!.data).toEqual({ player: players[1], icon });
     expect(rows[2]!.data.icon).toBeNull();
@@ -38,7 +38,7 @@ describe('player rows', () => {
 
   it('colours the first team blue without a team of yours', () => {
     const rows = playerRows([player(5, 1, 0), player(0, 0, 0)], {}, columns, null, 'relative');
-    expect(rows.map((r) => r.class)).toEqual(['hrs-glass-blue', 'hrs-glass-red']);
+    expect(rows.map((r) => r.theme)).toEqual(['blue', 'red']);
     expect(rows[0]!.key).toBe(0);
   });
 });

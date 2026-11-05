@@ -34,6 +34,8 @@
               }
             ],
             "styles": [
+              "../../packages/common/assets/styles/nexus/tokens.css",
+              "../../packages/common/assets/styles/nexus/nexus.css",
               "src/styles.scss"
             ],
             "stylePreprocessorOptions": {

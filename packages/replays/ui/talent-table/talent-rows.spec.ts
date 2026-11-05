@@ -52,9 +52,9 @@ describe('talent rows', () => {
 
   it('puts your team first, themed blue, and names talents by id before the data loads', () => {
     const rows = talentRows(players, [pick(5, 1, 'Valla1')], {}, null, images, 1, 'relative');
-    expect(rows.map((r) => [r.key, r.class])).toEqual([
-      [5, 'hrs-glass-blue'],
-      [0, 'hrs-glass-red'],
+    expect(rows.map((r) => [r.key, r.theme])).toEqual([
+      [5, 'blue'],
+      [0, 'red'],
     ]);
     expect(rows[0]!.talents[0]).toEqual({ name: 'Valla1', level: 1, icon: null });
   });

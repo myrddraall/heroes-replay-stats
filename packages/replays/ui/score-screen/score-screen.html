@@ -33,7 +33,7 @@
     @if (!first) {
       <span class="teams__vs">vs</span>
     }
-    <section class="team hrs-glass" [hrsTeam]="team.team" [attr.aria-label]="team.name">
+    <section class="team hrs-panel" [hrsTeam]="team.team" [attr.aria-label]="team.name">
       @if (decided()) {
         <span class="team__result">{{ team.won ? 'Victory' : 'Defeat' }}</span>
       }

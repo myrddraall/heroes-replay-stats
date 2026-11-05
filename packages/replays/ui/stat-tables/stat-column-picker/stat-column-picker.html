@@ -5,7 +5,7 @@
         type="button"
         class="picker__handle"
         cdkDragHandle
-        [attr.data-column]="item.choice.id"
+        [attr.column]="item.choice.id"
         [attr.aria-label]="'Move ' + item.column.label + ' (up and down arrow keys)'"
         (keydown.arrowup)="moveBy($event, item.choice.id, -1)"
         (keydown.arrowdown)="moveBy($event, item.choice.id, 1)"
