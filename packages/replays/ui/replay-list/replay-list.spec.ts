@@ -27,10 +27,17 @@ const replay: ReplaySummary = {
 
 let heroes: HeroLookup;
 
-/** The list showing one replay, `outdated` of them imported by an earlier version. */
-async function render(outdated: number) {
+/**
+ * The list showing these replays of `total` (one, of one, by default), `outdated` of them imported
+ * by an earlier version.
+ */
+async function render(outdated: number, replays: readonly ReplaySummary[] = [replay], total = 1) {
   const fixture = TestBed.createComponent(ReplayList);
-  fixture.componentRef.setInput('cards', [toReplayCard(replay, new Set(), heroes, undefined)]);
+  fixture.componentRef.setInput(
+    'cards',
+    replays.map((r) => toReplayCard(r, new Set(), heroes, undefined)),
+  );
+  fixture.componentRef.setInput('total', total);
   fixture.componentRef.setInput('loaded', true);
   fixture.componentRef.setInput('outdated', outdated);
   await fixture.whenStable();
@@ -59,6 +66,31 @@ describe('ReplayList', () => {
     fixture.componentInstance.importRequested.subscribe(() => requested++);
     notice?.querySelector('button')?.click();
     expect(requested).toBe(1);
+  });
+
+  it('counts the matches it shows of all of them, under the day each was played', async () => {
+    const later = { ...replay, id: 'r2', playedAt: '2024-06-03T18:30:00.000Z' };
+    const el: HTMLElement = (await render(0, [later, replay], 5)).nativeElement;
+    expect(el.querySelector('.count')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
+      '2 of 5 matches',
+    );
+    const days = [...el.querySelectorAll('.hrs-items__group-label')].map((d) => d.textContent);
+    expect(days).toEqual(
+      [later, replay].map((r) =>
+        new Date(r.playedAt).toLocaleDateString('en-US', {
+          weekday: 'long',
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+        }),
+      ),
+    );
+  });
+
+  it('says when no match fits the filter', async () => {
+    const el: HTMLElement = (await render(0, [], 3)).nativeElement;
+    expect(el.querySelector('hrs-empty-state h2')?.textContent).toBe('No matches fit');
+    expect(el.querySelector('hrs-item-list')).toBeNull();
   });
 
   it('says nothing about it when every replay is up to date', async () => {

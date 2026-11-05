@@ -1,16 +1,20 @@
 <header class="head">
   <h1>Matches</h1>
-  @if (cards().length > 0) {
-    <span class="count"
-      >{{ cards().length }} {{ cards().length === 1 ? 'match' : 'matches' }}</span
-    >
+  @if (total() > 0) {
+    <span class="count">
+      @if (cards().length === total()) {
+        {{ total() }} {{ total() === 1 ? 'match' : 'matches' }}
+      } @else {
+        {{ cards().length }} of {{ total() }} {{ total() === 1 ? 'match' : 'matches' }}
+      }
+    </span>
   }
 </header>
 @if (error(); as error) {
   <p class="error" role="alert">The replay database could not be read: {{ error }}</p>
 } @else if (!loaded()) {
   <mat-progress-bar mode="indeterminate" aria-label="Loading matches" />
-} @else if (cards().length === 0) {
+} @else if (total() === 0) {
   <hrs-empty-state icon="history" title="No matches yet">
     Import a few .StormReplay files and they will be parsed, stored locally and listed here.
     <br /><button mat-stroked-button class="cta" (click)="importRequested.emit()">
@@ -32,9 +36,25 @@
       <button mat-stroked-button (click)="importRequested.emit()">Import again</button>
     </div>
   }
-  <hrs-item-list class="list" aria-label="Matches" [items]="cards()" [trackBy]="byId">
-    <ng-template hrsItem let-card let-index="index">
-      <hrs-replay-list-item [card]="card" [priority]="index === 0" />
-    </ng-template>
-  </hrs-item-list>
+  <div class="filters"><ng-content /></div>
+  @if (cards().length === 0) {
+    <hrs-empty-state icon="filter_alt_off" title="No matches fit">
+      None of your matches fit these choices.
+    </hrs-empty-state>
+  } @else {
+    <hrs-item-list
+      class="list"
+      aria-label="Matches"
+      [items]="cards()"
+      [trackBy]="byId"
+      [groupBy]="byDay"
+    >
+      <ng-template hrsGroupHeader let-day>
+        <span class="hrs-items__group-label">{{ dayOf(day) | date: 'EEEE, MMMM d, y' }}</span>
+      </ng-template>
+      <ng-template hrsItem let-card let-index="index">
+        <hrs-replay-list-item [card]="card" [priority]="index === 0" />
+      </ng-template>
+    </hrs-item-list>
+  }
 }

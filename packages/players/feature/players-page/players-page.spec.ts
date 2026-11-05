@@ -1,5 +1,6 @@
-import { signal } from '@angular/core';
+import { ApplicationRef, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { provideRouter, Router } from '@angular/router';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { provideWholeLists } from '@myrddraall/heroes-replay-stats-data-views/testing';
 import { ReplayImportJobStore } from '@myrddraall/heroes-replay-stats-import/data';
@@ -28,6 +29,7 @@ const ann: PlayerSummary = {
 async function render(players: PlayerSummary[]) {
   TestBed.configureTestingModule({
     providers: [
+      provideRouter([]),
       provideWholeLists(),
       {
         provide: PlayerService,
@@ -57,6 +59,19 @@ describe('PlayersPage', () => {
     expect(
       [...el.querySelectorAll('.hero')].map((h) => h.textContent!.replace(/\s+/g, ' ').trim()),
     ).toEqual(['Jaina ×3', 'Sonya ×2', 'Li-Ming', '+1 more']);
+  });
+
+  it('keeps the players whose names fit the search, kept in the address', async () => {
+    const el = await render([ann, { ...ann, id: '2-Hero-1-2', name: 'Bob' }]);
+    const field = el.querySelector<HTMLInputElement>('input[type="search"]')!;
+    field.value = 'an';
+    field.dispatchEvent(new Event('input'));
+    await TestBed.inject(ApplicationRef).whenStable();
+    expect(el.querySelector('.count')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
+      '1 of 2 players',
+    );
+    expect([...el.querySelectorAll('.player__name')].map((n) => n.textContent)).toEqual(['Ann']);
+    expect(TestBed.inject(Router).url).toBe('/?q=an');
   });
 
   it('shows the empty state without players', async () => {
