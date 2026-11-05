@@ -18,6 +18,7 @@ minimumReleaseAgeExclude:
   # day; the release-age policy would block every bump.
   - '@myrddraall/*'
   - electron@44.4.5
+  - '@cpdevtools/schematics'
   - '@tanstack/angular-virtual@6.1.12'
   - '@tanstack/virtual-core@3.19.11'
 
