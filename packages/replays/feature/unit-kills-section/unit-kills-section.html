@@ -1,0 +1,9 @@
+<hrs-layout>
+  @if (store.error(); as error) {
+    <p role="alert">The unit kills could not be read: {{ error }}</p>
+  } @else if (store.kills(); as kills) {
+    <hrs-unit-kill-tables [players]="kills.players" [teams]="kills.teams" [icons]="store.icons()" />
+  } @else {
+    <mat-progress-bar mode="indeterminate" aria-label="Loading the unit kills" />
+  }
+</hrs-layout>

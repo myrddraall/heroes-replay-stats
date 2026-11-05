@@ -1,0 +1,48 @@
+@use './rows/property-row';
+
+// A thing added: its icon and name from the left, the buttons to go to it and take it out at the right.
+.item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) property-row.$reset-column property-row.$reset-column;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+}
+
+.icon {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+  opacity: 0.8;
+}
+
+.name {
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: var(--mat-sys-body-small);
+  text-align: start;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: 1px;
+  }
+}
+
+.detail {
+  margin-inline-start: 6px;
+  opacity: 0.6;
+}
+
+.action {
+  @include property-row.reset;
+}

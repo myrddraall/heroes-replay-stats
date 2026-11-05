@@ -1,0 +1,15 @@
+<h2 class="title">Unit Kills</h2>
+<section aria-labelledby="unit-kills-players">
+  <h3 id="unit-kills-players" class="subtitle">Players</h3>
+  <ui-stat-table [columns]="columns" [rows]="playerRows()">
+    <ng-template [uiStatRowHead]="playerRows()" let-data>
+      <hrs-player-cell [hero]="data.player.hero" [name]="data.player.name" [icon]="data.icon" />
+    </ng-template>
+  </ui-stat-table>
+</section>
+<section aria-labelledby="unit-kills-teams">
+  <h3 id="unit-kills-teams" class="subtitle">Teams</h3>
+  <ui-stat-table [columns]="columns" [rows]="teamRows()" rowHeadLabel="Team">
+    <ng-template [uiStatRowHead]="teamRows()" let-data>{{ data.name }}</ng-template>
+  </ui-stat-table>
+</section>

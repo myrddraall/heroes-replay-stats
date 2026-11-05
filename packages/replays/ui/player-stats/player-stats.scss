@@ -1,0 +1,14 @@
+// The title, then the table, padded as the layout pads; the table grows with its rows (the page
+// scrolls, not the table).
+:host {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding: 16px var(--hrs-layout-padding, 24px) var(--hrs-layout-padding, 24px);
+}
+
+.stats__title {
+  flex: none;
+  margin: 0 0 8px;
+  font: var(--mat-sys-title-large);
+}

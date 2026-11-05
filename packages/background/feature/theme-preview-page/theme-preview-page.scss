@@ -1,0 +1,100 @@
+:host {
+  display: block;
+}
+
+// Not a main landmark: the shell's main holds it.
+.preview {
+  position: relative;
+  display: grid;
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+  background: transparent;
+}
+
+h1,
+h2 {
+  margin: 0;
+}
+
+.muted {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px 32px;
+  padding: 16px 20px;
+}
+
+
+.variants {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.panel {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+  padding: 20px;
+
+  p {
+    margin: 0;
+  }
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+// A team's rows on a neutral panel (in the team's theme): a wash of its colour, a line at the start.
+table {
+  width: 100%;
+  border-collapse: collapse;
+
+  caption {
+    text-align: left;
+    padding: 0 12px 6px;
+    font-weight: 600;
+    color: var(--mat-sys-on-surface);
+  }
+
+  .result {
+    margin-left: 8px;
+    color: var(--mat-sys-primary);
+  }
+
+  th,
+  td {
+    padding: 8px 12px;
+    text-align: left;
+    font-weight: normal;
+  }
+
+  thead th {
+    color: var(--mat-sys-on-surface-variant);
+    font-size: 0.875em;
+  }
+
+  tbody tr {
+    background: color-mix(in srgb, var(--mat-sys-primary) 16%, transparent);
+    box-shadow: inset 2px 0 var(--mat-sys-primary);
+  }
+
+  tbody tr + tr {
+    border-top: 1px solid var(--mat-sys-outline-variant);
+  }
+
+  .number {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+}

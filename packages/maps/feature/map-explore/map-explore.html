@@ -1,0 +1,108 @@
+<mat-drawer-container class="explore" [hasBackdrop]="store.panelMode() === 'over'">
+  <mat-drawer
+    id="map-explore-info"
+    class="explore__drawer"
+    aria-label="Map information"
+    [position]="store.infoPosition()"
+    [mode]="store.panelMode()"
+    [opened]="store.infoOpened()"
+    (openedChange)="store.setPanelOpened('info', $event)"
+  >
+    <ui-side-panel
+      [title]="store.facts()?.name ?? 'Map'"
+      (closeRequested)="store.setPanelOpened('info', false)"
+    >
+      <hrs-map-view-controls
+        uiSidePanelPinned
+        [arenas]="store.arenas()"
+        [arena]="store.arena()"
+        [hasTeamColour]="store.hasTeamColour()"
+        [teamColoursSwapped]="store.teamColoursSwapped()"
+        (arenaChange)="store.showArena($event)"
+        (teamColoursToggle)="store.toggleTeamColours()"
+      />
+      <hrs-map-facts
+        [facts]="store.facts()"
+        [loadingScreen]="store.art().loadingScreen"
+        [extra]="store.extra()"
+        [extraLoading]="store.extraLoading()"
+      />
+    </ui-side-panel>
+  </mat-drawer>
+  <mat-drawer
+    id="map-explore-details"
+    class="explore__drawer"
+    aria-label="Points of interest"
+    [position]="store.detailsPosition()"
+    [mode]="store.panelMode()"
+    [opened]="store.detailsOpened()"
+    (openedChange)="store.setPanelOpened('details', $event)"
+  >
+    <ui-side-panel
+      title="Points of interest"
+      (closeRequested)="store.setPanelOpened('details', false)"
+    >
+      <hrs-poi-details
+        uiSidePanelPinned
+        [poi]="store.selectedPoi()"
+        (stateChange)="store.setSelectedState($event)"
+      />
+      <hrs-poi-list
+        [teams]="store.pois()"
+        [selected]="store.selected()"
+        [states]="store.elementStates()"
+        (poiSelect)="store.select($event, true)"
+        (stateToggle)="store.cycleElement($event)"
+      />
+    </ui-side-panel>
+  </mat-drawer>
+  <mat-drawer-content class="explore__content">
+    <hrs-map-viewer
+      class="explore__viewer"
+      [map]="store.map()"
+      [loading]="store.loading()"
+      [error]="store.error()"
+      [arena]="store.arena()"
+      [hiddenLayers]="store.hiddenLayers()"
+      [elementStates]="store.elementStates()"
+      [selected]="store.selected()"
+      [centreOn]="store.centre()"
+      [teamColours]="store.teamColours()"
+      bars="shrink"
+      (elementClick)="store.select($event)"
+      (mapClick)="store.deselect()"
+      (minimapFaded)="store.minimapFaded()"
+      (inUse)="store.inUse($event)"
+    />
+    <button
+      mat-icon-button
+      type="button"
+      class="explore__toggle"
+      [class.explore__toggle--start]="store.infoPosition() === 'start'"
+      aria-controls="map-explore-info"
+      [attr.aria-expanded]="store.infoOpened()"
+      [attr.aria-label]="store.infoOpened() ? 'Hide map information' : 'Show map information'"
+      (click)="store.togglePanel('info')"
+    >
+      <mat-icon class="material-symbols-outlined" aria-hidden="true">
+        {{ toggleIcon(store.infoPosition(), store.infoOpened()) }}
+      </mat-icon>
+    </button>
+    <button
+      mat-icon-button
+      type="button"
+      class="explore__toggle"
+      [class.explore__toggle--start]="store.detailsPosition() === 'start'"
+      aria-controls="map-explore-details"
+      [attr.aria-expanded]="store.detailsOpened()"
+      [attr.aria-label]="
+        store.detailsOpened() ? 'Hide points of interest' : 'Show points of interest'
+      "
+      (click)="store.togglePanel('details')"
+    >
+      <mat-icon class="material-symbols-outlined" aria-hidden="true">
+        {{ toggleIcon(store.detailsPosition(), store.detailsOpened()) }}
+      </mat-icon>
+    </button>
+  </mat-drawer-content>
+</mat-drawer-container>

@@ -1,0 +1,67 @@
+@if (asCards()) {
+  <ui-score-cards
+    [columns]="columns()"
+    [table]="cards()"
+    [rankBy]="rankBy()"
+    [rowHead]="rowHead()"
+    (rankRequested)="rankByColumn($event)"
+  />
+} @else {
+  <hrs-data-grid
+    class="score-table"
+    [items]="table()"
+    [trackBy]="byKey"
+    [rowTheme]="themeOf"
+    [sort]="sort()"
+    (sortChange)="sort.set($event)"
+    sortStart="desc"
+  >
+    <hrs-column name="head" [header]="rowHeadLabel()" width="min-content">
+      <ng-template hrsHeader><span class="score-table__hidden">{{ rowHeadLabel() }}</span></ng-template>
+      <ng-template hrsCell let-line>
+        @if (rowHead(); as head) {
+          <ng-container
+            [ngTemplateOutlet]="head.template"
+            [ngTemplateOutletContext]="{ $implicit: line.row.data, row: line.row }"
+          />
+        }
+      </ng-template>
+    </hrs-column>
+    @for (column of columns(); track column.id; let i = $index) {
+      <hrs-column [name]="column.id" [header]="column.label" width="minmax(max-content, 1fr)" sortable>
+        <ng-template hrsHeader>
+          <span
+            class="score-table__label"
+            [matTooltip]="column.description ?? column.label"
+            matTooltipPosition="above"
+          >
+            @if (column.icon) {
+              <mat-icon class="material-symbols-outlined score-table__icon" aria-hidden="true">{{
+                column.icon
+              }}</mat-icon>
+              <span class="score-table__hidden">{{ column.label }}</span>
+            } @else {
+              {{ column.label }}
+            }
+          </span>
+        </ng-template>
+        <ng-template hrsCell let-line>
+          @let cell = line.cells[i];
+          <span
+            class="score-table__value"
+            [class.score-table__value--best]="cell.best"
+            [class.score-table__value--best-in-group]="cell.bestInGroup"
+          >
+            <span class="score-table__full">{{ cell.text }}</span>
+            <span class="score-table__compact">{{ cell.compactText }}</span>
+            @if (cell.best) {
+              <span class="score-table__hidden">(best)</span>
+            } @else if (cell.bestInGroup) {
+              <span class="score-table__hidden">(best on the team)</span>
+            }
+          </span>
+        </ng-template>
+      </hrs-column>
+    }
+  </hrs-data-grid>
+}

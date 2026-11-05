@@ -1,0 +1,33 @@
+<div class="head" [class.head--open]="isOpen()">
+  <button
+    type="button"
+    class="heading"
+    [class.heading--changed]="changed()"
+    [attr.aria-expanded]="isOpen()"
+    [attr.aria-controls]="id"
+    (click)="toggle()"
+  >
+    <mat-icon class="material-symbols-outlined heading__chevron" aria-hidden="true">
+      {{ isOpen() ? 'expand_more' : 'chevron_right' }}
+    </mat-icon>
+    <span>{{ title() }}</span>
+  </button>
+  <span class="reset-slot">
+    @if (changed()) {
+    <button
+      type="button"
+      class="reset"
+      [attr.aria-label]="'Reset ' + title()"
+      title="Reset all"
+      (click)="resetRequested.emit()"
+    >
+      <mat-icon class="material-symbols-outlined" aria-hidden="true">restart_alt</mat-icon>
+    </button>
+    }
+  </span>
+</div>
+@if (isOpen()) {
+<div class="rows" [id]="id">
+  <ng-content />
+</div>
+}

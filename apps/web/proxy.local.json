@@ -1,0 +1,13 @@
+{
+  "/maps-local": {
+    "target": "http://localhost:4208",
+    "pathRewrite": { "^/maps-local": "/maps" }
+  },
+  "/ui-sheets-local": {
+    "target": "http://localhost:4210",
+    "pathRewrite": { "^/ui-sheets-local": "/ui" }
+  },
+  "/dev-reports": {
+    "target": "http://localhost:4209"
+  }
+}

@@ -1,0 +1,7 @@
+<div class="confirm" role="alert">
+  <span>{{ editor.resetAllLabel() }}? Everything in it goes back to what is under it.</span>
+  <span class="confirm__buttons">
+    <button type="button" class="button" (click)="editor.resetAll()">Reset</button>
+    <button type="button" class="button" (click)="ui.confirmReset(false)">Keep</button>
+  </span>
+</div>

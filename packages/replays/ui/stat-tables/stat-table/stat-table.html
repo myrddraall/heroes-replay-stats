@@ -1,0 +1,48 @@
+@if (limits().length > 0) {
+  <ul class="stat-table__legend" aria-label="Starred stats">
+    @for (kind of limits(); track kind) {
+      <li>
+        <span class="stat-table__star" [class]="'stat-table__star--' + kind" aria-hidden="true"
+          >*</span
+        >
+        {{ supportLabels[kind] }}
+      </li>
+    }
+  </ul>
+}
+<hrs-data-grid
+  class="stat-table"
+  [items]="table()"
+  [trackBy]="byKey"
+  [rowTheme]="themeOf"
+  [sort]="sort()"
+  (sortChange)="sort.set($event)"
+  sortStart="desc"
+>
+  <hrs-column name="head" [header]="rowHeadLabel()" width="max-content">
+    <ng-template hrsCell let-line>
+      @if (rowHead(); as head) {
+        <ng-container
+          [ngTemplateOutlet]="head.template"
+          [ngTemplateOutletContext]="{ $implicit: line.row.data, row: line.row }"
+        />
+      }
+    </ng-template>
+  </hrs-column>
+  @for (column of columns(); track column.id; let i = $index) {
+    <hrs-column [name]="column.id" [header]="column.label" width="minmax(min-content, max-content)" align="end" sortable>
+      <ng-template hrsHeader>
+        <span class="stat-table__label" [matTooltip]="tooltip(column)" matTooltipPosition="above">
+          {{ column.label }}
+          @if (isLimited(column.support)) {
+            <span class="stat-table__star" [class]="'stat-table__star--' + column.support" aria-hidden="true"
+              >*</span
+            >
+            <span class="stat-table__hidden">({{ supportLabels[column.support] }})</span>
+          }
+        </span>
+      </ng-template>
+      <ng-template hrsCell let-line>{{ line.cells[i].text }}</ng-template>
+    </hrs-column>
+  }
+</hrs-data-grid>

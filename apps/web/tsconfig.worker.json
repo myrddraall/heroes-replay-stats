@@ -1,0 +1,10 @@
+// The compiler options the Angular builder bundles web workers with (the import package's ingest
+// worker); each package type-checks its own workers.
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["es2022", "webworker"],
+    "types": []
+  },
+  "include": ["src/**/*.worker.ts"]
+}

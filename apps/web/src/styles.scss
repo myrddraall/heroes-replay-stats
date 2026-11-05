@@ -1,0 +1,58 @@
+@use '@angular/material' as mat;
+// The HRS Nexus UI theme as Angular Material's (generated from packages/common/design-system by
+// `pnpm run generate.theme`): its system tokens and each component's, on `:root` and every
+// `[theme]`, so nested themes (a team's) re-theme Material inside them. Its tokens and its own
+// components (nexus/tokens.css, nexus.css) load before this file.
+@use 'nexus/material-theme';
+
+// Material's base theme: the type scale, the density, and the system tokens the theme above
+// leaves alone.
+html {
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$violet-palette,
+        theme-type: dark,
+      ),
+      // Multi-word families must reach the CSS `font` shorthand quoted, or the whole
+      // declaration is invalid and headings fall back to body size.
+      typography: (
+          plain-family: "'Source Sans 3', sans-serif",
+          brand-family: "'Exo 2', sans-serif",
+          bold-weight: 600,
+        ),
+      density: 0,
+    )
+  );
+
+  // A blue for the background (--hrs-background-tint): the colour the game multiplies its Play
+  // screen's sky by for vs A.I. (Storm_UI_Play_AI_ColorShift, its sky's average).
+  --hrs-background-tint-blue: #8aecff;
+  // More tints for it, picked by eye on /play-background.
+  --hrs-background-tint-gold: #ffcc00;
+  --hrs-background-tint-green: #00ff00;
+  --hrs-background-tint-red: #ff0000;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+h1,
+h2,
+h3 {
+  color: var(--mat-sys-on-surface);
+  margin: 0 0 0.5em;
+}
+h1 {
+  font: var(--mat-sys-headline-medium);
+  text-transform: uppercase;
+}
+h2 {
+  font: var(--mat-sys-title-large);
+}
+h3 {
+  font: var(--mat-sys-title-medium);
+}

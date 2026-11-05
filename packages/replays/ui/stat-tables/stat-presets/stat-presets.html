@@ -1,0 +1,44 @@
+<div class="presets__row">
+  <mat-form-field class="presets__select" subscriptSizing="dynamic">
+    <mat-label>Preset</mat-label>
+    <mat-select [value]="selected()" (valueChange)="choose($event)">
+      <mat-optgroup label="Built in">
+        @for (name of builtIn(); track name) {
+          <mat-option [value]="name">{{ name }}</mat-option>
+        }
+      </mat-optgroup>
+      @if (saved().length > 0) {
+        <mat-optgroup label="Saved">
+          @for (name of saved(); track name) {
+            <mat-option [value]="name">{{ name }}</mat-option>
+          }
+        </mat-optgroup>
+      }
+      @if (custom()) {
+        <mat-option value="" disabled>Custom</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+  @if (currentIsSaved()) {
+    <button
+      mat-icon-button
+      type="button"
+      (click)="deleteRequested.emit(current()!)"
+      [attr.aria-label]="'Delete preset ' + current()"
+    >
+      <mat-icon class="material-symbols-outlined">delete</mat-icon>
+    </button>
+  }
+</div>
+@if (custom()) {
+  <form class="presets__row" (submit)="save($event)">
+    <mat-form-field class="presets__name" subscriptSizing="dynamic">
+      <mat-label>Preset name</mat-label>
+      <input matInput [formField]="nameForm.name" autocomplete="off" />
+      @if (nameForm.name().touched() && nameForm.name().errors()[0]; as error) {
+        <mat-error>{{ error.message }}</mat-error>
+      }
+    </mat-form-field>
+    <button mat-stroked-button type="submit">Save</button>
+  </form>
+}

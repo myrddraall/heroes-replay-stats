@@ -1,0 +1,103 @@
+// Colours are Material's system tokens, so a row re-themed by its team follows it. Sizes are em
+// of the table's font size, 1rem (16px) unless its page sets another, so the whole table scales
+// with it: the text is 1em, the header's labels 0.85em. It is as tall as its rows: the page
+// scrolls it, the header row staying at the top of the view.
+:host {
+  display: block;
+  min-width: 0;
+  font-size: 1rem;
+}
+
+.stat-table__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25em 1em;
+  margin: 0 0 0.5em;
+  padding: 0;
+  list-style: none;
+  font: var(--mat-sys-body-small);
+  font-size: 0.75em;
+  line-height: 1.35;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+// The grid's look: dense, the labels wrapping in narrow columns.
+.stat-table {
+  width: fit-content;
+  max-width: 100%;
+  --hrs-grid-row-height: 0px;
+  --hrs-grid-cell-padding: 0.3em 0.65em;
+  --hrs-grid-font: var(--mat-sys-body-small-weight) 1em / 1.3 var(--mat-sys-body-small-font);
+  --hrs-grid-text: var(--mat-sys-on-surface);
+  --hrs-grid-first-text: var(--mat-sys-on-surface);
+  --hrs-grid-header-height: 0px;
+  --hrs-grid-header-font: var(--mat-sys-label-small-weight) 0.85em / 1.3 var(--mat-sys-label-small-font);
+  --hrs-grid-header-text: var(--mat-sys-on-surface-variant);
+  --hrs-grid-header-case: none;
+  --hrs-grid-header-tracking: var(--mat-sys-label-small-tracking);
+  --hrs-grid-header-wrap: normal;
+  --hrs-grid-header-line: none;
+  --hrs-grid-header-background: var(--mat-sys-surface-container-highest);
+
+  // Each row's own colours, its team's: set on the rows, where its theme is.
+  ::ng-deep .hrs-grid__body .hrs-grid__row {
+    --hrs-grid-themed-row-background: var(--mat-sys-surface-container);
+    --hrs-grid-sticky-background: var(--mat-sys-surface-container-highest);
+    --hrs-grid-row-hover: var(--mat-sys-surface-container-high);
+    --hrs-grid-row-line: none;
+  }
+
+  ::ng-deep .hrs-grid__body .hrs-grid__cell {
+    border-top: 1px solid var(--mat-sys-outline-variant);
+  }
+
+  // The row heads stay put as it scrolls sideways, the header's too, over the stats.
+  ::ng-deep :is(.hrs-grid__header, .hrs-grid__cell):first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    padding-inline: 0.75em;
+    background: var(--hrs-grid-sticky-background, var(--mat-sys-surface-container-highest));
+  }
+
+  ::ng-deep .hrs-grid__header {
+    align-items: flex-end;
+    padding: 0.5em 0.7em;
+  }
+
+  // a stat's column: never narrower than 4.5em
+  ::ng-deep .hrs-grid__header:not(:first-child) {
+    min-width: 4.5em;
+  }
+}
+
+// A stat's label: its header at most 8em wide (6.6em and the padding), wrapping onto more lines.
+.stat-table__label {
+  display: inline-block;
+  max-width: 6.6em;
+}
+
+.stat-table__star {
+  font-weight: 700;
+}
+
+.stat-table__star--partial {
+  color: var(--mat-sys-primary);
+}
+
+.stat-table__star--flawed {
+  color: var(--mat-sys-tertiary);
+}
+
+.stat-table__star--none {
+  color: var(--mat-sys-error);
+}
+
+.stat-table__hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

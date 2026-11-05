@@ -1,0 +1,12 @@
+@if (guides().length) {
+<div class="guides">
+  <span class="label">Guides</span>
+  <ul>
+    @for (g of guides(); track g.says) {
+    <li>
+      <span class="line" [class]="'line line--' + g.line" aria-hidden="true"></span>{{ g.says }}
+    </li>
+    }
+  </ul>
+</div>
+}

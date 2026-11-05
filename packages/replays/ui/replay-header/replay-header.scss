@@ -1,0 +1,28 @@
+:host {
+  display: block;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+
+.head__map {
+  margin: 0;
+  font: var(--mat-sys-headline-medium);
+  font-family: 'Exo 2', sans-serif;
+  font-weight: 600;
+}
+
+.head__mode {
+  color: var(--mat-sys-primary);
+  font: var(--mat-sys-label-large);
+}
+
+.head__meta {
+  margin-left: auto;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-medium);
+}

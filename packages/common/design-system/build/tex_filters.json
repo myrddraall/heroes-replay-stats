@@ -1,0 +1,14 @@
+{
+ "purple": "none",
+ "cyan": "hue-rotate(-66deg)",
+ "blue": "hue-rotate(-20deg)",
+ "red": "hue-rotate(88deg)",
+ "green": "hue-rotate(-95deg)",
+ "poor": "grayscale(1)",
+ "common": "grayscale(1)",
+ "uncommon": "hue-rotate(-157deg) saturate(1.3)",
+ "rare": "hue-rotate(-53deg) saturate(1.25)",
+ "epic": "hue-rotate(22deg) saturate(1.35)",
+ "legendary": "hue-rotate(149deg) saturate(1.2)",
+ "magenta": "hue-rotate(41deg)"
+}

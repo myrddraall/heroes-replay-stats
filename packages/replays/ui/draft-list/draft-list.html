@@ -1,0 +1,31 @@
+<h2 class="title">Draft</h2>
+<hrs-data-grid class="draft hrs-panel" [items]="steps()" [trackBy]="byKey" [rowTheme]="themeOf">
+  <hrs-column name="order" header="#" width="max-content" align="end">
+    <ng-template hrsCell let-step>
+      <span [class.step--ban]="step.action === 'Ban'">{{ step.order }}</span>
+    </ng-template>
+  </hrs-column>
+  <hrs-column name="team" header="Team" width="max-content">
+    <ng-template hrsCell let-step>
+      <span class="step__team">{{ step.teamName }}</span>
+    </ng-template>
+  </hrs-column>
+  <hrs-column name="action" header="Ban or pick" width="max-content">
+    <ng-template hrsCell let-step>
+      <span [class.step--ban]="step.action === 'Ban'">{{ step.action }}</span>
+    </ng-template>
+  </hrs-column>
+  <hrs-column name="hero" header="Hero" width="max-content" rowHeader>
+    <ng-template hrsCell let-step>
+      <span class="step__hero" [class.step--ban]="step.action === 'Ban'">
+        <hrs-hero-minimap-icon [picture]="step.icon?.picture ?? null" [name]="step.hero" />
+        {{ step.hero }}
+      </span>
+    </ng-template>
+  </hrs-column>
+  <hrs-column name="player" header="Player" width="max-content">
+    <ng-template hrsCell let-step>
+      <span [class.step--ban]="step.action === 'Ban'">{{ step.player }}</span>
+    </ng-template>
+  </hrs-column>
+</hrs-data-grid>

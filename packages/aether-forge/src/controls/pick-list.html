@@ -1,0 +1,22 @@
+<forge-property-section
+  [title]="title()"
+  [changed]="changed()"
+  (resetRequested)="resetRequested.emit()"
+>
+  <div class="buttons">
+    <forge-split-button
+      [options]="options()"
+      (chosen)="created.emit()"
+      (picked)="added.emit($event.item)"
+    />
+  </div>
+  <forge-added-list
+    [title]="title()"
+    [items]="items()"
+    [linkable]="linkable()"
+    [linkLabel]="linkLabel()"
+    [removeLabel]="removeLabel()"
+    (itemShow)="itemShow.emit($event)"
+    (itemRemove)="removed.emit($event)"
+  />
+</forge-property-section>

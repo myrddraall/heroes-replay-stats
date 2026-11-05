@@ -1,0 +1,6 @@
+<h2 class="stats__title">{{ title() }}</h2>
+<ui-stat-table [columns]="shownColumns()" [rows]="rows()">
+  <ng-template [uiStatRowHead]="rows()" let-data>
+    <hrs-player-cell [hero]="data.player.hero" [name]="data.player.name" [icon]="data.icon" />
+  </ng-template>
+</ui-stat-table>

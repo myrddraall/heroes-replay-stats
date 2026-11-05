@@ -1,0 +1,16 @@
+:host {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cell__names {
+  display: grid;
+  line-height: 1.2;
+}
+.cell__hero {
+  font-weight: 600;
+}
+.cell__player {
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.9em;
+}

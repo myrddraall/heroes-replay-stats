@@ -1,0 +1,69 @@
+<span class="heading" [id]="id">Lights</span>
+<div class="links" role="list" [attr.aria-labelledby]="id">
+  @for (link of links(); track link.key; let i = $index) { @let unfolded = open().has(link.key);
+  <div class="link" role="listitem" [style.--depth]="link.depth">
+    @if (link.parts.length) {
+    <button
+      type="button"
+      class="fold"
+      [attr.aria-expanded]="unfolded"
+      [attr.aria-label]="(unfolded ? 'Fold ' : 'Unfold ') + link.label"
+      (click)="toggle(link.key)"
+    >
+      <mat-icon class="material-symbols-outlined" aria-hidden="true"
+        >{{ unfolded ? 'expand_more' : 'chevron_right' }}</mat-icon
+      >
+    </button>
+    } @else {
+    <span></span>
+    } @if (link.own) {
+    <span class="name name--own">{{ link.label }}</span>
+    } @else {
+    <span class="item">
+      <input
+        type="checkbox"
+        class="check"
+        [id]="id + '-' + i"
+        [checked]="link.lit"
+        (change)="check({ key: link.key, receiver: null }, $event)"
+      />
+      <label class="name" [class.name--changed]="link.changed" [for]="id + '-' + i"
+        >{{ link.label }} @if (link.origin && !link.changed) {
+        <span class="origin" [title]="'Set in ' + link.origin"
+          ><span class="origin__text">, set in {{ link.origin }}</span></span
+        >
+        }</label
+      >
+    </span>
+    }
+    <span class="reset-slot">
+      @if (link.changed) {
+      <button
+        type="button"
+        class="reset"
+        [attr.aria-label]="'Reset ' + link.label"
+        title="Reset"
+        (click)="linkReset.emit(link.key)"
+      >
+        <mat-icon class="material-symbols-outlined" aria-hidden="true">restart_alt</mat-icon>
+      </button>
+      }
+    </span>
+  </div>
+  @if (unfolded) { @for (part of link.parts; track part.receiver; let j = $index) {
+  <div class="link link--part" role="listitem" [style.--depth]="link.depth + 1">
+    <span></span>
+    <span class="item" [class.item--material]="part.material">
+      <input
+        type="checkbox"
+        class="check"
+        [id]="id + '-' + i + '-' + j"
+        [checked]="part.lit"
+        (change)="check({ key: link.key, receiver: part.receiver }, $event)"
+      />
+      <label class="name" [for]="id + '-' + i + '-' + j">{{ part.label }}</label>
+    </span>
+    <span></span>
+  </div>
+  } } }
+</div>

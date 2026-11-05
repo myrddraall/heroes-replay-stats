@@ -1,0 +1,28 @@
+<h2 class="title">Talents</h2>
+<hrs-data-grid class="talents" [items]="rows()" [trackBy]="byKey" [rowTheme]="themeOf">
+  <hrs-column name="player" header="Player" width="max-content">
+    <ng-template hrsCell let-row>
+      <hrs-player-cell [hero]="row.player.hero" [name]="row.player.name" [icon]="row.icon" />
+    </ng-template>
+  </hrs-column>
+  @for (tier of tiers; track tier; let i = $index) {
+    <hrs-column [name]="'tier-' + tier" [header]="'Tier ' + tier" width="minmax(min-content, 160px)">
+      <ng-template hrsCell let-row>
+        @let talent = row.talents[i];
+        @if (talent) {
+          <span class="talent">
+            @if (talent.icon; as icon) {
+              <img class="talent__icon" [hrsSprite]="icon" [spriteWidth]="32" alt="" />
+            }
+            <span class="talent__text">
+              <span class="talent__name">{{ talent.name }}</span>
+              <span class="talent__level">Level {{ talent.level }}</span>
+            </span>
+          </span>
+        } @else {
+          <span class="talents__none">None</span>
+        }
+      </ng-template>
+    </hrs-column>
+  }
+</hrs-data-grid>

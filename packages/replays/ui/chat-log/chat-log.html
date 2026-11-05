@@ -1,0 +1,35 @@
+<h2 class="title">Chat</h2>
+@if (lines().length === 0) {
+  <p class="empty">No one chatted in this game.</p>
+} @else {
+  <div class="log hrs-panel">
+    <hrs-item-list aria-label="Chat" [items]="lines()" [trackBy]="byKey">
+      <ng-template hrsItem let-line>
+      <div class="line" [hrsTeam]="line.team">
+        <time class="line__time">{{ line.time }}</time>
+        <hrs-hero-minimap-icon
+          class="line__icon"
+          [picture]="line.icon?.picture ?? null"
+          [name]="line.icon?.name ?? line.hero ?? ''"
+        />
+        <span class="line__sender">{{ line.sender }}</span>
+        <span class="line__text">
+          @for (piece of line.pieces; track $index) {
+            @if (piece.kind === 'text') {
+              {{ piece.text }}
+            } @else {
+              <img
+                class="line__emote"
+                [hrsSprite]="piece.picture"
+                [spriteHeight]="28"
+                [alt]="piece.code"
+                [title]="piece.code"
+              />
+            }
+          }
+        </span>
+      </div>
+      </ng-template>
+    </hrs-item-list>
+  </div>
+}

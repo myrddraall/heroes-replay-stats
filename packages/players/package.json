@@ -1,0 +1,69 @@
+{
+  "name": "@myrddraall/heroes-replay-stats-players",
+  "version": "0.0.0-MAIN",
+  "private": true,
+  "description": "Players: everyone in the stored replays with their numbers, the Players page, and who \"you\" are in a replay",
+  "types": "./index.ts",
+  "sideEffects": false,
+  "scripts": {
+    "format": "prettier --write \"**/*.ts\"",
+    "github.actions.test": "pnpm test",
+    "lint": "eslint .",
+    "test": "ng test --watch=false",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@myrddraall/heroes-replay-stats-common": "workspace:*",
+    "@myrddraall/heroes-replay-stats-data-views": "workspace:*",
+    "@myrddraall/heroes-replay-stats-import": "workspace:*",
+    "@myrddraall/heroes-replay-stats-layout": "workspace:*",
+    "@myrddraall/heroes-replay-stats-settings": "workspace:*",
+    "@myrddraall/heroes-replay-stats-shell": "workspace:*",
+    "@myrddraall/heroprotocol-db": "^0.5.6",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^22.2.5",
+    "@angular/cdk": "^22.1.0",
+    "@angular/cli": "^22.2.5",
+    "@angular/common": "^22.1.0",
+    "@angular/compiler": "^22.1.0",
+    "@angular/compiler-cli": "^22.1.0",
+    "@angular/core": "^22.1.0",
+    "@angular/material": "^22.1.0",
+    "@angular/platform-browser": "^22.1.0",
+    "@angular/router": "^22.1.0",
+    "@eslint/js": "^10.0.1",
+    "@myrddraall/heroes-replay-stats-platform": "workspace:*",
+    "@ngrx/signals": "^22.0.1",
+    "@tanstack/angular-virtual": "^6.1.12",
+    "angular-eslint": "^22.5.0",
+    "dexie": "^4.4.6",
+    "eslint": "^10.9.1",
+    "fake-indexeddb": "^6.0.0",
+    "jsdom": "^28.0.0",
+    "prettier": "^3.8.1",
+    "rxjs": "^7.8.0",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "^8.69.0",
+    "vitest": "^4.0.8"
+  },
+  "peerDependencies": {
+    "@angular/cdk": "^22.1.0",
+    "@angular/common": "^22.1.0",
+    "@angular/core": "^22.1.0",
+    "@angular/material": "^22.1.0",
+    "@angular/router": "^22.1.0",
+    "@ngrx/signals": "^22.0.1"
+  },
+  "license": "MIT",
+  "exports": {
+    ".": "./index.ts",
+    "./provide": "./provide/index.ts",
+    "./feature": "./feature/index.ts",
+    "./ui": "./ui/index.ts",
+    "./data": "./data/index.ts",
+    "./model": "./model/index.ts"
+  },
+  "type": "module"
+}

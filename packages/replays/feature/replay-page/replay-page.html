@@ -1,0 +1,18 @@
+<hrs-layout>
+  @if (store.error(); as error) {
+    <p role="alert">The replay could not be read: {{ error }}</p>
+  } @else if (!store.loaded()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Loading the match" />
+  } @else if (store.replay(); as replay) {
+    <hrs-replay-header hrsLayoutItem="padded" [replay]="replay" />
+    <!-- edge to edge: each section lays itself out, beside its side nav where it has one -->
+    <div class="match__body" hrsLayoutItem="edge-to-edge">
+      <hrs-shell-side-nav />
+      <div class="match__section"><router-outlet /></div>
+    </div>
+  } @else {
+    <hrs-empty-state icon="search_off" title="Match not found">
+      It is not in the replay database, or it is still being imported.
+    </hrs-empty-state>
+  }
+</hrs-layout>

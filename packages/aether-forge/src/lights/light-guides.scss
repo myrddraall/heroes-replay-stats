@@ -1,0 +1,44 @@
+@use '../controls/rows/property-row';
+
+// The lines the view draws, as a row: its label, then each line drawn as it is beside what it shows.
+.guides {
+  @include property-row.row;
+  align-items: start;
+}
+
+.label {
+  @include property-row.label;
+  padding-top: 4px;
+}
+
+ul {
+  display: grid;
+  grid-column: 2 / -1;
+  gap: 2px;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  font: var(--mat-sys-body-small);
+}
+
+li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+// A short piece of the line, in the page's colour (the view draws it in the light's).
+.line {
+  flex: none;
+  width: 20px;
+  border-top: 2px solid currentColor;
+
+  &--faint {
+    opacity: 0.3;
+  }
+
+  &--dashed {
+    border-top-style: dashed;
+    opacity: 0.7;
+  }
+}

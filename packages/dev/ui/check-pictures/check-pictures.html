@@ -1,0 +1,14 @@
+<div class="pictures">
+  <figure [class.hidden]="warmingUp()">
+    <div class="box"><ng-content /></div>
+    @if (test(); as t) {
+      <figcaption>{{ t.mode === 'webgpu' ? labels.webgpu : labels.webgl }}</figcaption>
+    }
+  </figure>
+  @if (test()?.mode === 'both') {
+    <figure>
+      <div class="box" #webgpu></div>
+      <figcaption>{{ labels.webgpu }}</figcaption>
+    </figure>
+  }
+</div>

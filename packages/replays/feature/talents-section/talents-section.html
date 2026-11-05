@@ -1,0 +1,9 @@
+<hrs-layout>
+  @if (store.error(); as error) {
+    <p role="alert">The talents could not be read: {{ error }}</p>
+  } @else if (store.rows(); as rows) {
+    <hrs-talent-table [rows]="rows" />
+  } @else {
+    <mat-progress-bar mode="indeterminate" aria-label="Loading the talents" />
+  }
+</hrs-layout>

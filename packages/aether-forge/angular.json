@@ -1,0 +1,31 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "cli": {
+    "packageManager": "pnpm",
+    "analytics": false
+  },
+  "projects": {
+    "aether-forge": {
+      "projectType": "library",
+      "root": "",
+      "sourceRoot": "src",
+      "prefix": "forge",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:ng-packagr",
+          "options": {
+            "project": "ng-package.json"
+          }
+        },
+        "test": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "tsConfig": "tsconfig.json",
+            "buildTarget": "aether-forge:build"
+          }
+        }
+      }
+    }
+  }
+}

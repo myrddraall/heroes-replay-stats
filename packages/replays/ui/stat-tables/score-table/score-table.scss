@@ -1,0 +1,102 @@
+// Colours are Material's system tokens, so a row re-themed by its team follows it. It never
+// scrolls sideways: the component measures the grid and squeezes it (below) or shows ranking
+// cards when it doesn't fit (see score-table.ts). The clip only hides the one frame in which a
+// too-wide table is measured.
+:host {
+  display: block;
+  min-width: 0;
+  overflow-x: clip;
+}
+
+// The grid's look: rows apart with rounded ends, the figures large and centred.
+.score-table {
+  --hrs-grid-row-height: 0px;
+  --hrs-grid-row-gap: 4px;
+  --hrs-grid-cell-padding: 8px 12px;
+  --hrs-grid-font: var(--mat-sys-title-medium);
+  --hrs-grid-text: var(--mat-sys-on-surface);
+  --hrs-grid-first-text: var(--mat-sys-on-surface);
+  --hrs-grid-header-height: 0px;
+  --hrs-grid-header-font: var(--mat-sys-label-large);
+  --hrs-grid-header-text: var(--mat-sys-on-surface-variant);
+  --hrs-grid-header-case: none;
+  --hrs-grid-header-tracking: var(--mat-sys-label-large-tracking);
+  --hrs-grid-header-line: none;
+
+  // Each row's own colours, its team's: set on the rows, where its theme is.
+  ::ng-deep .hrs-grid__body .hrs-grid__row {
+    --hrs-grid-themed-row-background: var(--mat-sys-surface-container);
+    --hrs-grid-row-hover: var(--mat-sys-surface-container);
+    --hrs-grid-row-line: none;
+    border-radius: 8px;
+  }
+
+  ::ng-deep .hrs-grid__header {
+    justify-content: center;
+    padding: 4px 8px;
+  }
+
+  // the row head in the page's own type: the player cell is sized by it
+  ::ng-deep .hrs-grid__cell:first-child {
+    font: inherit;
+  }
+
+  ::ng-deep .hrs-grid__cell:not(:first-child) {
+    justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.score-table__compact {
+  display: none;
+}
+
+// Squeezed: short numbers, tighter cells, smaller header icons.
+:host(.score-table--squeezed) {
+  .score-table__full {
+    display: none;
+  }
+
+  .score-table__compact {
+    display: inline;
+  }
+
+  .score-table {
+    --hrs-grid-cell-padding: 6px;
+
+    ::ng-deep .hrs-grid__header {
+      padding: 4px;
+    }
+  }
+
+  .score-table__icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.score-table__value--best-in-group {
+  color: var(--mat-sys-primary);
+  font-weight: 600;
+}
+
+.score-table__value--best {
+  color: var(--mat-sys-tertiary);
+  font-weight: 700;
+}
+
+.score-table__icon {
+  font-size: 22px;
+  width: 22px;
+  height: 22px;
+}
+
+.score-table__hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
