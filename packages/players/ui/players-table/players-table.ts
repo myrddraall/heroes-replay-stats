@@ -1,13 +1,18 @@
 import { DatePipe, PercentPipe } from '@angular/common';
-import { Component, input, output } from '@angular/core';
+import { Component, input, model, output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { EmptyState } from '@myrddraall/heroes-replay-stats-common/ui';
 import { CellTemplate, DataGrid, GridColumn } from '@myrddraall/heroes-replay-stats-data-views/ui';
 import type { PlayerRow } from './players-table.presenter';
 
-/** Everyone in the stored replays (presentational, on the data grid): a row each, and which accounts are me. */
+/**
+ * Everyone in the stored replays (presentational, on the data grid): a row each, which accounts are
+ * me, and a search by name.
+ */
 @Component({
   selector: 'hrs-players-table',
   imports: [
@@ -19,13 +24,20 @@ import type { PlayerRow } from './players-table.presenter';
     GridColumn,
     MatButtonModule,
     MatCheckboxModule,
+    MatIconModule,
+    MatInputModule,
     MatProgressBarModule,
   ],
   templateUrl: './players-table.html',
   styleUrl: './players-table.scss',
 })
 export class PlayersTable {
+  /** The rows to show: everyone, or those the search keeps. */
   readonly rows = input.required<readonly PlayerRow[]>();
+  /** How many players there are before searching. */
+  readonly total = input(0);
+  /** What the search field holds. */
+  readonly search = model('');
   /** The players have been read at least once. */
   readonly loaded = input(false);
   /** Why the players couldn't be read. */
