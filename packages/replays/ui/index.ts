@@ -46,3 +46,4 @@ export * from './unit-kill-tables/unit-kill-tables';
 export * from './unit-kill-tables/unit-kill-columns';
 export * from './xp-tables/xp-tables';
 export * from './xp-tables/xp-rows';
+export * from './match-filters/match-filters';

@@ -27,6 +27,7 @@
     "@angular/platform-browser": "^22.1.0",
     "@angular/router": "^22.1.0",
     "@eslint/js": "^10.0.1",
+    "@ngrx/signals": "^22.0.1",
     "@tanstack/angular-virtual": "^6.1.12",
     "angular-eslint": "^22.5.0",
     "eslint": "^10.9.1",
@@ -43,12 +44,15 @@
     "@angular/core": "^22.1.0",
     "@angular/material": "^22.1.0",
     "@angular/router": "^22.1.0",
-    "@tanstack/angular-virtual": "^6.1.12"
+    "@ngrx/signals": "^22.0.1",
+    "@tanstack/angular-virtual": "^6.1.12",
+    "rxjs": "^7.8.0"
   },
   "license": "MIT",
   "exports": {
     ".": "./index.ts",
     "./ui": "./ui/index.ts",
+    "./data": "./data/index.ts",
     "./model": "./model/index.ts",
     "./testing": "./testing/index.ts"
   },

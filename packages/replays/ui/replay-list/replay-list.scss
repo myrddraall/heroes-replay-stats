@@ -27,3 +27,9 @@
 .error {
   color: var(--mat-sys-error);
 }
+.filters {
+  margin-bottom: 16px;
+  &:empty {
+    display: none;
+  }
+}

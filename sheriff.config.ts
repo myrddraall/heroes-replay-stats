@@ -13,7 +13,7 @@ const domains: Record<string, readonly string[]> = {
   dev: ['provide', 'feature', 'ui', 'data', 'model'],
   heroes: ['provide', 'data', 'ui', 'model', 'testing'],
   import: ['provide', 'feature', 'ui', 'data', 'model'],
-  'data-views': ['ui', 'model', 'testing'],
+  'data-views': ['ui', 'data', 'model', 'testing'],
   layout: ['ui', 'model'],
   maps: ['provide', 'feature', 'ui', 'data', 'model', 'testing'],
   platform: ['provide', 'data', 'model'],
@@ -51,7 +51,16 @@ const featureModules: Record<string, readonly string[]> = {
 };
 
 /** Shared domains: any domain may use them; a shared domain uses another only through `uses`. */
-const shared = ['common', 'data-views', 'layout', 'platform', 'settings', 'sheets', 'shell', 'theme'];
+const shared = [
+  'common',
+  'data-views',
+  'layout',
+  'platform',
+  'settings',
+  'sheets',
+  'shell',
+  'theme',
+];
 
 /** The domains each domain may use besides itself, the shared ones and simple libraries; one way only. */
 const uses: Record<string, readonly string[]> = {

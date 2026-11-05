@@ -1,14 +1,20 @@
 <header class="head">
   <h1>Players</h1>
-  @if (rows().length > 0) {
-    <span class="count">{{ rows().length }} {{ rows().length === 1 ? 'player' : 'players' }}</span>
+  @if (total() > 0) {
+    <span class="count">
+      @if (rows().length === total()) {
+        {{ total() }} {{ total() === 1 ? 'player' : 'players' }}
+      } @else {
+        {{ rows().length }} of {{ total() }} {{ total() === 1 ? 'player' : 'players' }}
+      }
+    </span>
   }
 </header>
 @if (error(); as error) {
   <p class="error" role="alert">The replay database could not be read: {{ error }}</p>
 } @else if (!loaded()) {
   <mat-progress-bar mode="indeterminate" aria-label="Loading players" />
-} @else if (rows().length === 0) {
+} @else if (total() === 0) {
   <hrs-empty-state icon="groups" title="Nobody here yet">
     Players appear once replays are imported.
     <br /><button mat-stroked-button class="cta" (click)="importRequested.emit()">
@@ -16,6 +22,24 @@
     </button>
   </hrs-empty-state>
 } @else {
+  <mat-form-field class="search" appearance="outline" subscriptSizing="dynamic">
+    <mat-icon matPrefix class="material-symbols-outlined" aria-hidden="true">search</mat-icon>
+    <input
+      #field
+      matInput
+      type="search"
+      placeholder="Search players"
+      aria-label="Search players"
+      [value]="search()"
+      (input)="search.set(field.value)"
+      (keydown.escape)="search.set('')"
+    />
+  </mat-form-field>
+  @if (rows().length === 0) {
+    <hrs-empty-state icon="person_search" title="Nobody fits">
+      No player's name has all of these words.
+    </hrs-empty-state>
+  } @else {
   <hrs-data-grid class="players hrs-panel" [items]="rows()" [trackBy]="byId">
     <hrs-column name="player" header="Player" width="minmax(max-content, 3fr)">
       <ng-template hrsCell let-p>
@@ -79,4 +103,5 @@
       </ng-template>
     </hrs-column>
   </hrs-data-grid>
+}
 }
