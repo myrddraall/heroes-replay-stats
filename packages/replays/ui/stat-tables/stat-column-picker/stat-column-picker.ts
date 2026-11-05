@@ -63,7 +63,7 @@ export class StatColumnPicker {
     const from = this.choices().findIndex((c) => c.id === id);
     this.move(from, from + by);
     afterNextRender(
-      () => this.host.querySelector<HTMLElement>(`[data-column="${CSS.escape(id)}"]`)?.focus(),
+      () => this.host.querySelector<HTMLElement>(`[column="${CSS.escape(id)}"]`)?.focus(),
       { injector: this.injector },
     );
   }

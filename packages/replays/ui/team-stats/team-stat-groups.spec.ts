@@ -22,14 +22,14 @@ describe('team stat groups', () => {
           key: 1,
           group: null,
           values: { kills: 12, firstFortSeconds: null },
-          class: 'hrs-glass-blue',
+          theme: 'blue',
           data: { team: 1, name: 'Blue team', result: 'Defeat' },
         },
         {
           key: 0,
           group: null,
           values: { kills: 20, firstFortSeconds: 600 },
-          class: 'hrs-glass-red',
+          theme: 'red',
           data: { team: 0, name: 'Red team', result: 'Victory' },
         },
       ]);

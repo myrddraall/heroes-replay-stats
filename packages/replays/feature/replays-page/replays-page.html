@@ -1,9 +1,16 @@
 <hrs-layout>
   <hrs-replay-list
     [cards]="store.cards()"
+    [total]="store.all().length"
     [outdated]="store.outdated()"
     [loaded]="store.loaded()"
     [error]="store.error()"
     (importRequested)="store.importReplays()"
-  />
+  >
+    <hrs-match-filters
+      [options]="store.options()"
+      [filter]="store.filter()"
+      (filterChange)="store.setFilter($event)"
+    />
+  </hrs-replay-list>
 </hrs-layout>

@@ -86,6 +86,7 @@ describe('ReplayService', () => {
         { slot: 1, name: 'B', hero: 'Jaina', heroId: 'Jaina', team: 0, won: true, kind: 'player' },
       ],
       recorderToonHandle: null, // the record predates the recorder fields
+      outdated: false,
     });
     expect(service.error()).toBeNull();
   });
@@ -110,7 +111,7 @@ describe('ReplayService', () => {
     expect(service.replays()[0]!.id).toBe('a');
   });
 
-  it('counts the replays an earlier version of the importer stored', async () => {
+  it('marks and counts the replays an earlier version of the importer stored', async () => {
     await db.replays.bulkPut([
       record('current'),
       record('older', { normalizeVersion: NORMALIZE_VERSION - 1 }),
@@ -120,6 +121,12 @@ describe('ReplayService', () => {
     const service = TestBed.inject(ReplayService);
     open(undefined);
     await until(() => service.loaded());
+    const flags = service.replays().map((r) => [r.id, r.outdated] as const);
+    expect(flags.sort(([a], [b]) => a.localeCompare(b))).toEqual([
+      ['current', false],
+      ['older', true],
+      ['oldest', true],
+    ]);
     expect(service.outdated()).toBe(2);
   });
 

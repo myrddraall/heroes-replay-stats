@@ -2,7 +2,7 @@
   "name": "@myrddraall/heroes-replay-stats-theme",
   "version": "0.0.0-MAIN",
   "private": true,
-  "description": "Theme: the look every page shares (the theme, the glass and frame opacity, the blur behind the glass) and its settings section",
+  "description": "Theme: the look every page shares (the theme, the panels' opacity, the blur behind them) and its settings section",
   "types": "./index.ts",
   "sideEffects": false,
   "scripts": {

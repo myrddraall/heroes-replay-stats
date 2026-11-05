@@ -2,7 +2,7 @@ import type { HeroDataSet, HeroesImages, Picture } from '@myrddraall/hero-data';
 import type { TalentPickRow } from '@myrddraall/heroprotocol-analysis';
 import type { Team } from '@myrddraall/heroprotocol-db';
 import type { HeroIcon } from '@myrddraall/heroes-replay-stats-heroes/model';
-import type { TeamColorMode } from '../../model';
+import type { TeamColor, TeamColorMode } from '../../model';
 import { type PlayerIdentity, playerRows } from '../stat-tables/player-rows';
 
 /**
@@ -25,8 +25,8 @@ export interface TalentRow {
   readonly key: number;
   readonly player: PlayerIdentity;
   readonly icon: HeroIcon | null;
-  /** The team's theme class, such as `hrs-glass-blue`. */
-  readonly class: string | undefined;
+  /** The team's theme (`theme`); none for a player without a team. */
+  readonly theme: TeamColor | undefined;
   /** By tier, in {@link TALENT_TIERS}' order; null for a tier not picked. */
   readonly talents: readonly (TalentCell | null)[];
 }
@@ -59,7 +59,7 @@ export function talentRows(
       key: row.data.player.slot,
       player: row.data.player,
       icon: row.data.icon,
-      class: row.class,
+      theme: row.theme,
       talents: TALENT_TIERS.map((tier) => {
         const pick = own.find((p) => p.tier === tier);
         return pick ? cell(pick) : null;

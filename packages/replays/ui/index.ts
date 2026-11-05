@@ -6,9 +6,7 @@ export {
   NO_STAT_VALUE,
 } from './stat-tables/stat-format';
 export {
-  nextStatSort,
   sortStatRows,
-  statAriaSort,
   statBestFirst,
   statRanks,
   type StatSort,
@@ -16,7 +14,6 @@ export {
 export { statTableRows, type StatCell, type StatTableRow } from './stat-tables/stat-cells';
 export { STAT_SUPPORT_LABELS } from './stat-tables/stat-support';
 export { StatRowHead, type StatRowHeadContext } from './stat-tables/stat-row-head';
-export { StatSortHeader } from './stat-tables/stat-sort-header';
 export { ScoreCards } from './stat-tables/score-cards/score-cards';
 export { ScoreTable } from './stat-tables/score-table/score-table';
 export { StatTable } from './stat-tables/stat-table/stat-table';
@@ -31,8 +28,6 @@ export * from './replay-list/replay-list';
 export * from './replay-list-item/replay-card';
 export * from './replay-list-item/replay-list-item';
 export * from './replay-header/replay-header';
-export * from './replay-nav/replay-nav';
-export * from './replay-nav/replay-pages';
 export * from './chat-log/chat-log';
 export * from './chat-log/chat-log-lines';
 export * from './draft-list/draft-list';
@@ -51,3 +46,4 @@ export * from './unit-kill-tables/unit-kill-tables';
 export * from './unit-kill-tables/unit-kill-columns';
 export * from './xp-tables/xp-tables';
 export * from './xp-tables/xp-rows';
+export * from './match-filters/match-filters';

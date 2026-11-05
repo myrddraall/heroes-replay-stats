@@ -25,7 +25,7 @@ export interface SliceOptions {
   readonly centre?: SliceRepeat;
   /** The length of one tile along a tiled edge, and of a tiled centre's tile, in CSS pixels; the picture's own length (scaled) when not set. */
   readonly tile?: number;
-  /** Draws the frame in this colour (any CSS colour, `rgb(var(--hrs-glass-edge))` follows the team), its picture as the shape. */
+  /** Draws the frame in this colour (any CSS colour, `var(--mat-sys-primary)` follows the team), its picture as the shape. */
   readonly tint?: string;
   /** Makes the right column the left one flipped (`x`), the bottom row the top one (`y`), or both. */
   readonly mirror?: 'x' | 'y' | 'xy';

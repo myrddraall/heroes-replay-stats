@@ -50,7 +50,7 @@ $icon-inset: 6px;
     margin-inline-end: -$icon-inset;
 
     option {
-      background: rgb(var(--hrs-glass-tint));
+      background: var(--mat-sys-surface-container-high);
       color: inherit;
     }
   }

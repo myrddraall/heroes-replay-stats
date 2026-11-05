@@ -6,7 +6,7 @@ import { fakeHeroData } from '@myrddraall/heroes-replay-stats-heroes/testing';
 import { provideFakeSheets } from '@myrddraall/heroes-replay-stats-sheets/testing';
 import { heroLookup, type HeroLookup } from '@myrddraall/heroes-replay-stats-heroes/model';
 import type { ReplaySummary } from '../../model';
-import { toReplayCard } from './replay-card';
+import { toReplayCard, type ReplayCard } from './replay-card';
 import { formatDuration, ReplayListItem } from './replay-list-item';
 
 const replay: ReplaySummary = {
@@ -42,20 +42,27 @@ const replay: ReplaySummary = {
     },
   ],
   recorderToonHandle: '1-Hero-1-5',
+  outdated: false,
 };
 
 let heroes: HeroLookup;
 
-/** The item showing a replay's card, for the accounts marked as me. */
+/** The item showing a replay's card, for the accounts marked as me, already viewed. */
 async function render(r: ReplaySummary, me: readonly string[] = []) {
+  return renderCard(toReplayCard(r, new Set(me), heroes, r.importedAt));
+}
+
+async function renderCard(card: ReplayCard) {
   const fixture = TestBed.createComponent(ReplayListItem);
-  fixture.componentRef.setInput('card', toReplayCard(r, new Set(me), heroes));
+  fixture.componentRef.setInput('card', card);
   await fixture.whenStable();
   return fixture;
 }
 
 describe('ReplayListItem', () => {
-  beforeEach(() => TestBed.configureTestingModule({ providers: [provideRouter([]), provideFakeSheets()] }));
+  beforeEach(() =>
+    TestBed.configureTestingModule({ providers: [provideRouter([]), provideFakeSheets()] }),
+  );
 
   beforeAll(async () => {
     heroes = heroLookup(await fakeHeroData.latest(), heroesImages());
@@ -70,22 +77,23 @@ describe('ReplayListItem', () => {
     expect(formatDuration(3725.4)).toBe('1:02:05');
   });
 
-  it('shows map, mode, duration, build and each team with its result and heroes', async () => {
+  it('shows map, mode, length, build, dates and each team with its result and heroes', async () => {
     const fixture = await render(replay);
     const el: HTMLElement = fixture.nativeElement;
     const text = (sel: string) => el.querySelector(sel)?.textContent?.replace(/\s+/g, ' ').trim();
 
     expect(text('.replay__map')).toBe('Towers of Doom');
     expect(text('.replay__mode')).toBe('Storm League');
-    expect(text('.replay__meta')).toBe('20:34 · build 85267 · analysing…');
+    expect(text('.replay__length')).toBe('20:34');
+    expect(text('.replay__analysing')).toBe('analysing…');
     expect(el.querySelector('.replay__played time')?.getAttribute('datetime')).toBe(
       replay.playedAt,
     );
-    expect(text('.replay__played')).toMatch(/^Played Jun [12], 2024, \d\d:30$/);
+    expect(text('.replay__played')).toMatch(/^Played: Jun [12], 2024, \d\d:30 · Build: 85267$/);
     expect(el.querySelector('.replay__imported time')?.getAttribute('datetime')).toBe(
       replay.importedAt,
     );
-    expect(text('.replay__imported')).toMatch(/^Imported Jun 2, 2024, \d\d:15$/);
+    expect(text('.replay__imported')).toMatch(/^Imported: Jun 2, 2024, \d\d:15$/);
     const t = (node: Element, sel: string) => node.querySelector(sel)?.textContent?.trim();
     const teams = [...el.querySelectorAll('.team')].map((team) => [
       t(team, '.team__result'),
@@ -99,7 +107,15 @@ describe('ReplayListItem', () => {
       ['Victory', [['Jaina', 'Bob']]],
       ['Defeat', [['Sonya', 'Alice']]],
     ]);
-    expect(el.querySelectorAll('.team')[0]!.classList).toContain('team--won');
+    // Victory glows in the legendary theme, Defeat is plain in the team's colour
+    const results = [...el.querySelectorAll('.team__result > span')].map((r) => [
+      r.className.match(/hrs-styled--(\w+)/)?.[1],
+      r.getAttribute('theme'),
+    ]);
+    expect(results).toEqual([
+      ['glow', 'legendary'],
+      ['base', null],
+    ]);
     // each player has their hero's minimap icon; Sonya is the only hero the fake data knows
     const icons = [...el.querySelectorAll('.player')].map((p) => [
       p.querySelector('hrs-hero-minimap-icon') !== null,
@@ -125,8 +141,8 @@ describe('ReplayListItem', () => {
   it("colours the teams from the recorder's point of view, or yours once marked", async () => {
     const rows = (el: HTMLElement) =>
       [...el.querySelectorAll('.team')].map((t) => [
-        t.querySelector('.team__name')!.firstChild!.textContent!.trim(),
-        t.classList.contains('hrs-glass-blue') ? 'blue' : 'red',
+        t.getAttribute('aria-label'),
+        t.getAttribute('theme'),
         t.querySelector('.player__name')!.textContent!.trim(),
       ]);
     // Bob recorded it, so his team (1) is blue, and blue is on top
@@ -158,5 +174,37 @@ describe('ReplayListItem', () => {
       [...t.querySelectorAll('.player__name')].map((n) => n.textContent!.trim()),
     );
     expect(names).toEqual([['Dave', 'Alice', 'Carol'], ['Bob']]);
+  });
+
+  it('marks a match new until opened, updated once imported again, and one out of date', async () => {
+    const marks = async (r: ReplaySummary, seen: string | undefined) =>
+      [
+        ...(
+          await renderCard(toReplayCard(r, new Set(), heroes, seen))
+        ).nativeElement.querySelectorAll('mat-chip'),
+      ].map((c) => (c as HTMLElement).textContent!.trim());
+    expect(await marks(replay, replay.importedAt)).toEqual([]);
+    expect(await marks(replay, undefined)).toEqual(['New']);
+    expect(await marks(replay, '2024-06-01T00:00:00.000Z')).toEqual(['Updated']);
+    expect(await marks({ ...replay, outdated: true }, replay.importedAt)).toEqual(['Out of date']);
+    expect(await marks({ ...replay, outdated: true }, undefined)).toEqual(['New', 'Out of date']);
+  });
+
+  it('shows you in your own colour, and says so to screen readers', async () => {
+    const you = (el: HTMLElement) =>
+      [...el.querySelectorAll('.player')].map((p) => [
+        p.querySelector('.player__name')!.textContent!.trim(),
+        p.classList.contains('hrs-self'),
+        p.querySelector('.player__you')?.textContent?.trim() ?? null,
+      ]);
+    // Bob recorded it
+    expect(you((await render(replay)).nativeElement)).toEqual([
+      ['Bob', true, '(you)'],
+      ['Alice', false, null],
+    ]);
+    expect(you((await render(replay, ['1-Hero-1-1'])).nativeElement)).toEqual([
+      ['Alice', true, '(you)'],
+      ['Bob', false, null],
+    ]);
   });
 });

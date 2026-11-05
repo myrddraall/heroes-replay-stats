@@ -50,13 +50,13 @@ export function playerRows<P extends PlayerIdentity>(
         key: player.slot,
         group: player.team,
         values: statValues(player, columns),
-        class: c === null ? undefined : `hrs-glass-${c}`,
+        ...(c === null ? {} : { theme: c }),
         data: { player, icon: icons[player.slot] ?? null },
       };
     })
     .sort(
       (a, b) =>
-        Number(a.class !== 'hrs-glass-blue') - Number(b.class !== 'hrs-glass-blue') ||
+        Number(a.theme !== 'blue') - Number(b.theme !== 'blue') ||
         a.key - b.key,
     );
 }

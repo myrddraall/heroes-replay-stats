@@ -1,11 +1,10 @@
-@use 'glass-mixins' as glass;
 @use './rows/property-row';
 
-// A flyout's panel: the frame's glass, near opaque (readable over the list or the background it
-// opens over), its parts in a column, only its list scrolling. It does not clip (its edge's light
-// leaks outside it).
+// A flyout's panel: a raised film, near opaque (readable over the list or the background it
+// opens over), its parts in a column, only its list scrolling.
+// Its hairline is along its top.
 @mixin panel {
-  @include glass.frame-glass(top);
+  border-top: 1px solid var(--mat-sys-outline-variant);
   position: relative;
   display: flex;
   flex-direction: column;
@@ -15,7 +14,7 @@
   max-height: min(70vh, 520px);
   padding: 12px;
   color: var(--mat-sys-on-surface);
-  background: rgb(var(--hrs-glass-tint) / 0.97);
+  background: var(--mat-sys-surface-container);
   backdrop-filter: blur(12px);
 }
 
@@ -73,8 +72,8 @@
 
     &:hover,
     &:focus-visible {
-      border-color: rgb(var(--hrs-glass-edge) / 0.5);
-      background: rgb(var(--hrs-glass-edge) / 0.15);
+      border-color: color-mix(in srgb, var(--mat-sys-primary) 50%, transparent);
+      background: color-mix(in srgb, var(--mat-sys-primary) 15%, transparent);
     }
 
     &:focus-visible {

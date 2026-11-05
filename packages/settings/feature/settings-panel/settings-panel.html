@@ -4,8 +4,6 @@
   [max]="store.max"
   [deviceDefault]="store.deviceDefault"
   [cores]="store.cores"
-  [version]="store.platform.version"
-  [kind]="store.platform.kind"
   (parallelImportsChange)="store.setParallelImports($event)"
 >
   @for (section of sections(); track section.id) {

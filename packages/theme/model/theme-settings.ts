@@ -1,41 +1,56 @@
-/** The neutral the site is in: the game's purples with magenta, or the Nexus blue with cyan. */
-export type ThemeName = 'neutral' | 'nexus';
-export const THEME_NAMES: readonly ThemeName[] = ['neutral', 'nexus'];
+/** The neutral themes the site can wear: the game's violet, its ColorPurple magenta, or cyan. */
+export type NeutralTheme = 'purple' | 'magenta' | 'cyan';
+export const NEUTRAL_THEMES: readonly NeutralTheme[] = ['purple', 'magenta', 'cyan'];
+
+/**
+ * Every theme an element can carry (`theme`): the neutrals, then the ones the data sets: the
+ * teams, the user's own player, and the item tiers.
+ */
+export type ThemeName =
+  | NeutralTheme
+  | 'blue'
+  | 'red'
+  | 'green'
+  | 'poor'
+  | 'common'
+  | 'uncommon'
+  | 'rare'
+  | 'epic'
+  | 'legendary';
 
 /** The look every page shares. */
 export interface ThemeSettings {
-  readonly theme: ThemeName;
-  /** How see-through the glass panels are (their opacity). */
-  readonly glassAlpha: number;
-  /** How see-through the frame is (the menu and the header). */
-  readonly frameAlpha: number;
-  /** Whether the glass blurs what is behind it: redone for every frame of the background. */
+  readonly theme: NeutralTheme;
+  /** How solid every film is, from its legibility floor (0) to solid (1). */
+  readonly opacity: number;
+  /** Whether the films blur what is behind them. */
   readonly blur: boolean;
 }
 
-/** The glass opacity below which muted text loses WCAG AA contrast over the background's brightest sky. */
-export const GLASS_ALPHA_RANGE = { min: 0.06, max: 1 } as const;
+export const DEFAULT_THEME: ThemeSettings = { theme: 'purple', opacity: 0, blur: false };
 
-export const DEFAULT_THEME: ThemeSettings = {
-  theme: 'neutral',
-  glassAlpha: 0.5,
-  frameAlpha: 0.55,
-  blur: false,
-};
+/** The glass theme's names for the neutrals, as saved before. */
+const EARLIER_THEMES: Readonly<Record<string, NeutralTheme>> = { neutral: 'purple', nexus: 'cyan' };
 
-function alpha(v: unknown): number | undefined {
-  if (typeof v !== 'number' || !Number.isFinite(v)) return undefined;
-  const { min, max } = GLASS_ALPHA_RANGE;
-  return Math.min(max, Math.max(min, Math.round(v * 100) / 100));
+function theme(v: unknown): NeutralTheme | undefined {
+  if (typeof v !== 'string') return undefined;
+  return NEUTRAL_THEMES.find((t) => t === v) ?? EARLIER_THEMES[v];
 }
 
-/** What the user chose, each value kept within its range; one that isn't a value is left out. */
-export function validTheme(saved: Partial<Record<keyof ThemeSettings, unknown>>): Partial<ThemeSettings> {
+function opacity(v: unknown): number | undefined {
+  if (typeof v !== 'number' || !Number.isFinite(v)) return undefined;
+  return Math.min(1, Math.max(0, Math.round(v * 100) / 100));
+}
+
+/**
+ * What the user chose, each value kept within its range; one that isn't a value is left out, and
+ * so is anything else saved with them (the glass theme's opacities).
+ */
+export function validTheme(saved: Readonly<Record<string, unknown>>): Partial<ThemeSettings> {
   const chosen: Partial<Record<keyof ThemeSettings, unknown>> = {
-    theme: THEME_NAMES.find((t) => t === saved.theme),
-    glassAlpha: alpha(saved.glassAlpha),
-    frameAlpha: alpha(saved.frameAlpha),
-    blur: typeof saved.blur === 'boolean' ? saved.blur : undefined,
+    theme: theme(saved['theme']),
+    opacity: opacity(saved['opacity']),
+    blur: typeof saved['blur'] === 'boolean' ? saved['blur'] : undefined,
   };
   return Object.fromEntries(
     Object.entries(chosen).filter(([, v]) => v !== undefined),

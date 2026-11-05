@@ -22,7 +22,7 @@
 
 <ol class="cards">
   @for (card of cards(); track card.line.row.key) {
-    <li class="card" [class]="card.line.row.class ?? ''">
+    <li class="card" [attr.theme]="card.line.row.theme ?? null">
       <span class="card__rank">{{ card.rank }}</span>
       <div class="card__head">
         @if (rowHead(); as head) {

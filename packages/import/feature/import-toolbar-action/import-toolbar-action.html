@@ -1,43 +1,23 @@
-@if (importPod(); as pod) {
-  <div class="import-pod" role="status" aria-live="polite">
-    <a
-      class="import-pod__status"
-      routerLink="/import"
-      [attr.aria-label]="pod.label + ', show imports'"
-      matTooltip="Show imports"
-    >
-      <mat-progress-spinner
-        class="import-pod__ring"
-        mode="determinate"
-        [value]="pod.percent"
-        diameter="22"
-        strokeWidth="3"
-      />
-      <span class="import-pod__text">{{ handset() ? pod.short : pod.label }}</span>
-    </a>
-    <button
-      mat-icon-button
-      class="import-pod__add"
-      (click)="imports.import()"
-      aria-label="Import more replays"
-      matTooltip="Import more replays"
-    >
-      <mat-icon class="material-symbols-outlined">add</mat-icon>
-    </button>
-  </div>
-} @else if (handset()) {
-  <button
-    mat-icon-button
-    class="hrs-cta"
-    (click)="imports.import()"
-    aria-label="Import replays"
-    matTooltip="Import replays"
+@let pod = importPod();
+<div class="hrs-pod import-pod" [attr.role]="pod ? 'status' : null" aria-live="polite">
+  <a
+    class="import-pod__status"
+    routerLink="/replays/import"
+    [attr.aria-label]="pod ? pod.label + ', show imports' : null"
   >
-    <mat-icon class="material-symbols-outlined">upload_file</mat-icon>
+    <mat-icon class="material-symbols-outlined import-pod__icon" aria-hidden="true">upload_file</mat-icon>
+    <span>{{ pod ? (handset() ? pod.short : pod.label) : 'Import' }}</span>
+  </a>
+  <button
+    type="button"
+    class="hrs-badge hrs-badge--corner hrs-badge--filled import-pod__more"
+    [attr.aria-label]="pod ? 'Import more replays' : 'Import replays'"
+    [matTooltip]="pod ? 'Import more replays' : 'Import replays'"
+    (click)="imports.import()"
+  >
+    +
   </button>
-} @else {
-  <button mat-flat-button class="hrs-cta" (click)="imports.import()">
-    <mat-icon class="material-symbols-outlined">upload_file</mat-icon>
-    Import replays
-  </button>
-}
+  @if (pod) {
+    <span class="hrs-pod__bar" aria-hidden="true"><span [style.width.%]="pod.percent"></span></span>
+  }
+</div>

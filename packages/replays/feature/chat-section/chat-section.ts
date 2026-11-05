@@ -4,7 +4,7 @@ import { Layout } from '@myrddraall/heroes-replay-stats-layout/ui';
 import { ChatLog } from '../../ui';
 import { ChatSectionStore } from './chat-section.store';
 
-/** The replay's chat (container): `/replays/<id>/chat`. */
+/** The replay's chat (container): `/replays/matches/<id>/chat`. */
 @Component({
   selector: 'hrs-chat-section',
   imports: [ChatLog, Layout, MatProgressBar],

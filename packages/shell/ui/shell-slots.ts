@@ -1,25 +1,39 @@
 import { InjectionToken, type Provider, type Signal, signal, type Type } from '@angular/core';
+import {
+  SHELL_AREAS,
+  SHELL_MENU_ITEMS,
+  SHELL_SECTIONS,
+  SHELL_UTILITY_LINKS,
+  type ShellArea,
+  type ShellMenuItem,
+  type ShellSection,
+  type ShellUtilityLink,
+} from '../model';
 
-/** An item of the shell's main navigation, added by the domain whose page it opens. */
-export interface ShellNavItem {
-  readonly path: string;
-  readonly label: string;
-  /** A Material Symbols name. */
-  readonly icon: string;
-  /** Items show in ascending order. */
-  readonly order: number;
+/** An area on the top bar, added by the domain whose pages it holds (or the app, for one that gathers several). */
+export function provideShellArea(area: ShellArea): Provider {
+  return { provide: SHELL_AREAS, useValue: area, multi: true };
 }
 
-/** The shell's main navigation (`provideShellNavItem`). */
-export const SHELL_NAV_ITEMS = new InjectionToken<readonly ShellNavItem[]>('hrs.shell-nav-items', {
-  factory: () => [],
-});
-
-export function provideShellNavItem(item: ShellNavItem): Provider {
-  return { provide: SHELL_NAV_ITEMS, useValue: item, multi: true };
+/** A fixed section of an area (Game's Maps), added by the domain whose page it opens. */
+export function provideShellSection(section: ShellSection): Provider {
+  return { provide: SHELL_SECTIONS, useValue: section, multi: true };
 }
 
-/** What other domains show at the end of the shell's toolbar: components that inject what they show. */
+/**
+ * A page the domain's utility (its component in the top bar's cluster) leads to, listed in the
+ * tree after the areas, for where the cluster has no room (a handset).
+ */
+export function provideShellUtilityLink(link: ShellUtilityLink): Provider {
+  return { provide: SHELL_UTILITY_LINKS, useValue: link, multi: true };
+}
+
+/** An entry of the settings menu, added by the domain whose page it opens. */
+export function provideShellMenuItem(item: ShellMenuItem): Provider {
+  return { provide: SHELL_MENU_ITEMS, useValue: item, multi: true };
+}
+
+/** What other domains show in the top bar's utility cluster: components that inject what they show. */
 export const SHELL_TOOLBAR_ACTIONS = new InjectionToken<readonly Type<unknown>[]>(
   'hrs.shell-toolbar-actions',
   { factory: () => [] },
@@ -64,24 +78,18 @@ export function provideShellBackdrop(load: () => Promise<Type<unknown>>): Provid
   return { provide: SHELL_BACKDROP, useValue: load };
 }
 
-/** How the shell's glass looks: its theme, how see-through it is, and whether it blurs. */
+/** How the shell looks: its theme, how solid its films are, and whether they blur. */
 export interface ShellLook {
+  /** The neutral theme the shell carries (`theme`). */
   readonly theme: Signal<string>;
-  /** The panels' opacity. */
-  readonly glassAlpha: Signal<number>;
-  /** The frame's (the menu and the header). */
-  readonly frameAlpha: Signal<number>;
+  /** How solid every film is, from its legibility floor (0) to solid (1). */
+  readonly opacity: Signal<number>;
   readonly blur: Signal<boolean>;
 }
 
-/** The shell's look (`provideShellLook`); the neutral glass unless provided. */
+/** The shell's look (`provideShellLook`); the purple theme at its floors unless provided. */
 export const SHELL_LOOK = new InjectionToken<ShellLook>('hrs.shell-look', {
-  factory: () => ({
-    theme: signal('neutral'),
-    glassAlpha: signal(0.5),
-    frameAlpha: signal(0.55),
-    blur: signal(false),
-  }),
+  factory: () => ({ theme: signal('purple'), opacity: signal(0), blur: signal(false) }),
 });
 
 /** `look`: made in an injection context, so it can read what sets it. */

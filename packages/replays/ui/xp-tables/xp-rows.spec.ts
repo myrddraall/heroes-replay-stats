@@ -35,6 +35,6 @@ describe('xp tables', () => {
       ['2:00', 150, 40],
     ]);
     expect(red.rows[1]!.values['total']).toBe(290);
-    expect(red.rows[1]!.class).toBe('hrs-glass-red');
+    expect(red.rows[1]!.theme).toBe('red');
   });
 });

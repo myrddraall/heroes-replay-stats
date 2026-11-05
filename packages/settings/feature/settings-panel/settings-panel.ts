@@ -5,8 +5,8 @@ import { SETTINGS_SECTIONS, SettingsForm } from '../../ui';
 
 /**
  * The settings (container): shown by the Settings page, and in a dialog over the Background editor.
- * The Importing section and the About line are its own; the other sections come from the domains
- * that add them (`provideSettingsSection`).
+ * The Importing section is its own; the other sections come from the domains that add them
+ * (`provideSettingsSection`).
  */
 @Component({
   selector: 'hrs-settings-panel',
@@ -22,7 +22,7 @@ export class SettingsPanel {
   constructor() {
     const sections = [...inject(SETTINGS_SECTIONS)].sort((a, b) => a.order - b.order);
     void Promise.all(sections.map(async ({ id, load }) => ({ id, component: await load() }))).then(
-      (loaded) => this.sections.set(loaded),
+      (all) => this.sections.set(all),
     );
   }
 }
