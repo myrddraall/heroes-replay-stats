@@ -2,7 +2,7 @@
   "name": "heroes-replay-stats-workspace",
   "version": "0.0.0-MAIN",
   "private": true,
-  "description": "Heroes of the Storm replay statistics \u2014 an Angular app for the browser and the desktop (Electron)",
+  "description": "Heroes of the Storm replay statistics — an Angular app for the browser and the desktop (Electron)",
   "scripts": {
     "build": "devutil run build",
     "check": "wireit",
@@ -28,11 +28,28 @@
     "generate.play-background": "heroes-capture ui background -o apps/web/public/backgrounds/play",
     "serve.maps": "node tools/serve-maps.ts",
     "serve.reports": "node tools/serve-reports.ts",
-    "serve.sheets": "node tools/serve-sheets.ts"
+    "serve.sheets": "node tools/serve-sheets.ts",
+    "generate.domain": "ng generate domain",
+    "generate.library": "ng generate library",
+    "generate.layer": "ng generate layer",
+    "generate.testing": "ng generate testing",
+    "generate.featureset": "ng generate featureset",
+    "generate.feature-component": "ng generate feature-component",
+    "generate.ui-component": "ng generate ui-component",
+    "generate.store": "ng generate store",
+    "generate.store-feature": "ng generate store-feature",
+    "generate.slot": "ng generate slot",
+    "generate.worker": "ng generate worker",
+    "generate.uses": "ng generate uses",
+    "generate.move": "ng generate move",
+    "generate.extract-domain": "ng generate extract-domain",
+    "generate.publishable": "ng generate publishable"
   },
   "devDependencies": {
+    "@angular/cli": "^22.2.5",
     "@cpdevtools/git-flow": "^1.1.1",
     "@cpdevtools/git-flow-cli": "^1.1.1",
+    "@cpdevtools/schematics": "^0.1.0",
     "@cpdevtools/ts-dev-utilities-cli": "^1.1.6",
     "@softarc/eslint-plugin-sheriff": "^0.20.0",
     "@softarc/sheriff-core": "^0.20.0",
@@ -132,5 +149,13 @@
     }
   },
   "license": "MIT",
-  "type": "module"
+  "type": "module",
+  "domainPackages": {
+    "scope": "@myrddraall/heroes-replay-stats-",
+    "prefix": "hrs",
+    "apps": "apps",
+    "packages": "packages",
+    "libs": "libs",
+    "sheriffConfig": "sheriff.config.ts"
+  }
 }
