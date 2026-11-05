@@ -1,7 +1,7 @@
 /* HRS Nexus UI — component stylesheet. Every colour, length and glow is a token from tokens.json
    (tokens.css declares them); this file only composes them, in OKLab: films and glows are
    oklch(from …) relative colours, every gradient interpolates `in oklab`. Ports to packages/ui/src/theme as is. */
-@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@600;700&family=Source+Sans+3:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Saira:wght@600;700&family=Source+Sans+3:wght@400;600&display=swap');
 
 /* ---------- base ---------- */
 *, *::before, *::after { box-sizing: border-box; }
@@ -111,7 +111,7 @@ a:hover { text-decoration: underline; }
 [theme="cyan"] { --hrs-tex-filter: hue-rotate(-66deg); --hrs-hue-delta: -56; --hrs-chroma-k: 1; }
 [theme="blue"] { --hrs-tex-filter: hue-rotate(-20deg); --hrs-hue-delta: -20; --hrs-chroma-k: 1; }
 [theme="red"] { --hrs-tex-filter: hue-rotate(88deg); --hrs-hue-delta: -268; --hrs-chroma-k: 1; }
-[theme="green"] { --hrs-tex-filter: hue-rotate(-95deg); --hrs-hue-delta: -128; --hrs-chroma-k: 1; }
+[theme="self"] { --hrs-tex-filter: hue-rotate(-95deg); --hrs-hue-delta: -128; --hrs-chroma-k: 1; }
 [theme="poor"] { --hrs-tex-filter: grayscale(1) brightness(0.8); --hrs-nav-l-shift: -10%; --hrs-hue-delta: 0; --hrs-chroma-k: 0.0; }
 [theme="common"] { --hrs-tex-filter: grayscale(1) brightness(1.35); --hrs-nav-l-shift: 22%; --hrs-hue-delta: 0; --hrs-chroma-k: 0.0; }
 [theme="uncommon"] { --hrs-tex-filter: hue-rotate(-157deg) saturate(1.3); --hrs-hue-delta: -144; --hrs-chroma-k: 1.35; }

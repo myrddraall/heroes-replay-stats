@@ -15,7 +15,13 @@ import {
 } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { MatTooltip } from '@angular/material/tooltip';
-import { CellTemplate, DataGrid, GridColumn, HeaderTemplate } from '@myrddraall/heroes-replay-stats-data-views/ui';
+import {
+  CellTemplate,
+  DataGrid,
+  GridColumn,
+  HeaderTemplate,
+  NumberCell,
+} from '@myrddraall/heroes-replay-stats-data-views/ui';
 import { ScoreCards } from '../score-cards/score-cards';
 import type { StatColumn, StatRow } from '../../../model';
 import { statTableRows, type StatTableRow } from '../stat-cells';
@@ -31,6 +37,9 @@ type Fit = 'full' | 'squeezed' | 'cards';
  * table and within each row's group. The row head comes from a `uiStatRowHead` template inside.
  * Unsorted, the rows keep their given order.
  *
+ * Its rows are sized by their height (`--hrs-grid-row-height`, the page's to change): the type is a
+ * share of it and everything in a row is sized in em.
+ *
  * It never scrolls sideways. When the table is wider than its place it squeezes (the host gets
  * `score-table--squeezed`, which a row head's own styles can follow), and when even that is too
  * wide it becomes a ranking (`ui-score-cards`), ranked by the sorted column or else the first,
@@ -38,7 +47,17 @@ type Fit = 'full' | 'squeezed' | 'cards';
  */
 @Component({
   selector: 'ui-score-table',
-  imports: [CellTemplate, DataGrid, GridColumn, HeaderTemplate, MatIcon, MatTooltip, NgTemplateOutlet, ScoreCards],
+  imports: [
+    CellTemplate,
+    DataGrid,
+    GridColumn,
+    HeaderTemplate,
+    MatIcon,
+    MatTooltip,
+    NgTemplateOutlet,
+    NumberCell,
+    ScoreCards,
+  ],
   templateUrl: './score-table.html',
   styleUrl: './score-table.scss',
   host: { '[class.score-table--squeezed]': "fit() === 'squeezed'" },
@@ -95,6 +114,8 @@ export class ScoreTable<T> {
     inject(DestroyRef).onDestroy(() => observer.disconnect());
   }
 
+  /** A column's first press sorts best first: lowest first where lower is better (deaths). */
+  protected readonly bestFirst = (column: StatColumn) => statBestFirst(column).direction;
   protected readonly byKey = (line: StatTableRow<T>) => line.row.key;
   protected readonly themeOf = (line: StatTableRow<T>) => line.row.theme ?? null;
 

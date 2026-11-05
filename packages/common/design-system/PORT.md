@@ -19,9 +19,9 @@ port it when a page needs it).
 | Material M3 mapping replaces the overrides in `apps/web/src/styles.scss` | done | as a Material theme: `assets/styles/nexus/_material-theme.scss`, generated from bundle.css's mapping (`mat.theme-overrides` + `mat.<component>-overrides` on `:root` and every `[theme]`), `@use`d by `styles.scss` after `mat.theme` (type, density). Components keep Material's components and `--mat-sys-*` tokens |
 | Glass bridge: `hrs-glass*` classes and mixins drawn as Nexus films | removed | served until every package was converted, then deleted with the files below |
 | Glass files removed (`_glass*.scss`, `_theme-colors.scss`, `glass/`) | done | 2026-11-03; the background editor's `panelClass` option went with them (the editor sits in the shell, which carries `theme`) |
-| Self theme directive (`green`, the user's own player) | later | no consumer yet |
+| Self theme directive (`self`, the user's own player) | later | no consumer yet |
 | Rarity theme directive | later | no consumer yet |
-| Game font | later | licence check first; Exo 2 + Source Sans 3 meanwhile |
+| Game font | later | licence check first; Saira + Source Sans 3 meanwhile |
 
 ## Components
 

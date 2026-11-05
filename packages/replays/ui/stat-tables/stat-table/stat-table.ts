@@ -5,7 +5,7 @@ import { CellTemplate, DataGrid, GridColumn, HeaderTemplate } from '@myrddraall/
 import type { StatColumn, StatRow, StatSupport } from '../../../model';
 import { statTableRows, type StatTableRow } from '../stat-cells';
 import { StatRowHead } from '../stat-row-head';
-import type { StatSort } from '../stat-sort';
+import { statBestFirst, type StatSort } from '../stat-sort';
 import { STAT_SUPPORT_LABELS } from '../stat-support';
 
 /**
@@ -51,6 +51,8 @@ export class StatTable<T> {
     return support !== undefined && support !== 'full';
   }
 
+  /** A column's first press sorts best first: lowest first where lower is better (deaths). */
+  protected readonly bestFirst = (column: StatColumn) => statBestFirst(column).direction;
   protected readonly byKey = (line: StatTableRow<T>) => line.row.key;
   protected readonly themeOf = (line: StatTableRow<T>) => line.row.theme ?? null;
 }

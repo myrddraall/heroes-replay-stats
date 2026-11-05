@@ -2,7 +2,9 @@ import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { formatStatCompact } from '../stat-tables/stat-format';
 import { ScoreCards } from '../stat-tables/score-cards/score-cards';
-import { statBestFirst, statRanks } from '../stat-tables/stat-sort';
+import { statBestFirst, statRanks, type StatSort } from '../stat-tables/stat-sort';
+import { ScoreTable } from '../stat-tables/score-table/score-table';
+import { provideWholeLists } from '@myrddraall/heroes-replay-stats-data-views/testing';
 import { statTableRows } from '../stat-tables/stat-cells';
 import { type StatColumn, type StatRow } from '../../model';
 import { describe, expect, it } from 'vitest';
@@ -91,5 +93,42 @@ describe('ScoreCards', () => {
     await fixture.whenStable();
     expect(places(el)).toEqual(['1 Deaths 1 (best)', '2 Deaths 3', '3 Deaths 5']);
     expect(chips[1].getAttribute('aria-pressed')).toBe('true');
+  });
+});
+
+@Component({
+  imports: [ScoreTable],
+  template: `<ui-score-table [columns]="columns" [rows]="rows" [(sort)]="sort" />`,
+})
+class Table {
+  readonly columns = [kills, deaths];
+  readonly rows = [row('a', 2, 5), row('b', 8, 1), row('c', 6, 3)];
+  readonly sort = signal<StatSort | null>(null);
+}
+
+describe('ScoreTable sorting', () => {
+  it('sorts each column best first on its first press: fewest deaths first', async () => {
+    TestBed.configureTestingModule({ providers: [provideWholeLists()] });
+    const fixture = TestBed.createComponent(Table);
+    await fixture.whenStable();
+    const el: HTMLElement = fixture.nativeElement;
+    const header = (label: string) =>
+      [...el.querySelectorAll<HTMLElement>('.hrs-grid__head [role="columnheader"]')].find(
+        (h) => h.textContent?.includes(label),
+      )!;
+    // each row's figures, in the order drawn
+    const figures = (column: number) =>
+      [...el.querySelectorAll('.hrs-grid__body [role="row"]')].map((r) =>
+        r.querySelectorAll('hrs-number-cell')[column]?.firstChild?.textContent?.trim(),
+      );
+
+    header('Deaths').click();
+    await fixture.whenStable();
+    expect(fixture.componentInstance.sort()).toEqual({ column: 'd', direction: 'asc' });
+    expect(figures(1)).toEqual(['1', '3', '5']);
+    header('Kills').click();
+    await fixture.whenStable();
+    expect(fixture.componentInstance.sort()).toEqual({ column: 'k', direction: 'desc' });
+    expect(figures(0)).toEqual(['8', '6', '2']);
   });
 });

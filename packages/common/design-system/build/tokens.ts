@@ -4,7 +4,7 @@
  * spacing, radius, opacity and effects.
  */
 import { formatOklch, hexToOklch } from './oklab.ts';
-import { BASE_THEMES, type Role, roleValue, themeShadows } from './themes.ts';
+import { BASE_THEMES, type Role, roleValue, THEME_ALIASES, themeShadows } from './themes.ts';
 
 interface Token {
   readonly name: string;
@@ -36,7 +36,7 @@ const color: Token[] = [
   // semantic, theme independent
   { name: 'hrs-team-blue', value: hex('#4a95ff'), usage: 'Ally / team-1 player names and markers (lifted from game LabelYourTeam #3184ff for 4.5:1 on hrs-selection). Text on hrs-tint. Pair with theme="blue" for whole panels.' },
   { name: 'hrs-team-red', value: hex('#ff6471'), usage: 'Enemy / team-2 player names and markers (lifted from game LabelEnemyTeam #f70b21 for 4.5:1 on hrs-tint). Panels: theme="red".' },
-  { name: 'hrs-self', value: hex('#4ee36b'), usage: 'The user\'s own player wherever they appear in a list (the Watch roster green). Panels about the user: theme="green".' },
+  { name: 'hrs-self', value: hex('#4ee36b'), usage: 'The user\'s own player wherever they appear in a list (the Watch roster green). Panels about the user: theme="self".' },
   { name: 'hrs-gold', value: hex('#f2b632'), usage: 'Ownership and heroic marks: OWNED lines, heroic key outlines, the active section heading, the portrait frame fallback.' },
   { name: 'hrs-error', value: hex('#ff6b6b'), usage: "Error lines and failed imports (the chat's red). Text on hrs-tint; always with a word, never colour alone." },
   { name: 'hrs-info', value: hex('#6ca7ff'), usage: "System and informational lines (the chat's blue): 'has come online', import finished." },
@@ -62,14 +62,16 @@ export const DESIGN_TOKENS = {
       { id: 'cyan', name: 'Cyan (nexus)' },
       { id: 'blue', name: 'Blue team' },
       { id: 'red', name: 'Red team' },
-      { id: 'green', name: 'Self (green)' },
+      { id: 'self', name: 'Self' },
     ],
+    /** Other names for a theme (no values of their own): the generated CSS gives them its rules. */
+    aliases: Object.entries(THEME_ALIASES).map(([id, of]) => ({ id, of })),
     tokens: color,
   },
   type: {
     fonts: [],
     families: {
-      brand: "'Exo 2', 'Segoe UI', system-ui, sans-serif",
+      brand: "'Saira', 'Segoe UI', system-ui, sans-serif",
       plain: "'Source Sans 3', 'Segoe UI', system-ui, sans-serif",
       mono: "ui-monospace, 'Cascadia Mono', Consolas, monospace",
     },

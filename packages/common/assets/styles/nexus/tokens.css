@@ -135,7 +135,8 @@
   --hrs-glow-modal: 0 0 40px oklch(66% 0.225 18 / 0.45), 0 0 120px oklch(66% 0.225 18 / 0.2);
   --hrs-shade: 0 2px 8px oklch(0% 0 0 / 0.5);
 }
-[theme='green'] {
+[theme='self'],
+[theme='blue-self'] {
   --hrs-ground: oklch(16% 0.045 158);
   --hrs-tint: oklch(19.5% 0.06 158);
   --hrs-tint-raised: oklch(24% 0.075 158);
@@ -191,7 +192,7 @@
   --hrs-nav-shimmer: 8s;
   --hrs-nav-pulse: 4s;
   --hrs-nav-sparkle: 1.8s;
-  --font-brand: 'Exo 2', 'Segoe UI', system-ui, sans-serif;
+  --font-brand: 'Saira', 'Segoe UI', system-ui, sans-serif;
   --font-plain: 'Source Sans 3', 'Segoe UI', system-ui, sans-serif;
   --font-mono: ui-monospace, 'Cascadia Mono', Consolas, monospace;
   --hrs-font-nav-1: 700 26px/30px var(--font-brand);

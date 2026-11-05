@@ -1,7 +1,11 @@
+// Sized in em: its row's type sizes it (2.5em keeps the icon at 32px in 13px tables).
 :host {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.6em;
+}
+hrs-hero-minimap-icon {
+  font-size: 2.5em;
 }
 .cell__names {
   display: grid;

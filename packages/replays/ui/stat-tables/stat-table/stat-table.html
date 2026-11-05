@@ -30,7 +30,14 @@
     </ng-template>
   </hrs-column>
   @for (column of columns(); track column.id; let i = $index) {
-    <hrs-column [name]="column.id" [header]="column.label" width="minmax(min-content, max-content)" align="end" sortable>
+    <hrs-column
+      [name]="column.id"
+      [header]="column.label"
+      width="minmax(min-content, max-content)"
+      align="end"
+      sortable
+      [sortStart]="bestFirst(column)"
+    >
       <ng-template hrsHeader>
         <span class="stat-table__label" [matTooltip]="tooltip(column)" matTooltipPosition="above">
           {{ column.label }}

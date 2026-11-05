@@ -2,7 +2,7 @@ import type { HeroDataSet, HeroesImages, Picture } from '@myrddraall/hero-data';
 import type { TalentPickRow } from '@myrddraall/heroprotocol-analysis';
 import type { Team } from '@myrddraall/heroprotocol-db';
 import type { HeroIcon } from '@myrddraall/heroes-replay-stats-heroes/model';
-import type { TeamColor, TeamColorMode } from '../../model';
+import type { StatRowTheme, TeamColorMode } from '../../model';
 import { type PlayerIdentity, playerRows } from '../stat-tables/player-rows';
 
 /**
@@ -26,7 +26,7 @@ export interface TalentRow {
   readonly player: PlayerIdentity;
   readonly icon: HeroIcon | null;
   /** The team's theme (`theme`); none for a player without a team. */
-  readonly theme: TeamColor | undefined;
+  readonly theme: StatRowTheme | undefined;
   /** By tier, in {@link TALENT_TIERS}' order; null for a tier not picked. */
   readonly talents: readonly (TalentCell | null)[];
 }

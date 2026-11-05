@@ -29,6 +29,7 @@ import {
 import { EmptyTemplate, GroupHeaderTemplate } from '../templates/list-templates';
 import { injectVirtualWindow } from '../virtual/virtual-window';
 import { GridColumn } from './grid-column';
+import { GridRow, GridRowHeight } from '../grid-row/grid-row';
 
 /** A drawn row: a group's header, a row of an item (null while it loads). */
 type DrawnRow<T> =
@@ -50,7 +51,8 @@ type DrawnRow<T> =
  */
 @Component({
   selector: 'hrs-data-grid',
-  imports: [MatSort, MatSortHeader, NgTemplateOutlet],
+  imports: [GridRow, MatSort, MatSortHeader, NgTemplateOutlet],
+  providers: [{ provide: GridRowHeight, useExisting: DataGrid }],
   templateUrl: './data-grid.html',
   styleUrl: './data-grid.scss',
   host: {
@@ -60,7 +62,7 @@ type DrawnRow<T> =
     '[class.is-scrolled]': 'scrolled()',
   },
 })
-export class DataGrid<T> {
+export class DataGrid<T> implements GridRowHeight {
   /** The rows' items: all of them, or a source that loads them in ranges. */
   readonly items = input.required<ListItems<T>>();
   /** What stays the same for an item as the items change (without it, its place). */
@@ -81,7 +83,9 @@ export class DataGrid<T> {
   private readonly probe = viewChild.required<ElementRef<HTMLElement>>('probe');
   private readonly rowsBox = viewChild<ElementRef<HTMLElement>>('rowsBox');
   private readonly body = viewChild<ElementRef<HTMLElement>>('body');
-  private readonly drawnRows = viewChildren<ElementRef<HTMLElement>>('rowElement');
+  private readonly drawnRows = viewChildren<string, ElementRef<HTMLElement>>('rowElement', {
+    read: ElementRef,
+  });
 
   protected readonly count = computed(() => itemCount(this.items()));
   /** The column whose cells name their rows: the one marked, else the first. */
@@ -103,6 +107,8 @@ export class DataGrid<T> {
 
   /** What the custom properties come to in px: a row's height (until measured) and the gap. */
   private readonly size = signal({ row: 40, gap: 0 });
+  /** A row's height (`--hrs-grid-row-height`) in px, as measured: what each row gives its cells. */
+  readonly rowHeight = computed(() => this.size().row);
 
   private readonly rows = computed(() => {
     const items = this.items();

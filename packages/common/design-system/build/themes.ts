@@ -4,9 +4,18 @@
  * bundle.css from it (`rarityCss`), because the tokens page holds at most eight themes.
  */
 
-export const BASE_THEMES = ['purple', 'magenta', 'cyan', 'blue', 'red', 'green'] as const;
+export const BASE_THEMES = ['purple', 'magenta', 'cyan', 'blue', 'red', 'self'] as const;
 export const RARITY_THEMES = ['poor', 'common', 'uncommon', 'rare', 'epic', 'legendary'] as const;
 export type Theme = (typeof BASE_THEMES)[number] | (typeof RARITY_THEMES)[number];
+
+/**
+ * Other names for a theme, with no values of their own: the generated CSS adds each alias to every
+ * selector that names its theme. The user's own row says which side they were on: `blue-self` is
+ * the self theme, `red-self` the legendary one.
+ */
+export const THEME_ALIASES = { 'blue-self': 'self', 'red-self': 'legendary' } as const satisfies Readonly<
+  Record<string, Theme>
+>;
 export const ALL_THEMES: readonly Theme[] = [...BASE_THEMES, ...RARITY_THEMES];
 
 const HUE: Record<Theme, number> = {
@@ -15,7 +24,7 @@ const HUE: Record<Theme, number> = {
   cyan: 230,
   blue: 266,
   red: 18,
-  green: 158,
+  self: 158,
   poor: 286,
   common: 286,
   uncommon: 142,
@@ -49,7 +58,7 @@ const OVERRIDE: Partial<Record<Theme, Partial<Record<Role, readonly [number, num
   cyan: { 'hrs-glow': [72, 0.135] },
   blue: { 'hrs-glow': [66, 0.18] },
   red: { 'hrs-glow': [66, 0.225] },
-  green: { 'hrs-glow': [66, 0.15] },
+  self: { 'hrs-glow': [66, 0.15] },
   uncommon: {
     'hrs-glow': [68, 0.21],
     'hrs-accent': [84, 0.22],

@@ -28,13 +28,19 @@ export interface StatColumn {
 }
 
 /** One row of a stat table: its values by column id and what its row head shows (`data`). */
+/**
+ * A stats row's theme: its team's colour, or the user's own row's, which still says their side
+ * (`blue-self` is the self theme, `red-self` the legendary one: the design system's aliases).
+ */
+export type StatRowTheme = TeamColor | 'blue-self' | 'red-self';
+
 export interface StatRow<T> {
   readonly key: string | number;
   /** Rows with the same group (a team) are compared with each other for the best in the group. */
   readonly group: string | number | null;
   readonly values: Readonly<Record<string, number | null | undefined>>;
-  /** The row's theme (`theme`): its team's. */
-  readonly theme?: TeamColor;
+  /** The row's theme (`theme`): its team's, or the user's own on their side. */
+  readonly theme?: StatRowTheme;
   readonly data: T;
 }
 

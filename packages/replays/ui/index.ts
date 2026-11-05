@@ -34,6 +34,7 @@ export * from './draft-list/draft-list';
 export * from './draft-list/draft-steps';
 export * from './score-screen/score-screen';
 export * from './score-screen/score-columns';
+export * from './award-badge/award-badge';
 export * from './player-stats/player-stats';
 export * from './player-stats/stat-columns';
 export * from './player-stats/stat-choices';

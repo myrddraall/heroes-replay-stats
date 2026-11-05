@@ -80,13 +80,13 @@
           </div>
         </div>
       } @else {
-        <div
+        <hrs-grid-row
           #rowElement
-          class="hrs-grid__row"
-          role="row"
+          #gridRow
+          [index]="row.index"
+          [theme]="row.theme"
           [attr.row-index]="row.index"
           [attr.aria-rowindex]="row.index + 2"
-          [attr.theme]="row.theme"
         >
           @if (row.item !== null) {
             @for (column of columns(); track column.name()) {
@@ -100,6 +100,7 @@
                   <ng-container
                     [ngTemplateOutlet]="cell.template"
                     [ngTemplateOutletContext]="{ $implicit: row.item, index: row.index }"
+                    [ngTemplateOutletInjector]="gridRow.injector"
                   />
                 } @else {
                   {{ text(row.item, column) }}
@@ -109,7 +110,7 @@
           } @else {
             <div class="hrs-grid__placeholder" role="cell" [attr.aria-colspan]="columns().length"></div>
           }
-        </div>
+        </hrs-grid-row>
       }
     }
   </div>

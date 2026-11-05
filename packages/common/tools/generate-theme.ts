@@ -10,6 +10,7 @@
  *   rows), without its font import (the app's index.html loads the fonts), without its Angular
  *   Material mapping (below), and with the game textures it embeds as data URIs read from custom
  *   properties instead (`--hrs-tex-<texture>`), which the shell sets from the interface sheet.
+ * - Both carry the theme aliases (tokens.json): each alias added to every selector naming its theme.
  * - `_material-theme.scss`: bundle.css's Angular Material mapping as a Material theme, on `:root`
  *   and every `[theme]`: the system tokens through `mat.theme-overrides`, each component's
  *   through its `mat.<component>-overrides` (Material checks every name as it compiles).
@@ -45,7 +46,12 @@ interface TypeStyle {
 }
 interface Tokens {
   readonly name: string;
-  readonly color: { readonly themes: readonly { readonly id: string }[]; readonly tokens: readonly Token[] };
+  readonly color: {
+    readonly themes: readonly { readonly id: string }[];
+    /** Other names for a theme: each gets the rules of the theme it names. */
+    readonly aliases: readonly { readonly id: string; readonly of: string }[];
+    readonly tokens: readonly Token[];
+  };
   readonly shadow: { readonly tokens: readonly Token[] };
   readonly spacing: { readonly tokens: readonly Token[] };
   readonly radius: { readonly tokens: readonly Token[] };
@@ -193,6 +199,27 @@ function bundleCss(css: string, textures: ReadonlyMap<string, string>): string {
   return `${HEADER('HRS Nexus UI components')}${tree.toString().trimStart()}`;
 }
 
+/**
+ * Each theme alias added to every selector that names its theme (`[theme='self']` gains
+ * `[theme='blue-self']`, also inside a longer selector), so an alias has the theme's rules and no
+ * values of its own.
+ */
+function withAliases(css: string, aliases: Tokens['color']['aliases']): string {
+  const tree = postcss.parse(css);
+  tree.walkRules((rule) => {
+    const selectors = rule.selectors.flatMap((selector) => [
+      selector,
+      ...aliases.flatMap(({ id, of }) => {
+        const named = new RegExp(`\\[theme=(['"])${of}\\1\\]`, 'g');
+        const aliased = selector.replace(named, `[theme='${id}']`);
+        return aliased === selector ? [] : [aliased];
+      }),
+    ]);
+    if (selectors.length !== rule.selectors.length) rule.selectors = selectors;
+  });
+  return tree.toString();
+}
+
 async function format(file: string, css: string): Promise<string> {
   const options = await prettier.resolveConfig(file);
   return prettier.format(css, { ...options, filepath: file });
@@ -208,8 +235,8 @@ const bundle = await readFile(join(source, 'components', 'bundle.css'), 'utf8');
 
 await mkdir(out, { recursive: true });
 for (const [name, css] of [
-  ['tokens.css', tokensCss(tokens)],
-  ['nexus.css', bundleCss(bundle, textures)],
+  ['tokens.css', withAliases(tokensCss(tokens), tokens.color.aliases)],
+  ['nexus.css', withAliases(bundleCss(bundle, textures), tokens.color.aliases)],
   ['_material-theme.scss', materialTheme(bundle)],
 ] as const) {
   const file = join(out, name);

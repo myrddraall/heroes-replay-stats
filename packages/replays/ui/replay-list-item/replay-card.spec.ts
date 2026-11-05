@@ -32,6 +32,8 @@ const replay: ReplaySummary = {
 const heroes: HeroLookup = {
   heroIcon: (id) => (id === 'Barbarian' ? { picture: { src: 'sonya.png' }, name: 'Sonya' } : null),
   heroDataId: (id) => (id === 'Barbarian' ? id : null),
+  heroPortrait: () => null,
+  award: () => null,
   mapPreview: (map) => (map === 'Towers of Doom' ? { src: 'towers.png' } : null),
 };
 
