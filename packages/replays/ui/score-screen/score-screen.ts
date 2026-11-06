@@ -11,6 +11,7 @@ import { TeamPerspective } from '../team-theme/team-perspective';
 import { TeamTheme } from '../team-theme/team-theme';
 import { HeroPortrait } from '@myrddraall/heroes-replay-stats-heroes/ui';
 import { StyledText } from '@myrddraall/heroes-replay-stats-common/ui';
+import { Sprite } from '@myrddraall/heroes-replay-stats-sheets/ui';
 import { playerRows } from '../stat-tables/player-rows';
 import { SCORE_COLUMNS } from './score-columns';
 import { AwardBadge } from '../award-badge/award-badge';
@@ -24,6 +25,22 @@ export interface ShownAward {
   readonly tooltip: string;
   /** Null until the data has loaded, and for an award the data names no badge for. */
   readonly picture: SpritePicture | null;
+}
+
+/**
+ * The game's silence penalty icon for a player (the score screen's SilencedIcon: chat, voice or
+ * both), from heroes-assets' score-screen sheet, and what it says; null when neither.
+ */
+export function silenceIcon(
+  chat: boolean,
+  voice: boolean,
+): { readonly picture: string; readonly label: string } | null {
+  if (chat && voice) {
+    return { picture: 'score-screen#chat-and-voice-silenced', label: 'Chat and voice silenced' };
+  }
+  if (chat) return { picture: 'score-screen#chat-silenced', label: 'Chat silenced' };
+  if (voice) return { picture: 'score-screen#voice-silenced', label: 'Voice silenced' };
+  return null;
 }
 
 /** `MostXPContribution` as `Most XP contribution`. */
@@ -40,7 +57,17 @@ export function awardLabel(award: string): string {
  */
 @Component({
   selector: 'hrs-score-screen',
-  imports: [AwardBadge, HeroPortrait, MatIcon, MatTooltip, ScoreTable, StatRowHead, StyledText, TeamTheme],
+  imports: [
+    AwardBadge,
+    HeroPortrait,
+    MatIcon,
+    MatTooltip,
+    ScoreTable,
+    Sprite,
+    StatRowHead,
+    StyledText,
+    TeamTheme,
+  ],
   templateUrl: './score-screen.html',
   styleUrl: './score-screen.scss',
 })
@@ -93,6 +120,7 @@ export class ScoreScreen {
    * Each player's awards, by slot: the badge in the player's team colour from your point of view, as
    * the game's score screen shows them (your side blue).
    */
+  protected readonly silenceIcon = silenceIcon;
   protected readonly shownAwards = computed(() => {
     const yourTeam = this.perspective.yourTeam();
     const mode = this.perspective.mode();

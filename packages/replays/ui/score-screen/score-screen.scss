@@ -15,6 +15,7 @@
 // (Storm_UI_InGame_Leader_ScoreInset_PortraitFade: solid to 46%, gone at the edge), the hero's name
 // bright over its end and the player's below it, smaller. Sized in em: the row's type sizes it.
 .player {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 0.25em 0.75em;
@@ -49,11 +50,15 @@
   font-size: 0.75em;
 }
 
+// The game's silence icon (GameStatsPanel's SilencedIcon): at the portrait's top-left corner, 40 of
+// the row's 56 high, the texture's 48 × 40.
 .player__silence {
-  color: var(--mat-sys-error);
-  font-size: 1.25em;
-  width: 1em;
-  height: 1em;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc(var(--hrs-grid-row-height) * 48 / 56);
+  height: calc(var(--hrs-grid-row-height) * 40 / 56);
+  overflow: hidden;
 }
 
 // at the row head's right end, a badge wide in every row (empty where there is none), so the

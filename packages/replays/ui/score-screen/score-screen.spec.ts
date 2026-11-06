@@ -8,7 +8,7 @@ import { provideWholeLists } from '@myrddraall/heroes-replay-stats-data-views/te
 import { statTableRows } from '../stat-tables/stat-cells';
 import { type StatColumn, type StatRow } from '../../model';
 import { describe, expect, it } from 'vitest';
-import { awardLabel } from './score-screen';
+import { awardLabel, silenceIcon } from './score-screen';
 
 describe('awardLabel', () => {
   it('spells an award out, keeping its abbreviations', () => {
@@ -16,6 +16,18 @@ describe('awardLabel', () => {
     expect(awardLabel('MostXPContribution')).toBe('Most XP contribution');
     expect(awardLabel('HighestKillStreak')).toBe('Highest kill streak');
     expect(awardLabel('MostAltarDamageDone')).toBe('Most altar damage done');
+  });
+});
+
+describe('silenceIcon', () => {
+  it("picks the game's icon for chat, voice or both, and nothing for neither", () => {
+    expect(silenceIcon(true, false)).toEqual({
+      picture: 'score-screen#chat-silenced',
+      label: 'Chat silenced',
+    });
+    expect(silenceIcon(false, true)?.picture).toBe('score-screen#voice-silenced');
+    expect(silenceIcon(true, true)?.picture).toBe('score-screen#chat-and-voice-silenced');
+    expect(silenceIcon(false, false)).toBeNull();
   });
 });
 

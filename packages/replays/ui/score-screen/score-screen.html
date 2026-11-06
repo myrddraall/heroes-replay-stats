@@ -8,26 +8,17 @@
           [picture]="portrait?.picture ?? null"
           [name]="portrait?.name ?? data.player.hero"
         />
+        <!-- the game's silence penalty icon over the portrait's corner (its SilencedIcon) -->
+        @let silence = silenceIcon(data.player.silenced, data.player.voiceSilenced);
+        @if (silence) {
+          <span class="player__silence" [matTooltip]="silence.label">
+            <img [hrsSprite]="silence.picture" spriteCover [alt]="silence.label" />
+          </span>
+        }
         <span class="player__names">
           <span class="player__hero" hrsStyledText="bright">{{ data.player.hero }}</span>
           <span class="player__name" hrsStyledText="base">{{ data.player.name }}</span>
         </span>
-        @if (data.player.silenced) {
-          <mat-icon
-            class="material-symbols-outlined player__silence"
-            matTooltip="Silenced"
-            aria-label="Silenced"
-            >speaker_notes_off</mat-icon
-          >
-        }
-        @if (data.player.voiceSilenced) {
-          <mat-icon
-            class="material-symbols-outlined player__silence"
-            matTooltip="Voice silenced"
-            aria-label="Voice silenced"
-            >mic_off</mat-icon
-          >
-        }
         @let awards = shownAwards()[data.player.slot] ?? [];
         <!-- every row keeps room for a badge, so the column is wide enough wherever the awards fall -->
         <div class="player__awards-slot">
