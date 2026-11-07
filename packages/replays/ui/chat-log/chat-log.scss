@@ -30,9 +30,9 @@
   text-align: end;
 }
 
-// the icon 24px, its frame around it
+// the icon 24px (its font-size the circle frame's 26/48 of it), its frame around it
 .line__icon {
-  font-size: 24px;
+  font-size: calc(24px * 26 / 48);
 }
 
 .line__sender {

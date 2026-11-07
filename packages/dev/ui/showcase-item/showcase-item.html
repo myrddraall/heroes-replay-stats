@@ -1,2 +1,6 @@
 <ng-content />
-<span class="caption">{{ caption() }}</span>
+@if (theme()) {
+  <span class="caption" hrsStyledText="bright">{{ caption() }}</span>
+} @else {
+  <span class="caption">{{ caption() }}</span>
+}

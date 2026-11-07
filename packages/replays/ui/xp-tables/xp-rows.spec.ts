@@ -25,15 +25,17 @@ describe('xp tables', () => {
       1,
       'relative',
     );
-    expect(tables.map((t) => [t.team, t.name])).toEqual([
-      [1, 'Blue team'],
-      [0, 'Red team'],
+    expect(tables.map((t) => [t.team, t.color, t.name])).toEqual([
+      [1, 'blue', 'Blue team'],
+      [0, 'red', 'Red team'],
     ]);
     const red = tables[1]!;
-    expect(red.rows.map((r) => [r.data.time, r.values['minionXP'], r.values['heroXP']])).toEqual([
-      ['1:00', 100, 0],
-      ['2:00', 150, 40],
+    expect(red.rows.map((r) => [r.values['seconds'], r.values['minionXP'], r.values['heroXP']])).toEqual([
+      [60, 100, 0],
+      [120, 150, 40],
     ]);
+    // each row headed by its team, in its colour from your point of view
+    expect(red.rows[0]!.data).toEqual({ color: 'red', name: 'Red team' });
     expect(red.rows[1]!.values['total']).toBe(290);
     expect(red.rows[1]!.theme).toBe('red');
   });

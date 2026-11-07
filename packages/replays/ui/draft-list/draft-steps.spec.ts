@@ -9,6 +9,7 @@ describe('draft steps', () => {
       id === 'Barbarian' ? { picture: { src: 'sonya.png' }, name: 'Sonya' } : null,
     heroDataId: () => null,
     heroPortrait: () => null,
+    heroArt: () => null,
     award: () => null,
     mapPreview: () => null,
   };

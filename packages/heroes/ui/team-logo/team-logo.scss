@@ -1,0 +1,55 @@
+// The logo's hexagon (turned: 41.68 across, 35.93 high, of the drawing's 48) 1em high; the drawing's
+// whole box over it, centred, spilling past it alike on every side (one cell the hexagon's size,
+// which the larger drawing spills out of rather than widens).
+:host {
+  display: inline-grid;
+  grid-template: 100% / 100%;
+  flex: none;
+  width: calc(1em * 41.68 / 35.93);
+  height: 1em;
+}
+
+:host(.lit) {
+  --team-logo-base: hidden;
+  --team-logo-bright: visible;
+}
+
+// each style over the other, the shown one by the custom properties (hidden rather than taken out,
+// so the swap never redraws a box); its own font size, so the style's em-sized halo suits it
+.mark {
+  grid-area: 1 / 1;
+  place-self: unsafe center;
+  font-size: 1em;
+
+  > svg {
+    display: block;
+    width: calc(1em * 48 / 35.93);
+    height: calc(1em * 48 / 35.93);
+  }
+}
+
+.mark--base {
+  visibility: var(--team-logo-base, visible);
+}
+
+.mark--bright {
+  visibility: var(--team-logo-bright, hidden);
+}
+
+// Square: the frame's inside exactly (as a portrait), its drawing centred on it and sized so the
+// logo's hexagon (35.93 of the drawing's 48) would be 0.85 of the inside's shorter side (across its
+// flats): the blades a little smaller than the logo's. The square spills past the drawing's box and
+// the inside, which the frame cuts.
+:host(.square) {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
+  container-type: size;
+
+  .mark > svg {
+    width: calc(min(100cqw, 100cqh) * 0.85 * 48 / 35.93);
+    height: calc(min(100cqw, 100cqh) * 0.85 * 48 / 35.93);
+    overflow: visible;
+  }
+}

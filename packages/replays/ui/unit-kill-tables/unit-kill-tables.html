@@ -8,6 +8,8 @@
   </ui-stat-table>
 } @else {
   <ui-stat-table [columns]="columns" [rows]="teamRows()" rowHeadLabel="Team">
-    <ng-template [uiStatRowHead]="teamRows()" let-data>{{ data.name }}</ng-template>
+    <ng-template [uiStatRowHead]="teamRows()" let-data>
+      <ui-score-team-head [name]="data.name" />
+    </ng-template>
   </ui-stat-table>
 }

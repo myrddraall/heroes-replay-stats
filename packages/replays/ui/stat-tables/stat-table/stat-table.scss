@@ -22,6 +22,16 @@
   padding: 16px 20px;
 }
 
+// its title, centred over the table; none given, nothing
+.stat-card__title {
+  margin: 0 0 12px;
+  text-align: center;
+
+  &:empty {
+    display: none;
+  }
+}
+
 .stat-table__legend {
   display: flex;
   flex-wrap: wrap;
@@ -35,16 +45,20 @@
   color: var(--mat-sys-on-surface-variant);
 }
 
-// The grid's look: the score table's (the game's score rows, _score-row.scss), compact: rows 36px
-// high (the type 0.36 of it, 13px), the labels wrapping in narrow columns.
+// The grid's look: the score table's (the game's score rows, _score-row.scss), the labels wrapping
+// in narrow columns. Its rows the score table's height where each team has one row; compact where
+// a team has more (`stat-table--dense`): 36px (the type 0.36 of it, 13px).
 .stat-table {
   @include score-row.grid;
-  --hrs-grid-row-height: 2.25rem;
   --hrs-grid-header-height: 0px;
   --hrs-grid-header-font: 600 0.8em / 1.2 var(--font-brand);
   --hrs-grid-header-wrap: normal;
-  // the player's name nearer the hero's than on the score table's taller rows
-  --score-row-player-name-size: 0.85em;
+
+  &.stat-table--dense {
+    --hrs-grid-row-height: 2.25rem;
+    // the player's name nearer the hero's than on the score table's taller rows
+    --score-row-player-name-size: 0.85em;
+  }
 
   // the figures a step lighter than the theme's styled text (bold): semibold, as the score table's
   ::ng-deep .hrs-grid__body hrs-number-cell {
@@ -95,6 +109,14 @@
   ::ng-deep .hrs-grid__header:not(:first-child) {
     min-width: 4.5em;
   }
+}
+
+// A row's head: the cell's height (a player's portrait the full row), its content centred.
+.stat-table__head {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  min-width: 0;
 }
 
 // A stat's label: its header at most 8em wide (6.6em and the padding), wrapping onto more lines.

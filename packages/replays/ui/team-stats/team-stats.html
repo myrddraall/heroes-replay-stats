@@ -3,12 +3,7 @@
   <h2 class="cdk-visually-hidden">{{ group.title }}</h2>
   <ui-stat-table [columns]="group.columns" [rows]="group.rows" rowHeadLabel="Team">
     <ng-template [uiStatRowHead]="group.rows" let-data>
-      <span class="team">
-        <span class="team__name">{{ data.name }}</span>
-        @if (data.result) {
-          <span class="team__result">{{ data.result }}</span>
-        }
-      </span>
+      <ui-score-team-head [name]="data.name" [result]="data.result ?? null" />
     </ng-template>
   </ui-stat-table>
 }

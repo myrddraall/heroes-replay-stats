@@ -119,7 +119,7 @@ describe('ReplayListItem', () => {
     // each player has their hero's minimap icon; Sonya is the only hero the fake data knows
     const icons = [...el.querySelectorAll('hrs-player-cell')].map((p) => [
       p.querySelector('hrs-hero-minimap-icon') !== null,
-      p.querySelector<HTMLImageElement>('hrs-hero-minimap-icon .icon img')?.alt,
+      p.querySelector<HTMLImageElement>('hrs-hero-minimap-icon hrs-portrait img')?.alt,
     ]);
     expect(icons).toEqual([
       [true, undefined],

@@ -1,14 +1,17 @@
-import { formatStatClock } from '../stat-tables/stat-format';
 import { type StatColumn, type StatRow } from '../../model';
 import type { XpPointRow } from '@myrddraall/heroprotocol-analysis';
 import type { Team } from '@myrddraall/heroprotocol-db';
-import { teamColor, type TeamColorMode } from '../../model';
+import { type TeamColor, teamColor, type TeamColorMode } from '../../model';
 import { teamName } from '../stat-tables/team-rows';
 
 const since = 'since the previous time';
 
-/** The XP tables' columns: the team's level, its XP from each source since the previous time, its XP so far. */
+/**
+ * The XP tables' columns: the time, the team's level, its XP from each source since the previous
+ * time, its XP so far.
+ */
 export const XP_COLUMNS: readonly StatColumn[] = [
+  { id: 'seconds', label: 'Time', format: 'clock' },
   { id: 'teamLevel', label: 'Level', format: 'integer' },
   {
     id: 'minionXP',
@@ -39,14 +42,17 @@ export const XP_COLUMNS: readonly StatColumn[] = [
   { id: 'total', label: 'Total', format: 'integer', description: "The team's XP so far." },
 ];
 
-/** What an XP row's head shows: when in the game, `m:ss`. */
+/** What an XP row's head shows: its team, in its colour from your point of view. */
 export interface XpRowData {
-  readonly time: string;
+  readonly color: TeamColor;
+  readonly name: string;
 }
 
 /** One team's XP table. */
 export interface XpTable {
   readonly team: Team;
+  /** Its colour from your point of view, its theme. */
+  readonly color: TeamColor;
   readonly name: string;
   readonly rows: readonly StatRow<XpRowData>[];
 }
@@ -81,17 +87,18 @@ export function xpTables(
             key: point.seq,
             group: null,
             values: {
+              seconds: point.seconds,
               teamLevel: point.teamLevel,
               ...gained,
               gained: point.gained,
               total: point.total,
             },
             theme: color,
-            data: { time: formatStatClock(point.seconds) },
+            data: { color, name: teamName(color) },
           };
         }),
       };
     })
     .sort((a, b) => Number(a.color !== 'blue') - Number(b.color !== 'blue') || a.team - b.team)
-    .map(({ team, name, rows }) => ({ team, name, rows }));
+    .map(({ team, color, name, rows }) => ({ team, color, name, rows }));
 }

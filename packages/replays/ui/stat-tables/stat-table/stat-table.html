@@ -1,5 +1,7 @@
-<!-- one card (hrs-panel) around the legend and the table, as the score screen's -->
+<!-- one card (hrs-panel) around its title (given as `uiStatTableTitle`), the legend and the
+     table, as the score screen's -->
 <div #card class="stat-card hrs-panel">
+<div class="stat-card__title"><ng-content select="[uiStatTableTitle]" /></div>
 @if (limits().length > 0) {
   <ul class="stat-table__legend" aria-label="Starred stats">
     @for (kind of limits(); track kind) {
@@ -13,7 +15,7 @@
   </ul>
 }
 <!-- the header and the grid, one look (stat-table.scss) -->
-<div class="stat-table">
+<div class="stat-table" [class.stat-table--dense]="dense()">
 <hrs-grid-header [for]="grid" />
 <hrs-data-grid
   #grid
@@ -28,12 +30,15 @@
   <hrs-column name="head" [header]="rowHeadLabel()" width="minmax(max-content, 1fr)">
     <ng-template hrsCell let-line>
       <ui-score-row-bar />
-      @if (rowHead(); as head) {
-        <ng-container
-          [ngTemplateOutlet]="head.template"
-          [ngTemplateOutletContext]="{ $implicit: line.row.data, row: line.row }"
-        />
-      }
+      <!-- the row's head, the row's full height, its content centred in it -->
+      <span class="stat-table__head">
+        @if (rowHead(); as head) {
+          <ng-container
+            [ngTemplateOutlet]="head.template"
+            [ngTemplateOutletContext]="{ $implicit: line.row.data, row: line.row }"
+          />
+        }
+      </span>
     </ng-template>
   </hrs-column>
   @for (column of columns(); track column.id; let i = $index) {

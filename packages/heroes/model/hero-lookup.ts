@@ -18,7 +18,7 @@ export interface AwardBadges {
 }
 
 /**
- * What the app shows from the hero data: heroes' minimap icons and leaderboard portraits, match
+ * What the app shows from the hero data: heroes' minimap icons, square art and leaderboard portraits, match
  * awards' badges, and maps' replay previews.
  */
 export interface HeroLookup {
@@ -33,6 +33,12 @@ export interface HeroLookup {
    * {@link heroIcon} finds the hero; `null` for a hero the data doesn't know.
    */
   heroPortrait(heroId: string, name?: string): HeroIcon | null;
+  /**
+   * The hero's square art (its target portrait, 92 × 93, with a 64 px copy where heroes-assets
+   * keeps one), for a portrait in any shaped frame, found as {@link heroIcon} finds the hero; `null`
+   * for a hero the data doesn't know.
+   */
+  heroArt(heroId: string, name?: string): HeroIcon | null;
   /**
    * The hero data's own id for a replay's hero (`DVaPilot` → `DVa`), found as {@link heroIcon}
    * finds it; `null` for a hero the data doesn't know.
@@ -59,6 +65,11 @@ export function heroLookup(
     heroIcon: (heroId, name) => {
       const hero = find(heroId, name);
       const picture = hero ? images.portrait(hero, 'minimap') : null;
+      return hero && picture ? { picture, name: hero.name } : null;
+    },
+    heroArt: (heroId, name) => {
+      const hero = find(heroId, name);
+      const picture = hero ? images.portrait(hero, 'target') : null;
       return hero && picture ? { picture, name: hero.name } : null;
     },
     heroPortrait: (heroId, name) => {

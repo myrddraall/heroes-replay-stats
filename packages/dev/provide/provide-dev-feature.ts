@@ -38,8 +38,12 @@ export function provideDevFeature(): EnvironmentProviders {
           label: 'Frames',
           link: '/ui/components/frames',
           children: [
+            { label: 'Circle frame', link: '/ui/components/frames/circle' },
+            { label: 'Hex frame', link: '/ui/components/frames/hex' },
+            { label: 'Square frame', link: '/ui/components/frames/square' },
             { label: 'Hero frame', link: '/ui/components/frames/hero' },
             { label: 'Talent frame', link: '/ui/components/frames/talent' },
+            { label: 'Team frame', link: '/ui/components/frames/team' },
           ],
         },
         {

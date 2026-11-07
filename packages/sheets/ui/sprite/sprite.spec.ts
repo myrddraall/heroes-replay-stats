@@ -56,6 +56,27 @@ describe('hrsSprite', () => {
     expect(img.style.getPropertyValue('zoom')).toBe(String(28 / 32));
   });
 
+  it('shows the smallest copy that is at least as big as it is drawn, else the picture itself', () => {
+    const portrait: SpritePicture = {
+      src: 'https://x.test/target.webp',
+      rect: [94, 95, 92, 93],
+      variants: [{ src: 'https://x.test/target-small.webp', rect: [66, 0, 64, 64] }],
+    };
+    const ratio = devicePixelRatio;
+    const small = render((host) => {
+      host.picture.set(portrait);
+      host.width.set(48 / ratio);
+    });
+    expect(small.getAttribute('src')).toBe('https://x.test/target-small.webp');
+    expect(small.style.objectPosition).toBe('-66px 0px');
+    expect(small.style.getPropertyValue('zoom')).toBe(String(48 / ratio / 64));
+    const big = render((host) => {
+      host.picture.set(portrait);
+      host.width.set(80 / ratio);
+    });
+    expect(big.getAttribute('src')).toBe('https://x.test/target.webp');
+  });
+
   it('shows a file of its own as it is, sized by the width asked for or the CSS', () => {
     const sized = render((host) => host.picture.set({ src: 'https://x.test/cat.webp' }));
     expect(sized.getAttribute('src')).toBe('https://x.test/cat.webp');

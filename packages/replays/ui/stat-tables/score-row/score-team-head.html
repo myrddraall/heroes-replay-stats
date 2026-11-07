@@ -1,0 +1,16 @@
+<!-- the team's logo, decorative (its name says which team it is): framed on full-height rows,
+     alone in a compact table -->
+<hrs-hex-frame class="logo logo--framed"><hrs-team-logo shape="square" /></hrs-hex-frame>
+<hrs-team-logo class="logo logo--alone" />
+<span class="names">
+  <span class="names__team" hrsStyledText="bright">{{ name() }}</span>
+  @if (result(); as result) {
+    <!-- a victory in the legendary theme, glowing, as the match list's; a defeat plain -->
+    <span
+      class="names__result"
+      [attr.theme]="won() ? 'legendary' : null"
+      [hrsStyledText]="won() ? 'glow' : 'base'"
+      >{{ result }}</span
+    >
+  }
+</span>

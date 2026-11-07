@@ -1,4 +1,5 @@
 import { Component, computed, inject, input } from '@angular/core';
+import { ScoreTeamHead } from '../stat-tables/score-row/score-team-head';
 import { StatRowHead } from '../stat-tables/stat-row-head';
 import { StatTable } from '../stat-tables/stat-table/stat-table';
 import type { TeamStatsRow } from '@myrddraall/heroprotocol-analysis';
@@ -11,7 +12,7 @@ import { TEAM_STAT_GROUPS, teamStatRows } from './team-stat-groups';
  */
 @Component({
   selector: 'hrs-team-stats',
-  imports: [StatRowHead, StatTable],
+  imports: [ScoreTeamHead, StatRowHead, StatTable],
   templateUrl: './team-stats.html',
   styleUrl: './team-stats.scss',
 })

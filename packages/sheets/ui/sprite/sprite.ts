@@ -31,6 +31,11 @@ const LAZY_MARGIN = '300px';
  * parent (which hides its overflow); a file fills it with `object-fit: cover`. It stays hidden
  * until it can be drawn as it should: a named picture until its sheet has loaded (never an empty
  * image box), a covering sheet's picture until the parent's box has been measured.
+ *
+ * A picture with smaller copies (`variants`) shows the smallest that is at least as big as it is
+ * drawn, in device pixels (its box, or `spriteWidth`/`spriteHeight`), else the picture itself: a
+ * portrait shown small loads its small copy's sheet, not the full size's. Covering, it waits for
+ * the parent's box before it loads any.
  */
 @Directive({
   selector: 'img[hrsSprite]',
@@ -69,10 +74,10 @@ export class Sprite {
   /** Whether the image is near the viewport (always, where the browser can't tell). */
   private readonly near = signal(typeof IntersectionObserver === 'undefined');
 
-  /** The picture to show: as given, or a sheet's by name once its sheet has loaded. */
+  /** The picture to show: as given (or its smallest copy big enough), or a sheet's by name once its sheet has loaded. */
   protected readonly picture = computed((): SpritePicture | null => {
     const given = this.hrsSprite();
-    if (typeof given !== 'string') return given;
+    if (typeof given !== 'string') return this.sized(given);
     const { sheet, entry } = parseSheetName(given);
     const status = this.store.status(this.store.sheetUrl(sheet));
     if (status?.status !== 'ready') return null;
@@ -81,6 +86,34 @@ export class Sprite {
   });
 
   protected readonly rect = computed(() => this.picture()?.rect ?? null);
+
+  /**
+   * A picture, or the smallest of its copies at least as big as it is drawn (device pixels); none
+   * yet while a covering one's box is unknown (so it loads no sheet it might not need).
+   */
+  private sized(given: SpritePicture): SpritePicture | null {
+    const variants = given.variants;
+    if (!variants?.length) return given;
+    const ratio = typeof devicePixelRatio === 'number' ? devicePixelRatio : 1;
+    let need: readonly [number, number] | null;
+    if (this.cover()) {
+      const box = this.box();
+      if (!box) return null;
+      need = [box[0] * ratio, box[1] * ratio];
+    } else {
+      const width = this.spriteWidth();
+      const height = this.spriteHeight();
+      need =
+        width !== undefined
+          ? [width * ratio, 0]
+          : height !== undefined
+            ? [0, height * ratio]
+            : null;
+    }
+    if (!need) return given;
+    const [w, h] = need;
+    return variants.find((v) => v.rect && v.rect[2] >= w && v.rect[3] >= h) ?? given;
+  }
 
   /** The scale that makes a sheet's picture cover the parent's box. */
   private readonly coverScale = computed(() => {

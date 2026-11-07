@@ -8,9 +8,27 @@ import type { Routes } from '@angular/router';
 export const DEV_ROUTES: Routes = [
   { path: 'ui', pathMatch: 'full', redirectTo: 'ui/theme' },
   // straight to the first page: a redirect isn't followed into another
-  { path: 'ui/components', pathMatch: 'full', redirectTo: 'ui/components/frames/hero' },
+  { path: 'ui/components', pathMatch: 'full', redirectTo: 'ui/components/frames/circle' },
   // The frames, a page each: each in its states, themes and sizes.
-  { path: 'ui/components/frames', pathMatch: 'full', redirectTo: 'ui/components/frames/hero' },
+  { path: 'ui/components/frames', pathMatch: 'full', redirectTo: 'ui/components/frames/circle' },
+  {
+    path: 'ui/components/frames/circle',
+    title: 'Circle frame · Frames · Components · Heroes Replay Stats',
+    data: { shape: 'circle' },
+    loadComponent: () => import('../feature/circle-frame-page').then((m) => m.CircleFramePage),
+  },
+  {
+    path: 'ui/components/frames/hex',
+    title: 'Hex frame · Frames · Components · Heroes Replay Stats',
+    data: { shape: 'hex' },
+    loadComponent: () => import('../feature/circle-frame-page').then((m) => m.CircleFramePage),
+  },
+  {
+    path: 'ui/components/frames/square',
+    title: 'Square frame · Frames · Components · Heroes Replay Stats',
+    data: { shape: 'square' },
+    loadComponent: () => import('../feature/circle-frame-page').then((m) => m.CircleFramePage),
+  },
   {
     path: 'ui/components/frames/hero',
     title: 'Hero frame · Frames · Components · Heroes Replay Stats',
@@ -20,6 +38,11 @@ export const DEV_ROUTES: Routes = [
     path: 'ui/components/frames/talent',
     title: 'Talent frame · Frames · Components · Heroes Replay Stats',
     loadComponent: () => import('../feature/talent-frame-page').then((m) => m.TalentFramePage),
+  },
+  {
+    path: 'ui/components/frames/team',
+    title: 'Team frame · Frames · Components · Heroes Replay Stats',
+    loadComponent: () => import('../feature/team-frame-page').then((m) => m.TeamFramePage),
   },
   // The tooltips, a page each.
   { path: 'ui/components/tooltips', pathMatch: 'full', redirectTo: 'ui/components/tooltips/standard' },

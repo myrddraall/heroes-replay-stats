@@ -1,12 +1,12 @@
 <hrs-layout>
   <hrs-showcase heading="Hero frame">
     <ng-container ngProjectAs="[about]">
-      <code>hrs-hero-frame</code>: the game's profile hero frame, here around
-      <code>hrs-hero-minimap-icon</code>, the ring in the theme's colour. Its <code>font-size</code> is
-      the icon's size; the ring is built around it.
+      <code>hrs-hero-minimap-icon</code>: a hero's minimap icon, a portrait in the circle frame
+      (<code>hrs-circle-frame</code>), the ring in the theme's colour. At a <code>font-size</code> the
+      icon's circle is the frame's 1.5em inside, the ring built round it.
     </ng-container>
     @for (theme of themes; track theme.id) {
-      <hrs-showcase-row class="themed" [label]="theme.label" [attr.theme]="theme.id">
+      <hrs-showcase-row class="themed" [label]="theme.label" [theme]="theme.id">
         @for (icon of icons(); track icon.name) {
           <hrs-hero-minimap-icon [picture]="icon.picture" [name]="icon.name" />
         }

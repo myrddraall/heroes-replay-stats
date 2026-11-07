@@ -5,6 +5,7 @@ import type { PlayerKillsRow, TeamKillsRow } from '@myrddraall/heroprotocol-anal
 import type { HeroIcon } from '@myrddraall/heroes-replay-stats-heroes/model';
 import { TeamPerspective } from '../team-theme/team-perspective';
 import { ScoreRowHead } from '../stat-tables/score-row/score-row-head';
+import { ScoreTeamHead } from '../stat-tables/score-row/score-team-head';
 import { playerRows } from '../stat-tables/player-rows';
 import { teamRows } from '../stat-tables/team-rows';
 import { UNIT_KILL_COLUMNS } from './unit-kill-columns';
@@ -15,7 +16,7 @@ import { UNIT_KILL_COLUMNS } from './unit-kill-columns';
  */
 @Component({
   selector: 'hrs-unit-kill-tables',
-  imports: [ScoreRowHead, StatRowHead, StatTable],
+  imports: [ScoreRowHead, ScoreTeamHead, StatRowHead, StatTable],
   templateUrl: './unit-kill-tables.html',
   styleUrl: './unit-kill-tables.scss',
 })

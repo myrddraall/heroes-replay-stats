@@ -1,4 +1,5 @@
-// the label first, then the row's things; captioned ones on one line along their captions
+// the label first, centred on the row, then the row's things; captioned ones on one line along
+// their captions
 :host {
   display: flex;
   flex-wrap: wrap;
@@ -11,6 +12,7 @@
 }
 
 .label {
+  align-self: center;
   width: 8em;
   color: var(--mat-sys-on-surface-variant);
   font: var(--mat-sys-label-large);

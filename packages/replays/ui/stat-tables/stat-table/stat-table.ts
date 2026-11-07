@@ -31,6 +31,9 @@ import { STAT_SUPPORT_LABELS } from '../stat-support';
  * description. The row head comes from a `uiStatRowHead` template inside. Unsorted, the rows
  * keep their given order.
  *
+ * Its rows: the score table's height where each team has one row (team stats), compact where a
+ * team has more (a row per player, or per minute).
+ *
  * Its width: its card is at least as wide as the layout's constrained width (where there is room),
  * the row heads taking what the stats leave; with more stats, the card grows to its whole space;
  * when even that is too narrow, every figure shortens (`89.3K`, the exact one in its tooltip); and
@@ -47,8 +50,6 @@ export class StatTable<T> {
   readonly rows = input.required<readonly StatRow<T>[]>();
   /** What the row heads are, for the header over them. */
   readonly rowHeadLabel = input('Player');
-  /** Whether each column's best figure stands out (as the score table's); not for rows over time. */
-  readonly markBest = input(true);
   /** The table's order; none keeps the rows' own. */
   readonly sort = model<StatSort | null>(null);
 
@@ -65,11 +66,20 @@ export class StatTable<T> {
     source: () => [this.columns(), this.rows()],
     computation: () => null,
   });
+  /** Compact rows: some team (its rows' theme, yours counted with your side) has more than one. */
+  protected readonly dense = computed(() => {
+    const perTeam = new Map<string, number>();
+    for (const row of this.rows()) {
+      const team = row.theme?.replace('-self', '') ?? `${row.key}`;
+      perTeam.set(team, (perTeam.get(team) ?? 0) + 1);
+    }
+    return [...perTeam.values()].some((count) => count > 1);
+  });
   /** Every figure in short form: all or none, so they read alike. */
   protected readonly compact = computed(() => this.exactWidth() !== null);
   private readonly locale = inject(LOCALE_ID);
   protected readonly table = computed(() =>
-    statTableRows(this.rows(), this.columns(), this.sort(), this.locale, this.markBest()),
+    statTableRows(this.rows(), this.columns(), this.sort(), this.locale, true),
   );
   protected readonly supportLabels = STAT_SUPPORT_LABELS;
   /** The kinds of limited support the shown columns have, for the legend. */

@@ -36,6 +36,8 @@ const featureModules: Record<string, readonly string[]> = {
   dev: [
     'hero-frame-page',
     'talent-frame-page',
+    'team-frame-page',
+    'circle-frame-page',
     'standard-tooltip-page',
     'talent-tooltip-page',
     'lists-check-page',

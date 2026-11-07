@@ -2,21 +2,7 @@
   display: block;
 }
 
-
 .subtitle {
   margin: 16px 0 8px;
   font: var(--mat-sys-title-medium);
-}
-
-.team {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  white-space: nowrap;
-}
-
-.team__result {
-  font: var(--mat-sys-label-medium);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
 }

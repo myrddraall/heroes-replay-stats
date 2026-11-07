@@ -13,8 +13,41 @@ export interface TeamStatGroup {
 
 const summed = 'summed over the players';
 
+/** The team stats where less is better: deaths, time dead, what was lost, and how soon (the firsts). */
+const LOWER_IS_BETTER: ReadonlySet<string> = new Set([
+  'deaths',
+  'timeDead',
+  'averageTimeDead',
+  'firstFortSeconds',
+  'firstKeepSeconds',
+  'fortsLost',
+  'keepsLost',
+  'towersLost',
+  'gatesLost',
+  'wallsLost',
+  'wellsLost',
+  'firstCampSeconds',
+]);
+
+/**
+ * The team stats with no better way: heroes per kill (more teamwork, or less efficient kills), and
+ * when the core fell (only the losing side has one).
+ */
+const UNRANKED: ReadonlySet<string> = new Set(['peoplePerKill', 'coreSeconds']);
+
+/** A group with which way is better on each of its stats, so its table marks the better team's. */
+const ranked = (group: TeamStatGroup): TeamStatGroup => ({
+  ...group,
+  columns: group.columns.map((column) =>
+    UNRANKED.has(column.id)
+      ? column
+      : { ...column, better: LOWER_IS_BETTER.has(column.id) ? 'lower' : 'higher' },
+  ),
+});
+
 /** The team stats by group, in the order the page shows them, by the `teamStats` table's keys. */
-export const TEAM_STAT_GROUPS: readonly TeamStatGroup[] = [
+export const TEAM_STAT_GROUPS: readonly TeamStatGroup[] = (
+  [
   {
     id: 'combat',
     title: 'Combat',
@@ -176,7 +209,8 @@ export const TEAM_STAT_GROUPS: readonly TeamStatGroup[] = [
       },
     ],
   },
-];
+] satisfies TeamStatGroup[]
+).map(ranked);
 
 /** A team stats row: the team, its name from your point of view and its result. */
 export interface TeamStatsRowData extends TeamRowData {

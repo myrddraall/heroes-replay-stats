@@ -1,11 +1,21 @@
+// Each team's table a card of its own: side by side where both fit at their full width, else one
+// above the other.
 :host {
-  display: block;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
 }
 
+section {
+  flex: 0 1 auto;
+  min-width: 0;
+}
 
-.subtitle {
-  margin: 16px 0 8px;
-  font: var(--mat-sys-title-medium);
+// the team's name, in its card (the stat table's title), in the styled text's own font
+.title {
+  margin: 0;
+  font-size: var(--mat-sys-title-large-size);
 }
 
 .empty {
