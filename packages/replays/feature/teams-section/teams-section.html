@@ -1,4 +1,5 @@
-<hrs-layout>
+<!-- padded, not constrained: its tables grow to the whole width -->
+<hrs-layout default="padded">
   @if (store.error(); as error) {
     <p role="alert">The team stats could not be read: {{ error }}</p>
   } @else if (store.teams(); as teams) {

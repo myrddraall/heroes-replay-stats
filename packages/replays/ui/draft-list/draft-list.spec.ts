@@ -36,12 +36,14 @@ describe('DraftList', () => {
     await fixture.whenStable();
     const el = fixture.nativeElement as HTMLElement;
     const rows = [...el.querySelectorAll('.hrs-grid__body [role="row"]')];
-    expect(rows.map((r) => [...r.children].map((c) => c.textContent!.trim()))).toEqual([
+    // a row's cells (its look, after them, is no cell)
+    const cells = (r: Element) => [...r.children].filter((c) => c.matches('[role="cell"], [role="rowheader"]'));
+    expect(rows.map((r) => cells(r).map((c) => c.textContent!.trim()))).toEqual([
       ['1', 'Blue team', 'Ban', 'Genji', ''],
       ['2', 'Red team', 'Pick', 'Li Li', 'Ann'],
     ]);
     expect(rows.map((r) => r.getAttribute('theme'))).toEqual(['blue', 'red']);
-    expect([...rows[0]!.children].map((c) => c.getAttribute('role'))).toEqual([
+    expect(cells(rows[0]!).map((c) => c.getAttribute('role'))).toEqual([
       'cell',
       'cell',
       'cell',

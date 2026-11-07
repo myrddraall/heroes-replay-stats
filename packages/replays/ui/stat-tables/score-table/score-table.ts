@@ -14,13 +14,7 @@ import {
   untracked,
 } from '@angular/core';
 import { MatTooltip } from '@angular/material/tooltip';
-import {
-  CellTemplate,
-  DataGrid,
-  GridColumn,
-  HeaderTemplate,
-  NumberCell,
-} from '@myrddraall/heroes-replay-stats-data-views/ui';
+import { CellTemplate, DataGrid, GridColumn, GridHeader, GridRowElement, HeaderTemplate, NumberCell, RowTemplate } from '@myrddraall/heroes-replay-stats-data-views/ui';
 import { ScoreCards } from '../score-cards/score-cards';
 import { ScoreRowBar } from '../score-row/score-row-bar';
 import type { StatColumn, StatRow } from '../../../model';
@@ -50,7 +44,7 @@ type Fit = 'full' | 'squeezed' | 'cards';
  */
 @Component({
   selector: 'ui-score-table',
-  imports: [
+  imports: [GridHeader, GridRowElement, RowTemplate, 
     CellTemplate,
     DataGrid,
     GridColumn,

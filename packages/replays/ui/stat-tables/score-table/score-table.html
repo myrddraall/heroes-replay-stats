@@ -8,8 +8,11 @@
     (rankRequested)="rankByColumn($event)"
   />
 } @else {
+  <!-- the header and the grid, one look (score-table.scss) -->
+  <div class="score-table">
+  <hrs-grid-header [for]="grid" />
   <hrs-data-grid
-    class="score-table"
+    #grid
     [items]="table()"
     [trackBy]="byKey"
     [rowTheme]="themeOf"
@@ -17,6 +20,7 @@
     (sortChange)="sort.set($event)"
     sortStart="desc"
   >
+    <hrs-grid-row *hrsRow />
     <hrs-column name="head" [header]="rowHeadLabel()" width="max-content">
       <ng-template hrsHeader><span class="score-table__hidden">{{ rowHeadLabel() }}</span></ng-template>
       <ng-template hrsCell let-line>
@@ -77,4 +81,5 @@
       </hrs-column>
     }
   </hrs-data-grid>
+  </div>
 }

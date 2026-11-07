@@ -5,13 +5,15 @@ import { MatError, MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatIcon } from '@angular/material/icon';
 import { MatInput } from '@angular/material/input';
 import { MatOptgroup, MatOption, MatSelect } from '@angular/material/select';
+import { MatTooltip } from '@angular/material/tooltip';
 
 /** The select's value for columns that match no preset (no preset name can be empty). */
 const CUSTOM = '';
 
 /**
  * Named choices of stat columns (presentational): pick a built-in or saved one; once the columns
- * are changed so no preset matches (`current` null), name and save them, and delete a saved one.
+ * are changed so no preset matches (`current` null), reset them to the preset they came from
+ * (`base`), or name and save them; and delete a saved one.
  */
 @Component({
   selector: 'ui-stat-presets',
@@ -27,6 +29,7 @@ const CUSTOM = '';
     MatOptgroup,
     MatOption,
     MatSelect,
+    MatTooltip,
   ],
   templateUrl: './stat-presets.html',
   styleUrl: './stat-presets.scss',
@@ -36,11 +39,15 @@ export class StatPresets {
   readonly saved = input.required<readonly string[]>();
   /** The preset the columns match; null when they match none. */
   readonly current = input.required<string | null>();
+  /** The preset the changed columns came from, which a reset goes back to. */
+  readonly base = input.required<string>();
 
   readonly chosen = output<string>();
   /** Save the current columns under this name. */
   readonly saveRequested = output<string>();
   readonly deleteRequested = output<string>();
+  /** Drop the changes: back to the `base` preset's columns. */
+  readonly resetRequested = output<void>();
 
   protected readonly custom = computed(() => this.current() === null);
   /** What the select shows: the preset, or Custom when none matches. */

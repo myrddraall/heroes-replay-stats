@@ -1,9 +1,9 @@
 import { Component, computed, inject } from '@angular/core';
 import { LatestHeroData } from '@myrddraall/heroes-replay-stats-heroes/data';
 import { TalentFrame } from '@myrddraall/heroes-replay-stats-heroes/ui';
-import { ShellSideNav } from '@myrddraall/heroes-replay-stats-shell/feature';
+import { Layout } from '@myrddraall/heroes-replay-stats-layout/ui';
 import { SHOWCASE_SIZES } from '../../model';
-import { Showcase, ShowcaseItem, ShowcaseRow, SideNavPage } from '../../ui';
+import { Showcase, ShowcaseItem, ShowcaseRow } from '../../ui';
 
 /** A hero whose first and heroic talents show the talent frame's picked states. */
 const TALENT_HERO = 'Valla';
@@ -14,7 +14,7 @@ const TALENT_HERO = 'Valla';
  */
 @Component({
   selector: 'hrs-talent-frame-page',
-  imports: [ShellSideNav, Showcase, ShowcaseItem, ShowcaseRow, SideNavPage, TalentFrame],
+  imports: [Layout, Showcase, ShowcaseItem, ShowcaseRow, TalentFrame],
   templateUrl: './talent-frame-page.html',
   styleUrl: './talent-frame-page.scss',
 })

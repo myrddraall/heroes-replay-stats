@@ -4,7 +4,7 @@ import { Component, DestroyRef, inject, input, signal } from '@angular/core';
 import { MatIconButton } from '@angular/material/button';
 import { MatTooltip } from '@angular/material/tooltip';
 import { Sprite } from '@myrddraall/heroes-replay-stats-sheets/ui';
-import { CellTemplate, DataGrid, GridColumn, HeaderTemplate } from '@myrddraall/heroes-replay-stats-data-views/ui';
+import { CellTemplate, DataGrid, GridColumn, GridHeader, GridRowElement, HeaderTemplate, RowTemplate } from '@myrddraall/heroes-replay-stats-data-views/ui';
 import { TalentFrame, TalentTooltip } from '@myrddraall/heroes-replay-stats-heroes/ui';
 import { ScoreRowBar } from '../stat-tables/score-row/score-row-bar';
 import { ScoreRowHead } from '../stat-tables/score-row/score-row-head';
@@ -25,7 +25,7 @@ import { StyledText, Tooltip } from '@myrddraall/heroes-replay-stats-common/ui';
  */
 @Component({
   selector: 'hrs-talent-table',
-  imports: [CellTemplate, DataGrid, GridColumn, HeaderTemplate, MatIconButton, MatTooltip, Sprite, ScoreRowBar, ScoreRowHead, ScoreTeams, StyledText, TalentFrame, TalentTooltip, Tooltip],
+  imports: [GridHeader, GridRowElement, RowTemplate, CellTemplate, DataGrid, GridColumn, HeaderTemplate, MatIconButton, MatTooltip, Sprite, ScoreRowBar, ScoreRowHead, ScoreTeams, StyledText, TalentFrame, TalentTooltip, Tooltip],
   templateUrl: './talent-table.html',
   styleUrl: './talent-table.scss',
 })

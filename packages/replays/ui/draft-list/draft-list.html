@@ -1,5 +1,10 @@
-<h2 class="title">Draft</h2>
-<hrs-data-grid class="draft hrs-panel" [items]="steps()" [trackBy]="byKey" [rowTheme]="themeOf">
+<!-- the side nav names the section on screen -->
+<h2 class="cdk-visually-hidden">Draft</h2>
+<!-- one panel (hrs-panel) for the header and the rows -->
+<div class="draft hrs-panel">
+  <hrs-grid-header [for]="grid" />
+  <hrs-data-grid #grid [items]="steps()" [trackBy]="byKey" [rowTheme]="themeOf">
+  <hrs-grid-row *hrsRow />
   <hrs-column name="order" header="#" width="max-content" align="end">
     <ng-template hrsCell let-step>
       <span [class.step--ban]="step.action === 'Ban'">{{ step.order }}</span>
@@ -29,3 +34,4 @@
     </ng-template>
   </hrs-column>
 </hrs-data-grid>
+</div>

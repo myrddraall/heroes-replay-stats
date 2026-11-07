@@ -33,7 +33,8 @@
 }
 
 .names__player {
-  font-size: 0.75em;
+  // the player's name against the hero's; a page with smaller rows can set it larger
+  font-size: var(--score-row-player-name-size, 0.75em);
 }
 
 // The game's silence icon, as its talent screen and leader panel size it (TalentsOverviewPanel,

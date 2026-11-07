@@ -1592,7 +1592,7 @@ a:hover {
   aspect-ratio: 16 / 10;
 }
 
-/* DataGrid (hrs-data-grid): every table, drawn only where the page's view is; the page sets its look through the custom properties below (defaults in the fallbacks). The header row sticks to the top of the view; a grid wider than its space scrolls sideways in its body, the header following, the first column staying put */
+/* DataGrid (hrs-data-grid): every table, drawn only where the page's view is; it lays out rows and cells only. Its header (hrs-grid-header, attached by reference) and its rows' look (hrs-grid-row, the page's *hrsRow) take the look below, which the page sets through the custom properties (defaults in the fallbacks); a row without a look is a plain container. The header row sticks to the top of the view; a grid wider than its space scrolls sideways in its body, the header following, the first column staying put */
 hrs-data-grid {
   display: block;
   max-width: 100%;
@@ -1621,7 +1621,7 @@ hrs-data-grid {
   background: var(--hrs-grid-themed-row-background, var(--hrs-film));
 }
 .hrs-grid__header,
-.hrs-grid__cell {
+.hrs-grid__row > .hrs-grid__cell {
   display: flex;
   align-items: center;
   gap: var(--hrs-space-2);
@@ -1642,18 +1642,18 @@ hrs-data-grid {
 .hrs-grid__header:is([aria-sort='ascending'], [aria-sort='descending']) {
   color: var(--hrs-text);
 }
-.hrs-grid__cell {
+.hrs-grid__row > .hrs-grid__cell {
   min-height: var(--hrs-grid-row-height, 40px);
   white-space: var(--hrs-grid-cell-wrap, nowrap);
   font: var(--hrs-grid-font, 400 13px/18px var(--font-plain));
   color: var(--hrs-grid-text, var(--hrs-text-muted));
   border-bottom: var(--hrs-grid-row-line, 1px solid oklch(from var(--hrs-border) l c h / 0.35));
 }
-.hrs-grid__cell:first-child {
+.hrs-grid__row > .hrs-grid__cell:first-child {
   color: var(--hrs-grid-first-text, var(--hrs-text));
 }
 .hrs-grid__header.hrs-num,
-.hrs-grid__cell.hrs-num {
+.hrs-grid__row > .hrs-grid__cell.hrs-num {
   justify-content: flex-end;
   text-align: right;
   font-variant-numeric: tabular-nums;
@@ -1699,7 +1699,8 @@ hrs-data-grid {
   color: var(--hrs-text);
 }
 /* scrolled sideways: the first column over the cells passing under it */
-hrs-data-grid.is-scrolled :is(.hrs-grid__header, .hrs-grid__cell):first-child {
+:is(hrs-data-grid, hrs-grid-header).is-scrolled
+  :is(.hrs-grid__header, .hrs-grid__cell):first-child {
   position: sticky;
   left: 0;
   z-index: 1;

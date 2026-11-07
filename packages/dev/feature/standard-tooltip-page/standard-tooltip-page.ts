@@ -1,8 +1,8 @@
 import { Component, ElementRef, viewChild } from '@angular/core';
 import { MatButton } from '@angular/material/button';
 import { MatTooltip } from '@angular/material/tooltip';
-import { ShellSideNav } from '@myrddraall/heroes-replay-stats-shell/feature';
-import { afterPageSettles, Showcase, ShowcaseRow, SideNavPage } from '../../ui';
+import { Layout } from '@myrddraall/heroes-replay-stats-layout/ui';
+import { afterPageSettles, Showcase, ShowcaseRow } from '../../ui';
 
 /**
  * The game's standard tooltip, the UI area's Components › Tooltips › Standard tooltip
@@ -11,7 +11,7 @@ import { afterPageSettles, Showcase, ShowcaseRow, SideNavPage } from '../../ui';
  */
 @Component({
   selector: 'hrs-standard-tooltip-page',
-  imports: [MatButton, MatTooltip, ShellSideNav, Showcase, ShowcaseRow, SideNavPage],
+  imports: [MatButton, MatTooltip, Layout, Showcase, ShowcaseRow],
   templateUrl: './standard-tooltip-page.html',
   styleUrl: './standard-tooltip-page.scss',
 })

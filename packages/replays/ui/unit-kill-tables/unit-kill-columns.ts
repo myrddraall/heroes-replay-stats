@@ -2,8 +2,9 @@ import type { StatColumn } from '../../model';
 
 const killingBlows = 'Only killing blows count.';
 
-/** The unit kills tables' columns, by the `unitKills` analyser's counts. */
-export const UNIT_KILL_COLUMNS: readonly StatColumn[] = [
+/** The unit kills tables' columns, by the `unitKills` analyser's counts; more is better. */
+export const UNIT_KILL_COLUMNS: readonly StatColumn[] = (
+  [
   { id: 'heroes', label: 'Heroes', format: 'integer' },
   { id: 'minions', label: 'Minions', format: 'integer' },
   {
@@ -39,4 +40,5 @@ export const UNIT_KILL_COLUMNS: readonly StatColumn[] = [
   },
   { id: 'other', label: 'Other', format: 'integer' },
   { id: 'total', label: 'Total', format: 'integer' },
-];
+] satisfies StatColumn[]
+).map((column): StatColumn => ({ ...column, better: 'higher' }));

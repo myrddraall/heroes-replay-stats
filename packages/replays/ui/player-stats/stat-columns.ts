@@ -136,12 +136,31 @@ export const STAT_SOURCES: Readonly<Record<string, string>> = {
   SoftCCSecondsPerMinute: 'TimeSlowedEnemyHeroes',
 };
 
+/** The stats where less is better: deaths, time dead, disconnects. */
+const LOWER_IS_BETTER: ReadonlySet<string> = new Set([
+  'Deaths',
+  'TimeSpentDead',
+  'OutnumberedDeaths',
+  'DeathsToNPCs',
+  'PercentGameSpentDead',
+  'Disconnects',
+  'Reconnects',
+  'TimeDisconnected',
+  'PercentOfGameDisconnected',
+  'DeathsPer10Minutes',
+]);
+
+/** A performance stat, with which way is better, so a table marks its best and sorts best first. */
+const ranked = (column: StatColumn): StatColumn => ({
+  ...column,
+  better: LOWER_IS_BETTER.has(column.id) ? 'lower' : 'higher',
+});
+
 /**
- * Every stat the player stats tables can show, by the `playerStats` analyser's column ids, with
- * the labels, descriptions and formats the 2018 viewer gave them, then the rates and the
- * `activity` analyser's columns.
+ * The player's performance stats, by the `playerStats` analyser's column ids, with the labels,
+ * descriptions and formats the 2018 viewer gave them, then the rates.
  */
-export const STAT_COLUMNS: readonly StatColumn[] = [
+const PERFORMANCE_COLUMNS: readonly StatColumn[] = [
   { id: 'Takedowns', label: 'Takedowns', format: 'integer' },
   { id: 'Deaths', label: 'Deaths', format: 'integer' },
   { id: 'TownKills', label: 'Town Kills', format: 'integer' },
@@ -339,5 +358,14 @@ export const STAT_COLUMNS: readonly StatColumn[] = [
   },
   { id: 'RegenGlobesCollected', label: 'Regen Globes Colleced', format: 'integer' },
   ...RATE_COLUMNS,
+];
+
+/**
+ * Every stat the player stats tables can show: the performance stats, each with which way is
+ * better, then the `activity` analyser's columns, which have no best (how much someone pinged or
+ * chatted).
+ */
+export const STAT_COLUMNS: readonly StatColumn[] = [
+  ...PERFORMANCE_COLUMNS.map(ranked),
   ...ACTIVITY_COLUMNS,
 ];

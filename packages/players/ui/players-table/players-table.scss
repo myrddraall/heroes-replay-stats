@@ -96,8 +96,7 @@ time {
     --hrs-grid-row-gap: 12px;
     --hrs-grid-row-line: none;
 
-    ::ng-deep .hrs-grid__head,
-    ::ng-deep .data-grid__sizer {
+    ::ng-deep .hrs-grid__head {
       display: none;
     }
 
@@ -109,7 +108,7 @@ time {
       min-width: 0;
     }
 
-    ::ng-deep .hrs-grid__body > div > .hrs-grid__row:not(.data-grid__sizer) {
+    ::ng-deep .hrs-grid__body > div > .hrs-grid__row {
       display: block;
       padding: 12px 14px;
       border: 1px solid var(--mat-sys-outline-variant);

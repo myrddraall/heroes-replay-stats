@@ -1,5 +1,6 @@
 @if (shown(); as group) {
-  <h2 class="title">{{ group.title }}</h2>
+  <!-- the side nav names the section on screen -->
+  <h2 class="cdk-visually-hidden">{{ group.title }}</h2>
   <ui-stat-table [columns]="group.columns" [rows]="group.rows" rowHeadLabel="Team">
     <ng-template [uiStatRowHead]="group.rows" let-data>
       <span class="team">

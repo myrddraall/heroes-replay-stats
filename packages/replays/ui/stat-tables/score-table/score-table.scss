@@ -63,7 +63,7 @@
   overflow: hidden;
 }
 
-.score-table ::ng-deep :is(.mat-sort-header-arrow, .data-grid__arrow-room) {
+.score-table ::ng-deep .grid-header__arrow-room {
   display: none;
 }
 

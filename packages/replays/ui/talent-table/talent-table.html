@@ -1,5 +1,9 @@
 <div class="talent-screen hrs-panel">
-  <hrs-data-grid class="talents" [items]="rows()" [trackBy]="byKey" [rowTheme]="themeOf">
+  <!-- the header and the grid, one look (talent-table.scss) -->
+  <div class="talents">
+  <hrs-grid-header [for]="grid" />
+  <hrs-data-grid #grid [items]="rows()" [trackBy]="byKey" [rowTheme]="themeOf">
+    <hrs-grid-row *hrsRow />
     <hrs-column name="player" header="Player" width="max-content">
       <ng-template hrsHeader><span class="talents__hidden">Player</span></ng-template>
       <ng-template hrsCell let-row>
@@ -71,6 +75,7 @@
       </ng-template>
     </hrs-column>
   </hrs-data-grid>
+  </div>
   <!-- the teams' totals across the bottom, as the score screen's -->
   <ui-score-teams [teams]="teams()" />
 </div>

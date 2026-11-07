@@ -5,5 +5,4 @@ export * from './check-table/check-table';
 export * from './showcase/showcase';
 export * from './showcase-item/showcase-item';
 export * from './showcase-row/showcase-row';
-export * from './side-nav-page/side-nav-page';
 export * from './page-settled/page-settled';

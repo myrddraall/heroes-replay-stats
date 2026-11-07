@@ -1,5 +1,5 @@
 import { Component, inject, input } from '@angular/core';
-import { CellTemplate, DataGrid, GridColumn } from '@myrddraall/heroes-replay-stats-data-views/ui';
+import { CellTemplate, DataGrid, GridColumn, GridHeader, GridRowElement, RowTemplate } from '@myrddraall/heroes-replay-stats-data-views/ui';
 import { HeroMinimapIcon } from '@myrddraall/heroes-replay-stats-heroes/ui';
 import { teamColor } from '../../model';
 import { TeamPerspective } from '../team-theme/team-perspective';
@@ -12,7 +12,7 @@ import type { DraftStep } from './draft-steps';
  */
 @Component({
   selector: 'hrs-draft-list',
-  imports: [CellTemplate, DataGrid, GridColumn, HeroMinimapIcon],
+  imports: [CellTemplate, DataGrid, GridColumn, GridHeader, GridRowElement, HeroMinimapIcon, RowTemplate],
   templateUrl: './draft-list.html',
   styleUrl: './draft-list.scss',
 })

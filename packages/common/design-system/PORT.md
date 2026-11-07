@@ -34,7 +34,7 @@ Design: **settled** = the user approved it; **changing** = not reviewed yet, may
 | ShellLayout | settled | done | `packages/shell/feature/shell` (bars over the page, tool Drawer flush right); nav model in `packages/shell/model/nav`, `ShellNavStore`, pages hand over what is open with `showShellItem()` |
 | ShellMobile | settled | done | `hrs-shell--handset` from the shell's BreakpointObserver; title + breadcrumb (`packages/shell/ui/crumbs`), nav drawer with the NavTree |
 | NavTree | settled | done | `packages/shell/ui/nav-tree`: `mat-tree` with nested nodes (`isExpanded` from the active branch, Enter follows the link), links as `.hrs-tree__item`, the chevron only on rows with children |
-| SideNav | settled | done | `packages/shell/ui/side-nav`, placed by a page as `hrs-shell-side-nav` (`packages/shell/feature/shell-side-nav`); one folding group (`hrs-sidenav__heading`) headed by what is open (a match), its sections with their sub-items (Stats') |
+| SideNav | settled | done | `packages/shell/ui/side-nav`, drawn by the shell in its left-hand drawer (the page adds its own content over and under it with `hrsShellSide` templates); one group, no heading, its sections with their sub-items (Stats') |
 | StyledText | settled | done | `packages/common/ui/styled-text` (`hrsStyledText`); no page uses it yet |
 | ThemeVariants, Rarity | settled | n/a | previews only |
 | IconButton | changing | done | `mat-icon-button` with icon-button overrides (square, 36px, 16px icon, no state layer) and the outline ring in nexus.css; a `mat-icon` takes the icon-size token; in a Drawer header it is the small one (0.78) |

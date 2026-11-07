@@ -1,13 +1,7 @@
 <nav [attr.aria-label]="title()">
   <div class="hrs-sidenav__group">
-    <button
-      type="button"
-      class="hrs-sidenav__heading"
-      [attr.aria-expanded]="open()"
-      (click)="open.set(!open())"
-    >
-      <span class="hrs-sidenav__chev" aria-hidden="true">›</span>{{ title() }}
-    </button>
+    <!-- no heading: what the sections are of is named above (the page's title, the bar's section);
+         the nav still carries it for screen readers -->
     <ul class="hrs-list">
       @for (section of sections(); track section.link) {
         @let branch = section.children.length > 0;

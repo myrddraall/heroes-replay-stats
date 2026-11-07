@@ -11,7 +11,7 @@ export interface PlayerIdentity {
   readonly team: Team | null;
 }
 
-/** A stats table's row for one player: the player's row from the replay and their hero icon. */
+/** A stats table's row for one player: the player's row from the replay and their hero's picture (an icon, or the leaderboard portrait the score rows head with). */
 export interface PlayerRowData<P extends PlayerIdentity> {
   readonly player: P;
   readonly icon: HeroIcon | null;

@@ -4,12 +4,13 @@
   } @else if (!store.loaded()) {
     <mat-progress-bar mode="indeterminate" aria-label="Loading the match" />
   } @else if (store.replay(); as replay) {
-    <hrs-replay-header hrsLayoutItem="padded" [replay]="replay" />
-    <!-- edge to edge: each section lays itself out, beside its side nav where it has one -->
-    <div class="match__body" hrsLayoutItem="edge-to-edge">
-      <hrs-shell-side-nav />
-      <div class="match__section"><router-outlet /></div>
-    </div>
+    <!-- in the shell's left-hand drawer: its name over its sections, its facts under them -->
+    <ng-template hrsShellSide="header"><hrs-replay-header [replay]="replay" /></ng-template>
+    <ng-template hrsShellSide="footer"><hrs-replay-facts [replay]="replay" /></ng-template>
+    <!-- a handset has no such drawer: the header (with the facts) over the section instead -->
+    <hrs-replay-header class="match__header" hrsLayoutItem="padded" [replay]="replay" />
+    <!-- edge to edge: each section lays itself out -->
+    <div hrsLayoutItem="edge-to-edge"><router-outlet /></div>
   } @else {
     <hrs-empty-state icon="search_off" title="Match not found">
       It is not in the replay database, or it is still being imported.

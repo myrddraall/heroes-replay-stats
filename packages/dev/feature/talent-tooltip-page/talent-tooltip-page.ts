@@ -2,8 +2,8 @@ import { Component, computed, ElementRef, inject, viewChildren } from '@angular/
 import { Tooltip } from '@myrddraall/heroes-replay-stats-common/ui';
 import { LatestHeroData } from '@myrddraall/heroes-replay-stats-heroes/data';
 import { TalentFrame, TalentTooltip } from '@myrddraall/heroes-replay-stats-heroes/ui';
-import { ShellSideNav } from '@myrddraall/heroes-replay-stats-shell/feature';
-import { afterPageSettles, Showcase, ShowcaseItem, ShowcaseRow, SideNavPage } from '../../ui';
+import { Layout } from '@myrddraall/heroes-replay-stats-layout/ui';
+import { afterPageSettles, Showcase, ShowcaseItem, ShowcaseRow } from '../../ui';
 
 /** A hero whose talents show the talent tooltip's kinds: a plain one, a heroic, a quest. */
 const TALENT_HERO = 'Valla';
@@ -18,7 +18,7 @@ const QUEST_ICON = '@UI/StormTalentInTextQuestIcon';
  */
 @Component({
   selector: 'hrs-talent-tooltip-page',
-  imports: [ShellSideNav, Showcase, ShowcaseItem, ShowcaseRow, SideNavPage, TalentFrame, TalentTooltip, Tooltip],
+  imports: [Layout, Showcase, ShowcaseItem, ShowcaseRow, TalentFrame, TalentTooltip, Tooltip],
   templateUrl: './talent-tooltip-page.html',
   styleUrl: './talent-tooltip-page.scss',
 })

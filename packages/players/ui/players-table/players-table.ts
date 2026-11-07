@@ -6,7 +6,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { EmptyState } from '@myrddraall/heroes-replay-stats-common/ui';
-import { CellTemplate, DataGrid, GridColumn } from '@myrddraall/heroes-replay-stats-data-views/ui';
+import {
+  CellTemplate,
+  DataGrid,
+  GridColumn,
+  GridHeader,
+  GridRowElement,
+  RowTemplate,
+} from '@myrddraall/heroes-replay-stats-data-views/ui';
 import type { PlayerRow } from './players-table.presenter';
 
 /**
@@ -22,11 +29,14 @@ import type { PlayerRow } from './players-table.presenter';
     DataGrid,
     EmptyState,
     GridColumn,
+    GridHeader,
+    GridRowElement,
     MatButtonModule,
     MatCheckboxModule,
     MatIconModule,
     MatInputModule,
     MatProgressBarModule,
+    RowTemplate,
   ],
   templateUrl: './players-table.html',
   styleUrl: './players-table.scss',

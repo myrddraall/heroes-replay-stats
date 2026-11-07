@@ -15,7 +15,8 @@ export const UnitKillsSectionStore = signalStore(
         params: () => page.replayId() ?? undefined,
         stream: ({ params }) => stats.unitKills(params),
       }),
-      icons: page.icons,
+      portraits: page.portraits,
+      you: computed(() => new Set(page.you().slots)),
     };
   }),
   withComputed(({ _kills }) => ({

@@ -40,7 +40,11 @@
       No player's name has all of these words.
     </hrs-empty-state>
   } @else {
-  <hrs-data-grid class="players hrs-panel" [items]="rows()" [trackBy]="byId">
+  <!-- one panel (hrs-panel) for the header and the rows -->
+  <div class="players hrs-panel">
+  <hrs-grid-header [for]="grid" />
+  <hrs-data-grid #grid [items]="rows()" [trackBy]="byId">
+    <hrs-grid-row *hrsRow />
     <hrs-column name="player" header="Player" width="minmax(max-content, 3fr)">
       <ng-template hrsCell let-p>
         <span class="player">
@@ -103,5 +107,6 @@
       </ng-template>
     </hrs-column>
   </hrs-data-grid>
+  </div>
 }
 }

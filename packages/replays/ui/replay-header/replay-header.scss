@@ -21,8 +21,12 @@
   font: var(--mat-sys-label-large);
 }
 
-.head__meta {
-  margin-left: auto;
-  color: var(--mat-sys-on-surface-variant);
-  font: var(--mat-sys-body-medium);
+.head__facts {
+  display: none;
+  flex-basis: 100%;
+}
+
+// a handset (the shell's) has no left-hand drawer: the facts are here instead
+:host-context(.hrs-shell--handset) .head__facts {
+  display: block;
 }

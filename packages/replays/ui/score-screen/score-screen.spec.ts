@@ -145,11 +145,11 @@ describe('ScoreTable sorting', () => {
         r.querySelectorAll('hrs-number-cell')[column]?.firstChild?.textContent?.trim(),
       );
 
-    header('Deaths').click();
+    header('Deaths').querySelector('button')!.click();
     await fixture.whenStable();
     expect(fixture.componentInstance.sort()).toEqual({ column: 'd', direction: 'asc' });
     expect(figures(1)).toEqual(['1', '3', '5']);
-    header('Kills').click();
+    header('Kills').querySelector('button')!.click();
     await fixture.whenStable();
     expect(fixture.componentInstance.sort()).toEqual({ column: 'k', direction: 'desc' });
     expect(figures(0)).toEqual(['8', '6', '2']);

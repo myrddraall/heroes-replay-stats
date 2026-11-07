@@ -1,8 +1,4 @@
 <hrs-layout>
-  <!-- edge to edge: the Tests section's side nav (level 3) beside the page -->
-  <div class="tests" hrsLayoutItem="edge-to-edge">
-    <hrs-shell-side-nav />
-    <hrs-layout class="tests__page">
       <section class="check">
         <h1 class="check__title">Lists</h1>
         <button type="button" matButton="outlined" (click)="extra.set(extra() + 1)">Add a line above</button>
@@ -49,6 +45,4 @@
           <ng-template hrsEmpty>Nothing here.</ng-template>
         </hrs-item-list>
       </section>
-    </hrs-layout>
-  </div>
 </hrs-layout>

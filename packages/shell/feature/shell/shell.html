@@ -75,9 +75,31 @@
         }
       </mat-menu>
     }
-    <!-- Below the bars: the page, and the tool drawer the page fills against the right edge. -->
+    <!-- Below the bars: the page between its two drawers, its sections' on the left and its tools' on
+         the right, each from under the bars to the window's bottom. -->
     <div class="shell__body">
       <mat-drawer-container class="shell__panels">
+        <!-- the page's sections, its own content over and under them -->
+        <mat-drawer
+          id="shell-side"
+          class="shell__side"
+          position="start"
+          mode="side"
+          disableClose
+          [opened]="sideShown()"
+        >
+          <div class="shell__side-body hrs-scroll">
+            @if (panels.sideHeader(); as header) {
+              <ng-container [ngTemplateOutlet]="header" />
+            }
+            @if (shellNav.level3Of; as of) {
+              <hrs-side-nav [title]="of.label" [sections]="shellNav.level3" />
+            }
+            @if (panels.sideFooter(); as footer) {
+              <ng-container [ngTemplateOutlet]="footer" />
+            }
+          </div>
+        </mat-drawer>
         <mat-drawer
           id="shell-panel"
           class="hrs-drawer hrs-drawer--shell shell__panel"
@@ -92,7 +114,7 @@
           }
         </mat-drawer>
         <mat-drawer-content #main class="shell__main">
-          <main class="shell__page" [class.shell__page--panel-toggle]="panels.end() !== null">
+          <main class="shell__page" [class.shell__page--panel-toggle]="panels.end() !== null && !panels.endShown()">
             <!-- the panel the sub-bar's sections show the page in -->
             <mat-tab-nav-panel #sectionPanel="matTabNavPanel" class="shell__sections">
               <router-outlet />
@@ -100,23 +122,21 @@
           </main>
         </mat-drawer-content>
       </mat-drawer-container>
-      @if (!bare() && panels.end(); as panel) {
-        <!-- on the panel's edge, at the top, so it moves with it -->
+      @if (!bare() && !panels.endShown() && panels.end(); as panel) {
+        <!-- only while the panel is closed (open, it has its own close): at the top of the page's edge -->
         <button
+          #panelToggle
           mat-icon-button
           type="button"
           class="shell__panel-toggle"
-          [class.shell__panel-toggle--open]="panels.endShown()"
           aria-controls="shell-panel"
-          [attr.aria-expanded]="panels.endOpen()"
-          [attr.aria-label]="(panels.endOpen() ? 'Hide ' : 'Show ') + panel.label"
-          [matTooltip]="(panels.endOpen() ? 'Hide ' : 'Show ') + panel.label"
+          aria-expanded="false"
+          [attr.aria-label]="'Show ' + panel.label"
+          [matTooltip]="'Show ' + panel.label"
           matTooltipPosition="left"
-          (click)="panels.setEndOpen(!panels.endOpen())"
+          (click)="openPanel()"
         >
-          <mat-icon class="material-symbols-outlined" aria-hidden="true">{{
-            panels.endOpen() ? 'right_panel_close' : 'right_panel_open'
-          }}</mat-icon>
+          <mat-icon class="material-symbols-outlined" aria-hidden="true">right_panel_open</mat-icon>
         </button>
       }
     </div>

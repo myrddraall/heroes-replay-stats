@@ -1,9 +1,9 @@
 import { Component, computed, inject } from '@angular/core';
 import { LatestHeroData } from '@myrddraall/heroes-replay-stats-heroes/data';
 import { HeroMinimapIcon } from '@myrddraall/heroes-replay-stats-heroes/ui';
-import { ShellSideNav } from '@myrddraall/heroes-replay-stats-shell/feature';
+import { Layout } from '@myrddraall/heroes-replay-stats-layout/ui';
 import { SHOWCASE_SIZES } from '../../model';
-import { Showcase, ShowcaseItem, ShowcaseRow, SideNavPage } from '../../ui';
+import { Showcase, ShowcaseItem, ShowcaseRow } from '../../ui';
 
 /** The themes a hero frame takes: each side's, and the user's own on each side. */
 const THEMES = [
@@ -22,7 +22,7 @@ const HEROES = ['Barbarian', 'Jaina', 'Diablo', 'Murky', 'Abathur'] as const;
  */
 @Component({
   selector: 'hrs-hero-frame-page',
-  imports: [HeroMinimapIcon, ShellSideNav, Showcase, ShowcaseItem, ShowcaseRow, SideNavPage],
+  imports: [HeroMinimapIcon, Layout, Showcase, ShowcaseItem, ShowcaseRow],
   templateUrl: './hero-frame-page.html',
   styleUrl: './hero-frame-page.scss',
 })
