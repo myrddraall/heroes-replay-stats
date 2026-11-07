@@ -30,6 +30,7 @@ export * from './replay-list-item/replay-card';
 export * from './replay-list-item/replay-list-item';
 export * from './replay-header/replay-header';
 export * from './replay-facts/replay-facts';
+export * from './match-card/match-card';
 export * from './chat-log/chat-log';
 export * from './chat-log/chat-log-lines';
 export * from './draft-list/draft-list';

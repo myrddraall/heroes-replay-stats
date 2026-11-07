@@ -4,9 +4,9 @@
   } @else if (!store.loaded()) {
     <mat-progress-bar mode="indeterminate" aria-label="Loading the match" />
   } @else if (store.replay(); as replay) {
-    <!-- in the shell's left-hand drawer: its name over its sections, its facts under them -->
-    <ng-template hrsShellSide="header"><hrs-replay-header [replay]="replay" /></ng-template>
-    <ng-template hrsShellSide="footer"><hrs-replay-facts [replay]="replay" /></ng-template>
+    <!-- in the shell's left-hand drawer, over its sections: its card (the map's preview, its name,
+         mode and facts) -->
+    <ng-template hrsShellSide="header"><hrs-match-card [replay]="replay" [preview]="preview()" /></ng-template>
     <!-- a handset has no such drawer: the header (with the facts) over the section instead -->
     <hrs-replay-header class="match__header" hrsLayoutItem="padded" [replay]="replay" />
     <!-- edge to edge: each section lays itself out -->
