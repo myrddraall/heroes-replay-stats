@@ -59,14 +59,14 @@ $reset-column: 16px;
   }
 }
 
-// A small field: the glass's tint behind it, its edge faint until focused.
+// A small field: a film behind it, its edge faint until focused.
 @mixin field {
   box-sizing: border-box;
   height: 24px;
   padding: 0 4px;
-  border: 1px solid rgb(var(--hrs-glass-edge) / 0.3);
+  border: 1px solid color-mix(in srgb, var(--mat-sys-primary) 30%, transparent);
   border-radius: 0;
-  background: rgb(var(--hrs-glass-tint) / 0.5);
+  background: var(--mat-sys-surface-container-low);
   color: inherit;
   font: var(--mat-sys-body-small);
 
@@ -92,9 +92,9 @@ $reset-column: 16px;
   gap: 4px;
   height: 24px;
   padding: 0 8px;
-  border: 1px solid rgb(var(--hrs-glass-edge) / 0.4);
+  border: 1px solid color-mix(in srgb, var(--mat-sys-primary) 40%, transparent);
   border-radius: 0;
-  background: rgb(var(--hrs-glass-tint) / 0.5);
+  background: var(--mat-sys-surface-container-low);
   color: inherit;
   font: var(--mat-sys-body-small);
   cursor: pointer;
@@ -106,7 +106,7 @@ $reset-column: 16px;
   }
 
   &:hover:not(:disabled) {
-    border-color: rgb(var(--hrs-glass-edge) / 0.8);
+    border-color: color-mix(in srgb, var(--mat-sys-primary) 80%, transparent);
   }
 
   &:disabled {

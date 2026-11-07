@@ -3,7 +3,11 @@ import { ROUTES } from '@angular/router';
 import { provideAether } from '@myrddraall/heroes-replay-stats-aether';
 import { provideAetherForge } from '@myrddraall/heroes-replay-stats-aether-forge';
 import { provideSettingsSection } from '@myrddraall/heroes-replay-stats-settings/ui';
-import { provideShellBackdrop, provideShellMenuItem } from '@myrddraall/heroes-replay-stats-shell/ui';
+import {
+  provideShellBackdrop,
+  provideShellMenuItem,
+  provideShellSection,
+} from '@myrddraall/heroes-replay-stats-shell/ui';
 import { PRESETS } from '../model';
 import { BACKGROUND_EDITOR, BACKGROUND_EDITOR_PATH } from './background-editor';
 import { provideGraphicsCarryOver } from './carry-over-graphics';
@@ -12,7 +16,8 @@ import { BACKGROUND_ROUTES } from './routes';
 
 /**
  * The site's background in an app: Aether drawing the Play screen's, behind every page; its
- * editor (the Background page) and the theme preview, in the settings menu's Dev group; its Graphics settings;
+ * editor (the Background page, in the settings menu's Dev group), the theme preview (the UI area's
+ * Theme); its Graphics settings;
  * its colour, which can change with each page. List it before `provideRouter`.
  */
 export function provideBackgroundFeature(): EnvironmentProviders {
@@ -26,7 +31,8 @@ export function provideBackgroundFeature(): EnvironmentProviders {
     }),
     provideAetherForge(BACKGROUND_EDITOR),
     { provide: ROUTES, multi: true, useValue: BACKGROUND_ROUTES },
-    provideShellMenuItem({ label: 'Theme preview', link: '/theme-preview', order: 10, group: 'dev' }),
+    // the theme preview, as the UI area's Theme section (the dev feature adds the area)
+    provideShellSection({ area: '/ui', label: 'Theme', link: '/ui/theme', order: 10 }),
     provideShellMenuItem({
       label: 'Background',
       link: `/${BACKGROUND_EDITOR_PATH}`,

@@ -1,0 +1,26 @@
+<hrs-side-nav-page>
+  <hrs-shell-side-nav sideNav />
+  <hrs-showcase heading="Hero frame">
+    <ng-container ngProjectAs="[about]">
+      <code>hrs-hero-frame</code>: the game's profile hero frame, here around
+      <code>hrs-hero-minimap-icon</code>, the ring in the theme's colour. Its <code>font-size</code> is
+      the icon's size; the ring is built around it.
+    </ng-container>
+    @for (theme of themes; track theme.id) {
+      <hrs-showcase-row class="themed" [label]="theme.label" [attr.theme]="theme.id">
+        @for (icon of icons(); track icon.name) {
+          <hrs-hero-minimap-icon [picture]="icon.picture" [name]="icon.name" />
+        }
+      </hrs-showcase-row>
+    }
+    <hrs-showcase-row label="Sizes" theme="blue">
+      @if (icons()[0]; as icon) {
+        @for (size of sizes; track size) {
+          <hrs-showcase-item [caption]="'font-size: ' + size">
+            <hrs-hero-minimap-icon [style.font-size]="size" [picture]="icon.picture" [name]="icon.name" />
+          </hrs-showcase-item>
+        }
+      }
+    </hrs-showcase-row>
+  </hrs-showcase>
+</hrs-side-nav-page>

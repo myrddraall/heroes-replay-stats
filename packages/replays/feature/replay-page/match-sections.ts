@@ -1,21 +1,41 @@
 import type { ShellNavLink } from '@myrddraall/heroes-replay-stats-shell/model';
-import { STAT_SECTION_IDS, STAT_SECTIONS } from '../../model';
+import { hasDraft, STAT_SECTION_IDS, STAT_SECTIONS, type ReplaySummary } from '../../model';
+import { TEAM_STAT_GROUPS } from '../../ui';
 
-/** A match's sections, as the shell's navigation lists them: level 2, and Stats' level 3. */
-export function matchSections(id: string): ShellNavLink[] {
-  const at = (path: string) => `/matches/${id}/${path}`;
+/**
+ * A match's sections, as the shell's navigation lists them, in three groups: Overview (the score
+ * screen, the talents, the draft where the game had one, the chat), Player Stats (each player
+ * stats section, then each player's unit kills) and Team Stats (each team table on its own).
+ */
+export function matchSections(replay: Pick<ReplaySummary, 'id' | 'mode'>): ShellNavLink[] {
+  const at = (path: string) => `/replays/matches/${replay.id}/${path}`;
   return [
-    { label: 'Score', link: at('score') },
-    { label: 'Teams', link: at('teams') },
-    { label: 'Draft', link: at('draft') },
-    { label: 'Talents', link: at('talents') },
-    { label: 'Chat', link: at('chat') },
     {
-      label: 'Stats',
-      link: at('stats'),
-      children: STAT_SECTION_IDS.map((s) => ({ label: STAT_SECTIONS[s].title, link: at(`stats/${s}`) })),
+      label: 'Overview',
+      link: at('overview'),
+      children: [
+        { label: 'Score', link: at('overview/score') },
+        { label: 'Talents', link: at('overview/talents') },
+        ...(hasDraft(replay.mode) ? [{ label: 'Draft', link: at('overview/draft') }] : []),
+        { label: 'Chat', link: at('overview/chat') },
+      ],
     },
-    { label: 'Unit Kills', link: at('unit-kills') },
-    { label: 'XP', link: at('xp') },
+    {
+      label: 'Player Stats',
+      link: at('players'),
+      children: [
+        ...STAT_SECTION_IDS.map((s) => ({ label: STAT_SECTIONS[s].title, link: at(`players/${s}`) })),
+        { label: 'Unit Kills', link: at('players/unit-kills') },
+      ],
+    },
+    {
+      label: 'Team Stats',
+      link: at('teams'),
+      children: [
+        ...TEAM_STAT_GROUPS.map((g) => ({ label: g.title, link: at(`teams/${g.id}`) })),
+        { label: 'Unit Kills', link: at('teams/unit-kills') },
+        { label: 'XP Over Time', link: at('teams/xp-over-time') },
+      ],
+    },
   ];
 }

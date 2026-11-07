@@ -16,10 +16,18 @@ export interface ReplaySummary {
   readonly winningTeam: Team | null;
   /** The game build, e.g. 85267. */
   readonly build: number;
-  /** `complete` once every background analyser has run; `ready` before that. */
-  readonly status: Extract<ReplayStatus, 'ready' | 'complete'>;
+  /**
+   * `ingesting` while its rows are written and `analysing` while its first analysers run (it
+   * can't be opened yet); then `ready`, and `complete` once every background analyser has run.
+   */
+  readonly status: Exclude<ReplayStatus, 'failed'>;
   /** Participants in slot order. */
   readonly players: readonly ReplayPlayer[];
   /** The account that recorded the replay, when known. */
   readonly recorderToonHandle: string | null;
+  /**
+   * An earlier version of the importer stored it: some details may be out of date until its
+   * file is imported again.
+   */
+  readonly outdated: boolean;
 }

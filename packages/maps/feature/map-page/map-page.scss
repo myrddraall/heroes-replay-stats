@@ -1,4 +1,4 @@
-// The map fills the page below the toolbar, edge to edge.
+// The map fills the page below the bars (the height the shell gives it), edge to edge.
 .title {
   position: absolute;
   width: 1px;
@@ -8,6 +8,6 @@
   white-space: nowrap;
 }
 .map {
-  height: calc(100dvh - 64px);
+  height: var(--hrs-page-height, 100dvh);
   min-height: 360px;
 }

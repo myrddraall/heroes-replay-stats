@@ -15,7 +15,10 @@ import { Sprite } from './sprite';
   />`,
 })
 class Host {
-  readonly picture = signal<SpritePicture>({ src: 'https://x.test/sheet.webp', rect: [64, 32, 128, 128] });
+  readonly picture = signal<SpritePicture>({
+    src: 'https://x.test/sheet.webp',
+    rect: [64, 32, 128, 128],
+  });
   readonly width = signal<number | undefined>(32);
   readonly height = signal<number | undefined>(undefined);
 }
@@ -114,6 +117,12 @@ describe('hrsSprite by name', () => {
     return { store, img: fixture.nativeElement.querySelector('img') as HTMLImageElement };
   };
 
+  it('hides the image until its sheet has loaded, never drawing an empty image box', async () => {
+    const { img } = await setUp((host) => host.name.set('missing#nothing'));
+    expect(img.getAttribute('src')).toBeNull();
+    expect(img.style.visibility).toBe('hidden');
+  });
+
   it("shows a sheet's picture by its name, as it would an object", async () => {
     const { store, img } = await setUp();
     expect(store.load).toHaveBeenCalledWith('/sheets/ui.webp');
@@ -153,5 +162,24 @@ describe('hrsSprite by name', () => {
   it('shows nothing for a name its sheet lacks', async () => {
     const { img } = await setUp((host) => host.name.set('ui#nothing'));
     expect(img.hasAttribute('src')).toBe(false);
+  });
+
+  it("hides a sheet's picture that covers its parent until the parent's box is known", () => {
+    @Component({
+      imports: [Sprite],
+      template: `<span style="display: block; width: 40px; height: 40px; overflow: hidden">
+        <img [hrsSprite]="picture" spriteCover alt="" />
+      </span>`,
+    })
+    class CoverHost {
+      readonly picture: SpritePicture = { src: 'https://x.test/sheet.webp', rect: [0, 0, 64, 64] };
+    }
+    TestBed.configureTestingModule({ providers: [provideFakeSheets()] });
+    const fixture = TestBed.createComponent(CoverHost);
+    fixture.detectChanges();
+    const img: HTMLImageElement = fixture.nativeElement.querySelector('img');
+    // the parent is measured after the first layout (a ResizeObserver), so not yet
+    expect(img.style.visibility).toBe('hidden');
+    expect(img.style.getPropertyValue('zoom')).toBe('');
   });
 });

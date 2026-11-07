@@ -10,7 +10,7 @@ import {
   type ShellUtilityLink,
 } from '../model';
 
-/** An area on the top bar, added by the domain whose pages it holds (or the app, for a family's). */
+/** An area on the top bar, added by the domain whose pages it holds (or the app, for one that gathers several). */
 export function provideShellArea(area: ShellArea): Provider {
   return { provide: SHELL_AREAS, useValue: area, multi: true };
 }
@@ -80,7 +80,7 @@ export function provideShellBackdrop(load: () => Promise<Type<unknown>>): Provid
 
 /** How the shell looks: its theme, how solid its films are, and whether they blur. */
 export interface ShellLook {
-  /** The neutral theme the shell carries (`data-theme`). */
+  /** The neutral theme the shell carries (`theme`). */
   readonly theme: Signal<string>;
   /** How solid every film is, from its legibility floor (0) to solid (1). */
   readonly opacity: Signal<number>;

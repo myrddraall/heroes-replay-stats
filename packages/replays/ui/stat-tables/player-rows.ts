@@ -1,7 +1,7 @@
-import type { StatColumn, StatRow } from '../../model';
+import type { StatColumn, StatRow, StatRowTheme } from '../../model';
 import type { Team } from '@myrddraall/heroprotocol-db';
 import type { HeroIcon } from '@myrddraall/heroes-replay-stats-heroes/model';
-import { teamColor, type TeamColorMode } from '../../model';
+import { playerTheme, teamColor, type TeamColorMode } from '../../model';
 
 /** Who a player is, as a stats table's row identifies them. */
 export interface PlayerIdentity {
@@ -33,7 +33,8 @@ export function statValues(
 
 /**
  * One stats row per player, grouped by team and themed in its colour from your point of view,
- * your team first, then by slot, with the columns' stats.
+ * your own rows (`you`, slots) in the self theme of your side, blue team first, then by slot, with
+ * the columns' stats.
  */
 export function playerRows<P extends PlayerIdentity>(
   players: readonly P[],
@@ -41,22 +42,24 @@ export function playerRows<P extends PlayerIdentity>(
   columns: readonly StatColumn[],
   yourTeam: Team | null,
   mode: TeamColorMode,
+  you: ReadonlySet<number> = new Set(),
 ): StatRow<PlayerRowData<P>>[] {
   const color = (team: Team | null) => (team === null ? null : teamColor(team, yourTeam, mode));
   return players
     .map((player) => {
       const c = color(player.team);
+      const theme: StatRowTheme | null = c === null ? null : playerTheme(c, you.has(player.slot));
       return {
-        key: player.slot,
-        group: player.team,
-        values: statValues(player, columns),
-        class: c === null ? undefined : `hrs-glass-${c}`,
-        data: { player, icon: icons[player.slot] ?? null },
+        row: {
+          key: player.slot,
+          group: player.team,
+          values: statValues(player, columns),
+          ...(theme === null ? {} : { theme }),
+          data: { player, icon: icons[player.slot] ?? null },
+        },
+        blue: c === 'blue',
       };
     })
-    .sort(
-      (a, b) =>
-        Number(a.class !== 'hrs-glass-blue') - Number(b.class !== 'hrs-glass-blue') ||
-        a.key - b.key,
-    );
+    .sort((a, b) => Number(b.blue) - Number(a.blue) || a.row.key - b.row.key)
+    .map(({ row }) => row);
 }

@@ -17,6 +17,7 @@ import {
   type ImportJobStatus,
   type ImportOverall,
   progressOf,
+  type ReplayImportProgress,
   type ReplayInput,
   storeOf,
 } from '../model';
@@ -109,6 +110,24 @@ export const ReplayImportJobStore = signalStore(
         const byRank = GROUP[a.status] - GROUP[b.status];
         return byRank !== 0 ? byRank : sequenceOf(b) - sequenceOf(a);
       });
+    }),
+    /**
+     * Each replay with an import job still going (by replay id, once the file is read): its
+     * stage and progress.
+     */
+    progressByReplay: computed((): ReadonlyMap<string, ReplayImportProgress> => {
+      const STAGE: Partial<Record<ImportJobStatus, ReplayImportProgress['stage']>> = {
+        running: 'importing',
+        ready: 'analysing',
+      };
+      return new Map(
+        entities().flatMap((j) => {
+          const stage = STAGE[j.status];
+          return stage && j.replayId !== null
+            ? [[j.replayId, { stage, progress: j.progress }] as const]
+            : [];
+        }),
+      );
     }),
     overall: computed((): ImportOverall => {
       const jobs = entities();

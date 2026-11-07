@@ -1,6 +1,6 @@
-import type { StatColumn } from '../../model';
+import { statIcon, type StatColumn } from '../../model';
 
-/** The score screen's columns, as the game's score screen has them. */
+/** The score screen's columns, as the game's score screen has them, with its icons (heroes-assets' score-screen sheet). */
 export const SCORE_COLUMNS: readonly StatColumn[] = [
   {
     id: 'SoloKill',
@@ -8,7 +8,7 @@ export const SCORE_COLUMNS: readonly StatColumn[] = [
     description: 'Total hero kills',
     format: 'integer',
     better: 'higher',
-    icon: 'swords',
+    icon: statIcon('score-screen#kills'),
   },
   {
     id: 'Assists',
@@ -16,7 +16,7 @@ export const SCORE_COLUMNS: readonly StatColumn[] = [
     description: 'Total hero kill assists',
     format: 'integer',
     better: 'higher',
-    icon: 'handshake',
+    icon: statIcon('score-screen#assists'),
   },
   {
     id: 'Deaths',
@@ -24,7 +24,7 @@ export const SCORE_COLUMNS: readonly StatColumn[] = [
     description: 'Total deaths',
     format: 'integer',
     better: 'lower',
-    icon: 'skull',
+    icon: statIcon('score-screen#deaths'),
   },
   {
     id: 'SiegeDamage',
@@ -32,7 +32,7 @@ export const SCORE_COLUMNS: readonly StatColumn[] = [
     description: 'Siege damage: damage dealt to enemy structures and minions',
     format: 'integer',
     better: 'higher',
-    icon: 'castle',
+    icon: statIcon('score-screen#siege-damage'),
   },
   {
     id: 'HeroDamage',
@@ -40,7 +40,7 @@ export const SCORE_COLUMNS: readonly StatColumn[] = [
     description: 'Hero damage: damage dealt to enemy heroes',
     format: 'integer',
     better: 'higher',
-    icon: 'local_fire_department',
+    icon: statIcon('score-screen#hero-damage'),
   },
   {
     id: 'Healing',
@@ -48,7 +48,7 @@ export const SCORE_COLUMNS: readonly StatColumn[] = [
     description: 'Healing and shielding: damage prevented and healing done to allied heroes',
     format: 'integer',
     better: 'higher',
-    icon: 'healing',
+    icon: statIcon('score-screen#healing'),
   },
   {
     id: 'DamageTaken',
@@ -56,7 +56,7 @@ export const SCORE_COLUMNS: readonly StatColumn[] = [
     description: 'Damage taken',
     format: 'integer',
     better: 'higher',
-    icon: 'shield',
+    icon: statIcon('score-screen#damage-taken'),
   },
   {
     id: 'ExperienceContribution',
@@ -64,6 +64,6 @@ export const SCORE_COLUMNS: readonly StatColumn[] = [
     description: 'Experience contributed',
     format: 'integer',
     better: 'higher',
-    icon: 'star',
+    icon: statIcon('score-screen#experience'),
   },
 ];

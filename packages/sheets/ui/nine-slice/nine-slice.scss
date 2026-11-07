@@ -52,7 +52,7 @@
 }
 
 // the states, weakest first: later rules win when several hold (pressed while hovered)
-:host([data-hrs-slice-state='selected']),
+:host([slice-state='selected']),
 :host([aria-pressed='true']),
 :host([aria-selected='true']) {
   .part {
@@ -60,28 +60,28 @@
   }
 }
 
-:host([data-hrs-slice-state='focus']),
+:host([slice-state='focus']),
 :host(:focus-visible) {
   .part {
     --hrs-slice-image: var(--hrs-slice-focus, var(--hrs-slice-normal));
   }
 }
 
-:host([data-hrs-slice-state='hover']),
+:host([slice-state='hover']),
 :host(:hover) {
   .part {
     --hrs-slice-image: var(--hrs-slice-hover, var(--hrs-slice-normal));
   }
 }
 
-:host([data-hrs-slice-state='pressed']),
+:host([slice-state='pressed']),
 :host(:active) {
   .part {
     --hrs-slice-image: var(--hrs-slice-pressed, var(--hrs-slice-hover, var(--hrs-slice-normal)));
   }
 }
 
-:host([data-hrs-slice-state='disabled']),
+:host([slice-state='disabled']),
 :host(:disabled),
 :host([aria-disabled='true']) {
   .part {

@@ -1,102 +1,70 @@
-// Colours are Material's system tokens, so a row re-themed by its class (a team's) follows it.
-// It never scrolls sideways: the component measures the table and squeezes it (below) or shows
-// ranking cards when it doesn't fit (see score-table.ts). The clip only hides the one frame in
-// which a too-wide table is measured.
+@use '../score-row/score-row';
+
+// Colours are Material's system tokens, so a row re-themed by its team follows it. It never
+// scrolls sideways: the component measures the grid and squeezes it (below) or shows ranking
+// cards when it doesn't fit (see score-table.ts).
 :host {
   display: block;
   min-width: 0;
+}
+
+// The grid's look, the game's score rows (_score-row.scss); hides the one frame in which a
+// too-wide table is measured, on the grid only, so the ranking cards (and their chips' outline and
+// glow) are never cut.
+.score-table {
+  @include score-row.grid;
   overflow-x: clip;
+
+  // the figures a step lighter than the theme's styled text (bold): semibold
+  ::ng-deep .hrs-grid__body hrs-number-cell {
+    font-weight: 600;
+  }
 }
 
-.score-table__compact {
-  display: none;
-}
-
-// Squeezed: short numbers, tighter cells, smaller header icons.
+// Squeezed: short numbers (the number cells), tighter cells, smaller header icons.
 :host(.score-table--squeezed) {
-  .score-table__full {
-    display: none;
-  }
+  .score-table {
+    --hrs-grid-cell-padding: 0.35em;
 
-  .score-table__compact {
-    display: inline;
-  }
-
-  tbody th,
-  tbody td {
-    padding: 6px;
-  }
-
-  thead th {
-    padding: 4px;
+    ::ng-deep .hrs-grid__header {
+      padding: 4px;
+    }
   }
 
   .score-table__icon {
-    font-size: 20px;
-    width: 20px;
-    height: 20px;
+    font-size: 26px;
   }
 }
 
-.score-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0 4px;
+// a header's icon and, sorted by, its order arrow, on one line
+.score-table__label {
+  display: inline-flex;
+  align-items: center;
 }
 
-thead th {
-  padding: 4px 8px;
-  font: var(--mat-sys-label-large);
-  color: var(--mat-sys-on-surface-variant);
-  text-align: center;
-  white-space: nowrap;
-}
-
-tbody tr {
-  background: var(--mat-sys-surface-container);
-}
-
-tbody th,
-tbody td {
-  padding: 8px 12px;
-}
-
-.score-table__head-col {
-  width: 1%;
-}
-
-.score-table__head {
-  text-align: start;
-  font-weight: normal;
-  border-radius: 8px 0 0 8px;
-}
-
-.score-table__cell {
-  font: var(--mat-sys-title-medium);
-  font-variant-numeric: tabular-nums;
-  text-align: center;
-  white-space: nowrap;
-  color: var(--mat-sys-on-surface);
-
-  &:last-child {
-    border-radius: 0 8px 8px 0;
-  }
-}
-
-.score-table__cell--best-in-group {
-  color: var(--mat-sys-primary);
-  font-weight: 600;
-}
-
-.score-table__cell--best {
-  color: var(--mat-sys-tertiary);
-  font-weight: 700;
-}
-
+// the game's icons at its size (32 for its 56 high rows, as ours are), the hover state while the
+// header is hovered
 .score-table__icon {
-  font-size: 22px;
-  width: 22px;
-  height: 22px;
+  font-size: 32px;
+}
+
+.score-table ::ng-deep .hrs-grid__header:hover {
+  --stat-icon-normal: none;
+  --stat-icon-hover: block;
+}
+
+// the sort order in the game's arrows (26 × 18, at half its size) beside the icon; Material's arrow
+// and the room kept for it hidden
+.score-table__order {
+  display: inline-block;
+  width: 13px;
+  height: 9px;
+  margin-left: 3px;
+  overflow: hidden;
+}
+
+.score-table ::ng-deep :is(.mat-sort-header-arrow, .data-grid__arrow-room) {
+  display: none;
 }
 
 .score-table__hidden {

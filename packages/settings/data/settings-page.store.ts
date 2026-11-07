@@ -1,6 +1,5 @@
 import { inject } from '@angular/core';
 import { signalStore, withComputed, withMethods, withProps } from '@ngrx/signals';
-import { injectPlatform } from '@myrddraall/heroes-replay-stats-platform/data';
 import {
   defaultParallelImports,
   deviceCores,
@@ -9,13 +8,12 @@ import {
   SettingsStore,
 } from './settings.store';
 
-/** {@link SettingsPanel}'s component store: the importing settings, and this device and app. */
+/** {@link SettingsPanel}'s component store: the importing settings, and this device. */
 export const SettingsPageStore = signalStore(
   withProps(() => {
     const cores = deviceCores() ?? null;
     return {
       _settings: inject(SettingsStore),
-      platform: injectPlatform(),
       min: MIN_PARALLEL_IMPORTS,
       max: MAX_PARALLEL_IMPORTS,
       cores,

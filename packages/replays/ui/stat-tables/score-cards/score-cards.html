@@ -1,20 +1,34 @@
 <div class="chips" role="group" aria-label="Rank by">
   @for (column of columns(); track column.id) {
+    @let on = column.id === rankBy();
     <button
       type="button"
       class="chip"
-      [class.chip--on]="column.id === rankBy()"
-      [attr.aria-pressed]="column.id === rankBy()"
-      [matTooltip]="column.description ?? column.label"
+      [class.chip--on]="on"
+      [attr.aria-pressed]="on"
+      [matTooltip]="
+        (column.description ?? column.label) +
+        (on ? (rankOrder() === 'worst-first' ? ': worst first' : ': best first') : '')
+      "
       (click)="rankRequested.emit(column.id)"
     >
-      @if (column.icon) {
-        <mat-icon class="material-symbols-outlined chip__icon" aria-hidden="true">{{
-          column.icon
-        }}</mat-icon>
+      @if (column.icon; as icon) {
+        <ui-stat-icon class="chip__icon" [icon]="icon" [sorted]="on" />
         <span class="hidden">{{ column.label }}</span>
       } @else {
         {{ column.label }}
+      }
+      @if (on) {
+        <!-- the order, in the game's sort arrows: down for best first, up for worst first -->
+        <span class="chip__order" aria-hidden="true">
+          <img
+            [hrsSprite]="rankOrder() === 'worst-first' ? 'score-screen#sort-up' : 'score-screen#sort-down'"
+            spriteCover
+            loading="eager"
+            alt=""
+          />
+        </span>
+        <span class="hidden">{{ rankOrder() === 'worst-first' ? ', worst first' : ', best first' }}</span>
       }
     </button>
   }
@@ -22,8 +36,10 @@
 
 <ol class="cards">
   @for (card of cards(); track card.line.row.key) {
-    <li class="card" [class]="card.line.row.class ?? ''">
-      <span class="card__rank">{{ card.rank }}</span>
+    <!-- a row of the score table: its texture, bar and head, the ranking stat at its end; the other
+         stats under it -->
+    <li class="card" [attr.theme]="card.line.row.theme ?? null">
+      <ui-score-row-bar />
       <div class="card__head">
         @if (rowHead(); as head) {
           <ng-container
@@ -32,12 +48,14 @@
           />
         }
       </div>
-      @if (card.main; as main) {
-        <ng-container
-          [ngTemplateOutlet]="stat"
-          [ngTemplateOutletContext]="{ $implicit: main, main: true }"
-        />
-      }
+      <div class="card__main">
+        @if (card.main; as main) {
+          <ng-container
+            [ngTemplateOutlet]="stat"
+            [ngTemplateOutletContext]="{ $implicit: main, main: true }"
+          />
+        }
+      </div>
       <ul class="card__stats">
         @for (other of card.others; track other.cell.column) {
           <li>
@@ -49,22 +67,19 @@
   }
 </ol>
 
+<!-- a stat: its column's icon (its name for screen readers) and the figure as the table shows it -->
 <ng-template #stat let-s let-main="main">
-  <span
-    class="stat"
-    [class.stat--main]="main"
-    [class.stat--best]="s.cell.best"
-    [class.stat--best-in-group]="s.cell.bestInGroup"
-  >
+  <span class="stat" [class.stat--main]="main">
     @if (s.column?.icon; as icon) {
-      <mat-icon class="material-symbols-outlined stat__icon" aria-hidden="true">{{ icon }}</mat-icon>
+      <ui-stat-icon class="stat__icon" [icon]="icon" />
     }
-    <span class="hidden">{{ s.column?.label }}</span>
-    {{ s.cell.compactText }}
-    @if (s.cell.best) {
-      <span class="hidden">(best)</span>
-    } @else if (s.cell.bestInGroup) {
-      <span class="hidden">(best on the team)</span>
-    }
+    <span class="hidden">{{ s.column?.label }}&#32;</span>
+    <hrs-number-cell
+      class="stat__value"
+      [value]="s.cell.compactText"
+      styled
+      [mark]="s.cell.best ? 'best' : s.cell.bestInGroup ? 'group-best' : null"
+      groupBestLabel="best on the team"
+    />
   </span>
 </ng-template>

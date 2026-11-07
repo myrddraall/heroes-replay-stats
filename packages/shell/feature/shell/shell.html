@@ -18,8 +18,8 @@
         Heroes Replay Stats
         <span class="hrs-spacer"></span>
         <button
+          mat-icon-button
           type="button"
-          class="hrs-btn hrs-btn--icon hrs-btn--sm"
           aria-label="Close navigation"
           (click)="navDrawer.close()"
         >
@@ -45,8 +45,8 @@
           <ng-container *ngComponentOutlet="action" />
         }
         <button
+          mat-icon-button
           type="button"
-          class="hrs-btn hrs-btn--icon"
           aria-label="Settings"
           matTooltip="Settings"
           [matMenuTriggerFor]="settingsMenu"
@@ -54,12 +54,12 @@
           <mat-icon class="material-symbols-outlined" aria-hidden="true">settings</mat-icon>
         </button>
       </hrs-top-bar>
+      <!-- the band under the top bar: the breadcrumb on a handset, else the area's sections (sliding up
+           behind the top bar where the page has none) -->
       @if (handset()) {
-        @if (shellNav.crumbs.length) {
-          <hrs-crumbs [crumbs]="shellNav.crumbs" />
-        }
-      } @else if (shellNav.level2.length > 1) {
-        <hrs-sub-bar [sections]="shellNav.level2" />
+        <hrs-crumbs [crumbs]="shellNav.crumbs" />
+      } @else {
+        <hrs-sub-bar [sections]="shellNav.level2" [panel]="sectionPanel" />
       }
       <mat-menu #settingsMenu="matMenu" xPosition="before">
         @for (item of menu; track item.label) {
@@ -91,17 +91,21 @@
             <ng-container [ngTemplateOutlet]="panel.template" />
           }
         </mat-drawer>
-        <mat-drawer-content class="shell__main">
+        <mat-drawer-content #main class="shell__main">
           <main class="shell__page" [class.shell__page--panel-toggle]="panels.end() !== null">
-            <router-outlet />
+            <!-- the panel the sub-bar's sections show the page in -->
+            <mat-tab-nav-panel #sectionPanel="matTabNavPanel" class="shell__sections">
+              <router-outlet />
+            </mat-tab-nav-panel>
           </main>
         </mat-drawer-content>
       </mat-drawer-container>
       @if (!bare() && panels.end(); as panel) {
         <!-- on the panel's edge, at the top, so it moves with it -->
         <button
+          mat-icon-button
           type="button"
-          class="hrs-btn hrs-btn--icon shell__panel-toggle"
+          class="shell__panel-toggle"
           [class.shell__panel-toggle--open]="panels.endShown()"
           aria-controls="shell-panel"
           [attr.aria-expanded]="panels.endOpen()"

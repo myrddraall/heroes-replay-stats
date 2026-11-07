@@ -13,8 +13,9 @@
     "typecheck": "tsc --noEmit -p ."
   },
   "dependencies": {
-    "@myrddraall/hero-data": "^0.5.4",
+    "@myrddraall/hero-data": "^0.5.5",
     "@myrddraall/heroes-replay-stats-common": "workspace:*",
+    "@myrddraall/heroes-replay-stats-data-views": "workspace:*",
     "@myrddraall/heroes-replay-stats-heroes": "workspace:*",
     "@myrddraall/heroes-replay-stats-import": "workspace:*",
     "@myrddraall/heroes-replay-stats-layout": "workspace:*",
@@ -28,9 +29,9 @@
     "tslib": "^2.3.0"
   },
   "devDependencies": {
-    "@angular/build": "^22.1.8",
+    "@angular/build": "^22.2.5",
     "@angular/cdk": "^22.1.0",
-    "@angular/cli": "^22.1.8",
+    "@angular/cli": "^22.2.5",
     "@angular/common": "^22.1.0",
     "@angular/compiler": "^22.1.0",
     "@angular/compiler-cli": "^22.1.0",
@@ -42,6 +43,7 @@
     "@eslint/js": "^10.0.1",
     "@myrddraall/heroes-replay-stats-platform": "workspace:*",
     "@ngrx/signals": "^22.0.1",
+    "@tanstack/angular-virtual": "^6.1.12",
     "angular-eslint": "^22.5.0",
     "eslint": "^10.9.1",
     "fake-indexeddb": "^6.0.0",

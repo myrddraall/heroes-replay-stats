@@ -1,3 +1,5 @@
+@use '../score-row/score-row';
+
 // Colours are Material's system tokens, so a card re-themed by its row's class (a team's) follows it.
 :host {
   display: grid;
@@ -32,102 +34,134 @@
   }
 }
 
+// the stat ranked by, as the design system's pressed toggle (.hrs-toggle[aria-pressed]): the
+// theme's selection, its strong border (Material's secondary here) and the selected glow, as the
+// match cards' hover has (secondary-container is Material's own grey, which the theme leaves
+// unmapped)
 .chip--on {
-  background: var(--mat-sys-secondary-container);
-  box-shadow: 0 0 0 1px var(--mat-sys-primary);
-  color: var(--mat-sys-on-secondary-container);
+  background: var(--mat-sys-primary-container);
+  box-shadow:
+    0 0 0 1px var(--mat-sys-secondary),
+    var(--hrs-glow-selected);
+  color: var(--mat-sys-on-primary-container);
 }
 
+// the game's sort arrow (26 × 18), at half its size
+.chip__order {
+  display: inline-block;
+  width: 13px;
+  height: 9px;
+  margin-left: 3px;
+  overflow: hidden;
+}
+
+// the game's icon, its hover state while the chip is hovered
 .chip__icon {
-  font-size: 20px;
-  width: 20px;
-  height: 20px;
+  font-size: 28px;
+}
+
+.chip:hover {
+  --stat-icon-normal: none;
+  --stat-icon-hover: block;
 }
 
 .cards {
+  @include score-row.size;
   display: grid;
-  gap: 4px;
+  // 2px apart, as the table's rows
+  gap: 2px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-// place, who, the ranking stat; the other stats under them
+// A row of the score table (_score-row.scss): its texture under the whole card, the bar down its
+// left; at the top the row head, the row's height, and the ranking stat at its end;
+// the other stats under them, past the bar. Type a share of the row's height, as the table's.
 .card {
+  @include score-row.texture;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   grid-template-areas:
-    'rank head main'
-    'stats stats stats';
+    'head main'
+    'stats stats';
   align-items: center;
-  gap: 8px 10px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  background: var(--mat-sys-surface-container);
+  background: var(--score-row);
+  font: 700 calc(var(--hrs-grid-row-height) * var(--hrs-grid-row-type-scale)) / 1.2
+    var(--font-brand);
+  color: var(--mat-sys-on-surface);
+  @include score-row.self-overlay;
 }
 
-.card__rank {
-  grid-area: rank;
-  min-width: 1.5em;
-  font: var(--mat-sys-title-medium);
-  font-variant-numeric: tabular-nums;
-  text-align: center;
-  color: var(--mat-sys-on-surface-variant);
-}
-
+// as the table's row head cell: the portrait 3px past the bar, the row's height
 .card__head {
   grid-area: head;
+  display: flex;
+  align-items: stretch;
   min-width: 0;
+  min-height: var(--hrs-grid-row-height);
+  padding: 0 0.3em 0 15px;
 }
 
-// an even grid, so the stats line up from card to card
+// The portrait fades out at the bottom too: a card goes on under the row head (its stats), so the
+// portrait's lower edge would stand in the card, where a table row ends. The game's fade to the
+// right (PortraitFade: solid to 46%, gone at the edge), intersected with one downwards.
+.card__head ::ng-deep .player__portrait {
+  mask-image:
+    linear-gradient(
+      to right,
+      black 46%,
+      rgb(0 0 0 / 0.82) 58%,
+      rgb(0 0 0 / 0.52) 70%,
+      rgb(0 0 0 / 0.22) 82%,
+      rgb(0 0 0 / 0.09) 90%,
+      transparent
+    ),
+    linear-gradient(to bottom, black 55%, transparent);
+  mask-composite: intersect;
+}
+
+// the names a little further from the portrait than the table's (they overlap its faded end there)
+.card__head ::ng-deep .player__names {
+  margin-left: calc(-0.1 * var(--hrs-grid-row-height) * 100 / 56 - 0.75em + 0.4em);
+}
+
+.card__main {
+  grid-area: main;
+  padding-right: 0.6em;
+}
+
+// an even grid inside the fill, so the stats line up from card to card
 .card__stats {
   grid-area: stats;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(4.75em, 1fr));
-  gap: 4px 8px;
+  grid-template-columns: repeat(auto-fill, minmax(4.4em, 1fr));
+  gap: 0.25em 0.5em;
   margin: 0;
-  padding: 0;
+  // clear of the row head above it, and in from the fill's edge (17px) as the table's cells are
+  padding: 0.8em 0.8em 0.9em calc(17px + 0.8em);
   list-style: none;
+  font-size: 0.72em;
 }
 
 .stat {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  font: var(--mat-sys-body-medium);
-  font-variant-numeric: tabular-nums;
+  gap: 0.25em;
   white-space: nowrap;
-  color: var(--mat-sys-on-surface);
 }
 
-.stat--main {
-  grid-area: main;
-  font: var(--mat-sys-title-large);
-  font-variant-numeric: tabular-nums;
-}
-
-.stat--best-in-group {
-  color: var(--mat-sys-primary);
+// the figures semibold, as the table's
+.stat__value {
   font-weight: 600;
 }
 
-.stat--best {
-  color: var(--mat-sys-tertiary);
-  font-weight: 700;
+.stat--main {
+  font-size: 1.25em;
 }
 
 .stat__icon {
-  font-size: 16px;
-  width: 16px;
-  height: 16px;
-  color: var(--mat-sys-on-surface-variant);
-}
-
-.stat--main .stat__icon {
-  font-size: 20px;
-  width: 20px;
-  height: 20px;
+  font-size: 1em;
 }
 
 .hidden {

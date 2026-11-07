@@ -1,4 +1,3 @@
-@use 'glass-mixins' as glass;
 
 // The drawer container fills the host; the viewer fills the content between the panels. Nothing
 // here may scroll sideways: the panels keep to their width, the map clips.
@@ -26,14 +25,17 @@
     overflow: hidden;
   }
 
-  // the frame's glass over the map, lit along the edge facing it
+  // Material's drawer (its film from the theme), blurring what is behind it as the theme says, with a
+  // hairline on the edge facing the map.
+  backdrop-filter: var(--hrs-backdrop-raised);
+
   &.mat-drawer-end {
-    @include glass.frame-glass(left);
+    border-left: 1px solid var(--mat-sys-outline-variant);
   }
 
   // (Material marks only an end drawer: a start one is any other.)
   &:not(.mat-drawer-end) {
-    @include glass.frame-glass(right);
+    border-right: 1px solid var(--mat-sys-outline-variant);
   }
 }
 
@@ -55,8 +57,8 @@
   top: 8px;
   inset-inline-end: 8px;
   z-index: 10001;
-  background: rgb(var(--hrs-glass-tint) / var(--hrs-glass-alpha-frame));
-  backdrop-filter: var(--hrs-glass-backdrop-frame);
+  background: var(--mat-sys-surface-container);
+  backdrop-filter: var(--hrs-backdrop-raised);
 
   &.explore__toggle--start {
     inset-inline-end: auto;

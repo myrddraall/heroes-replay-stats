@@ -2,10 +2,14 @@ import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { formatStatCompact } from '../stat-tables/stat-format';
 import { ScoreCards } from '../stat-tables/score-cards/score-cards';
-import { statBestFirst, statRanks } from '../stat-tables/stat-sort';
+import { nextStatSort, statBestFirst, statRanks, type StatSort } from '../stat-tables/stat-sort';
+import { ScoreTable } from '../stat-tables/score-table/score-table';
+import { provideWholeLists } from '@myrddraall/heroes-replay-stats-data-views/testing';
+import { provideFakeSheets } from '@myrddraall/heroes-replay-stats-sheets/testing';
 import { statTableRows } from '../stat-tables/stat-cells';
 import { type StatColumn, type StatRow } from '../../model';
 import { describe, expect, it } from 'vitest';
+import { silenceIcon } from '../stat-tables/score-row/score-row-head';
 import { awardLabel } from './score-screen';
 
 describe('awardLabel', () => {
@@ -14,6 +18,19 @@ describe('awardLabel', () => {
     expect(awardLabel('MostXPContribution')).toBe('Most XP contribution');
     expect(awardLabel('HighestKillStreak')).toBe('Highest kill streak');
     expect(awardLabel('MostAltarDamageDone')).toBe('Most altar damage done');
+  });
+});
+
+describe('silenceIcon', () => {
+  it("picks the game's icon for chat, voice or both, and nothing for neither", () => {
+    expect(silenceIcon(true, false)).toMatchObject({
+      picture: 'score-screen#chat-silenced',
+      label: 'Chat silenced',
+    });
+    expect(silenceIcon(true, false)?.tooltip).toContain('can only Chat with friends and party members');
+    expect(silenceIcon(false, true)?.picture).toBe('score-screen#voice-silenced');
+    expect(silenceIcon(true, true)?.picture).toBe('score-screen#chat-and-voice-silenced');
+    expect(silenceIcon(false, false)).toBeNull();
   });
 });
 
@@ -39,6 +56,17 @@ describe('statRanks', () => {
   it('gives tied rows the same place and skips the places they take', () => {
     const rows = [row('a', 8, 0), row('b', 8, 0), row('c', 6, 0), row('d', 6, 0), row('e', 1, 0)];
     expect(statRanks(rows, 'k')).toEqual([1, 1, 3, 3, 5]);
+  });
+});
+
+describe('nextStatSort', () => {
+  it('cycles a column best first, worst first, then unsorted; a new column starts best first', () => {
+    expect(nextStatSort(null, kills)).toEqual({ column: 'k', direction: 'desc' });
+    expect(nextStatSort({ column: 'k', direction: 'desc' }, kills)).toEqual({ column: 'k', direction: 'asc' });
+    expect(nextStatSort({ column: 'k', direction: 'asc' }, kills)).toBeNull();
+    expect(nextStatSort(null, deaths)).toEqual({ column: 'd', direction: 'asc' });
+    expect(nextStatSort({ column: 'd', direction: 'asc' }, deaths)).toEqual({ column: 'd', direction: 'desc' });
+    expect(nextStatSort({ column: 'k', direction: 'asc' }, deaths)).toEqual({ column: 'd', direction: 'asc' });
   });
 });
 
@@ -70,26 +98,60 @@ class Cards {
 
 function places(el: HTMLElement): string[] {
   return [...el.querySelectorAll('.card')].map(
-    (card) =>
-      `${card.querySelector('.card__rank')?.textContent?.trim()} ${card
-        .querySelector('.stat--main')
-        ?.textContent?.replace(/\s+/g, ' ')
-        .trim()}`,
+    (card) => card.querySelector('.stat--main')?.textContent?.replace(/\s+/g, ' ').trim() ?? '',
   );
 }
 
 describe('ScoreCards', () => {
   it('ranks the rows by the chosen stat, best first, and re-ranks from its chips', async () => {
+    TestBed.configureTestingModule({ providers: [provideFakeSheets()] });
     const fixture = TestBed.createComponent(Cards);
     await fixture.whenStable();
     const el: HTMLElement = fixture.nativeElement;
-    expect(places(el)).toEqual(['1 Kills 8 (best)', '1 Kills 8 (best)', '3 Kills 2']);
+    expect(places(el)).toEqual(['Kills 8 (best)', 'Kills 8 (best)', 'Kills 2']);
 
     const chips = el.querySelectorAll<HTMLButtonElement>('.chip');
     expect(chips[0].getAttribute('aria-pressed')).toBe('true');
     chips[1].click();
     await fixture.whenStable();
-    expect(places(el)).toEqual(['1 Deaths 1 (best)', '2 Deaths 3', '3 Deaths 5']);
+    expect(places(el)).toEqual(['Deaths 1 (best)', 'Deaths 3', 'Deaths 5']);
     expect(chips[1].getAttribute('aria-pressed')).toBe('true');
+  });
+});
+
+@Component({
+  imports: [ScoreTable],
+  template: `<ui-score-table [columns]="columns" [rows]="rows" [(sort)]="sort" />`,
+})
+class Table {
+  readonly columns = [kills, deaths];
+  readonly rows = [row('a', 2, 5), row('b', 8, 1), row('c', 6, 3)];
+  readonly sort = signal<StatSort | null>(null);
+}
+
+describe('ScoreTable sorting', () => {
+  it('sorts each column best first on its first press: fewest deaths first', async () => {
+    TestBed.configureTestingModule({ providers: [provideWholeLists(), provideFakeSheets()] });
+    const fixture = TestBed.createComponent(Table);
+    await fixture.whenStable();
+    const el: HTMLElement = fixture.nativeElement;
+    const header = (label: string) =>
+      [...el.querySelectorAll<HTMLElement>('.hrs-grid__head [role="columnheader"]')].find(
+        (h) => h.textContent?.includes(label),
+      )!;
+    // each row's figures, in the order drawn
+    const figures = (column: number) =>
+      [...el.querySelectorAll('.hrs-grid__body [role="row"]')].map((r) =>
+        r.querySelectorAll('hrs-number-cell')[column]?.firstChild?.textContent?.trim(),
+      );
+
+    header('Deaths').click();
+    await fixture.whenStable();
+    expect(fixture.componentInstance.sort()).toEqual({ column: 'd', direction: 'asc' });
+    expect(figures(1)).toEqual(['1', '3', '5']);
+    header('Kills').click();
+    await fixture.whenStable();
+    expect(fixture.componentInstance.sort()).toEqual({ column: 'k', direction: 'desc' });
+    expect(figures(0)).toEqual(['8', '6', '2']);
   });
 });

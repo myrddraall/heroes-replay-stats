@@ -1,4 +1,5 @@
 import {
+  booleanAttribute,
   computed,
   DestroyRef,
   Directive,
@@ -25,19 +26,27 @@ const LAZY_MARGIN = '300px';
  * shows that part of it (`object-fit: none`, `object-position`), then `zoom` scales it to
  * `spriteWidth` pixels wide or `spriteHeight` pixels high (the other side follows). Without either,
  * a sheet's picture shows at its own size and a file is sized by the page's CSS. `zoom`, unlike
- * `transform: scale`, scales the space it takes too.
+ * `transform: scale`, scales the space it takes too. With `spriteCover`, it covers its parent's
+ * box instead, as `object-fit: cover` does: scaled to fill it, centred, the rest cut off by the
+ * parent (which hides its overflow); a file fills it with `object-fit: cover`. It stays hidden
+ * until it can be drawn as it should: a named picture until its sheet has loaded (never an empty
+ * image box), a covering sheet's picture until the parent's box has been measured.
  */
 @Directive({
   selector: 'img[hrsSprite]',
   host: {
     '[attr.src]': 'picture()?.src ?? null',
     '[attr.loading]': 'loading()',
-    'decoding': 'async',
+    decoding: 'async',
     '[style.width]': 'width()',
     '[style.height]': 'height()',
-    '[style.object-fit]': 'rect() ? "none" : null',
+    '[style.object-fit]': 'rect() ? "none" : cover() ? "cover" : null',
     '[style.object-position]': 'position()',
     '[style.zoom]': 'zoom()',
+    '[style.display]': 'cover() ? "block" : null',
+    '[style.visibility]': 'unready() ? "hidden" : null',
+    '[style.margin-left]': 'coverOffset()?.[0] ?? null',
+    '[style.margin-top]': 'coverOffset()?.[1] ?? null',
   },
 })
 export class Sprite {
@@ -47,10 +56,16 @@ export class Sprite {
   readonly spriteWidth = input<number>();
   /** The height to show it at instead, in CSS pixels (pictures of one height but varied widths, such as emotes). */
   readonly spriteHeight = input<number>();
+  /** Cover the parent's box (scaled to fill it, centred) instead of a set width or height. */
+  readonly spriteCover = input(false, { transform: booleanAttribute });
   /** `lazy` unless the picture is needed at once. */
   readonly loading = input<'lazy' | 'eager'>('lazy');
 
   private readonly store = inject(SHEET_PICTURES);
+  private readonly element = inject<ElementRef<HTMLImageElement>>(ElementRef).nativeElement;
+  /** The parent's size, for `spriteCover`. */
+  private readonly box = signal<readonly [number, number] | null>(null);
+  protected readonly cover = computed(() => this.spriteCover());
   /** Whether the image is near the viewport (always, where the browser can't tell). */
   private readonly near = signal(typeof IntersectionObserver === 'undefined');
 
@@ -67,9 +82,41 @@ export class Sprite {
 
   protected readonly rect = computed(() => this.picture()?.rect ?? null);
 
+  /** The scale that makes a sheet's picture cover the parent's box. */
+  private readonly coverScale = computed(() => {
+    const rect = this.rect();
+    const box = this.box();
+    if (!this.cover() || !rect || !box) return null;
+    return Math.max(box[0] / rect[2], box[1] / rect[3]);
+  });
+
+  /**
+   * Not drawn yet: before a named picture's sheet has loaded (an image without a source, which the
+   * browser would draw as an empty box with a border), or a sheet's picture covering its parent
+   * before the parent's box is known (it would draw at its own size first).
+   */
+  protected readonly unready = computed(
+    () =>
+      this.picture() === null ||
+      (this.cover() && this.rect() !== null && this.coverScale() === null),
+  );
+
+  /** How far it sits from the parent's corner, centred (in its own, zoomed, pixels). */
+  protected readonly coverOffset = computed(() => {
+    const scale = this.coverScale();
+    const rect = this.rect();
+    const box = this.box();
+    if (scale === null || !rect || !box) return null;
+    return [
+      px((box[0] - rect[2] * scale) / 2 / scale),
+      px((box[1] - rect[3] * scale) / 2 / scale),
+    ] as const;
+  });
+
   protected readonly width = computed(() => {
     const rect = this.rect();
     if (rect) return px(rect[2]);
+    if (this.cover()) return '100%';
     const width = this.spriteWidth();
     return width === undefined ? null : px(width);
   });
@@ -77,6 +124,7 @@ export class Sprite {
   protected readonly height = computed(() => {
     const rect = this.rect();
     if (rect) return px(rect[3]);
+    if (this.cover()) return '100%';
     const height = this.spriteHeight();
     return height === undefined || this.spriteWidth() !== undefined ? null : px(height);
   });
@@ -89,6 +137,8 @@ export class Sprite {
   protected readonly zoom = computed(() => {
     const rect = this.rect();
     if (!rect) return null;
+    const cover = this.coverScale();
+    if (cover !== null) return String(cover);
     const width = this.spriteWidth();
     if (width !== undefined) return String(width / rect[2]);
     const height = this.spriteHeight();
@@ -103,6 +153,16 @@ export class Sprite {
       const url = this.store.sheetUrl(parseSheetName(given).sheet);
       untracked(() => this.store.load(url));
     });
+    // the parent's box, for spriteCover
+    effect((onCleanup) => {
+      const parent = this.element.parentElement;
+      if (!this.cover() || !parent || typeof ResizeObserver === 'undefined') return;
+      const observer = new ResizeObserver(() =>
+        this.box.set([parent.clientWidth, parent.clientHeight]),
+      );
+      observer.observe(parent);
+      onCleanup(() => observer.disconnect());
+    });
     if (typeof IntersectionObserver !== 'undefined') {
       const observer = new IntersectionObserver(
         (entries) => {
@@ -113,7 +173,7 @@ export class Sprite {
         },
         { rootMargin: LAZY_MARGIN },
       );
-      observer.observe(inject<ElementRef<HTMLElement>>(ElementRef).nativeElement);
+      observer.observe(this.element);
       inject(DestroyRef).onDestroy(() => observer.disconnect());
     }
   }

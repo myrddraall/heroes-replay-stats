@@ -1,0 +1,41 @@
+// The Tests section's side nav (level 3) in a column at the left; the page beside it lays itself
+// out, as a match's sections do.
+.tests {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.tests__page {
+  flex: 1;
+  min-width: 0;
+}
+
+.check {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-block: 24px;
+}
+
+.check__cards,
+.check__slow {
+  --hrs-list-item-min-width: 14em;
+}
+
+.check__card {
+  // the theme's card is a fixed-width art card; here it fills its column
+  width: auto;
+  display: grid;
+  place-items: center;
+  height: 96px;
+}
+
+.check__chat {
+  --hrs-list-gap: 0px;
+}
+
+.check__line {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}

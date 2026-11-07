@@ -3,14 +3,17 @@ export type NeutralTheme = 'purple' | 'magenta' | 'cyan';
 export const NEUTRAL_THEMES: readonly NeutralTheme[] = ['purple', 'magenta', 'cyan'];
 
 /**
- * Every theme an element can carry (`data-theme`): the neutrals, then the ones the data sets: the
+ * Every theme an element can carry (`theme`): the neutrals, then the ones the data sets: the
  * teams, the user's own player, and the item tiers.
  */
 export type ThemeName =
   | NeutralTheme
   | 'blue'
   | 'red'
-  | 'green'
+  | 'self'
+  // aliases (the design system's): the user's own row, on the blue side or the red
+  | 'blue-self'
+  | 'red-self'
   | 'poor'
   | 'common'
   | 'uncommon'

@@ -13,20 +13,19 @@
 }
 
 .log {
-  margin: 0;
   padding: 8px 0;
-  list-style: none;
+  --hrs-list-gap: 0px;
 }
 
 // time, icon, sender, text; the text wraps under itself
 .line {
   display: grid;
-  grid-template-columns: 3.5em 24px minmax(6em, max-content) 1fr;
+  grid-template-columns: 3.5em max-content minmax(6em, max-content) 1fr;
   align-items: center;
   gap: 4px 10px;
   padding: 3px 16px;
-  // the team's colour (hrsTeam) shows as a faint band and the sender's name
-  background: linear-gradient(90deg, rgb(var(--hrs-glass-edge) / 0.12), transparent 40%);
+  // the team's theme (hrsTeam) shows as a faint band and the sender's name
+  background: linear-gradient(90deg, color-mix(in srgb, var(--mat-sys-primary) 12%, transparent), transparent 40%);
 }
 
 .line__time {
@@ -36,16 +35,16 @@
   text-align: end;
 }
 
+// the icon 24px, its frame around it
 .line__icon {
-  width: 24px;
-  height: 24px;
+  font-size: 24px;
 }
 
 .line__sender {
   min-width: 0;
   overflow-wrap: anywhere;
   font-weight: 600;
-  color: color-mix(in srgb, rgb(var(--hrs-glass-edge)) 55%, white);
+  color: var(--mat-sys-primary);
 }
 
 .line__text {

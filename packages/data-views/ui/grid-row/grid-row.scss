@@ -1,0 +1,5 @@
+// The row's type from its height: everything inside is sized in em, so the row height sizes the
+// whole row. Without a scale (the page sets none) the declaration drops and the type is inherited.
+:host {
+  font-size: calc(var(--hrs-grid-row-height) * var(--hrs-grid-row-type-scale));
+}

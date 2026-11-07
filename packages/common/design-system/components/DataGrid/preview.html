@@ -1,0 +1,54 @@
+<!-- @dsCard group="Data" height=560 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>DataGrid — preview</title></head>
+<body>
+<div class="hrs-stage">
+<div class="hrs-col" style="gap:24px;width:760px">
+
+<!-- Dense: a stat table. The page sets: --hrs-grid-row-height: 28px; --hrs-grid-columns -->
+<section class="hrs-panel" style="padding:0">
+<hrs-data-grid role="table" aria-label="PvP combat" aria-rowcount="7" style="--hrs-grid-row-height:28px;--hrs-grid-columns:minmax(10em,2fr) repeat(5,10ch)">
+  <div class="hrs-grid__head" role="rowgroup">
+    <div class="hrs-grid__row" role="row" aria-rowindex="1">
+      <div class="hrs-grid__header" role="columnheader">Player</div>
+      <div class="hrs-grid__header hrs-num" role="columnheader">KDA</div>
+      <div class="hrs-grid__header hrs-num" role="columnheader" aria-sort="descending">Kills</div>
+      <div class="hrs-grid__header hrs-num" role="columnheader">Deaths</div>
+      <div class="hrs-grid__header hrs-num" role="columnheader">Assists</div>
+      <div class="hrs-grid__header hrs-num" role="columnheader">Hero dmg</div>
+    </div>
+  </div>
+  <div class="hrs-grid__body" role="rowgroup">
+    <div class="hrs-grid__row" role="row"><div class="hrs-grid__group" role="rowheader">Blue team · Victory</div></div>
+    <div class="hrs-grid__row" role="row" aria-rowindex="2"><div class="hrs-grid__cell" role="cell">Malthael</div><div class="hrs-grid__cell hrs-num" role="cell">3.83</div><div class="hrs-grid__cell hrs-num" role="cell">8</div><div class="hrs-grid__cell hrs-num" role="cell">5</div><div class="hrs-grid__cell hrs-num" role="cell">15</div><div class="hrs-grid__cell hrs-num" role="cell">68,736</div></div>
+    <div class="hrs-grid__row" role="row" aria-rowindex="3" aria-selected="true"><div class="hrs-grid__cell" role="cell">Sylvanas</div><div class="hrs-grid__cell hrs-num" role="cell">6.75</div><div class="hrs-grid__cell hrs-num" role="cell">6</div><div class="hrs-grid__cell hrs-num" role="cell">3</div><div class="hrs-grid__cell hrs-num" role="cell">21</div><div class="hrs-grid__cell hrs-num" role="cell">74,704</div></div>
+    <div class="hrs-grid__row" role="row" aria-rowindex="4"><div class="hrs-grid__cell" role="cell">Falstad</div><div class="hrs-grid__cell hrs-num" role="cell">4.60</div><div class="hrs-grid__cell hrs-num" role="cell">8</div><div class="hrs-grid__cell hrs-num" role="cell">4</div><div class="hrs-grid__cell hrs-num" role="cell">15</div><div class="hrs-grid__cell hrs-num" role="cell">72,331</div></div>
+    <div class="hrs-grid__row" role="row"><div class="hrs-grid__group" role="rowheader">Red team · Defeat</div></div>
+    <div class="hrs-grid__row" role="row" aria-rowindex="5"><div class="hrs-grid__cell" role="cell">Ragnaros</div><div class="hrs-grid__cell hrs-num" role="cell">3.25</div><div class="hrs-grid__cell hrs-num" role="cell">1</div><div class="hrs-grid__cell hrs-num" role="cell">3</div><div class="hrs-grid__cell hrs-num" role="cell">12</div><div class="hrs-grid__cell hrs-num" role="cell">90,593</div></div>
+    <div class="hrs-grid__row" role="row" aria-rowindex="6"><div class="hrs-grid__cell" role="cell">Valla</div><div class="hrs-grid__cell hrs-num" role="cell">2.00</div><div class="hrs-grid__cell hrs-num" role="cell">1</div><div class="hrs-grid__cell hrs-num" role="cell">6</div><div class="hrs-grid__cell hrs-num" role="cell">13</div><div class="hrs-grid__cell hrs-num" role="cell">42,556</div></div>
+  </div>
+</hrs-data-grid>
+</section>
+
+<!-- Regular, separated rows: the score table. The page sets: --hrs-grid-row-height: 52px; --hrs-grid-row-gap: 6px; --hrs-grid-row-background; --hrs-grid-row-line: none -->
+<hrs-data-grid role="table" aria-label="Score" aria-rowcount="4" style="--hrs-grid-row-height:52px;--hrs-grid-row-gap:6px;--hrs-grid-row-line:none;--hrs-grid-row-background:var(--hrs-film);--hrs-grid-columns:minmax(12em,2fr) repeat(3,8ch)">
+  <div class="hrs-grid__head" role="rowgroup">
+    <div class="hrs-grid__row" role="row" aria-rowindex="1">
+      <div class="hrs-grid__header" role="columnheader">Player</div>
+      <div class="hrs-grid__header hrs-num" role="columnheader" aria-sort="descending">Kills</div>
+      <div class="hrs-grid__header hrs-num" role="columnheader">Assists</div>
+      <div class="hrs-grid__header hrs-num" role="columnheader">Deaths</div>
+    </div>
+  </div>
+  <div class="hrs-grid__body" role="rowgroup">
+    <div class="hrs-grid__row" role="row" aria-rowindex="2"><div class="hrs-grid__cell" role="cell">Malthael · SpeedyRogue</div><div class="hrs-grid__cell hrs-num" role="cell">8</div><div class="hrs-grid__cell hrs-num" role="cell">15</div><div class="hrs-grid__cell hrs-num" role="cell">5</div></div>
+    <div class="hrs-grid__row" role="row" aria-rowindex="3"><div class="hrs-grid__cell" role="cell">Stukov · Facepalm</div><div class="hrs-grid__cell hrs-num" role="cell">2</div><div class="hrs-grid__cell hrs-num" role="cell">21</div><div class="hrs-grid__cell hrs-num" role="cell">4</div></div>
+    <div class="hrs-grid__row" role="row" aria-rowindex="4"><div class="hrs-grid__placeholder" role="cell" aria-busy="true"></div></div>
+  </div>
+</hrs-data-grid>
+
+</div>
+</div>
+</body>
+</html>

@@ -6,7 +6,7 @@ export type StyledTextKind = 'base' | 'bright' | 'glow';
 /**
  * Shows a few words or a number in one of the game's display treatments (the theme's StyledText:
  * `hrs-styled--base|bright|glow` in nexus.css): `<span hrsStyledText="glow">10</span>`. Its
- * colours come from the theme the element is in (`data-theme` on it or an ancestor), its size from
+ * colours come from the theme the element is in (`theme` on it or an ancestor), its size from
  * its font-size. Never for body copy.
  */
 @Directive({

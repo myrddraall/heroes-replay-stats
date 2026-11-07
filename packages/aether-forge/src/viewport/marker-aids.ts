@@ -5,7 +5,7 @@ import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/space';
 import type { MarkerMode } from '../layout/editor-ui.store';
 import type { SceneMarker } from './scene-markers';
 
-/** The colours the markers are drawn in, each channel 0 to 1: the glass's edge, and what is selected. */
+/** The colours the markers are drawn in, each channel 0 to 1: the theme's edge, and what is selected. */
 export interface MarkerColours {
   readonly edge: Vec3;
   readonly selected: Vec3;

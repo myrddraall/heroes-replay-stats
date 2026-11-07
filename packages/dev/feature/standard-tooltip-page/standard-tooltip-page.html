@@ -1,0 +1,22 @@
+<hrs-side-nav-page>
+  <hrs-shell-side-nav sideNav />
+  <hrs-showcase heading="Standard tooltip">
+    <ng-container ngProjectAs="[about]">
+      <code>matTooltip</code> in the game's standard tooltip (the theme draws it in CSS): every tooltip
+      in the app. The first is shown when the page opens; hover the others.
+    </ng-container>
+    <hrs-showcase-row class="tooltips" label="Tooltips">
+      <button mat-stroked-button #shown="matTooltip"
+        #shownButton matTooltip="Hungering Arrow · Level 1" matTooltipPosition="below">
+        Short
+      </button>
+      <button
+        mat-stroked-button
+        matTooltip="This player is currently silenced and can only Chat with friends and party members. This player cannot participate in Storm League games."
+        matTooltipPosition="below"
+      >
+        Long
+      </button>
+    </hrs-showcase-row>
+  </hrs-showcase>
+</hrs-side-nav-page>

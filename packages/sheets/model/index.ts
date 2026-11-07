@@ -3,3 +3,4 @@ export * from './sheet/sheet-meta';
 export * from './sheet/sheet-name';
 export * from './sheet/sheet-pictures';
 export * from './sprite/sprite-picture';
+export * from './frame/frame-layers';

@@ -1,9 +1,13 @@
-import type { HeroDataProvider, HeroDataSet, HeroInfo, MapInfo } from '@myrddraall/hero-data';
+import type { AwardInfo, HeroDataProvider, HeroDataSet, HeroInfo, MapInfo } from '@myrddraall/hero-data';
 
 const sonya = {
   id: 'Barbarian',
   name: 'Sonya',
-  portraits: { minimap: 'storm_ui_minimapicon_heros_femalebarbarian.png', partyFrames: [] },
+  portraits: {
+    minimap: 'storm_ui_minimapicon_heros_femalebarbarian.png',
+    leaderboard: 'storm_ui_ingame_hero_leaderboard_barbarian.png',
+    partyFrames: [],
+  },
 } as unknown as HeroInfo;
 
 const towers = {
@@ -26,13 +30,24 @@ const towers = {
   ],
 } as unknown as MapInfo;
 
-/** For tests: a provider whose latest build knows only Sonya and Towers of Doom. */
+const mainHealer: AwardInfo = {
+  id: 'MostHealing',
+  gameLink: 'EndOfMatchAwardMostHealingBoolean',
+  tag: 'AwHL',
+  name: 'Main Healer',
+  description: 'Highest Healing',
+  mvpScreenIcon: 'storm_ui_mvp_mainhealer_%color%.png',
+  scoreScreenIcon: 'storm_ui_scorescreen_mvp_mainhealer_%team%.png',
+};
+
+/** For tests: a provider whose latest build knows only Sonya, Towers of Doom and Main Healer. */
 export const fakeHeroData: HeroDataProvider = {
   latest: async () =>
     ({
       hero: (idOrName: string) =>
         idOrName === 'Barbarian' || idOrName === 'Sonya' ? sonya : undefined,
       map: (name: string) => (name === 'Towers of Doom' ? towers : undefined),
+      award: (idOrLink: string) => (idOrLink === 'MostHealing' ? mainHealer : undefined),
     }) as unknown as HeroDataSet,
   forBuild: async () => {
     throw new Error('not used');

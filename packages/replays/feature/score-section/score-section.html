@@ -1,7 +1,13 @@
 <hrs-layout>
   @if (store.scoreScreen(); as scoreScreen) {
     @if (scoreScreen.players.length > 0) {
-      <hrs-score-screen [scoreScreen]="scoreScreen" [icons]="store.icons()" />
+      <hrs-score-screen
+        [scoreScreen]="scoreScreen"
+        [icons]="store.icons()"
+        [portraits]="store.portraits()"
+        [awards]="store.awards()"
+        [you]="store.you().slots"
+      />
     } @else {
       <hrs-empty-state icon="scoreboard" title="No score screen">
         The score screen of this replay could not be read.

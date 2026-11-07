@@ -1,13 +1,13 @@
-import {
-  afterRenderEffect,
-  Component,
-  type ElementRef,
-  input,
-  output,
-  viewChildren,
-} from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
-import { allPois, type ElementShown, KIND_STATES, type Poi, type PoiTeam } from '../../model';
+import {
+  EmptyTemplate,
+  GroupHeaderTemplate,
+  ItemFocus,
+  ItemList,
+  ItemTemplate,
+} from '@myrddraall/heroes-replay-stats-data-views/ui';
+import { allPois, type ElementShown, KIND_STATES, type Poi, type PoiGroup, type PoiTeam } from '../../model';
 
 const STATE_ICONS: Record<ElementShown, string> = {
   standing: 'fort',
@@ -23,6 +23,14 @@ const STATE_LABELS: Record<ElementShown, string> = {
   spawned: 'Spawned',
 };
 
+/** A group's header: its team, shown over the team's first group (`top` over the first of all). */
+interface PoiHead {
+  readonly team: PoiTeam;
+  readonly group: PoiGroup;
+  readonly first: boolean;
+  readonly top: boolean;
+}
+
 /**
  * The map's points of interest by team and, within a team, by group (presentational), each a
  * button; the picked one is pressed, and kept in view. The arrow keys pick the next or the
@@ -33,8 +41,7 @@ const STATE_LABELS: Record<ElementShown, string> = {
   selector: 'hrs-poi-list',
   templateUrl: './poi-list.html',
   styleUrl: './poi-list.scss',
-  imports: [MatIcon],
-  host: { '(keydown)': 'key($event)' },
+  imports: [EmptyTemplate, GroupHeaderTemplate, ItemFocus, ItemList, ItemTemplate, MatIcon],
 })
 export class PoiList {
   readonly teams = input.required<readonly PoiTeam[]>();
@@ -46,16 +53,31 @@ export class PoiList {
   /** A point of interest's toggle was pressed: its key (it should step to its next state). */
   readonly stateToggle = output<string>();
 
-  private readonly buttons = viewChildren<ElementRef<HTMLButtonElement>>('poi');
+  protected readonly pois = computed(() => allPois(this.teams()));
+  protected readonly picked = computed(() => this.pois().find((p) => p.key === this.selected()) ?? null);
 
-  constructor() {
-    // The picked one scrolled into view, picked on the map or from here alike.
-    afterRenderEffect(() => {
-      const key = this.selected();
-      const at = this.keys().indexOf(key ?? '');
-      if (at >= 0) this.buttons()[at]?.nativeElement.scrollIntoView({ block: 'nearest' });
-    });
-  }
+  /** Each group's header, by the group's key (`<team>/<group>`). */
+  protected readonly heads = computed(() => {
+    const heads = new Map<string, PoiHead>();
+    this.teams().forEach((team, t) =>
+      team.groups.forEach((group, g) =>
+        heads.set(`${team.id}/${group.id}`, { team, group, first: g === 0, top: t === 0 && g === 0 }),
+      ),
+    );
+    return heads;
+  });
+
+  /** Each point of interest's group key. */
+  private readonly groupKeys = computed(() => {
+    const keys = new Map<string, string>();
+    for (const team of this.teams()) {
+      for (const group of team.groups) for (const poi of group.pois) keys.set(poi.key, `${team.id}/${group.id}`);
+    }
+    return keys;
+  });
+
+  protected readonly byKey = (poi: Poi) => poi.key;
+  protected readonly groupOf = (poi: Poi) => this.groupKeys().get(poi.key) ?? null;
 
   protected stateIcon(state: ElementShown | undefined): string {
     return state ? STATE_ICONS[state] : '';
@@ -67,26 +89,5 @@ export class PoiList {
     const states = KIND_STATES[poi.kind] as readonly ElementShown[];
     const next = states[(states.indexOf(state) + 1) % states.length] ?? state;
     return `${poi.label}: shown as ${STATE_LABELS[state]}, show ${STATE_LABELS[next]}`;
-  }
-
-  private keys(): string[] {
-    return allPois(this.teams()).map((p) => p.key);
-  }
-
-  /** Up and down pick the previous and the next point of interest, and move focus to it. */
-  protected key(e: KeyboardEvent): void {
-    const step = e.key === 'ArrowDown' ? 1 : e.key === 'ArrowUp' ? -1 : 0;
-    const keys = this.keys();
-    if (!step || !keys.length) return;
-    const current = keys.indexOf(this.selected() ?? '');
-    const next =
-      current < 0
-        ? step > 0
-          ? 0
-          : keys.length - 1
-        : Math.min(keys.length - 1, Math.max(0, current + step));
-    e.preventDefault();
-    this.poiSelect.emit(keys[next]);
-    this.buttons()[next]?.nativeElement.focus();
   }
 }

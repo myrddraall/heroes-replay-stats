@@ -21,7 +21,7 @@ body {
   background: var(--hrs-ground);
 }
 :root,
-[data-theme] {
+[theme] {
   /* the films: tint composed with the alpha the user controls */
   --hrs-film: oklch(from var(--hrs-tint) l c h / var(--hrs-surface-alpha));
   --hrs-film-raised: oklch(from var(--hrs-tint-raised) l c h / var(--hrs-surface-alpha-raised));
@@ -181,16 +181,31 @@ a:hover {
   background: var(--hrs-border);
 }
 
+/* Tooltip: the game's (StandardTooltip, Storm_UI_Tooltip_TopBorder) in CSS, its texture being flat
+   colours: the fill at 242/255 over the page blurred (its BlurFrame), a 2px border at 179/255, a faint
+   2px dark edge outside it (26/255, then 8/255), square. Insets 20 and a 480 widest for its 18 high
+   type; its body text TooltipBody, shadowed. Material's tooltip takes the same (below). */
+.hrs-tooltip,
+.mat-mdc-tooltip .mat-mdc-tooltip-surface {
+  max-width: calc(1em * 480 / 18);
+  padding: calc(1em * 20 / 18);
+  background: oklch(from var(--hrs-tooltip-fill) l c h / calc(242 / 255));
+  border: 2px solid oklch(from var(--hrs-tooltip-edge) l c h / calc(179 / 255));
+  border-radius: 0;
+  box-shadow:
+    0 0 0 1px oklch(0% 0 0 / calc(26 / 255)),
+    0 0 0 2px oklch(0% 0 0 / calc(8 / 255));
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  font-family: var(--font-plain);
+  font-size: 14px;
+  line-height: 18px;
+  text-align: left;
+  color: var(--hrs-tooltip-text);
+  text-shadow: 1px 1px 0 oklch(0% 0 0 / 0.8);
+}
 .hrs-tooltip {
   display: inline-block;
-  max-width: 280px;
-  padding: var(--hrs-space-2) var(--hrs-space-3);
-  background: var(--hrs-film-raised);
-  border: var(--hrs-line);
-  box-shadow: var(--hrs-shade);
-  font-size: 13px;
-  line-height: 18px;
-  color: var(--hrs-text-muted);
 }
 .hrs-tooltip b {
   color: var(--hrs-text);
@@ -308,74 +323,74 @@ a:hover {
 /* The TopBar and SubBar are drawn with the game's own navigation textures (core.stormmod ui/layout/common/standardtemplates.stormlayout:
    TopNavContainer, ScreenNavigationButtonTemplate, SubNavContainer, Top_Navigation). Purple shows them exactly as shipped; every other theme
    moves them to its hue with --hrs-tex-filter, and the label colours (fontstyles.stormstyle TaskBarNavigation) rotate by --hrs-hue-delta. */
-[data-theme='purple'],
+[theme='purple'],
 :root {
   --hrs-tex-filter: none;
   --hrs-hue-delta: 0;
   --hrs-chroma-k: 1;
 }
-[data-theme='magenta'] {
+[theme='magenta'] {
   --hrs-tex-filter: hue-rotate(41deg);
   --hrs-hue-delta: 42;
   --hrs-chroma-k: 1;
 }
-[data-theme='cyan'] {
+[theme='cyan'] {
   --hrs-tex-filter: hue-rotate(-66deg);
   --hrs-hue-delta: -56;
   --hrs-chroma-k: 1;
 }
-[data-theme='blue'] {
+[theme='blue'] {
   --hrs-tex-filter: hue-rotate(-20deg);
   --hrs-hue-delta: -20;
   --hrs-chroma-k: 1;
 }
-[data-theme='red'] {
+[theme='red'] {
   --hrs-tex-filter: hue-rotate(88deg);
   --hrs-hue-delta: -268;
   --hrs-chroma-k: 1;
 }
-[data-theme='green'] {
-  --hrs-tex-filter: hue-rotate(-95deg);
-  --hrs-hue-delta: -128;
+[theme='self'] {
+  --hrs-tex-filter: hue-rotate(-111deg);
+  --hrs-hue-delta: -150;
   --hrs-chroma-k: 1;
 }
-[data-theme='poor'] {
+[theme='poor'] {
   --hrs-tex-filter: grayscale(1) brightness(0.8);
   --hrs-nav-l-shift: -10%;
   --hrs-hue-delta: 0;
   --hrs-chroma-k: 0;
 }
-[data-theme='common'] {
+[theme='common'] {
   --hrs-tex-filter: grayscale(1) brightness(1.35);
   --hrs-nav-l-shift: 22%;
   --hrs-hue-delta: 0;
   --hrs-chroma-k: 0;
 }
-[data-theme='uncommon'] {
+[theme='uncommon'] {
   --hrs-tex-filter: hue-rotate(-157deg) saturate(1.3);
   --hrs-hue-delta: -144;
   --hrs-chroma-k: 1.35;
 }
-[data-theme='rare'] {
+[theme='rare'] {
   --hrs-tex-filter: hue-rotate(-53deg) saturate(1.25);
   --hrs-nav-l-shift: -5%;
   --hrs-hue-delta: -37;
   --hrs-chroma-k: 1.15;
 }
-[data-theme='epic'] {
+[theme='epic'] {
   --hrs-tex-filter: hue-rotate(22deg) saturate(1.35);
   --hrs-nav-l-shift: 0%;
   --hrs-hue-delta: 19;
   --hrs-chroma-k: 1.35;
 }
-[data-theme='legendary'] {
+[theme='legendary'] {
   --hrs-tex-filter: hue-rotate(149deg) saturate(1.2);
   --hrs-nav-l-shift: 0%;
   --hrs-hue-delta: -234;
   --hrs-chroma-k: 1.2;
 }
 :root,
-[data-theme] {
+[theme] {
   --hrs-nav-text-top: oklch(
     calc(71.2% + var(--hrs-nav-l-shift, 0%)) calc(0.158 * var(--hrs-chroma-k))
       calc(287 + var(--hrs-hue-delta))
@@ -429,7 +444,6 @@ a:hover {
   inset: 0 0 calc(-1 * var(--_shadow)) 0;
   z-index: 0;
   pointer-events: none;
-  backdrop-filter: var(--hrs-backdrop-raised);
   background:
     var(--hrs-tex-mainnavigation-background) 0 0 / auto 100% repeat-x,
     linear-gradient(
@@ -549,6 +563,10 @@ a:hover {
   padding: 0 var(--hrs-space-4);
   text-decoration: none;
 }
+/* no underline on hover (the base a:hover would win over the class) */
+.hrs-nav1__link:hover {
+  text-decoration: none;
+}
 /* the label: TaskBarNavigation (Uppercase, gradient 9d90ff→8f99fb, glow 010a14); hover c9c2ff→b3baff; selected cbe8ff→ffffff, glow 0063c8 */
 .hrs-nav1__text {
   position: relative;
@@ -597,13 +615,13 @@ a:hover {
     opacity: 0;
   }
 }
-/* UnderlineImage: Storm_UI_MainNavigation_Hover_Underline (268×108), the button's width (label + 60 units a side), placed so its bright row (59 of 108) lies on the background texture's edge row (76 of 82); fades in over 0.2 s */
+/* UnderlineImage: Storm_UI_MainNavigation_Hover_Underline (268×108), the button's width (label + 60 units a side), placed so its bright row (59 of 108) lies on the background texture's edge row (76 of 82), 2px lower to sit on the drawn line; fades in over 0.2 s */
 .hrs-nav1__link::after {
   content: '';
   position: absolute;
   left: calc(16px - var(--hrs-bar-1) * 0.73);
   right: calc(16px - var(--hrs-bar-1) * 0.73);
-  top: 20.8%;
+  top: calc(20.8% + 2px);
   height: 131.7%;
   z-index: 1;
   pointer-events: none;
@@ -616,7 +634,7 @@ a:hover {
 .hrs-nav1__link[aria-current='page']::after {
   opacity: 1;
 }
-/* ShapesContainer: Storm_UI_MainNavigation_Hover_Particle triangles rising from the label (1.8 s), spinning (3 s), alpha 130 at most */
+/* ShapesContainer: Storm_UI_MainNavigation_Hover_Particle triangles rising from the label (1.8 s), spinning (3 s), alpha 130 at most; masked under the line (the underline's bright row: its top 20.8% + 2px + 59/108 of its 131.7%, from the sparks' bottom at 75%) */
 .hrs-nav1__sparks {
   position: absolute;
   left: 50%;
@@ -627,6 +645,9 @@ a:hover {
   z-index: 2;
   pointer-events: none;
   display: none;
+  clip-path: inset(
+    -100vh -100vw calc(var(--hrs-bar-1) * (0.208 + 1.317 * 59 / 108 - 0.75) * -1 - 2px) -100vw
+  );
 }
 .hrs-nav1__link[aria-current='page'] .hrs-nav1__sparks {
   display: block;
@@ -807,7 +828,6 @@ a:hover {
   inset: 0 0 calc(-1 * var(--_shadow)) 0;
   z-index: 0;
   pointer-events: none;
-  backdrop-filter: var(--hrs-backdrop);
   background:
     var(--hrs-tex-mainnavigation-subbackground) 0 0 / auto 100% repeat-x,
     linear-gradient(
@@ -921,6 +941,41 @@ a:hover {
 .hrs-subbar .hrs-tab[aria-selected='true']::after {
   opacity: 1;
 }
+/* a section not open yet: dim, no hover */
+.hrs-subbar .hrs-tab[aria-disabled='true'] {
+  background-image: linear-gradient(var(--hrs-text-dim), var(--hrs-text-dim));
+  filter: none;
+  cursor: default;
+}
+/* On Material's tab links (mat-tab-nav-bar): its label is a positioned child, which the tab's text clip would skip, so it stays in flow; its focus indicator owns the tab's ::before, so the separator is drawn by the content box (in flow too, so it sits on the tab's left edge); the tab is as wide as its label (no gap: Material's ripple and content are its children) */
+.hrs-subbar .mat-mdc-tab-link.hrs-tab {
+  min-width: 0;
+  gap: 0;
+}
+.hrs-subbar .mat-mdc-tab-link .mdc-tab__content,
+.hrs-subbar .mat-mdc-tab-link .mdc-tab__text-label {
+  position: static;
+  z-index: auto;
+}
+.hrs-subbar .mat-mdc-tab-link.hrs-tab::before {
+  width: auto;
+  height: auto;
+  top: 0;
+  transform: none;
+  opacity: 1;
+  background: none;
+}
+.hrs-subbar .mat-mdc-tab-link.hrs-tab + .hrs-tab .mdc-tab__content::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 2px;
+  height: 46%;
+  transform: translateY(-50%);
+  opacity: 0.4;
+  background: var(--hrs-tex-mainnavigation-separator-sub) 0 0 / 100% 100%;
+}
 @media (prefers-reduced-motion: reduce) {
   .hrs-topbar::after,
   .hrs-nav1__link::before {
@@ -1007,7 +1062,6 @@ a:hover {
   align-self: flex-start;
   max-height: calc(100vh - var(--hrs-bar-1) - var(--hrs-bar-2) - var(--hrs-space-8));
   overflow-y: auto;
-  scrollbar-width: thin;
 }
 .hrs-sidenav__group {
   display: flex;
@@ -1411,77 +1465,6 @@ a:hover {
 }
 
 /* ---------- data ---------- */
-.hrs-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-  line-height: 18px;
-}
-.hrs-table th {
-  padding: var(--hrs-space-2) var(--hrs-space-3);
-  text-align: left;
-  font: 700 11px/14px var(--font-brand);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--hrs-text-muted);
-  border-bottom: var(--hrs-line);
-  white-space: nowrap;
-}
-.hrs-table th[aria-sort] {
-  color: var(--hrs-text);
-  cursor: pointer;
-}
-.hrs-table th[aria-sort]::after {
-  content: ' ▾';
-  color: var(--hrs-border-strong);
-}
-.hrs-table th[aria-sort='ascending']::after {
-  content: ' ▴';
-}
-.hrs-table td {
-  padding: var(--hrs-space-2) var(--hrs-space-3);
-  border-bottom: 1px solid oklch(from var(--hrs-border) l c h / 0.35);
-  color: var(--hrs-text-muted);
-}
-.hrs-table td.hrs-num,
-.hrs-table th.hrs-num {
-  text-align: right;
-}
-.hrs-table td:first-child {
-  color: var(--hrs-text);
-}
-.hrs-table tbody tr {
-  border: 1px solid transparent;
-}
-.hrs-table tbody tr:hover td {
-  background: var(--hrs-film-hover);
-}
-.hrs-table tbody tr.is-selected td {
-  background: var(--hrs-selection);
-  color: var(--hrs-text);
-  box-shadow:
-    inset 0 1px var(--hrs-border-strong),
-    inset 0 -1px var(--hrs-border-strong);
-}
-.hrs-table tbody tr.is-selected td:first-child {
-  box-shadow:
-    inset 1px 1px var(--hrs-border-strong),
-    inset 0 -1px var(--hrs-border-strong);
-}
-.hrs-table tbody tr.is-selected td:last-child {
-  box-shadow:
-    inset -1px 1px var(--hrs-border-strong),
-    inset 0 -1px var(--hrs-border-strong);
-}
-.hrs-table td.hrs-team-blue {
-  color: var(--hrs-team-blue);
-}
-.hrs-table td.hrs-team-red {
-  color: var(--hrs-team-red);
-}
-.hrs-table td.hrs-self {
-  color: var(--hrs-self);
-}
 .hrs-team-blue {
   color: var(--hrs-team-blue);
 }
@@ -1609,6 +1592,202 @@ a:hover {
   aspect-ratio: 16 / 10;
 }
 
+/* DataGrid (hrs-data-grid): every table, drawn only where the page's view is; the page sets its look through the custom properties below (defaults in the fallbacks). The header row sticks to the top of the view; a grid wider than its space scrolls sideways in its body, the header following, the first column staying put */
+hrs-data-grid {
+  display: block;
+  max-width: 100%;
+}
+.hrs-grid__head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  overflow: hidden;
+  background: var(--hrs-grid-header-background, transparent);
+}
+.hrs-grid__body {
+  position: relative;
+  overflow-x: auto;
+}
+.hrs-grid__row {
+  display: grid;
+  grid-template-columns: var(--hrs-grid-columns);
+  width: 100%;
+}
+.hrs-grid__body .hrs-grid__row {
+  background: var(--hrs-grid-row-background, transparent);
+}
+/* a row with a theme of its own (a team's) takes its theme's film */
+.hrs-grid__body .hrs-grid__row[theme] {
+  background: var(--hrs-grid-themed-row-background, var(--hrs-film));
+}
+.hrs-grid__header,
+.hrs-grid__cell {
+  display: flex;
+  align-items: center;
+  gap: var(--hrs-space-2);
+  min-width: 0;
+  white-space: nowrap;
+  padding: var(--hrs-grid-cell-padding, 0 var(--hrs-space-3));
+}
+.hrs-grid__header {
+  min-height: var(--hrs-grid-header-height, 32px);
+  white-space: var(--hrs-grid-header-wrap, nowrap);
+  font: var(--hrs-grid-header-font, 700 11px/14px var(--font-brand));
+  letter-spacing: var(--hrs-grid-header-tracking, 0.08em);
+  text-transform: var(--hrs-grid-header-case, uppercase);
+  color: var(--hrs-grid-header-text, var(--hrs-text-muted));
+  background: var(--hrs-grid-header-cell-background, transparent);
+  border-bottom: var(--hrs-grid-header-line, var(--hrs-line));
+}
+.hrs-grid__header:is([aria-sort='ascending'], [aria-sort='descending']) {
+  color: var(--hrs-text);
+}
+.hrs-grid__cell {
+  min-height: var(--hrs-grid-row-height, 40px);
+  white-space: var(--hrs-grid-cell-wrap, nowrap);
+  font: var(--hrs-grid-font, 400 13px/18px var(--font-plain));
+  color: var(--hrs-grid-text, var(--hrs-text-muted));
+  border-bottom: var(--hrs-grid-row-line, 1px solid oklch(from var(--hrs-border) l c h / 0.35));
+}
+.hrs-grid__cell:first-child {
+  color: var(--hrs-grid-first-text, var(--hrs-text));
+}
+.hrs-grid__header.hrs-num,
+.hrs-grid__cell.hrs-num {
+  justify-content: flex-end;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+/* a player's name in their colour */
+.hrs-grid__cell.hrs-team-blue {
+  color: var(--hrs-team-blue);
+}
+.hrs-grid__cell.hrs-team-red {
+  color: var(--hrs-team-red);
+}
+.hrs-grid__cell.hrs-self {
+  color: var(--hrs-self);
+}
+/* static markup (the previews): rows straight in the body, apart by the gap; a sorted header's arrow where Material's sort header doesn't draw one */
+.hrs-grid__body > .hrs-grid__row + .hrs-grid__row {
+  margin-top: var(--hrs-grid-row-gap, 0);
+}
+.hrs-grid__header[aria-sort='descending']:not(.mat-sort-header)::after {
+  content: '▾';
+  color: var(--hrs-border-strong);
+}
+.hrs-grid__header[aria-sort='ascending']:not(.mat-sort-header)::after {
+  content: '▴';
+  color: var(--hrs-border-strong);
+}
+.hrs-grid__body .hrs-grid__row:hover {
+  background: var(--hrs-grid-row-hover, var(--hrs-film-hover));
+}
+.hrs-grid__body .hrs-grid__row[aria-selected='true'] {
+  background: var(--hrs-grid-row-selected, var(--hrs-selection));
+  box-shadow: inset 0 0 0 1px var(--hrs-border-strong);
+}
+.hrs-grid__group {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  height: var(--hrs-grid-header-height, 32px);
+  padding: var(--hrs-grid-cell-padding, 0 var(--hrs-space-3));
+  font: 700 11px/14px var(--font-brand);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--hrs-text);
+}
+/* scrolled sideways: the first column over the cells passing under it */
+hrs-data-grid.is-scrolled :is(.hrs-grid__header, .hrs-grid__cell):first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--hrs-grid-sticky-background, var(--hrs-film-raised));
+  box-shadow: 1px 0 var(--hrs-border);
+}
+
+/* ItemList (hrs-item-list): every list of cards or rows, drawn only where the page's view is; the page sets its look through the custom properties below. Columns: as many as --hrs-list-item-min-width allows (the component sets --hrs-list-columns) */
+hrs-item-list {
+  display: block;
+}
+.hrs-items__row {
+  display: grid;
+  grid-template-columns: repeat(var(--hrs-list-columns, 1), minmax(0, 1fr));
+  gap: var(--hrs-list-gap, var(--hrs-space-3));
+}
+.hrs-items__row + .hrs-items__row {
+  margin-top: var(--hrs-list-gap, var(--hrs-space-3));
+}
+.hrs-items__item {
+  min-width: 0;
+}
+.hrs-items__item:focus-visible {
+  outline: 2px solid var(--hrs-focus, var(--hrs-accent));
+  outline-offset: 2px;
+}
+.hrs-items__group {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin-bottom: var(--hrs-list-gap, var(--hrs-space-3));
+  padding: var(--hrs-list-group-padding, 0 var(--hrs-space-1));
+  color: var(--hrs-list-group-text, var(--hrs-text-muted));
+  background: var(--hrs-list-group-background, oklch(from var(--hrs-film-raised) l c h / 1));
+}
+/* the group name as the list draws it without the page's own header template */
+.hrs-items__group-label {
+  display: flex;
+  align-items: center;
+  gap: var(--hrs-space-3);
+  min-height: 32px;
+  font: var(--hrs-list-group-font, 700 11px/14px var(--font-brand));
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.hrs-items__group-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, oklch(from var(--hrs-border) l c h / 0.6), transparent);
+}
+
+/* a row or item not loaded yet (both): a film with a slow light crossing it */
+.hrs-grid__placeholder,
+.hrs-items__placeholder {
+  background: linear-gradient(
+      90deg,
+      var(--hrs-film) 30%,
+      var(--hrs-film-hover) 50%,
+      var(--hrs-film) 70%
+    )
+    0 0 / 300% 100%;
+  border: var(--hrs-line);
+  animation: hrs-placeholder 1.6s linear infinite;
+}
+.hrs-grid__placeholder {
+  grid-column: 1 / -1;
+  height: var(--hrs-grid-row-height, 40px);
+  border-width: 0 0 1px;
+}
+.hrs-items__placeholder {
+  height: var(--hrs-list-placeholder-height, 120px);
+}
+@keyframes hrs-placeholder {
+  from {
+    background-position-x: 100%;
+  }
+  to {
+    background-position-x: 0%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hrs-grid__placeholder,
+  .hrs-items__placeholder {
+    animation: none;
+  }
+}
+
 .hrs-product {
   width: 150px;
   background: var(--hrs-film);
@@ -1688,22 +1867,66 @@ a:hover {
   );
 }
 
+/* Scrollbar: the game's Storm_ScrollBar_Background (16×28: 3 clear, a 2px border rgb(66 49 130), a dark fill rgb(26 16 55) 6 wide; its clear ends and outer side dropped, so the track runs the scrolling area's full length flush against its edge, the 3 clear only on the content side) holding Storm_ScrollBar_Button (16×33: a 6-wide bar rgb(139 166 255) at 70%, 5 clear on every side; hover 85%, pressed rgb(218 212 250)), built from the textures' own pixels; purple is the game's colours, other themes rotate them to their hue. Every scrolling area takes it, Material's included (drawers, the page, select and menu panels, dialogs); .hrs-scroll only adds the scrolling. The standard scrollbar-width and scrollbar-color are left unset where these parts work: Chrome ignores the parts once either is set */
+:root,
+[theme] {
+  --hrs-scroll-line: oklch(
+    from rgb(66 49 130) l calc(c * var(--hrs-chroma-k)) calc(h + var(--hrs-hue-delta))
+  );
+  --hrs-scroll-fill: oklch(
+    from rgb(26 16 55) l calc(c * var(--hrs-chroma-k)) calc(h + var(--hrs-hue-delta))
+  );
+  --hrs-scroll-thumb: oklch(
+    from rgb(139 166 255) l calc(c * var(--hrs-chroma-k)) calc(h + var(--hrs-hue-delta))
+  );
+  --hrs-scroll-thumb-down: oklch(
+    from rgb(218 212 250) l calc(c * var(--hrs-chroma-k)) calc(h + var(--hrs-hue-delta))
+  );
+}
 .hrs-scroll {
   overflow: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--hrs-border-strong) oklch(from var(--hrs-tint) l c h / 0.6);
 }
-.hrs-scroll::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+::-webkit-scrollbar {
+  width: 13px;
+  height: 13px;
+  background: transparent;
 }
-.hrs-scroll::-webkit-scrollbar-track {
-  background: oklch(from var(--hrs-tint) l c h / 0.6);
-  border-left: var(--hrs-line);
+::-webkit-scrollbar-track {
+  border: solid transparent;
+  border-width: 0 0 0 3px;
+  background: var(--hrs-scroll-fill) padding-box;
+  box-shadow: inset 0 0 0 2px var(--hrs-scroll-line);
 }
-.hrs-scroll::-webkit-scrollbar-thumb {
-  background: var(--hrs-border-strong);
-  border: 1px solid var(--hrs-tint);
+::-webkit-scrollbar-track:horizontal {
+  border-width: 3px 0 0;
+}
+::-webkit-scrollbar-thumb {
+  border: solid transparent;
+  border-width: 5px 2px 5px 5px;
+  border-radius: 0;
+  background: oklch(from var(--hrs-scroll-thumb) l c h / 0.7) padding-box;
+}
+::-webkit-scrollbar-thumb:horizontal {
+  border-width: 5px 5px 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: oklch(from var(--hrs-scroll-thumb) l c h / 0.85);
+}
+::-webkit-scrollbar-thumb:active {
+  background-color: var(--hrs-scroll-thumb-down);
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+/* no arrow buttons: styling them at all makes Chrome draw them, an empty 16px box at each end */
+::-webkit-scrollbar-button {
+  display: none;
+}
+@supports not selector(::-webkit-scrollbar) {
+  :root,
+  [theme] {
+    scrollbar-color: oklch(from var(--hrs-scroll-thumb) l c h / 0.7) var(--hrs-scroll-fill);
+  }
 }
 
 /* ---------- inputs ---------- */
@@ -2005,8 +2228,8 @@ a:hover {
 }
 
 /* ---------- rarity themes: the same roles as the five base themes (tokens.json), generated from one role table;
-   they live here only because the tokens page holds at most 8 themes. data-theme="poor|common|uncommon|rare|epic|legendary". ---------- */
-[data-theme='poor'] {
+   they live here only because the tokens page holds at most 8 themes. theme="poor|common|uncommon|rare|epic|legendary". ---------- */
+[theme='poor'] {
   --hrs-ground: oklch(16% 0 286);
   --hrs-tint: oklch(19.5% 0 286);
   --hrs-tint-raised: oklch(24% 0 286);
@@ -2024,7 +2247,7 @@ a:hover {
   --hrs-glow-modal: 0 0 40px oklch(52% 0 286 / 0.45), 0 0 120px oklch(52% 0 286 / 0.2);
   --hrs-glow-k: 0.25;
 }
-[data-theme='common'] {
+[theme='common'] {
   --hrs-ground: oklch(16% 0 286);
   --hrs-tint: oklch(19.5% 0 286);
   --hrs-tint-raised: oklch(24% 0 286);
@@ -2042,7 +2265,7 @@ a:hover {
   --hrs-glow-modal: 0 0 40px oklch(92% 0 286 / 0.45), 0 0 120px oklch(92% 0 286 / 0.2);
   --hrs-glow-k: 0.6;
 }
-[data-theme='uncommon'] {
+[theme='uncommon'] {
   --hrs-ground: oklch(16% 0.045 142);
   --hrs-tint: oklch(19.5% 0.06 142);
   --hrs-tint-raised: oklch(24% 0.075 142);
@@ -2060,7 +2283,7 @@ a:hover {
   --hrs-glow-modal: 0 0 40px oklch(68% 0.21 142 / 0.45), 0 0 120px oklch(68% 0.21 142 / 0.2);
   --hrs-glow-k: 0.7;
 }
-[data-theme='rare'] {
+[theme='rare'] {
   --hrs-ground: oklch(16% 0.045 250);
   --hrs-tint: oklch(19.5% 0.06 250);
   --hrs-tint-raised: oklch(24% 0.075 250);
@@ -2078,7 +2301,7 @@ a:hover {
   --hrs-glow-modal: 0 0 40px oklch(64% 0.18 250 / 0.45), 0 0 120px oklch(64% 0.18 250 / 0.2);
   --hrs-glow-k: 0.85;
 }
-[data-theme='epic'] {
+[theme='epic'] {
   --hrs-ground: oklch(16% 0.045 306);
   --hrs-tint: oklch(19.5% 0.06 306);
   --hrs-tint-raised: oklch(24% 0.075 306);
@@ -2096,7 +2319,7 @@ a:hover {
   --hrs-glow-modal: 0 0 40px oklch(64% 0.24 306 / 0.45), 0 0 120px oklch(64% 0.24 306 / 0.2);
   --hrs-glow-k: 1;
 }
-[data-theme='legendary'] {
+[theme='legendary'] {
   --hrs-ground: oklch(16% 0.045 53);
   --hrs-tint: oklch(19.5% 0.06 53);
   --hrs-tint-raised: oklch(24% 0.075 53);
@@ -2114,78 +2337,26 @@ a:hover {
   --hrs-glow-modal: 0 0 40px oklch(68% 0.17 53 / 0.45), 0 0 120px oklch(68% 0.17 53 / 0.2);
   --hrs-glow-k: 1.15;
 }
-
-/* ---------- Angular Material mapping (M3 system tokens realised from HRS tokens) ---------- */
-:root,
-[data-theme] {
-  --mat-sys-background: var(--hrs-ground);
-  --mat-sys-surface: var(--hrs-film);
-  --mat-sys-surface-container-lowest: var(--hrs-film);
-  --mat-sys-surface-container-low: var(--hrs-film);
-  --mat-sys-surface-container: var(--hrs-film-raised);
-  --mat-sys-surface-container-high: var(--hrs-film-raised);
-  --mat-sys-surface-container-highest: var(--hrs-selection);
-  --mat-sys-on-surface: var(--hrs-text);
-  --mat-sys-on-surface-variant: var(--hrs-text-muted);
-  --mat-sys-outline: var(--hrs-border);
-  --mat-sys-outline-variant: var(--hrs-border);
-  --mat-sys-primary: var(--hrs-accent);
-  --mat-sys-on-primary: var(--hrs-on-accent);
-  --mat-sys-primary-container: var(--hrs-selection);
-  --mat-sys-on-primary-container: var(--hrs-text);
-  --mat-sys-secondary: var(--hrs-border-strong);
-  --mat-sys-tertiary: var(--hrs-gold);
-  --mat-sys-error: var(--hrs-error);
-  --mat-sys-corner-none: var(--hrs-radius-0);
-  --mat-sys-corner-extra-small: var(--hrs-radius-1);
-  --mat-sys-corner-small: var(--hrs-radius-0);
-  --mat-sys-corner-medium: var(--hrs-radius-0);
-  --mat-sys-corner-large: var(--hrs-radius-0);
-  --mat-sys-corner-extra-large: var(--hrs-radius-0);
-  --mat-sys-corner-full: var(--hrs-radius-1);
-  --mat-sys-body-large-font: var(--font-plain);
-  --mat-sys-label-large-font: var(--font-brand);
-  --mat-sys-title-medium-font: var(--font-brand);
-  --mat-sys-level1: var(--hrs-shade);
-  --mat-sys-level2: var(--hrs-shade);
-  --mat-sys-level3: var(--hrs-shade);
-  --mat-menu-container-color: var(--hrs-film-raised);
-  --mat-select-panel-background-color: var(--hrs-film-raised);
-  --mat-autocomplete-background-color: var(--hrs-film-raised);
-  --mat-dialog-container-color: var(--hrs-film-modal);
-  --mat-sidenav-container-background-color: var(--hrs-film-raised);
-  --mat-sidenav-container-shape: var(--hrs-radius-0);
-  --mat-tooltip-container-color: var(--hrs-film-raised);
-  --mat-tooltip-supporting-text-color: var(--hrs-text-muted);
-  --mat-tab-active-indicator-color: var(--hrs-accent);
-  --mat-tab-active-indicator-height: 2px;
-  --mat-tab-divider-color: var(--hrs-border);
-  --mat-form-field-outlined-outline-color: var(--hrs-border);
-  --mat-form-field-outlined-focus-outline-color: var(--hrs-border-strong);
-  --mat-form-field-outlined-container-shape: var(--hrs-radius-0);
-  --mat-button-outlined-outline-color: var(--hrs-border);
-  --mat-button-outlined-container-shape: var(--hrs-radius-0);
-  --mat-button-filled-container-shape: var(--hrs-radius-0);
-  --mat-slider-active-track-color: var(--hrs-accent);
-  --mat-slider-inactive-track-color: var(--hrs-border);
-  --mat-slider-handle-color: var(--hrs-text);
-  --mat-checkbox-selected-icon-color: var(--hrs-accent);
-  --mat-checkbox-selected-checkmark-color: var(--hrs-on-accent);
-  --mat-checkbox-unselected-icon-color: var(--hrs-border);
-  --mat-slide-toggle-selected-track-color: var(--hrs-selection);
-  --mat-slide-toggle-selected-handle-color: var(--hrs-accent);
-  --mat-slide-toggle-track-shape: var(--hrs-radius-0);
-  --mat-slide-toggle-handle-shape: var(--hrs-radius-0);
-  --mat-progress-bar-active-indicator-color: var(--hrs-accent);
-  --mat-progress-bar-track-color: var(--hrs-border);
-  --mat-table-header-headline-color: var(--hrs-text-muted);
-  --mat-table-row-item-outline-color: var(--hrs-border);
-  --mat-table-background-color: transparent;
-  --mat-chip-outline-color: var(--hrs-border);
-  --mat-chip-container-shape-radius: var(--hrs-radius-1);
-  --mat-list-active-indicator-shape: var(--hrs-radius-0);
-  --mat-button-toggle-shape: var(--hrs-radius-0);
-  --mat-button-toggle-selected-state-background-color: var(--hrs-selection);
+/* IconButton's hairline, which Material's icon button has no token for: the ring; strong with the hover glow */
+.mat-mdc-icon-button {
+  box-shadow: inset 0 0 0 1px var(--hrs-border);
+}
+.mat-mdc-icon-button:hover {
+  box-shadow:
+    inset 0 0 0 1px var(--hrs-border-strong),
+    var(--hrs-glow-hover);
+}
+/* a mat-icon glyph takes the icon size as Material's images and svgs do (the button's font-size is the icon-size token); the icon font's class would hold it at 24px */
+.mat-mdc-icon-button .mat-icon {
+  width: 1em;
+  height: 1em;
+  font-size: inherit;
+  line-height: 1;
+}
+/* a Drawer header's Close is the small IconButton: its icon 0.78 of the header's 14px type, its frame 2.25 times the icon */
+.hrs-drawer__header .mat-mdc-icon-button {
+  --mat-icon-button-icon-size: calc(14px * 0.78);
+  --mat-icon-button-state-layer-size: calc(14px * 0.78 * 2.25);
 }
 
 /* ---------- handset form: a class the shell sets from its breakpoint signal (never a viewport media query, so previews and embedded frames show the real layout) ----------
@@ -2255,7 +2426,6 @@ a:hover {
   inset: 0 0 calc(-1 * var(--_shadow)) 0;
   z-index: -1;
   pointer-events: none;
-  backdrop-filter: var(--hrs-backdrop);
   background:
     var(--hrs-tex-mainnavigation-subbackground) 0 0 / auto 100% repeat-x,
     linear-gradient(
@@ -2299,14 +2469,16 @@ a:hover {
   filter: drop-shadow(0 0 2px var(--hrs-nav-sel-glow));
 }
 
-/* ---------- NavTree: every navigation level as one tree (the handset nav Drawer; also usable as a desktop side panel) ---------- */
+/* ---------- NavTree: every navigation level as one tree (the handset nav Drawer; also usable as a desktop side panel).
+   Nested lists (ul > li) or mat-tree's nested nodes with role="group" children; the node's aria-expanded opens its group. ---------- */
 .hrs-tree,
-.hrs-tree ul {
+.hrs-tree :is(ul, [role='group']) {
+  display: block;
   margin: 0;
   padding: 0;
   list-style: none;
 }
-.hrs-tree ul {
+.hrs-tree :is(ul, [role='group']) {
   margin: 0 0 var(--hrs-space-1) var(--hrs-space-5);
   padding-left: var(--hrs-space-2);
   border-left: 1px solid oklch(from var(--hrs-border) l c h / 0.6);
@@ -2336,17 +2508,17 @@ a:hover {
   -webkit-background-clip: text;
   background-clip: text;
 }
-.hrs-tree > li > .hrs-tree__item .hrs-tree__label {
+.hrs-tree > * > .hrs-tree__item .hrs-tree__label {
   font: 700 18px/22px var(--font-brand);
   text-transform: uppercase;
 }
-.hrs-tree ul .hrs-tree__item {
+.hrs-tree :is(ul, [role='group']) .hrs-tree__item {
   min-height: 34px;
 }
-.hrs-tree ul .hrs-tree__label {
+.hrs-tree :is(ul, [role='group']) .hrs-tree__label {
   font: 700 15px/20px var(--font-brand);
 }
-.hrs-tree ul ul .hrs-tree__label {
+.hrs-tree :is(ul, [role='group']) :is(ul, [role='group']) .hrs-tree__label {
   font: 600 14px/18px var(--font-brand);
 }
 .hrs-tree__item:hover .hrs-tree__label {
@@ -2381,7 +2553,7 @@ a:hover {
     oklch(from var(--hrs-selection) l c h / 0.25)
   );
 }
-.hrs-tree > li > .hrs-tree__item[aria-current='page']::after {
+.hrs-tree > * > .hrs-tree__item[aria-current='page']::after {
   left: 0;
 }
 .hrs-tree__item[aria-current='page']::before {
@@ -2398,12 +2570,20 @@ a:hover {
   mix-blend-mode: plus-lighter;
   filter: var(--hrs-tex-filter);
 }
-.hrs-tree > li > .hrs-tree__item[aria-current='page']::before {
+.hrs-tree > * > .hrs-tree__item[aria-current='page']::before {
   left: -11px;
 }
 /* a branch that holds the current page: lit label, open */
 .hrs-tree__item.is-trail .hrs-tree__label {
   background-image: linear-gradient(180deg, var(--hrs-nav-hover-top), var(--hrs-nav-hover-bot));
+}
+/* a page not open yet: dim, no hover */
+.hrs-tree__item[aria-disabled='true'] {
+  cursor: default;
+  background: none;
+}
+.hrs-tree__item[aria-disabled='true'] .hrs-tree__label {
+  background-image: linear-gradient(var(--hrs-text-dim), var(--hrs-text-dim));
 }
 .hrs-tree__chev {
   flex: none;
@@ -2413,17 +2593,22 @@ a:hover {
   color: var(--hrs-nav-text-bot);
   transition: rotate 0.15s;
 }
-.hrs-tree__item[aria-expanded='true'] .hrs-tree__chev {
+.hrs-tree__item[aria-expanded='true'] .hrs-tree__chev,
+[aria-expanded='true'] > .hrs-tree__item .hrs-tree__chev {
   rotate: 90deg;
 }
-.hrs-tree__item[aria-expanded='false'] + ul {
+.hrs-tree__item[aria-expanded='false'] + ul,
+[aria-expanded='false'] > [role='group'] {
   display: none;
 }
 .hrs-tree .hrs-badge {
   flex: none;
 }
 /* the break before another family of top-level items (the game's, then the utilities): a hairline with room round it, as the top bar's separator */
-.hrs-tree > li.hrs-tree__family {
+.hrs-tree [role='treeitem'] {
+  display: block;
+}
+.hrs-tree > .hrs-tree__family {
   margin-top: var(--hrs-space-2);
   padding-top: var(--hrs-space-2);
   border-top: var(--hrs-line);
@@ -2444,4 +2629,13 @@ a:hover {
 }
 .hrs-drawer--nav .hrs-drawer__body {
   padding: var(--hrs-space-2) 0;
+}
+
+/* The bars' backdrop blur sits on each bar's own box, never on its texture layer: that layer reaches below the bar for the drop shadow, and a blur there smears whatever is at the bar's edge (the scene, a bright planet) into those rows, a line of light under the bar */
+.hrs-topbar {
+  backdrop-filter: var(--hrs-backdrop-raised);
+}
+.hrs-subbar,
+.hrs-crumbs {
+  backdrop-filter: var(--hrs-backdrop);
 }

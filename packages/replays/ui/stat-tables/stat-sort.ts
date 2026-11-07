@@ -1,16 +1,8 @@
+import type { GridSort } from '@myrddraall/heroes-replay-stats-data-views/model';
 import type { StatColumn, StatRow } from '../../model';
 
-/** A stat table's order: by one column, highest or lowest first. */
-export interface StatSort {
-  readonly column: string;
-  readonly direction: 'asc' | 'desc';
-}
-
-/** The order after a column's header is pressed: highest first, then lowest first, then unsorted. */
-export function nextStatSort(current: StatSort | null, column: string): StatSort | null {
-  if (current?.column !== column) return { column, direction: 'desc' };
-  return current.direction === 'desc' ? { column, direction: 'asc' } : null;
-}
+/** A stat table's order: by one column, highest or lowest first (the data grid's order). */
+export type StatSort = GridSort;
 
 /** The rows in `sort`'s order, rows without a value last; in their own order when unsorted. */
 export function sortStatRows<T>(
@@ -34,6 +26,22 @@ export function statBestFirst(column: Pick<StatColumn, 'id' | 'better'>): StatSo
 }
 
 /**
+ * The sort after a press on `column`, as a table's header cycles: best first on a new column, then
+ * worst first, then unsorted.
+ */
+export function nextStatSort(
+  current: StatSort | null,
+  column: Pick<StatColumn, 'id' | 'better'>,
+): StatSort | null {
+  const best = statBestFirst(column);
+  if (current?.column !== column.id) return best;
+  if (current.direction === best.direction) {
+    return { column: column.id, direction: best.direction === 'asc' ? 'desc' : 'asc' };
+  }
+  return null;
+}
+
+/**
  * Each row's place in a ranking by `column`, for rows already in that order: rows with the same
  * value share a place and the next one skips ahead (1, 1, 3).
  */
@@ -45,13 +53,4 @@ export function statRanks<T>(rows: readonly StatRow<T>[], column: string): reado
     ranks.push(shared ? ranks[i - 1] : i + 1);
   });
   return ranks;
-}
-
-/** A column header's `aria-sort`: how the table is sorted by it, null when it is not. */
-export function statAriaSort(
-  sort: StatSort | null,
-  column: string,
-): 'ascending' | 'descending' | null {
-  if (sort?.column !== column) return null;
-  return sort.direction === 'asc' ? 'ascending' : 'descending';
 }
