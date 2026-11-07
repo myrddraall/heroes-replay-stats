@@ -1,0 +1,28 @@
+:host {
+  // the frame built around the icon: the ring's inner edge (11 to 53 of its 64, so 42 across) on
+  // the icon's circle (3 to 29 of its 32, so 26/32em across), the ring 26/21em, 5/42em out each side
+  --hrs-frame-inset: calc(1em * 5 / 42);
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+}
+
+// The ring: the theme's glow colour in the ring's shape, with the ring's own light over it in
+// luminosity (the texture's light and dark, the theme's hue), in a group of its own so it blends
+// with nothing behind the frame.
+.ring {
+  isolation: isolate;
+}
+
+.ring__colour {
+  position: absolute;
+  inset: 0;
+  background: var(--hrs-glow);
+}
+
+.ring__light {
+  position: absolute;
+  inset: 0;
+  filter: grayscale(1);
+  mix-blend-mode: luminosity;
+}

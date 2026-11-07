@@ -1,3 +1,16 @@
+// The Tests section's side nav (level 3) in a column at the left; the page beside it lays itself
+// out, as a match's sections do.
+.tests {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.tests__page {
+  flex: 1;
+  min-width: 0;
+}
+
 .check {
   display: flex;
   flex-direction: column;

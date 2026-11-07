@@ -3,6 +3,7 @@
     [columns]="columns()"
     [table]="cards()"
     [rankBy]="rankBy()"
+    [rankOrder]="rankOrder()"
     [rowHead]="rowHead()"
     (rankRequested)="rankByColumn($event)"
   />
@@ -19,12 +20,7 @@
     <hrs-column name="head" [header]="rowHeadLabel()" width="max-content">
       <ng-template hrsHeader><span class="score-table__hidden">{{ rowHeadLabel() }}</span></ng-template>
       <ng-template hrsCell let-line>
-        <!-- the row's bar (the game's PlayerBG texture's): 4px, its left corners cut, the row's height -->
-        <svg class="score-table__bar" aria-hidden="true" focusable="false">
-          <polygon points="4,0 4,4 0,4" />
-          <rect class="score-table__bar-middle" x="0" y="4" width="4" />
-          <svg y="100%" overflow="visible"><polygon points="0,-4 4,-4 4,0" /></svg>
-        </svg>
+        <ui-score-row-bar />
         @if (rowHead(); as head) {
           <ng-container
             [ngTemplateOutlet]="head.template"

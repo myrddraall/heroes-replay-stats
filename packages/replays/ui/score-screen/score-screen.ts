@@ -27,19 +27,43 @@ export interface ShownAward {
   readonly picture: SpritePicture | null;
 }
 
+/** A silence penalty as a row head shows it: the game's icon, its words and the game's tooltip. */
+export interface SilenceIcon {
+  /** The picture in heroes-assets' score-screen sheet. */
+  readonly picture: string;
+  readonly label: string;
+  /** The game's own tooltip for it (UI/BattleUser/… in its strings). */
+  readonly tooltip: string;
+}
+
 /**
- * The game's silence penalty icon for a player (the score screen's SilencedIcon: chat, voice or
- * both), from heroes-assets' score-screen sheet, and what it says; null when neither.
+ * The game's silence penalty icon for a player (its SilencedIconTemplate: chat, voice or both),
+ * what it says and the game's tooltip for it; null when neither.
  */
-export function silenceIcon(
-  chat: boolean,
-  voice: boolean,
-): { readonly picture: string; readonly label: string } | null {
+export function silenceIcon(chat: boolean, voice: boolean): SilenceIcon | null {
   if (chat && voice) {
-    return { picture: 'score-screen#chat-and-voice-silenced', label: 'Chat and voice silenced' };
+    return {
+      picture: 'score-screen#chat-and-voice-silenced',
+      label: 'Chat and voice silenced',
+      tooltip:
+        'This player is currently silenced. They can only Chat with friends and party members, and can only speak in party Voice. This player cannot participate in Storm League games.',
+    };
   }
-  if (chat) return { picture: 'score-screen#chat-silenced', label: 'Chat silenced' };
-  if (voice) return { picture: 'score-screen#voice-silenced', label: 'Voice silenced' };
+  if (chat) {
+    return {
+      picture: 'score-screen#chat-silenced',
+      label: 'Chat silenced',
+      tooltip:
+        'This player is currently silenced and can only Chat with friends and party members. This player cannot participate in Storm League games.',
+    };
+  }
+  if (voice) {
+    return {
+      picture: 'score-screen#voice-silenced',
+      label: 'Voice silenced',
+      tooltip: 'This player is currently silenced and can only speak in party Voice.',
+    };
+  }
   return null;
 }
 

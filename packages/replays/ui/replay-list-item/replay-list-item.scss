@@ -95,96 +95,6 @@
   display: grid;
   gap: 8px;
 }
-.team {
-  position: relative;
-  isolation: isolate;
-  display: grid;
-  grid-template-columns: 6.5rem minmax(0, 1fr);
-  align-items: center;
-  gap: 8px 12px;
-  // the 1px of the bar's border on top, bottom and left
-  padding: 9px 12px 9px 13px;
-  // a bar in the team's theme (hrsTeam): its fill and border opaque at the left, fading out to
-  // nothing at the right; drawn behind the row so the players stay solid
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    background: oklch(from var(--mat-sys-surface-container-low) l c h / 1);
-    border: 1px solid var(--mat-sys-outline-variant);
-    border-right: 0;
-    mask-image: linear-gradient(to right, black, transparent);
-  }
-}
-// Victory glowing in the legendary theme (hrsStyledText glow); Defeat in the team's colour (base)
-.team__result {
-  font-size: 15px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  // capitals have no descenders, so they sit above the line's middle: brought down onto it
-  translate: 0 0.12em;
-}
-// the replay ends before the game did: no winner, so neither side glows
-.team__no-result {
-  color: var(--mat-sys-on-surface-variant);
-  font-weight: 600;
-}
-// a side nobody played on
-.team__empty {
-  margin: 0;
-  color: var(--mat-sys-on-surface-variant);
-  font: var(--mat-sys-body-medium);
-}
-.team__players {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 16px;
-}
-.player {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  column-gap: 8px;
-  min-width: 0;
-}
-.player__icon {
-  grid-row: span 2;
-}
-.player__hero {
-  font: var(--mat-sys-body-medium);
-  color: var(--mat-sys-on-surface);
-}
-.player__name {
-  font: var(--mat-sys-body-small);
-  color: var(--mat-sys-on-surface-variant);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 12ch;
-}
-// you, in your own colour (hrs-self) wherever you appear
-.player.hrs-self {
-  .player__hero,
-  .player__name {
-    color: inherit;
-  }
-  .player__hero {
-    font-weight: 600;
-  }
-}
-// "(you)" for screen readers: the colour says it on screen
-.player__you {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
 @media (max-width: 600px) {
   .replay {
     padding: 12px 14px;
@@ -193,8 +103,5 @@
     justify-items: start;
     margin-left: 0;
     width: 100%;
-  }
-  .team {
-    grid-template-columns: minmax(0, 1fr);
   }
 }

@@ -1,7 +1,7 @@
 import type { StatColumn, StatRow, StatRowTheme } from '../../model';
 import type { Team } from '@myrddraall/heroprotocol-db';
 import type { HeroIcon } from '@myrddraall/heroes-replay-stats-heroes/model';
-import { teamColor, type TeamColorMode } from '../../model';
+import { playerTheme, teamColor, type TeamColorMode } from '../../model';
 
 /** Who a player is, as a stats table's row identifies them. */
 export interface PlayerIdentity {
@@ -48,8 +48,7 @@ export function playerRows<P extends PlayerIdentity>(
   return players
     .map((player) => {
       const c = color(player.team);
-      const theme: StatRowTheme | null =
-        c === null ? null : you.has(player.slot) ? (c === 'red' ? 'red-self' : 'blue-self') : c;
+      const theme: StatRowTheme | null = c === null ? null : playerTheme(c, you.has(player.slot));
       return {
         row: {
           key: player.slot,

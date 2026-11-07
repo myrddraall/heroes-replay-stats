@@ -1,20 +1,43 @@
-// Sized in em: its row's type sizes it (2.5em keeps the icon at 32px in 13px tables).
+// Sized in em: its font-size sizes it (2.5em keeps the icon at 32px in 13px tables).
 :host {
   display: flex;
   align-items: center;
   gap: 0.6em;
+  min-width: 0;
 }
 hrs-hero-minimap-icon {
   font-size: 2.5em;
 }
 .cell__names {
   display: grid;
+  min-width: 0;
   line-height: 1.2;
 }
 .cell__hero {
   font-weight: 600;
 }
+// the player's name, cut short past --player-cell-name-max-width (none unless the page sets it)
 .cell__player {
+  max-width: var(--player-cell-name-max-width, none);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--mat-sys-on-surface-variant);
   font-size: 0.9em;
+}
+// the user's own: both names in their theme's colour (green on blue, gold on red)
+:host(.self) {
+  .cell__hero,
+  .cell__player {
+    color: var(--mat-sys-primary);
+  }
+}
+// "(you)" for screen readers: the colour says it on screen
+.cell__you {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

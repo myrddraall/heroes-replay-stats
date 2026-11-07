@@ -10,7 +10,7 @@ import { teamRows } from '../stat-tables/team-rows';
 import { UNIT_KILL_COLUMNS } from './unit-kill-columns';
 
 /**
- * A replay's unit kills (presentational): the units each player and each team killed, by kind,
+ * A replay's unit kills (presentational): the units each player, or each team, killed, by kind,
  * coloured from your point of view.
  */
 @Component({
@@ -22,6 +22,8 @@ import { UNIT_KILL_COLUMNS } from './unit-kill-columns';
 export class UnitKillTables {
   readonly players = input.required<readonly PlayerKillsRow[]>();
   readonly teams = input.required<readonly TeamKillsRow[]>();
+  /** Whose kills: each player's, or each team's. */
+  readonly table = input.required<'players' | 'teams'>();
   /** Each player's hero icon, by slot. */
   readonly icons = input.required<Readonly<Record<number, HeroIcon | null>>>();
 

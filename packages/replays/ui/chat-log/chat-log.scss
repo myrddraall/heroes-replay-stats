@@ -20,7 +20,7 @@
 // time, icon, sender, text; the text wraps under itself
 .line {
   display: grid;
-  grid-template-columns: 3.5em 24px minmax(6em, max-content) 1fr;
+  grid-template-columns: 3.5em max-content minmax(6em, max-content) 1fr;
   align-items: center;
   gap: 4px 10px;
   padding: 3px 16px;
@@ -35,9 +35,9 @@
   text-align: end;
 }
 
+// the icon 24px, its frame around it
 .line__icon {
-  width: 24px;
-  height: 24px;
+  font-size: 24px;
 }
 
 .line__sender {

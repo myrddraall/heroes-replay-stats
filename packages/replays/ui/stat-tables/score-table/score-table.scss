@@ -1,19 +1,21 @@
+@use '../score-row/score-row';
+
 // Colours are Material's system tokens, so a row re-themed by its team follows it. It never
 // scrolls sideways: the component measures the grid and squeezes it (below) or shows ranking
-// cards when it doesn't fit (see score-table.ts). The clip only hides the one frame in which a
-// too-wide table is measured.
+// cards when it doesn't fit (see score-table.ts).
 :host {
   display: block;
   min-width: 0;
-  overflow-x: clip;
 }
 
 // The grid's look, as the game's score screen (GameStatsPanel): rows 2px apart, each the game's row
 // texture recreated (below), the type 0.36 of the row's height (its labels are 20 of 56), everything
 // in a row in em, so the row height is the one size.
 .score-table {
-  --hrs-grid-row-height: 3.5rem;
-  --hrs-grid-row-type-scale: 0.36;
+  @include score-row.size;
+  // hides the one frame in which a too-wide table is measured; on the grid only, so the ranking
+  // cards (and their chips' outline and glow) are never cut
+  overflow-x: clip;
   --hrs-grid-row-gap: 2px;
   --hrs-grid-cell-padding: 0 0.6em;
   --hrs-grid-font: 700 1em / 1.2 var(--font-brand);
@@ -26,42 +28,17 @@
   --hrs-grid-header-tracking: var(--mat-sys-label-large-tracking);
   --hrs-grid-header-line: none;
 
-  // Storm_UI_ScoreScreen_Stats_PlayerBG, recreated: a grey texture the game colorizes, each grey a
-  // share of the way from the row's dark colour to its light one; here the row theme's tint and
-  // glow (Material has no glow role). From the texture: from 17px a 50% fill, 12% light at the top
-  // to 17% at the bottom, over a 2px line at 35% (55% opaque); the bar and its glow are drawn
-  // below. Every other column a white film lighter (below).
+  // each row the game's row texture (_score-row.scss), the user's own with the game's self
+  // overlay; the bar is in the row head's cell (ui-score-row-bar)
   ::ng-deep .hrs-grid__body .hrs-grid__row {
-    --score-row-dark: var(--hrs-tint);
-    --score-row-light: var(--hrs-glow);
-    // the bar: the team's colour at full strength (the game's bars are saturated); its glow the
-    // same colour at the texture's 55%
-    --score-row-bar: color-mix(in oklab, var(--hrs-glow), white 10%);
-    --score-row-glow: oklch(from var(--hrs-glow) l c h / 0.55);
-    --score-row: linear-gradient(
-          to top,
-          oklch(from color-mix(in oklab, var(--score-row-light) 35%, var(--score-row-dark)) l c h / 0.55)
-            2px,
-          transparent 2px
-        )
-        17px 0 / calc(100% - 17px) 100% no-repeat,
-      linear-gradient(
-          oklch(from color-mix(in oklab, var(--score-row-light) 12%, var(--score-row-dark)) l c h / 0.5),
-          oklch(from color-mix(in oklab, var(--score-row-light) 17%, var(--score-row-dark)) l c h / 0.5)
-        )
-        17px 0 / calc(100% - 17px) 100% no-repeat;
+    @include score-row.texture;
     --hrs-grid-row-background: var(--score-row);
     --hrs-grid-themed-row-background: var(--score-row);
     --hrs-grid-row-hover: linear-gradient(rgb(255 255 255 / 0.05), rgb(255 255 255 / 0.05)) 17px 0 /
         calc(100% - 17px) 100% no-repeat,
       var(--score-row);
     --hrs-grid-row-line: none;
-  }
-
-  // the bar (in the row head's cell, an SVG) stands in its row, behind the row's content
-  ::ng-deep .hrs-grid__body .hrs-grid__row {
-    position: relative;
-    isolation: isolate;
+    @include score-row.self-overlay;
   }
 
   // columns alternate light and dark, the hero column light: a white film on every other cell
@@ -101,27 +78,6 @@
   ::ng-deep .hrs-grid__body hrs-number-cell {
     font-weight: 600;
   }
-}
-
-// The texture's bar, drawn as its shape: 4px of the light colour the row's full height, its left
-// corners cut at 45° over 4px, 8px in; its glow a drop shadow, so it follows the cut corners,
-// 55% of the mid grey at the bar fading out over about 8px (into the gaps, past the ends).
-.score-table__bar {
-  position: absolute;
-  top: 0;
-  left: 8px;
-  z-index: -1;
-  width: 4px;
-  height: 100%;
-  overflow: visible;
-  pointer-events: none;
-  fill: var(--score-row-bar);
-  filter: drop-shadow(0 0 2px var(--score-row-glow))
-    drop-shadow(0 0 5px oklch(from var(--score-row-glow) l c h / 0.5));
-}
-
-.score-table__bar-middle {
-  height: calc(100% - 8px);
 }
 
 // Squeezed: short numbers (the number cells), tighter cells, smaller header icons.

@@ -53,7 +53,7 @@ Design: **settled** = the user approved it; **changing** = not reviewed yet, may
 | Tooltip | changing | later | |
 | BackLink | changing | later | |
 | DataGrid | new | done | `hrs-data-grid` in `packages/data-views` (TanStack Virtual, page scroll, look by custom properties, Material sort): score, stat tables (team stats, player stats, unit kills, XP), talents, draft, players |
-| ItemList | new | done | `hrs-item-list` in `packages/data-views`: matches, maps, points of interest, chat; Dev › Lists check |
+| ItemList | new | done | `hrs-item-list` in `packages/data-views`: matches, maps, points of interest, chat; Dev › UI › Tests › Lists |
 | ListRow | changing | later | |
 | KeyValue | changing | later | |
 | Card | changing | later | |
@@ -82,7 +82,7 @@ foundation port; all converted the same day). A package is done when it has no g
 |---|---|---|
 | replays | 0 | done (glass gone: `.hrs-panel` for its panels, team rows by `theme`; its styles stay on Material's `--mat-sys-*` tokens) |
 | aether-forge | 17 | done (Material drawers with a hairline, fields and flyouts on `--mat-sys-surface-container*`, accents on `--mat-sys-primary`, markers from `--mat-sys-secondary`/`-primary`) |
-| background | 9 | done (Theme preview: a panel per `theme`, its opacity and blur the site's) |
+| background | 9 | done (Theme preview, Dev › UI › Theme: a panel per `theme`, its opacity and blur the site's) |
 | maps | 7 | done (Material drawers, `.hrs-panel` map cards, lines `--mat-sys-outline-variant`) |
 | shell | 0 | done |
 | import | 2 | done |

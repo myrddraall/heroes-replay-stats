@@ -1,0 +1,71 @@
+// The Components section's side nav (level 3) in a column at the left; the page beside it lays
+// itself out, as a match's sections do.
+.components {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.components__page {
+  flex: 1;
+  min-width: 0;
+}
+
+.frames {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-block: 24px;
+}
+
+.frames__title,
+.frame__title {
+  margin: 0;
+}
+
+.frame {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.frame__about {
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-medium);
+}
+
+// one theme's frames in a row, its name first
+.frame__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+.frame__label {
+  width: 8em;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-label-large);
+}
+
+// the themes' icons at 3rem
+.frame__row > hrs-hero-minimap-icon {
+  font-size: 3rem;
+}
+
+// a frame with its font-size under it
+.frame__size {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-label-small);
+}
+
+// frames with captions: on one line along their captions
+.frame__row:has(.frame__size) {
+  align-items: flex-end;
+}

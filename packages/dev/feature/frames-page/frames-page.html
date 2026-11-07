@@ -1,0 +1,39 @@
+<hrs-layout>
+  <!-- edge to edge: the Components section's side nav (level 3) beside the page -->
+  <div class="components" hrsLayoutItem="edge-to-edge">
+    <hrs-shell-side-nav />
+    <hrs-layout class="components__page">
+      <section class="frames" aria-labelledby="frames-title">
+        <h1 id="frames-title" class="frames__title">Frames</h1>
+
+        <section class="frame" aria-labelledby="hero-frame-title">
+          <h2 id="hero-frame-title" class="frame__title">Hero frame</h2>
+          <p class="frame__about">
+            <code>hrs-hero-frame</code>: the game's profile hero frame, here around <code>hrs-hero-minimap-icon</code>, the
+            ring in the theme's colour. Its <code>font-size</code> is the icon's size; the ring is built
+            around it.
+          </p>
+          @for (theme of themes; track theme.id) {
+            <div class="frame__row" [attr.theme]="theme.id">
+              <span class="frame__label">{{ theme.label }}</span>
+              @for (icon of icons(); track icon.name) {
+                <hrs-hero-minimap-icon [picture]="icon.picture" [name]="icon.name" />
+              }
+            </div>
+          }
+          <div class="frame__row" theme="blue">
+            <span class="frame__label">Sizes</span>
+            @if (icons()[0]; as icon) {
+              @for (size of sizes; track size) {
+                <figure class="frame__size">
+                  <hrs-hero-minimap-icon [style.font-size]="size" [picture]="icon.picture" [name]="icon.name" />
+                  <figcaption>font-size: {{ size }}</figcaption>
+                </figure>
+              }
+            }
+          </div>
+        </section>
+      </section>
+    </hrs-layout>
+  </div>
+</hrs-layout>

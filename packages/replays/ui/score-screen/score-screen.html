@@ -8,10 +8,10 @@
           [picture]="portrait?.picture ?? null"
           [name]="portrait?.name ?? data.player.hero"
         />
-        <!-- the game's silence penalty icon over the portrait's corner (its SilencedIcon) -->
+        <!-- the game's silence penalty icon in the portrait's top-right corner (its SilencedIcon) -->
         @let silence = silenceIcon(data.player.silenced, data.player.voiceSilenced);
         @if (silence) {
-          <span class="player__silence" [matTooltip]="silence.label">
+          <span class="player__silence" [matTooltip]="silence.tooltip">
             <img [hrsSprite]="silence.picture" spriteCover [alt]="silence.label" />
           </span>
         }

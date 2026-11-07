@@ -334,10 +334,9 @@ a:hover {
   --hrs-hue-delta: -268;
   --hrs-chroma-k: 1;
 }
-[theme='self'],
-[theme='blue-self'] {
-  --hrs-tex-filter: hue-rotate(-95deg);
-  --hrs-hue-delta: -128;
+[theme='self'] {
+  --hrs-tex-filter: hue-rotate(-111deg);
+  --hrs-hue-delta: -150;
   --hrs-chroma-k: 1;
 }
 [theme='poor'] {
@@ -369,8 +368,7 @@ a:hover {
   --hrs-hue-delta: 19;
   --hrs-chroma-k: 1.35;
 }
-[theme='legendary'],
-[theme='red-self'] {
+[theme='legendary'] {
   --hrs-tex-filter: hue-rotate(149deg) saturate(1.2);
   --hrs-nav-l-shift: 0%;
   --hrs-hue-delta: -234;
@@ -2306,8 +2304,7 @@ hrs-item-list {
   --hrs-glow-modal: 0 0 40px oklch(64% 0.24 306 / 0.45), 0 0 120px oklch(64% 0.24 306 / 0.2);
   --hrs-glow-k: 1;
 }
-[theme='legendary'],
-[theme='red-self'] {
+[theme='legendary'] {
   --hrs-ground: oklch(16% 0.045 53);
   --hrs-tint: oklch(19.5% 0.06 53);
   --hrs-tint-raised: oklch(24% 0.075 53);

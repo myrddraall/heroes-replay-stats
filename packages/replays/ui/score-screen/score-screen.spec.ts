@@ -2,7 +2,7 @@ import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { formatStatCompact } from '../stat-tables/stat-format';
 import { ScoreCards } from '../stat-tables/score-cards/score-cards';
-import { statBestFirst, statRanks, type StatSort } from '../stat-tables/stat-sort';
+import { nextStatSort, statBestFirst, statRanks, type StatSort } from '../stat-tables/stat-sort';
 import { ScoreTable } from '../stat-tables/score-table/score-table';
 import { provideWholeLists } from '@myrddraall/heroes-replay-stats-data-views/testing';
 import { statTableRows } from '../stat-tables/stat-cells';
@@ -21,10 +21,11 @@ describe('awardLabel', () => {
 
 describe('silenceIcon', () => {
   it("picks the game's icon for chat, voice or both, and nothing for neither", () => {
-    expect(silenceIcon(true, false)).toEqual({
+    expect(silenceIcon(true, false)).toMatchObject({
       picture: 'score-screen#chat-silenced',
       label: 'Chat silenced',
     });
+    expect(silenceIcon(true, false)?.tooltip).toContain('can only Chat with friends and party members');
     expect(silenceIcon(false, true)?.picture).toBe('score-screen#voice-silenced');
     expect(silenceIcon(true, true)?.picture).toBe('score-screen#chat-and-voice-silenced');
     expect(silenceIcon(false, false)).toBeNull();
@@ -56,6 +57,17 @@ describe('statRanks', () => {
   });
 });
 
+describe('nextStatSort', () => {
+  it('cycles a column best first, worst first, then unsorted; a new column starts best first', () => {
+    expect(nextStatSort(null, kills)).toEqual({ column: 'k', direction: 'desc' });
+    expect(nextStatSort({ column: 'k', direction: 'desc' }, kills)).toEqual({ column: 'k', direction: 'asc' });
+    expect(nextStatSort({ column: 'k', direction: 'asc' }, kills)).toBeNull();
+    expect(nextStatSort(null, deaths)).toEqual({ column: 'd', direction: 'asc' });
+    expect(nextStatSort({ column: 'd', direction: 'asc' }, deaths)).toEqual({ column: 'd', direction: 'desc' });
+    expect(nextStatSort({ column: 'k', direction: 'asc' }, deaths)).toEqual({ column: 'd', direction: 'asc' });
+  });
+});
+
 describe('statBestFirst', () => {
   it('ranks highest first, or lowest first where lower is better', () => {
     expect(statBestFirst(kills)).toEqual({ column: 'k', direction: 'desc' });
@@ -84,11 +96,7 @@ class Cards {
 
 function places(el: HTMLElement): string[] {
   return [...el.querySelectorAll('.card')].map(
-    (card) =>
-      `${card.querySelector('.card__rank')?.textContent?.trim()} ${card
-        .querySelector('.stat--main')
-        ?.textContent?.replace(/\s+/g, ' ')
-        .trim()}`,
+    (card) => card.querySelector('.stat--main')?.textContent?.replace(/\s+/g, ' ').trim() ?? '',
   );
 }
 
@@ -97,13 +105,13 @@ describe('ScoreCards', () => {
     const fixture = TestBed.createComponent(Cards);
     await fixture.whenStable();
     const el: HTMLElement = fixture.nativeElement;
-    expect(places(el)).toEqual(['1 Kills 8 (best)', '1 Kills 8 (best)', '3 Kills 2']);
+    expect(places(el)).toEqual(['Kills 8 (best)', 'Kills 8 (best)', 'Kills 2']);
 
     const chips = el.querySelectorAll<HTMLButtonElement>('.chip');
     expect(chips[0].getAttribute('aria-pressed')).toBe('true');
     chips[1].click();
     await fixture.whenStable();
-    expect(places(el)).toEqual(['1 Deaths 1 (best)', '2 Deaths 3', '3 Deaths 5']);
+    expect(places(el)).toEqual(['Deaths 1 (best)', 'Deaths 3', 'Deaths 5']);
     expect(chips[1].getAttribute('aria-pressed')).toBe('true');
   });
 });

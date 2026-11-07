@@ -3,7 +3,7 @@
     <p role="alert">The team stats could not be read: {{ error }}</p>
   } @else if (store.teams(); as teams) {
     @if (teams.length > 0) {
-      <hrs-team-stats [teams]="teams" />
+      <hrs-team-stats [teams]="teams" [group]="group()" />
     } @else {
       <hrs-empty-state icon="groups" title="No team stats">
         The team stats of this replay could not be read.

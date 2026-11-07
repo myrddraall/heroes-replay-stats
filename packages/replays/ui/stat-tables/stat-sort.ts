@@ -26,6 +26,22 @@ export function statBestFirst(column: Pick<StatColumn, 'id' | 'better'>): StatSo
 }
 
 /**
+ * The sort after a press on `column`, as a table's header cycles: best first on a new column, then
+ * worst first, then unsorted.
+ */
+export function nextStatSort(
+  current: StatSort | null,
+  column: Pick<StatColumn, 'id' | 'better'>,
+): StatSort | null {
+  const best = statBestFirst(column);
+  if (current?.column !== column.id) return best;
+  if (current.direction === best.direction) {
+    return { column: column.id, direction: best.direction === 'asc' ? 'desc' : 'asc' };
+  }
+  return null;
+}
+
+/**
  * Each row's place in a ranking by `column`, for rows already in that order: rows with the same
  * value share a place and the next one skips ahead (1, 1, 3).
  */

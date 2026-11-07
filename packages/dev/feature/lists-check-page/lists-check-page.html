@@ -1,48 +1,54 @@
 <hrs-layout>
-  <section class="check">
-    <h1 class="check__title">Lists</h1>
-    <button type="button" matButton="outlined" (click)="extra.set(extra() + 1)">Add a line above</button>
-    @for (i of extraLines(); track i) {
-      <p class="check__extra">Line {{ i + 1 }} above the lists.</p>
-    }
-    <p>Chosen: {{ chosen()?.title ?? 'none' }}</p>
+  <!-- edge to edge: the Tests section's side nav (level 3) beside the page -->
+  <div class="tests" hrsLayoutItem="edge-to-edge">
+    <hrs-shell-side-nav />
+    <hrs-layout class="tests__page">
+      <section class="check">
+        <h1 class="check__title">Lists</h1>
+        <button type="button" matButton="outlined" (click)="extra.set(extra() + 1)">Add a line above</button>
+        @for (i of extraLines(); track i) {
+          <p class="check__extra">Line {{ i + 1 }} above the lists.</p>
+        }
+        <p>Chosen: {{ chosen()?.title ?? 'none' }}</p>
 
-    <h2 class="check__heading">Matches by day</h2>
-    <hrs-item-list
-      class="check__cards"
-      aria-label="Matches"
-      selectable
-      [items]="cards"
-      [trackBy]="byId"
-      [groupBy]="byDay"
-      [(selected)]="chosen"
-    >
-      <ng-template hrsGroupHeader let-day>{{ day }}</ng-template>
-      <ng-template hrsItem let-card>
-        <div class="hrs-card check__card" [class.is-selected]="chosen()?.id === card.id">{{ card.title }}</div>
-      </ng-template>
-    </hrs-item-list>
+        <h2 class="check__heading">Matches by day</h2>
+        <hrs-item-list
+          class="check__cards"
+          aria-label="Matches"
+          selectable
+          [items]="cards"
+          [trackBy]="byId"
+          [groupBy]="byDay"
+          [(selected)]="chosen"
+        >
+          <ng-template hrsGroupHeader let-day>{{ day }}</ng-template>
+          <ng-template hrsItem let-card>
+            <div class="hrs-card check__card" [class.is-selected]="chosen()?.id === card.id">{{ card.title }}</div>
+          </ng-template>
+        </hrs-item-list>
 
-    <h2 class="check__heading">Chat</h2>
-    <hrs-item-list class="check__chat" aria-label="Chat" [items]="lines" [trackBy]="lineId">
-      <ng-template hrsItem let-line>
-        <div class="check__line">
-          <b>{{ line.who }}:</b> {{ line.text }}
-        </div>
-      </ng-template>
-    </hrs-item-list>
+        <h2 class="check__heading">Chat</h2>
+        <hrs-item-list class="check__chat" aria-label="Chat" [items]="lines" [trackBy]="lineId">
+          <ng-template hrsItem let-line>
+            <div class="check__line">
+              <b>{{ line.who }}:</b> {{ line.text }}
+            </div>
+          </ng-template>
+        </hrs-item-list>
 
-    <h2 class="check__heading">Loaded as it shows</h2>
-    <hrs-item-list class="check__slow" aria-label="Loaded as it shows" [items]="source">
-      <ng-template hrsItem let-card>
-        <div class="hrs-card check__card">{{ card.title }}</div>
-      </ng-template>
-    </hrs-item-list>
+        <h2 class="check__heading">Loaded as it shows</h2>
+        <hrs-item-list class="check__slow" aria-label="Loaded as it shows" [items]="source">
+          <ng-template hrsItem let-card>
+            <div class="hrs-card check__card">{{ card.title }}</div>
+          </ng-template>
+        </hrs-item-list>
 
-    <h2 class="check__heading">Empty</h2>
-    <hrs-item-list aria-label="Nothing" [items]="noItems">
-      <ng-template hrsItem let-card>{{ card.title }}</ng-template>
-      <ng-template hrsEmpty>Nothing here.</ng-template>
-    </hrs-item-list>
-  </section>
+        <h2 class="check__heading">Empty</h2>
+        <hrs-item-list aria-label="Nothing" [items]="noItems">
+          <ng-template hrsItem let-card>{{ card.title }}</ng-template>
+          <ng-template hrsEmpty>Nothing here.</ng-template>
+        </hrs-item-list>
+      </section>
+    </hrs-layout>
+  </div>
 </hrs-layout>

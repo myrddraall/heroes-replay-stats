@@ -715,6 +715,9 @@ importers:
       '@myrddraall/heroes-replay-stats-data-views':
         specifier: workspace:*
         version: link:../data-views
+      '@myrddraall/heroes-replay-stats-heroes':
+        specifier: workspace:*
+        version: link:../heroes
       '@myrddraall/heroes-replay-stats-layout':
         specifier: workspace:*
         version: link:../layout

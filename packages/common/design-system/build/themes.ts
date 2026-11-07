@@ -4,19 +4,28 @@
  * bundle.css from it (`rarityCss`), because the tokens page holds at most eight themes.
  */
 
-export const BASE_THEMES = ['purple', 'magenta', 'cyan', 'blue', 'red', 'self'] as const;
+export const BASE_THEMES = [
+  'purple',
+  'magenta',
+  'cyan',
+  'blue',
+  'red',
+  'self',
+  'blue-self',
+  'red-self',
+] as const;
 export const RARITY_THEMES = ['poor', 'common', 'uncommon', 'rare', 'epic', 'legendary'] as const;
 export type Theme = (typeof BASE_THEMES)[number] | (typeof RARITY_THEMES)[number];
 
 /**
  * Other names for a theme, with no values of their own: the generated CSS adds each alias to every
- * selector that names its theme. The user's own row says which side they were on: `blue-self` is
- * the self theme, `red-self` the legendary one.
+ * selector that names its theme. None at present (the self rows are themes of their own, below).
  */
-export const THEME_ALIASES = { 'blue-self': 'self', 'red-self': 'legendary' } as const satisfies Readonly<
-  Record<string, Theme>
->;
+export const THEME_ALIASES = {} as const satisfies Readonly<Record<string, Theme>>;
 export const ALL_THEMES: readonly Theme[] = [...BASE_THEMES, ...RARITY_THEMES];
+
+/** The self rows' gold: the design system's hrs-gold (#f2b632), hue 79. */
+const GOLD_HUE = 79;
 
 const HUE: Record<Theme, number> = {
   purple: 286,
@@ -24,7 +33,11 @@ const HUE: Record<Theme, number> = {
   cyan: 230,
   blue: 266,
   red: 18,
-  self: 158,
+  // the game's self green (the profile frame's _self, the score screen's self overlay: hue 135–138)
+  self: 137,
+  // the self rows' grounds; their accents come from SELF_ROW
+  'blue-self': 266,
+  'red-self': 18,
   poor: 286,
   common: 286,
   uncommon: 142,
@@ -58,7 +71,7 @@ const OVERRIDE: Partial<Record<Theme, Partial<Record<Role, readonly [number, num
   cyan: { 'hrs-glow': [72, 0.135] },
   blue: { 'hrs-glow': [66, 0.18] },
   red: { 'hrs-glow': [66, 0.225] },
-  self: { 'hrs-glow': [66, 0.15] },
+  self: { 'hrs-glow': [66, 0.2] },
   uncommon: {
     'hrs-glow': [68, 0.21],
     'hrs-accent': [84, 0.22],
@@ -109,8 +122,55 @@ const GLOW_K: Partial<Record<Theme, string>> = {
   legendary: '1.15',
 };
 
+/** The roles that are a theme's grounds: the surfaces things sit on, rather than its colour. */
+const GROUND_ROLES: ReadonlySet<Role> = new Set([
+  'hrs-ground',
+  'hrs-tint',
+  'hrs-tint-raised',
+  'hrs-selection',
+]);
+
+/**
+ * The user's own row, as the game's score screens draw it (the PlayerBG_Gold overlay over the
+ * team's row): the team's grounds with the self colour for everything else, green on the blue
+ * side and gold on the red. Each accent role is the given hue at its [L, C].
+ */
+const SELF_ROW: Partial<
+  Record<Theme, { readonly hue: number; readonly roles: Readonly<Record<Exclude<Role, 'hrs-ground' | 'hrs-tint' | 'hrs-tint-raised' | 'hrs-selection'>, readonly [number, number]>> }>
+> = {
+  'blue-self': {
+    hue: HUE.self,
+    roles: {
+      'hrs-border': ROLES['hrs-border'],
+      'hrs-border-strong': ROLES['hrs-border-strong'],
+      'hrs-accent': ROLES['hrs-accent'],
+      'hrs-glow': [66, 0.2],
+      'hrs-text-muted': ROLES['hrs-text-muted'],
+      'hrs-text-dim': ROLES['hrs-text-dim'],
+      'hrs-on-accent': ROLES['hrs-on-accent'],
+    },
+  },
+  'red-self': {
+    hue: GOLD_HUE,
+    roles: {
+      'hrs-border': [66, 0.14],
+      'hrs-border-strong': [74, 0.15],
+      'hrs-accent': [82, 0.15],
+      'hrs-glow': [78, 0.16],
+      'hrs-text-muted': [84, 0.06],
+      'hrs-text-dim': [70, 0.06],
+      'hrs-on-accent': [18, 0.04],
+    },
+  },
+};
+
 /** A role's colour in a theme, as `oklch(L% C H)`. */
 export function roleValue(theme: Theme, role: Role): string {
+  const self = SELF_ROW[theme];
+  if (self && !GROUND_ROLES.has(role)) {
+    const [L, C] = self.roles[role as keyof typeof self.roles];
+    return `oklch(${L}% ${C.toFixed(3)} ${self.hue})`;
+  }
   const [L, C] = OVERRIDE[theme]?.[role] ?? ROLES[role];
   return `oklch(${L}% ${(C * (SAT[theme] ?? 1)).toFixed(3)} ${HUE[theme]})`;
 }

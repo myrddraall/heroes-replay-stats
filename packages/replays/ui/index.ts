@@ -24,6 +24,7 @@ export * from './stat-tables/team-rows';
 export * from './team-theme/team-perspective';
 export * from './team-theme/team-theme';
 export * from './player-cell/player-cell';
+export * from './match-team/match-team';
 export * from './replay-list/replay-list';
 export * from './replay-list-item/replay-card';
 export * from './replay-list-item/replay-list-item';

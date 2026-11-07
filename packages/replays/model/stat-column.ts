@@ -30,9 +30,14 @@ export interface StatColumn {
 /** One row of a stat table: its values by column id and what its row head shows (`data`). */
 /**
  * A stats row's theme: its team's colour, or the user's own row's, which still says their side
- * (`blue-self` is the self theme, `red-self` the legendary one: the design system's aliases).
+ * (`blue-self`: the blue team's grounds in green; `red-self`: the red team's in gold, as the game draws your row).
  */
 export type StatRowTheme = TeamColor | 'blue-self' | 'red-self';
+
+/** The theme for a team's colour: the user's own (`blue-self`, `red-self`) for them, else the team's. */
+export function playerTheme(color: TeamColor, self: boolean): StatRowTheme {
+  return self ? `${color}-self` : color;
+}
 
 export interface StatRow<T> {
   readonly key: string | number;

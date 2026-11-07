@@ -1,13 +1,15 @@
 /**
  * Stops this repository's running dev servers (`ng serve`, as `pnpm start` runs it, and the
- * wrappers that started it), wherever they were started from (another terminal, another session),
- * so `pnpm restart` (pnpm runs `stop`, then `start`) always comes up on a fresh one.
+ * wrappers that started it) and the local servers its proxy reaches (`serve.maps`, `serve.reports`,
+ * `serve.sheets`, which `pnpm start` runs alongside), wherever they were started from (another
+ * terminal, another session), so `pnpm restart` (pnpm runs `stop`, then `start`) always comes up
+ * on fresh ones.
  *
  *   pnpm stop [port]
  *
- * With a port, only the server serving it (`--port`, else 4200, `ng serve`'s default). Finds them
- * through /proc (Linux: the devcontainer); asks each to stop, and ends any still running after a
- * few seconds.
+ * With a port, only the dev server serving it (`--port`, else 4200, `ng serve`'s default); its
+ * wrapper stops the local servers it started. Finds them through /proc (Linux: the devcontainer);
+ * asks each to stop, and ends any still running after a few seconds.
  */
 import { readdirSync, readFileSync, readlinkSync } from 'node:fs';
 import { resolve, sep } from 'node:path';
@@ -17,6 +19,11 @@ const portArg = process.argv[2];
 const onlyPort = portArg === undefined ? null : Number(portArg);
 /** A dev server's processes: `ng serve` itself, and the `node tools/ng.mts serve` that started it. */
 const SERVER = /(^|\s|\/)(ng(\.mts)?)\s+serve(\s|$)/;
+/** The local servers the dev server's proxy reaches (tools/serve-*.ts). */
+const LOCAL_SERVER = /(^|\s|\/)tools\/serve-(maps|reports|sheets)\.ts(\s|$)/;
+
+/** Their ports (apps/web/proxy.local.json), for the log. */
+const LOCAL_PORTS: Record<string, number> = { maps: 4208, reports: 4209, sheets: 4210 };
 
 interface Found {
   readonly pid: number;
@@ -31,9 +38,14 @@ function servers(): Found[] {
     if (!Number.isInteger(pid) || pid === process.pid) continue;
     try {
       const command = readFileSync(`/proc/${pid}/cmdline`, 'utf8').split('\0').join(' ').trim();
-      if (!SERVER.test(command)) continue;
+      const local = LOCAL_SERVER.exec(command);
+      if (!SERVER.test(command) && !local) continue;
       const cwd = readlinkSync(`/proc/${pid}/cwd`);
       if (cwd !== root && !cwd.startsWith(root + sep)) continue;
+      if (local) {
+        if (onlyPort === null) found.push({ pid, command, port: LOCAL_PORTS[local[2]!]! });
+        continue;
+      }
       const port = Number(/--port[=\s]+(\d+)/.exec(command)?.[1] ?? 4200);
       if (onlyPort === null || port === onlyPort) found.push({ pid, command, port });
     } catch {

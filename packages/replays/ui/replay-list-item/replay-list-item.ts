@@ -6,11 +6,9 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { ItemFocus } from '@myrddraall/heroes-replay-stats-data-views/ui';
 import { Sprite } from '@myrddraall/heroes-replay-stats-sheets/ui';
-import { StyledText } from '@myrddraall/heroes-replay-stats-common/ui';
-import { HeroMinimapIcon } from '@myrddraall/heroes-replay-stats-heroes/ui';
 import { teamColor, type ReplayViewed, type TeamColor } from '../../model';
 import { TeamPerspective } from '../team-theme/team-perspective';
-import { TeamTheme } from '../team-theme/team-theme';
+import { MatchTeam, type MatchTeamPlayer } from '../match-team/match-team';
 import type { ReplayCard } from './replay-card';
 
 export const MODE_LABELS: Readonly<Record<GameMode, string>> = {
@@ -56,14 +54,12 @@ export function formatDuration(seconds: number): string {
   selector: 'hrs-replay-list-item',
   imports: [
     DatePipe,
-    HeroMinimapIcon,
     ItemFocus,
     MatChipsModule,
     MatProgressBarModule,
     RouterLink,
     Sprite,
-    StyledText,
-    TeamTheme,
+    MatchTeam,
   ],
   providers: [TeamPerspective],
   templateUrl: './replay-list-item.html',
@@ -105,6 +101,7 @@ export class ReplayListItem {
     const yourTeam = this.perspective.yourTeam();
     const mode = this.perspective.mode();
     const yours = new Set(this.you().slots);
+    const icons = this.card().icons;
     return ([0, 1] as const)
       .map((team: Team) => {
         const color = teamColor(team, yourTeam, mode);
@@ -116,7 +113,15 @@ export class ReplayListItem {
           // you first, then slot order
           players: r.players
             .filter((p) => p.team === team)
-            .map((p) => ({ ...p, you: yours.has(p.slot) }))
+            .map(
+              (p): MatchTeamPlayer => ({
+                slot: p.slot,
+                hero: p.hero,
+                name: p.name,
+                icon: icons[p.slot] ?? null,
+                you: yours.has(p.slot),
+              }),
+            )
             .sort((a, b) => Number(b.you) - Number(a.you)),
         };
       })
@@ -124,6 +129,5 @@ export class ReplayListItem {
   });
   /** The map's replay preview image, behind the card. */
   protected readonly preview = computed(() => this.card().preview);
-  protected readonly icons = computed(() => this.card().icons);
   protected readonly label = computed(() => `${this.replay().map}, ${this.mode()}`);
 }

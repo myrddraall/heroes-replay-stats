@@ -2,7 +2,8 @@ import { Component, computed, signal } from '@angular/core';
 import type { ListDataSource } from '@myrddraall/heroes-replay-stats-data-views/model';
 import { EmptyTemplate, GroupHeaderTemplate, ItemList, ItemTemplate } from '@myrddraall/heroes-replay-stats-data-views/ui';
 import { MatButton } from '@angular/material/button';
-import { Layout } from '@myrddraall/heroes-replay-stats-layout/ui';
+import { Layout, LayoutItem } from '@myrddraall/heroes-replay-stats-layout/ui';
+import { ShellSideNav } from '@myrddraall/heroes-replay-stats-shell/feature';
 
 interface Card {
   readonly id: number;
@@ -67,10 +68,22 @@ class SlowSource implements ListDataSource<Card> {
   }
 }
 
-/** Long lists on one page, in the page's own scroll, each drawing only what is in view. */
+/**
+ * Long lists on one page, in the page's own scroll, each drawing only what is in view: the UI
+ * area's Tests › Lists (`/ui/tests/lists`), beside the Tests section's side nav.
+ */
 @Component({
   selector: 'hrs-lists-check-page',
-  imports: [MatButton, Layout, ItemList, ItemTemplate, GroupHeaderTemplate, EmptyTemplate],
+  imports: [
+    MatButton,
+    Layout,
+    LayoutItem,
+    ShellSideNav,
+    ItemList,
+    ItemTemplate,
+    GroupHeaderTemplate,
+    EmptyTemplate,
+  ],
   templateUrl: './lists-check-page.html',
   styleUrl: './lists-check-page.scss',
 })

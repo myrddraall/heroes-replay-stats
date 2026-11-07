@@ -55,5 +55,10 @@
       "@myrddraall/heroes-replay-stats-signals": ["./libs/signals/src/index.ts"]
     }
   },
-  "exclude": ["node_modules", "dist", "packages"]
+  "exclude": ["node_modules", "dist", "packages"],
+  "angularCompilerOptions": {
+    "strictTemplates": true,
+    "strictStandalone": true,
+    "typeCheckHostBindings": true
+  }
 }

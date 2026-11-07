@@ -16,7 +16,7 @@
   --hrs-focus: oklch(88% 0.135 86.1);
   --hrs-team-blue: oklch(67.4% 0.174 257.5);
   --hrs-team-red: oklch(70.4% 0.189 18.4);
-  --hrs-self: oklch(81.1% 0.205 146.8);
+  --hrs-self: oklch(81.1% 0.205 137);
   --hrs-gold: oklch(81.1% 0.153 82.1);
   --hrs-error: oklch(71.2% 0.181 22.8);
   --hrs-info: oklch(72.6% 0.143 258.2);
@@ -43,7 +43,7 @@
   --hrs-focus: oklch(88% 0.135 86.1);
   --hrs-team-blue: oklch(67.4% 0.174 257.5);
   --hrs-team-red: oklch(70.4% 0.189 18.4);
-  --hrs-self: oklch(81.1% 0.205 146.8);
+  --hrs-self: oklch(81.1% 0.205 137);
   --hrs-gold: oklch(81.1% 0.153 82.1);
   --hrs-error: oklch(71.2% 0.181 22.8);
   --hrs-info: oklch(72.6% 0.143 258.2);
@@ -70,7 +70,7 @@
   --hrs-focus: oklch(88% 0.135 86.1);
   --hrs-team-blue: oklch(67.4% 0.174 257.5);
   --hrs-team-red: oklch(70.4% 0.189 18.4);
-  --hrs-self: oklch(81.1% 0.205 146.8);
+  --hrs-self: oklch(81.1% 0.205 137);
   --hrs-gold: oklch(81.1% 0.153 82.1);
   --hrs-error: oklch(71.2% 0.181 22.8);
   --hrs-info: oklch(72.6% 0.143 258.2);
@@ -97,7 +97,7 @@
   --hrs-focus: oklch(88% 0.135 86.1);
   --hrs-team-blue: oklch(67.4% 0.174 257.5);
   --hrs-team-red: oklch(70.4% 0.189 18.4);
-  --hrs-self: oklch(81.1% 0.205 146.8);
+  --hrs-self: oklch(81.1% 0.205 137);
   --hrs-gold: oklch(81.1% 0.153 82.1);
   --hrs-error: oklch(71.2% 0.181 22.8);
   --hrs-info: oklch(72.6% 0.143 258.2);
@@ -124,7 +124,7 @@
   --hrs-focus: oklch(88% 0.135 86.1);
   --hrs-team-blue: oklch(67.4% 0.174 257.5);
   --hrs-team-red: oklch(70.4% 0.189 18.4);
-  --hrs-self: oklch(81.1% 0.205 146.8);
+  --hrs-self: oklch(81.1% 0.205 137);
   --hrs-gold: oklch(81.1% 0.153 82.1);
   --hrs-error: oklch(71.2% 0.181 22.8);
   --hrs-info: oklch(72.6% 0.143 258.2);
@@ -135,32 +135,85 @@
   --hrs-glow-modal: 0 0 40px oklch(66% 0.225 18 / 0.45), 0 0 120px oklch(66% 0.225 18 / 0.2);
   --hrs-shade: 0 2px 8px oklch(0% 0 0 / 0.5);
 }
-[theme='self'],
-[theme='blue-self'] {
-  --hrs-ground: oklch(16% 0.045 158);
-  --hrs-tint: oklch(19.5% 0.06 158);
-  --hrs-tint-raised: oklch(24% 0.075 158);
-  --hrs-selection: oklch(27.5% 0.09 158);
-  --hrs-border: oklch(58% 0.17 158);
-  --hrs-border-strong: oklch(68% 0.18 158);
-  --hrs-accent: oklch(78% 0.13 158);
-  --hrs-glow: oklch(66% 0.15 158);
+[theme='self'] {
+  --hrs-ground: oklch(16% 0.045 137);
+  --hrs-tint: oklch(19.5% 0.06 137);
+  --hrs-tint-raised: oklch(24% 0.075 137);
+  --hrs-selection: oklch(27.5% 0.09 137);
+  --hrs-border: oklch(58% 0.17 137);
+  --hrs-border-strong: oklch(68% 0.18 137);
+  --hrs-accent: oklch(78% 0.13 137);
+  --hrs-glow: oklch(66% 0.2 137);
   --hrs-text: oklch(96.2% 0.02 295.2);
-  --hrs-text-muted: oklch(80% 0.06 158);
-  --hrs-text-dim: oklch(66% 0.06 158);
-  --hrs-on-accent: oklch(16.5% 0.045 158);
+  --hrs-text-muted: oklch(80% 0.06 137);
+  --hrs-text-dim: oklch(66% 0.06 137);
+  --hrs-on-accent: oklch(16.5% 0.045 137);
   --hrs-focus: oklch(88% 0.135 86.1);
   --hrs-team-blue: oklch(67.4% 0.174 257.5);
   --hrs-team-red: oklch(70.4% 0.189 18.4);
-  --hrs-self: oklch(81.1% 0.205 146.8);
+  --hrs-self: oklch(81.1% 0.205 137);
   --hrs-gold: oklch(81.1% 0.153 82.1);
   --hrs-error: oklch(71.2% 0.181 22.8);
   --hrs-info: oklch(72.6% 0.143 258.2);
   --hrs-warning: oklch(78.2% 0.151 74.7);
-  --hrs-glow-hover: 0 0 6px oklch(66% 0.15 158 / 0.5);
-  --hrs-glow-selected: 0 0 10px oklch(66% 0.15 158 / 0.7), 0 0 2px oklch(66% 0.15 158);
-  --hrs-glow-panel: 0 0 14px oklch(66% 0.15 158 / 0.35);
-  --hrs-glow-modal: 0 0 40px oklch(66% 0.15 158 / 0.45), 0 0 120px oklch(66% 0.15 158 / 0.2);
+  --hrs-glow-hover: 0 0 6px oklch(66% 0.2 137 / 0.5);
+  --hrs-glow-selected: 0 0 10px oklch(66% 0.2 137 / 0.7), 0 0 2px oklch(66% 0.2 137);
+  --hrs-glow-panel: 0 0 14px oklch(66% 0.2 137 / 0.35);
+  --hrs-glow-modal: 0 0 40px oklch(66% 0.2 137 / 0.45), 0 0 120px oklch(66% 0.2 137 / 0.2);
+  --hrs-shade: 0 2px 8px oklch(0% 0 0 / 0.5);
+}
+[theme='blue-self'] {
+  --hrs-ground: oklch(16% 0.045 266);
+  --hrs-tint: oklch(19.5% 0.06 266);
+  --hrs-tint-raised: oklch(24% 0.075 266);
+  --hrs-selection: oklch(27.5% 0.09 266);
+  --hrs-border: oklch(58% 0.17 137);
+  --hrs-border-strong: oklch(68% 0.18 137);
+  --hrs-accent: oklch(78% 0.13 137);
+  --hrs-glow: oklch(66% 0.2 137);
+  --hrs-text: oklch(96.2% 0.02 295.2);
+  --hrs-text-muted: oklch(80% 0.06 137);
+  --hrs-text-dim: oklch(66% 0.06 137);
+  --hrs-on-accent: oklch(16.5% 0.045 137);
+  --hrs-focus: oklch(88% 0.135 86.1);
+  --hrs-team-blue: oklch(67.4% 0.174 257.5);
+  --hrs-team-red: oklch(70.4% 0.189 18.4);
+  --hrs-self: oklch(81.1% 0.205 137);
+  --hrs-gold: oklch(81.1% 0.153 82.1);
+  --hrs-error: oklch(71.2% 0.181 22.8);
+  --hrs-info: oklch(72.6% 0.143 258.2);
+  --hrs-warning: oklch(78.2% 0.151 74.7);
+  --hrs-glow-hover: 0 0 6px oklch(66% 0.2 137 / 0.5);
+  --hrs-glow-selected: 0 0 10px oklch(66% 0.2 137 / 0.7), 0 0 2px oklch(66% 0.2 137);
+  --hrs-glow-panel: 0 0 14px oklch(66% 0.2 137 / 0.35);
+  --hrs-glow-modal: 0 0 40px oklch(66% 0.2 137 / 0.45), 0 0 120px oklch(66% 0.2 137 / 0.2);
+  --hrs-shade: 0 2px 8px oklch(0% 0 0 / 0.5);
+}
+[theme='red-self'] {
+  --hrs-ground: oklch(16% 0.045 18);
+  --hrs-tint: oklch(19.5% 0.06 18);
+  --hrs-tint-raised: oklch(24% 0.075 18);
+  --hrs-selection: oklch(27.5% 0.09 18);
+  --hrs-border: oklch(66% 0.14 79);
+  --hrs-border-strong: oklch(74% 0.15 79);
+  --hrs-accent: oklch(82% 0.15 79);
+  --hrs-glow: oklch(78% 0.16 79);
+  --hrs-text: oklch(96.2% 0.02 295.2);
+  --hrs-text-muted: oklch(84% 0.06 79);
+  --hrs-text-dim: oklch(70% 0.06 79);
+  --hrs-on-accent: oklch(18% 0.04 79);
+  --hrs-focus: oklch(88% 0.135 86.1);
+  --hrs-team-blue: oklch(67.4% 0.174 257.5);
+  --hrs-team-red: oklch(70.4% 0.189 18.4);
+  --hrs-self: oklch(81.1% 0.205 137);
+  --hrs-gold: oklch(81.1% 0.153 82.1);
+  --hrs-error: oklch(71.2% 0.181 22.8);
+  --hrs-info: oklch(72.6% 0.143 258.2);
+  --hrs-warning: oklch(78.2% 0.151 74.7);
+  --hrs-glow-hover: 0 0 6px oklch(78% 0.16 79 / 0.5);
+  --hrs-glow-selected: 0 0 10px oklch(78% 0.16 79 / 0.7), 0 0 2px oklch(78% 0.16 79);
+  --hrs-glow-panel: 0 0 14px oklch(78% 0.16 79 / 0.35);
+  --hrs-glow-modal: 0 0 40px oklch(78% 0.16 79 / 0.45), 0 0 120px oklch(78% 0.16 79 / 0.2);
   --hrs-shade: 0 2px 8px oklch(0% 0 0 / 0.5);
 }
 :root {

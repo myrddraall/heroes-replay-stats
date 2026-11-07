@@ -8,6 +8,8 @@
   display: grid;
   gap: 16px;
   padding: 16px 20px;
+  // the teams' totals scale with the card's width on narrow screens
+  container-type: inline-size;
 }
 
 // A player's row head as the game's score screen draws it (GameStatsPanel, PlayerScoreResultFrame):
@@ -50,14 +52,16 @@
   font-size: 0.75em;
 }
 
-// The game's silence icon (GameStatsPanel's SilencedIcon): at the portrait's top-left corner, 40 of
-// the row's 56 high, the texture's 48 × 40.
+// The game's silence icon, as its talent screen and leader panel size it (TalentsOverviewPanel,
+// HeroLeaderPanel: SilencedIcon): 27 × 24 at the top of the 100-wide portrait, in the row's 56. The
+// game puts it 6 in from the portrait's right; here 16, as the names start 10 back over the
+// portrait, so it ends 6 short of them. (The older GameStatsPanel drew it 45 × 40 top-left.)
 .player__silence {
   position: absolute;
   top: 0;
-  left: 0;
-  width: calc(var(--hrs-grid-row-height) * 48 / 56);
-  height: calc(var(--hrs-grid-row-height) * 40 / 56);
+  left: calc(var(--hrs-grid-row-height) * (100 - 16 - 27) / 56);
+  width: calc(var(--hrs-grid-row-height) * 27 / 56);
+  height: calc(var(--hrs-grid-row-height) * 24 / 56);
   overflow: hidden;
 }
 
@@ -118,7 +122,8 @@
 // glow), levels in the team's own. Sized from the rows' height (3.5rem, the score table's), as the
 // game's are from its 56px rows: kills 1.15 of it, names 0.5, levels 0.38.
 .teams {
-  font-size: 3.5rem;
+  // the row height, or less where the card is too narrow for it (a narrow screen's ranking cards)
+  font-size: min(3.5rem, 7cqi);
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
@@ -144,6 +149,7 @@
 
 .team__names {
   display: grid;
+  white-space: nowrap;
   gap: 0.06em;
   line-height: 1.15;
 }
