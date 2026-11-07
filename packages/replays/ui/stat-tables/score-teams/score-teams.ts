@@ -1,7 +1,7 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { MatIcon } from '@angular/material/icon';
 import type { ScoreScreenTeamRow } from '@myrddraall/heroprotocol-analysis';
 import { StyledText } from '@myrddraall/heroes-replay-stats-common/ui';
+import { Sprite } from '@myrddraall/heroes-replay-stats-sheets/ui';
 import { teamColor } from '../../../model';
 import { TeamPerspective } from '../../team-theme/team-perspective';
 import { TeamTheme } from '../../team-theme/team-theme';
@@ -15,7 +15,7 @@ import { TeamTheme } from '../../team-theme/team-theme';
  */
 @Component({
   selector: 'ui-score-teams',
-  imports: [MatIcon, StyledText, TeamTheme],
+  imports: [Sprite, StyledText, TeamTheme],
   templateUrl: './score-teams.html',
   styleUrl: './score-teams.scss',
 })

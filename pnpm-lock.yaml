@@ -712,6 +712,9 @@ importers:
       '@myrddraall/heroes-replay-stats-aether':
         specifier: workspace:*
         version: link:../aether
+      '@myrddraall/heroes-replay-stats-common':
+        specifier: workspace:*
+        version: link:../common
       '@myrddraall/heroes-replay-stats-data-views':
         specifier: workspace:*
         version: link:../data-views

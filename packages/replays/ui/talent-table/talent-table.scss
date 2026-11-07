@@ -37,6 +37,27 @@
   margin-block: calc(var(--hrs-grid-row-height) * (1 - 44 * 68 / (70 * 40)) / 2);
 }
 
+// the build's button: the game's link icon (its Copy Link buttons'), at its 24, the button's icon
+// size so Material centres it
+.build {
+  --mat-icon-button-icon-size: 24px;
+}
+
+// no ring (the theme's on every icon button), here or hovered: just the game's icon
+.build,
+.build:hover {
+  box-shadow: none;
+}
+
+.build__icon {
+  display: block;
+  // a little under the row's middle, to sit with the talents' frames
+  translate: 0 2px;
+  width: 24px;
+  height: 24px;
+  overflow: hidden;
+}
+
 .talents__hidden {
   position: absolute;
   width: 1px;

@@ -1,7 +1,7 @@
 import type { HeroDataSet, HeroesImages, Picture } from '@myrddraall/hero-data';
 import type { TalentPickRow } from '@myrddraall/heroprotocol-analysis';
 import type { Team } from '@myrddraall/heroprotocol-db';
-import type { HeroIcon } from '@myrddraall/heroes-replay-stats-heroes/model';
+import { talentBuildLink, type HeroIcon } from '@myrddraall/heroes-replay-stats-heroes/model';
 import type { StatRowTheme, TeamColorMode } from '../../model';
 import { type PlayerIdentity, playerRows } from '../stat-tables/player-rows';
 
@@ -29,6 +29,8 @@ export interface TalentCell {
   readonly level: number;
   /** The talent's icon; null when the hero data has none. */
   readonly icon: Picture | null;
+  /** Its full tooltip text, in the game's markup; null when the hero data has none. */
+  readonly text: string | null;
 }
 
 /** A player as the talents table names them: who, on which hero, and their silence penalties (the row head's icon). */
@@ -57,6 +59,11 @@ export interface TalentRow {
   readonly theme: StatRowTheme | undefined;
   /** By tier, in {@link TALENT_TIERS}' order. */
   readonly tiers: readonly TalentTier[];
+  /**
+   * The build as the game links it in chat (`[T1322000,DemonHunter]`), to paste into the game;
+   * null before the hero data loads, for a hero or a picked talent it doesn't know, or with no talents.
+   */
+  readonly build: string | null;
 }
 
 /**
@@ -82,6 +89,7 @@ export function talentRows(
       name: info?.name ?? pick.talent,
       level: pick.level,
       icon: info ? images.icon(info) : null,
+      text: info?.fullText ?? null,
     };
   };
   /**
@@ -102,6 +110,16 @@ export function talentRows(
         .map(([tier]) => tier),
     );
   };
+  /** The build link: each tier's pick as its place in the tier, from the data. */
+  const buildOf = (player: TalentPlayer, own: readonly TalentPickRow[]): string | null => {
+    const hero = data?.hero(player.heroId) ?? data?.hero(player.hero);
+    if (!hero || own.length === 0) return null;
+    const places = TALENT_TIERS.map((tier) => {
+      const pick = own.find((p) => p.tier === tier);
+      return pick ? (data?.talent(pick.talent)?.sort ?? NaN) : null;
+    });
+    return places.some((place) => Number.isNaN(place)) ? null : talentBuildLink(hero.id, places);
+  };
   return playerRows(players, portraits, [], yourTeam, mode, you).map((row) => {
     const own = picks.filter((p) => p.slot === row.data.player.slot);
     const heroic = heroicTiers(row.data.player);
@@ -114,6 +132,7 @@ export function talentRows(
         const pick = own.find((p) => p.tier === tier);
         return { heroic: heroic.has(tier), talent: pick ? cell(pick) : null };
       }),
+      build: buildOf(row.data.player, own),
     };
   });
 }

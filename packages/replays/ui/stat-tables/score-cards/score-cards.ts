@@ -1,9 +1,10 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, input, output } from '@angular/core';
-import { MatIcon } from '@angular/material/icon';
 import { MatTooltip } from '@angular/material/tooltip';
 import { NumberCell } from '@myrddraall/heroes-replay-stats-data-views/ui';
 import { ScoreRowBar } from '../score-row/score-row-bar';
+import { StatIcon } from '../stat-icon/stat-icon';
+import { Sprite } from '@myrddraall/heroes-replay-stats-sheets/ui';
 import type { StatColumn } from '../../../model';
 import type { StatTableRow } from '../stat-cells';
 import type { StatRowHead } from '../stat-row-head';
@@ -17,7 +18,7 @@ import type { StatRowHead } from '../stat-row-head';
  */
 @Component({
   selector: 'ui-score-cards',
-  imports: [MatIcon, MatTooltip, NgTemplateOutlet, NumberCell, ScoreRowBar],
+  imports: [MatTooltip, NgTemplateOutlet, NumberCell, ScoreRowBar, Sprite, StatIcon],
   templateUrl: './score-cards.html',
   styleUrl: './score-cards.scss',
 })

@@ -181,16 +181,31 @@ a:hover {
   background: var(--hrs-border);
 }
 
+/* Tooltip: the game's (StandardTooltip, Storm_UI_Tooltip_TopBorder) in CSS, its texture being flat
+   colours: the fill at 242/255 over the page blurred (its BlurFrame), a 2px border at 179/255, a faint
+   2px dark edge outside it (26/255, then 8/255), square. Insets 20 and a 480 widest for its 18 high
+   type; its body text TooltipBody, shadowed. Material's tooltip takes the same (below). */
+.hrs-tooltip,
+.mat-mdc-tooltip .mat-mdc-tooltip-surface {
+  max-width: calc(1em * 480 / 18);
+  padding: calc(1em * 20 / 18);
+  background: oklch(from var(--hrs-tooltip-fill) l c h / calc(242 / 255));
+  border: 2px solid oklch(from var(--hrs-tooltip-edge) l c h / calc(179 / 255));
+  border-radius: 0;
+  box-shadow:
+    0 0 0 1px oklch(0% 0 0 / calc(26 / 255)),
+    0 0 0 2px oklch(0% 0 0 / calc(8 / 255));
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  font-family: var(--font-plain);
+  font-size: 14px;
+  line-height: 18px;
+  text-align: left;
+  color: var(--hrs-tooltip-text);
+  text-shadow: 1px 1px 0 oklch(0% 0 0 / 0.8);
+}
 .hrs-tooltip {
   display: inline-block;
-  max-width: 280px;
-  padding: var(--hrs-space-2) var(--hrs-space-3);
-  background: var(--hrs-film-raised);
-  border: var(--hrs-line);
-  box-shadow: var(--hrs-shade);
-  font-size: 13px;
-  line-height: 18px;
-  color: var(--hrs-text-muted);
 }
 .hrs-tooltip b {
   color: var(--hrs-text);

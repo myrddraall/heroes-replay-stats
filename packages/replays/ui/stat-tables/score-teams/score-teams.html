@@ -12,6 +12,14 @@
     <span class="team__kills" hrsStyledText="glow" [attr.aria-label]="team.kills + (team.kills === 1 ? ' kill' : ' kills')">{{
       team.kills
     }}</span>
-    <mat-icon class="material-symbols-outlined team__icon" aria-hidden="true">swords</mat-icon>
+    <!-- the game's kills icon (BattleIcon), in the side's colour -->
+    <span class="team__icon" aria-hidden="true">
+      <img
+        [hrsSprite]="team.blue ? 'score-screen#team-kills-blue' : 'score-screen#team-kills-red'"
+        spriteCover
+        loading="eager"
+        alt=""
+      />
+    </span>
   </section>
 }

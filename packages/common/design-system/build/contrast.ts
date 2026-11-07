@@ -86,5 +86,14 @@ for (const theme of ALL_THEMES) {
     console.log(`FAIL ${theme} on-accent ${r.toFixed(2)}`);
   }
 }
+// the game's tooltip, the same in every theme: its text on its fill (242/255) over a bright patch
+{
+  const fill = over(colour('hrs-tooltip-fill', 'purple'), 242 / 255, BRIGHT);
+  const r = ratio(colour('hrs-tooltip-text', 'purple'), fill);
+  if (r < 4.5) {
+    failures++;
+    console.log(`FAIL tooltip text on its fill ${r.toFixed(2)} < 4.5`);
+  }
+}
 console.log(`failures: ${failures}`);
 if (failures) process.exitCode = 1;

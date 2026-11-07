@@ -67,7 +67,9 @@
   --hrs-grid-font: 700 1em / 1.2 var(--font-brand);
   --hrs-grid-text: var(--mat-sys-on-surface);
   --hrs-grid-first-text: var(--mat-sys-on-surface);
-  --hrs-grid-header-height: 0px;
+  // one header height on every screen: the score screen's sort icons (the game's 32) and the
+  // header's 4px padding each side, the talent screen's levels centred in the same
+  --hrs-grid-header-height: 40px;
   --hrs-grid-header-font: var(--mat-sys-label-large);
   --hrs-grid-header-text: var(--mat-sys-on-surface-variant);
   --hrs-grid-header-case: none;

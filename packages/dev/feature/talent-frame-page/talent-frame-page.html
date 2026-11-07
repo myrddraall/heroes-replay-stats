@@ -1,0 +1,25 @@
+<hrs-side-nav-page>
+  <hrs-shell-side-nav sideNav />
+  <hrs-showcase heading="Talent frame">
+    <ng-container ngProjectAs="[about]">
+      <code>hrs-talent-frame</code>: a talent's icon in the game's talent frame, by <code>state</code>.
+      Its <code>font-size</code> is the icon's size; the frame is built around it.
+    </ng-container>
+    <hrs-showcase-row class="states" label="States">
+      @for (talent of states(); track talent.label) {
+        <hrs-showcase-item [caption]="talent.label">
+          <hrs-talent-frame [state]="talent.state" [picture]="talent.picture" [name]="talent.name" />
+        </hrs-showcase-item>
+      }
+    </hrs-showcase-row>
+    <hrs-showcase-row label="Sizes">
+      @if (states()[1]; as talent) {
+        @for (size of sizes; track size) {
+          <hrs-showcase-item [caption]="'font-size: ' + size">
+            <hrs-talent-frame [style.font-size]="size" state="heroic" [picture]="talent.picture" [name]="talent.name" />
+          </hrs-showcase-item>
+        }
+      }
+    </hrs-showcase-row>
+  </hrs-showcase>
+</hrs-side-nav-page>

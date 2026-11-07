@@ -41,6 +41,11 @@ const color: Token[] = [
   { name: 'hrs-error', value: hex('#ff6b6b'), usage: "Error lines and failed imports (the chat's red). Text on hrs-tint; always with a word, never colour alone." },
   { name: 'hrs-info', value: hex('#6ca7ff'), usage: "System and informational lines (the chat's blue): 'has come online', import finished." },
   { name: 'hrs-warning', value: hex('#f0a830'), usage: 'Warnings and partial states. Text on hrs-tint.' },
+  // the game's tooltip (StandardTooltip: Storm_UI_Tooltip_TopBorder, a 9-slice of flat colours over a
+  // blurred backdrop), theme independent as the game's: every tooltip looks the same
+  { name: 'hrs-tooltip-fill', value: hex('#130936'), usage: "Tooltip fill, at 242/255 over the blurred page (the game's tooltip texture's centre)." },
+  { name: 'hrs-tooltip-edge', value: hex('#8d94e7'), usage: "Tooltip border, 2px at 179/255 (the game's tooltip texture's edge)." },
+  { name: 'hrs-tooltip-text', value: hex('#8783e6'), usage: "Tooltip body text (the game's TooltipBody). On hrs-tooltip-fill." },
 ];
 
 const shadow: Token[] = [

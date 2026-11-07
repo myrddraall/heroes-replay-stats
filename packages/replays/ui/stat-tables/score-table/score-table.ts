@@ -13,7 +13,6 @@ import {
   signal,
   untracked,
 } from '@angular/core';
-import { MatIcon } from '@angular/material/icon';
 import { MatTooltip } from '@angular/material/tooltip';
 import {
   CellTemplate,
@@ -26,6 +25,8 @@ import { ScoreCards } from '../score-cards/score-cards';
 import { ScoreRowBar } from '../score-row/score-row-bar';
 import type { StatColumn, StatRow } from '../../../model';
 import { statTableRows, type StatTableRow } from '../stat-cells';
+import { StatIcon } from '../stat-icon/stat-icon';
+import { Sprite } from '@myrddraall/heroes-replay-stats-sheets/ui';
 import { StatRowHead } from '../stat-row-head';
 import { nextStatSort, statBestFirst, type StatSort } from '../stat-sort';
 
@@ -54,12 +55,13 @@ type Fit = 'full' | 'squeezed' | 'cards';
     DataGrid,
     GridColumn,
     HeaderTemplate,
-    MatIcon,
     MatTooltip,
     NgTemplateOutlet,
     NumberCell,
     ScoreCards,
     ScoreRowBar,
+    Sprite,
+    StatIcon,
   ],
   templateUrl: './score-table.html',
   styleUrl: './score-table.scss',

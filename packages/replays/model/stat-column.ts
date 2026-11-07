@@ -8,6 +8,21 @@ export type StatFormat = 'integer' | 'decimal' | 'percent' | 'duration' | 'clock
 /** How far the data behind a stat can be trusted: all of it, some players, a flawed figure, none. */
 export type StatSupport = 'full' | 'partial' | 'flawed' | 'none';
 
+/**
+ * A stat's icon as the game's score screen draws its sort buttons (GameStatsPanel's SortButtons):
+ * a sheet's picture (`score-screen#kills`) for each state, hovered and sorted by.
+ */
+export interface StatIcon {
+  readonly normal: string;
+  readonly hover: string;
+  readonly sorted: string;
+}
+
+/** A stat's icon from a sheet's picture and its `-hover` and `-sorted` siblings. */
+export function statIcon(picture: string): StatIcon {
+  return { normal: picture, hover: `${picture}-hover`, sorted: `${picture}-sorted` };
+}
+
 /** One stat as a table column. */
 export interface StatColumn {
   /** The key of the stat in each row's `values`. */
@@ -19,8 +34,8 @@ export interface StatColumn {
   readonly digits?: readonly [number, number];
   /** Which way is better, for marking the best; no marking without it. */
   readonly better?: 'higher' | 'lower';
-  /** A Material Symbols icon the score table shows in place of the label. */
-  readonly icon?: string;
+  /** The game's icon the score table shows in place of the label. */
+  readonly icon?: StatIcon;
   /** Full when absent. */
   readonly support?: StatSupport;
   /** What to know about the figure (why it is partial or flawed). */

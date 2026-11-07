@@ -46,17 +46,23 @@
   color: var(--mat-sys-on-primary-container);
 }
 
+// the game's sort arrow (26 × 18), at half its size
 .chip__order {
-  font-size: 14px;
-  width: 14px;
-  height: 14px;
-  margin-left: 1px;
+  display: inline-block;
+  width: 13px;
+  height: 9px;
+  margin-left: 3px;
+  overflow: hidden;
 }
 
+// the game's icon, its hover state while the chip is hovered
 .chip__icon {
-  font-size: 20px;
-  width: 20px;
-  height: 20px;
+  font-size: 28px;
+}
+
+.chip:hover {
+  --stat-icon-normal: none;
+  --stat-icon-hover: block;
 }
 
 .cards {
@@ -156,9 +162,6 @@
 
 .stat__icon {
   font-size: 1em;
-  width: 1em;
-  height: 1em;
-  color: var(--mat-sys-on-surface-variant);
 }
 
 .hidden {

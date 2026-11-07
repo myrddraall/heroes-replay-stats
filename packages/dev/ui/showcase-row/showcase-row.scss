@@ -1,0 +1,17 @@
+// the label first, then the row's things; captioned ones on one line along their captions
+:host {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+:host(:has(hrs-showcase-item)) {
+  align-items: flex-end;
+}
+
+.label {
+  width: 8em;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-label-large);
+}

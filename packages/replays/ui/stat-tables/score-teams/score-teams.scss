@@ -51,8 +51,9 @@
 }
 
 .team__icon {
-  color: var(--mat-sys-primary);
-  font-size: 0.6em;
-  width: 1em;
-  height: 1em;
+  // the game's 37 × 34 icon, 0.6 of the rows' height high
+  display: inline-block;
+  height: 0.6em;
+  aspect-ratio: 37 / 34;
+  overflow: hidden;
 }

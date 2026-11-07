@@ -32,16 +32,39 @@
   }
 
   .score-table__icon {
-    font-size: 20px;
-    width: 20px;
-    height: 20px;
+    font-size: 26px;
   }
 }
 
+// a header's icon and, sorted by, its order arrow, on one line
+.score-table__label {
+  display: inline-flex;
+  align-items: center;
+}
+
+// the game's icons at its size (32 for its 56 high rows, as ours are), the hover state while the
+// header is hovered
 .score-table__icon {
-  font-size: 22px;
-  width: 22px;
-  height: 22px;
+  font-size: 32px;
+}
+
+.score-table ::ng-deep .hrs-grid__header:hover {
+  --stat-icon-normal: none;
+  --stat-icon-hover: block;
+}
+
+// the sort order in the game's arrows (26 × 18, at half its size) beside the icon; Material's arrow
+// and the room kept for it hidden
+.score-table__order {
+  display: inline-block;
+  width: 13px;
+  height: 9px;
+  margin-left: 3px;
+  overflow: hidden;
+}
+
+.score-table ::ng-deep :is(.mat-sort-header-arrow, .data-grid__arrow-room) {
+  display: none;
 }
 
 .score-table__hidden {

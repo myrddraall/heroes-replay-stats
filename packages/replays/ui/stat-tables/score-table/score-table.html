@@ -43,10 +43,20 @@
             [matTooltip]="column.description ?? column.label"
             matTooltipPosition="above"
           >
-            @if (column.icon) {
-              <mat-icon class="material-symbols-outlined score-table__icon" aria-hidden="true">{{
-                column.icon
-              }}</mat-icon>
+            @if (column.icon; as icon) {
+              @let sorted = sort()?.column === column.id ? sort() : null;
+              <ui-stat-icon class="score-table__icon" [icon]="icon" [sorted]="!!sorted" />
+              @if (sorted) {
+                <!-- the order, in the game's sort arrows (in place of Material's) -->
+                <span class="score-table__order" aria-hidden="true">
+                  <img
+                    [hrsSprite]="sorted.direction === 'asc' ? 'score-screen#sort-up' : 'score-screen#sort-down'"
+                    spriteCover
+                    loading="eager"
+                    alt=""
+                  />
+                </span>
+              }
               <span class="score-table__hidden">{{ column.label }}</span>
             } @else {
               {{ column.label }}

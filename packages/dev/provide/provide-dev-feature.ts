@@ -33,7 +33,24 @@ export function provideDevFeature(): EnvironmentProviders {
       label: 'Components',
       link: '/ui/components',
       order: 20,
-      children: [{ label: 'Frames', link: '/ui/components/frames' }],
+      children: [
+        {
+          label: 'Frames',
+          link: '/ui/components/frames',
+          children: [
+            { label: 'Hero frame', link: '/ui/components/frames/hero' },
+            { label: 'Talent frame', link: '/ui/components/frames/talent' },
+          ],
+        },
+        {
+          label: 'Tooltips',
+          link: '/ui/components/tooltips',
+          children: [
+            { label: 'Standard tooltip', link: '/ui/components/tooltips/standard' },
+            { label: 'Talent tooltip', link: '/ui/components/tooltips/talent' },
+          ],
+        },
+      ],
     }),
     provideShellSection({
       area: '/ui',

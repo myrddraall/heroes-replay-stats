@@ -5,6 +5,7 @@ import { ScoreCards } from '../stat-tables/score-cards/score-cards';
 import { nextStatSort, statBestFirst, statRanks, type StatSort } from '../stat-tables/stat-sort';
 import { ScoreTable } from '../stat-tables/score-table/score-table';
 import { provideWholeLists } from '@myrddraall/heroes-replay-stats-data-views/testing';
+import { provideFakeSheets } from '@myrddraall/heroes-replay-stats-sheets/testing';
 import { statTableRows } from '../stat-tables/stat-cells';
 import { type StatColumn, type StatRow } from '../../model';
 import { describe, expect, it } from 'vitest';
@@ -103,6 +104,7 @@ function places(el: HTMLElement): string[] {
 
 describe('ScoreCards', () => {
   it('ranks the rows by the chosen stat, best first, and re-ranks from its chips', async () => {
+    TestBed.configureTestingModule({ providers: [provideFakeSheets()] });
     const fixture = TestBed.createComponent(Cards);
     await fixture.whenStable();
     const el: HTMLElement = fixture.nativeElement;
@@ -129,7 +131,7 @@ class Table {
 
 describe('ScoreTable sorting', () => {
   it('sorts each column best first on its first press: fewest deaths first', async () => {
-    TestBed.configureTestingModule({ providers: [provideWholeLists()] });
+    TestBed.configureTestingModule({ providers: [provideWholeLists(), provideFakeSheets()] });
     const fixture = TestBed.createComponent(Table);
     await fixture.whenStable();
     const el: HTMLElement = fixture.nativeElement;

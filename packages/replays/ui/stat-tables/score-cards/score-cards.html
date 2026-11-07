@@ -12,19 +12,22 @@
       "
       (click)="rankRequested.emit(column.id)"
     >
-      @if (column.icon) {
-        <mat-icon class="material-symbols-outlined chip__icon" aria-hidden="true">{{
-          column.icon
-        }}</mat-icon>
+      @if (column.icon; as icon) {
+        <ui-stat-icon class="chip__icon" [icon]="icon" [sorted]="on" />
         <span class="hidden">{{ column.label }}</span>
       } @else {
         {{ column.label }}
       }
       @if (on) {
-        <!-- the order: down for best first, up for worst first -->
-        <mat-icon class="material-symbols-outlined chip__order" aria-hidden="true">{{
-          rankOrder() === 'worst-first' ? 'arrow_upward' : 'arrow_downward'
-        }}</mat-icon>
+        <!-- the order, in the game's sort arrows: down for best first, up for worst first -->
+        <span class="chip__order" aria-hidden="true">
+          <img
+            [hrsSprite]="rankOrder() === 'worst-first' ? 'score-screen#sort-up' : 'score-screen#sort-down'"
+            spriteCover
+            loading="eager"
+            alt=""
+          />
+        </span>
         <span class="hidden">{{ rankOrder() === 'worst-first' ? ', worst first' : ', best first' }}</span>
       }
     </button>
@@ -68,7 +71,7 @@
 <ng-template #stat let-s let-main="main">
   <span class="stat" [class.stat--main]="main">
     @if (s.column?.icon; as icon) {
-      <mat-icon class="material-symbols-outlined stat__icon" aria-hidden="true">{{ icon }}</mat-icon>
+      <ui-stat-icon class="stat__icon" [icon]="icon" />
     }
     <span class="hidden">{{ s.column?.label }}&#32;</span>
     <hrs-number-cell

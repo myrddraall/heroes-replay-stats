@@ -26,11 +26,14 @@ describe('talent rows', () => {
     name: 'Hungering Arrow+',
     icon: 'valla1.png',
     level: 1,
+    sort: 2,
     abilityType: 'W',
+    fullText: 'Arrows <c val="bfd4fd">hunger</c>.',
   } as TalentInfo;
   const heroic = (id: string, level: number) => ({ id, level, abilityType: 'Heroic' }) as TalentInfo;
   const plain = (id: string, level: number) => ({ id, level, abilityType: 'Q' }) as TalentInfo;
   const valla = {
+    id: 'DemonHunter',
     talents: [
       known,
       plain('Valla4', 4),
@@ -40,7 +43,7 @@ describe('talent rows', () => {
       heroic('Valla20a', 20),
       plain('Valla20b', 20),
     ],
-  } as Pick<HeroInfo, 'talents'> as HeroInfo;
+  } as Pick<HeroInfo, 'id' | 'talents'> as HeroInfo;
   const data = {
     hero: (id: string) => (id === 'Valla' ? valla : undefined),
     talent: (id: string) => (id === known.id ? known : undefined),
@@ -58,9 +61,9 @@ describe('talent rows', () => {
       'relative',
     );
     expect(rows[0]!.tiers.map((t) => t.talent)).toEqual([
-      { name: 'Hungering Arrow+', level: 1, icon: { src: 'img/valla1.png' } },
+      { name: 'Hungering Arrow+', level: 1, icon: { src: 'img/valla1.png' }, text: 'Arrows <c val="bfd4fd">hunger</c>.' },
       null,
-      { name: 'ValllaUnknown', level: 3, icon: null },
+      { name: 'ValllaUnknown', level: 3, icon: null, text: null },
       null,
       null,
       null,
@@ -74,7 +77,7 @@ describe('talent rows', () => {
       [5, 'blue'],
       [0, 'red'],
     ]);
-    expect(rows[0]!.tiers[0]!.talent).toEqual({ name: 'Valla1', level: 1, icon: null });
+    expect(rows[0]!.tiers[0]!.talent).toEqual({ name: 'Valla1', level: 1, icon: null, text: null });
   });
 
   it("gives your own rows your side's self theme, with each player's portrait", () => {
@@ -91,5 +94,14 @@ describe('talent rows', () => {
       talentRows(players, [], {}, d, images, 0, 'relative')[0]!.tiers.map((t) => t.heroic);
     expect(tiers(data)).toEqual([false, false, false, true, false, false, false]);
     expect(tiers(null)).toEqual([false, false, false, false, false, false, false]);
+  });
+
+  it("links each build as the game does, each tier's place from the data; none it can't place", () => {
+    const build = (d: typeof data | null, picks: TalentPickRow[]) =>
+      talentRows(players, picks, {}, d, images, 0, 'relative')[0]!.build;
+    expect(build(data, [pick(0, 1, 'Valla1')])).toBe('[T2000000,DemonHunter]');
+    expect(build(data, [pick(0, 1, 'Valla1'), pick(0, 2, 'NotInTheData')])).toBeNull();
+    expect(build(data, [])).toBeNull();
+    expect(build(null, [pick(0, 1, 'Valla1')])).toBeNull();
   });
 });
