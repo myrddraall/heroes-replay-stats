@@ -1,6 +1,6 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { MatIcon } from '@angular/material/icon';
 import { MatTooltip } from '@angular/material/tooltip';
+import { ScoreRowHead } from '../stat-tables/score-row/score-row-head';
 import { ScoreTable } from '../stat-tables/score-table/score-table';
 import { StatRowHead } from '../stat-tables/stat-row-head';
 import type { AwardBadges, HeroIcon } from '@myrddraall/heroes-replay-stats-heroes/model';
@@ -8,10 +8,8 @@ import type { SpritePicture } from '@myrddraall/heroes-replay-stats-sheets/model
 import type { ReplayScoreScreen } from '../../model';
 import { teamColor } from '../../model';
 import { TeamPerspective } from '../team-theme/team-perspective';
-import { TeamTheme } from '../team-theme/team-theme';
-import { HeroPortrait } from '@myrddraall/heroes-replay-stats-heroes/ui';
+import { ScoreTeams } from '../stat-tables/score-teams/score-teams';
 import { StyledText } from '@myrddraall/heroes-replay-stats-common/ui';
-import { Sprite } from '@myrddraall/heroes-replay-stats-sheets/ui';
 import { playerRows } from '../stat-tables/player-rows';
 import { SCORE_COLUMNS } from './score-columns';
 import { AwardBadge } from '../award-badge/award-badge';
@@ -25,46 +23,6 @@ export interface ShownAward {
   readonly tooltip: string;
   /** Null until the data has loaded, and for an award the data names no badge for. */
   readonly picture: SpritePicture | null;
-}
-
-/** A silence penalty as a row head shows it: the game's icon, its words and the game's tooltip. */
-export interface SilenceIcon {
-  /** The picture in heroes-assets' score-screen sheet. */
-  readonly picture: string;
-  readonly label: string;
-  /** The game's own tooltip for it (UI/BattleUser/… in its strings). */
-  readonly tooltip: string;
-}
-
-/**
- * The game's silence penalty icon for a player (its SilencedIconTemplate: chat, voice or both),
- * what it says and the game's tooltip for it; null when neither.
- */
-export function silenceIcon(chat: boolean, voice: boolean): SilenceIcon | null {
-  if (chat && voice) {
-    return {
-      picture: 'score-screen#chat-and-voice-silenced',
-      label: 'Chat and voice silenced',
-      tooltip:
-        'This player is currently silenced. They can only Chat with friends and party members, and can only speak in party Voice. This player cannot participate in Storm League games.',
-    };
-  }
-  if (chat) {
-    return {
-      picture: 'score-screen#chat-silenced',
-      label: 'Chat silenced',
-      tooltip:
-        'This player is currently silenced and can only Chat with friends and party members. This player cannot participate in Storm League games.',
-    };
-  }
-  if (voice) {
-    return {
-      picture: 'score-screen#voice-silenced',
-      label: 'Voice silenced',
-      tooltip: 'This player is currently silenced and can only speak in party Voice.',
-    };
-  }
-  return null;
 }
 
 /** `MostXPContribution` as `Most XP contribution`. */
@@ -83,14 +41,12 @@ export function awardLabel(award: string): string {
   selector: 'hrs-score-screen',
   imports: [
     AwardBadge,
-    HeroPortrait,
-    MatIcon,
     MatTooltip,
+    ScoreRowHead,
     ScoreTable,
-    Sprite,
     StatRowHead,
     StyledText,
-    TeamTheme,
+    ScoreTeams,
   ],
   templateUrl: './score-screen.html',
   styleUrl: './score-screen.scss',
@@ -119,32 +75,9 @@ export class ScoreScreen {
     ),
   );
   /**
-   * Each team's totals, blue first: named for you ("My Team", "Enemy Team") when you're known, by
-   * their colour otherwise.
-   */
-  protected readonly teams = computed(() => {
-    const yourTeam = this.perspective.yourTeam();
-    const mode = this.perspective.mode();
-    return this.scoreScreen()
-      .teams.map((team) => {
-        const color = teamColor(team.team, yourTeam, mode);
-        const name =
-          yourTeam === null
-            ? color === 'blue'
-              ? 'Blue Team'
-              : 'Red Team'
-            : team.team === yourTeam
-              ? 'My Team'
-              : 'Enemy Team';
-        return { ...team, name, blue: color === 'blue' };
-      })
-      .sort((a, b) => Number(b.blue) - Number(a.blue));
-  });
-  /**
    * Each player's awards, by slot: the badge in the player's team colour from your point of view, as
    * the game's score screen shows them (your side blue).
    */
-  protected readonly silenceIcon = silenceIcon;
   protected readonly shownAwards = computed(() => {
     const yourTeam = this.perspective.yourTeam();
     const mode = this.perspective.mode();

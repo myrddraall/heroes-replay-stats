@@ -8,7 +8,8 @@ import { provideWholeLists } from '@myrddraall/heroes-replay-stats-data-views/te
 import { statTableRows } from '../stat-tables/stat-cells';
 import { type StatColumn, type StatRow } from '../../model';
 import { describe, expect, it } from 'vitest';
-import { awardLabel, silenceIcon } from './score-screen';
+import { silenceIcon } from '../stat-tables/score-row/score-row-head';
+import { awardLabel } from './score-screen';
 
 describe('awardLabel', () => {
   it('spells an award out, keeping its abbreviations', () => {

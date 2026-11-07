@@ -1,24 +1,13 @@
 <div class="score-screen hrs-panel">
   <ui-score-table [columns]="columns" [rows]="rows()">
     <ng-template [uiStatRowHead]="rows()" let-data>
-      <div class="player">
-        @let portrait = portraits()[data.player.slot];
-        <hrs-hero-portrait
-          class="player__portrait"
-          [picture]="portrait?.picture ?? null"
-          [name]="portrait?.name ?? data.player.hero"
-        />
-        <!-- the game's silence penalty icon in the portrait's top-right corner (its SilencedIcon) -->
-        @let silence = silenceIcon(data.player.silenced, data.player.voiceSilenced);
-        @if (silence) {
-          <span class="player__silence" [matTooltip]="silence.tooltip">
-            <img [hrsSprite]="silence.picture" spriteCover [alt]="silence.label" />
-          </span>
-        }
-        <span class="player__names">
-          <span class="player__hero" hrsStyledText="bright">{{ data.player.hero }}</span>
-          <span class="player__name" hrsStyledText="base">{{ data.player.name }}</span>
-        </span>
+      <ui-score-row-head
+        [hero]="data.player.hero"
+        [name]="data.player.name"
+        [portrait]="portraits()[data.player.slot] ?? null"
+        [silenced]="data.player.silenced"
+        [voiceSilenced]="data.player.voiceSilenced"
+      >
         @let awards = shownAwards()[data.player.slot] ?? [];
         <!-- every row keeps room for a badge, so the column is wide enough wherever the awards fall -->
         <div class="player__awards-slot">
@@ -37,27 +26,9 @@
             </ul>
           }
         </div>
-      </div>
+      </ui-score-row-head>
     </ng-template>
   </ui-score-table>
   <!-- the teams' totals across the bottom, as the game's score screen (GameStatsPanel's team stats) -->
-  <div class="teams">
-    @for (team of teams(); track team.team; let first = $first) {
-      @if (!first) {
-        <span class="teams__vs">VS</span>
-      }
-      <section class="team" [class.team--red]="!team.blue" [hrsTeam]="team.team" [attr.aria-label]="team.name">
-        <span class="team__names">
-          <span class="team__name" hrsStyledText="glow">{{ team.name }}</span>
-          @if (team.level !== null) {
-            <span class="team__level" hrsStyledText="base">Level {{ team.level }}</span>
-          }
-        </span>
-        <span class="team__kills" hrsStyledText="glow" [attr.aria-label]="team.kills + (team.kills === 1 ? ' kill' : ' kills')">{{
-          team.kills
-        }}</span>
-        <mat-icon class="material-symbols-outlined team__icon" aria-hidden="true">swords</mat-icon>
-      </section>
-    }
-  </div>
+  <ui-score-teams [teams]="scoreScreen().teams" />
 </div>

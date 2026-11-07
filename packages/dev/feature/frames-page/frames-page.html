@@ -33,6 +33,39 @@
             }
           </div>
         </section>
+
+        <section class="frame" aria-labelledby="talent-frame-title">
+          <h2 id="talent-frame-title" class="frame__title">Talent frame</h2>
+          <p class="frame__about">
+            <code>hrs-talent-frame</code>: a talent's icon in the game's talent frame, by
+            <code>state</code>. Its <code>font-size</code> is the icon's size; the frame is built around it.
+          </p>
+          <div class="frame__row frame__row--talents">
+            <span class="frame__label">States</span>
+            @for (talent of talentStates(); track talent.label) {
+              <figure class="frame__size">
+                <hrs-talent-frame [state]="talent.state" [picture]="talent.picture" [name]="talent.name" />
+                <figcaption>{{ talent.label }}</figcaption>
+              </figure>
+            }
+          </div>
+          <div class="frame__row frame__row--talents">
+            <span class="frame__label">Sizes</span>
+            @if (talentStates()[1]; as talent) {
+              @for (size of sizes; track size) {
+                <figure class="frame__size">
+                  <hrs-talent-frame
+                    [style.font-size]="size"
+                    state="heroic"
+                    [picture]="talent.picture"
+                    [name]="talent.name"
+                  />
+                  <figcaption>font-size: {{ size }}</figcaption>
+                </figure>
+              }
+            }
+          </div>
+        </section>
       </section>
     </hrs-layout>
   </div>

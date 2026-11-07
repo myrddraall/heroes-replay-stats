@@ -8,71 +8,12 @@
   min-width: 0;
 }
 
-// The grid's look, as the game's score screen (GameStatsPanel): rows 2px apart, each the game's row
-// texture recreated (below), the type 0.36 of the row's height (its labels are 20 of 56), everything
-// in a row in em, so the row height is the one size.
+// The grid's look, the game's score rows (_score-row.scss); hides the one frame in which a
+// too-wide table is measured, on the grid only, so the ranking cards (and their chips' outline and
+// glow) are never cut.
 .score-table {
-  @include score-row.size;
-  // hides the one frame in which a too-wide table is measured; on the grid only, so the ranking
-  // cards (and their chips' outline and glow) are never cut
+  @include score-row.grid;
   overflow-x: clip;
-  --hrs-grid-row-gap: 2px;
-  --hrs-grid-cell-padding: 0 0.6em;
-  --hrs-grid-font: 700 1em / 1.2 var(--font-brand);
-  --hrs-grid-text: var(--mat-sys-on-surface);
-  --hrs-grid-first-text: var(--mat-sys-on-surface);
-  --hrs-grid-header-height: 0px;
-  --hrs-grid-header-font: var(--mat-sys-label-large);
-  --hrs-grid-header-text: var(--mat-sys-on-surface-variant);
-  --hrs-grid-header-case: none;
-  --hrs-grid-header-tracking: var(--mat-sys-label-large-tracking);
-  --hrs-grid-header-line: none;
-
-  // each row the game's row texture (_score-row.scss), the user's own with the game's self
-  // overlay; the bar is in the row head's cell (ui-score-row-bar)
-  ::ng-deep .hrs-grid__body .hrs-grid__row {
-    @include score-row.texture;
-    --hrs-grid-row-background: var(--score-row);
-    --hrs-grid-themed-row-background: var(--score-row);
-    --hrs-grid-row-hover: linear-gradient(rgb(255 255 255 / 0.05), rgb(255 255 255 / 0.05)) 17px 0 /
-        calc(100% - 17px) 100% no-repeat,
-      var(--score-row);
-    --hrs-grid-row-line: none;
-    @include score-row.self-overlay;
-  }
-
-  // columns alternate light and dark, the hero column light: a white film on every other cell
-  // (cells are their rows' children, the row head first); on the row head it starts past the bar,
-  // where the row's fill does
-  ::ng-deep .hrs-grid__body .hrs-grid__cell:nth-child(odd) {
-    background: rgb(255 255 255 / 0.035);
-  }
-
-  ::ng-deep .hrs-grid__body .hrs-grid__cell:first-child {
-    background: linear-gradient(rgb(255 255 255 / 0.035), rgb(255 255 255 / 0.035)) 17px 0 /
-      calc(100% - 17px) 100% no-repeat;
-  }
-
-  // never scrolled sideways (it squeezes or becomes cards), so the body needn't clip: the first and
-  // last rows' bar glow stands out past the table as the others' does into the gaps
-  ::ng-deep .hrs-grid__body {
-    overflow: visible;
-  }
-
-  ::ng-deep .hrs-grid__header {
-    justify-content: center;
-    padding: 4px 8px;
-  }
-
-  // the row head: 3px past the bar, the portrait the row's full height; the awards close to its end
-  ::ng-deep .hrs-grid__cell:first-child {
-    padding: 0 0.3em 0 15px;
-    align-items: stretch;
-  }
-
-  ::ng-deep .hrs-grid__cell:not(:first-child) {
-    justify-content: center;
-  }
 
   // the figures a step lighter than the theme's styled text (bold): semibold
   ::ng-deep .hrs-grid__body hrs-number-cell {

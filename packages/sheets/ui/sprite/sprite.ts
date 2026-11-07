@@ -28,7 +28,9 @@ const LAZY_MARGIN = '300px';
  * a sheet's picture shows at its own size and a file is sized by the page's CSS. `zoom`, unlike
  * `transform: scale`, scales the space it takes too. With `spriteCover`, it covers its parent's
  * box instead, as `object-fit: cover` does: scaled to fill it, centred, the rest cut off by the
- * parent (which hides its overflow); a file fills it with `object-fit: cover`.
+ * parent (which hides its overflow); a file fills it with `object-fit: cover`. It stays hidden
+ * until it can be drawn as it should: a named picture until its sheet has loaded (never an empty
+ * image box), a covering sheet's picture until the parent's box has been measured.
  */
 @Directive({
   selector: 'img[hrsSprite]',
@@ -42,6 +44,7 @@ const LAZY_MARGIN = '300px';
     '[style.object-position]': 'position()',
     '[style.zoom]': 'zoom()',
     '[style.display]': 'cover() ? "block" : null',
+    '[style.visibility]': 'unready() ? "hidden" : null',
     '[style.margin-left]': 'coverOffset()?.[0] ?? null',
     '[style.margin-top]': 'coverOffset()?.[1] ?? null',
   },
@@ -86,6 +89,17 @@ export class Sprite {
     if (!this.cover() || !rect || !box) return null;
     return Math.max(box[0] / rect[2], box[1] / rect[3]);
   });
+
+  /**
+   * Not drawn yet: before a named picture's sheet has loaded (an image without a source, which the
+   * browser would draw as an empty box with a border), or a sheet's picture covering its parent
+   * before the parent's box is known (it would draw at its own size first).
+   */
+  protected readonly unready = computed(
+    () =>
+      this.picture() === null ||
+      (this.cover() && this.rect() !== null && this.coverScale() === null),
+  );
 
   /** How far it sits from the parent's corner, centred (in its own, zoomed, pixels). */
   protected readonly coverOffset = computed(() => {
