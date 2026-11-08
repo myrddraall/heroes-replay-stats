@@ -171,11 +171,11 @@ importers:
         specifier: workspace:*
         version: link:../../packages/theme
       '@myrddraall/heroprotocol-analysis':
-        specifier: ^0.5.4
-        version: 0.5.4(dexie@4.4.6)
+        specifier: ^0.5.6
+        version: 0.5.6(dexie@4.4.6)
       '@myrddraall/heroprotocol-db':
-        specifier: ^0.5.4
-        version: 0.5.4(dexie@4.4.6)
+        specifier: ^0.5.6
+        version: 0.5.6(dexie@4.4.6)
       '@ngrx/signals':
         specifier: ^22.0.1
         version: 22.0.1(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2)
@@ -247,12 +247,12 @@ importers:
   libs/analysers:
     dependencies:
       '@myrddraall/heroprotocol-db':
-        specifier: ^0.5.4
-        version: 0.5.4(dexie@4.4.6)
+        specifier: ^0.5.6
+        version: 0.5.6(dexie@4.4.6)
     devDependencies:
       '@myrddraall/heroprotocol':
-        specifier: ^0.5.4
-        version: 0.5.4
+        specifier: ^0.5.6
+        version: 0.5.6
       '@types/node':
         specifier: ^24.0.0
         version: 24.13.6
@@ -859,11 +859,11 @@ importers:
         specifier: workspace:*
         version: link:../shell
       '@myrddraall/heroprotocol-analysis':
-        specifier: ^0.5.4
-        version: 0.5.4(dexie@4.4.6)
+        specifier: ^0.5.6
+        version: 0.5.6(dexie@4.4.6)
       '@myrddraall/heroprotocol-db':
-        specifier: ^0.5.4
-        version: 0.5.4(dexie@4.4.6)
+        specifier: ^0.5.6
+        version: 0.5.6(dexie@4.4.6)
       dexie:
         specifier: ^4.4.6
         version: 4.4.6
@@ -1172,8 +1172,8 @@ importers:
         specifier: workspace:*
         version: link:../shell
       '@myrddraall/heroprotocol-db':
-        specifier: ^0.5.4
-        version: 0.5.4(dexie@4.4.6)
+        specifier: ^0.5.6
+        version: 0.5.6(dexie@4.4.6)
       tslib:
         specifier: ^2.3.0
         version: 2.8.1
@@ -1284,11 +1284,11 @@ importers:
         specifier: workspace:*
         version: link:../shell
       '@myrddraall/heroprotocol-analysis':
-        specifier: ^0.5.4
-        version: 0.5.4(dexie@4.4.6)
+        specifier: ^0.5.6
+        version: 0.5.6(dexie@4.4.6)
       '@myrddraall/heroprotocol-db':
-        specifier: ^0.5.4
-        version: 0.5.4(dexie@4.4.6)
+        specifier: ^0.5.6
+        version: 0.5.6(dexie@4.4.6)
       dexie:
         specifier: ^4.4.6
         version: 4.4.6
@@ -2756,20 +2756,20 @@ packages:
     resolution: {integrity: sha512-zQmgrae86JmP6vSk+ZnAoAzVkY0OwXoeW9PK+N9nxnm3obpYRORIuPQXAZ2oPcqwNUlNkfUBTmt8OimV55Bahg==, tarball: https://npm.pkg.github.com/download/@myrddraall/hero-data/0.5.7/87fde2d6dc7171f30f9ac34538d108ea8348ea4e}
     engines: {node: '>=24'}
 
-  '@myrddraall/heroprotocol-analysis@0.5.4':
-    resolution: {integrity: sha512-JrX/NnNQeZ50S8+blH/uNxN64HcybdRhnIAaLWAKljA4D7beF3avTaHsVC0mLvXpQvmlVAp/u60baW4ZxWADCA==, tarball: https://npm.pkg.github.com/download/@myrddraall/heroprotocol-analysis/0.5.4/fab8178cde2e57e4d6b645b4dc8772710e8b8642}
+  '@myrddraall/heroprotocol-analysis@0.5.6':
+    resolution: {integrity: sha512-Cf0/6F2I5r5dLYRxhIC+02wmFHDFhRM42ZKxnagmNMPPq4yQM9P0QWFmEPMlH309dJDwIY3vNwhZdVG4iq368Q==, tarball: https://npm.pkg.github.com/download/@myrddraall/heroprotocol-analysis/0.5.6/887e294c71ca1389c97277869410c413299e9534}
     engines: {node: '>=24'}
     peerDependencies:
       dexie: ^4.4.6
 
-  '@myrddraall/heroprotocol-db@0.5.4':
-    resolution: {integrity: sha512-/4bUQYy+a8Bjb1NjUa/t5vsIPk1+ox202dM0wZRSWnE096QnQk/NfNTpHBVM7xQ/fZTg/pZpmVPS79wWXfhn0A==, tarball: https://npm.pkg.github.com/download/@myrddraall/heroprotocol-db/0.5.4/3becd9303df6d4d66951067aa84560527015ba53}
+  '@myrddraall/heroprotocol-db@0.5.6':
+    resolution: {integrity: sha512-uL36nGtT65BE73NPf1puaSNdLqvcI/da6XU4Hmhr/hDmww9FoguBcMGaiRx4TXe9rpaZnp0Y1clqJzB0GAFLTw==, tarball: https://npm.pkg.github.com/download/@myrddraall/heroprotocol-db/0.5.6/81ce32b5911bf5865fb072788fb7b7698f57d9f2}
     engines: {node: '>=24'}
     peerDependencies:
       dexie: ^4.4.6
 
-  '@myrddraall/heroprotocol@0.5.4':
-    resolution: {integrity: sha512-uvztMkR4x6aIm3IT3AZ5tdyVvbm2iYzV/4OFMsKTM+sOUdxzPMpD3i2KWIdNkK/kLdThDc1dVuQSD6u3KEFkrg==, tarball: https://npm.pkg.github.com/download/@myrddraall/heroprotocol/0.5.4/4b7faaa6697fefa139041fa493e09d945ceb0fbb}
+  '@myrddraall/heroprotocol@0.5.6':
+    resolution: {integrity: sha512-1I9rGQKgVo8rGNyPe53F8drRN59Hdijtq1HmM2DkEo6uXWZ3d0CMtML8w+rVattbGPiD49lXBjM2g/e6A6g6fQ==, tarball: https://npm.pkg.github.com/download/@myrddraall/heroprotocol/0.5.6/db23003ad9464f024d4a5223b792b4927e686b19}
     engines: {node: '>=24'}
 
   '@myrddraall/mpq@0.2.0':
@@ -7520,17 +7520,17 @@ snapshots:
 
   '@myrddraall/hero-data@0.5.7': {}
 
-  '@myrddraall/heroprotocol-analysis@0.5.4(dexie@4.4.6)':
+  '@myrddraall/heroprotocol-analysis@0.5.6(dexie@4.4.6)':
     dependencies:
-      '@myrddraall/heroprotocol-db': 0.5.4(dexie@4.4.6)
+      '@myrddraall/heroprotocol-db': 0.5.6(dexie@4.4.6)
       dexie: 4.4.6
 
-  '@myrddraall/heroprotocol-db@0.5.4(dexie@4.4.6)':
+  '@myrddraall/heroprotocol-db@0.5.6(dexie@4.4.6)':
     dependencies:
-      '@myrddraall/heroprotocol': 0.5.4
+      '@myrddraall/heroprotocol': 0.5.6
       dexie: 4.4.6
 
-  '@myrddraall/heroprotocol@0.5.4':
+  '@myrddraall/heroprotocol@0.5.6':
     dependencies:
       '@myrddraall/mpq': 0.2.0
 
