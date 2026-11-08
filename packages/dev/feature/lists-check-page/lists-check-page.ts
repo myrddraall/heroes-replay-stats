@@ -67,10 +67,20 @@ class SlowSource implements ListDataSource<Card> {
   }
 }
 
-/** Long lists on one page, in the page's own scroll, each drawing only what is in view. */
+/**
+ * Long lists on one page, in the page's own scroll, each drawing only what is in view: the UI
+ * area's Tests › Lists (`/ui/tests/lists`), its section's side nav in the shell's left-hand drawer.
+ */
 @Component({
   selector: 'hrs-lists-check-page',
-  imports: [MatButton, Layout, ItemList, ItemTemplate, GroupHeaderTemplate, EmptyTemplate],
+  imports: [
+    MatButton,
+    Layout,
+    ItemList,
+    ItemTemplate,
+    GroupHeaderTemplate,
+    EmptyTemplate,
+  ],
   templateUrl: './lists-check-page.html',
   styleUrl: './lists-check-page.scss',
 })

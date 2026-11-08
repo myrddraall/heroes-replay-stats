@@ -57,10 +57,19 @@
   padding-inline-end: 48px;
 }
 
+// The page and its tool drawer: never scrolled sideways (Material's overflow: hidden lets focus and
+// scripts scroll it, which slid the whole page across as a drawer or menu opened); the page inside
+// scrolls up and down as before.
+.shell__panels {
+  overflow: clip;
+}
+
 // The tool drawer (the theme's Drawer, hrs-drawer--shell): flush against the window's right edge,
 // from under the bars to the bottom; only the side panel inside it scrolls.
 .shell__panel {
   width: var(--ui-side-panel-width);
+  // its line along the page: Material's side drawer draws it (over the theme's) in its divider colour
+  --mat-sidenav-container-divider-color: var(--hrs-border);
   min-height: 0;
 
   ::ng-deep .mat-drawer-inner-container {
@@ -68,19 +77,38 @@
   }
 }
 
-// At the top of the panel's edge (the content's corner), over the page; it stays put as the page
-// scrolls and moves with the panel.
+// The sections' drawer: as wide as the side nav and its padding, from under the bars to the bottom,
+// with no fill, line or shade of its own (the scene shows through); its content scrolls inside it.
+.shell__side {
+  width: calc(var(--hrs-side-nav) + 2 * var(--hrs-space-4));
+  background: none;
+  border: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+
+  ::ng-deep .mat-drawer-inner-container {
+    overflow: hidden;
+  }
+}
+
+.shell__side-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hrs-space-4);
+  box-sizing: border-box;
+  height: 100%;
+  padding: var(--hrs-space-4);
+  overflow-y: auto;
+}
+
+// At the top of the page's right edge, over the page, while the panel is closed; it stays put as
+// the page scrolls.
 .shell__panel-toggle {
   position: absolute;
   top: 8px;
   inset-inline-end: 8px;
   z-index: 10;
   background: var(--mat-sys-surface-container);
-  transition: inset-inline-end 400ms cubic-bezier(0.25, 0.8, 0.25, 1);
-}
-
-.shell__panel-toggle--open {
-  inset-inline-end: calc(var(--ui-side-panel-width) + 8px);
 }
 
 // The settings menu's Dev group: a small heading over its pages.

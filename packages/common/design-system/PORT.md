@@ -19,9 +19,9 @@ port it when a page needs it).
 | Material M3 mapping replaces the overrides in `apps/web/src/styles.scss` | done | as a Material theme: `assets/styles/nexus/_material-theme.scss`, generated from bundle.css's mapping (`mat.theme-overrides` + `mat.<component>-overrides` on `:root` and every `[theme]`), `@use`d by `styles.scss` after `mat.theme` (type, density). Components keep Material's components and `--mat-sys-*` tokens |
 | Glass bridge: `hrs-glass*` classes and mixins drawn as Nexus films | removed | served until every package was converted, then deleted with the files below |
 | Glass files removed (`_glass*.scss`, `_theme-colors.scss`, `glass/`) | done | 2026-11-03; the background editor's `panelClass` option went with them (the editor sits in the shell, which carries `theme`) |
-| Self theme directive (`green`, the user's own player) | later | no consumer yet |
+| Self theme directive (`self`, the user's own player) | later | no consumer yet |
 | Rarity theme directive | later | no consumer yet |
-| Game font | later | licence check first; Exo 2 + Source Sans 3 meanwhile |
+| Game font | later | licence check first; Saira + Source Sans 3 meanwhile |
 
 ## Components
 
@@ -34,7 +34,7 @@ Design: **settled** = the user approved it; **changing** = not reviewed yet, may
 | ShellLayout | settled | done | `packages/shell/feature/shell` (bars over the page, tool Drawer flush right); nav model in `packages/shell/model/nav`, `ShellNavStore`, pages hand over what is open with `showShellItem()` |
 | ShellMobile | settled | done | `hrs-shell--handset` from the shell's BreakpointObserver; title + breadcrumb (`packages/shell/ui/crumbs`), nav drawer with the NavTree |
 | NavTree | settled | done | `packages/shell/ui/nav-tree`: `mat-tree` with nested nodes (`isExpanded` from the active branch, Enter follows the link), links as `.hrs-tree__item`, the chevron only on rows with children |
-| SideNav | settled | done | `packages/shell/ui/side-nav`, placed by a page as `hrs-shell-side-nav` (`packages/shell/feature/shell-side-nav`); one folding group (`hrs-sidenav__heading`) headed by what is open (a match), its sections with their sub-items (Stats') |
+| SideNav | settled | done | `packages/shell/ui/side-nav`, drawn by the shell in its left-hand drawer (the page adds its own content over and under it with `hrsShellSide` templates); one group, no heading, its sections with their sub-items (Stats') |
 | StyledText | settled | done | `packages/common/ui/styled-text` (`hrsStyledText`); no page uses it yet |
 | ThemeVariants, Rarity | settled | n/a | previews only |
 | IconButton | changing | done | `mat-icon-button` with icon-button overrides (square, 36px, 16px icon, no state layer) and the outline ring in nexus.css; a `mat-icon` takes the icon-size token; in a Drawer header it is the small one (0.78) |
@@ -53,7 +53,7 @@ Design: **settled** = the user approved it; **changing** = not reviewed yet, may
 | Tooltip | changing | later | |
 | BackLink | changing | later | |
 | DataGrid | new | done | `hrs-data-grid` in `packages/data-views` (TanStack Virtual, page scroll, look by custom properties, Material sort): score, stat tables (team stats, player stats, unit kills, XP), talents, draft, players |
-| ItemList | new | done | `hrs-item-list` in `packages/data-views`: matches, maps, points of interest, chat; Dev › Lists check |
+| ItemList | new | done | `hrs-item-list` in `packages/data-views`: matches, maps, points of interest, chat; Dev › UI › Tests › Lists |
 | ListRow | changing | later | |
 | KeyValue | changing | later | |
 | Card | changing | later | |
@@ -82,7 +82,7 @@ foundation port; all converted the same day). A package is done when it has no g
 |---|---|---|
 | replays | 0 | done (glass gone: `.hrs-panel` for its panels, team rows by `theme`; its styles stay on Material's `--mat-sys-*` tokens) |
 | aether-forge | 17 | done (Material drawers with a hairline, fields and flyouts on `--mat-sys-surface-container*`, accents on `--mat-sys-primary`, markers from `--mat-sys-secondary`/`-primary`) |
-| background | 9 | done (Theme preview: a panel per `theme`, its opacity and blur the site's) |
+| background | 9 | done (Theme preview, Dev › UI › Theme: a panel per `theme`, its opacity and blur the site's) |
 | maps | 7 | done (Material drawers, `.hrs-panel` map cards, lines `--mat-sys-outline-variant`) |
 | shell | 0 | done |
 | import | 2 | done |

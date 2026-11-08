@@ -1,82 +1,68 @@
+@use '../stat-tables/score-row/score-row';
+
+// one card (hrs-panel) around the table and the teams' totals, as the score screen's; inside the
+// host, so the page layout's padding stays around it. Too wide for the card, it scrolls sideways
+// inside it.
 :host {
   display: block;
-  padding-top: 16px;
+  min-width: 0;
 }
 
-.title {
-  margin: 0 0 8px;
-  font: var(--mat-sys-title-large);
-}
-
-// Colours are Material's system tokens, so a row re-themed by its team follows it. The tiers
-// are 112px to 160px wide, the talents' names wrapping.
-.talents {
-  width: fit-content;
-  max-width: 100%;
-  --hrs-grid-row-height: 0px;
-  --hrs-grid-cell-padding: 4px 8px;
-  --hrs-grid-cell-wrap: normal;
-  --hrs-grid-font: var(--mat-sys-body-small);
-  --hrs-grid-text: var(--mat-sys-on-surface);
-  --hrs-grid-first-text: var(--mat-sys-on-surface);
-  --hrs-grid-header-height: 0px;
-  --hrs-grid-header-font: var(--mat-sys-label-small);
-  --hrs-grid-header-text: var(--mat-sys-on-surface-variant);
-  --hrs-grid-header-case: none;
-  --hrs-grid-header-tracking: var(--mat-sys-label-small-tracking);
-  --hrs-grid-header-line: none;
-  --hrs-grid-header-background: var(--mat-sys-surface-container-highest);
-
-  // Each row's own colours, its team's: set on the rows, where its theme is.
-  ::ng-deep .hrs-grid__body .hrs-grid__row {
-    --hrs-grid-themed-row-background: var(--mat-sys-surface-container);
-    --hrs-grid-sticky-background: var(--mat-sys-surface-container-highest);
-    --hrs-grid-row-hover: var(--mat-sys-surface-container-high);
-    --hrs-grid-row-line: none;
-  }
-
-  ::ng-deep .hrs-grid__body .hrs-grid__cell {
-    border-top: 1px solid var(--mat-sys-outline-variant);
-  }
-
-  ::ng-deep .hrs-grid__cell:not(:first-child) {
-    min-width: 112px;
-  }
-
-  // The players stay put as it scrolls sideways.
-  ::ng-deep :is(.hrs-grid__header, .hrs-grid__cell):first-child {
-    position: sticky;
-    left: 0;
-    z-index: 1;
-    padding: 2px 8px;
-    background: var(--hrs-grid-sticky-background, var(--mat-sys-surface-container-highest));
-  }
-
-  ::ng-deep .hrs-grid__header {
-    padding: 4px 8px;
-  }
-}
-
-.talent {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.talent__icon {
-  flex: none;
-  border-radius: 4px;
-}
-
-.talents__none {
-  color: var(--mat-sys-on-surface-variant);
-}
-
-.talent__text {
+.talent-screen {
   display: grid;
+  gap: 16px;
+  padding: 16px 20px;
+  overflow-x: auto;
+  // the teams' totals scale with the card's width on narrow screens
+  container-type: inline-size;
 }
 
-.talent__level {
-  font: var(--mat-sys-label-small);
-  color: var(--mat-sys-on-surface-variant);
+// the game's score rows (_score-row.scss)
+.talents {
+  @include score-row.grid;
+}
+
+// the levels over the tiers in the rows' type, as the game's talent screen heads them (their colour
+// their theme's styled text: purple, the heroic tier's legendary)
+.talents__level {
+  font: 700 calc(var(--hrs-grid-row-height) * var(--hrs-grid-row-type-scale)) / 1 var(--font-brand);
+}
+
+// The game's talent frames (hrs-talent-frame): the icon 44 of the game's 70 high row, a little over
+// the layout's 40 (TalentsOverviewPanel's TalentTreeIcon) so the frame shows as large in the row as
+// on the game's screen; its frame (68 for 40, so a little over the row's height) overhangs the row
+// into the gaps between rows rather than making the row taller than the score screen's.
+.talent {
+  font-size: calc(var(--hrs-grid-row-height) * 44 / 70);
+  margin-block: calc(var(--hrs-grid-row-height) * (1 - 44 * 68 / (70 * 40)) / 2);
+}
+
+// the build's button: the game's link icon (its Copy Link buttons'), at its 24, the button's icon
+// size so Material centres it
+.build {
+  --mat-icon-button-icon-size: 24px;
+}
+
+// no ring (the theme's on every icon button), here or hovered: just the game's icon
+.build,
+.build:hover {
+  box-shadow: none;
+}
+
+.build__icon {
+  display: block;
+  // a little under the row's middle, to sit with the talents' frames
+  translate: 0 2px;
+  width: 24px;
+  height: 24px;
+  overflow: hidden;
+}
+
+.talents__hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

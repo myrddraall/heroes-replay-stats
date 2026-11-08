@@ -1,0 +1,56 @@
+// Stuck to the top of the view and following the grid sideways come from the theme's
+// `hrs-grid__head`; the row lines up with the grid's columns, at least as wide as its space. Its
+// width counts for nothing round it (the grid already takes its cells' widths, as its sizing row):
+// a row the grid's width in px would otherwise hold a fitted container at its old width.
+:host {
+  display: block;
+  contain: inline-size;
+}
+
+.hrs-grid__row {
+  min-width: 100%;
+}
+
+// A sortable header is a button across the whole cell, in the cell's own type.
+.grid-header__sort {
+  all: unset;
+  display: flex;
+  flex: 1;
+  align-self: stretch;
+  align-items: center;
+  justify-content: inherit;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--hrs-focus);
+    outline-offset: -2px;
+  }
+}
+
+// The cell's content, wrapping as the cell does; measured (at its least and most) for the grid.
+.grid-header__content {
+  display: inline-flex;
+  align-items: center;
+  gap: inherit;
+  max-width: 100%;
+}
+
+.grid-header__arrow-room {
+  flex: none;
+  width: 18px;
+}
+
+// the sort arrow in the room kept for it (in place of the theme's, drawn after the cell)
+[role='columnheader'].hrs-grid__header[aria-sort]::after {
+  content: none;
+}
+
+.hrs-grid__header[aria-sort='descending'] .grid-header__arrow-room::after {
+  content: '▾';
+  color: var(--hrs-border-strong);
+}
+
+.hrs-grid__header[aria-sort='ascending'] .grid-header__arrow-room::after {
+  content: '▴';
+  color: var(--hrs-border-strong);
+}

@@ -41,4 +41,23 @@ describe('player rows', () => {
     expect(rows.map((r) => r.theme)).toEqual(['blue', 'red']);
     expect(rows[0]!.key).toBe(0);
   });
+
+  it('themes your own rows by your side: the self theme on blue, legendary on red', () => {
+    const players = [player(0, 0, 0), player(1, 0, 0), player(5, 1, 0)];
+    // relative: your team is blue
+    const blue = playerRows(players, {}, columns, 0, 'relative', new Set([1]));
+    expect(blue.map((r) => [r.key, r.theme])).toEqual([
+      [0, 'blue'],
+      [1, 'blue-self'],
+      [5, 'red'],
+    ]);
+    // fixed: team 0 is blue, so you on team 1 are on red; blue team still first
+    const red = playerRows([...players, player(6, 1, 0)], {}, columns, 1, 'fixed', new Set([6]));
+    expect(red.map((r) => [r.key, r.theme])).toEqual([
+      [0, 'blue'],
+      [1, 'blue'],
+      [5, 'red'],
+      [6, 'red-self'],
+    ]);
+  });
 });

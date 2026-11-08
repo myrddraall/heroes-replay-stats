@@ -6,7 +6,7 @@ import { fakeHeroData } from '@myrddraall/heroes-replay-stats-heroes/testing';
 import { provideFakeSheets } from '@myrddraall/heroes-replay-stats-sheets/testing';
 import { heroLookup, type HeroLookup } from '@myrddraall/heroes-replay-stats-heroes/model';
 import type { ReplaySummary } from '../../model';
-import { toReplayCard, type ReplayCard } from './replay-card';
+import { toReplayCard, type ReplayCard, type ReplayCardJob } from './replay-card';
 import { formatDuration, ReplayListItem } from './replay-list-item';
 
 const replay: ReplaySummary = {
@@ -85,7 +85,7 @@ describe('ReplayListItem', () => {
     expect(text('.replay__map')).toBe('Towers of Doom');
     expect(text('.replay__mode')).toBe('Storm League');
     expect(text('.replay__length')).toBe('20:34');
-    expect(text('.replay__analysing')).toBe('analysing…');
+    expect(text('.replay__activity')).toBe('analysing…'); // ready: its background analysers run
     expect(el.querySelector('.replay__played time')?.getAttribute('datetime')).toBe(
       replay.playedAt,
     );
@@ -95,11 +95,11 @@ describe('ReplayListItem', () => {
     );
     expect(text('.replay__imported')).toMatch(/^Imported: Jun 2, 2024, \d\d:15$/);
     const t = (node: Element, sel: string) => node.querySelector(sel)?.textContent?.trim();
-    const teams = [...el.querySelectorAll('.team')].map((team) => [
-      t(team, '.team__result'),
-      [...team.querySelectorAll('.player')].map((p) => [
-        t(p, '.player__hero'),
-        t(p, '.player__name'),
+    const teams = [...el.querySelectorAll('hrs-match-team')].map((team) => [
+      t(team, '.result'),
+      [...team.querySelectorAll('hrs-player-cell')].map((p) => [
+        t(p, '.cell__hero'),
+        t(p, '.cell__player'),
       ]),
     ]);
     // Bob recorded it, so his team is blue and listed first
@@ -108,7 +108,7 @@ describe('ReplayListItem', () => {
       ['Defeat', [['Sonya', 'Alice']]],
     ]);
     // Victory glows in the legendary theme, Defeat is plain in the team's colour
-    const results = [...el.querySelectorAll('.team__result > span')].map((r) => [
+    const results = [...el.querySelectorAll('.result > span')].map((r) => [
       r.className.match(/hrs-styled--(\w+)/)?.[1],
       r.getAttribute('theme'),
     ]);
@@ -117,9 +117,9 @@ describe('ReplayListItem', () => {
       ['base', null],
     ]);
     // each player has their hero's minimap icon; Sonya is the only hero the fake data knows
-    const icons = [...el.querySelectorAll('.player')].map((p) => [
+    const icons = [...el.querySelectorAll('hrs-player-cell')].map((p) => [
       p.querySelector('hrs-hero-minimap-icon') !== null,
-      p.querySelector('img')?.alt,
+      p.querySelector<HTMLImageElement>('hrs-hero-minimap-icon hrs-portrait img')?.alt,
     ]);
     expect(icons).toEqual([
       [true, undefined],
@@ -140,10 +140,10 @@ describe('ReplayListItem', () => {
 
   it("colours the teams from the recorder's point of view, or yours once marked", async () => {
     const rows = (el: HTMLElement) =>
-      [...el.querySelectorAll('.team')].map((t) => [
+      [...el.querySelectorAll('hrs-match-team')].map((t) => [
         t.getAttribute('aria-label'),
         t.getAttribute('theme'),
-        t.querySelector('.player__name')!.textContent!.trim(),
+        t.querySelector('.cell__player')!.textContent!.trim(),
       ]);
     // Bob recorded it, so his team (1) is blue, and blue is on top
     expect(rows((await render(replay)).nativeElement)).toEqual([
@@ -170,8 +170,8 @@ describe('ReplayListItem', () => {
       recorderToonHandle: '1-Hero-1-3',
     });
     const el: HTMLElement = fixture.nativeElement;
-    const names = [...el.querySelectorAll('.team')].map((t) =>
-      [...t.querySelectorAll('.player__name')].map((n) => n.textContent!.trim()),
+    const names = [...el.querySelectorAll('hrs-match-team')].map((t) =>
+      [...t.querySelectorAll('.cell__player')].map((n) => n.textContent!.trim()),
     );
     expect(names).toEqual([['Dave', 'Alice', 'Carol'], ['Bob']]);
   });
@@ -190,21 +190,94 @@ describe('ReplayListItem', () => {
     expect(await marks({ ...replay, outdated: true }, undefined)).toEqual(['New', 'Out of date']);
   });
 
-  it('shows you in your own colour, and says so to screen readers', async () => {
+  it('shows you in your own theme on your side, and says so to screen readers', async () => {
     const you = (el: HTMLElement) =>
-      [...el.querySelectorAll('.player')].map((p) => [
-        p.querySelector('.player__name')!.textContent!.trim(),
-        p.classList.contains('hrs-self'),
-        p.querySelector('.player__you')?.textContent?.trim() ?? null,
+      [...el.querySelectorAll('hrs-player-cell')].map((p) => [
+        p.querySelector('.cell__player')!.textContent!.trim(),
+        p.getAttribute('theme'),
+        p.querySelector('.cell__you')?.textContent?.trim() ?? null,
       ]);
     // Bob recorded it
     expect(you((await render(replay)).nativeElement)).toEqual([
-      ['Bob', true, '(you)'],
-      ['Alice', false, null],
+      ['Bob', 'blue-self', '(you)'],
+      ['Alice', 'red', null],
     ]);
     expect(you((await render(replay, ['1-Hero-1-1'])).nativeElement)).toEqual([
-      ['Alice', true, '(you)'],
-      ['Bob', false, null],
+      ['Alice', 'blue-self', '(you)'],
+      ['Bob', 'red', null],
     ]);
+  });
+
+  it('says when there is no result, nobody on a side, or no game clock yet', async () => {
+    const [alice] = replay.players;
+    // left during loading: no winner, the gates never opened, and only Alice on her side
+    const fixture = await render({
+      ...replay,
+      winningTeam: null,
+      durationSeconds: 0,
+      players: [alice!],
+      recorderToonHandle: alice!.toonHandle,
+    });
+    const el: HTMLElement = fixture.nativeElement;
+    const t = (node: ParentNode, sel: string) => node.querySelector(sel)?.textContent?.trim();
+    expect(t(el, '.replay__length')).toBe('Before the gates opened');
+    const teams = [...el.querySelectorAll('hrs-match-team')].map((team) => [
+      team.getAttribute('aria-label'),
+      t(team, '.result'),
+      team.querySelector('[hrsStyledText], .hrs-styled--glow, .hrs-styled--base') !== null,
+      t(team, '.empty') ?? null,
+      team.querySelectorAll('hrs-player-cell').length,
+    ]);
+    expect(teams).toEqual([
+      ['Blue team', 'No result', false, null, 1],
+      ['Red team', 'No result', false, 'No players', 0],
+    ]);
+  });
+
+  it('shows an import and its analysers in progress, after the chips, and opens once imported', async () => {
+    const state = async (r: ReplaySummary, job: ReplayCardJob | null) => {
+      const el: HTMLElement = (await renderCard(toReplayCard(r, new Set(), heroes, undefined, job)))
+        .nativeElement;
+      const head = [...el.querySelector('.replay__head')!.children].map((c) => c.className);
+      return {
+        activity: el.querySelector('.replay__activity')?.textContent?.trim() ?? null,
+        afterChips:
+          head.indexOf('replay__activity') ===
+          head.findIndex((c) => c.includes('replay__marks')) + 1,
+        bar: el.querySelector('mat-progress-bar')?.getAttribute('aria-valuenow') ?? null,
+        label: el.querySelector('mat-progress-bar')?.getAttribute('aria-label') ?? null,
+        opens: el.querySelector('.replay__link') !== null,
+      };
+    };
+    const importing = { stage: 'importing', progress: 0.42 } as const;
+    expect(await state({ ...replay, status: 'ingesting' }, importing)).toEqual({
+      activity: 'importing…',
+      afterChips: true,
+      bar: '42',
+      label: 'Importing Towers of Doom',
+      opens: false,
+    });
+    // re-imported: still listed as ready, but its job is importing it again
+    expect((await state({ ...replay, status: 'complete' }, importing)).opens).toBe(false);
+    expect(await state(replay, { stage: 'analysing', progress: 0.9 })).toEqual({
+      activity: 'analysing…',
+      afterChips: true,
+      bar: '90',
+      label: 'Analysing Towers of Doom',
+      opens: true,
+    });
+    // a job's start, 0%, still shows its bar
+    expect((await state(replay, { stage: 'analysing', progress: 0 })).bar).toBe('0');
+    // without a job, from its stored status: ready is analysing, without progress
+    expect(await state(replay, null)).toMatchObject({
+      activity: 'analysing…',
+      bar: null,
+      opens: true,
+    });
+    expect(await state({ ...replay, status: 'complete' }, null)).toMatchObject({
+      activity: null,
+      bar: null,
+      opens: true,
+    });
   });
 });

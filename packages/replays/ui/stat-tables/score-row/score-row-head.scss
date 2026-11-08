@@ -1,0 +1,52 @@
+// The row head (see score-row-head.ts). Sized in em: the row's type sizes it; the portrait and the
+// silence icon from the row's height.
+:host {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.25em 0.75em;
+  min-height: 100%;
+  // the cell's width, so its content can sit at its right end
+  flex: 1;
+}
+
+.portrait {
+  // the row's height
+  font-size: var(--hrs-grid-row-height);
+  align-self: stretch;
+  mask-image: linear-gradient(
+    to right,
+    black 46%,
+    rgb(0 0 0 / 0.82) 58%,
+    rgb(0 0 0 / 0.52) 70%,
+    rgb(0 0 0 / 0.22) 82%,
+    rgb(0 0 0 / 0.09) 90%,
+    transparent
+  );
+}
+
+.names {
+  display: grid;
+  // over the portrait's faded end, as the game's labels sit 10 of its 100 back over it
+  margin-left: calc(-0.1 * var(--hrs-grid-row-height) * 100 / 56 - 0.75em);
+  line-height: 1.2;
+}
+
+.names__player {
+  // the player's name against the hero's; a page with smaller rows can set it larger
+  font-size: var(--score-row-player-name-size, 0.75em);
+}
+
+// The game's silence icon, as its talent screen and leader panel size it (TalentsOverviewPanel,
+// HeroLeaderPanel: SilencedIcon): 27 × 24 at the top of the 100-wide portrait, in the row's 56. The
+// game puts it 6 in from the portrait's right; here 16, as the names start 10 back over the
+// portrait, so it ends 6 short of them. (The older GameStatsPanel drew it 45 × 40 top-left.)
+.silence {
+  position: absolute;
+  top: 0;
+  left: calc(var(--hrs-grid-row-height) * (100 - 16 - 27) / 56);
+  width: calc(var(--hrs-grid-row-height) * 27 / 56);
+  height: calc(var(--hrs-grid-row-height) * 24 / 56);
+  overflow: hidden;
+}
+

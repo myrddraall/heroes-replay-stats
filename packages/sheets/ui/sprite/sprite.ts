@@ -28,7 +28,14 @@ const LAZY_MARGIN = '300px';
  * a sheet's picture shows at its own size and a file is sized by the page's CSS. `zoom`, unlike
  * `transform: scale`, scales the space it takes too. With `spriteCover`, it covers its parent's
  * box instead, as `object-fit: cover` does: scaled to fill it, centred, the rest cut off by the
- * parent (which hides its overflow); a file fills it with `object-fit: cover`.
+ * parent (which hides its overflow); a file fills it with `object-fit: cover`. It stays hidden
+ * until it can be drawn as it should: a named picture until its sheet has loaded (never an empty
+ * image box), a covering sheet's picture until the parent's box has been measured.
+ *
+ * A picture with smaller copies (`variants`) shows the smallest that is at least as big as it is
+ * drawn, in device pixels (its box, or `spriteWidth`/`spriteHeight`), else the picture itself: a
+ * portrait shown small loads its small copy's sheet, not the full size's. Covering, it waits for
+ * the parent's box before it loads any.
  */
 @Directive({
   selector: 'img[hrsSprite]',
@@ -42,6 +49,7 @@ const LAZY_MARGIN = '300px';
     '[style.object-position]': 'position()',
     '[style.zoom]': 'zoom()',
     '[style.display]': 'cover() ? "block" : null',
+    '[style.visibility]': 'unready() ? "hidden" : null',
     '[style.margin-left]': 'coverOffset()?.[0] ?? null',
     '[style.margin-top]': 'coverOffset()?.[1] ?? null',
   },
@@ -66,10 +74,10 @@ export class Sprite {
   /** Whether the image is near the viewport (always, where the browser can't tell). */
   private readonly near = signal(typeof IntersectionObserver === 'undefined');
 
-  /** The picture to show: as given, or a sheet's by name once its sheet has loaded. */
+  /** The picture to show: as given (or its smallest copy big enough), or a sheet's by name once its sheet has loaded. */
   protected readonly picture = computed((): SpritePicture | null => {
     const given = this.hrsSprite();
-    if (typeof given !== 'string') return given;
+    if (typeof given !== 'string') return this.sized(given);
     const { sheet, entry } = parseSheetName(given);
     const status = this.store.status(this.store.sheetUrl(sheet));
     if (status?.status !== 'ready') return null;
@@ -79,6 +87,34 @@ export class Sprite {
 
   protected readonly rect = computed(() => this.picture()?.rect ?? null);
 
+  /**
+   * A picture, or the smallest of its copies at least as big as it is drawn (device pixels); none
+   * yet while a covering one's box is unknown (so it loads no sheet it might not need).
+   */
+  private sized(given: SpritePicture): SpritePicture | null {
+    const variants = given.variants;
+    if (!variants?.length) return given;
+    const ratio = typeof devicePixelRatio === 'number' ? devicePixelRatio : 1;
+    let need: readonly [number, number] | null;
+    if (this.cover()) {
+      const box = this.box();
+      if (!box) return null;
+      need = [box[0] * ratio, box[1] * ratio];
+    } else {
+      const width = this.spriteWidth();
+      const height = this.spriteHeight();
+      need =
+        width !== undefined
+          ? [width * ratio, 0]
+          : height !== undefined
+            ? [0, height * ratio]
+            : null;
+    }
+    if (!need) return given;
+    const [w, h] = need;
+    return variants.find((v) => v.rect && v.rect[2] >= w && v.rect[3] >= h) ?? given;
+  }
+
   /** The scale that makes a sheet's picture cover the parent's box. */
   private readonly coverScale = computed(() => {
     const rect = this.rect();
@@ -86,6 +122,17 @@ export class Sprite {
     if (!this.cover() || !rect || !box) return null;
     return Math.max(box[0] / rect[2], box[1] / rect[3]);
   });
+
+  /**
+   * Not drawn yet: before a named picture's sheet has loaded (an image without a source, which the
+   * browser would draw as an empty box with a border), or a sheet's picture covering its parent
+   * before the parent's box is known (it would draw at its own size first).
+   */
+  protected readonly unready = computed(
+    () =>
+      this.picture() === null ||
+      (this.cover() && this.rect() !== null && this.coverScale() === null),
+  );
 
   /** How far it sits from the parent's corner, centred (in its own, zoomed, pixels). */
   protected readonly coverOffset = computed(() => {

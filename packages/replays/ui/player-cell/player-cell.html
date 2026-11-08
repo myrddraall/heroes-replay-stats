@@ -2,4 +2,7 @@
 <span class="cell__names">
   <span class="cell__hero">{{ hero() }}</span>
   <span class="cell__player">{{ name() }}</span>
+  @if (self()) {
+    <span class="cell__you">(you)</span>
+  }
 </span>

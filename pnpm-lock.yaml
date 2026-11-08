@@ -114,8 +114,8 @@ importers:
         specifier: ^22.1.0
         version: 22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(rxjs@7.8.2)
       '@myrddraall/hero-data':
-        specifier: ^0.5.6
-        version: 0.5.6
+        specifier: ^0.5.7
+        version: 0.5.7
       '@myrddraall/heroes-replay-stats-aether':
         specifier: workspace:*
         version: link:../../packages/aether
@@ -712,9 +712,15 @@ importers:
       '@myrddraall/heroes-replay-stats-aether':
         specifier: workspace:*
         version: link:../aether
+      '@myrddraall/heroes-replay-stats-common':
+        specifier: workspace:*
+        version: link:../common
       '@myrddraall/heroes-replay-stats-data-views':
         specifier: workspace:*
         version: link:../data-views
+      '@myrddraall/heroes-replay-stats-heroes':
+        specifier: workspace:*
+        version: link:../heroes
       '@myrddraall/heroes-replay-stats-layout':
         specifier: workspace:*
         version: link:../layout
@@ -774,8 +780,8 @@ importers:
   packages/heroes:
     dependencies:
       '@myrddraall/hero-data':
-        specifier: ^0.5.6
-        version: 0.5.6
+        specifier: ^0.5.7
+        version: 0.5.7
       '@myrddraall/heroes-replay-stats-common':
         specifier: workspace:*
         version: link:../common
@@ -984,8 +990,8 @@ importers:
   packages/maps:
     dependencies:
       '@myrddraall/hero-data':
-        specifier: ^0.5.6
-        version: 0.5.6
+        specifier: ^0.5.7
+        version: 0.5.7
       '@myrddraall/heroes-replay-stats-background':
         specifier: workspace:*
         version: link:../background
@@ -1248,8 +1254,8 @@ importers:
   packages/replays:
     dependencies:
       '@myrddraall/hero-data':
-        specifier: ^0.5.6
-        version: 0.5.6
+        specifier: ^0.5.7
+        version: 0.5.7
       '@myrddraall/heroes-replay-stats-common':
         specifier: workspace:*
         version: link:../common
@@ -2746,8 +2752,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@myrddraall/hero-data@0.5.6':
-    resolution: {integrity: sha512-lSF3OpzOZ+a3QaeZ3NMAhHZiY8BNFv5HjudriqYFNbMe9CToXSkRjw+BsagS5mhpQWn9OC2z/8blVauja6UtGA==, tarball: https://npm.pkg.github.com/download/@myrddraall/hero-data/0.5.6/08ceddfe55de53a66aef18a8d741d861b9276fe3}
+  '@myrddraall/hero-data@0.5.7':
+    resolution: {integrity: sha512-zQmgrae86JmP6vSk+ZnAoAzVkY0OwXoeW9PK+N9nxnm3obpYRORIuPQXAZ2oPcqwNUlNkfUBTmt8OimV55Bahg==, tarball: https://npm.pkg.github.com/download/@myrddraall/hero-data/0.5.7/87fde2d6dc7171f30f9ac34538d108ea8348ea4e}
     engines: {node: '>=24'}
 
   '@myrddraall/heroprotocol-analysis@0.5.6':
@@ -7512,7 +7518,7 @@ snapshots:
   '@msgpackr-extract/msgpackr-extract-win32-x64@3.0.4':
     optional: true
 
-  '@myrddraall/hero-data@0.5.6': {}
+  '@myrddraall/hero-data@0.5.7': {}
 
   '@myrddraall/heroprotocol-analysis@0.5.6(dexie@4.4.6)':
     dependencies:

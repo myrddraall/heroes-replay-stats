@@ -1,0 +1,81 @@
+// The inside 1.5em across; the ring (its inner edge 42 of its 64) 64/42 of that, 11/42 out each side.
+:host {
+  --hrs-frame-inset: calc(1.5em * 11 / 42);
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+}
+
+:host([state='disabled']) {
+  filter: grayscale(0.8) brightness(0.85);
+}
+
+// The ring, over the inside: the theme's glow colour in the ring's shape, with the ring's own light
+// over it in luminosity (the texture's light and dark, the theme's hue), in a group of its own so it
+// blends with nothing behind the frame. Its art is black inside its rim (to 20.5 of its 32 radius,
+// the rim solid from there to 22.5), so that is cut away: the inside shows through, its edge under
+// the rim.
+.ring {
+  isolation: isolate;
+  mask: radial-gradient(closest-side, transparent calc(100% * 20.75 / 32), #000 calc(100% * 21 / 32));
+}
+
+.ring__colour {
+  position: absolute;
+  inset: 0;
+  background: var(--hrs-glow);
+}
+
+.ring__light {
+  position: absolute;
+  inset: 0;
+  filter: grayscale(1);
+  mix-blend-mode: luminosity;
+}
+
+// The inside: the ring's inner circle and one unit of 42 more (43), everything in it cut to it,
+// its layers one over another: its edge under the rim, so nothing shows between them. It lays out
+// as 1.5em (the margin takes the extra back), so the frame's size and its content's centre stay.
+.inside {
+  display: grid;
+  grid-template: 100% / 100%;
+  width: calc(1.5em * 43 / 42);
+  height: calc(1.5em * 43 / 42);
+  margin: calc(1.5em * -0.5 / 42);
+  border-radius: 50%;
+  overflow: hidden;
+
+  > * {
+    grid-area: 1 / 1;
+  }
+}
+
+// the background: the theme's dark tint, a little of its glow in the middle
+.inside__background {
+  background: radial-gradient(
+    circle,
+    color-mix(in oklab, var(--hrs-tint) 70%, var(--hrs-glow)),
+    var(--hrs-tint)
+  );
+}
+
+// the content, centred, the inside's size (a portrait fills it, its edge under the rim)
+.inside__content {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+// selected: the inner glow (white art, its fade in its alpha) in the theme's glow colour at 69%,
+// over the content: a wash of the team's colour round the inside's edge, the content still clear
+.inside__glow {
+  position: relative;
+  visibility: hidden;
+  background: var(--hrs-glow);
+  opacity: 0.69;
+  pointer-events: none;
+}
+
+:host([state='selected']) .inside__glow {
+  visibility: visible;
+}

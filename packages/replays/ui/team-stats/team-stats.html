@@ -1,16 +1,9 @@
-<h2 class="title">Teams</h2>
-@for (group of groups(); track group.id) {
-  <section [attr.aria-labelledby]="'teams-' + group.id">
-    <h3 class="subtitle" [id]="'teams-' + group.id">{{ group.title }}</h3>
-    <ui-stat-table [columns]="group.columns" [rows]="group.rows" rowHeadLabel="Team">
-      <ng-template [uiStatRowHead]="group.rows" let-data>
-        <span class="team">
-          <span class="team__name">{{ data.name }}</span>
-          @if (data.result) {
-            <span class="team__result">{{ data.result }}</span>
-          }
-        </span>
-      </ng-template>
-    </ui-stat-table>
-  </section>
+@if (shown(); as group) {
+  <!-- the side nav names the section on screen -->
+  <h2 class="cdk-visually-hidden">{{ group.title }}</h2>
+  <ui-stat-table [columns]="group.columns" [rows]="group.rows" rowHeadLabel="Team">
+    <ng-template [uiStatRowHead]="group.rows" let-data>
+      <ui-score-team-head [name]="data.name" [result]="data.result ?? null" />
+    </ng-template>
+  </ui-stat-table>
 }

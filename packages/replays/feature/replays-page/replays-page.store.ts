@@ -21,8 +21,8 @@ import { MODE_LABELS, toReplayCard } from '../../ui';
 const QUERY = { q: '', map: '', mode: '', hero: '', played: 'any' };
 
 /**
- * {@link ReplaysPage}'s component store: the stored replays as cards, and the filter that narrows
- * them, kept in the page's address.
+ * {@link ReplaysPage}'s component store: the stored replays as cards, importing ones included, and
+ * the filter that narrows them, kept in the page's address.
  */
 export const ReplaysPageStore = signalStore(
   withQueryParams(QUERY),
@@ -33,12 +33,19 @@ export const ReplaysPageStore = signalStore(
     _imports: inject(ReplayImportJobStore),
     _viewed: inject(ViewedReplaysStore),
   })),
-  withComputed(({ _replays, _settings, _heroData, _viewed, query }) => {
+  withComputed(({ _replays, _settings, _heroData, _viewed, _imports, query }) => {
     const cards = computed(() => {
       const me = new Set(_settings.meToonHandles());
       const heroes = _heroData.lookup();
       const seen = _viewed.seen();
-      return _replays.replays().map((replay) => toReplayCard(replay, me, heroes, seen[replay.id]));
+      const jobs = _imports.progressByReplay();
+      return (
+        _replays
+          .listed()
+          // one still importing only while its import runs: one that stopped part-way stays hidden
+          .filter((r) => r.status === 'ready' || r.status === 'complete' || jobs.has(r.id))
+          .map((r) => toReplayCard(r, me, heroes, seen[r.id], jobs.get(r.id) ?? null))
+      );
     });
     /** The filter the address holds; a mode or a time it doesn't know is any. */
     const filter = computed((): MatchFilter => {

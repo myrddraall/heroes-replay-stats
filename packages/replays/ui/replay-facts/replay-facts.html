@@ -1,0 +1,10 @@
+<dl class="facts">
+  <dt>Played</dt>
+  <dd>
+    <time [attr.datetime]="replay().playedAt">{{ replay().playedAt | date: 'MMM d, y, HH:mm' }}</time>
+  </dd>
+  <dt>Length</dt>
+  <dd>{{ duration() }}</dd>
+  <dt>Build</dt>
+  <dd>{{ replay().build }}</dd>
+</dl>

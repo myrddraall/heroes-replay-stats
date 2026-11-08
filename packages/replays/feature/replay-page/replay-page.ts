@@ -2,18 +2,19 @@ import { Component, computed, inject, input } from '@angular/core';
 import { MatProgressBar } from '@angular/material/progress-bar';
 import { RouterOutlet } from '@angular/router';
 import { Layout, LayoutItem } from '@myrddraall/heroes-replay-stats-layout/ui';
-import { ShellSideNav, showShellItem } from '@myrddraall/heroes-replay-stats-shell/feature';
+import { ShellSideTemplate, showShellItem } from '@myrddraall/heroes-replay-stats-shell/feature';
 import { TeamPerspective } from '../../ui';
 import { EmptyState } from '@myrddraall/heroes-replay-stats-common/ui';
-import { ReplayHeader } from '../../ui';
+import { MatchCard, ReplayHeader } from '../../ui';
 import { matchSections } from './match-sections';
 import { ReplayPageStore } from './replay-page.store';
 
 /**
- * One match, by its replay's id in the address (`/replays/matches/<id>`) (container): its header
- * and the section its child route shows (the score screen, a player stats table), with the side nav
- * of its sections (Stats' own under Stats) beside it. While it is open the shell's navigation has
- * it under Replays › Matches, with its sections. The sections read the replay from
+ * One match, by its replay's id in the address (`/replays/matches/<id>`) (container): the section
+ * its child route shows (the score screen, a player stats table); its card (the map's preview, its
+ * name, mode and facts) goes over its sections in the shell's left-hand drawer (on a handset, which
+ * has no such drawer, its header with the facts is over the section). While it is open the shell's
+ * navigation has it under Replays › Matches, with its sections. The sections read the replay from
  * {@link ReplayPageStore}; teams are coloured from your point of view.
  */
 @Component({
@@ -22,10 +23,11 @@ import { ReplayPageStore } from './replay-page.store';
     EmptyState,
     Layout,
     LayoutItem,
+    MatchCard,
     MatProgressBar,
     ReplayHeader,
     RouterOutlet,
-    ShellSideNav,
+    ShellSideTemplate,
   ],
   templateUrl: './replay-page.html',
   styleUrl: './replay-page.scss',
@@ -35,6 +37,11 @@ export class ReplayPage {
   /** From the route. */
   readonly replayId = input.required<string>();
   protected readonly store = inject(ReplayPageStore);
+  /** The map's replay preview, for its card; none where the data has none. */
+  protected readonly preview = computed(() => {
+    const replay = this.store.replay();
+    return replay ? this.store.heroes().mapPreview(replay.map) : null;
+  });
 
   constructor() {
     this.store.show(this.replayId);
@@ -45,7 +52,7 @@ export class ReplayPage {
             under: '/replays/matches',
             label: replay.map,
             link: `/replays/matches/${replay.id}`,
-            sections: matchSections(replay.id),
+            sections: matchSections(replay),
           }
         : null;
     });

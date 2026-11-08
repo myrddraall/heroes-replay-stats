@@ -12,13 +12,15 @@
   }
   <header class="replay__head">
     <h2 class="replay__map">
-      <a class="replay__link" hrsItemFocus [routerLink]="['/replays/matches', replay().id]">{{ replay().map }}</a>
+      @if (opens()) {
+        <a class="replay__link" hrsItemFocus [routerLink]="['/replays/matches', replay().id]">{{ replay().map }}</a>
+      } @else {
+        <!-- it opens once imported -->
+        {{ replay().map }}
+      }
     </h2>
     <span class="replay__mode">{{ mode() }}</span>
     <span class="replay__length">{{ duration() }}</span>
-    @if (replay().status === 'ready') {
-      <span class="replay__analysing">analysing…</span>
-    }
     @if (viewed() || replay().outdated) {
       <mat-chip-set class="replay__marks">
         @if (viewed(); as viewed) {
@@ -28,6 +30,9 @@
           <mat-chip>Out of date</mat-chip>
         }
       </mat-chip-set>
+    }
+    @if (activity(); as activity) {
+      <span class="replay__activity">{{ activity }}</span>
     }
     <span class="replay__dates">
       <span class="replay__played">
@@ -47,33 +52,20 @@
   </header>
   <div class="replay__teams">
     @for (team of teams(); track team.team) {
-      <div class="team" role="group" [attr.aria-label]="team.name" [hrsTeam]="team.team">
-        <span class="team__result">
-          @if (team.won !== null) {
-            <span
-              [hrsStyledText]="team.won ? 'glow' : 'base'"
-              [attr.theme]="team.won ? 'legendary' : null"
-              >{{ team.won ? 'Victory' : 'Defeat' }}</span
-            >
-          }
-        </span>
-        <ul class="team__players">
-          @for (p of team.players; track p.slot) {
-            <li class="player" [class.hrs-self]="p.you">
-              <hrs-hero-minimap-icon
-                class="player__icon"
-                [picture]="icons()[p.slot]?.picture ?? null"
-                [name]="icons()[p.slot]?.name ?? p.hero"
-              />
-              <span class="player__hero">{{ p.hero }}</span>
-              <span class="player__name">{{ p.name }}</span>
-              @if (p.you) {
-                <span class="player__you">(you)</span>
-              }
-            </li>
-          }
-        </ul>
-      </div>
+      <hrs-match-team
+        [team]="team.team"
+        [name]="team.name"
+        [won]="team.won"
+        [players]="team.players"
+      />
     }
   </div>
+  @if (progress() !== null) {
+    <mat-progress-bar
+      class="replay__progress"
+      mode="determinate"
+      [value]="progress()"
+      [attr.aria-label]="(opens() ? 'Analysing ' : 'Importing ') + replay().map"
+    />
+  }
 </article>

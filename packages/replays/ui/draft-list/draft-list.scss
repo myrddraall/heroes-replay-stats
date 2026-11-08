@@ -1,14 +1,9 @@
 :host {
   display: block;
-  padding-top: 16px;
 }
 
-.title {
-  margin: 0 0 8px;
-  font: var(--mat-sys-title-large);
-}
 
-// A panel (hrs-panel) as wide as its columns.
+// A panel (hrs-panel) as wide as its columns, around the header and the grid.
 .draft {
   width: fit-content;
   max-width: 100%;

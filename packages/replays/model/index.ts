@@ -1,3 +1,4 @@
+export * from './game-mode';
 export * from './match-filter';
 export * from './replay-stats';
 export * from './replay-summary';

@@ -1,0 +1,6 @@
+@if (sorted()) {
+  <span class="layer"><img [hrsSprite]="icon().sorted" spriteCover loading="eager" alt="" /></span>
+} @else {
+  <span class="layer layer--normal"><img [hrsSprite]="icon().normal" spriteCover loading="eager" alt="" /></span>
+  <span class="layer layer--hover"><img [hrsSprite]="icon().hover" spriteCover loading="eager" alt="" /></span>
+}

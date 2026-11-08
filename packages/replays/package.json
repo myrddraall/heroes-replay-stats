@@ -13,7 +13,7 @@
     "typecheck": "tsc --noEmit -p ."
   },
   "dependencies": {
-    "@myrddraall/hero-data": "^0.5.6",
+    "@myrddraall/hero-data": "^0.5.7",
     "@myrddraall/heroes-replay-stats-common": "workspace:*",
     "@myrddraall/heroes-replay-stats-data-views": "workspace:*",
     "@myrddraall/heroes-replay-stats-heroes": "workspace:*",

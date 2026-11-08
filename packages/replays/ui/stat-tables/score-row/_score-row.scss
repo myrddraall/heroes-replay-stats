@@ -1,0 +1,123 @@
+// The game's score screen row (GameStatsPanel, HeroLeaderPanel), shared by the score table's rows and
+// the ranking cards that stand in for it on narrow screens.
+
+// The row's size: its height is the one size; its type a share of it (the game's labels are 20 of
+// its 56), everything in it in em.
+@mixin size {
+  --hrs-grid-row-height: 3.5rem;
+  --hrs-grid-row-type-scale: 0.36;
+}
+
+// Storm_UI_ScoreScreen_Stats_PlayerBG, recreated: a grey texture the game colorizes, each grey a
+// share of the way from the row's dark colour to its light one; here the row theme's tint and glow
+// (Material has no glow role). From the texture: from 17px a 50% fill, 12% light at the top to 17%
+// at the bottom, over a 2px line at 35% (55% opaque). The bar (ui-score-row-bar) takes
+// --score-row-bar and --score-row-glow. Sets the custom properties; `background: var(--score-row)`
+// draws it.
+@mixin texture {
+  --score-row-dark: var(--hrs-tint);
+  --score-row-light: var(--hrs-glow);
+  // the bar: the team's colour at full strength (the game's bars are saturated); its glow the
+  // same colour at the texture's 55%
+  --score-row-bar: color-mix(in oklab, var(--hrs-glow), white 10%);
+  --score-row-glow: oklch(from var(--hrs-glow) l c h / 0.55);
+  --score-row: linear-gradient(
+        to top,
+        oklch(from color-mix(in oklab, var(--score-row-light) 35%, var(--score-row-dark)) l c h / 0.55)
+          2px,
+        transparent 2px
+      )
+      17px 0 / calc(100% - 17px) 100% no-repeat,
+    linear-gradient(
+        oklch(from color-mix(in oklab, var(--score-row-light) 12%, var(--score-row-dark)) l c h / 0.5),
+        oklch(from color-mix(in oklab, var(--score-row-light) 17%, var(--score-row-dark)) l c h / 0.5)
+      )
+      17px 0 / calc(100% - 17px) 100% no-repeat;
+  // the bar stands in the row, behind its content
+  position: relative;
+  isolation: isolate;
+}
+
+// The user's own row: the game's self overlay over the team's row (SelfBackground,
+// Storm_UI_ScoreScreen_Stats_PlayerBG_Gold): over the fill (from 17px) a 2px line at about 30%, a
+// glow inside it fading over about 12px, and a faint one outside over about 6px, in the row's self
+// colour (its theme: green on the blue side, gold on the red). On the row, which `texture` set up.
+@mixin self-overlay {
+  &:is([theme='blue-self'], [theme='red-self'])::after {
+    content: '';
+    position: absolute;
+    inset: 0 0 0 17px;
+    z-index: -1;
+    pointer-events: none;
+    border: 2px solid oklch(from var(--hrs-accent) l c h / 0.3);
+    box-shadow:
+      inset 0 0 12px oklch(from var(--hrs-accent) l c h / 0.14),
+      0 0 6px oklch(from var(--hrs-accent) l c h / 0.12);
+  }
+}
+
+// A data grid (hrs-data-grid) in the game's score rows, as its score and talent screens draw them
+// (GameStatsPanel, TalentsOverviewPanel): rows 2px apart, each the game's row texture recreated
+// (`texture`, above), the type 0.36 of the row's height (its labels are 20 of 56), everything in a
+// row in em, so the row height is the one size. A row head starts with its bar (ui-score-row-bar).
+@mixin grid {
+  @include size;
+  --hrs-grid-row-gap: 2px;
+  --hrs-grid-cell-padding: 0 0.6em;
+  --hrs-grid-font: 700 1em / 1.2 var(--font-brand);
+  --hrs-grid-text: var(--mat-sys-on-surface);
+  --hrs-grid-first-text: var(--mat-sys-on-surface);
+  // one header height on every screen: the score screen's sort icons (the game's 32) and the
+  // header's 4px padding each side, the talent screen's levels centred in the same
+  --hrs-grid-header-height: 40px;
+  --hrs-grid-header-font: var(--mat-sys-label-large);
+  --hrs-grid-header-text: var(--mat-sys-on-surface-variant);
+  --hrs-grid-header-case: none;
+  --hrs-grid-header-tracking: var(--mat-sys-label-large-tracking);
+  --hrs-grid-header-line: none;
+
+  // each row the game's row texture, the user's own with the game's self overlay
+  ::ng-deep .hrs-grid__body .hrs-grid__row {
+    @include texture;
+    --hrs-grid-row-background: var(--score-row);
+    --hrs-grid-themed-row-background: var(--score-row);
+    --hrs-grid-row-hover: linear-gradient(rgb(255 255 255 / 0.05), rgb(255 255 255 / 0.05)) 17px 0 /
+        calc(100% - 17px) 100% no-repeat,
+      var(--score-row);
+    --hrs-grid-row-line: none;
+    @include self-overlay;
+  }
+
+  // columns alternate light and dark, the hero column light: a white film on every other cell
+  // (cells are their rows' children, the row head first); on the row head it starts past the bar,
+  // where the row's fill does
+  ::ng-deep .hrs-grid__body .hrs-grid__cell:nth-child(odd) {
+    background: rgb(255 255 255 / 0.035);
+  }
+
+  ::ng-deep .hrs-grid__body .hrs-grid__cell:first-child {
+    background: linear-gradient(rgb(255 255 255 / 0.035), rgb(255 255 255 / 0.035)) 17px 0 /
+      calc(100% - 17px) 100% no-repeat;
+  }
+
+  // the body doesn't clip: the first and last rows' bar glow stands out past the table as the
+  // others' does into the gaps
+  ::ng-deep .hrs-grid__body {
+    overflow: visible;
+  }
+
+  ::ng-deep .hrs-grid__header {
+    justify-content: center;
+    padding: 4px 8px;
+  }
+
+  // the row head: 3px past the bar, the portrait the row's full height; its content close to its end
+  ::ng-deep .hrs-grid__cell:first-child {
+    padding: 0 0.3em 0 15px;
+    align-items: stretch;
+  }
+
+  ::ng-deep .hrs-grid__cell:not(:first-child) {
+    justify-content: center;
+  }
+}

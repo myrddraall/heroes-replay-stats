@@ -5,4 +5,9 @@
 export interface SpritePicture {
   readonly src: string;
   readonly rect?: readonly [number, number, number, number];
+  /**
+   * Smaller copies of the same picture, each in a sheet, smallest first (hero-data's: a heroes-assets
+   * target portrait's small copy): shown at a size one covers, that one loads instead.
+   */
+  readonly variants?: readonly SpritePicture[];
 }

@@ -1,43 +1,5 @@
 <div #probe class="data-grid__probe" aria-hidden="true"></div>
 
-<ng-template #headerContent let-column>
-  @if (column.headerTemplate(); as header) {
-    <ng-container [ngTemplateOutlet]="header.template" />
-  } @else {
-    {{ column.header() }}
-  }
-</ng-template>
-
-<div class="hrs-grid__head" role="rowgroup" [style.top.px]="-window.inset()">
-  <div
-    class="hrs-grid__row"
-    role="row"
-    aria-rowindex="1"
-    matSort
-    [matSortActive]="matSortActive()"
-    [matSortDirection]="matSortDirection()"
-    [matSortStart]="sortStart()"
-    (matSortChange)="onSort($event)"
-    [style.grid-template-columns]="headTracks() || tracks()"
-    [style.width.px]="headWidth() || null"
-  >
-    @for (column of columns(); track column.name()) {
-      <div
-        role="columnheader"
-        class="hrs-grid__header"
-        [class]="column.cellClass()"
-        [class.hrs-num]="column.align() === 'end'"
-        [mat-sort-header]="column.name()"
-        [disabled]="!column.sortable()"
-        [start]="column.sortStart() ?? sortStart()"
-        [arrowPosition]="column.align() === 'end' ? 'before' : 'after'"
-      >
-        <ng-container [ngTemplateOutlet]="headerContent" [ngTemplateOutletContext]="{ $implicit: column }" />
-      </div>
-    }
-  </div>
-</div>
-
 <div #body class="hrs-grid__body" (scroll)="onScroll()">
   <div
     #rowsBox
@@ -46,22 +8,23 @@
     [style.height.px]="window.totalSize()"
     [style.padding-top.px]="above()"
   >
-    <!-- the headers again, unseen: the columns fit them too -->
-    <div class="hrs-grid__row data-grid__sizer" aria-hidden="true">
-      @for (column of columns(); track column.name()) {
-        <div class="hrs-grid__header" [class]="column.cellClass()" [class.hrs-num]="column.align() === 'end'">
-          <ng-container [ngTemplateOutlet]="headerContent" [ngTemplateOutletContext]="{ $implicit: column }" />
-          @if (column.sortable()) {
-            <span class="data-grid__arrow-room"></span>
-          }
-        </div>
-      }
-    </div>
+    <!-- the attached headers' widths, as empty boxes: the columns take them as their cells' -->
+    @if (headers().length > 0) {
+      <div class="data-grid__sizes" aria-hidden="true">
+        @for (column of shownColumns(); track column.name()) {
+          <div #columnBox class="data-grid__size">
+            @for (piece of sizePieces(column); track $index) {
+              <span [style.width.px]="piece"></span>
+            }
+          </div>
+        }
+      </div>
+    }
 
     @if (count() === 0) {
       @if (emptyTemplate(); as empty) {
         <div class="hrs-grid__row data-grid__empty" role="row">
-          <div class="hrs-grid__cell" role="cell" [attr.aria-colspan]="columns().length">
+          <div class="hrs-grid__cell" role="cell" [attr.aria-colspan]="shownColumns().length">
             <ng-container [ngTemplateOutlet]="empty.template" />
           </div>
         </div>
@@ -71,7 +34,7 @@
     @for (row of drawn(); track row.key) {
       @if (row.kind === 'group') {
         <div #rowElement class="hrs-grid__row hrs-grid__group" role="row" [attr.row-index]="row.index">
-          <div class="data-grid__group-cell" role="cell" [attr.aria-colspan]="columns().length">
+          <div class="data-grid__group-cell" role="cell" [attr.aria-colspan]="shownColumns().length">
             @if (groupTemplate(); as group) {
               <ng-container [ngTemplateOutlet]="group.template" [ngTemplateOutletContext]="{ $implicit: row.group }" />
             } @else {
@@ -82,14 +45,17 @@
       } @else {
         <div
           #rowElement
-          class="hrs-grid__row"
-          role="row"
+          #gridRow="hrsGridRow"
+          hrsGridRow
+          class="data-grid__row"
+          [index]="row.index"
+          [item]="row.item"
+          [theme]="row.theme"
           [attr.row-index]="row.index"
-          [attr.aria-rowindex]="row.index + 2"
-          [attr.theme]="row.theme"
+          [attr.aria-rowindex]="row.index + 1 + headers().length"
         >
           @if (row.item !== null) {
-            @for (column of columns(); track column.name()) {
+            @for (column of shownColumns(); track column.name()) {
               <div
                 class="hrs-grid__cell"
                 [attr.role]="column === rowHeaderColumn() ? 'rowheader' : 'cell'"
@@ -98,8 +64,9 @@
               >
                 @if (column.cell(); as cell) {
                   <ng-container
-                    [ngTemplateOutlet]="cell.template"
+                    [ngTemplateOutlet]="cell"
                     [ngTemplateOutletContext]="{ $implicit: row.item, index: row.index }"
+                    [ngTemplateOutletInjector]="gridRow.injector"
                   />
                 } @else {
                   {{ text(row.item, column) }}
@@ -107,7 +74,12 @@
               </div>
             }
           } @else {
-            <div class="hrs-grid__placeholder" role="cell" [attr.aria-colspan]="columns().length"></div>
+            <div class="hrs-grid__placeholder" role="cell" [attr.aria-colspan]="shownColumns().length"></div>
+          }
+          <!-- the rows' look, if the page gives one: after the cells (so they count from the first),
+               taking no column -->
+          @if (rowTemplate(); as look) {
+            <ng-container [ngTemplateOutlet]="look.template" [ngTemplateOutletInjector]="gridRow.injector" />
           }
         </div>
       }

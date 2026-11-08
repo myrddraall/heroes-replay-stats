@@ -66,8 +66,9 @@
   );
   @include mat.tooltip-overrides(
     (
-      container-color: var(--hrs-film-raised),
-      supporting-text-color: var(--hrs-text-muted),
+      container-color: oklch(from var(--hrs-tooltip-fill) l c h / calc(242 / 255)),
+      supporting-text-color: var(--hrs-tooltip-text),
+      container-shape: 0,
     )
   );
   @include mat.tabs-overrides(

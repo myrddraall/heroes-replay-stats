@@ -1,4 +1,6 @@
 import { Component, computed, inject, input } from '@angular/core';
+import { StyledText } from '@myrddraall/heroes-replay-stats-common/ui';
+import { ScoreTeamHead } from '../stat-tables/score-row/score-team-head';
 import { StatRowHead } from '../stat-tables/stat-row-head';
 import { StatTable } from '../stat-tables/stat-table/stat-table';
 import type { XpPointRow } from '@myrddraall/heroprotocol-analysis';
@@ -11,7 +13,7 @@ import { XP_COLUMNS, xpTables } from './xp-rows';
  */
 @Component({
   selector: 'hrs-xp-tables',
-  imports: [StatRowHead, StatTable],
+  imports: [ScoreTeamHead, StatRowHead, StatTable, StyledText],
   templateUrl: './xp-tables.html',
   styleUrl: './xp-tables.scss',
 })

@@ -4,3 +4,6 @@ export * from './item-list/item-list';
 export * from './templates/list-templates';
 export * from './virtual/virtual-scroll-memory';
 export * from './virtual/virtual-window';
+export * from './grid-row/grid-row';
+export * from './grid-header/grid-header';
+export * from './number-cell/number-cell';

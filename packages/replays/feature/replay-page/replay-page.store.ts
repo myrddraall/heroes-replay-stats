@@ -12,7 +12,11 @@ import {
 } from '@ngrx/signals';
 import { heroesImages } from '@myrddraall/hero-data';
 import { HERO_DATA, LatestHeroData } from '@myrddraall/heroes-replay-stats-heroes/data';
-import { heroLookup, type HeroIcon } from '@myrddraall/heroes-replay-stats-heroes/model';
+import {
+  heroLookup,
+  type AwardBadges,
+  type HeroIcon,
+} from '@myrddraall/heroes-replay-stats-heroes/model';
 import { ReplayService, ReplayStatsService, ViewedReplaysStore } from '../../data';
 import { SettingsStore } from '@myrddraall/heroes-replay-stats-settings/data';
 import { resolveYou } from '@myrddraall/heroes-replay-stats-players/model';
@@ -86,7 +90,21 @@ export const ReplayPageStore = signalStore(
           (replay()?.players ?? []).map((p) => [p.slot, lookup.heroIcon(p.heroId, p.hero)]),
         );
       }),
+      /** Each player's hero leaderboard portrait (the score screen's), by slot. */
+      portraits: computed((): Readonly<Record<number, HeroIcon | null>> => {
+        const lookup = heroes();
+        return Object.fromEntries(
+          (replay()?.players ?? []).map((p) => [p.slot, lookup.heroPortrait(p.heroId, p.hero)]),
+        );
+      }),
       scoreScreen: computed(() => (_scoreScreen.hasValue() ? _scoreScreen.value() : null)),
+      /** The badges of the awards the score screen gives, by award id; `null` for one the data doesn't know. */
+      awards: computed((): Readonly<Record<string, AwardBadges | null>> => {
+        const lookup = heroes();
+        const players = _scoreScreen.hasValue() ? (_scoreScreen.value()?.players ?? []) : [];
+        const ids = new Set(players.flatMap((p) => p.awards));
+        return Object.fromEntries([...ids].map((id) => [id, lookup.award(id)]));
+      }),
       playerStats: computed(() => (_playerStats.hasValue() ? _playerStats.value() : null)),
       error: computed(() =>
         errorMessage(_replays.error() ?? _scoreScreen.error() ?? _playerStats.error()),

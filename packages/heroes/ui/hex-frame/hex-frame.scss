@@ -1,0 +1,128 @@
+// The picture (85 × 79) in its own units (`--u`), its inside 42 high the frame's 1.5em: a regular
+// hexagon flat at top and bottom, its sides 21 from its centre (42.6, 40), its corners 23.8; the
+// rim out to 28 at the sides and 31.5 at the corners, its glow past that to the picture's edges.
+// The frame reaches out to the rim's corners (10.5 past the inside's sides); the glow spills over.
+:host {
+  --u: calc(1.5em / 42);
+  --hrs-frame-inset: calc(var(--u) * 10.5);
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+}
+
+:host([state='disabled']) {
+  filter: grayscale(0.8) brightness(0.85);
+}
+
+// each layer a box over the whole frame, its picture centred in one cell the frame's size, which
+// the larger picture spills out of rather than widens
+.layer {
+  display: grid;
+  grid-template: 100% / 100%;
+
+  > * {
+    place-self: unsafe center;
+  }
+}
+
+// the background: the theme's dark tint, a hexagon 44 high (a unit under the rim all round)
+.background {
+  width: calc(var(--u) * 44 * 2 / 1.7320508);
+  height: calc(var(--u) * 44);
+  clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+  background: radial-gradient(
+    circle,
+    color-mix(in oklab, var(--hrs-tint) 70%, var(--hrs-glow)),
+    var(--hrs-tint)
+  );
+}
+
+// The inside: the hexagon 44 high, as the background (a unit under the rim all round, the see-through
+// middle 42), everything in it cut to it, its layers one over another. It lays out as the 42 one
+// (the margins take the extra back), so the frame's size and its content's centre stay.
+.inside {
+  display: grid;
+  grid-template: 100% / 100%;
+  width: calc(var(--u) * 44 * 2 / 1.7320508);
+  height: calc(var(--u) * 44);
+  margin: calc(var(--u) * -1) calc(var(--u) * -2 / 1.7320508);
+  clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+
+  > * {
+    grid-area: 1 / 1;
+  }
+}
+
+// the content, centred, the inside's size (a portrait fills it)
+.inside__content {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+// selected: the inner glow (white art, its fade in its alpha) in the theme's glow colour at 69%,
+// over the content: a wash of the team's colour round the inside's edge, the content still clear
+.inside__glow {
+  position: relative;
+  visibility: hidden;
+  background: var(--hrs-glow);
+  opacity: 0.69;
+  pointer-events: none;
+}
+
+:host([state='selected']) .inside__glow {
+  visibility: visible;
+}
+
+// The rim, over it all, on the inside's centre (0.1 left, 0.5 up from the picture's own): the
+// theme's glow colour in its shape, its own light over it in luminosity, as the circle frame's ring.
+.rim {
+  position: relative;
+  isolation: isolate;
+  width: calc(var(--u) * 85);
+  height: calc(var(--u) * 79);
+  translate: calc(var(--u) * -0.1) calc(var(--u) * -0.5);
+  overflow: hidden;
+}
+
+.rim__colour {
+  position: absolute;
+  inset: 0;
+  background: var(--hrs-glow);
+}
+
+.rim__light {
+  position: absolute;
+  inset: 0;
+  filter: grayscale(1);
+  mix-blend-mode: luminosity;
+}
+
+// Pointy (pointed at top and bottom): the same frame turned a quarter clockwise, its content
+// upright. The background and inside swap their width and height and take the turned hexagon;
+// the inner glow, the flat one's size, turns in the middle of the inside; the rim turns about its
+// own centre, its offset to the inside's centre turned with it (0.5 right, 0.1 up).
+:host(.pointy) {
+  .background,
+  .inside {
+    width: calc(var(--u) * 44);
+    height: calc(var(--u) * 44 * 2 / 1.7320508);
+    clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  }
+
+  .inside {
+    margin: calc(var(--u) * -2 / 1.7320508) calc(var(--u) * -1);
+  }
+
+  .inside__glow {
+    place-self: unsafe center;
+    width: calc(var(--u) * 44 * 2 / 1.7320508);
+    height: calc(var(--u) * 44);
+    rotate: 90deg;
+  }
+
+  .rim {
+    translate: calc(var(--u) * 0.5) calc(var(--u) * -0.1);
+    rotate: 90deg;
+  }
+}

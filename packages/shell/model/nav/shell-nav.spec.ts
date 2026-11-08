@@ -138,3 +138,38 @@ describe('resolveShellNav', () => {
     expect(labels(nav.crumbs)).toEqual(['Import']);
   });
 });
+
+describe('a hidden area (the settings menu leads to it)', () => {
+  const ui: ShellArea = { path: '/ui', label: 'UI', order: 90, hidden: true };
+  const uiSections: ShellSection[] = [
+    { area: '/ui', label: 'Theme', link: '/ui/theme', order: 10 },
+    { area: '/ui', label: 'Components', link: '/ui/components', order: 20, disabled: true },
+    {
+      area: '/ui',
+      label: 'Tests',
+      link: '/ui/tests',
+      order: 30,
+      children: [{ label: 'Lists', link: '/ui/tests/lists' }],
+    },
+  ];
+
+  it('is not in the top bar, nor the tree, elsewhere', () => {
+    const nav = resolveShellNav([...areas, ui], [...sections, ...uiSections], [], null, '/replays');
+    expect(nav.areas.map((a) => a.label)).toEqual(['Replays', 'Game Info', 'About']);
+    expect(nav.tree.map((n) => n.label)).toEqual(['Replays', 'Game Info', 'About']);
+  });
+
+  it('shows its sections, and a section its pages as the side nav, while shown', () => {
+    const nav = resolveShellNav([...areas, ui], [...sections, ...uiSections], [], null, '/ui/tests/lists');
+    expect(nav.areas.map((a) => a.label)).toEqual(['Replays', 'Game Info', 'About']);
+    expect(nav.level2.map((s) => [s.label, s.active])).toEqual([
+      ['Theme', false],
+      ['Components', false],
+      ['Tests', true],
+    ]);
+    expect(nav.level3Of?.label).toBe('Tests');
+    expect(nav.level3.map((s) => [s.label, s.active])).toEqual([['Lists', true]]);
+    expect(nav.crumbs.map((c) => c.label)).toEqual(['UI', 'Tests', 'Lists']);
+    expect(nav.tree.map((n) => n.label)).toEqual(['Replays', 'Game Info', 'About', 'UI']);
+  });
+});

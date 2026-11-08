@@ -3,12 +3,16 @@
     [columns]="columns()"
     [table]="cards()"
     [rankBy]="rankBy()"
+    [rankOrder]="rankOrder()"
     [rowHead]="rowHead()"
     (rankRequested)="rankByColumn($event)"
   />
 } @else {
+  <!-- the header and the grid, one look (score-table.scss) -->
+  <div class="score-table">
+  <hrs-grid-header [for]="grid" />
   <hrs-data-grid
-    class="score-table"
+    #grid
     [items]="table()"
     [trackBy]="byKey"
     [rowTheme]="themeOf"
@@ -16,9 +20,11 @@
     (sortChange)="sort.set($event)"
     sortStart="desc"
   >
-    <hrs-column name="head" [header]="rowHeadLabel()" width="min-content">
+    <hrs-grid-row *hrsRow />
+    <hrs-column name="head" [header]="rowHeadLabel()" width="max-content">
       <ng-template hrsHeader><span class="score-table__hidden">{{ rowHeadLabel() }}</span></ng-template>
       <ng-template hrsCell let-line>
+        <ui-score-row-bar />
         @if (rowHead(); as head) {
           <ng-container
             [ngTemplateOutlet]="head.template"
@@ -28,17 +34,33 @@
       </ng-template>
     </hrs-column>
     @for (column of columns(); track column.id; let i = $index) {
-      <hrs-column [name]="column.id" [header]="column.label" width="minmax(max-content, 1fr)" sortable>
+      <hrs-column
+        [name]="column.id"
+        [header]="column.label"
+        width="minmax(max-content, 1fr)"
+        sortable
+        [sortStart]="bestFirst(column)"
+      >
         <ng-template hrsHeader>
           <span
             class="score-table__label"
             [matTooltip]="column.description ?? column.label"
             matTooltipPosition="above"
           >
-            @if (column.icon) {
-              <mat-icon class="material-symbols-outlined score-table__icon" aria-hidden="true">{{
-                column.icon
-              }}</mat-icon>
+            @if (column.icon; as icon) {
+              @let sorted = sort()?.column === column.id ? sort() : null;
+              <ui-stat-icon class="score-table__icon" [icon]="icon" [sorted]="!!sorted" />
+              @if (sorted) {
+                <!-- the order, in the game's sort arrows (in place of Material's) -->
+                <span class="score-table__order" aria-hidden="true">
+                  <img
+                    [hrsSprite]="sorted.direction === 'asc' ? 'score-screen#sort-up' : 'score-screen#sort-down'"
+                    spriteCover
+                    loading="eager"
+                    alt=""
+                  />
+                </span>
+              }
               <span class="score-table__hidden">{{ column.label }}</span>
             } @else {
               {{ column.label }}
@@ -47,21 +69,17 @@
         </ng-template>
         <ng-template hrsCell let-line>
           @let cell = line.cells[i];
-          <span
-            class="score-table__value"
-            [class.score-table__value--best]="cell.best"
-            [class.score-table__value--best-in-group]="cell.bestInGroup"
-          >
-            <span class="score-table__full">{{ cell.text }}</span>
-            <span class="score-table__compact">{{ cell.compactText }}</span>
-            @if (cell.best) {
-              <span class="score-table__hidden">(best)</span>
-            } @else if (cell.bestInGroup) {
-              <span class="score-table__hidden">(best on the team)</span>
-            }
-          </span>
+          <hrs-number-cell
+            [value]="cell.text"
+            [shortValue]="cell.compactText"
+            [short]="fit() === 'squeezed'"
+            styled
+            [mark]="cell.best ? 'best' : cell.bestInGroup ? 'group-best' : null"
+            groupBestLabel="best on the team"
+          />
         </ng-template>
       </hrs-column>
     }
   </hrs-data-grid>
+  </div>
 }

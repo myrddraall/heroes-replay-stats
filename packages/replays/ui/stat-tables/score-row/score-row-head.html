@@ -1,0 +1,16 @@
+<hrs-hero-portrait
+  class="portrait"
+  [picture]="portrait()?.picture ?? null"
+  [name]="portrait()?.name ?? hero()"
+/>
+<!-- the game's silence penalty icon in the portrait's top-right corner (its SilencedIcon) -->
+@if (silence(); as silence) {
+  <span class="silence" [matTooltip]="silence.tooltip">
+    <img [hrsSprite]="silence.picture" spriteCover [alt]="silence.label" />
+  </span>
+}
+<span class="names">
+  <span class="names__hero" hrsStyledText="bright">{{ hero() }}</span>
+  <span class="names__player" hrsStyledText="base">{{ name() }}</span>
+</span>
+<ng-content />

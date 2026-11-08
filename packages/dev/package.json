@@ -12,7 +12,9 @@
   },
   "dependencies": {
     "@myrddraall/heroes-replay-stats-aether": "workspace:*",
+    "@myrddraall/heroes-replay-stats-common": "workspace:*",
     "@myrddraall/heroes-replay-stats-data-views": "workspace:*",
+    "@myrddraall/heroes-replay-stats-heroes": "workspace:*",
     "@myrddraall/heroes-replay-stats-layout": "workspace:*",
     "@myrddraall/heroes-replay-stats-platform": "workspace:*",
     "@myrddraall/heroes-replay-stats-shell": "workspace:*",

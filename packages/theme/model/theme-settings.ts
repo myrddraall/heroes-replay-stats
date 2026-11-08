@@ -10,7 +10,10 @@ export type ThemeName =
   | NeutralTheme
   | 'blue'
   | 'red'
-  | 'green'
+  | 'self'
+  // aliases (the design system's): the user's own row, on the blue side or the red
+  | 'blue-self'
+  | 'red-self'
   | 'poor'
   | 'common'
   | 'uncommon'

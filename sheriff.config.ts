@@ -33,7 +33,16 @@ const domains: Record<string, readonly string[]> = {
 const featureModules: Record<string, readonly string[]> = {
   background: ['site-backdrop', 'graphics-section', 'theme-preview-page'],
   import: ['import-page', 'import-toolbar-action'],
-  dev: ['lists-check-page', 'renderer-check-page'],
+  dev: [
+    'hero-frame-page',
+    'talent-frame-page',
+    'team-frame-page',
+    'circle-frame-page',
+    'standard-tooltip-page',
+    'talent-tooltip-page',
+    'lists-check-page',
+    'renderer-check-page',
+  ],
   maps: ['maps-page', 'map-page'],
   players: ['players-page'],
   replays: [
@@ -66,8 +75,9 @@ const shared = [
 const uses: Record<string, readonly string[]> = {
   // Everything else reaches aether through background.
   background: ['aether', 'aether-forge'],
-  // Developer tools for aether itself, which reach into its areas.
-  dev: ['aether'],
+  // Developer tools for aether itself, which reach into its areas; and the UI area's catalogue of
+  // components, which shows the heroes' (the hero frame).
+  dev: ['aether', 'heroes'],
   maps: ['background', 'heroes'],
   players: ['import'],
   replays: ['heroes', 'import', 'players'],

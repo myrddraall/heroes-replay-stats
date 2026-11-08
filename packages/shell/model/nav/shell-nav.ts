@@ -16,6 +16,11 @@ export interface ShellArea {
   readonly label: string;
   /** Areas show in ascending order. */
   readonly order: number;
+  /**
+   * Reached from elsewhere (the settings menu's Dev group): not in the top bar, and in the tree
+   * only while its pages are shown. Its sections and their pages work as any area's.
+   */
+  readonly hidden?: boolean;
 }
 
 /** A fixed level-2 section of an area (Replays' Matches), added by the domain whose page it opens. */
@@ -27,6 +32,8 @@ export interface ShellSection {
   readonly order: number;
   /** Shown but not open yet (a page still to be built). */
   readonly disabled?: boolean;
+  /** Its pages, as the page's side nav lists them while the section is shown. */
+  readonly children?: readonly ShellNavLink[];
 }
 
 /**
@@ -138,16 +145,23 @@ export function resolveShellNav(
 ): ShellNav {
   const path = url.split(/[?#]/)[0] ?? url;
   const ordered = [...areas].sort(byOrder);
+  // a hidden area shows only while its pages are
+  const shown = ordered.filter((a) => !a.hidden || isUnder(path, a.path));
   const sectionsOf = (area: ShellArea): ShellNavLink[] =>
     sections
       .filter((s) => s.area === area.path)
       .sort(byOrder)
-      .map(({ label, link, disabled }) => ({ label, link, ...(disabled ? { disabled } : {}) }));
+      .map(({ label, link, disabled, children }) => ({
+        label,
+        link,
+        ...(disabled ? { disabled } : {}),
+        ...(children?.length ? { children } : {}),
+      }));
   const itemLink: ShellNavLink | null = item
     ? { label: item.label, link: item.link, children: item.sections ?? [] }
     : null;
 
-  const tree: ShellNavNode[] = ordered.map((area) => {
+  const tree: ShellNavNode[] = shown.map((area) => {
     const own = sectionsOf(area).map((s) =>
       itemLink && item!.under === s.link ? { ...s, children: [...(s.children ?? []), itemLink] } : s,
     );
@@ -181,7 +195,7 @@ export function resolveShellNav(
     .map((c) => entry(c, path));
 
   return {
-    areas: ordered.map((a) => entry({ label: a.label, link: a.path }, path)),
+    areas: ordered.filter((a) => !a.hidden).map((a) => entry({ label: a.label, link: a.path }, path)),
     level2: areaSections.map((s) => entry(s, path)),
     level3: side.map((s) => ({ ...entry(s, path), children: (s.children ?? []).map((c) => entry(c, path)) })),
     level3Of: level3Of && entry({ label: level3Of.label, link: level3Of.link }, path),

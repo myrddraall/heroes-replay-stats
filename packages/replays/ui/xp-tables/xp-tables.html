@@ -1,12 +1,24 @@
-<h2 class="title">XP</h2>
+<!-- the side nav names the section on screen -->
+<h2 class="cdk-visually-hidden">XP</h2>
 @if (tables().length === 0) {
   <p class="empty">This replay has no XP over time.</p>
 }
 @for (table of tables(); track table.team) {
   <section [attr.aria-labelledby]="'xp-team-' + table.team">
-    <h3 class="subtitle" [id]="'xp-team-' + table.team">{{ table.name }}</h3>
-    <ui-stat-table [columns]="columns" [rows]="table.rows" rowHeadLabel="Time">
-      <ng-template [uiStatRowHead]="table.rows" let-data>{{ data.time }}</ng-template>
+    <ui-stat-table [columns]="columns" [rows]="table.rows" rowHeadLabel="Team">
+      <!-- the team's name in its card, in its colour, bright -->
+      <h3
+        uiStatTableTitle
+        class="title"
+        [id]="'xp-team-' + table.team"
+        [attr.theme]="table.color"
+        hrsStyledText="bright"
+      >
+        {{ table.name }}
+      </h3>
+      <ng-template [uiStatRowHead]="table.rows" let-data>
+        <ui-score-team-head [name]="data.name" />
+      </ng-template>
     </ui-stat-table>
   </section>
 }
