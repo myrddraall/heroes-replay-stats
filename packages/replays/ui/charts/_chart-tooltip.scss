@@ -53,6 +53,44 @@
       margin-block-start: 2px;
     }
 
+    // a tooltip's table: names in the first column, counts after it; a team's rows under its name
+    .chart-tip__table {
+      inline-size: 100%;
+      border-collapse: collapse;
+      font-variant-numeric: tabular-nums;
+
+      th,
+      td {
+        padding: 2px 0;
+        text-align: end;
+        font-weight: normal;
+
+        &:first-child {
+          text-align: start;
+          padding-inline-end: 12px;
+        }
+
+        & + th,
+        & + td {
+          padding-inline-start: 12px;
+        }
+      }
+
+      thead th {
+        color: var(--mat-sys-on-surface-variant);
+        border-block-end: 1px solid var(--mat-sys-outline-variant);
+      }
+
+      tbody th {
+        padding-block-start: 6px;
+        color: var(--mat-sys-primary);
+      }
+
+      td {
+        color: var(--mat-sys-on-surface);
+      }
+    }
+
     .chart-tip__swatch {
       display: inline-block;
       inline-size: 0.7em;

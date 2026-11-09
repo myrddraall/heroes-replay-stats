@@ -42,6 +42,11 @@ export interface ReplayDeaths {
   readonly takedowns: readonly Takedowns[];
 }
 
+/** A player's slot from the game's PlayerID (slots from 1); null for the teams' own players. */
+export function playerIdSlot(id: number): number | null {
+  return id >= 1 && id <= 10 ? id - 1 : null;
+}
+
 /** How far apart (in game loops) a death and the dead stretch it starts may be and still match. */
 const SAME_DEATH_LOOPS = 16;
 
@@ -75,9 +80,9 @@ export function replayDeaths(
       (d) => d.slot === slot && Math.abs(d.start - loop) <= SAME_DEATH_LOOPS,
     );
     return (death?.killers ?? [])
-      .filter((id) => id >= 1 && id <= 10)
-      .map((id) => id - 1)
-      .filter((killer) => teamOf.has(killer) && teamOf.get(killer) !== teamOf.get(slot));
+      .map(playerIdSlot)
+      .filter((k) => k !== null && teamOf.has(k) && teamOf.get(k) !== teamOf.get(slot))
+      .map((k) => k!);
   };
 
   const spans = timeline.events.flatMap((e): DeadSpan[] => {

@@ -15,7 +15,7 @@ import { echarts } from '../charts/echarts';
 import { teamName } from '../stat-tables/team-rows';
 import { TeamPerspective } from '../team-theme/team-perspective';
 import { replayDeaths } from './death-lanes';
-import { replayFights, replayTalentPicks } from './timeline-rows';
+import { FIGHT_GAP_SECONDS, replayFights, replayTalentPicks } from './timeline-rows';
 import { type TimelineChartKind, timelineOptions } from './timeline-chart-options';
 
 /** Each chart's name, for screen readers (the side nav names it on screen). */
@@ -36,6 +36,14 @@ const EMPTY: Readonly<Record<TimelineChartKind, string>> = {
   camps: 'This map has no camps.',
   structures: 'This map has no towns.',
   'talent-tiers': 'No talents were picked in this replay.',
+};
+
+/** What a chart's marks mean, where that needs saying: under the chart. */
+const NOTES: Readonly<Partial<Record<TimelineChartKind, string>>> = {
+  fights:
+    `A team fight is two or more heroes dying, with at most ${FIGHT_GAP_SECONDS} seconds between ` +
+    "each death and the next. Each bar counts one team's players in the fight: in full colour " +
+    'those who died, darker those who survived but got takedown credit.',
 };
 
 /**
@@ -66,6 +74,7 @@ export class TimelineChart {
   private chart: ECharts | null = null;
 
   protected readonly title = computed(() => TITLES[this.kind()]);
+  protected readonly note = computed(() => NOTES[this.kind()] ?? null);
   private readonly deaths = computed(() =>
     replayDeaths(
       this.timeline(),
