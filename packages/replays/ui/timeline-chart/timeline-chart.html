@@ -12,6 +12,23 @@
           {{ team.name }}
         </li>
       }
+      @if (kind() === 'camps') {
+        <li>
+          <span class="legend__state"><span class="row-look" theme="blue" [style.background]="stateBackground('away')"></span></span>
+          Up for the taking
+        </li>
+      }
+      @if (kind() === 'structures') {
+        <li>
+          <span class="legend__state">
+            @for (team of rowTeams; track team) {
+              <span class="row-look" [attr.theme]="team" [style.background]="stateBackground('dead')"></span>
+            }
+          </span>
+          Destroyed
+        </li>
+        <li><span class="legend__notch"></span> Structure lost</li>
+      }
       @if (kind() === 'timeline') {
         @for (state of states; track state.key) {
           <li>
@@ -36,13 +53,13 @@
       }
     </ul>
 
-    @if (kind() === 'timeline') {
+    @if (hasHeads()) {
       @for (team of rowTeams; track team) {
         <span #rowProbe class="row-look row-look--probe" [attr.theme]="team" aria-hidden="true"></span>
       }
     }
 
-    @if (kind() === 'timeline') {
+    @if (hasHeads()) {
       <!-- each row's head beside the chart, as the tables' rows -->
       <div class="timeline" [style.--timeline-rows]="heads().length">
         <ol class="timeline__heads" aria-label="Rows">
@@ -51,6 +68,13 @@
               <ui-score-row-bar />
               @if (head.kind === 'team') {
                 <ui-score-team-head [name]="head.name" [result]="head.result" />
+              } @else if (head.kind === 'label') {
+                <span class="row-label">
+                  <span hrsStyledText="bright">{{ head.name }}</span>
+                  @if (head.sub; as sub) {
+                    <span class="row-label__sub" hrsStyledText="base">{{ sub }}</span>
+                  }
+                </span>
               } @else {
                 <ui-score-row-head [hero]="head.hero" [name]="head.name" [portrait]="head.portrait" />
               }

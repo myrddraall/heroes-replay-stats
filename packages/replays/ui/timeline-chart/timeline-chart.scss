@@ -80,6 +80,14 @@
   color: var(--mat-sys-on-surface);
 }
 
+// a structure lost: the chart's notch
+.legend__notch {
+  inline-size: 3px;
+  block-size: 0.9em;
+  margin-inline: 0.3em;
+  background: var(--mat-sys-on-surface);
+}
+
 // an event's mark: its shape, as on the chart
 .legend__mark {
   inline-size: 0.8em;
@@ -120,6 +128,18 @@
   background: var(--score-row);
   color: var(--mat-sys-on-surface);
   font: 700 calc(var(--hrs-grid-row-height) * 0.36) / 1.2 var(--font-brand);
+}
+
+// a camp's, town's or core's head: its name, a town's hall under it
+.row-label {
+  display: grid;
+  align-content: center;
+  margin-inline-start: 0.5em;
+  line-height: 1.2;
+}
+
+.row-label__sub {
+  font-size: 0.75em;
 }
 
 .chart--timeline {

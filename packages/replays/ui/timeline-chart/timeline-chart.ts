@@ -21,6 +21,7 @@ import {
   teamColor,
   type TeamColor,
 } from '../../model';
+import { StyledText } from '@myrddraall/heroes-replay-stats-common/ui';
 import { ScoreRowBar } from '../stat-tables/score-row/score-row-bar';
 import { ScoreRowHead } from '../stat-tables/score-row/score-row-head';
 import { ScoreTeamHead } from '../stat-tables/score-row/score-team-head';
@@ -39,10 +40,19 @@ import {
   type TimelineEventKind,
 } from './game-timeline';
 import { FIGHT_GAP_SECONDS, replayFights, replayTalentPicks } from './timeline-rows';
-import { type TimelineChartKind, timelineOptions } from './timeline-chart-options';
+import { campNames } from './map-names';
+import { structureRows, type TimelineChartKind, timelineOptions } from './timeline-chart-options';
 
-/** A timeline row's head beside the chart: a team's, or a player's. */
+/** A row's head beside the chart: a team's, a player's, or a camp's, town's or core's. */
 type TimelineHead =
+  | {
+      readonly kind: 'label';
+      readonly key: string;
+      readonly theme: TeamColor | null;
+      readonly name: string;
+      /** Under the name, smaller (a town's hall); none for the others. */
+      readonly sub: string | null;
+    }
   | {
       readonly kind: 'team';
       readonly key: string;
@@ -97,7 +107,7 @@ const NOTES: Readonly<Partial<Record<TimelineChartKind, string>>> = {
  */
 @Component({
   selector: 'hrs-timeline-chart',
-  imports: [NgxEchartsDirective, ScoreRowBar, ScoreRowHead, ScoreTeamHead],
+  imports: [NgxEchartsDirective, ScoreRowBar, ScoreRowHead, ScoreTeamHead, StyledText],
   templateUrl: './timeline-chart.html',
   styleUrl: './timeline-chart.scss',
   providers: [provideEchartsCore({ echarts })],
@@ -156,8 +166,39 @@ export class TimelineChart {
         })
       : null,
   );
-  /** For `timeline`: each row's head beside the chart, as the tables' rows: a team's or a player's. */
+  /** The charts whose rows have heads beside them, as the tables' rows. */
+  protected readonly hasHeads = computed(() =>
+    (['timeline', 'camps', 'structures'] as TimelineChartKind[]).includes(this.kind()),
+  );
+  /**
+   * Each row's head beside the chart, as the tables' rows: on the timeline a team's or a player's;
+   * on the camps and structures a camp's, town's or core's name.
+   */
   protected readonly heads = computed((): TimelineHead[] => {
+    const kind = this.kind();
+    const map = this.map();
+    // the camps' and structures' rows: a name (and a town's hall), in its side's colour
+    if (kind === 'camps')
+      return campNames(map?.camps ?? []).map((name, i) => ({
+        kind: 'label',
+        key: `camp ${i}`,
+        theme: null,
+        name,
+        sub: null,
+      }));
+    if (kind === 'structures')
+      return structureRows(
+        map,
+        this.colorOf,
+        this.teams().map((t) => t.color),
+        this.durationSeconds(),
+      ).map((row, i) => ({
+        kind: 'label',
+        key: `structure ${i}`,
+        theme: this.colorOf(row.team),
+        name: row.name,
+        sub: row.sub,
+      }));
     const game = this.game();
     if (!game) return [];
     const { lanes } = this.deaths();

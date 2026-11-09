@@ -13,7 +13,6 @@ import type {
 } from 'echarts/components';
 import type {
   ComposeOption,
-  CustomSeriesRenderItem,
   CustomSeriesRenderItemAPI,
   CustomSeriesRenderItemReturn,
 } from 'echarts';
@@ -112,19 +111,6 @@ function alongTheGame(
     grid: CHART_GRID,
     xAxis: gameTimeAxis(durationSeconds, look),
     dataZoom: [{ type: 'inside', xAxisIndex: 0, filterMode: 'none' }],
-  };
-}
-
-/** A category axis of rows, the first at the top. */
-function rowsAxis(rows: readonly string[], look: ChartLook): TimelineChartOption['yAxis'] {
-  return {
-    type: 'category',
-    inverse: true,
-    data: [...rows],
-    axisLabel: axisText(look),
-    axisLine: { lineStyle: { color: look.line } },
-    axisTick: { show: false },
-    splitLine: { show: true, lineStyle: { color: look.line, opacity: 0.3 } },
   };
 }
 
@@ -244,34 +230,55 @@ export function fightsOptions(model: TimelineChartModel): TimelineChartOption {
   };
 }
 
-/** Draws `[row, start, end, opacity]` as a bar along the row, in the item's colour. */
-function spanBars(height = 0.6): CustomSeriesRenderItem {
-  return (_params, api) => {
-    const row = Number(api.value(0));
-    const [x0, y] = api.coord([api.value(1), row]) as [number, number];
-    const [x1] = api.coord([api.value(2), row]) as [number, number];
-    const h = (api.size?.([0, 1]) as number[])[1]! * height;
-    return {
-      type: 'rect',
-      shape: { x: x0, y: y - h / 2, width: Math.max(2, x1 - x0), height: h, r: 2 },
-      style: { fill: api.visual('color') as string, opacity: Number(api.value(3)) },
-    };
+/**
+ * A tooltip's lines as the timeline's: what it is in a team's colour (`theme`) with when at the top
+ * right, then the main detail in white and the rest in grey.
+ */
+function rowTip(
+  theme: TeamColor | null,
+  title: string,
+  when: string,
+  main: string | null,
+  minors: readonly string[] = [],
+): string {
+  return (
+    `<div class="chart-tip__head"><span${theme ? ` theme="${theme}"` : ''} class="chart-tip__name">${escapeHtml(title)}</span>` +
+    `<span class="chart-tip__time">${when}</span></div>` +
+    (main ? `<div class="chart-tip__main">${escapeHtml(main)}</div>` : '') +
+    minors.map((m) => `<div class="chart-tip__minor">${escapeHtml(m)}</div>`).join('')
+  );
+}
+
+/** The time axis and rows of a chart whose row heads the page puts beside it (`TIMELINE_GRID`). */
+function besideHeads(model: TimelineChartModel, rows: number): TimelineChartOption {
+  return {
+    grid: TIMELINE_GRID,
+    xAxis: gameTimeAxis(model.durationSeconds, model.look, { fromEdge: true }),
+    yAxis: {
+      type: 'category',
+      inverse: true,
+      data: Array.from({ length: rows }, (_, i) => String(i)),
+      // the rows' heads beside the chart name them; rows 2px apart as the tables', no lines
+      axisLabel: { show: false },
+      axisLine: { show: false },
+      axisTick: { show: false },
+      splitLine: { show: false },
+    },
   };
 }
 
 /**
- * The camps: a row per camp, faint while it was up for the taking, and in the capturing team's
- * colour from each capture until it came back.
+ * The camps: a row per camp (its head beside the chart), each stretch drawn as the tables' rows:
+ * grey while it was up for the taking, in the capturing team's colour from each capture until it
+ * came back.
  */
 export function campsOptions(model: TimelineChartModel): TimelineChartOption {
   const { map, look, colorOf } = model;
   const camps = map?.camps ?? [];
   const names = campNames(camps);
-  const spans = camps.flatMap((camp, row) => camp.spans.map((span) => ({ camp: row, span })));
-  const colour = (team: Team | null) => {
-    const c = colorOf(team);
-    return c ? look.teams[c] : look.label;
-  };
+  const spans = camps.flatMap((camp, row) => camp.spans.map((span) => ({ row, span })));
+  // up for the taking: grey (the theme's colours without colour, any theme's)
+  const grey = look.themed?.['blue'];
   return {
     ...alongTheGame(
       model,
@@ -283,42 +290,59 @@ export function campsOptions(model: TimelineChartModel): TimelineChartOption {
           .join('; ') +
         '.',
     ),
+    ...besideHeads(model, camps.length),
     dataZoom: [{ type: 'inside', xAxisIndex: 0, filterMode: 'weakFilter' }],
-    yAxis: rowsAxis(names, look),
     tooltip: chartTooltip(
       look,
       (params) => {
         const hit = spans[Number((params as { dataIndex?: number }).dataIndex)];
         if (!hit) return '';
         const { span } = hit;
-        const name = escapeHtml(names[hit.camp] ?? 'Camp');
-        const time = `${formatStatClock(span.start)} – ${formatStatClock(span.end)}`;
-        const c = colorOf(span.team);
+        const when = `${formatStatClock(span.start)} – ${formatStatClock(span.end)}`;
+        const name = names[hit.row] ?? 'Camp';
         return span.team === null
-          ? `<div class="chart-tip__name">${name}</div><div class="chart-tip__time">Up ${time}</div>`
-          : `<div class="chart-tip__name">${name}</div><div class="chart-tip__time">${time}</div>` +
-              `<div${c ? ` theme="${c}"` : ''}><span class="chart-tip__name">${c ? teamName(c) : 'A team'}</span> captured it; it came back at ${formatStatClock(span.end)}</div>`;
+          ? rowTip(null, 'Up for the taking', when, name)
+          : rowTip(colorOf(span.team), 'Captured', when, name, [
+              `${teamName(colorOf(span.team) ?? 'blue')} held it`,
+            ]);
       },
       'item',
     ),
     series: [
       {
         type: 'custom',
+        id: 'camps',
         name: 'Camps',
-        renderItem: spanBars(),
+        clip: true,
+        renderItem: (params, api) => {
+          const hit = spans[params.dataIndex];
+          if (!hit) return null;
+          const color = colorOf(hit.span.team);
+          const colours = color ? look.themed?.[color] : grey;
+          return colours
+            ? rowStretch(
+                api,
+                hit.row,
+                hit.span.start,
+                hit.span.end,
+                colours,
+                color ? 'alive' : 'away',
+                look,
+              )
+            : null;
+        },
         encode: { x: [1, 2], y: 0 },
-        data: spans.map(({ camp, span }) => ({
-          value: [camp, span.start, span.end, span.team === null ? 0.18 : 0.85],
-          itemStyle: { color: colour(span.team) },
-        })),
+        data: spans.map(({ row, span }) => [row, span.start, span.end]),
       },
     ],
   };
 }
 
 /** A row of the structures chart: a town or a core, who held it, and when it fell. */
-interface StructureRow {
+export interface StructureRow {
   readonly name: string;
+  /** Under the name in its head: the town's hall (`Fort`, `Keep`); none for a core. */
+  readonly sub: string | null;
   /** The team whose side it is on. */
   readonly team: Team;
   readonly fell: number | null;
@@ -326,27 +350,16 @@ interface StructureRow {
   readonly town: TownState | null;
 }
 
-/** A mark on a structures row: a structure lost, or (Towers of Doom) the town taken. */
-type StructureMark =
-  | { readonly row: number; readonly seconds: number; readonly loss: TownLoss }
-  | { readonly row: number; readonly seconds: number; readonly takenBy: Team };
-
-/** What a town or core's bar says when no one took it: its hall, and whether it fell. */
-function townFate(r: StructureRow): string {
-  const hall = r.town?.hall;
-  const fate = r.fell === null ? 'stood to the end' : `destroyed at ${formatStatClock(r.fell)}`;
-  const text = hall ? `${hall} ${fate}` : fate;
-  return `${text[0]!.toUpperCase()}${text.slice(1)}`;
-}
-
 /**
- * The structures: a row per town (your team's side first, top lane to bottom, each lane's towns
- * from the outer one in) and a row per core, in the colour of the team holding it while it stood
- * (on Towers of Doom towns change hands), with a notch for each tower, wall, gate and well that
- * fell in the town and a full-height one each time the town was taken.
+ * The structures chart's rows: a row per town (your team's side first, top lane to bottom, each
+ * lane's towns from the outer one in), then each side's core.
  */
-export function structuresOptions(model: TimelineChartModel): TimelineChartOption {
-  const { map, look, colorOf, durationSeconds, teams } = model;
+export function structureRows(
+  map: MapState | null,
+  colorOf: (team: Team | null) => TeamColor | null,
+  teams: readonly TeamColor[],
+  durationSeconds: number,
+): StructureRow[] {
   const order = { top: 0, middle: 1, bottom: 2 } as const;
   const teamOrder = (team: Team) => teams.indexOf(colorOf(team) as TeamColor);
   const towns = [...(map?.towns ?? [])].sort(
@@ -360,148 +373,168 @@ export function structuresOptions(model: TimelineChartModel): TimelineChartOptio
     const own = towns.filter((x) => x.team === team);
     for (const t of own) {
       const lane = own.filter((x) => x.lane === t.lane);
-      rows.push({ name: townName(t, lane), team, fell: t.fell, holds: t.holds, town: t });
+      const sub = t.hall ? `${t.hall[0]!.toUpperCase()}${t.hall.slice(1)}` : null;
+      rows.push({ name: townName(t, lane), sub, team, fell: t.fell, holds: t.holds, town: t });
     }
     const core = map?.cores.find((c) => c.team === team);
     if (core) {
       const hold = { start: 0, end: core.fell ?? durationSeconds, team };
-      rows.push({ name: 'Core', team, fell: core.fell, holds: [hold], town: null });
+      rows.push({ name: 'Core', sub: null, team, fell: core.fell, holds: [hold], town: null });
     }
   }
-  const colour = (team: Team) => {
-    const c = colorOf(team);
-    return c ? look.teams[c] : look.label;
-  };
-  /** A team's name in its colour, for the tooltips. */
-  const named = (team: Team, after = '') => {
-    const c = colorOf(team);
-    return `<span${c ? ` theme="${c}"` : ''} class="chart-tip__name">${c ? teamName(c) : 'A team'}${after}</span>`;
-  };
-  const holds = rows.flatMap((r, row) =>
-    r.holds.map((hold, i) => ({ row, hold, next: r.holds[i + 1] })),
-  );
+  return rows;
+}
+
+/** A mark on a structures row: a structure lost, or (Towers of Doom) the town taken. */
+type StructureMark =
+  | { readonly row: number; readonly seconds: number; readonly loss: TownLoss }
+  | { readonly row: number; readonly seconds: number; readonly takenBy: Team };
+
+/**
+ * The structures: a row per town and core (`structureRows`, their heads beside the chart), each
+ * drawn as the tables' rows in the colour of the team holding it while it stood (on Towers of Doom
+ * towns change hands) and darker once it fell, with a notch for each tower, wall, gate and well
+ * that fell in the town and a full-height one each time the town was taken.
+ */
+export function structuresOptions(model: TimelineChartModel): TimelineChartOption {
+  const { map, look, colorOf, durationSeconds, teams } = model;
+  const rows = structureRows(map, colorOf, teams, durationSeconds);
+  const mark = look.extra['mat-sys-on-surface'] ?? look.label;
+  /** Each row's stretches: held by a team while it stood, then fallen (its side's, darker). */
+  const bars = rows.flatMap((r, row) => [
+    ...r.holds.map((hold, i) => ({
+      row,
+      start: hold.start,
+      end: hold.end,
+      team: hold.team,
+      fallen: false,
+      next: r.holds[i + 1] ?? null,
+    })),
+    ...(r.fell !== null && r.fell < durationSeconds
+      ? [{ row, start: r.fell, end: durationSeconds, team: r.team, fallen: true, next: null }]
+      : []),
+  ]);
   const marks: StructureMark[] = rows.flatMap((r, row) => [
     ...(r.town?.losses ?? []).map((loss) => ({ row, seconds: loss.seconds, loss })),
     ...r.holds.slice(1).map((h) => ({ row, seconds: h.start, takenBy: h.team })),
   ]);
-  const text = axisText(look);
-  const label = (r: StructureRow) => {
-    const c = colorOf(r.team);
-    return c ? `{${c}|${r.name}}` : r.name;
-  };
-  /** A row's name in a sentence: a town that changed hands is named by whose side it is on. */
-  const rowName = (r: StructureRow) => {
-    const c = colorOf(r.team);
-    const team = c ? teamName(c) : 'A team';
-    return r.holds.length > 1 ? `${r.name} on ${team}'s side` : `${team} ${r.name}`;
-  };
+  const sideOf = (team: Team) => `${teamName(colorOf(team) ?? 'blue')}'s`;
+  /** A row's name in a tooltip: a town that changed hands named by whose side it is on. */
+  const rowName = (r: StructureRow) =>
+    r.holds.length > 1 ? `${r.name} on ${sideOf(r.team)} side` : `${sideOf(r.team)} ${r.name}`;
   const story = (r: StructureRow) =>
     r.holds.length > 1
       ? `${rowName(r)} taken ` +
         r.holds
           .slice(1)
-          .map((h) => {
-            const c = colorOf(h.team);
-            return `by ${c ? teamName(c) : 'a team'} at ${formatStatClock(h.start)}`;
-          })
+          .map((h) => `by ${teamName(colorOf(h.team) ?? 'blue')} at ${formatStatClock(h.start)}`)
           .join(', ')
       : `${rowName(r)} ${r.fell === null ? 'stood' : `fell at ${formatStatClock(r.fell)}`}`;
   return {
     ...alongTheGame(model, `Each town and core over the game: ${rows.map(story).join('; ')}.`),
+    ...besideHeads(model, rows.length),
     dataZoom: [{ type: 'inside', xAxisIndex: 0, filterMode: 'weakFilter' }],
-    yAxis: {
-      type: 'category',
-      inverse: true,
-      data: rows.map(label),
-      axisLabel: {
-        ...text,
-        rich: { blue: { color: look.teams.blue }, red: { color: look.teams.red } },
-      },
-      axisLine: { lineStyle: { color: look.line } },
-      axisTick: { show: false },
-      splitLine: { show: true, lineStyle: { color: look.line, opacity: 0.3 } },
-    },
     tooltip: chartTooltip(
       look,
       (params) => {
-        const p = params as { seriesIndex?: number; dataIndex?: number };
-        if (p.seriesIndex === 1) {
-          const mark = marks[Number(p.dataIndex)];
-          const r = mark ? rows[mark.row] : undefined;
-          if (!mark || !r) return '';
-          return (
-            `<div><span class="chart-tip__name">${escapeHtml(rowName(r))}</span></div>` +
-            `<div class="chart-tip__time">${formatStatClock(mark.seconds)}</div>` +
-            ('loss' in mark
-              ? `<div>${named(mark.loss.team, ` lost a ${mark.loss.kind}`)}</div>`
-              : `<div>${named(mark.takenBy, ' took it')}</div>`)
-          );
+        const p = params as { seriesId?: string; dataIndex?: number };
+        if (p.seriesId === 'marks') {
+          const m = marks[Number(p.dataIndex)];
+          const r = m ? rows[m.row] : undefined;
+          if (!m || !r) return '';
+          const when = formatStatClock(m.seconds);
+          if ('loss' in m) {
+            const kind = `${m.loss.kind[0]!.toUpperCase()}${m.loss.kind.slice(1)}`;
+            return rowTip(
+              colorOf(m.loss.team),
+              `${kind} lost`,
+              when,
+              rowName(r),
+              r.sub ? [r.sub] : [],
+            );
+          }
+          return rowTip(colorOf(m.takenBy), 'Town taken', when, rowName(r));
         }
-        const hit = holds[Number(p.dataIndex)];
-        const r = hit ? rows[hit.row] : undefined;
-        if (!hit || !r) return '';
-        const head = `<div><span class="chart-tip__name">${escapeHtml(rowName(r))}</span></div>`;
-        if (r.holds.length > 1) {
-          return (
-            head +
-            `<div class="chart-tip__time">${formatStatClock(hit.hold.start)} – ${formatStatClock(hit.hold.end)}</div>` +
-            `<div>${named(hit.hold.team, ' held it')}</div>` +
-            (hit.next
-              ? `<div>${named(hit.next.team, ' took it')} at ${formatStatClock(hit.next.start)}</div>`
-              : '')
+        const bar = bars[Number(p.dataIndex)];
+        const r = bar ? rows[bar.row] : undefined;
+        if (!bar || !r) return '';
+        const when = `${formatStatClock(bar.start)} – ${formatStatClock(bar.end)}`;
+        const color = colorOf(bar.team);
+        if (bar.fallen) return rowTip(color, 'Destroyed', when, rowName(r), r.sub ? [r.sub] : []);
+        if (r.holds.length > 1)
+          return rowTip(
+            color,
+            'Held',
+            when,
+            rowName(r),
+            bar.next ? [`Taken by ${teamName(colorOf(bar.next.team) ?? 'blue')}`] : [],
           );
-        }
         const lost = r.town?.losses.length ?? 0;
-        return (
-          head +
-          `<div class="chart-tip__time">${townFate(r)}</div>` +
-          (r.town
-            ? `<div>${lost} ${lost === 1 ? 'structure' : 'structures'} lost around it</div>`
-            : '')
-        );
+        return rowTip(color, 'Standing', when, rowName(r), [
+          ...(r.sub ? [r.sub] : []),
+          ...(r.town ? [`${lost} ${lost === 1 ? 'structure' : 'structures'} lost around it`] : []),
+        ]);
       },
       'item',
     ),
     series: [
       {
         type: 'custom',
+        id: 'standing',
         name: 'Standing',
-        renderItem: spanBars(),
+        clip: true,
+        renderItem: (params, api) => {
+          const bar = bars[params.dataIndex];
+          const color = bar ? colorOf(bar.team) : null;
+          const colours = color ? look.themed?.[color] : undefined;
+          return bar && colours
+            ? rowStretch(
+                api,
+                bar.row,
+                bar.start,
+                bar.end,
+                colours,
+                bar.fallen ? 'dead' : 'alive',
+                look,
+              )
+            : null;
+        },
         encode: { x: [1, 2], y: 0 },
-        data: holds.map(({ row, hold }) => ({
-          value: [row, hold.start, hold.end, 0.55],
-          itemStyle: { color: colour(hold.team) },
-        })),
+        data: bars.map((b) => [b.row, b.start, b.end]),
       },
       {
         type: 'custom',
+        id: 'marks',
         name: 'Marks',
         // over the bars, so the notches are what the pointer finds where they cross
         z: 3,
+        clip: true,
         renderItem: (_params, api) => {
           const row = Number(api.value(0));
           const [x, y] = api.coord([api.value(1), row]) as [number, number];
-          const h = (api.size?.([0, 1]) as number[])[1]! * Number(api.value(2));
+          const h = ((api.size?.([0, 1]) as number[])[1]! - 2) * Number(api.value(2));
           return {
             type: 'group',
             children: [
               // a wider, unseen area to hover than the notch itself
               {
                 type: 'rect',
+                transition: 'shape',
                 shape: { x: x - 5, y: y - h / 2, width: 10, height: h },
                 style: { fill: 'transparent' },
               },
               {
                 type: 'rect',
+                transition: 'shape',
                 shape: { x: x - 1.5, y: y - h / 2, width: 3, height: h },
-                style: { fill: look.label },
+                style: { fill: mark },
               },
             ],
           };
         },
         encode: { x: 1, y: 0 },
         // a structure lost: most of the row; the town taken: all of it
-        data: marks.map((m) => [m.row, m.seconds, 'loss' in m ? 0.8 : 1]),
+        data: marks.map((m) => [m.row, m.seconds, 'loss' in m ? 0.7 : 1]),
       },
     ],
   };
