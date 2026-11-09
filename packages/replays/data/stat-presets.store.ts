@@ -1,6 +1,6 @@
 import { patchState, signalStore, withHooks, withMethods, withState } from '@ngrx/signals';
 import type { StatColumnChoice } from '../model';
-import { STAT_SECTION_IDS, type StatSectionId } from '../model';
+import { OLD_STAT_SECTION_IDS, STAT_SECTION_IDS, type StatSectionId } from '../model';
 
 export const STAT_PRESETS_STORAGE_KEY = 'hrs.stat-presets';
 
@@ -21,7 +21,9 @@ export function parseStatPresets(raw: string | null): SavedStatPresets {
     const saved = JSON.parse(raw) as Record<string, unknown>;
     const out: Partial<Record<StatSectionId, Record<string, readonly StatColumnChoice[]>>> = {};
     for (const section of STAT_SECTION_IDS) {
-      const presets = saved[section];
+      // a renamed section's presets, saved under its earlier id
+      const old = OLD_STAT_SECTION_IDS[section];
+      const presets = saved[section] ?? (old === undefined ? undefined : saved[old]);
       if (typeof presets !== 'object' || presets === null) continue;
       for (const [name, choices] of Object.entries(presets))
         if (Array.isArray(choices) && choices.every(isChoice))

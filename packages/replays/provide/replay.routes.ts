@@ -1,5 +1,5 @@
 import type { Routes } from '@angular/router';
-import { STAT_SECTION_IDS } from '../model';
+import { OLD_STAT_SECTION_IDS, STAT_SECTION_IDS } from '../model';
 import { TEAM_STAT_GROUPS } from '../ui';
 
 const score = () => import('../feature/score-section').then((m) => m.ScoreSection);
@@ -45,6 +45,11 @@ export const replayRoutes: Routes = [
     loadComponent: stats,
   })),
   { path: 'players/unit-kills', data: { table: 'players' }, loadComponent: unitKills },
+  // renamed sections' earlier addresses
+  ...Object.entries(OLD_STAT_SECTION_IDS).map(([section, old]) => ({
+    path: `players/${old}`,
+    redirectTo: `players/${section}`,
+  })),
   { path: 'players/compare', data: { chart: 'compare' }, loadComponent: playerChart },
   { path: 'players/apm', data: { chart: 'apm' }, loadComponent: playerChart },
   { path: 'teams', pathMatch: 'full', redirectTo: `teams/${TEAM_STAT_GROUPS[0]!.id}` },

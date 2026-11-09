@@ -31,7 +31,7 @@ export function matchSections(replay: Pick<ReplaySummary, 'id' | 'mode'>): Shell
           link: at(`players/${s}`),
         })),
         { label: 'Unit Kills', link: at('players/unit-kills') },
-        { label: 'Compare', link: at('players/compare') },
+        { label: 'Compare Stats', link: at('players/compare') },
         { label: 'APM', link: at('players/apm') },
       ],
     },

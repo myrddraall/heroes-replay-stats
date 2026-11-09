@@ -25,7 +25,7 @@ import {
 
 /** Each chart's name, for screen readers (the side nav names it on screen). */
 const TITLES: Readonly<Record<PlayerChartKind, string>> = {
-  compare: 'Player comparison',
+  compare: 'Compare stats',
   apm: 'Actions per minute',
 };
 
