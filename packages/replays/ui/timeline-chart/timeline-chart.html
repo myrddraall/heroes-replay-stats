@@ -13,7 +13,7 @@
         </li>
       }
       @if (kind() === 'camps') {
-        @for (level of campLevels; track level.theme) {
+        @for (level of campLevels(); track level.theme) {
           <li>
             <span class="legend__state"><span class="row-look" [attr.theme]="level.theme" [style.background]="stateBackground('row')"></span></span>
             {{ level.label }}

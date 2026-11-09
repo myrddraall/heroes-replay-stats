@@ -27,9 +27,51 @@ export function campTypeOf(camp: CampState, units: MapUnitsInfo | null): CampTyp
   return best;
 }
 
-/** A camp's rarity theme: its type's, one higher where its camp type is elite (`campRarity`). */
+/** The game's names for the kinds of camp, by its camp types' categories. */
+const KIND_NAMES: Partial<Record<CampTypeInfo['category'], string>> = {
+  siege: 'Siege Camp',
+  bruiser: 'Bruiser Camp',
+  boss: 'Boss Camp',
+};
+
+/**
+ * A camp's kind (`Siege Camp`): the replay's name for it, from its captures; for a camp never
+ * captured, its camp type's category in the map's data.
+ */
+function campKind(camp: CampState, units: MapUnitsInfo | null): string | null {
+  if (camp.type) return camp.type;
+  const category = campTypeOf(camp, units)?.category;
+  return (category && KIND_NAMES[category]) ?? null;
+}
+
+/** A camp's rarity theme: its kind's, one higher where its camp type is elite (`campRarity`). */
 export function campRarityOf(camp: CampState, units: MapUnitsInfo | null): CampRarity | null {
-  return campRarity(camp.type, campTypeOf(camp, units)?.elite ?? false);
+  return campRarity(campKind(camp, units), campTypeOf(camp, units)?.elite ?? false);
+}
+
+/**
+ * The camps' rarity themes in the key, those the camps have, each with what it stands for there
+ * (`Boss camp`, `Elite bruiser camp`).
+ */
+export function campKey(
+  camps: readonly CampState[],
+  units: MapUnitsInfo | null,
+): { theme: CampRarity; label: string }[] {
+  const kinds = new Map<CampRarity, Set<string>>();
+  for (const camp of camps) {
+    const theme = campRarityOf(camp, units);
+    const kind = campKind(camp, units);
+    if (!theme || !kind) continue;
+    const name = kind.toLowerCase();
+    const label = campTypeOf(camp, units)?.elite
+      ? `Elite ${name}`
+      : `${name[0]!.toUpperCase()}${name.slice(1)}`;
+    kinds.set(theme, (kinds.get(theme) ?? new Set()).add(label));
+  }
+  return (['rare', 'epic', 'legendary'] as const).flatMap((theme) => {
+    const labels = kinds.get(theme);
+    return labels ? [{ theme, label: [...labels].join(', ') }] : [];
+  });
 }
 
 /**

@@ -42,7 +42,14 @@ import {
 } from './game-timeline';
 import { FIGHT_GAP_SECONDS, replayFights, replayTalentPicks } from './timeline-rows';
 import type { CampRarity } from './map-names';
-import { campHeadIcons, campLabels, campPlace, campRarityOf, unitIcon } from './map-unit-heads';
+import {
+  campHeadIcons,
+  campKey,
+  campLabels,
+  campPlace,
+  campRarityOf,
+  unitIcon,
+} from './map-unit-heads';
 import { structureRows, type TimelineChartKind, timelineOptions } from './timeline-chart-options';
 
 /** A row's head beside the chart: a team's, a player's, or a camp's, town's or core's. */
@@ -262,12 +269,10 @@ export class TimelineChart {
   protected readonly rowTeams: readonly TeamColor[] = ['blue', 'red'];
   /** The camps' levels' rarity themes, read alongside the teams' for the camps' rows. */
   protected readonly campThemes: readonly CampRarity[] = ['rare', 'epic', 'legendary'];
-  /** For `camps`: each level in the key, by the game's name for its camps. */
-  protected readonly campLevels = [
-    { theme: 'rare', label: 'Siege camp' },
-    { theme: 'epic', label: 'Bruiser camp' },
-    { theme: 'legendary', label: 'Boss camp' },
-  ] as const;
+  /** For `camps`: each rarity the camps have in the key, with what it stands for here. */
+  protected readonly campLevels = computed(() =>
+    this.kind() === 'camps' ? campKey(this.map()?.camps ?? [], this.mapUnits()) : [],
+  );
   private readonly rowProbes = viewChildren('rowProbe', { read: ElementRef<HTMLElement> });
   /** For `timeline`: the kinds of event in the legend, with their shapes. */
   protected readonly events = computed(() =>
