@@ -48,6 +48,8 @@ export * from './xp-chart/xp-chart-controls';
 export * from './xp-chart/xp-curves';
 export type { XpChartKind } from './xp-chart/xp-chart-options';
 export * from './timeline-chart/timeline-chart';
+export * from './timeline-chart/timeline-event-controls';
+export type { TimelineEventKind } from './timeline-chart/game-timeline';
 export type { TimelineChartKind } from './timeline-chart/timeline-chart-options';
 export * from './player-chart/player-chart';
 export * from './player-chart/player-chart-controls';

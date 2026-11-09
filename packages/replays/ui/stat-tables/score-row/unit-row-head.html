@@ -1,0 +1,15 @@
+@if (slotCount()) {
+  <span class="portraits" [class.portraits--many]="portraits().length > 1" [style.--slots]="slotCount()">
+    @for (portrait of portraits(); track $index) {
+      <span class="slot">
+        <hrs-hero-portrait class="portrait" [picture]="portrait.picture" [name]="portrait.name" />
+      </span>
+    }
+  </span>
+}
+<span class="names" [class.names--alone]="!slotCount()">
+  <span hrsStyledText="bright">{{ name() }}</span>
+  @if (sub(); as sub) {
+    <span class="names__sub" hrsStyledText="base">{{ sub }}</span>
+  }
+</span>

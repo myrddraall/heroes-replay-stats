@@ -9,6 +9,11 @@
       [players]="store.players()"
       [map]="store.map()"
       [durationSeconds]="store.durationSeconds()"
+      [talentNames]="store.talentNames()"
+      [hidden]="store.hiddenEvents()"
+      [portraits]="store.portraits()"
+      [you]="store.you()"
+      [mapUnits]="store.mapUnits()"
     />
   } @else {
     <mat-progress-bar mode="indeterminate" aria-label="Loading the timeline" />
@@ -18,6 +23,9 @@
   <ng-template hrsShellPanel="Chart">
     <ui-side-panel title="Chart" (closeRequested)="panels.setEndOpen(false)">
       <div class="controls">
+        @if (chart() === 'timeline') {
+          <hrs-timeline-event-controls [hidden]="store.hiddenEvents()" (hiddenChange)="store.hideEvents($event)" />
+        }
         <button type="button" matButton="outlined" (click)="resetZoom()">Reset zoom</button>
       </div>
     </ui-side-panel>

@@ -190,9 +190,10 @@ export class ReplayStatsService {
 
   /**
    * The map over the game: each camp's stretches up and captured, each town with its hall and
-   * structures and when they fell, and each core; from the replay's stat events and units.
+   * structures and when they fell, and each core; from the replay's stat events and units, its
+   * camps' defenders the `defenderTypes` the map's game data names (null without it).
    */
-  mapState(replayId: string): Observable<MapState> {
+  mapState(replayId: string, defenderTypes: ReadonlySet<string> | null): Observable<MapState> {
     return this.live(async () => {
       const range = (table: string) =>
         this.db.db
@@ -210,6 +211,7 @@ export class ReplayStatsService {
         units,
         replay?.gameStartLoop ?? GAME_START_LOOP,
         replay?.durationSeconds ?? 0,
+        defenderTypes,
       );
     });
   }

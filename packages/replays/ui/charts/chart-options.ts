@@ -27,17 +27,24 @@ export const CHART_GRID = {
 } as const;
 
 /**
- * The game's clock along the bottom, up to `end` seconds: a tick every whole minute, zoomed or not,
- * labelled every 1, 2, 5 or 10 minutes (evenly, at most about 16 along the game).
+ * The game's clock along the bottom, from `start` (0, the gates opening; the replay's own start,
+ * before them, is negative) up to `end` seconds: a tick every whole minute, zoomed or not,
+ * labelled every 1, 2, 5 or 10 minutes (evenly, at most about 16 along the game), and the start
+ * labelled when it is before the gates. On a plot from the chart's left edge (`fromEdge`), the
+ * first label starts at its tick rather than across it.
  */
-export function gameTimeAxis(end: number, look: ChartLook): XAXisComponentOption {
+export function gameTimeAxis(
+  end: number,
+  look: ChartLook,
+  { start = 0, fromEdge = false }: { start?: number; fromEdge?: boolean } = {},
+): XAXisComponentOption {
   const text = axisText(look);
   const minutes = Array.from({ length: Math.floor(end / 60) + 1 }, (_, i) => i * 60);
   const step = [1, 2, 5, 10].find((m) => end / 60 / m <= 16) ?? 10;
-  const labelled = minutes.filter((s) => (s / 60) % step === 0);
+  const labelled = [...(start < 0 ? [start] : []), ...minutes.filter((s) => (s / 60) % step === 0)];
   return {
     type: 'value',
-    min: 0,
+    min: start,
     max: end,
     name: 'Time',
     nameLocation: 'middle',
@@ -46,6 +53,7 @@ export function gameTimeAxis(end: number, look: ChartLook): XAXisComponentOption
     axisLabel: {
       ...text,
       hideOverlap: true,
+      ...(fromEdge ? { alignMinLabel: 'left' as const } : {}),
       customValues: labelled,
       formatter: (v: number) => formatStatClock(v),
     },

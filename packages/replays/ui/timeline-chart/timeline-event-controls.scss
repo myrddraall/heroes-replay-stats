@@ -1,0 +1,34 @@
+:host {
+  display: block;
+}
+
+.events {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.title {
+  margin: 0 0 4px;
+  font: var(--mat-sys-title-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+// the event's mark on the chart: its shape
+.mark {
+  display: inline-block;
+  inline-size: 0.8em;
+  block-size: 0.8em;
+  margin-inline-end: 0.5em;
+  vertical-align: middle;
+  background: var(--mat-sys-on-surface);
+}
+
+// a kind marked by its own text (a team level's number): an example, as on the chart
+.text {
+  display: inline-block;
+  min-inline-size: 0.8em;
+  margin-inline-end: 0.5em;
+  font: 700 0.75em var(--font-brand);
+  color: var(--mat-sys-on-surface);
+}

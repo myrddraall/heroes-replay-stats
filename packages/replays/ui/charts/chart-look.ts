@@ -10,6 +10,8 @@ export interface ChartLook {
   readonly teams: Readonly<Record<TeamColor, string>>;
   /** Further colours a chart's stylesheet sets (`--<name>` custom properties), by name. */
   readonly extra: Readonly<Record<string, string>>;
+  /** Colours a chart's stylesheet sets per theme (`readThemedColours`), by theme, then name. */
+  readonly themed?: Readonly<Record<string, Readonly<Record<string, string>>>>;
 }
 
 /**
@@ -31,6 +33,30 @@ export function readChartLook(element: HTMLElement, extra: readonly string[] = [
     } satisfies Record<TeamColor, string>,
     extra: Object.fromEntries(extra.map((name) => [name, read(`--${name}`)])),
   };
+}
+
+/**
+ * Colours a stylesheet sets as custom properties on themed elements (`theme="blue"`…), by each
+ * element's theme and then by name (`top` for `--top`): for colours made from a theme's tokens
+ * (`color-mix`, relative colours), which only an element in that theme resolves. Each is resolved
+ * to the `rgba()` the canvas draws.
+ */
+export function readThemedColours(
+  elements: readonly HTMLElement[],
+  names: readonly string[],
+): Record<string, Record<string, string>> {
+  const color = colorResolver();
+  return Object.fromEntries(
+    elements.map((element) => {
+      const read = (name: string) => {
+        element.style.color = `var(--${name})`;
+        return color(getComputedStyle(element).color);
+      };
+      const colours = Object.fromEntries(names.map((name) => [name, read(name)]));
+      element.style.color = '';
+      return [element.getAttribute('theme') ?? '', colours];
+    }),
+  );
 }
 
 /** Resolves any CSS colour (oklch, a named colour…) to `rgba()` by painting it on a pixel. */

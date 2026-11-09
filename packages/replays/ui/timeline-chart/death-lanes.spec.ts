@@ -38,9 +38,16 @@ describe('replay deaths', () => {
     events: [
       event({ kind: 'dead', start: at(100), end: at(130), slot: 0, team: 0 }),
       // the game's PlayerIDs are slots from 1; an ally's credit is dropped
-      event({ kind: 'death', start: at(100), slot: 0, team: 0, killers: [6, 7, 2] }),
+      event({ kind: 'death', start: at(100), slot: 0, team: 0, killers: [6, 7, 2], killerSlot: 5 }),
       event({ kind: 'dead', start: at(200), end: at(220), slot: 6, team: 1 }),
-      event({ kind: 'death', start: at(200), slot: 6, team: 1, killers: [1] }),
+      event({
+        kind: 'death',
+        start: at(200),
+        slot: 6,
+        team: 1,
+        killers: [1],
+        unitType: 'TownCannonTowerL3',
+      }),
       event({ kind: 'death', start: at(300), slot: 0, team: 0, killers: [6] }),
     ],
   };
@@ -54,8 +61,8 @@ describe('replay deaths', () => {
       ['Uther', 'red'],
     ]);
     expect(deaths.spans).toEqual([
-      { lane: 2, start: 100, end: 130, killers: [5, 6] },
-      { lane: 1, start: 200, end: 220, killers: [0] },
+      { lane: 2, start: 100, end: 130, killers: [5, 6], killerSlot: 5, killedBy: null },
+      { lane: 1, start: 200, end: 220, killers: [0], killerSlot: null, killedBy: 'Towers' },
     ]);
   });
 

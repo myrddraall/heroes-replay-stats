@@ -37,11 +37,13 @@
 .replay__link {
   color: inherit;
   text-decoration: none;
-  // the whole card opens the replay
+  // the whole card opens the replay: over everything in it (the teams' bars are layers of their
+  // own, later in the card, and would take the click)
   &::after {
     content: '';
     position: absolute;
     inset: 0;
+    z-index: 1;
   }
   &:hover,
   &:focus-visible {

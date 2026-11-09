@@ -1,3 +1,4 @@
+import type { MapUnitsInfo } from '@myrddraall/hero-data';
 import type {
   BarSeriesOption,
   ChordSeriesOption,
@@ -11,7 +12,11 @@ import type {
   GridComponentOption,
   TooltipComponentOption,
 } from 'echarts/components';
-import type { ComposeOption, CustomSeriesRenderItem } from 'echarts';
+import type {
+  ComposeOption,
+  CustomSeriesRenderItemAPI,
+  CustomSeriesRenderItemReturn,
+} from 'echarts';
 import type { ChartLook } from '../charts/chart-look';
 import {
   axisText,
@@ -23,9 +28,19 @@ import {
 import { formatStatClock } from '../stat-tables/stat-format';
 import type { DeathLane, ReplayDeaths } from './death-lanes';
 import type { Team } from '@myrddraall/heroprotocol-db';
-import type { CampState, MapState, TeamColor, TownHold, TownLoss, TownState } from '../../model';
+import type { MapState, TeamColor, TownHold, TownLoss, TownState } from '../../model';
 import { teamName } from '../stat-tables/team-rows';
 import { type Fight, FIGHT_GAP_SECONDS, fightPlayers, type TalentPick } from './timeline-rows';
+import { townName } from './map-names';
+import { campLabels, campRarityOf, mercsAtRank } from './map-unit-heads';
+import {
+  type GameTimeline,
+  TIMELINE_EVENTS,
+  type TimelineEventKind,
+  type TimelineEventLook,
+  type PlayerStateKey,
+  playerStateLook,
+} from './game-timeline';
 
 export type TimelineChartOption = ComposeOption<
   | CustomSeriesOption
@@ -40,22 +55,27 @@ export type TimelineChartOption = ComposeOption<
 >;
 
 /**
- * Which chart of the game's timeline: each player's dead stretches (`deaths`), who killed whom
+ * Which chart of the game's timeline: the game over time (`timeline`), who killed whom
  * (`takedowns`), the fights, the camps' captures, the structures destroyed, or when each player
  * picked their talents (`talent-tiers`).
  */
 export type TimelineChartKind =
-  'deaths' | 'takedowns' | 'fights' | 'camps' | 'structures' | 'talent-tiers';
+  'timeline' | 'takedowns' | 'fights' | 'camps' | 'structures' | 'talent-tiers';
 
 /** What the charts show. */
 export interface TimelineChartModel {
   readonly deaths: ReplayDeaths;
+  /** For `timeline`: the game as a timeline (null for the other charts), and the kinds of event hidden. */
+  readonly game: GameTimeline | null;
+  readonly hidden: readonly TimelineEventKind[];
   readonly fights: readonly Fight[];
   /** For `camps` and `structures`: the map over the game (null until read). */
   readonly map: MapState | null;
   /** A team's colour from your point of view. */
   readonly colorOf: (team: Team | null) => TeamColor | null;
   readonly talents: readonly TalentPick[];
+  /** For `camps`: the map's camps and unit cards (heroes-assets); null without them. */
+  readonly mapUnits?: MapUnitsInfo | null;
   /** The teams, your team first. */
   readonly teams: readonly TeamColor[];
   /** The game's length on its clock. */
@@ -68,8 +88,8 @@ export function timelineOptions(
   model: TimelineChartModel,
 ): TimelineChartOption {
   switch (kind) {
-    case 'deaths':
-      return deathTimelineOptions(model);
+    case 'timeline':
+      return gameTimelineOptions(model);
     case 'takedowns':
       return takedownsOptions(model);
     case 'fights':
@@ -95,19 +115,6 @@ function alongTheGame(
     grid: CHART_GRID,
     xAxis: gameTimeAxis(durationSeconds, look),
     dataZoom: [{ type: 'inside', xAxisIndex: 0, filterMode: 'none' }],
-  };
-}
-
-/** A category axis of rows, the first at the top. */
-function rowsAxis(rows: readonly string[], look: ChartLook): TimelineChartOption['yAxis'] {
-  return {
-    type: 'category',
-    inverse: true,
-    data: [...rows],
-    axisLabel: axisText(look),
-    axisLine: { lineStyle: { color: look.line } },
-    axisTick: { show: false },
-    splitLine: { show: true, lineStyle: { color: look.line, opacity: 0.3 } },
   };
 }
 
@@ -227,43 +234,135 @@ export function fightsOptions(model: TimelineChartModel): TimelineChartOption {
   };
 }
 
-/** Draws `[row, start, end, opacity]` as a bar along the row, in the item's colour. */
-function spanBars(height = 0.6): CustomSeriesRenderItem {
-  return (_params, api) => {
-    const row = Number(api.value(0));
-    const [x0, y] = api.coord([api.value(1), row]) as [number, number];
-    const [x1] = api.coord([api.value(2), row]) as [number, number];
-    const h = (api.size?.([0, 1]) as number[])[1]! * height;
-    return {
-      type: 'rect',
-      shape: { x: x0, y: y - h / 2, width: Math.max(2, x1 - x0), height: h, r: 2 },
-      style: { fill: api.visual('color') as string, opacity: Number(api.value(3)) },
-    };
+/**
+ * A tooltip's lines as the timeline's: what it is in a team's colour (`theme`) with when at the top
+ * right, then the main detail in white and the rest in grey.
+ */
+function rowTip(
+  theme: TeamColor | null,
+  title: string,
+  when: string,
+  main: string | null,
+  minors: readonly string[] = [],
+): string {
+  return (
+    `<div class="chart-tip__head"><span${theme ? ` theme="${theme}"` : ''} class="chart-tip__name">${escapeHtml(title)}</span>` +
+    `<span class="chart-tip__time">${when}</span></div>` +
+    (main ? `<div class="chart-tip__main">${escapeHtml(main)}</div>` : '') +
+    minors.map((m) => `<div class="chart-tip__minor">${escapeHtml(m)}</div>`).join('')
+  );
+}
+
+/** The time axis and rows of a chart whose row heads the page puts beside it (`TIMELINE_GRID`). */
+function besideHeads(model: TimelineChartModel, rows: number): TimelineChartOption {
+  return {
+    grid: TIMELINE_GRID,
+    xAxis: gameTimeAxis(model.durationSeconds, model.look, { fromEdge: true }),
+    yAxis: {
+      type: 'category',
+      inverse: true,
+      data: Array.from({ length: rows }, (_, i) => String(i)),
+      // the rows' heads beside the chart name them; rows 2px apart as the tables', no lines
+      axisLabel: { show: false },
+      axisLine: { show: false },
+      axisTick: { show: false },
+      splitLine: { show: false },
+    },
   };
 }
 
-/** Names camps by type, numbering the types with several: Siege Camp 1, Siege Camp 2, Boss Camp. */
-function campNames(camps: readonly CampState[]): string[] {
-  return camps.map((c) => {
-    const type = c.type ?? 'Camp';
-    const same = camps.filter((o) => (o.type ?? 'Camp') === type);
-    return same.length > 1 ? `${type} ${same.indexOf(c) + 1}` : type;
-  });
+/** A stretch of a camp's row: whose, how many of its capture's mercenaries were still in lane. */
+interface CampPiece {
+  readonly row: number;
+  readonly start: number;
+  readonly end: number;
+  readonly team: Team | null;
+  readonly inLane: number;
+  readonly sent: number;
+  /** Before the camp first came up. */
+  readonly waiting: boolean;
+  /** Captured: when the capture was; null otherwise. */
+  readonly captured: number | null;
 }
 
 /**
- * The camps: a row per camp, faint while it was up for the taking, and in the capturing team's
- * colour from each capture until it came back.
+ * The camps: a row per camp (its head beside the chart, in its level's rarity theme: siege camps
+ * rare, bruiser camps epic, boss camps legendary), each stretch drawn as the tables' rows: the
+ * camp's theme's while it was up for the taking, darker while empty (before it first came up,
+ * and after a capture), and from each capture the capturing team's colour, moving towards the
+ * darker empty camp's as the mercenaries it sent into lane died (all of the way once none were
+ * left), until it came back.
  */
 export function campsOptions(model: TimelineChartModel): TimelineChartOption {
   const { map, look, colorOf } = model;
   const camps = map?.camps ?? [];
-  const names = campNames(camps);
-  const spans = camps.flatMap((camp, row) => camp.spans.map((span) => ({ camp: row, span })));
-  const colour = (team: Team | null) => {
-    const c = colorOf(team);
-    return c ? look.teams[c] : look.label;
+  // each camp's label as the game shows it (`Knights`), its type's name without one
+  const names = campLabels(camps, model.mapUnits ?? null);
+  /** A camp's own theme's colours: its level's rarity (`campRarityOf`), or the neutral theme's. */
+  const themeOf = (row: number) => {
+    const camp = camps[row];
+    return look.themed?.[(camp && campRarityOf(camp, model.mapUnits ?? null)) ?? ''];
   };
+  /**
+   * Each camp's stretches: before it first came up; up for the taking; and captured, cut each time
+   * one of the capture's mercenaries died, its share of them still in lane.
+   */
+  const pieces = camps.flatMap((camp, row): CampPiece[] => {
+    const first = camp.spans[0]?.start ?? 0;
+    return [
+      ...(first > 0
+        ? [
+            {
+              row,
+              start: 0,
+              end: first,
+              team: null,
+              inLane: 0,
+              sent: 0,
+              waiting: true,
+              captured: null,
+            },
+          ]
+        : []),
+      ...camp.spans.flatMap((span): CampPiece[] => {
+        if (span.team === null)
+          return [
+            {
+              row,
+              start: span.start,
+              end: span.end,
+              team: null,
+              inLane: 0,
+              sent: 0,
+              waiting: false,
+              captured: null,
+            },
+          ];
+        const cuts = [
+          ...new Set([
+            span.start,
+            span.end,
+            ...span.mercs.map((m) => m.end).filter((t) => t > span.start && t < span.end),
+          ]),
+        ].sort((p, q) => p - q);
+        return cuts.slice(0, -1).map((start, i) => {
+          const end = cuts[i + 1]!;
+          const mid = (start + end) / 2;
+          const inLane = span.mercs.filter((m) => m.start <= mid && mid < m.end).length;
+          return {
+            row,
+            start,
+            end,
+            team: span.team,
+            inLane,
+            sent: span.mercs.length,
+            waiting: false,
+            captured: span.start,
+          };
+        });
+      }),
+    ];
+  });
   return {
     ...alongTheGame(
       model,
@@ -275,42 +374,84 @@ export function campsOptions(model: TimelineChartModel): TimelineChartOption {
           .join('; ') +
         '.',
     ),
+    ...besideHeads(model, camps.length),
     dataZoom: [{ type: 'inside', xAxisIndex: 0, filterMode: 'weakFilter' }],
-    yAxis: rowsAxis(names, look),
     tooltip: chartTooltip(
       look,
       (params) => {
-        const hit = spans[Number((params as { dataIndex?: number }).dataIndex)];
-        if (!hit) return '';
-        const { span } = hit;
-        const name = escapeHtml(names[hit.camp] ?? 'Camp');
-        const time = `${formatStatClock(span.start)} – ${formatStatClock(span.end)}`;
-        const c = colorOf(span.team);
-        return span.team === null
-          ? `<div class="chart-tip__name">${name}</div><div class="chart-tip__time">Up ${time}</div>`
-          : `<div class="chart-tip__name">${name}</div><div class="chart-tip__time">${time}</div>` +
-              `<div${c ? ` theme="${c}"` : ''}><span class="chart-tip__name">${c ? teamName(c) : 'A team'}</span> captured it; it came back at ${formatStatClock(span.end)}</div>`;
+        const piece = pieces[Number((params as { dataIndex?: number }).dataIndex)];
+        // up for the taking, not up yet, or captured with none of its mercenaries left in lane says
+        // nothing: it is the row itself
+        if (!piece || piece.team === null || (piece.sent > 0 && piece.inLane === 0)) return '';
+        const when = `${formatStatClock(piece.start)} – ${formatStatClock(piece.end)}`;
+        // the mercenaries the capture sent, at their rank then (the game's scaling)
+        const camp = camps[piece.row];
+        const sent =
+          camp && piece.captured !== null
+            ? mercsAtRank(camp, model.mapUnits ?? null, piece.captured)
+            : null;
+        const number = (n: number | null) => (n === null ? '–' : Math.round(n).toLocaleString());
+        return rowTip(colorOf(piece.team), 'Captured', when, names[piece.row] ?? 'Camp', [
+          ...(piece.sent > 0
+            ? [
+                `${piece.inLane} of ${piece.sent} ${piece.sent === 1 ? 'mercenary' : 'mercenaries'} in lane`,
+              ]
+            : []),
+          ...(sent
+            ? [
+                `Rank ${sent.rank} at capture`,
+                ...sent.mercs.map(
+                  (m) =>
+                    `${m.count > 1 ? `${m.count} × ` : ''}${m.name}: ${number(m.life)} life, ${number(m.damage)} damage`,
+                ),
+              ]
+            : []),
+        ]);
       },
       'item',
     ),
     series: [
       {
         type: 'custom',
+        id: 'camps',
         name: 'Camps',
-        renderItem: spanBars(),
+        clip: true,
+        renderItem: (params, api) => {
+          const piece = pieces[params.dataIndex];
+          if (!piece) return null;
+          const color = colorOf(piece.team);
+          // up for the taking, and empty (darker): the camp's own theme's rows
+          const own = themeOf(piece.row);
+          const up = stateFill(own, 'row', look);
+          // captured: the team's colour, towards the darker empty camp's (as before it first came
+          // up) by the share of its mercenaries lost, all of the way once none are left, until it
+          // comes back (a capture with none sent stays the team's)
+          const empty = stateFill(own, 'unready', look);
+          const fill = piece.waiting
+            ? empty
+            : color
+              ? mixFill(
+                  stateFill(look.themed?.[color], 'alive', look),
+                  empty,
+                  piece.sent > 0 ? 1 - piece.inLane / piece.sent : 0,
+                )
+              : up;
+          return rowStretch(api, piece.row, piece.start, piece.end, fill);
+        },
         encode: { x: [1, 2], y: 0 },
-        data: spans.map(({ camp, span }) => ({
-          value: [camp, span.start, span.end, span.team === null ? 0.18 : 0.85],
-          itemStyle: { color: colour(span.team) },
-        })),
+        data: pieces.map((p) => [p.row, p.start, p.end]),
       },
     ],
   };
 }
 
 /** A row of the structures chart: a town or a core, who held it, and when it fell. */
-interface StructureRow {
+export interface StructureRow {
   readonly name: string;
+  /** Its unit type (a town's hall's, `TownTownHallL2`; a core's, `KingsCore`, Alterac Pass' generals). */
+  readonly unit: string;
+  /** Under the name in its head: the town's hall (`Fort`, `Keep`); none for a core. */
+  readonly sub: string | null;
   /** The team whose side it is on. */
   readonly team: Team;
   readonly fell: number | null;
@@ -318,36 +459,16 @@ interface StructureRow {
   readonly town: TownState | null;
 }
 
-/** A mark on a structures row: a structure lost, or (Towers of Doom) the town taken. */
-type StructureMark =
-  | { readonly row: number; readonly seconds: number; readonly loss: TownLoss }
-  | { readonly row: number; readonly seconds: number; readonly takenBy: Team };
-
 /**
- * A town's name: where its lane runs, and its number from the outer town in when the lane has
- * several (Top town 1 is the fort's, Top town 2 the keep's).
+ * The structures chart's rows: a row per town (your team's side first, top lane to bottom, each
+ * lane's towns from the outer one in), then each side's core.
  */
-function townName(town: TownState, laneTowns: readonly TownState[]): string {
-  const place = town.place ? `${town.place[0]!.toUpperCase()}${town.place.slice(1)} town` : 'Town';
-  return laneTowns.length > 1 ? `${place} ${laneTowns.indexOf(town) + 1}` : place;
-}
-
-/** What a town or core's bar says when no one took it: its hall, and whether it fell. */
-function townFate(r: StructureRow): string {
-  const hall = r.town?.hall;
-  const fate = r.fell === null ? 'stood to the end' : `destroyed at ${formatStatClock(r.fell)}`;
-  const text = hall ? `${hall} ${fate}` : fate;
-  return `${text[0]!.toUpperCase()}${text.slice(1)}`;
-}
-
-/**
- * The structures: a row per town (your team's side first, top lane to bottom, each lane's towns
- * from the outer one in) and a row per core, in the colour of the team holding it while it stood
- * (on Towers of Doom towns change hands), with a notch for each tower, wall, gate and well that
- * fell in the town and a full-height one each time the town was taken.
- */
-export function structuresOptions(model: TimelineChartModel): TimelineChartOption {
-  const { map, look, colorOf, durationSeconds, teams } = model;
+export function structureRows(
+  map: MapState | null,
+  colorOf: (team: Team | null) => TeamColor | null,
+  teams: readonly TeamColor[],
+  durationSeconds: number,
+): StructureRow[] {
   const order = { top: 0, middle: 1, bottom: 2 } as const;
   const teamOrder = (team: Team) => teams.indexOf(colorOf(team) as TeamColor);
   const towns = [...(map?.towns ?? [])].sort(
@@ -361,148 +482,183 @@ export function structuresOptions(model: TimelineChartModel): TimelineChartOptio
     const own = towns.filter((x) => x.team === team);
     for (const t of own) {
       const lane = own.filter((x) => x.lane === t.lane);
-      rows.push({ name: townName(t, lane), team, fell: t.fell, holds: t.holds, town: t });
+      const sub = t.hall ? `${t.hall[0]!.toUpperCase()}${t.hall.slice(1)}` : null;
+      const unit = t.hall === 'keep' ? 'TownTownHallL3' : 'TownTownHallL2';
+      rows.push({
+        name: townName(t, lane),
+        unit,
+        sub,
+        team,
+        fell: t.fell,
+        holds: t.holds,
+        town: t,
+      });
     }
     const core = map?.cores.find((c) => c.team === team);
     if (core) {
       const hold = { start: 0, end: core.fell ?? durationSeconds, team };
-      rows.push({ name: 'Core', team, fell: core.fell, holds: [hold], town: null });
+      rows.push({
+        name: 'Core',
+        unit: core.type,
+        sub: null,
+        team,
+        fell: core.fell,
+        holds: [hold],
+        town: null,
+      });
     }
   }
-  const colour = (team: Team) => {
-    const c = colorOf(team);
-    return c ? look.teams[c] : look.label;
-  };
-  /** A team's name in its colour, for the tooltips. */
-  const named = (team: Team, after = '') => {
-    const c = colorOf(team);
-    return `<span${c ? ` theme="${c}"` : ''} class="chart-tip__name">${c ? teamName(c) : 'A team'}${after}</span>`;
-  };
-  const holds = rows.flatMap((r, row) =>
-    r.holds.map((hold, i) => ({ row, hold, next: r.holds[i + 1] })),
-  );
+  return rows;
+}
+
+/** A mark on a structures row: a structure lost, or (Towers of Doom) the town taken. */
+type StructureMark =
+  | { readonly row: number; readonly seconds: number; readonly loss: TownLoss }
+  | { readonly row: number; readonly seconds: number; readonly takenBy: Team };
+
+/**
+ * The structures: a row per town and core (`structureRows`, their heads beside the chart), each
+ * drawn as the tables' rows in the colour of the team holding it while it stood (on Towers of Doom
+ * towns change hands) and darker once it fell, with a notch for each tower, wall, gate and well
+ * that fell in the town and a full-height one each time the town was taken.
+ */
+export function structuresOptions(model: TimelineChartModel): TimelineChartOption {
+  const { map, look, colorOf, durationSeconds, teams } = model;
+  const rows = structureRows(map, colorOf, teams, durationSeconds);
+  const mark = look.extra['mat-sys-on-surface'] ?? look.label;
+  /** Each row's stretches: held by a team while it stood, then fallen (its side's, darker). */
+  const bars = rows.flatMap((r, row) => [
+    ...r.holds.map((hold, i) => ({
+      row,
+      start: hold.start,
+      end: hold.end,
+      team: hold.team,
+      fallen: false,
+      next: r.holds[i + 1] ?? null,
+    })),
+    ...(r.fell !== null && r.fell < durationSeconds
+      ? [{ row, start: r.fell, end: durationSeconds, team: r.team, fallen: true, next: null }]
+      : []),
+  ]);
   const marks: StructureMark[] = rows.flatMap((r, row) => [
     ...(r.town?.losses ?? []).map((loss) => ({ row, seconds: loss.seconds, loss })),
     ...r.holds.slice(1).map((h) => ({ row, seconds: h.start, takenBy: h.team })),
   ]);
-  const text = axisText(look);
-  const label = (r: StructureRow) => {
-    const c = colorOf(r.team);
-    return c ? `{${c}|${r.name}}` : r.name;
-  };
-  /** A row's name in a sentence: a town that changed hands is named by whose side it is on. */
-  const rowName = (r: StructureRow) => {
-    const c = colorOf(r.team);
-    const team = c ? teamName(c) : 'A team';
-    return r.holds.length > 1 ? `${r.name} on ${team}'s side` : `${team} ${r.name}`;
-  };
+  const sideOf = (team: Team) => `${teamName(colorOf(team) ?? 'blue')}'s`;
+  /** A row's name in a tooltip: a town that changed hands named by whose side it is on. */
+  const rowName = (r: StructureRow) =>
+    r.holds.length > 1 ? `${r.name} on ${sideOf(r.team)} side` : `${sideOf(r.team)} ${r.name}`;
   const story = (r: StructureRow) =>
     r.holds.length > 1
       ? `${rowName(r)} taken ` +
         r.holds
           .slice(1)
-          .map((h) => {
-            const c = colorOf(h.team);
-            return `by ${c ? teamName(c) : 'a team'} at ${formatStatClock(h.start)}`;
-          })
+          .map((h) => `by ${teamName(colorOf(h.team) ?? 'blue')} at ${formatStatClock(h.start)}`)
           .join(', ')
       : `${rowName(r)} ${r.fell === null ? 'stood' : `fell at ${formatStatClock(r.fell)}`}`;
   return {
     ...alongTheGame(model, `Each town and core over the game: ${rows.map(story).join('; ')}.`),
+    ...besideHeads(model, rows.length),
     dataZoom: [{ type: 'inside', xAxisIndex: 0, filterMode: 'weakFilter' }],
-    yAxis: {
-      type: 'category',
-      inverse: true,
-      data: rows.map(label),
-      axisLabel: {
-        ...text,
-        rich: { blue: { color: look.teams.blue }, red: { color: look.teams.red } },
-      },
-      axisLine: { lineStyle: { color: look.line } },
-      axisTick: { show: false },
-      splitLine: { show: true, lineStyle: { color: look.line, opacity: 0.3 } },
-    },
     tooltip: chartTooltip(
       look,
       (params) => {
-        const p = params as { seriesIndex?: number; dataIndex?: number };
-        if (p.seriesIndex === 1) {
-          const mark = marks[Number(p.dataIndex)];
-          const r = mark ? rows[mark.row] : undefined;
-          if (!mark || !r) return '';
-          return (
-            `<div><span class="chart-tip__name">${escapeHtml(rowName(r))}</span></div>` +
-            `<div class="chart-tip__time">${formatStatClock(mark.seconds)}</div>` +
-            ('loss' in mark
-              ? `<div>${named(mark.loss.team, ` lost a ${mark.loss.kind}`)}</div>`
-              : `<div>${named(mark.takenBy, ' took it')}</div>`)
-          );
+        const p = params as { seriesId?: string; dataIndex?: number };
+        if (p.seriesId === 'marks') {
+          const m = marks[Number(p.dataIndex)];
+          const r = m ? rows[m.row] : undefined;
+          if (!m || !r) return '';
+          const when = formatStatClock(m.seconds);
+          if ('loss' in m) {
+            const kind = `${m.loss.kind[0]!.toUpperCase()}${m.loss.kind.slice(1)}`;
+            return rowTip(
+              colorOf(m.loss.team),
+              `${kind} lost`,
+              when,
+              rowName(r),
+              r.sub ? [r.sub] : [],
+            );
+          }
+          return rowTip(colorOf(m.takenBy), 'Town taken', when, rowName(r));
         }
-        const hit = holds[Number(p.dataIndex)];
-        const r = hit ? rows[hit.row] : undefined;
-        if (!hit || !r) return '';
-        const head = `<div><span class="chart-tip__name">${escapeHtml(rowName(r))}</span></div>`;
-        if (r.holds.length > 1) {
-          return (
-            head +
-            `<div class="chart-tip__time">${formatStatClock(hit.hold.start)} – ${formatStatClock(hit.hold.end)}</div>` +
-            `<div>${named(hit.hold.team, ' held it')}</div>` +
-            (hit.next
-              ? `<div>${named(hit.next.team, ' took it')} at ${formatStatClock(hit.next.start)}</div>`
-              : '')
+        const bar = bars[Number(p.dataIndex)];
+        const r = bar ? rows[bar.row] : undefined;
+        if (!bar || !r) return '';
+        const when = `${formatStatClock(bar.start)} – ${formatStatClock(bar.end)}`;
+        const color = colorOf(bar.team);
+        if (bar.fallen) return rowTip(color, 'Destroyed', when, rowName(r), r.sub ? [r.sub] : []);
+        if (r.holds.length > 1)
+          return rowTip(
+            color,
+            'Held',
+            when,
+            rowName(r),
+            bar.next ? [`Taken by ${teamName(colorOf(bar.next.team) ?? 'blue')}`] : [],
           );
-        }
         const lost = r.town?.losses.length ?? 0;
-        return (
-          head +
-          `<div class="chart-tip__time">${townFate(r)}</div>` +
-          (r.town
-            ? `<div>${lost} ${lost === 1 ? 'structure' : 'structures'} lost around it</div>`
-            : '')
-        );
+        return rowTip(color, 'Standing', when, rowName(r), [
+          ...(r.sub ? [r.sub] : []),
+          ...(r.town ? [`${lost} ${lost === 1 ? 'structure' : 'structures'} lost around it`] : []),
+        ]);
       },
       'item',
     ),
     series: [
       {
         type: 'custom',
+        id: 'standing',
         name: 'Standing',
-        renderItem: spanBars(),
+        clip: true,
+        renderItem: (params, api) => {
+          const bar = bars[params.dataIndex];
+          const color = bar ? colorOf(bar.team) : null;
+          const colours = color ? look.themed?.[color] : undefined;
+          return bar && colours
+            ? rowStretch(
+                api,
+                bar.row,
+                bar.start,
+                bar.end,
+                stateFill(colours, bar.fallen ? 'dead' : 'alive', look),
+              )
+            : null;
+        },
         encode: { x: [1, 2], y: 0 },
-        data: holds.map(({ row, hold }) => ({
-          value: [row, hold.start, hold.end, 0.55],
-          itemStyle: { color: colour(hold.team) },
-        })),
+        data: bars.map((b) => [b.row, b.start, b.end]),
       },
       {
         type: 'custom',
+        id: 'marks',
         name: 'Marks',
         // over the bars, so the notches are what the pointer finds where they cross
         z: 3,
+        clip: true,
         renderItem: (_params, api) => {
           const row = Number(api.value(0));
           const [x, y] = api.coord([api.value(1), row]) as [number, number];
-          const h = (api.size?.([0, 1]) as number[])[1]! * Number(api.value(2));
+          const h = ((api.size?.([0, 1]) as number[])[1]! - 2) * Number(api.value(2));
           return {
             type: 'group',
             children: [
               // a wider, unseen area to hover than the notch itself
               {
                 type: 'rect',
+                transition: 'shape',
                 shape: { x: x - 5, y: y - h / 2, width: 10, height: h },
                 style: { fill: 'transparent' },
               },
               {
                 type: 'rect',
+                transition: 'shape',
                 shape: { x: x - 1.5, y: y - h / 2, width: 3, height: h },
-                style: { fill: look.label },
+                style: { fill: mark },
               },
             ],
           };
         },
         encode: { x: 1, y: 0 },
         // a structure lost: most of the row; the town taken: all of it
-        data: marks.map((m) => [m.row, m.seconds, 'loss' in m ? 0.8 : 1]),
+        data: marks.map((m) => [m.row, m.seconds, 'loss' in m ? 0.7 : 1]),
       },
     ],
   };
@@ -587,67 +743,352 @@ const who = (lane: DeathLane | undefined) =>
   lane ? `${escapeHtml(lane.hero)} (${escapeHtml(lane.name)})` : '';
 
 /**
- * The death timeline: a row per player, your team's first, with a bar in the player's team
- * colour for each stretch they spent dead.
+ * The timeline's plot: from the chart's top to the time axis, `bottom` px above its bottom (the
+ * axis's labels and name below it), so its rows line up with the row heads the page puts beside it.
  */
-export function deathTimelineOptions(model: TimelineChartModel): TimelineChartOption {
-  const { deaths, look } = model;
-  const { lanes, spans } = deaths;
-  const colour = (lane: DeathLane | undefined) =>
-    lane?.color ? look.teams[lane.color] : look.label;
-  const renderItem: CustomSeriesRenderItem = (_params, api) => {
-    const lane = Number(api.value(0));
-    const [x0, y] = api.coord([api.value(1), lane]) as [number, number];
-    const [x1] = api.coord([api.value(2), lane]) as [number, number];
-    const height = (api.size?.([0, 1]) as number[])[1]! * 0.6;
-    return {
-      type: 'rect',
-      shape: { x: x0, y: y - height / 2, width: Math.max(2, x1 - x0), height, r: 2 },
-      style: { fill: colour(lanes[lane]) },
-    };
+export const TIMELINE_GRID = {
+  left: 0,
+  right: 16,
+  top: 0,
+  bottom: 48,
+  outerBoundsMode: 'none',
+} as const;
+
+/** A stretch's colours: its fill's top and bottom, and its 2px line. */
+interface RowFill {
+  readonly top: string;
+  readonly bottom: string;
+  readonly line: string;
+}
+
+/** A theme's colours (`readThemedColours`) for a stretch's look (`<state>-top` …). */
+function stateFill(
+  colours: Readonly<Record<string, string>> | undefined,
+  state: PlayerStateKey,
+  look: ChartLook,
+): RowFill {
+  return {
+    top: colours?.[`${state}-top`] ?? look.label,
+    bottom: colours?.[`${state}-bottom`] ?? look.label,
+    line: colours?.[`${state}-line`] ?? look.label,
   };
+}
+
+/** `t` of the way from one `rgba()` colour to another (0 is `from`, 1 is `to`). */
+function mixColour(from: string, to: string, t: number): string {
+  const parse = (c: string) =>
+    (/rgba?\(([^)]+)\)/.exec(c)?.[1] ?? '0,0,0,0').split(',').map(Number);
+  const [a, b] = [parse(from), parse(to)];
+  const at = (i: number) => (a[i] ?? 0) + ((b[i] ?? 0) - (a[i] ?? 0)) * t;
+  return `rgba(${Math.round(at(0))}, ${Math.round(at(1))}, ${Math.round(at(2))}, ${at(3).toFixed(3)})`;
+}
+
+/** `t` of the way from one fill to another. */
+function mixFill(from: RowFill, to: RowFill, t: number): RowFill {
+  return {
+    top: mixColour(from.top, to.top, t),
+    bottom: mixColour(from.bottom, to.bottom, t),
+    line: mixColour(from.line, to.line, t),
+  };
+}
+
+/**
+ * A stretch along a row as the tables' rows are drawn (`_score-row.scss`'s texture): the row's
+ * whole height less 2px (rows 2px apart), a fill from its top colour to its bottom over a 2px
+ * line. Its shapes move as the chart's marks do when it zooms and pans (animated the same), so the
+ * marks stay on it.
+ */
+function rowStretch(
+  api: CustomSeriesRenderItemAPI,
+  row: number,
+  start: number,
+  end: number,
+  fill: RowFill,
+): CustomSeriesRenderItemReturn {
+  const [x0, y] = api.coord([start, row]) as [number, number];
+  const [x1] = api.coord([end, row]) as [number, number];
+  const h = (api.size?.([0, 1]) as number[])[1]! - 2;
+  const top = y - h / 2;
+  const width = Math.max(1, x1 - x0);
+  return {
+    type: 'group',
+    children: [
+      {
+        type: 'rect',
+        transition: 'shape',
+        shape: { x: x0, y: top, width, height: h },
+        style: {
+          fill: {
+            type: 'linear',
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: fill.top },
+              { offset: 1, color: fill.bottom },
+            ],
+          },
+        },
+      },
+      {
+        type: 'rect',
+        transition: 'shape',
+        shape: { x: x0, y: top + h - 2, width, height: 2 },
+        style: { fill: fill.line },
+      },
+    ],
+  };
+}
+
+/**
+ * The team events with a line down their team's players' rows: solid for the game's start and end,
+ * dotted for each level.
+ */
+const LINED_EVENTS: Partial<Record<TimelineEventKind, 'solid' | 'dotted'>> = {
+  gates: 'solid',
+  result: 'solid',
+  level: 'dotted',
+};
+
+/** An event's shape as ECharts draws it: a circle, or its corners as a path. */
+function eventSymbol(look: TimelineEventLook): string {
+  return look.points === null ? 'circle' : `path://M${look.points.split(' ').join('L')}Z`;
+}
+
+/**
+ * The game's timeline: a row per team, then a row per player, your team first. Each player's row
+ * is drawn as the tables' rows are (their team's row texture, the glowing bar at its head):
+ * brighter while they were alive, the tables' own darker while dead, grey while disconnected
+ * (darker grey while dead too); marks on the rows show each player's talent picks, and each team's
+ * levels, camp captures and the forts, keeps and cores it destroyed (`hidden` kinds left out).
+ */
+export function gameTimelineOptions(model: TimelineChartModel): TimelineChartOption {
+  const { game, deaths, look, hidden, durationSeconds } = model;
+  if (!game) return {};
+  const { rows, life, events } = game;
+  const { lanes } = deaths;
+  const mark = look.extra['mat-sys-on-surface'] ?? look.label;
+  const ring = look.extra['mat-sys-surface'] ?? 'transparent';
+  const laneOf = (row: number) => {
+    const r = rows[row];
+    return r?.kind === 'player' ? lanes[r.lane] : undefined;
+  };
+  /** A player's row's colours: their team's row look, read from the stylesheet. */
+  const rowColours = (row: number) => {
+    const r = rows[row];
+    const color = r?.kind === 'team' ? r.color : laneOf(row)?.color;
+    return color ? look.themed?.[color] : undefined;
+  };
+  const rowName = (row: number) => {
+    const r = rows[row];
+    if (!r) return '';
+    return r.kind === 'team' ? (r.color ? teamName(r.color) : 'Team') : who(lanes[r.lane]);
+  };
+  const rowTheme = (row: number) => {
+    const r = rows[row];
+    const color = r?.kind === 'team' ? r.color : laneOf(row)?.color;
+    return color ? ` theme="${color}"` : '';
+  };
+  const shown = TIMELINE_EVENTS.filter((e) => !hidden.includes(e.kind));
+  const ofKind = (kind: TimelineEventKind) => events.filter((e) => e.kind === kind);
+  /** A tooltip's first line: what it is, in its row's team colour, and when, at the top right. */
+  const top = (row: number, title: string, when: string) =>
+    `<div class="chart-tip__head"><span${rowTheme(row)} class="chart-tip__name">${escapeHtml(title)}</span>` +
+    `<span class="chart-tip__time">${when}</span></div>`;
+  /** A player's name on its own line, in their team's colour. */
+  const whose = (row: number) =>
+    `<div${rowTheme(row)}><span class="chart-tip__name">${rowName(row)}</span></div>`;
   return {
     ...alongTheGame(
       model,
-      "Each player's time dead over the game. " +
+      'The game over time: for each team the gates opening, its levels, camp captures, the forts and ' +
+        'keeps it destroyed or lost, and its victory or defeat; for each player their time alive and dead, disconnected, and their talent picks. ' +
         lanes
-          .map(
-            (l, i) =>
-              `${l.hero} (${l.name}) died ${spans.filter((s) => s.lane === i).length} times`,
-          )
+          .map((l, i) => {
+            const n = deaths.spans.filter((s) => s.lane === i).length;
+            return `${l.hero} (${l.name}) died ${n === 1 ? 'once' : `${n} times`}`;
+          })
           .join('; ') +
         '.',
     ),
+    // the rows exactly the page's row heads' height (beside the chart, `TIMELINE_GRID`)
+    grid: TIMELINE_GRID,
+    // the plot starts at the chart's edge
+    xAxis: gameTimeAxis(durationSeconds, look, { start: game.start, fromEdge: true }),
     dataZoom: [{ type: 'inside', xAxisIndex: 0, filterMode: 'weakFilter' }],
-    yAxis: rowsAxis(
-      lanes.map((l) => l.hero),
-      look,
-    ),
+    yAxis: {
+      type: 'category',
+      inverse: true,
+      data: rows.map((_, i) => rowName(i)),
+      // the rows' heads beside the chart name them; rows 2px apart as the tables', no lines
+      axisLabel: { show: false },
+      axisLine: { show: false },
+      axisTick: { show: false },
+      splitLine: { show: false },
+    },
     tooltip: chartTooltip(
       look,
       (params) => {
-        const span = spans[Number((params as { dataIndex?: number }).dataIndex)];
-        if (!span) return '';
-        const lane = lanes[span.lane];
-        const killers = span.killers.map((k) => who(lanes.find((l) => l.slot === k)));
-        return (
-          `<div class="chart-tip__row"${lane?.color ? ` theme="${lane.color}"` : ''}><span class="chart-tip__name">${who(lane)}</span></div>` +
-          `<div class="chart-tip__time">Dead ${formatStatClock(span.start)} – ${formatStatClock(span.end)} (${Math.round(span.end - span.start)} s)</div>` +
-          (killers.length > 0
-            ? `<div>Killed by ${killers.join(', ')}</div>`
-            : '<div>No enemy hero was credited</div>')
-        );
+        const p = params as { seriesId?: string; dataIndex?: number };
+        const i = Number(p.dataIndex);
+        if (p.seriesId === 'life') {
+          const span = life[i];
+          // only the stretches dead or disconnected say anything: alive is the row itself
+          if (!span || (!span.dead && !span.disconnected)) return '';
+          // a team's: defeated, from its core's fall
+          const when = `${formatStatClock(span.start)} – ${formatStatClock(span.end)}`;
+          if (rows[span.row]?.kind === 'team')
+            return top(span.row, 'Defeated', when) + '<div>Its core destroyed</div>';
+          const death = span.death;
+          /** A player as a list item, in their team's colour. */
+          const item = (slot: number) => {
+            const lane = lanes.find((l) => l.slot === slot);
+            return `<li${lane?.color ? ` theme="${lane.color}"` : ''}><span class="chart-tip__name">${who(lane)}</span></li>`;
+          };
+          const list = (title: string, items: readonly string[]) =>
+            items.length > 0
+              ? `<div class="chart-tip__list-title">${title}</div><ul class="chart-tip__list">${items.join('')}</ul>`
+              : '';
+          const blow =
+            death === null
+              ? []
+              : death.killerSlot !== null
+                ? [item(death.killerSlot)]
+                : death.killedBy !== null
+                  ? [`<li>${escapeHtml(death.killedBy)}</li>`]
+                  : [];
+          // the others credited with the takedown
+          const assists = (death?.killers ?? []).filter((k) => k !== death?.killerSlot).map(item);
+          return (
+            top(
+              span.row,
+              playerStateLook(span).label,
+              `${when} (${Math.round(span.end - span.start)} s)`,
+            ) +
+            whose(span.row) +
+            (death === null
+              ? ''
+              : blow.length === 0 && assists.length === 0
+                ? '<div>No enemy hero was credited</div>'
+                : list('Killing blow', blow) + list('Assists', assists))
+          );
+        }
+        // an event: the kind of event in its row's team colour and when, then what exactly, and for a
+        // player's, whose
+        const event = ofKind(p.seriesId as TimelineEventKind)[i];
+        return event
+          ? top(event.row, event.title, formatStatClock(event.seconds)) +
+              // what exactly: the first line the main part, white; the rest less important, grey
+              event.details
+                .map(
+                  (d, n) =>
+                    `<div class="${n === 0 ? 'chart-tip__main' : 'chart-tip__minor'}">${escapeHtml(d)}</div>`,
+                )
+                .join('') +
+              (rows[event.row]?.kind === 'player' ? whose(event.row) : '')
+          : '';
       },
       'item',
     ),
     series: [
       {
         type: 'custom',
-        name: 'Dead',
-        renderItem,
+        id: 'life',
+        name: 'Players',
+        // a stretch past the time axis's ends (zoomed) is cut at its edges
+        clip: true,
+        renderItem: (params, api) => {
+          const span = life[params.dataIndex];
+          const colours = rowColours(span?.row ?? -1);
+          if (!span || !colours) return null;
+          return rowStretch(
+            api,
+            span.row,
+            span.start,
+            span.end,
+            stateFill(colours, playerStateLook(span).key, look),
+          );
+        },
         encode: { x: [1, 2], y: 0 },
-        data: spans.map((s) => [s.lane, s.start, s.end]),
+        data: life.map((s) => [s.row, s.start, s.end]),
       },
+      {
+        type: 'custom',
+        id: 'team-lines',
+        name: 'Team lines',
+        // from each team's gates, result and level-up marks (those shown), a line down across its
+        // players' rows; its shape moves as the marks do when the chart zooms and pans (animated
+        // the same), so it stays on them
+        z: 2.5,
+        clip: true,
+        silent: true,
+        renderItem: (_params, api) => {
+          const [x, y0] = api.coord([api.value(2), api.value(0)]) as [number, number];
+          const [, y1] = api.coord([api.value(2), api.value(1)]) as [number, number];
+          const h = (api.size?.([0, 1]) as number[])[1]!;
+          return {
+            type: 'line',
+            transition: 'shape',
+            // to just short of the bottom row's 2px line (its stretch is the row less 2px)
+            shape: { x1: x, y1: y0, x2: x, y2: y1 + (h - 2) / 2 - 3 },
+            style: {
+              stroke: mark,
+              lineWidth: 1.5,
+              lineDash: api.value(3) === 1 ? 'solid' : [2, 3],
+              opacity: 0.8,
+            },
+          };
+        },
+        encode: { x: 2, y: 0 },
+        data: events.flatMap((e) => {
+          const line = LINED_EVENTS[e.kind];
+          if (!line || hidden.includes(e.kind)) return [];
+          // to the team's last player's row
+          let last = e.row;
+          while (rows[last + 1]?.kind === 'player') last++;
+          return [[e.row, last, e.seconds, line === 'solid' ? 1 : 0]];
+        }),
+      },
+      ...shown.map((e): ScatterSeriesOption =>
+        e.text === null
+          ? {
+              type: 'scatter',
+              id: e.kind,
+              name: e.label,
+              // over the bars
+              z: 3,
+              symbol: eventSymbol(e),
+              symbolSize: 10,
+              itemStyle: { color: mark, borderColor: ring, borderWidth: 1.5 },
+              emphasis: { scale: 1.4 },
+              data: ofKind(e.kind).map((ev) => [ev.seconds, ev.row]),
+            }
+          : {
+              type: 'scatter',
+              id: e.kind,
+              name: e.label,
+              // each event its own text (a team level's number) in the marks' colour, ringed in
+              // the surface's to read over the bar; the symbol only the area to hover
+              z: 3,
+              symbol: 'circle',
+              symbolSize: 16,
+              itemStyle: { color: 'transparent' },
+              label: {
+                show: true,
+                position: 'inside',
+                formatter: (p: { value: unknown }) => String((p.value as unknown[])[2] ?? ''),
+                color: mark,
+                fontFamily: look.font,
+                fontSize: 11,
+                fontWeight: 'bold',
+                textBorderColor: ring,
+                textBorderWidth: 2.5,
+              },
+              emphasis: { scale: 1.3 },
+              data: ofKind(e.kind).map((ev) => [ev.seconds, ev.row, ev.mark ?? '']),
+            },
+      ),
     ],
   };
 }
