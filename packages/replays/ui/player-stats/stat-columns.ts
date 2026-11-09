@@ -67,45 +67,50 @@ const RATE_COLUMNS: readonly StatColumn[] = [
   ccPerMinute('SoftCCSecondsPerMinute', 'Soft CC', 'slows'),
 ];
 
-/** The `activity` analyser's columns: how the player played and talked, from its own table. */
-const ACTIVITY_COLUMNS: readonly StatColumn[] = [
-  {
-    id: 'apm',
-    label: 'APM',
-    format: 'decimal',
-    digits: [0, 0],
-    description: 'Orders given per minute of the game.',
-  },
-  {
-    id: 'castsPerMinute',
-    label: 'Casts / min',
-    format: 'decimal',
-    digits: [0, 0],
-    description:
-      'Orders with an ability, such as attacks and hero abilities, per minute of the game.',
-  },
-  { id: 'pings', label: 'Pings', format: 'integer' },
-  {
-    id: 'minimapPings',
-    label: 'Minimap Pings',
-    format: 'integer',
-    description: 'Pings made on the minimap.',
-  },
-  {
-    id: 'chatMessages',
-    label: 'Chat Messages',
-    format: 'integer',
-    description: 'Lines typed in the chat.',
-  },
-  { id: 'sprays', label: 'Sprays', format: 'integer' },
-  { id: 'voiceLines', label: 'Voice Lines', format: 'integer' },
-  {
-    id: 'upvotesGiven',
-    label: 'Votes Given',
-    format: 'integer',
-    description: 'Votes the player gave other players at the end of the game.',
-  },
-];
+/**
+ * The `activity` analyser's columns: how the player played and talked, from its own table. The
+ * most of each is marked as the best.
+ */
+const ACTIVITY_COLUMNS: readonly StatColumn[] = (
+  [
+    {
+      id: 'apm',
+      label: 'APM',
+      format: 'decimal',
+      digits: [0, 0],
+      description: 'Orders given per minute of the game.',
+    },
+    {
+      id: 'castsPerMinute',
+      label: 'Casts / min',
+      format: 'decimal',
+      digits: [0, 0],
+      description:
+        'Orders with an ability, such as attacks and hero abilities, per minute of the game.',
+    },
+    { id: 'pings', label: 'Pings', format: 'integer' },
+    {
+      id: 'minimapPings',
+      label: 'Minimap Pings',
+      format: 'integer',
+      description: 'Pings made on the minimap.',
+    },
+    {
+      id: 'chatMessages',
+      label: 'Chat Messages',
+      format: 'integer',
+      description: 'Lines typed in the chat.',
+    },
+    { id: 'sprays', label: 'Sprays', format: 'integer' },
+    { id: 'voiceLines', label: 'Voice Lines', format: 'integer' },
+    {
+      id: 'upvotesGiven',
+      label: 'Votes Given',
+      format: 'integer',
+      description: 'Votes the player gave other players at the end of the game.',
+    },
+  ] satisfies StatColumn[]
+).map((c) => ({ ...c, better: 'higher' as const }));
 
 /** The columns read from the `activity` table rather than from the player stats. */
 export const ACTIVITY_COLUMN_IDS: ReadonlySet<string> = new Set(ACTIVITY_COLUMNS.map((c) => c.id));
