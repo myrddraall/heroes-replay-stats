@@ -1,5 +1,5 @@
-import { type ReplayTimeline, structureKind, timelineSeconds } from '../../model';
-import { type DeathLane, playerIdSlot } from './death-lanes';
+import { type ReplayTimeline, timelineSeconds } from '../../model';
+import { type DeathLane, killerKind, playerIdSlot } from './death-lanes';
 
 /** Who landed a death's killing blow: an enemy player, or another of the enemy's units. */
 export interface KillingBlow {
@@ -21,18 +21,6 @@ export interface Fight {
   readonly credited: readonly number[];
   /** Each death's killing blow, where the replay has it (not Leoric's: his hero never dies). */
   readonly blows: readonly KillingBlow[];
-}
-
-/** The kind of unit that landed a killing blow, by its type, when no player did. */
-export function killerKind(type: string): string {
-  const kind = structureKind(type);
-  if (kind === 'tower') return 'Towers';
-  if (kind === 'fort') return 'Forts';
-  if (kind === 'keep') return 'Keeps';
-  if (kind !== null) return 'Structures';
-  if (/Minion/.test(type)) return 'Minions';
-  if (type.startsWith('Merc')) return 'Mercenaries';
-  return 'Map units';
 }
 
 /** The players who took part in a fight, by row: each who died or was credited with a takedown. */

@@ -4,10 +4,10 @@ import { TEAM_STAT_GROUPS } from '../../ui';
 
 /**
  * A match's sections, as the shell's navigation lists them, in six groups: Overview (the score
- * screen, the talents, the draft where the game had one, the chat), Player Stats (each player
+ * screen, the timeline, the talents, the draft where the game had one, the chat), Player Stats (each player
  * stats section, each player's unit kills, the comparison, the APM), Team Stats (each team table on
  * its own, but XP's), XP (the totals, over time, per minute, the advantage, by source, the talent tiers), Deaths (the
- * timeline, the takedowns, the fights) and Map (the camps, the structures).
+ * takedowns, the fights) and Map (the camps, the structures).
  */
 export function matchSections(replay: Pick<ReplaySummary, 'id' | 'mode'>): ShellNavLink[] {
   const at = (path: string) => `/replays/matches/${replay.id}/${path}`;
@@ -17,6 +17,7 @@ export function matchSections(replay: Pick<ReplaySummary, 'id' | 'mode'>): Shell
       link: at('overview'),
       children: [
         { label: 'Score', link: at('overview/score') },
+        { label: 'Timeline', link: at('overview/timeline') },
         { label: 'Talents', link: at('overview/talents') },
         ...(hasDraft(replay.mode) ? [{ label: 'Draft', link: at('overview/draft') }] : []),
         { label: 'Chat', link: at('overview/chat') },
@@ -63,7 +64,6 @@ export function matchSections(replay: Pick<ReplaySummary, 'id' | 'mode'>): Shell
       label: 'Deaths',
       link: at('deaths'),
       children: [
-        { label: 'Timeline', link: at('deaths/timeline') },
         { label: 'Takedowns', link: at('deaths/takedowns') },
         { label: 'Team Fights', link: at('deaths/fights') },
       ],

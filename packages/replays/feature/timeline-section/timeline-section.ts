@@ -5,18 +5,26 @@ import { SidePanel } from '@myrddraall/heroes-replay-stats-common/ui';
 import { Layout } from '@myrddraall/heroes-replay-stats-layout/ui';
 import { ShellPanelsStore } from '@myrddraall/heroes-replay-stats-shell/data';
 import { ShellPanelTemplate } from '@myrddraall/heroes-replay-stats-shell/feature';
-import { TimelineChart, type TimelineChartKind } from '../../ui';
+import { TimelineChart, type TimelineChartKind, TimelineEventControls } from '../../ui';
 import { TimelineSectionStore } from './timeline-section.store';
 
 /**
- * One of the charts of the replay's timeline (container): `/replays/matches/<id>/deaths/<chart>`
- * (timeline, takedowns, fights), `…/map/<chart>` (camps, structures) and `…/xp/talent-tiers`.
- * The chart in the page; the zoom reset (for every chart but the takedowns) in the shell's
- * right-hand panel.
+ * One of the charts of the replay's timeline (container): `/replays/matches/<id>/overview/timeline`,
+ * `…/deaths/<chart>` (takedowns, fights), `…/map/<chart>` (camps, structures) and `…/xp/talent-tiers`.
+ * The chart in the page; the zoom reset (for every chart but the takedowns) and the timeline's
+ * events shown in the shell's right-hand panel.
  */
 @Component({
   selector: 'hrs-timeline-section',
-  imports: [TimelineChart, Layout, MatButton, MatProgressBar, ShellPanelTemplate, SidePanel],
+  imports: [
+    TimelineChart,
+    TimelineEventControls,
+    Layout,
+    MatButton,
+    MatProgressBar,
+    ShellPanelTemplate,
+    SidePanel,
+  ],
   templateUrl: './timeline-section.html',
   styleUrl: './timeline-section.scss',
   providers: [TimelineSectionStore],

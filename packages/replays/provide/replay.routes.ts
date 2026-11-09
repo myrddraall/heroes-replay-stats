@@ -13,12 +13,12 @@ const playerChart = () =>
 
 /**
  * A replay's pages, under its page, in six groups (match-sections.ts lists them):
- * - overview/: the score screen, the talents, the draft and the chat;
+ * - overview/: the score screen, the timeline, the talents, the draft and the chat;
  * - players/: each player stats section, each player's unit kills, the comparison and the APM;
  * - teams/: each team stats table on its own (combat, structures, camps), and each team's unit
  *   kills;
  * - xp/: the team XP totals (the team stats' XP table), and the XP charts: over time, per minute, the advantage, by source and the talent tiers;
- * - deaths/: the deaths charts: each player's time dead, who killed whom, and the fights;
+ * - deaths/: the deaths charts: who killed whom, and the fights;
  * - map/: the camps' captures and the structures destroyed.
  * Their old addresses lead there.
  */
@@ -26,6 +26,7 @@ export const replayRoutes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'overview/score' },
   { path: 'overview', pathMatch: 'full', redirectTo: 'overview/score' },
   { path: 'overview/score', loadComponent: score },
+  { path: 'overview/timeline', data: { chart: 'timeline' }, loadComponent: timeline },
   {
     path: 'overview/talents',
     loadComponent: () => import('../feature/talents-section').then((m) => m.TalentsSection),
@@ -67,14 +68,14 @@ export const replayRoutes: Routes = [
   { path: 'xp/advantage', data: { chart: 'advantage' }, loadComponent: xp },
   { path: 'xp/sources', data: { chart: 'sources' }, loadComponent: xp },
   { path: 'xp/talent-tiers', data: { chart: 'talent-tiers' }, loadComponent: timeline },
-  { path: 'deaths', pathMatch: 'full', redirectTo: 'deaths/timeline' },
-  { path: 'deaths/timeline', data: { chart: 'deaths' }, loadComponent: timeline },
+  { path: 'deaths', pathMatch: 'full', redirectTo: 'deaths/takedowns' },
   { path: 'deaths/takedowns', data: { chart: 'takedowns' }, loadComponent: timeline },
   { path: 'deaths/fights', data: { chart: 'fights' }, loadComponent: timeline },
   { path: 'map', pathMatch: 'full', redirectTo: 'map/camps' },
   { path: 'map/camps', data: { chart: 'camps' }, loadComponent: timeline },
   { path: 'map/structures', data: { chart: 'structures' }, loadComponent: timeline },
   // the old addresses
+  { path: 'deaths/timeline', redirectTo: 'overview/timeline' },
   { path: 'score', redirectTo: 'overview/score' },
   { path: 'talents', redirectTo: 'overview/talents' },
   { path: 'draft', redirectTo: 'overview/draft' },

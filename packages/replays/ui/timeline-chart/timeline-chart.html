@@ -1,31 +1,76 @@
 <!-- the side nav names the page on screen -->
 <h2 class="cdk-visually-hidden">{{ title() }}</h2>
 @if (empty(); as empty) {
-<p class="empty">{{ empty }}</p>
+  <p class="empty">{{ empty }}</p>
 } @else {
-<!-- one card, like the other sections' tables -->
-<div class="card hrs-panel">
-  <ul class="legend" aria-label="Teams">
-    @for (team of teams(); track team.color) {
-    <li>
-      <span class="legend__swatch" [style.background]="'var(--hrs-team-' + team.color + ')'"></span>
-      {{ team.name }}
-    </li>
-    }
-  </ul>
+  <!-- one card, like the other sections' tables -->
+  <div class="card hrs-panel">
+    <ul class="legend" aria-label="Key">
+      @for (team of teams(); track team.color) {
+        <li>
+          <span class="legend__swatch" [style.background]="'var(--hrs-team-' + team.color + ')'"></span>
+          {{ team.name }}
+        </li>
+      }
+      @if (kind() === 'timeline') {
+        @for (state of states; track state.key) {
+          <li>
+            <span class="legend__state">
+              @for (team of rowTeams; track team) {
+                <span class="row-look" [attr.theme]="team" [style.background]="stateBackground(state.key)"></span>
+              }
+            </span>
+            {{ state.label }}
+          </li>
+        }
+        @for (event of events(); track event.kind) {
+          <li>
+            @if (event.text; as text) {
+              <span class="legend__text">{{ text }}</span>
+            } @else {
+              <span class="legend__mark" [style.clip-path]="event.clip"></span>
+            }
+            {{ event.label }}
+          </li>
+        }
+      }
+    </ul>
 
-  @if (options(); as options) {
-  <div
-    class="chart"
-    [class.chart--round]="kind() === 'takedowns'"
-    echarts
-    [options]="options"
-    (chartInit)="chartReady($event)"
-  ></div>
-  } @else {
-  <div class="chart" [class.chart--round]="kind() === 'takedowns'"></div>
-  } @if (note(); as note) {
-  <p class="note">{{ note }}</p>
-  }
-</div>
+    @if (kind() === 'timeline') {
+      @for (team of rowTeams; track team) {
+        <span #rowProbe class="row-look row-look--probe" [attr.theme]="team" aria-hidden="true"></span>
+      }
+    }
+
+    @if (kind() === 'timeline') {
+      <!-- each row's head beside the chart, as the tables' rows -->
+      <div class="timeline" [style.--timeline-rows]="heads().length">
+        <ol class="timeline__heads" aria-label="Rows">
+          @for (head of heads(); track head.key) {
+            <li class="timeline__head" [attr.theme]="head.theme">
+              <ui-score-row-bar />
+              @if (head.kind === 'team') {
+                <ui-score-team-head [name]="head.name" [result]="head.result" />
+              } @else {
+                <ui-score-row-head [hero]="head.hero" [name]="head.name" [portrait]="head.portrait" />
+              }
+            </li>
+          }
+        </ol>
+        @if (options(); as options) {
+          <div class="chart chart--timeline" echarts [options]="options" (chartInit)="chartReady($event)"></div>
+        } @else {
+          <div class="chart chart--timeline"></div>
+        }
+      </div>
+    } @else if (options(); as options) {
+      <div class="chart" [class.chart--round]="kind() === 'takedowns'" echarts [options]="options" (chartInit)="chartReady($event)"></div>
+    } @else {
+      <div class="chart" [class.chart--round]="kind() === 'takedowns'"></div>
+    }
+
+    @if (note(); as note) {
+      <p class="note">{{ note }}</p>
+    }
+  </div>
 }

@@ -21,6 +21,28 @@
       margin-block-end: 4px;
     }
 
+    // a tooltip's first line: what it is, and when at its right end
+    .chart-tip__head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 16px;
+      margin-block-end: 4px;
+
+      .chart-tip__time {
+        margin: 0;
+      }
+    }
+
+    // a line's main part, and less important lines under it
+    .chart-tip__main {
+      color: var(--mat-sys-on-surface);
+    }
+
+    .chart-tip__minor {
+      color: var(--mat-sys-on-surface-variant);
+    }
+
     .chart-tip__lead {
       color: var(--mat-sys-primary);
       margin-block-end: 4px;
@@ -88,6 +110,23 @@
 
       td {
         color: var(--mat-sys-on-surface);
+      }
+    }
+
+    // a list of players (or units) under a small title: one a line
+    .chart-tip__list-title {
+      margin-block-start: 6px;
+      color: var(--mat-sys-on-surface-variant);
+      font: var(--mat-sys-label-medium);
+    }
+
+    .chart-tip__list {
+      margin: 2px 0 0;
+      padding: 0;
+      list-style: none;
+
+      li {
+        margin-block-start: 1px;
       }
     }
 
