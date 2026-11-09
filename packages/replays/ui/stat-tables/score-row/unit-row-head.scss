@@ -1,0 +1,97 @@
+// The unit row head (see unit-row-head.ts), as the player's (score-row-head.scss): sized in em, the
+// row's type sizing it, the portraits from the row's height.
+:host {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.25em 0.75em;
+  min-height: 100%;
+  flex: 1;
+  // a portrait's width (the row's height, the portrait's shape), and how much of it a later one
+  // covers
+  --portrait-width: calc(var(--hrs-grid-row-height) * 100 / 56);
+  --portrait-overlap: 0.55;
+}
+
+// as wide as `--slots` portraits layered, whatever its own are, so the names beside line up
+.portraits {
+  display: flex;
+  align-self: stretch;
+  inline-size: calc(var(--portrait-width) * (1 + (1 - var(--portrait-overlap)) * (var(--slots) - 1)));
+  flex: none;
+}
+
+.slot {
+  position: relative;
+  display: flex;
+}
+
+// the row's height, fading out to the right as a player's portrait does (the last one, in a camp
+// of two kinds of unit)
+.portrait {
+  font-size: var(--hrs-grid-row-height);
+}
+
+.slot:last-child .portrait {
+  mask-image: linear-gradient(
+    to right,
+    black 46%,
+    rgb(0 0 0 / 0.82) 58%,
+    rgb(0 0 0 / 0.52) 70%,
+    rgb(0 0 0 / 0.22) 82%,
+    rgb(0 0 0 / 0.09) 90%,
+    transparent
+  );
+}
+
+// a camp of two kinds of unit: the first portrait shifted left in its place (its subject clear of
+// the cut), its place keeping its width
+.portraits--many .slot:first-child {
+  inline-size: var(--portrait-width);
+  overflow: hidden;
+
+  .portrait {
+    margin-left: calc(-0.2 * var(--portrait-width));
+  }
+}
+
+// a camp of two kinds of unit: each later portrait over the one before, cut at 60° (its left edge
+// leaning right by the row's height × tan 30° at the top), a line in the row's colour along the cut
+.slot + .slot {
+  --cut: calc(var(--hrs-grid-row-height) * 0.57735);
+  margin-left: calc(-1 * var(--portrait-overlap) * var(--portrait-width));
+
+  .portrait {
+    clip-path: polygon(var(--cut) 0, 100% 0, 100% 100%, 0 100%);
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    left: -1px;
+    z-index: 1;
+    inline-size: 2px;
+    background: var(--score-row-bar, var(--hrs-glow));
+    filter: drop-shadow(0 0 2px var(--score-row-glow, transparent));
+    transform: skewX(-30deg);
+    transform-origin: bottom left;
+  }
+}
+
+.names {
+  display: grid;
+  // over the portrait's faded end, as a player's name sits
+  margin-left: calc(-0.1 * var(--portrait-width) - 0.75em);
+  line-height: 1.2;
+  // one line each: the timeline's heads widen to the longest
+  white-space: nowrap;
+}
+
+.names--alone {
+  margin-left: 0.5em;
+}
+
+.names__sub {
+  font-size: var(--score-row-player-name-size, 0.75em);
+}

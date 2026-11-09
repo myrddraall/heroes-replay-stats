@@ -116,7 +116,8 @@
   flex: none;
   display: grid;
   grid-auto-rows: var(--timeline-row);
-  inline-size: 13rem;
+  // as wide as its widest head, at least 13rem
+  min-inline-size: 13rem;
   margin: 0;
   padding: 0 0 48px;
   list-style: none;

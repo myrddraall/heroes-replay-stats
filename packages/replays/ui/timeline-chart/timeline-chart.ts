@@ -11,6 +11,7 @@ import {
 import type { ECharts } from 'echarts/core';
 import { NgxEchartsDirective, provideEchartsCore } from 'ngx-echarts';
 import type { Team } from '@myrddraall/heroprotocol-db';
+import type { MapUnitsInfo } from '@myrddraall/hero-data';
 import type { HeroIcon } from '@myrddraall/heroes-replay-stats-heroes/model';
 import {
   type MapState,
@@ -21,10 +22,10 @@ import {
   teamColor,
   type TeamColor,
 } from '../../model';
-import { StyledText } from '@myrddraall/heroes-replay-stats-common/ui';
 import { ScoreRowBar } from '../stat-tables/score-row/score-row-bar';
 import { ScoreRowHead } from '../stat-tables/score-row/score-row-head';
 import { ScoreTeamHead } from '../stat-tables/score-row/score-team-head';
+import { UnitRowHead } from '../stat-tables/score-row/unit-row-head';
 import { type ChartLook, readChartLook, readThemedColours } from '../charts/chart-look';
 import { echarts } from '../charts/echarts';
 import { teamName } from '../stat-tables/team-rows';
@@ -40,17 +41,20 @@ import {
   type TimelineEventKind,
 } from './game-timeline';
 import { FIGHT_GAP_SECONDS, replayFights, replayTalentPicks } from './timeline-rows';
-import { campNames, type CampRarity, campRarity } from './map-names';
+import { type CampRarity, campRarity } from './map-names';
+import { campHeadIcons, campLabels, campPlace, unitIcon } from './map-unit-heads';
 import { structureRows, type TimelineChartKind, timelineOptions } from './timeline-chart-options';
 
 /** A row's head beside the chart: a team's, a player's, or a camp's, town's or core's. */
 type TimelineHead =
   | {
-      readonly kind: 'label';
+      readonly kind: 'unit';
       readonly key: string;
       readonly theme: TeamColor | CampRarity | null;
+      /** The game's portraits of the units it stands for; none where the map's units aren't read. */
+      readonly portraits: readonly HeroIcon[];
+      /** Its in-game name (`Knights`, `Fort`), and where it is below (`Top, Blue team's side`). */
       readonly name: string;
-      /** Under the name, smaller (a town's hall); none for the others. */
       readonly sub: string | null;
     }
   | {
@@ -107,7 +111,7 @@ const NOTES: Readonly<Partial<Record<TimelineChartKind, string>>> = {
  */
 @Component({
   selector: 'hrs-timeline-chart',
-  imports: [NgxEchartsDirective, ScoreRowBar, ScoreRowHead, ScoreTeamHead, StyledText],
+  imports: [NgxEchartsDirective, ScoreRowBar, ScoreRowHead, ScoreTeamHead, UnitRowHead],
   templateUrl: './timeline-chart.html',
   styleUrl: './timeline-chart.scss',
   providers: [provideEchartsCore({ echarts })],
@@ -122,6 +126,8 @@ export class TimelineChart {
   readonly durationSeconds = input.required<number>();
   /** For `timeline`: talents' names by the game's id. */
   readonly talentNames = input<Readonly<Record<string, string>>>({});
+  /** For `camps` and `structures`: the map's camps and unit cards (heroes-assets); null without them. */
+  readonly mapUnits = input<MapUnitsInfo | null>(null);
   /** For `timeline`: the kinds of event not shown. */
   readonly hidden = input<readonly TimelineEventKind[]>([]);
   /** For `timeline`: each player's hero leaderboard portrait, by slot (the row heads'). */
@@ -174,31 +180,53 @@ export class TimelineChart {
    * Each row's head beside the chart, as the tables' rows: on the timeline a team's or a player's;
    * on the camps and structures a camp's, town's or core's name.
    */
+  /** The most portraits a unit row's head has: room for them in every one, so the names line up. */
+  protected readonly portraitSlots = computed(() =>
+    Math.max(0, ...this.heads().map((h) => (h.kind === 'unit' ? h.portraits.length : 0))),
+  );
   protected readonly heads = computed((): TimelineHead[] => {
     const kind = this.kind();
     const map = this.map();
-    // the camps' and structures' rows: a name (and a town's hall), in its side's colour
-    if (kind === 'camps')
-      return campNames(map?.camps ?? []).map((name, i) => ({
-        kind: 'label',
+    const units = this.mapUnits();
+    const name = (color: TeamColor) => teamName(color);
+    // a camp's row: its units' portraits, its label as the game shows it, and where it is, in its
+    // level's rarity theme
+    if (kind === 'camps') {
+      const camps = map?.camps ?? [];
+      const labels = campLabels(camps, units);
+      return camps.map((camp, i) => ({
+        kind: 'unit',
         key: `camp ${i}`,
-        theme: campRarity(map?.camps[i]?.type ?? null),
-        name,
-        sub: null,
+        theme: campRarity(camp.type),
+        portraits: campHeadIcons(camp, units),
+        name: labels[i]!,
+        sub: campPlace(camp, this.colorOf, name),
       }));
+    }
+    // a town's or core's row: its hall's or core's portrait for its side, its in-game name (`Fort`,
+    // `Keep`, `Core`, a general's) and its lane, in its side's colour
     if (kind === 'structures')
       return structureRows(
         map,
         this.colorOf,
         this.teams().map((t) => t.color),
         this.durationSeconds(),
-      ).map((row, i) => ({
-        kind: 'label',
-        key: `structure ${i}`,
-        theme: this.colorOf(row.team),
-        name: row.name,
-        sub: row.sub,
-      }));
+      ).map((row, i) => {
+        const icon = unitIcon(units, row.unit, row.team);
+        const place = row.town?.place;
+        return {
+          kind: 'unit',
+          key: `structure ${i}`,
+          theme: this.colorOf(row.team),
+          portraits: icon ? [icon] : [],
+          name: units?.units[row.unit]?.name ?? row.sub ?? row.name,
+          sub: row.town
+            ? place
+              ? `${place[0]!.toUpperCase()}${place.slice(1)} lane`
+              : row.name
+            : null,
+        };
+      });
     const game = this.game();
     if (!game) return [];
     const { lanes } = this.deaths();
@@ -284,6 +312,7 @@ export class TimelineChart {
           map: this.map(),
           colorOf: this.colorOf,
           talents: this.talents(),
+          mapUnits: this.mapUnits(),
           teams: this.teams().map((t) => t.color),
           durationSeconds: this.durationSeconds(),
           look,

@@ -75,13 +75,8 @@
               <ui-score-row-bar />
               @if (head.kind === 'team') {
                 <ui-score-team-head [name]="head.name" [result]="head.result" />
-              } @else if (head.kind === 'label') {
-                <span class="row-label">
-                  <span hrsStyledText="bright">{{ head.name }}</span>
-                  @if (head.sub; as sub) {
-                    <span class="row-label__sub" hrsStyledText="base">{{ sub }}</span>
-                  }
-                </span>
+              } @else if (head.kind === 'unit') {
+                <ui-unit-row-head [portraits]="head.portraits" [slots]="portraitSlots()" [name]="head.name" [sub]="head.sub" />
               } @else {
                 <ui-score-row-head [hero]="head.hero" [name]="head.name" [portrait]="head.portrait" />
               }

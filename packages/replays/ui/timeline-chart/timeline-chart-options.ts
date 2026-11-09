@@ -1,3 +1,4 @@
+import type { MapUnitsInfo } from '@myrddraall/hero-data';
 import type {
   BarSeriesOption,
   ChordSeriesOption,
@@ -30,7 +31,8 @@ import type { Team } from '@myrddraall/heroprotocol-db';
 import type { MapState, TeamColor, TownHold, TownLoss, TownState } from '../../model';
 import { teamName } from '../stat-tables/team-rows';
 import { type Fight, FIGHT_GAP_SECONDS, fightPlayers, type TalentPick } from './timeline-rows';
-import { campNames, campRarity, townName } from './map-names';
+import { campRarity, townName } from './map-names';
+import { campLabels, mercsAtRank } from './map-unit-heads';
 import {
   type GameTimeline,
   TIMELINE_EVENTS,
@@ -72,6 +74,8 @@ export interface TimelineChartModel {
   /** A team's colour from your point of view. */
   readonly colorOf: (team: Team | null) => TeamColor | null;
   readonly talents: readonly TalentPick[];
+  /** For `camps`: the map's camps and unit cards (heroes-assets); null without them. */
+  readonly mapUnits?: MapUnitsInfo | null;
   /** The teams, your team first. */
   readonly teams: readonly TeamColor[];
   /** The game's length on its clock. */
@@ -267,6 +271,20 @@ function besideHeads(model: TimelineChartModel, rows: number): TimelineChartOpti
   };
 }
 
+/** A stretch of a camp's row: whose, how many of its capture's mercenaries were still in lane. */
+interface CampPiece {
+  readonly row: number;
+  readonly start: number;
+  readonly end: number;
+  readonly team: Team | null;
+  readonly inLane: number;
+  readonly sent: number;
+  /** Before the camp first came up. */
+  readonly waiting: boolean;
+  /** Captured: when the capture was; null otherwise. */
+  readonly captured: number | null;
+}
+
 /**
  * The camps: a row per camp (its head beside the chart, in its level's rarity theme: siege camps
  * rare, bruiser camps epic, boss camps legendary), each stretch drawn as the tables' rows: the
@@ -278,20 +296,32 @@ function besideHeads(model: TimelineChartModel, rows: number): TimelineChartOpti
 export function campsOptions(model: TimelineChartModel): TimelineChartOption {
   const { map, look, colorOf } = model;
   const camps = map?.camps ?? [];
-  const names = campNames(camps);
+  // each camp's label as the game shows it (`Knights`), its type's name without one
+  const names = campLabels(camps, model.mapUnits ?? null);
   /** A camp's own theme's colours: its level's rarity (`campRarity`), or the neutral theme's. */
   const themeOf = (row: number) => look.themed?.[campRarity(camps[row]?.type ?? null) ?? ''];
   /**
    * Each camp's stretches: before it first came up; up for the taking; and captured, cut each time
    * one of the capture's mercenaries died, its share of them still in lane.
    */
-  const pieces = camps.flatMap((camp, row) => {
+  const pieces = camps.flatMap((camp, row): CampPiece[] => {
     const first = camp.spans[0]?.start ?? 0;
     return [
       ...(first > 0
-        ? [{ row, start: 0, end: first, team: null, inLane: 0, sent: 0, waiting: true }]
+        ? [
+            {
+              row,
+              start: 0,
+              end: first,
+              team: null,
+              inLane: 0,
+              sent: 0,
+              waiting: true,
+              captured: null,
+            },
+          ]
         : []),
-      ...camp.spans.flatMap((span) => {
+      ...camp.spans.flatMap((span): CampPiece[] => {
         if (span.team === null)
           return [
             {
@@ -302,6 +332,7 @@ export function campsOptions(model: TimelineChartModel): TimelineChartOption {
               inLane: 0,
               sent: 0,
               waiting: false,
+              captured: null,
             },
           ];
         const cuts = [
@@ -323,6 +354,7 @@ export function campsOptions(model: TimelineChartModel): TimelineChartOption {
             inLane,
             sent: span.mercs.length,
             waiting: false,
+            captured: span.start,
           };
         });
       }),
@@ -349,17 +381,29 @@ export function campsOptions(model: TimelineChartModel): TimelineChartOption {
         // nothing: it is the row itself
         if (!piece || piece.team === null || (piece.sent > 0 && piece.inLane === 0)) return '';
         const when = `${formatStatClock(piece.start)} – ${formatStatClock(piece.end)}`;
-        return rowTip(
-          colorOf(piece.team),
-          'Captured',
-          when,
-          names[piece.row] ?? 'Camp',
-          piece.sent > 0
+        // the mercenaries the capture sent, at their rank then (the game's scaling)
+        const camp = camps[piece.row];
+        const sent =
+          camp && piece.captured !== null
+            ? mercsAtRank(camp, model.mapUnits ?? null, piece.captured)
+            : null;
+        const number = (n: number | null) => (n === null ? '–' : Math.round(n).toLocaleString());
+        return rowTip(colorOf(piece.team), 'Captured', when, names[piece.row] ?? 'Camp', [
+          ...(piece.sent > 0
             ? [
                 `${piece.inLane} of ${piece.sent} ${piece.sent === 1 ? 'mercenary' : 'mercenaries'} in lane`,
               ]
-            : [],
-        );
+            : []),
+          ...(sent
+            ? [
+                `Rank ${sent.rank} at capture`,
+                ...sent.mercs.map(
+                  (m) =>
+                    `${m.count > 1 ? `${m.count} × ` : ''}${m.name}: ${number(m.life)} life, ${number(m.damage)} damage`,
+                ),
+              ]
+            : []),
+        ]);
       },
       'item',
     ),
@@ -401,6 +445,8 @@ export function campsOptions(model: TimelineChartModel): TimelineChartOption {
 /** A row of the structures chart: a town or a core, who held it, and when it fell. */
 export interface StructureRow {
   readonly name: string;
+  /** Its unit type (a town's hall's, `TownTownHallL2`; a core's, `KingsCore`, Alterac Pass' generals). */
+  readonly unit: string;
   /** Under the name in its head: the town's hall (`Fort`, `Keep`); none for a core. */
   readonly sub: string | null;
   /** The team whose side it is on. */
@@ -434,12 +480,29 @@ export function structureRows(
     for (const t of own) {
       const lane = own.filter((x) => x.lane === t.lane);
       const sub = t.hall ? `${t.hall[0]!.toUpperCase()}${t.hall.slice(1)}` : null;
-      rows.push({ name: townName(t, lane), sub, team, fell: t.fell, holds: t.holds, town: t });
+      const unit = t.hall === 'keep' ? 'TownTownHallL3' : 'TownTownHallL2';
+      rows.push({
+        name: townName(t, lane),
+        unit,
+        sub,
+        team,
+        fell: t.fell,
+        holds: t.holds,
+        town: t,
+      });
     }
     const core = map?.cores.find((c) => c.team === team);
     if (core) {
       const hold = { start: 0, end: core.fell ?? durationSeconds, team };
-      rows.push({ name: 'Core', sub: null, team, fell: core.fell, holds: [hold], town: null });
+      rows.push({
+        name: 'Core',
+        unit: core.type,
+        sub: null,
+        team,
+        fell: core.fell,
+        holds: [hold],
+        town: null,
+      });
     }
   }
   return rows;

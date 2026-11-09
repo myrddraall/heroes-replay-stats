@@ -40,6 +40,9 @@ describe('game timeline', () => {
       {
         id: 1,
         type: 'Siege Camp',
+        defenders: ['MercSiegeTrooperDefender'],
+        place: 'middle',
+        side: null,
         spans: [
           { start: 60, end: 200, team: null, mercs: [] },
           { start: 200, end: 300, team: 1, mercs: [] },
@@ -58,7 +61,7 @@ describe('game timeline', () => {
         losses: [],
       },
     ],
-    cores: [{ team: 0, fell: 600 }],
+    cores: [{ team: 0, type: 'KingsCore', fell: 600 }],
   };
   const game = gameTimeline({
     timeline: {
