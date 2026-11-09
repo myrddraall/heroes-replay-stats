@@ -16,7 +16,7 @@ export const TALENT_TIERS = [1, 2, 3, 4, 5, 6, 7] as const;
  */
 export const TALENT_TIER_LEVELS = [1, 4, 7, 10, 13, 16, 20] as const;
 
-/** The heroic tier for all heroes but Varian (level 4) and Deathwing (none): level 10's. */
+/** The heroic tier for all heroes but Varian (level 4): level 10's. */
 export const HEROIC_TALENT_TIER = 4;
 
 /** A heroic ability's type in the hero data. */
@@ -69,9 +69,9 @@ export interface TalentRow {
 /**
  * Each player's talents by tier, grouped by team and themed in its colour from your point of
  * view (your team first, then by slot), your own rows in your side's self theme, named and
- * pictured from the hero data where it knows the talent and by the game's own id otherwise. A
- * tier is heroic where all the hero's talents at it are heroics (the hero's tiers its talents'
- * levels, in order); none before the data loads.
+ * pictured from the hero data where it knows the talent and by the game's own id otherwise. Each
+ * hero's heroic tier is framed as one (the hero's tiers its talents' levels, in order); none
+ * before the data loads.
  */
 export function talentRows(
   players: readonly TalentPlayer[],
@@ -93,22 +93,25 @@ export function talentRows(
     };
   };
   /**
-   * The tiers (1-based) at which all the hero's talents are heroics: level 10 for all heroes but
-   * Varian (level 4) and Deathwing (none). A tier with only some (level 20's heroic upgrades) isn't.
+   * The hero's heroic tier (1-based): of the tiers before the last (whose heroic upgrades are not
+   * a heroic choice), the one with the largest share of talents typed heroic. Level 10's for all
+   * heroes but Varian (level 4). Deathwing's level 10 counts though the data types only one of its
+   * talents heroic (Bellowing Roar is typed Active), and a stray heroic-typed talent elsewhere
+   * (Tracer's level 4, Kerrigan's level 16) doesn't. None for a hero the data doesn't know.
    */
   const heroicTiers = (player: TalentPlayer): Set<number> => {
     const hero = data?.hero(player.heroId) ?? data?.hero(player.hero);
     const talents = hero?.talents ?? [];
     const levels = [...new Set(talents.map((t) => t.level))].sort((a, b) => a - b);
-    return new Set(
-      levels
-        .map(
-          (level, i) =>
-            [i + 1, talents.filter((t) => t.level === level).every((t) => t.abilityType === HEROIC)] as const,
-        )
-        .filter(([, heroic]) => heroic)
-        .map(([tier]) => tier),
+    const shares = levels.slice(0, -1).map((level, i) => {
+      const at = talents.filter((t) => t.level === level);
+      return { tier: i + 1, share: at.filter((t) => t.abilityType === HEROIC).length / at.length };
+    });
+    const best = shares.reduce<{ tier: number; share: number } | null>(
+      (top, s) => (s.share > 0 && (!top || s.share > top.share) ? s : top),
+      null,
     );
+    return new Set(best ? [best.tier] : []);
   };
   /** The build link: each tier's pick as its place in the tier, from the data. */
   const buildOf = (player: TalentPlayer, own: readonly TalentPickRow[]): string | null => {
