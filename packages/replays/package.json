@@ -13,7 +13,7 @@
     "typecheck": "tsc --noEmit -p ."
   },
   "dependencies": {
-    "@myrddraall/hero-data": "^0.5.7",
+    "@myrddraall/hero-data": "^0.5.8",
     "@myrddraall/heroes-replay-stats-analysers": "workspace:*",
     "@myrddraall/heroes-replay-stats-common": "workspace:*",
     "@myrddraall/heroes-replay-stats-data-views": "workspace:*",
@@ -24,8 +24,8 @@
     "@myrddraall/heroes-replay-stats-settings": "workspace:*",
     "@myrddraall/heroes-replay-stats-sheets": "workspace:*",
     "@myrddraall/heroes-replay-stats-shell": "workspace:*",
-    "@myrddraall/heroprotocol-analysis": "^0.5.6",
-    "@myrddraall/heroprotocol-db": "^0.5.6",
+    "@myrddraall/heroprotocol-analysis": "^0.5.8",
+    "@myrddraall/heroprotocol-db": "^0.5.8",
     "dexie": "^4.4.6",
     "echarts": "^6.1.0",
     "ngx-echarts": "^22.0.0",

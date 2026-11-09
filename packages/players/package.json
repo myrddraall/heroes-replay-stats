@@ -19,7 +19,7 @@
     "@myrddraall/heroes-replay-stats-layout": "workspace:*",
     "@myrddraall/heroes-replay-stats-settings": "workspace:*",
     "@myrddraall/heroes-replay-stats-shell": "workspace:*",
-    "@myrddraall/heroprotocol-db": "^0.5.6",
+    "@myrddraall/heroprotocol-db": "^0.5.8",
     "tslib": "^2.3.0"
   },
   "devDependencies": {
