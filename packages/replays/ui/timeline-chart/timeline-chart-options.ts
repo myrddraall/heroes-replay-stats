@@ -31,8 +31,8 @@ import type { Team } from '@myrddraall/heroprotocol-db';
 import type { MapState, TeamColor, TownHold, TownLoss, TownState } from '../../model';
 import { teamName } from '../stat-tables/team-rows';
 import { type Fight, FIGHT_GAP_SECONDS, fightPlayers, type TalentPick } from './timeline-rows';
-import { campRarity, townName } from './map-names';
-import { campLabels, mercsAtRank } from './map-unit-heads';
+import { townName } from './map-names';
+import { campLabels, campRarityOf, mercsAtRank } from './map-unit-heads';
 import {
   type GameTimeline,
   TIMELINE_EVENTS,
@@ -298,8 +298,11 @@ export function campsOptions(model: TimelineChartModel): TimelineChartOption {
   const camps = map?.camps ?? [];
   // each camp's label as the game shows it (`Knights`), its type's name without one
   const names = campLabels(camps, model.mapUnits ?? null);
-  /** A camp's own theme's colours: its level's rarity (`campRarity`), or the neutral theme's. */
-  const themeOf = (row: number) => look.themed?.[campRarity(camps[row]?.type ?? null) ?? ''];
+  /** A camp's own theme's colours: its level's rarity (`campRarityOf`), or the neutral theme's. */
+  const themeOf = (row: number) => {
+    const camp = camps[row];
+    return look.themed?.[(camp && campRarityOf(camp, model.mapUnits ?? null)) ?? ''];
+  };
   /**
    * Each camp's stretches: before it first came up; up for the taking; and captured, cut each time
    * one of the capture's mercenaries died, its share of them still in lane.

@@ -21,11 +21,15 @@ export function townName(town: TownState, laneTowns: readonly TownState[]): stri
 /** A camp's level, as a rarity theme: siege camps rare, bruiser camps epic, boss camps legendary. */
 export type CampRarity = 'rare' | 'epic' | 'legendary';
 
-/** A camp's rarity theme by the game's name for its type (`Siege Camp`); null for the others. */
-export function campRarity(type: string | null): CampRarity | null {
+const RARITIES: readonly CampRarity[] = ['rare', 'epic', 'legendary'];
+
+/**
+ * A camp's rarity theme by the game's name for its type (`Siege Camp`), an elite camp's (the game's
+ * `lv_campIsElite`: Hanamura's Sentinel) one higher, legendary at most; null for the others.
+ */
+export function campRarity(type: string | null, elite = false): CampRarity | null {
   if (!type) return null;
-  if (/siege/i.test(type)) return 'rare';
-  if (/bruiser/i.test(type)) return 'epic';
-  if (/boss/i.test(type)) return 'legendary';
-  return null;
+  const level = /siege/i.test(type) ? 0 : /bruiser/i.test(type) ? 1 : /boss/i.test(type) ? 2 : -1;
+  if (level < 0) return null;
+  return RARITIES[Math.min(level + (elite ? 1 : 0), RARITIES.length - 1)]!;
 }

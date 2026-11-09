@@ -7,7 +7,7 @@ import {
 import type { Team } from '@myrddraall/heroprotocol-db';
 import type { HeroIcon } from '@myrddraall/heroes-replay-stats-heroes/model';
 import type { CampState, TeamColor } from '../../model';
-import { campNames } from './map-names';
+import { type CampRarity, campNames, campRarity } from './map-names';
 
 /**
  * A replay camp's camp type (heroes-assets): the one whose defenders are the camp's, or failing
@@ -25,6 +25,11 @@ export function campTypeOf(camp: CampState, units: MapUnitsInfo | null): CampTyp
     if (shared > bestShared) [best, bestShared] = [type, shared];
   }
   return best;
+}
+
+/** A camp's rarity theme: its type's, one higher where its camp type is elite (`campRarity`). */
+export function campRarityOf(camp: CampState, units: MapUnitsInfo | null): CampRarity | null {
+  return campRarity(camp.type, campTypeOf(camp, units)?.elite ?? false);
 }
 
 /**

@@ -41,8 +41,8 @@ import {
   type TimelineEventKind,
 } from './game-timeline';
 import { FIGHT_GAP_SECONDS, replayFights, replayTalentPicks } from './timeline-rows';
-import { type CampRarity, campRarity } from './map-names';
-import { campHeadIcons, campLabels, campPlace, unitIcon } from './map-unit-heads';
+import type { CampRarity } from './map-names';
+import { campHeadIcons, campLabels, campPlace, campRarityOf, unitIcon } from './map-unit-heads';
 import { structureRows, type TimelineChartKind, timelineOptions } from './timeline-chart-options';
 
 /** A row's head beside the chart: a team's, a player's, or a camp's, town's or core's. */
@@ -197,7 +197,7 @@ export class TimelineChart {
       return camps.map((camp, i) => ({
         kind: 'unit',
         key: `camp ${i}`,
-        theme: campRarity(camp.type),
+        theme: campRarityOf(camp, units),
         portraits: campHeadIcons(camp, units),
         name: labels[i]!,
         sub: campPlace(camp, this.colorOf, name),
