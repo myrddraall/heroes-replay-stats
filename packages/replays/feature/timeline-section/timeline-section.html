@@ -1,0 +1,25 @@
+<!-- padded, not constrained: the chart grows to the whole width -->
+<hrs-layout default="padded">
+  @if (store.error(); as error) {
+    <p role="alert">The timeline could not be read: {{ error }}</p>
+  } @else if (store.timeline(); as timeline) {
+    <hrs-timeline-chart
+      [kind]="chart()"
+      [timeline]="timeline"
+      [players]="store.players()"
+      [map]="store.map()"
+      [durationSeconds]="store.durationSeconds()"
+    />
+  } @else {
+    <mat-progress-bar mode="indeterminate" aria-label="Loading the timeline" />
+  }
+</hrs-layout>
+@if (chart() !== 'takedowns') {
+  <ng-template hrsShellPanel="Chart">
+    <ui-side-panel title="Chart" (closeRequested)="panels.setEndOpen(false)">
+      <div class="controls">
+        <button type="button" matButton="outlined" (click)="resetZoom()">Reset zoom</button>
+      </div>
+    </ui-side-panel>
+  </ng-template>
+}

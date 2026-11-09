@@ -1,0 +1,37 @@
+@if (columns().length > 0) {
+  <mat-form-field>
+    <mat-label>Stat</mat-label>
+    <mat-select [value]="column()" (valueChange)="column.set($event)">
+      @for (c of columns(); track c.id) {
+        <mat-option [value]="c.id">{{ c.label }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+}
+@if (players().length > 0) {
+  <section class="players" aria-labelledby="chart-players-title">
+    <h3 id="chart-players-title" class="title">Players</h3>
+    <mat-checkbox [checked]="allShown()" [indeterminate]="!allShown()" (click)="showAll()"
+      >All</mat-checkbox
+    >
+    @for (p of players(); track p.slot) {
+      <mat-checkbox
+        [checked]="isShown(p.slot)"
+        (click)="choose(p.slot, $event)"
+        matTooltip="Ctrl-click to show only this player"
+        matTooltipShowDelay="800"
+        matTooltipPosition="left"
+      >
+        <span
+          class="line"
+          [class.line--dashed]="p.dashed"
+          [style.color]="'var(--player-colour-' + p.colour + ')'"
+        ></span>
+        <span [attr.theme]="p.color" class="hero">{{ p.hero }}</span> ({{ p.name }})
+      </mat-checkbox>
+    }
+  </section>
+}
+@if (zooms()) {
+  <button type="button" matButton="outlined" (click)="resetZoomRequested.emit()">Reset zoom</button>
+}

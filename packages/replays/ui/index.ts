@@ -5,12 +5,7 @@ export {
   formatStatDuration,
   NO_STAT_VALUE,
 } from './stat-tables/stat-format';
-export {
-  sortStatRows,
-  statBestFirst,
-  statRanks,
-  type StatSort,
-} from './stat-tables/stat-sort';
+export { sortStatRows, statBestFirst, statRanks, type StatSort } from './stat-tables/stat-sort';
 export { statTableRows, type StatCell, type StatTableRow } from './stat-tables/stat-cells';
 export { STAT_SUPPORT_LABELS } from './stat-tables/stat-support';
 export { StatRowHead, type StatRowHeadContext } from './stat-tables/stat-row-head';
@@ -48,6 +43,17 @@ export * from './team-stats/team-stats';
 export * from './team-stats/team-stat-groups';
 export * from './unit-kill-tables/unit-kill-tables';
 export * from './unit-kill-tables/unit-kill-columns';
-export * from './xp-tables/xp-tables';
-export * from './xp-tables/xp-rows';
+export * from './xp-chart/xp-chart';
+export * from './xp-chart/xp-chart-controls';
+export * from './xp-chart/xp-curves';
+export type { XpChartKind } from './xp-chart/xp-chart-options';
+export * from './timeline-chart/timeline-chart';
+export type { TimelineChartKind } from './timeline-chart/timeline-chart-options';
+export * from './player-chart/player-chart';
+export * from './player-chart/player-chart-controls';
+export {
+  chartPlayers,
+  type ChartPlayer,
+  type PlayerChartKind,
+} from './player-chart/player-chart-options';
 export * from './match-filters/match-filters';

@@ -1,0 +1,64 @@
+// A chart's tooltip: ECharts writes it inside the chart, outside the component's view, as a raised
+// panel (`hrs-panel hrs-panel--raised chart-tip`); its layout is here. ECharts sets a background
+// inline, so the panel's is restored over it. Include it in the chart component's stylesheet.
+@mixin chart-tooltip {
+  :host ::ng-deep .chart-tip {
+    background: var(--mat-sys-surface-container) !important;
+    min-inline-size: 16em;
+    max-inline-size: 28em;
+    // ECharts keeps it on one line inline
+    white-space: normal !important;
+    color: var(--mat-sys-on-surface);
+    font: var(--mat-sys-body-medium);
+
+    // before its first showing ECharts leaves it unstyled and empty: the panel's border would draw
+    &:empty {
+      display: none;
+    }
+
+    .chart-tip__time {
+      color: var(--mat-sys-on-surface-variant);
+      margin-block-end: 4px;
+    }
+
+    .chart-tip__lead {
+      color: var(--mat-sys-primary);
+      margin-block-end: 4px;
+    }
+
+    .chart-tip__row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 12px;
+      margin-block-start: 4px;
+    }
+
+    .chart-tip__name {
+      color: var(--mat-sys-primary);
+    }
+
+    .chart-tip__value {
+      text-align: end;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .chart-tip__events {
+      margin: 6px 0 0;
+      padding: 6px 0 0;
+      border-block-start: 1px solid var(--mat-sys-outline-variant);
+      list-style: none;
+    }
+
+    .chart-tip__event {
+      margin-block-start: 2px;
+    }
+
+    .chart-tip__swatch {
+      display: inline-block;
+      inline-size: 0.7em;
+      block-size: 0.7em;
+      margin-inline-end: 0.4em;
+      border-radius: 2px;
+    }
+  }
+}

@@ -1,0 +1,53 @@
+@use '../charts/chart-tooltip' as tooltip;
+@use '../charts/player-colours' as colours;
+
+:host {
+  @include colours.player-colours;
+
+  display: block;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 20px;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--mat-sys-on-surface);
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+// a line's sample: solid for your team, dashed for the other
+.legend__line {
+  inline-size: 1.6em;
+  border-block-start: 2px solid currentcolor;
+}
+
+.legend__line--dashed {
+  border-block-start-style: dashed;
+}
+
+.legend__swatch {
+  inline-size: 0.9em;
+  block-size: 0.9em;
+  border-radius: 2px;
+}
+
+.chart {
+  block-size: max(20em, 60vh);
+}
+
+@include tooltip.chart-tooltip;

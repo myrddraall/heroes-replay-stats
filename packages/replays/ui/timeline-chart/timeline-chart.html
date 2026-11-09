@@ -1,0 +1,23 @@
+<!-- the side nav names the page on screen -->
+<h2 class="cdk-visually-hidden">{{ title() }}</h2>
+@if (empty(); as empty) {
+  <p class="empty">{{ empty }}</p>
+} @else {
+  <!-- one card, like the other sections' tables -->
+  <div class="card hrs-panel">
+    <ul class="legend" aria-label="Teams">
+      @for (team of teams(); track team.color) {
+        <li>
+          <span class="legend__swatch" [style.background]="'var(--hrs-team-' + team.color + ')'"></span>
+          {{ team.name }}
+        </li>
+      }
+    </ul>
+
+    @if (options(); as options) {
+      <div class="chart" [class.chart--round]="kind() === 'takedowns'" echarts [options]="options" (chartInit)="chartReady($event)"></div>
+    } @else {
+      <div class="chart" [class.chart--round]="kind() === 'takedowns'"></div>
+    }
+  </div>
+}
