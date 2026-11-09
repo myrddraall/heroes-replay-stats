@@ -26,6 +26,15 @@ export interface CampState {
 export interface TownLoss {
   readonly seconds: number;
   readonly kind: StructureKind;
+  /** Whose it was: on Towers of Doom, whoever held the town when it was built. */
+  readonly team: Team;
+}
+
+/** A stretch a team held a town: from the start or from taking it, until it fell or was taken. */
+export interface TownHold {
+  readonly start: number;
+  readonly end: number;
+  readonly team: Team;
 }
 
 /** A town (a fort's or a keep's, with its towers, walls, gates and wells) over the game. */
@@ -38,8 +47,10 @@ export interface TownState {
   readonly place: 'top' | 'middle' | 'bottom' | null;
   /** The town's hall: a fort or a keep; null when the replay has no hall for it. */
   readonly hall: 'fort' | 'keep' | null;
-  /** When its hall fell; null when it stood to the end. */
+  /** When its hall fell for good; null when it stood to the end or was taken (Towers of Doom). */
   readonly fell: number | null;
+  /** Who held it over the game: one team until it fell, except where towns are taken. */
+  readonly holds: readonly TownHold[];
   /** Its other structures that fell, in order. */
   readonly losses: readonly TownLoss[];
 }
@@ -63,6 +74,8 @@ const NEAR = 12;
 
 /** The game's `Team`/`TeamID` (1, 2) as a team (0, 1). */
 const teamOf = (v: unknown): Team | null => (v === 1 ? 0 : v === 2 ? 1 : null);
+/** The game's team players (11, 12), as `Town Captured` names a town's new owner, as a team. */
+const teamPlayerOf = (v: unknown): Team | null => (v === 11 ? 0 : v === 12 ? 1 : null);
 const num = (e: StatEventRecord, key: string): number | null => {
   const v = e.values[key];
   return typeof v === 'number' ? v : null;
@@ -73,8 +86,10 @@ const num = (e: StatEventRecord, key: string): number | null => {
  * - each camp's stretches: up from when its defenders are born (at the start, and each time it
  *   comes back) until a team captures it, then the team's until its next defenders are born;
  * - each town (`TownStructureInit`), with its hall and its other structures (the units born nearest
- *   it, on its team) and when each fell: a tower when it turned into its ruin, the rest when they
- *   died;
+ *   it) and when each fell: a tower when it turned into its ruin, the rest when they died;
+ * - who held each town: on Towers of Doom a town is taken, not destroyed: its hall's death
+ *   (`TownStructureDeath`) comes with a `Town Captured` naming the new owner at the same moment,
+ *   and the hall is rebuilt for them;
  * - each team's core and when it fell.
  */
 export function mapState(
@@ -129,14 +144,14 @@ export function mapState(
     x: num(e, 'PositionX') ?? 0,
     y: num(e, 'PositionY') ?? 0,
   }));
+  // the nearest town of either team: on Towers of Doom a taken town's new hall and wells are its
+  // new owner's
   const nearestTown = (u: UnitRecord) =>
-    towns
-      .filter((t) => t.team === u.ownerTeam)
-      .sort(
-        (a, b) =>
-          Math.hypot(a.x - u.bornAt.x, a.y - u.bornAt.y) -
-          Math.hypot(b.x - u.bornAt.x, b.y - u.bornAt.y),
-      )[0];
+    [...towns].sort(
+      (a, b) =>
+        Math.hypot(a.x - u.bornAt.x, a.y - u.bornAt.y) -
+        Math.hypot(b.x - u.bornAt.x, b.y - u.bornAt.y),
+    )[0];
   const structures = units.flatMap((u) => {
     const kind = structureKind(u.bornType ?? u.type) ?? structureKind(u.type);
     if (kind === null || kind === 'core' || u.ownerTeam === null) return [];
@@ -145,8 +160,29 @@ export function mapState(
         ? (u.typeChanges.find((c) => c.type === 'TownCannonTowerDead')?.gameloop ?? null)
         : u.diedAtLoop;
     const town = nearestTown(u);
-    return town ? [{ town: town.id, kind, fell: loop === null ? null : seconds(loop) }] : [];
+    return town
+      ? [
+          {
+            town: town.id,
+            kind,
+            team: u.ownerTeam,
+            born: u.bornAtLoop,
+            fell: loop === null ? null : seconds(loop),
+          },
+        ]
+      : [];
   });
+  // the towns taken: each `Town Captured` with the hall's death at the same moment
+  const deaths = stats.filter((e) => e.eventName === 'TownStructureDeath');
+  const taken = stats
+    .filter((e) => e.eventName === 'Town Captured')
+    .flatMap((e) => {
+      const same = stats.filter((c) => c.eventName === e.eventName && c.gameloop === e.gameloop);
+      const death = deaths.filter((d) => d.gameloop === e.gameloop)[same.indexOf(e)];
+      const team = teamPlayerOf(e.values['New Owner']);
+      const town = death ? num(death, 'TownID') : null;
+      return town === null || team === null ? [] : [{ town, team, seconds: e.seconds }];
+    });
   // the lanes' places, by where their towns are: higher on the map is the top
   const lanes = [...new Set(towns.map((t) => t.lane))]
     .map((lane) => {
@@ -163,7 +199,12 @@ export function mapState(
   const townStates = towns.flatMap((t): TownState[] => {
     if (t.team === null) return [];
     const own = structures.filter((s) => s.town === t.id);
-    const hall = own.find((s) => s.kind === 'fort' || s.kind === 'keep');
+    const isHall = (s: (typeof own)[number]) => s.kind === 'fort' || s.kind === 'keep';
+    // the first hall: on Towers of Doom the later ones are rebuilt for whoever took the town
+    const hall = own.filter(isHall).sort((a, b) => a.born - b.born)[0];
+    const takes = taken.filter((x) => x.town === t.id).sort((a, b) => a.seconds - b.seconds);
+    const fell = takes.length > 0 ? null : (hall?.fell ?? null);
+    const starts = [{ seconds: 0, team: t.team }, ...takes];
     return [
       {
         id: t.id,
@@ -171,10 +212,15 @@ export function mapState(
         lane: t.lane,
         place: places[t.lane] ?? null,
         hall: hall ? (hall.kind as 'fort' | 'keep') : null,
-        fell: hall?.fell ?? null,
+        fell,
+        holds: starts.map((s, i) => ({
+          start: s.seconds,
+          end: starts[i + 1]?.seconds ?? fell ?? durationSeconds,
+          team: s.team,
+        })),
         losses: own
-          .filter((s) => s !== hall && s.fell !== null)
-          .map((s) => ({ seconds: s.fell!, kind: s.kind }))
+          .filter((s) => !isHall(s) && s.fell !== null)
+          .map((s) => ({ seconds: s.fell!, kind: s.kind, team: s.team }))
           .sort((a, b) => a.seconds - b.seconds),
       },
     ];

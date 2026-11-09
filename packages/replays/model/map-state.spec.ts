@@ -117,10 +117,93 @@ describe('map state', () => {
         place: 'top',
         hall: 'fort',
         fell: 600,
-        losses: [{ seconds: 400, kind: 'tower' }],
+        holds: [{ start: 0, end: 600, team: 0 }],
+        losses: [{ seconds: 400, kind: 'tower', team: 0 }],
       },
-      { id: 2, team: 0, lane: 2, place: 'bottom', hall: 'keep', fell: null, losses: [] },
+      {
+        id: 2,
+        team: 0,
+        lane: 2,
+        place: 'bottom',
+        hall: 'keep',
+        fell: null,
+        holds: [{ start: 0, end: 1000, team: 0 }],
+        losses: [],
+      },
     ]);
     expect(cores).toEqual([{ team: 0, fell: 900 }]);
+  });
+
+  it('gives a town taken on Towers of Doom each team that held it, and no fall', () => {
+    const doom = [
+      stat('TownStructureInit', -38, {
+        TownID: 1,
+        Team: 1,
+        Lane: 1,
+        PositionX: 80,
+        PositionY: 130,
+      }),
+      stat('TownStructureInit', -38, {
+        TownID: 4,
+        Team: 2,
+        Lane: 1,
+        PositionX: 160,
+        PositionY: 130,
+      }),
+      stat('TownStructureDeath', 850, { UnitType: 'TownTownHallL3', TownID: 1 }),
+      stat('Town Captured', 850, { 'New Owner': 12 }),
+      stat('TownStructureDeath', 930, { UnitType: 'TownTownHallL3', TownID: 1 }),
+      stat('Town Captured', 930, { 'New Owner': 11 }),
+    ];
+    const halls = [
+      // the first hall, then each rebuilt for whoever took the town
+      unit({
+        type: 'TownTownHallL3',
+        bornType: 'TownTownHallL2',
+        ownerTeam: 0,
+        bornAt: { x: 80, y: 130 },
+        diedAtLoop: at(850),
+      }),
+      unit({
+        type: 'TownTownHallL3',
+        ownerTeam: 1,
+        bornAt: { x: 80, y: 130 },
+        bornAtLoop: at(850),
+        diedAtLoop: at(930),
+      }),
+      unit({
+        type: 'TownTownHallL3',
+        ownerTeam: 0,
+        bornAt: { x: 80, y: 130 },
+        bornAtLoop: at(930),
+      }),
+      // a well rebuilt for the other team, lost in the town they took
+      unit({
+        type: 'TownMoonwellL3',
+        ownerTeam: 1,
+        bornAt: { x: 82, y: 128 },
+        bornAtLoop: at(851),
+        diedAtLoop: at(925),
+      }),
+      unit({ type: 'TownTownHallL2', ownerTeam: 1, bornAt: { x: 160, y: 130 } }),
+    ];
+    const [town, other] = mapState(doom, halls, 610, 1000).towns;
+    expect(town).toMatchObject({
+      id: 1,
+      hall: 'fort',
+      fell: null,
+      holds: [
+        { start: 0, end: 850, team: 0 },
+        { start: 850, end: 930, team: 1 },
+        { start: 930, end: 1000, team: 0 },
+      ],
+      losses: [{ seconds: 925, kind: 'well', team: 1 }],
+    });
+    expect(other).toMatchObject({
+      id: 4,
+      fell: null,
+      holds: [{ start: 0, end: 1000, team: 1 }],
+      losses: [],
+    });
   });
 });

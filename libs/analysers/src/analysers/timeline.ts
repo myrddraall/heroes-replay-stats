@@ -33,9 +33,11 @@ export interface TimelineEventRow {
   readonly killers: readonly number[] | null;
   readonly x: number | null;
   readonly y: number | null;
-  /** `structure-death` */
+  /** `structure-death`: the structure; `death`: the unit that landed the killing blow (a hero, a
+   * tower, a mercenary, a map's unit), when the replay has the hero's death */
   readonly unitType: string | null;
   readonly townId: number | null;
+  /** `structure-death`: who destroyed it; `death`: the enemy who landed the killing blow */
   readonly killerSlot: number | null;
   /** `camp-capture` */
   readonly campId: number | null;
@@ -92,24 +94,28 @@ const blank: Omit<Draft, 'kind' | 'start'> = {
   values: null,
 };
 
+/** How far apart (game loops) a `PlayerDeath` and its hero's `HeroDied` may be and still match. */
+const SAME_DEATH_LOOPS = 16;
+
 /**
- * The game as a timeline: per-player alive/dead spans, deaths with killers, level-ups
+ * The game as a timeline: per-player alive/dead spans, deaths with killers and killing blows, level-ups
  * and talent picks (the 2018 version emitted level-ups twice and talents never),
  * team levels, structure deaths, camp captures, map objectives, the core's death, leavers.
  */
 export const timeline: Analyser<TimelineTables> = {
   id: `${NS}timeline`,
-  version: 2,
+  version: 3,
   tables: { timelineEvents: '[replayId+seq], replayId, [replayId+kind], [replayId+slot], start' },
   inputs: ['players', 'statEvents', 'units', 'events'],
   mode: 'background',
   async run(ctx) {
-    const [players, stats, cores, left, revives] = await Promise.all([
+    const [players, stats, cores, left, revives, heroDied] = await Promise.all([
       participants(ctx),
       ctx.read('statEvents'),
       ctx.read('units', { unitClass: 'core' }),
       ctx.read('events', { kind: 'PlayerLeft' }),
       ctx.read('events', { kind: 'UnitRevived' }),
+      ctx.read('events', { kind: 'HeroDied' }),
     ]);
     const teamOf = new Map(players.map((p) => [p.slot, p.team]));
     const events: Draft[] = [];
@@ -159,16 +165,36 @@ export const timeline: Analyser<TimelineTables> = {
       const slot = e.playerSlot;
       switch (e.eventName) {
         case 'PlayerDeath':
-          if (slot !== null)
+          if (slot !== null) {
+            // the killing blow, from the hero's own death at that moment; an enemy's only (a
+            // hero's own unit can end its life: Uther's spirit)
+            const blow = heroDied
+              .filter(
+                (d) =>
+                  d.playerSlot === slot && Math.abs(d.gameloop - e.gameloop) <= SAME_DEATH_LOOPS,
+              )
+              .sort(
+                (a, b) => Math.abs(a.gameloop - e.gameloop) - Math.abs(b.gameloop - e.gameloop),
+              )[0];
+            const killer = blow?.data['killerSlot'];
+            const killerType = blow?.data['killerType'];
             push({
               kind: 'death',
               slot,
               team: teamOf.get(slot) ?? null,
               start: e.gameloop,
               killers: all(e, 'KillingPlayer').map(Number),
+              killerSlot:
+                typeof killer === 'number' &&
+                teamOf.has(killer) &&
+                teamOf.get(killer) !== teamOf.get(slot)
+                  ? killer
+                  : null,
+              unitType: typeof killerType === 'string' ? killerType : null,
               x: int(e, 'PositionX'),
               y: int(e, 'PositionY'),
             });
+          }
           break;
         case 'LevelUp':
           if (slot !== null)

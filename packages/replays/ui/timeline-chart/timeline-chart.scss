@@ -43,6 +43,13 @@
   min-block-size: 24em;
 }
 
+.note {
+  margin: 0;
+  max-inline-size: 60em;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-small);
+}
+
 .empty {
   color: var(--mat-sys-on-surface-variant);
 }
