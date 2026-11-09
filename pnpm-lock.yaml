@@ -114,8 +114,8 @@ importers:
         specifier: ^22.1.0
         version: 22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(rxjs@7.8.2)
       '@myrddraall/hero-data':
-        specifier: ^0.5.7
-        version: 0.5.7
+        specifier: ^0.5.8
+        version: 0.5.8
       '@myrddraall/heroes-replay-stats-aether':
         specifier: workspace:*
         version: link:../../packages/aether
@@ -171,11 +171,11 @@ importers:
         specifier: workspace:*
         version: link:../../packages/theme
       '@myrddraall/heroprotocol-analysis':
-        specifier: ^0.5.6
-        version: 0.5.6(dexie@4.4.6)
+        specifier: ^0.5.8
+        version: 0.5.8(dexie@4.4.6)
       '@myrddraall/heroprotocol-db':
-        specifier: ^0.5.6
-        version: 0.5.6(dexie@4.4.6)
+        specifier: ^0.5.8
+        version: 0.5.8(dexie@4.4.6)
       '@ngrx/signals':
         specifier: ^22.0.1
         version: 22.0.1(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2)
@@ -185,9 +185,15 @@ importers:
       dexie:
         specifier: ^4.4.6
         version: 4.4.6
+      echarts:
+        specifier: ^6.1.0
+        version: 6.1.0
       fflate:
         specifier: ^0.8.3
         version: 0.8.3
+      ngx-echarts:
+        specifier: ^22.0.0
+        version: 22.0.0(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(echarts@6.1.0)
       pmtiles:
         specifier: ^4.5.0
         version: 4.5.0
@@ -247,12 +253,12 @@ importers:
   libs/analysers:
     dependencies:
       '@myrddraall/heroprotocol-db':
-        specifier: ^0.5.6
-        version: 0.5.6(dexie@4.4.6)
+        specifier: ^0.5.8
+        version: 0.5.8(dexie@4.4.6)
     devDependencies:
       '@myrddraall/heroprotocol':
-        specifier: ^0.5.6
-        version: 0.5.6
+        specifier: ^0.5.8
+        version: 0.5.8
       '@types/node':
         specifier: ^24.0.0
         version: 24.13.6
@@ -780,8 +786,8 @@ importers:
   packages/heroes:
     dependencies:
       '@myrddraall/hero-data':
-        specifier: ^0.5.7
-        version: 0.5.7
+        specifier: ^0.5.8
+        version: 0.5.8
       '@myrddraall/heroes-replay-stats-common':
         specifier: workspace:*
         version: link:../common
@@ -859,11 +865,11 @@ importers:
         specifier: workspace:*
         version: link:../shell
       '@myrddraall/heroprotocol-analysis':
-        specifier: ^0.5.6
-        version: 0.5.6(dexie@4.4.6)
+        specifier: ^0.5.8
+        version: 0.5.8(dexie@4.4.6)
       '@myrddraall/heroprotocol-db':
-        specifier: ^0.5.6
-        version: 0.5.6(dexie@4.4.6)
+        specifier: ^0.5.8
+        version: 0.5.8(dexie@4.4.6)
       dexie:
         specifier: ^4.4.6
         version: 4.4.6
@@ -990,8 +996,8 @@ importers:
   packages/maps:
     dependencies:
       '@myrddraall/hero-data':
-        specifier: ^0.5.7
-        version: 0.5.7
+        specifier: ^0.5.8
+        version: 0.5.8
       '@myrddraall/heroes-replay-stats-background':
         specifier: workspace:*
         version: link:../background
@@ -1172,8 +1178,8 @@ importers:
         specifier: workspace:*
         version: link:../shell
       '@myrddraall/heroprotocol-db':
-        specifier: ^0.5.6
-        version: 0.5.6(dexie@4.4.6)
+        specifier: ^0.5.8
+        version: 0.5.8(dexie@4.4.6)
       tslib:
         specifier: ^2.3.0
         version: 2.8.1
@@ -1254,8 +1260,11 @@ importers:
   packages/replays:
     dependencies:
       '@myrddraall/hero-data':
-        specifier: ^0.5.7
-        version: 0.5.7
+        specifier: ^0.5.8
+        version: 0.5.8
+      '@myrddraall/heroes-replay-stats-analysers':
+        specifier: workspace:*
+        version: link:../../libs/analysers
       '@myrddraall/heroes-replay-stats-common':
         specifier: workspace:*
         version: link:../common
@@ -1284,14 +1293,20 @@ importers:
         specifier: workspace:*
         version: link:../shell
       '@myrddraall/heroprotocol-analysis':
-        specifier: ^0.5.6
-        version: 0.5.6(dexie@4.4.6)
+        specifier: ^0.5.8
+        version: 0.5.8(dexie@4.4.6)
       '@myrddraall/heroprotocol-db':
-        specifier: ^0.5.6
-        version: 0.5.6(dexie@4.4.6)
+        specifier: ^0.5.8
+        version: 0.5.8(dexie@4.4.6)
       dexie:
         specifier: ^4.4.6
         version: 4.4.6
+      echarts:
+        specifier: ^6.1.0
+        version: 6.1.0
+      ngx-echarts:
+        specifier: ^22.0.0
+        version: 22.0.0(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(echarts@6.1.0)
       tslib:
         specifier: ^2.3.0
         version: 2.8.1
@@ -2752,24 +2767,24 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@myrddraall/hero-data@0.5.7':
-    resolution: {integrity: sha512-zQmgrae86JmP6vSk+ZnAoAzVkY0OwXoeW9PK+N9nxnm3obpYRORIuPQXAZ2oPcqwNUlNkfUBTmt8OimV55Bahg==, tarball: https://npm.pkg.github.com/download/@myrddraall/hero-data/0.5.7/87fde2d6dc7171f30f9ac34538d108ea8348ea4e}
+  '@myrddraall/hero-data@0.5.8':
+    resolution: {integrity: sha512-HzdwiTRpCrTtBsC+Ovz2UIzalcTth/JxX2GRCtMMV7MUUYUi1YLndh40L2/HwRveeT1pjfceGEJy5uUUeKtqaw==, tarball: https://npm.pkg.github.com/download/@myrddraall/hero-data/0.5.8/51ba25a63eb7f53a09df4de46d83452c477b2c28}
     engines: {node: '>=24'}
 
-  '@myrddraall/heroprotocol-analysis@0.5.6':
-    resolution: {integrity: sha512-Cf0/6F2I5r5dLYRxhIC+02wmFHDFhRM42ZKxnagmNMPPq4yQM9P0QWFmEPMlH309dJDwIY3vNwhZdVG4iq368Q==, tarball: https://npm.pkg.github.com/download/@myrddraall/heroprotocol-analysis/0.5.6/887e294c71ca1389c97277869410c413299e9534}
-    engines: {node: '>=24'}
-    peerDependencies:
-      dexie: ^4.4.6
-
-  '@myrddraall/heroprotocol-db@0.5.6':
-    resolution: {integrity: sha512-uL36nGtT65BE73NPf1puaSNdLqvcI/da6XU4Hmhr/hDmww9FoguBcMGaiRx4TXe9rpaZnp0Y1clqJzB0GAFLTw==, tarball: https://npm.pkg.github.com/download/@myrddraall/heroprotocol-db/0.5.6/81ce32b5911bf5865fb072788fb7b7698f57d9f2}
+  '@myrddraall/heroprotocol-analysis@0.5.8':
+    resolution: {integrity: sha512-GPs8kAk9/2nCDdgAm2yMQFnPxola5OwkantI0JLogN0zO4AGxBv3qXG66fEu5dF7JCuyv2BvCCX+GT9sudix2Q==, tarball: https://npm.pkg.github.com/download/@myrddraall/heroprotocol-analysis/0.5.8/465153833173c6e990abf6ff9835fcfb7c797eab}
     engines: {node: '>=24'}
     peerDependencies:
       dexie: ^4.4.6
 
-  '@myrddraall/heroprotocol@0.5.6':
-    resolution: {integrity: sha512-1I9rGQKgVo8rGNyPe53F8drRN59Hdijtq1HmM2DkEo6uXWZ3d0CMtML8w+rVattbGPiD49lXBjM2g/e6A6g6fQ==, tarball: https://npm.pkg.github.com/download/@myrddraall/heroprotocol/0.5.6/db23003ad9464f024d4a5223b792b4927e686b19}
+  '@myrddraall/heroprotocol-db@0.5.8':
+    resolution: {integrity: sha512-Fhs59yipolbsStiBkLmF+1HV5RGtpoebvl+OsK24e8I3DhALTnKae632Tcm+GxiwjfgHhljnQg8Hv1WEt1S5zQ==, tarball: https://npm.pkg.github.com/download/@myrddraall/heroprotocol-db/0.5.8/20f0094129ad34d8173085660de630509766dee8}
+    engines: {node: '>=24'}
+    peerDependencies:
+      dexie: ^4.4.6
+
+  '@myrddraall/heroprotocol@0.5.8':
+    resolution: {integrity: sha512-3uxUPtSpbnOPKeendQiOsjgN53h2Vm/wAn6KmBYjM1ATXeET81CXEhpmQ6hE9Om6tawvWVNWSK/UaOAe7E6Blg==, tarball: https://npm.pkg.github.com/download/@myrddraall/heroprotocol/0.5.8/59d334a034e94047783c121cdc4474c8a4347460}
     engines: {node: '>=24'}
 
   '@myrddraall/mpq@0.2.0':
@@ -4315,6 +4330,9 @@ packages:
   duplexer2@0.1.4:
     resolution: {integrity: sha512-asLFVfWWtJ90ZyOUHMqk7/S2w2guQKxUI2itj3d92ADHhxUSbCMGi1f1cBcJ7xM1To+pE/Khbwo1yuNbMEPKeA==}
 
+  echarts@6.1.0:
+    resolution: {integrity: sha512-q0yaFPggC9FUdsWH4blavRWFmxdrIodbkoKNAjJudAI6CA9gNPxHtV2RcZNEepZVlk4yvBYkOkbk6HIVpIyHZA==}
+
   effect@3.22.2:
     resolution: {integrity: sha512-fm1CQXCs7GTMwpadZxwU5rnAb2bN6mbQpknq/pXBGCzSKkosNYb9k0wsoL0TfB10rSa5xOEZJjo77u/KLXSANg==}
 
@@ -5182,6 +5200,12 @@ packages:
   natural-compare@1.4.0:
     resolution: {integrity: sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==}
 
+  ngx-echarts@22.0.0:
+    resolution: {integrity: sha512-evh5+CgEg3f/jmDLKwzUdih8unuhtwrpPzLTtoFwF/jwr6BM5QEb46QKdqXrwBTmSDZCL//iK9jlQJGIzM9LkQ==}
+    peerDependencies:
+      '@angular/core': '>=22.0.0'
+      echarts: '>=5.0.0'
+
   node-abi@4.35.0:
     resolution: {integrity: sha512-ymk4aIzxdPopw2giv8Fs1Ec6vybGkjmyxUwVqhkI4MCy2tVfXdkOGGWieWVjL0THgH+7a8lRdevyupoYj3Js/Q==}
     engines: {node: '>=22.12.0'}
@@ -5981,6 +6005,9 @@ packages:
   ts-toolbelt@9.6.0:
     resolution: {integrity: sha512-nsZd8ZeNUzukXPlJmTBwUAuABDe/9qtVDelJeT/qW0ow3ZS3BsQJtNkan1802aM9Uf68/Y8ljw86Hu0h5IUW3w==}
 
+  tslib@2.3.0:
+    resolution: {integrity: sha512-N82ooyxVNm6h1riLCoyS9e3fuJ3AMG2zIZs2Gd1ATcSFjSA23Q0fzjjZeh0jbJvWVDZ0cJT8yaNNaaXHzueNjg==}
+
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
 
@@ -6326,6 +6353,9 @@ packages:
 
   zod@4.6.6:
     resolution: {integrity: sha512-4UmzQUF5fxvfcYHlbjBmejU+w+hbDnWFx4aS8kBx7nPBHcO2SqPbpAG8snbdg+Xse4pRefR98hgjFgIMCI/UhA==}
+
+  zrender@6.1.0:
+    resolution: {integrity: sha512-oEGMDB6pOP2S6OwRR4PdVv610zrjnA3Bh+JnSG12fYJlBKjtNAoEb5fSUoCOOINlH96I2fU38/A2UpRKs67xYQ==}
 
   zx@8.8.5:
     resolution: {integrity: sha512-SNgDF5L0gfN7FwVOdEFguY3orU5AkfFZm9B5YSHog/UDHv+lvmd82ZAsOenOkQixigwH2+yyH198AwNdKhj+RA==}
@@ -7518,19 +7548,19 @@ snapshots:
   '@msgpackr-extract/msgpackr-extract-win32-x64@3.0.4':
     optional: true
 
-  '@myrddraall/hero-data@0.5.7': {}
+  '@myrddraall/hero-data@0.5.8': {}
 
-  '@myrddraall/heroprotocol-analysis@0.5.6(dexie@4.4.6)':
+  '@myrddraall/heroprotocol-analysis@0.5.8(dexie@4.4.6)':
     dependencies:
-      '@myrddraall/heroprotocol-db': 0.5.6(dexie@4.4.6)
+      '@myrddraall/heroprotocol-db': 0.5.8(dexie@4.4.6)
       dexie: 4.4.6
 
-  '@myrddraall/heroprotocol-db@0.5.6(dexie@4.4.6)':
+  '@myrddraall/heroprotocol-db@0.5.8(dexie@4.4.6)':
     dependencies:
-      '@myrddraall/heroprotocol': 0.5.6
+      '@myrddraall/heroprotocol': 0.5.8
       dexie: 4.4.6
 
-  '@myrddraall/heroprotocol@0.5.6':
+  '@myrddraall/heroprotocol@0.5.8':
     dependencies:
       '@myrddraall/mpq': 0.2.0
 
@@ -8992,6 +9022,11 @@ snapshots:
     dependencies:
       readable-stream: 2.3.8
 
+  echarts@6.1.0:
+    dependencies:
+      tslib: 2.3.0
+      zrender: 6.1.0
+
   effect@3.22.2:
     dependencies:
       '@standard-schema/spec': 1.1.0
@@ -9982,6 +10017,12 @@ snapshots:
 
   natural-compare@1.4.0: {}
 
+  ngx-echarts@22.0.0(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(echarts@6.1.0):
+    dependencies:
+      '@angular/core': 22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)
+      echarts: 6.1.0
+      tslib: 2.8.1
+
   node-abi@4.35.0:
     dependencies:
       semver: 7.8.5
@@ -10803,6 +10844,8 @@ snapshots:
 
   ts-toolbelt@9.6.0: {}
 
+  tslib@2.3.0: {}
+
   tslib@2.8.1: {}
 
   tsup@8.5.1(jiti@2.7.0)(postcss@8.5.32)(supports-color@8.1.1)(tsx@4.23.15)(typescript@6.0.3)(yaml@2.9.1):
@@ -11097,5 +11140,9 @@ snapshots:
   zod@4.6.5: {}
 
   zod@4.6.6: {}
+
+  zrender@6.1.0:
+    dependencies:
+      tslib: 2.3.0
 
   zx@8.8.5: {}

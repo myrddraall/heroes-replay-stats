@@ -14,10 +14,27 @@ import type {
   TeamStatsRow,
   XpPointRow,
 } from '@myrddraall/heroprotocol-analysis';
-import { liveQuery } from 'dexie';
+import { Dexie, liveQuery } from 'dexie';
 import { from, type Observable, switchMap } from 'rxjs';
 import { REPLAY_DB } from '@myrddraall/heroes-replay-stats-import/data';
-import type { ReplayScoreScreen, ReplayPlayerStats, ReplayDraft, ReplayUnitKills } from '../model';
+import {
+  type ActionsPerMinute,
+  type ReplayDraft,
+  type ReplayPlayerStats,
+  type ReplayScoreScreen,
+  type ReplayTimeline,
+  type ReplayUnitKills,
+  type MapState,
+  mapState,
+} from '../model';
+import type { TimelineEventRow } from '@myrddraall/heroes-replay-stats-analysers';
+import {
+  type CommandRecord,
+  GAME_START_LOOP,
+  type ReplayRecord,
+  type StatEventRecord,
+  type UnitRecord,
+} from '@myrddraall/heroprotocol-db';
 
 const bySlot = (a: { slot: number }, b: { slot: number }): number => a.slot - b.slot;
 
@@ -25,6 +42,10 @@ const bySlot = (a: { slot: number }, b: { slot: number }): number => a.slot - b.
 const CHAT_ANALYSER = '@myrddraall/chat';
 const TALENTS_ANALYSER = '@myrddraall/talents';
 const XP_CURVE_ANALYSER = '@myrddraall/xp-curve';
+/** Gates readiness, but is asked for again when a newer version counts differently. */
+const UNIT_KILLS_ANALYSER = '@myrddraall/unit-kills';
+/** The app's own timeline analyser (@myrddraall/heroes-replay-stats-analysers). */
+const TIMELINE_ANALYSER = '@myrddraall/timeline';
 /** Runs when first asked for, after the commands analyser. */
 const ACTIVITY_ANALYSER = '@myrddraall/activity';
 
@@ -86,8 +107,12 @@ export class ReplayStatsService {
     );
   }
 
+  /**
+   * The units each player and team killed. The analyser is asked for first, so a replay stored by
+   * an older version of it (which counted only the heroes still dead at the end) is counted again.
+   */
   unitKills(replayId: string): Observable<ReplayUnitKills> {
-    return this.live(async () => {
+    return this.analysed(replayId, UNIT_KILLS_ANALYSER, async () => {
       const [players, teams] = await Promise.all([
         this.rows<PlayerKillsRow>('unitKills', replayId),
         this.rows<TeamKillsRow>('teamUnitKills', replayId),
@@ -120,6 +145,73 @@ export class ReplayStatsService {
         (a, b) => a.team - b.team || a.seq - b.seq,
       ),
     );
+  }
+
+  /**
+   * What happened when over the game (lifespans, deaths, talents, team levels, structures, camps,
+   * objectives), in game order, with the loop the game's clock starts from; the timeline analyser
+   * runs first if it hasn't.
+   */
+  timeline(replayId: string): Observable<ReplayTimeline> {
+    return this.analysed(replayId, TIMELINE_ANALYSER, async () => {
+      const [replay, events] = await Promise.all([
+        this.db.db.table<ReplayRecord>('replays').get(replayId),
+        this.rows<TimelineEventRow>('timelineEvents', replayId),
+      ]);
+      return {
+        startLoop: replay?.gameStartLoop ?? GAME_START_LOOP,
+        events: events.sort((a, b) => a.seq - b.seq),
+      };
+    });
+  }
+
+  /**
+   * How many commands each player gave in each minute of the game (from the gates opening), from
+   * the replay's stored commands, by player then minute.
+   */
+  actionsPerMinute(replayId: string): Observable<readonly ActionsPerMinute[]> {
+    return this.live(async () => {
+      const commands = await this.db.db
+        .table<CommandRecord>('commands')
+        .where('[replayId+seq]')
+        .between([replayId, Dexie.minKey], [replayId, Dexie.maxKey])
+        .toArray();
+      const counts = new Map<string, ActionsPerMinute>();
+      for (const c of commands) {
+        if (c.seconds < 0) continue;
+        const minute = Math.floor(c.seconds / 60);
+        const key = `${c.playerSlot}:${minute}`;
+        const before = counts.get(key);
+        counts.set(key, { slot: c.playerSlot, minute, actions: (before?.actions ?? 0) + 1 });
+      }
+      return [...counts.values()].sort((a, b) => a.slot - b.slot || a.minute - b.minute);
+    });
+  }
+
+  /**
+   * The map over the game: each camp's stretches up and captured, each town with its hall and
+   * structures and when they fell, and each core; from the replay's stat events and units.
+   */
+  mapState(replayId: string): Observable<MapState> {
+    return this.live(async () => {
+      const range = (table: string) =>
+        this.db.db
+          .table(table)
+          .where(table === 'units' ? '[replayId+tag]' : '[replayId+seq]')
+          .between([replayId, Dexie.minKey], [replayId, Dexie.maxKey])
+          .toArray();
+      const [replay, stats, units] = await Promise.all([
+        this.db.db.table<ReplayRecord>('replays').get(replayId),
+        range('statEvents') as Promise<StatEventRecord[]>,
+        range('units') as Promise<UnitRecord[]>,
+      ]);
+      return mapState(
+        stats,
+        units,
+        replay?.gameStartLoop ?? GAME_START_LOOP,
+        replay?.durationSeconds ?? 0,
+      );
+    });
   }
 
   private rows<T>(table: string, replayId: string): Promise<T[]> {

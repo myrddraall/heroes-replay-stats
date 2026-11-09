@@ -1,0 +1,53 @@
+@use '../charts/chart-tooltip' as tooltip;
+
+// The XP sources' colours (the sources chart's areas): categorical hues checked for colour-blind
+// separation between neighbours in the stacking order (XP_STACK) on the theme's dark panels, none
+// the teams' blue or red.
+:host {
+  --xp-source-trickleXP: #199e70;
+  --xp-source-creepXP: #d95926;
+  --xp-source-structureXP: #9085e9;
+  --xp-source-minionXP: #c98500;
+  --xp-source-heroXP: #d55181;
+
+  display: block;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 20px;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--mat-sys-on-surface);
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+.legend__line {
+  inline-size: 1.5em;
+  block-size: 2px;
+  border-radius: 1px;
+}
+
+.chart {
+  block-size: max(20em, 60vh);
+}
+
+.empty {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+@include tooltip.chart-tooltip;

@@ -1,0 +1,50 @@
+@use '../charts/chart-tooltip' as tooltip;
+
+:host {
+  display: block;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 20px;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--mat-sys-on-surface);
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+.legend__swatch {
+  inline-size: 0.9em;
+  block-size: 0.9em;
+  border-radius: 2px;
+}
+
+.chart {
+  block-size: max(20em, 60vh);
+}
+
+// the circle as big as the card's width allows, up to the page's height
+.chart--round {
+  block-size: min(70vh, 60vw);
+  min-block-size: 24em;
+}
+
+.empty {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+@include tooltip.chart-tooltip;

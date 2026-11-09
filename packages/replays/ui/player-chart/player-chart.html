@@ -1,0 +1,34 @@
+<!-- the side nav names the page on screen -->
+<h2 class="cdk-visually-hidden">{{ title() }}</h2>
+<!-- one card, like the other sections' tables -->
+<div class="card hrs-panel">
+  @if (kind() === 'apm') {
+    <ul class="legend" aria-label="Players">
+      @for (p of shownPlayers(); track p.slot) {
+        <li>
+          <span
+            class="legend__line"
+            [class.legend__line--dashed]="p.dashed"
+            [style.color]="'var(--player-colour-' + p.colour + ')'"
+          ></span>
+          {{ p.hero }}
+        </li>
+      }
+    </ul>
+  } @else {
+    <ul class="legend" aria-label="Teams">
+      @for (team of teams(); track team.color) {
+        <li>
+          <span class="legend__swatch" [style.background]="'var(--hrs-team-' + team.color + ')'"></span>
+          {{ team.name }}
+        </li>
+      }
+    </ul>
+  }
+
+  @if (options(); as options) {
+    <div class="chart" echarts [options]="options" (chartInit)="chartReady($event)"></div>
+  } @else {
+    <div class="chart"></div>
+  }
+</div>
