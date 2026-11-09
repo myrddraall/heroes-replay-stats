@@ -61,8 +61,12 @@ export interface PlayerState {
   readonly disconnected: boolean;
 }
 
-/** A player's state for a stretch, as the timeline draws it (its colours are named by it). */
-export type PlayerStateKey = 'alive' | 'dead' | 'away' | 'away-dead';
+/**
+ * A stretch's look, as the timeline draws it (its colours are named by it): a player's state, or
+ * `row`, the tables' rows' own (a camp up for the taking, in the neutral theme), or `unready`, darker
+ * (a camp before it first comes up).
+ */
+export type PlayerStateKey = 'row' | 'unready' | 'alive' | 'dead' | 'away' | 'away-dead';
 
 /** A state's name and key. */
 export interface PlayerStateLook {
@@ -91,7 +95,7 @@ export const PLAYER_STATE_KEY: readonly PlayerStateLook[] = [
 
 /** The colours each state's stretch is drawn in, from the row look's custom properties. */
 export const PLAYER_STATE_COLOURS: readonly string[] = [
-  ...(['alive', 'dead', 'away', 'away-dead'] as const).flatMap((k) => [
+  ...(['row', 'unready', 'alive', 'dead', 'away', 'away-dead'] as const).flatMap((k) => [
     `${k}-top`,
     `${k}-bottom`,
     `${k}-line`,

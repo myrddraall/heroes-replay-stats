@@ -41,8 +41,8 @@ describe('game timeline', () => {
         id: 1,
         type: 'Siege Camp',
         spans: [
-          { start: 60, end: 200, team: null },
-          { start: 200, end: 300, team: 1 },
+          { start: 60, end: 200, team: null, mercs: [] },
+          { start: 200, end: 300, team: 1, mercs: [] },
         ],
       },
     ],

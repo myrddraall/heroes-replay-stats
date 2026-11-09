@@ -30,7 +30,7 @@ import type { Team } from '@myrddraall/heroprotocol-db';
 import type { MapState, TeamColor, TownHold, TownLoss, TownState } from '../../model';
 import { teamName } from '../stat-tables/team-rows';
 import { type Fight, FIGHT_GAP_SECONDS, fightPlayers, type TalentPick } from './timeline-rows';
-import { campNames, townName } from './map-names';
+import { campNames, campRarity, townName } from './map-names';
 import {
   type GameTimeline,
   TIMELINE_EVENTS,
@@ -268,17 +268,66 @@ function besideHeads(model: TimelineChartModel, rows: number): TimelineChartOpti
 }
 
 /**
- * The camps: a row per camp (its head beside the chart), each stretch drawn as the tables' rows:
- * grey while it was up for the taking, in the capturing team's colour from each capture until it
- * came back.
+ * The camps: a row per camp (its head beside the chart, in its level's rarity theme: siege camps
+ * rare, bruiser camps epic, boss camps legendary), each stretch drawn as the tables' rows: the
+ * camp's theme's while it was up for the taking, darker while empty (before it first came up,
+ * and after a capture), and from each capture the capturing team's colour, moving towards the
+ * darker empty camp's as the mercenaries it sent into lane died (all of the way once none were
+ * left), until it came back.
  */
 export function campsOptions(model: TimelineChartModel): TimelineChartOption {
   const { map, look, colorOf } = model;
   const camps = map?.camps ?? [];
   const names = campNames(camps);
-  const spans = camps.flatMap((camp, row) => camp.spans.map((span) => ({ row, span })));
-  // up for the taking: grey (the theme's colours without colour, any theme's)
-  const grey = look.themed?.['blue'];
+  /** A camp's own theme's colours: its level's rarity (`campRarity`), or the neutral theme's. */
+  const themeOf = (row: number) => look.themed?.[campRarity(camps[row]?.type ?? null) ?? ''];
+  /**
+   * Each camp's stretches: before it first came up; up for the taking; and captured, cut each time
+   * one of the capture's mercenaries died, its share of them still in lane.
+   */
+  const pieces = camps.flatMap((camp, row) => {
+    const first = camp.spans[0]?.start ?? 0;
+    return [
+      ...(first > 0
+        ? [{ row, start: 0, end: first, team: null, inLane: 0, sent: 0, waiting: true }]
+        : []),
+      ...camp.spans.flatMap((span) => {
+        if (span.team === null)
+          return [
+            {
+              row,
+              start: span.start,
+              end: span.end,
+              team: null,
+              inLane: 0,
+              sent: 0,
+              waiting: false,
+            },
+          ];
+        const cuts = [
+          ...new Set([
+            span.start,
+            span.end,
+            ...span.mercs.map((m) => m.end).filter((t) => t > span.start && t < span.end),
+          ]),
+        ].sort((p, q) => p - q);
+        return cuts.slice(0, -1).map((start, i) => {
+          const end = cuts[i + 1]!;
+          const mid = (start + end) / 2;
+          const inLane = span.mercs.filter((m) => m.start <= mid && mid < m.end).length;
+          return {
+            row,
+            start,
+            end,
+            team: span.team,
+            inLane,
+            sent: span.mercs.length,
+            waiting: false,
+          };
+        });
+      }),
+    ];
+  });
   return {
     ...alongTheGame(
       model,
@@ -295,16 +344,22 @@ export function campsOptions(model: TimelineChartModel): TimelineChartOption {
     tooltip: chartTooltip(
       look,
       (params) => {
-        const hit = spans[Number((params as { dataIndex?: number }).dataIndex)];
-        if (!hit) return '';
-        const { span } = hit;
-        const when = `${formatStatClock(span.start)} – ${formatStatClock(span.end)}`;
-        const name = names[hit.row] ?? 'Camp';
-        return span.team === null
-          ? rowTip(null, 'Up for the taking', when, name)
-          : rowTip(colorOf(span.team), 'Captured', when, name, [
-              `${teamName(colorOf(span.team) ?? 'blue')} held it`,
-            ]);
+        const piece = pieces[Number((params as { dataIndex?: number }).dataIndex)];
+        // up for the taking, not up yet, or captured with none of its mercenaries left in lane says
+        // nothing: it is the row itself
+        if (!piece || piece.team === null || (piece.sent > 0 && piece.inLane === 0)) return '';
+        const when = `${formatStatClock(piece.start)} – ${formatStatClock(piece.end)}`;
+        return rowTip(
+          colorOf(piece.team),
+          'Captured',
+          when,
+          names[piece.row] ?? 'Camp',
+          piece.sent > 0
+            ? [
+                `${piece.inLane} of ${piece.sent} ${piece.sent === 1 ? 'mercenary' : 'mercenaries'} in lane`,
+              ]
+            : [],
+        );
       },
       'item',
     ),
@@ -315,24 +370,29 @@ export function campsOptions(model: TimelineChartModel): TimelineChartOption {
         name: 'Camps',
         clip: true,
         renderItem: (params, api) => {
-          const hit = spans[params.dataIndex];
-          if (!hit) return null;
-          const color = colorOf(hit.span.team);
-          const colours = color ? look.themed?.[color] : grey;
-          return colours
-            ? rowStretch(
-                api,
-                hit.row,
-                hit.span.start,
-                hit.span.end,
-                colours,
-                color ? 'alive' : 'away',
-                look,
-              )
-            : null;
+          const piece = pieces[params.dataIndex];
+          if (!piece) return null;
+          const color = colorOf(piece.team);
+          // up for the taking, and empty (darker): the camp's own theme's rows
+          const own = themeOf(piece.row);
+          const up = stateFill(own, 'row', look);
+          // captured: the team's colour, towards the darker empty camp's (as before it first came
+          // up) by the share of its mercenaries lost, all of the way once none are left, until it
+          // comes back (a capture with none sent stays the team's)
+          const empty = stateFill(own, 'unready', look);
+          const fill = piece.waiting
+            ? empty
+            : color
+              ? mixFill(
+                  stateFill(look.themed?.[color], 'alive', look),
+                  empty,
+                  piece.sent > 0 ? 1 - piece.inLane / piece.sent : 0,
+                )
+              : up;
+          return rowStretch(api, piece.row, piece.start, piece.end, fill);
         },
         encode: { x: [1, 2], y: 0 },
-        data: spans.map(({ row, span }) => [row, span.start, span.end]),
+        data: pieces.map((p) => [p.row, p.start, p.end]),
       },
     ],
   };
@@ -493,9 +553,7 @@ export function structuresOptions(model: TimelineChartModel): TimelineChartOptio
                 bar.row,
                 bar.start,
                 bar.end,
-                colours,
-                bar.fallen ? 'dead' : 'alive',
-                look,
+                stateFill(colours, bar.fallen ? 'dead' : 'alive', look),
               )
             : null;
         },
@@ -630,20 +688,56 @@ export const TIMELINE_GRID = {
   outerBoundsMode: 'none',
 } as const;
 
+/** A stretch's colours: its fill's top and bottom, and its 2px line. */
+interface RowFill {
+  readonly top: string;
+  readonly bottom: string;
+  readonly line: string;
+}
+
+/** A theme's colours (`readThemedColours`) for a stretch's look (`<state>-top` …). */
+function stateFill(
+  colours: Readonly<Record<string, string>> | undefined,
+  state: PlayerStateKey,
+  look: ChartLook,
+): RowFill {
+  return {
+    top: colours?.[`${state}-top`] ?? look.label,
+    bottom: colours?.[`${state}-bottom`] ?? look.label,
+    line: colours?.[`${state}-line`] ?? look.label,
+  };
+}
+
+/** `t` of the way from one `rgba()` colour to another (0 is `from`, 1 is `to`). */
+function mixColour(from: string, to: string, t: number): string {
+  const parse = (c: string) =>
+    (/rgba?\(([^)]+)\)/.exec(c)?.[1] ?? '0,0,0,0').split(',').map(Number);
+  const [a, b] = [parse(from), parse(to)];
+  const at = (i: number) => (a[i] ?? 0) + ((b[i] ?? 0) - (a[i] ?? 0)) * t;
+  return `rgba(${Math.round(at(0))}, ${Math.round(at(1))}, ${Math.round(at(2))}, ${at(3).toFixed(3)})`;
+}
+
+/** `t` of the way from one fill to another. */
+function mixFill(from: RowFill, to: RowFill, t: number): RowFill {
+  return {
+    top: mixColour(from.top, to.top, t),
+    bottom: mixColour(from.bottom, to.bottom, t),
+    line: mixColour(from.line, to.line, t),
+  };
+}
+
 /**
  * A stretch along a row as the tables' rows are drawn (`_score-row.scss`'s texture): the row's
- * whole height less 2px (rows 2px apart), a fill from `<state>-top` to `<state>-bottom` over a 2px
- * `<state>-line`, in a theme's colours (`readThemedColours`). Its shapes move as the chart's marks
- * do when it zooms and pans (animated the same), so the marks stay on it.
+ * whole height less 2px (rows 2px apart), a fill from its top colour to its bottom over a 2px
+ * line. Its shapes move as the chart's marks do when it zooms and pans (animated the same), so the
+ * marks stay on it.
  */
 function rowStretch(
   api: CustomSeriesRenderItemAPI,
   row: number,
   start: number,
   end: number,
-  colours: Readonly<Record<string, string>>,
-  state: PlayerStateKey,
-  look: ChartLook,
+  fill: RowFill,
 ): CustomSeriesRenderItemReturn {
   const [x0, y] = api.coord([start, row]) as [number, number];
   const [x1] = api.coord([end, row]) as [number, number];
@@ -665,8 +759,8 @@ function rowStretch(
             x2: 0,
             y2: 1,
             colorStops: [
-              { offset: 0, color: colours[`${state}-top`] ?? look.label },
-              { offset: 1, color: colours[`${state}-bottom`] ?? look.label },
+              { offset: 0, color: fill.top },
+              { offset: 1, color: fill.bottom },
             ],
           },
         },
@@ -675,7 +769,7 @@ function rowStretch(
         type: 'rect',
         transition: 'shape',
         shape: { x: x0, y: top + h - 2, width, height: 2 },
-        style: { fill: colours[`${state}-line`] ?? look.label },
+        style: { fill: fill.line },
       },
     ],
   };
@@ -847,9 +941,7 @@ export function gameTimelineOptions(model: TimelineChartModel): TimelineChartOpt
             span.row,
             span.start,
             span.end,
-            colours,
-            playerStateLook(span).key,
-            look,
+            stateFill(colours, playerStateLook(span).key, look),
           );
         },
         encode: { x: [1, 2], y: 0 },

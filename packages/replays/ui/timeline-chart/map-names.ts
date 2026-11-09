@@ -17,3 +17,15 @@ export function townName(town: TownState, laneTowns: readonly TownState[]): stri
   const place = town.place ? `${town.place[0]!.toUpperCase()}${town.place.slice(1)} town` : 'Town';
   return laneTowns.length > 1 ? `${place} ${laneTowns.indexOf(town) + 1}` : place;
 }
+
+/** A camp's level, as a rarity theme: siege camps rare, bruiser camps epic, boss camps legendary. */
+export type CampRarity = 'rare' | 'epic' | 'legendary';
+
+/** A camp's rarity theme by the game's name for its type (`Siege Camp`); null for the others. */
+export function campRarity(type: string | null): CampRarity | null {
+  if (!type) return null;
+  if (/siege/i.test(type)) return 'rare';
+  if (/bruiser/i.test(type)) return 'epic';
+  if (/boss/i.test(type)) return 'legendary';
+  return null;
+}

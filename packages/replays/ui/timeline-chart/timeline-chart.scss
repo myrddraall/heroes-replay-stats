@@ -18,6 +18,10 @@
 // on elements in a team's theme: the chart reads them from hidden ones (`.row-look--probe`), the key
 // draws them
 .row-look {
+  // the tables' rows' own (the row heads'): in the neutral theme, a camp up for the taking
+  @include state(row, 12%, 17%, 35%, 0.5);
+  // darker: a camp before it first comes up
+  @include state(unready, 4%, 7%, 18%, 0.35);
   @include state(alive, 32%, 42%, 75%, 0.9);
   @include state(dead, 12%, 17%, 35%, 0.5);
   @include state(away, 32%, 42%, 75%, 0.6, $grey: true);

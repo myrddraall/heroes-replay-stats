@@ -68,6 +68,30 @@ describe('map state', () => {
       bornAt: { x: 100, y: 69 },
       bornAtLoop: at(310),
     }),
+    // the capture's mercenaries: two lane units born at the camp as it was captured, one still
+    // alive at the end; a missile is not one
+    unit({
+      type: 'MercSiegeTrooperLaner',
+      unitClass: 'mercenary',
+      ownerTeam: 1,
+      bornAt: { x: 101, y: 70 },
+      bornAtLoop: at(130),
+      diedAtLoop: at(200),
+    }),
+    unit({
+      type: 'MercSiegeTrooperLaner',
+      unitClass: 'mercenary',
+      ownerTeam: 1,
+      bornAt: { x: 99, y: 71 },
+      bornAtLoop: at(130),
+    }),
+    unit({
+      type: 'MercSiegeTrooperLanerMissile',
+      unitClass: 'mercenary',
+      ownerTeam: 1,
+      bornAt: { x: 100, y: 70 },
+      bornAtLoop: at(130),
+    }),
     // the top town's fort and a tower that fell, the bottom town's keep standing
     unit({
       type: 'TownHallDestroyed',
@@ -99,9 +123,17 @@ describe('map state', () => {
         id: 1,
         type: 'Siege Camp',
         spans: [
-          { start: 57, end: 130, team: null },
-          { start: 130, end: 310, team: 1 },
-          { start: 310, end: 1000, team: null },
+          { start: 57, end: 130, team: null, mercs: [] },
+          {
+            start: 130,
+            end: 310,
+            team: 1,
+            mercs: [
+              { start: 130, end: 200 },
+              { start: 130, end: 1000 },
+            ],
+          },
+          { start: 310, end: 1000, team: null, mercs: [] },
         ],
       },
     ]);

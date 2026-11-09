@@ -13,10 +13,12 @@
         </li>
       }
       @if (kind() === 'camps') {
-        <li>
-          <span class="legend__state"><span class="row-look" theme="blue" [style.background]="stateBackground('away')"></span></span>
-          Up for the taking
-        </li>
+        @for (level of campLevels; track level.theme) {
+          <li>
+            <span class="legend__state"><span class="row-look" [attr.theme]="level.theme" [style.background]="stateBackground('row')"></span></span>
+            {{ level.label }}
+          </li>
+        }
       }
       @if (kind() === 'structures') {
         <li>
@@ -57,6 +59,11 @@
       @for (team of rowTeams; track team) {
         <span #rowProbe class="row-look row-look--probe" [attr.theme]="team" aria-hidden="true"></span>
       }
+      @for (theme of campThemes; track theme) {
+        <span #rowProbe class="row-look row-look--probe" [attr.theme]="theme" aria-hidden="true"></span>
+      }
+      <!-- the neutral theme's (the page's own), read as theme '' -->
+      <span #rowProbe class="row-look row-look--probe" aria-hidden="true"></span>
     }
 
     @if (hasHeads()) {

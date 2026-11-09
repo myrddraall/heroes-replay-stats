@@ -12,6 +12,11 @@ export interface CampSpan {
   readonly end: number;
   /** The team that captured it; null while it was up. */
   readonly team: Team | null;
+  /**
+   * Captured: the mercenaries the capture sent into lane, each from the capture until it died (or
+   * the game's end); none while it was up.
+   */
+  readonly mercs: readonly { readonly start: number; readonly end: number }[];
 }
 
 /** A mercenary camp over the game. */
@@ -84,7 +89,9 @@ const num = (e: StatEventRecord, key: string): number | null => {
 /**
  * The map over the game, from the replay's stat events and units:
  * - each camp's stretches: up from when its defenders are born (at the start, and each time it
- *   comes back) until a team captures it, then the team's until its next defenders are born;
+ *   comes back) until a team captures it, then the team's until its next defenders are born, with
+ *   the mercenaries the capture sent into lane (its team's lane units born at the camp as it was
+ *   captured) and when each died;
  * - each town (`TownStructureInit`), with its hall and its other structures (the units born nearest
  *   it) and when each fell: a tower when it turned into its ruin, the rest when they died;
  * - who held each town: on Towers of Doom a town is taken, not destroyed: its hall's death
@@ -121,14 +128,37 @@ export function mapState(
         .sort((a, b) => a - b)
         .filter((s, i, all) => i === 0 || s - all[i - 1]! > 10);
       const mine = captures.filter((c) => num(c, 'CampID') === id);
+      /** A capture's mercenaries: its team's lane units born at the camp as it was captured. */
+      const mercsOf = (capture: StatEventRecord, team: Team | null) =>
+        units
+          .filter(
+            (u) =>
+              u.ownerTeam === team &&
+              /Laner/.test(u.type) &&
+              !/Missile/.test(u.type) &&
+              Math.abs(u.bornAtLoop - capture.gameloop) <= 16 &&
+              Math.hypot(u.bornAt.x - x, u.bornAt.y - y) < NEAR,
+          )
+          .map((u) => ({
+            start: seconds(u.bornAtLoop),
+            end: u.diedAtLoop === null ? durationSeconds : seconds(u.diedAtLoop),
+          }));
       const marks = [
-        ...spawns.map((s) => ({ at: s, team: null as Team | null })),
-        ...mine.map((c) => ({ at: c.seconds, team: teamOf(c.values['TeamID']) })),
+        ...spawns.map((s) => ({
+          at: s,
+          team: null as Team | null,
+          mercs: [] as CampSpan['mercs'],
+        })),
+        ...mine.map((c) => {
+          const team = teamOf(c.values['TeamID']);
+          return { at: c.seconds, team, mercs: mercsOf(c, team) };
+        }),
       ].sort((a, b) => a.at - b.at);
       const spans = marks.map((m, i) => ({
         start: m.at,
         end: marks[i + 1]?.at ?? durationSeconds,
         team: m.team,
+        mercs: m.mercs,
       }));
       const type = mine.map((c) => c.values['CampType']).find((t) => typeof t === 'string');
       return { id, type: typeof type === 'string' ? type : null, spans };
