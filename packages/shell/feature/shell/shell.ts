@@ -45,7 +45,15 @@ import {
   SubBar,
   TopBar,
 } from '../../ui';
-import { SHELL_MENU_ITEMS } from '../../model';
+import {
+  SHELL_MENU_ACTIONS,
+  SHELL_MENU_ITEMS,
+  type ShellMenuAction,
+  type ShellMenuItem,
+} from '../../model';
+
+/** An entry of the settings menu: a page it opens (`link`), or something it does (`run`). */
+type ShellMenuEntry = Partial<ShellMenuItem> & Partial<ShellMenuAction> & { label: string; order: number };
 import { filmStyle } from './films';
 
 /** Whether a drag carries files (as opposed to text or links dragged within the page). */
@@ -151,8 +159,11 @@ export class Shell {
   protected readonly title = computed(
     () => this.nav().areas.find((a) => a.active)?.label ?? this.routeTitle(),
   );
-  /** The settings menu: its own entries, then the Dev pages. */
-  private readonly menuItems = [...inject(SHELL_MENU_ITEMS)].sort((a, b) => a.order - b.order);
+  /** The settings menu: its own entries (pages and actions), then the Dev ones. */
+  private readonly menuItems: readonly ShellMenuEntry[] = [
+    ...inject(SHELL_MENU_ITEMS),
+    ...inject(SHELL_MENU_ACTIONS),
+  ].sort((a, b) => a.order - b.order);
   protected readonly menu = this.menuItems.filter((i) => i.group !== 'dev');
   protected readonly devMenu = this.menuItems.filter((i) => i.group === 'dev');
   /** The extra panel on the right, which the page fills. */
