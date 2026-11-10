@@ -2,7 +2,7 @@
   "name": "@myrddraall/heroes-replay-stats-players",
   "version": "0.0.0-MAIN",
   "private": true,
-  "description": "Players: everyone in the stored replays with their numbers, the Players page, and who \"you\" are in a replay",
+  "description": "Players: everyone in the stored replays with their numbers, the Players page, and each player's page of stats across their matches",
   "types": "./index.ts",
   "sideEffects": false,
   "scripts": {
@@ -13,12 +13,17 @@
     "typecheck": "tsc --noEmit -p ."
   },
   "dependencies": {
+    "@myrddraall/hero-data": "^0.7.0",
     "@myrddraall/heroes-replay-stats-common": "workspace:*",
     "@myrddraall/heroes-replay-stats-data-views": "workspace:*",
+    "@myrddraall/heroes-replay-stats-heroes": "workspace:*",
     "@myrddraall/heroes-replay-stats-import": "workspace:*",
     "@myrddraall/heroes-replay-stats-layout": "workspace:*",
+    "@myrddraall/heroes-replay-stats-replays": "workspace:*",
     "@myrddraall/heroes-replay-stats-settings": "workspace:*",
+    "@myrddraall/heroes-replay-stats-sheets": "workspace:*",
     "@myrddraall/heroes-replay-stats-shell": "workspace:*",
+    "@myrddraall/heroprotocol-analysis": "^0.7.0",
     "@myrddraall/heroprotocol-db": "^0.7.0",
     "tslib": "^2.3.0"
   },

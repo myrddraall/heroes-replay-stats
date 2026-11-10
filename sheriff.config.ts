@@ -44,7 +44,15 @@ const featureModules: Record<string, readonly string[]> = {
     'renderer-check-page',
   ],
   maps: ['maps-page', 'map-page'],
-  players: ['players-page'],
+  players: [
+    'players-page',
+    'player-page',
+    'overview-section',
+    'stats-section',
+    'records-section',
+    'peers-section',
+    'matches-section',
+  ],
   replays: [
     'replays-page',
     'replay-page',
@@ -56,6 +64,8 @@ const featureModules: Record<string, readonly string[]> = {
     'stats-section',
     'unit-kills-section',
     'xp-section',
+    'timeline-section',
+    'player-chart-section',
   ],
 };
 
@@ -79,8 +89,8 @@ const uses: Record<string, readonly string[]> = {
   // components, which shows the heroes' (the hero frame).
   dev: ['aether', 'heroes'],
   maps: ['background', 'heroes'],
-  players: ['import'],
-  replays: ['heroes', 'import', 'players'],
+  players: ['heroes', 'import', 'replays'],
+  replays: ['heroes', 'import'],
   settings: ['layout', 'platform', 'shell'],
   shell: ['platform', 'sheets'],
   theme: ['settings', 'shell'],

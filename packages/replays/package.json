@@ -20,7 +20,6 @@
     "@myrddraall/heroes-replay-stats-heroes": "workspace:*",
     "@myrddraall/heroes-replay-stats-import": "workspace:*",
     "@myrddraall/heroes-replay-stats-layout": "workspace:*",
-    "@myrddraall/heroes-replay-stats-players": "workspace:*",
     "@myrddraall/heroes-replay-stats-settings": "workspace:*",
     "@myrddraall/heroes-replay-stats-sheets": "workspace:*",
     "@myrddraall/heroes-replay-stats-shell": "workspace:*",

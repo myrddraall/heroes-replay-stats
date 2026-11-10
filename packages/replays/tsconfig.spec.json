@@ -18,9 +18,6 @@
       "@myrddraall/heroes-replay-stats-layout/*": [
         "../layout/*/index.ts"
       ],
-      "@myrddraall/heroes-replay-stats-players/*": [
-        "../players/*/index.ts"
-      ],
       "@myrddraall/heroes-replay-stats-settings/*": [
         "../settings/*/index.ts"
       ],

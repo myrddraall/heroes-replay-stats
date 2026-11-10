@@ -1159,24 +1159,39 @@ importers:
 
   packages/players:
     dependencies:
+      '@myrddraall/hero-data':
+        specifier: ^0.7.0
+        version: 0.7.0
       '@myrddraall/heroes-replay-stats-common':
         specifier: workspace:*
         version: link:../common
       '@myrddraall/heroes-replay-stats-data-views':
         specifier: workspace:*
         version: link:../data-views
+      '@myrddraall/heroes-replay-stats-heroes':
+        specifier: workspace:*
+        version: link:../heroes
       '@myrddraall/heroes-replay-stats-import':
         specifier: workspace:*
         version: link:../import
       '@myrddraall/heroes-replay-stats-layout':
         specifier: workspace:*
         version: link:../layout
+      '@myrddraall/heroes-replay-stats-replays':
+        specifier: workspace:*
+        version: link:../replays
       '@myrddraall/heroes-replay-stats-settings':
         specifier: workspace:*
         version: link:../settings
+      '@myrddraall/heroes-replay-stats-sheets':
+        specifier: workspace:*
+        version: link:../sheets
       '@myrddraall/heroes-replay-stats-shell':
         specifier: workspace:*
         version: link:../shell
+      '@myrddraall/heroprotocol-analysis':
+        specifier: ^0.7.0
+        version: 0.7.0(dexie@4.4.6)
       '@myrddraall/heroprotocol-db':
         specifier: ^0.7.0
         version: 0.7.0(dexie@4.4.6)
@@ -1280,9 +1295,6 @@ importers:
       '@myrddraall/heroes-replay-stats-layout':
         specifier: workspace:*
         version: link:../layout
-      '@myrddraall/heroes-replay-stats-players':
-        specifier: workspace:*
-        version: link:../players
       '@myrddraall/heroes-replay-stats-settings':
         specifier: workspace:*
         version: link:../settings

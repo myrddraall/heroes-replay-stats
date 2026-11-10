@@ -48,7 +48,7 @@
     <hrs-column name="player" header="Player" width="minmax(max-content, 3fr)">
       <ng-template hrsCell let-p>
         <span class="player">
-          <span class="player__name">{{ p.name }}</span>
+          <a class="player__name" [routerLink]="['/replays/players', p.id]">{{ p.name }}</a>
           @if (p.region; as r) {
             <span class="player__region">{{ r }}</span>
           }

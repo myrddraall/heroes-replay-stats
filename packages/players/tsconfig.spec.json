@@ -23,6 +23,15 @@
       ],
       "@myrddraall/heroes-replay-stats-platform/*": [
         "../platform/*/index.ts"
+      ],
+      "@myrddraall/heroes-replay-stats-replays/*": [
+        "../replays/*/index.ts"
+      ],
+      "@myrddraall/heroes-replay-stats-heroes/*": [
+        "../heroes/*/index.ts"
+      ],
+      "@myrddraall/heroes-replay-stats-sheets/*": [
+        "../sheets/*/index.ts"
       ]
     }
   }

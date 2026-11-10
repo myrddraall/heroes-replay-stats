@@ -19,7 +19,7 @@ import {
 } from '@myrddraall/heroes-replay-stats-heroes/model';
 import { ReplayService, ReplayStatsService, ViewedReplaysStore } from '../../data';
 import { SettingsStore } from '@myrddraall/heroes-replay-stats-settings/data';
-import { resolveYou } from '@myrddraall/heroes-replay-stats-players/model';
+import { resolveYou } from '../../model';
 import { errorMessage } from '@myrddraall/heroes-replay-stats-common/model';
 
 /**

@@ -11,3 +11,4 @@ export * from './replay-timeline';
 export * from './actions-per-minute';
 export * from './structure-kind';
 export * from './map-state';
+export * from './resolve-you';

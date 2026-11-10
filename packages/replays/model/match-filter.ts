@@ -1,5 +1,5 @@
 import type { GameMode } from '@myrddraall/heroprotocol-db';
-import type { You } from '@myrddraall/heroes-replay-stats-players/model';
+import type { You } from './resolve-you';
 import type { ReplaySummary } from './replay-summary';
 
 /** How recently a match was played, for the filter: any time, today, the last 7 or 30 days. */

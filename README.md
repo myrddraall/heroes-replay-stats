@@ -12,7 +12,7 @@ login and no server.
 | [`@myrddraall/heroes-replay-stats-analysers`](./libs/analysers)           | the app's own replay analysers: timeline and points of interest                                     |
 | [`@myrddraall/heroes-replay-stats-heroes`](./packages/heroes)             | hero, talent and map data for each build, the lookups the app shows from it, the hero icon          |
 | [`@myrddraall/heroes-replay-stats-import`](./packages/import)             | importing replays on ingest workers into the replay database, the import jobs, the Import page      |
-| [`@myrddraall/heroes-replay-stats-players`](./packages/players)           | everyone in the stored replays with their numbers, the Players page, who "you" are in a replay      |
+| [`@myrddraall/heroes-replay-stats-players`](./packages/players)           | everyone in the stored replays with their numbers, the Players page, each player's page of stats across their matches |
 | [`@myrddraall/heroes-replay-stats-replays`](./packages/replays)           | the stored replays, the replay list, and each replay's page with its sections                       |
 | [`@myrddraall/heroes-replay-stats-background`](./packages/background)     | the site's Play-screen background (Aether, its editor, the Graphics settings) and the theme preview |
 | [`@myrddraall/heroes-replay-stats-theme`](./packages/theme)               | the look every page shares (theme, panel opacity, blur) and its settings section                    |

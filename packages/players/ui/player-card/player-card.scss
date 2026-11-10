@@ -1,0 +1,58 @@
+:host {
+  display: block;
+}
+
+.card {
+  padding: 12px 14px;
+}
+
+.card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+  margin-bottom: 8px;
+}
+
+.card__name {
+  margin: 0;
+  font: var(--mat-sys-headline-small);
+  font-family: var(--font-brand);
+  font-weight: 600;
+  color: #fff;
+  overflow-wrap: anywhere;
+}
+
+.card__region {
+  font: var(--mat-sys-label-large);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.card__me {
+  font: var(--mat-sys-label-large);
+  color: var(--mat-sys-primary);
+}
+
+// a name and its value a line each pair, the names in a column
+.facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 10px;
+  margin: 0;
+  font: var(--mat-sys-body-small);
+}
+
+dt {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+dd {
+  margin: 0;
+  color: var(--mat-sys-on-surface);
+  font-variant-numeric: tabular-nums;
+}
+
+.facts__rate {
+  margin-left: 6px;
+  color: var(--mat-sys-on-surface-variant);
+}

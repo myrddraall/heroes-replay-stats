@@ -37,7 +37,7 @@
 
   @if (o.heroes.length) {
     <mat-form-field class="filters__select" appearance="outline" subscriptSizing="dynamic">
-      <mat-label>Your hero</mat-label>
+      <mat-label>{{ heroLabel() }}</mat-label>
       <mat-select [value]="f.hero" (valueChange)="set({ hero: $event })">
         <mat-option value="">Any hero</mat-option>
         @for (hero of o.heroes; track hero) {
