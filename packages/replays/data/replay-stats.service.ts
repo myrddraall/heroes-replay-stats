@@ -15,7 +15,7 @@ import type {
   XpPointRow,
 } from '@myrddraall/heroprotocol-analysis';
 import { Dexie, liveQuery } from 'dexie';
-import { from, type Observable, switchMap } from 'rxjs';
+import { from, Observable, switchMap } from 'rxjs';
 import { REPLAY_DB } from '@myrddraall/heroes-replay-stats-import/data';
 import {
   type ActionsPerMinute,
@@ -221,7 +221,7 @@ export class ReplayStatsService {
   }
 
   private live<T>(query: () => Promise<T>): Observable<T> {
-    return from(this.db.ready).pipe(switchMap(() => from(liveQuery(query))));
+    return this.prioritised(from(this.db.ready).pipe(switchMap(() => from(liveQuery(query)))));
   }
 
   /**
@@ -229,9 +229,42 @@ export class ReplayStatsService {
    * now if it hasn't yet, and answers from its stored run if it has.
    */
   private analysed<T>(replayId: string, analyser: string, query: () => Promise<T>): Observable<T> {
-    return from(this.db.ready).pipe(
-      switchMap(() => this.db.analyse(replayId, analyser)),
-      switchMap(() => from(liveQuery(query))),
+    return this.prioritised(
+      from(this.db.ready).pipe(
+        switchMap(() => this.db.analyse(replayId, analyser)),
+        switchMap(() => from(liveQuery(query))),
+      ),
     );
+  }
+
+  /**
+   * `source` as the open replay's priority work (the client's `priority`): from subscribing until
+   * its first answer (or its end), imports take no new write turn, so its analyser and reads wait
+   * for one import write at most, not for the batch.
+   */
+  private prioritised<T>(source: Observable<T>): Observable<T> {
+    return new Observable<T>((subscriber) => {
+      let release!: () => void;
+      const answered = new Promise<void>((resolve) => (release = resolve));
+      void this.db.priority(() => answered);
+      const inner = source.subscribe({
+        next: (value) => {
+          release();
+          subscriber.next(value);
+        },
+        error: (err: unknown) => {
+          release();
+          subscriber.error(err);
+        },
+        complete: () => {
+          release();
+          subscriber.complete();
+        },
+      });
+      return () => {
+        release();
+        inner.unsubscribe();
+      };
+    });
   }
 }

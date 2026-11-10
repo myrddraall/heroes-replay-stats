@@ -419,14 +419,14 @@ describe('ReplayImportJobStore', () => {
     const byName = (name: string) => scripted.find((s) => s.fileName === `${name}.StormReplay`)!;
     // oldest first: a and b start, c and d wait
     expect(['a', 'b', 'c', 'd'].map(status)).toEqual(['running', 'running', 'queued', 'queued']);
-    expect(extra).toHaveLength(1); // the main worker plus one more
+    expect(extra).toHaveLength(2); // a worker each: the main one is the open replay's
     expect(store.overall()).toMatchObject({ running: 2, queued: 2 });
 
     // raising the limit starts the next job straight away, on a third worker
     settings.setParallelImports(3);
     await tick();
     expect(status('c')).toBe('running');
-    expect(extra).toHaveLength(2);
+    expect(extra).toHaveLength(3);
 
     // lowering it lets running jobs finish; nothing new starts until fewer are running
     settings.setParallelImports(1);
@@ -443,7 +443,8 @@ describe('ReplayImportJobStore', () => {
     await tick();
     await tick();
     expect(status('d')).toBe('running');
-    expect(extra.every((c) => c.closed)).toBe(true); // workers beyond the limit are closed
+    // workers beyond the limit are closed; slot 1, within it, stays
+    expect(extra.map((c) => c.closed)).toEqual([false, true, true]);
     byName('d').complete('rd');
     const jobs = await done;
     expect(jobs.map((j) => j.status)).toEqual(['complete', 'complete', 'complete', 'complete']);
