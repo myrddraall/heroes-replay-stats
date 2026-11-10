@@ -18,8 +18,8 @@
     "@myrddraall/heroes-replay-stats-platform": "workspace:*",
     "@myrddraall/heroes-replay-stats-settings": "workspace:*",
     "@myrddraall/heroes-replay-stats-shell": "workspace:*",
-    "@myrddraall/heroprotocol-analysis": "^0.6.0",
-    "@myrddraall/heroprotocol-db": "^0.6.0",
+    "@myrddraall/heroprotocol-analysis": "^0.7.0",
+    "@myrddraall/heroprotocol-db": "^0.7.0",
     "dexie": "^4.4.6",
     "tslib": "^2.3.0"
   },
