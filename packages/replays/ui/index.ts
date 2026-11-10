@@ -5,18 +5,10 @@ export {
   formatStatDuration,
   NO_STAT_VALUE,
 } from './stat-tables/stat-format';
-export {
-  nextStatSort,
-  sortStatRows,
-  statAriaSort,
-  statBestFirst,
-  statRanks,
-  type StatSort,
-} from './stat-tables/stat-sort';
+export { sortStatRows, statBestFirst, statRanks, type StatSort } from './stat-tables/stat-sort';
 export { statTableRows, type StatCell, type StatTableRow } from './stat-tables/stat-cells';
 export { STAT_SUPPORT_LABELS } from './stat-tables/stat-support';
 export { StatRowHead, type StatRowHeadContext } from './stat-tables/stat-row-head';
-export { StatSortHeader } from './stat-tables/stat-sort-header';
 export { ScoreCards } from './stat-tables/score-cards/score-cards';
 export { ScoreTable } from './stat-tables/score-table/score-table';
 export { StatTable } from './stat-tables/stat-table/stat-table';
@@ -27,16 +19,20 @@ export * from './stat-tables/team-rows';
 export * from './team-theme/team-perspective';
 export * from './team-theme/team-theme';
 export * from './player-cell/player-cell';
+export * from './match-team/match-team';
 export * from './replay-list/replay-list';
 export * from './replay-list-item/replay-card';
 export * from './replay-list-item/replay-list-item';
 export * from './replay-header/replay-header';
+export * from './replay-facts/replay-facts';
+export * from './match-card/match-card';
 export * from './chat-log/chat-log';
 export * from './chat-log/chat-log-lines';
 export * from './draft-list/draft-list';
 export * from './draft-list/draft-steps';
 export * from './score-screen/score-screen';
 export * from './score-screen/score-columns';
+export * from './award-badge/award-badge';
 export * from './player-stats/player-stats';
 export * from './player-stats/stat-columns';
 export * from './player-stats/stat-choices';
@@ -47,5 +43,19 @@ export * from './team-stats/team-stats';
 export * from './team-stats/team-stat-groups';
 export * from './unit-kill-tables/unit-kill-tables';
 export * from './unit-kill-tables/unit-kill-columns';
-export * from './xp-tables/xp-tables';
-export * from './xp-tables/xp-rows';
+export * from './xp-chart/xp-chart';
+export * from './xp-chart/xp-chart-controls';
+export * from './xp-chart/xp-curves';
+export type { XpChartKind } from './xp-chart/xp-chart-options';
+export * from './timeline-chart/timeline-chart';
+export * from './timeline-chart/timeline-event-controls';
+export type { TimelineEventKind } from './timeline-chart/game-timeline';
+export type { TimelineChartKind } from './timeline-chart/timeline-chart-options';
+export * from './player-chart/player-chart';
+export * from './player-chart/player-chart-controls';
+export {
+  chartPlayers,
+  type ChartPlayer,
+  type PlayerChartKind,
+} from './player-chart/player-chart-options';
+export * from './match-filters/match-filters';

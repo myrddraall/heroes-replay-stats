@@ -14,14 +14,14 @@
   width: 100%;
 
   option {
-    background: rgb(var(--hrs-glass-tint));
+    background: var(--mat-sys-surface-container-high);
     color: inherit;
   }
 }
 
 // A divider between groups of choices, in the panel's edge colour.
 .select hr {
-  border-color: rgb(var(--hrs-glass-edge) / 0.4);
+  border-color: color-mix(in srgb, var(--mat-sys-primary) 40%, transparent);
 }
 
 .reset-slot {

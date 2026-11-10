@@ -1,0 +1,46 @@
+// 1em square, its content centred in it.
+:host {
+  display: grid;
+  place-items: center;
+  width: 1em;
+  height: 1em;
+}
+
+.glyph {
+  display: grid;
+  place-items: center;
+  width: 1em;
+  height: 1em;
+  font-family: var(--font-brand);
+  font-weight: 700;
+  line-height: 1;
+}
+
+// plain: the theme's text colour (a styled look's class sets its own)
+.glyph--plain {
+  color: var(--hrs-text);
+}
+
+// the content in a box of its own, for a letter trimmed to its capitals (from the cap height to the
+// baseline) so the frame centres the capital itself, not the font's line
+.glyph__content {
+  display: block;
+  line-height: 1;
+}
+
+:host(:not(:has(mat-icon))) {
+  .glyph {
+    font-size: 0.875em;
+  }
+
+  .glyph__content {
+    text-box: trim-both cap alphabetic;
+  }
+}
+
+// a Material icon at the glyph's size (Material sets its own 24px), its own margin round it
+.glyph ::ng-deep mat-icon {
+  width: 1em;
+  height: 1em;
+  font-size: 1em;
+}

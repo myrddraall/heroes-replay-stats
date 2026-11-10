@@ -12,17 +12,21 @@
 .head__map {
   margin: 0;
   font: var(--mat-sys-headline-medium);
-  font-family: 'Exo 2', sans-serif;
+  font-family: var(--font-brand);
   font-weight: 600;
 }
 
 .head__mode {
-  color: var(--hrs-accent);
+  color: var(--mat-sys-primary);
   font: var(--mat-sys-label-large);
 }
 
-.head__meta {
-  margin-left: auto;
-  color: var(--mat-sys-on-surface-variant);
-  font: var(--mat-sys-body-medium);
+.head__facts {
+  display: none;
+  flex-basis: 100%;
+}
+
+// a handset (the shell's) has no left-hand drawer: the facts are here instead
+:host-context(.hrs-shell--handset) .head__facts {
+  display: block;
 }

@@ -1,12 +1,12 @@
 import { Component, inject } from '@angular/core';
-import { ReplayList } from '../../ui';
+import { MatchFilters, ReplayList } from '../../ui';
 import { ReplaysPageStore } from './replays-page.store';
 import { Layout } from '@myrddraall/heroes-replay-stats-layout/ui';
 
-/** The stored replays (container). */
+/** The stored replays (container), and the filter that narrows them. */
 @Component({
   selector: 'hrs-replays-page',
-  imports: [Layout, ReplayList],
+  imports: [Layout, MatchFilters, ReplayList],
   templateUrl: './replays-page.html',
   providers: [ReplaysPageStore],
 })

@@ -1,20 +1,44 @@
 <nav [attr.aria-label]="title()">
-  <h2 class="hrs-sidenav__title">{{ title() }}</h2>
-  <ul class="hrs-list">
-    @for (section of sections(); track section.link) {
-      <li>
-        <a
-          class="hrs-list__item"
-          [class.is-selected]="section.active"
-          [routerLink]="section.link"
-          [attr.aria-current]="section.active ? 'page' : null"
-        >
-          {{ section.label }}
-          @if (section.count) {
-            <span class="hrs-count">{{ section.count }}</span>
+  <div class="hrs-sidenav__group">
+    <!-- no heading: what the sections are of is named above (the page's title, the bar's section);
+         the nav still carries it for screen readers -->
+    <ul class="hrs-list">
+      @for (section of sections(); track section.link) {
+        @let branch = section.children.length > 0;
+        @let trail = branch && section.active && hasActive(section.children);
+        <li>
+          <a
+            class="hrs-list__item"
+            [class.is-selected]="section.active && !trail"
+            [class.is-trail]="trail"
+            [routerLink]="section.link"
+            [attr.aria-current]="section.active && !trail ? 'page' : null"
+            [attr.aria-expanded]="branch ? section.active : null"
+          >
+            {{ section.label }}
+            @if (section.count) {
+              <span class="hrs-count">{{ section.count }}</span>
+            }
+            @if (branch) {
+              <span class="hrs-sidenav__chev" aria-hidden="true">›</span>
+            }
+          </a>
+          @if (branch) {
+            <ul class="hrs-sidenav__sub">
+              @for (sub of section.children; track sub.link) {
+                <li>
+                  <a [routerLink]="sub.link" [attr.aria-current]="sub.active ? 'page' : null">
+                    <span>{{ sub.label }}</span>
+                    @if (sub.count) {
+                      <span class="hrs-count">{{ sub.count }}</span>
+                    }
+                  </a>
+                </li>
+              }
+            </ul>
           }
-        </a>
-      </li>
-    }
-  </ul>
+        </li>
+      }
+    </ul>
+  </div>
 </nav>

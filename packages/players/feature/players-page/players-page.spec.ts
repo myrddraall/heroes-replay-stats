@@ -1,6 +1,8 @@
-import { signal } from '@angular/core';
+import { ApplicationRef, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { provideRouter, Router } from '@angular/router';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { provideWholeLists } from '@myrddraall/heroes-replay-stats-data-views/testing';
 import { ReplayImportJobStore } from '@myrddraall/heroes-replay-stats-import/data';
 import { PlayerService } from '../../data';
 import type { PlayerSummary } from '../../model';
@@ -27,6 +29,8 @@ const ann: PlayerSummary = {
 async function render(players: PlayerSummary[]) {
   TestBed.configureTestingModule({
     providers: [
+      provideRouter([]),
+      provideWholeLists(),
       {
         provide: PlayerService,
         useValue: { players: signal(players), loaded: signal(true), error: signal(null) },
@@ -48,7 +52,7 @@ describe('PlayersPage', () => {
     expect(text('.count')).toBe('1 player');
     expect(text('.player__name')).toBe('Ann');
     expect(text('.player__region')).toBe('EU');
-    expect(text('[data-label="Games"]')).toBe('7');
+    expect(text('.players__games')).toBe('7');
     expect(text('.record__wl')).toBe('4–3');
     expect(text('.record__rate')).toBe('57%');
     expect(el.querySelector('time')?.getAttribute('datetime')).toBe(ann.lastPlayedAt);
@@ -57,16 +61,29 @@ describe('PlayersPage', () => {
     ).toEqual(['Jaina ×3', 'Sonya ×2', 'Li-Ming', '+1 more']);
   });
 
+  it('keeps the players whose names fit the search, kept in the address', async () => {
+    const el = await render([ann, { ...ann, id: '2-Hero-1-2', name: 'Bob' }]);
+    const field = el.querySelector<HTMLInputElement>('input[type="search"]')!;
+    field.value = 'an';
+    field.dispatchEvent(new Event('input'));
+    await TestBed.inject(ApplicationRef).whenStable();
+    expect(el.querySelector('.count')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
+      '1 of 2 players',
+    );
+    expect([...el.querySelectorAll('.player__name')].map((n) => n.textContent)).toEqual(['Ann']);
+    expect(TestBed.inject(Router).url).toBe('/?q=an');
+  });
+
   it('shows the empty state without players', async () => {
     const el = await render([]);
-    expect(el.querySelector('table')).toBeNull();
+    expect(el.querySelector('hrs-data-grid')).toBeNull();
     expect(el.querySelector('hrs-empty-state h2')?.textContent).toBe('Nobody here yet');
   });
 
   it('marks and unmarks a player as me', async () => {
     const el = await render([ann, { ...ann, id: 'name:Bot', name: 'Bot' }]);
     const settings = TestBed.inject(SettingsStore);
-    const boxes = el.querySelectorAll<HTMLInputElement>('.me input[type="checkbox"]');
+    const boxes = el.querySelectorAll<HTMLInputElement>('.players__me input[type="checkbox"]');
     expect(boxes).toHaveLength(1); // no toon handle, no checkbox
     expect(boxes[0]!.getAttribute('aria-label')).toBe('Ann is me');
     expect(boxes[0]!.checked).toBe(false);

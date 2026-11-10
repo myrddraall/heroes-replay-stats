@@ -3,13 +3,17 @@
  * (../design-system: tokens.json and components/bundle.css), into ../assets/styles/nexus:
  *
  * - `tokens.css`: every token as a CSS custom property. The colour and shadow roles per theme
- *   (`:root` and `[data-theme="purple"]` first, then one block per base theme), the rest once on
+ *   (`:root` and `[theme="purple"]` first, then one block per base theme), the rest once on
  *   `:root`; the type styles as font shorthands (`--hrs-font-<style>`) and trackings
  *   (`--hrs-tracking-<style>`), not classes, so they never clash with the app's own class names.
  * - `nexus.css`: bundle.css without the preview-only helpers (the scene stand-in and the preview
- *   rows), without its font import (the app's index.html loads the fonts), and with the game
- *   textures it embeds as data URIs read from custom properties instead (`--hrs-tex-<texture>`),
- *   which the shell sets from the interface sheet.
+ *   rows), without its font import (the app's index.html loads the fonts), without its Angular
+ *   Material mapping (below), and with the game textures it embeds as data URIs read from custom
+ *   properties instead (`--hrs-tex-<texture>`), which the shell sets from the interface sheet.
+ * - Both carry the theme aliases (tokens.json): each alias added to every selector naming its theme.
+ * - `_material-theme.scss`: bundle.css's Angular Material mapping as a Material theme, on `:root`
+ *   and every `[theme]`: the system tokens through `mat.theme-overrides`, each component's
+ *   through its `mat.<component>-overrides` (Material checks every name as it compiles).
  *
  *   pnpm run generate.theme
  *
@@ -42,7 +46,12 @@ interface TypeStyle {
 }
 interface Tokens {
   readonly name: string;
-  readonly color: { readonly themes: readonly { readonly id: string }[]; readonly tokens: readonly Token[] };
+  readonly color: {
+    readonly themes: readonly { readonly id: string }[];
+    /** Other names for a theme: each gets the rules of the theme it names. */
+    readonly aliases: readonly { readonly id: string; readonly of: string }[];
+    readonly tokens: readonly Token[];
+  };
   readonly shadow: { readonly tokens: readonly Token[] };
   readonly spacing: { readonly tokens: readonly Token[] };
   readonly radius: { readonly tokens: readonly Token[] };
@@ -68,7 +77,7 @@ function tokensCss(t: Tokens): string {
   const value = (token: Token, theme: string) =>
     typeof token.value === 'string' ? token.value : (token.value[theme] ?? token.value[first]);
   const blocks = themes.map((theme) => {
-    const selector = theme === first ? `:root, [data-theme="${theme}"]` : `[data-theme="${theme}"]`;
+    const selector = theme === first ? `:root, [theme="${theme}"]` : `[theme="${theme}"]`;
     const lines = [...t.color.tokens, ...t.shadow.tokens].map(
       (token) => `  --${token.name}: ${value(token, theme)};`,
     );
@@ -89,8 +98,76 @@ function tokensCss(t: Tokens): string {
   return `${HEADER(`${t.name} tokens`)}${blocks.join('\n')}\n:root {\n${[...once, ...families, ...styles].join('\n')}\n}\n`;
 }
 
+/** Where bundle.css's Angular Material mapping starts: a comment, then one rule. */
+const MATERIAL_MAPPING = '---------- Angular Material mapping';
+
+/** Material's component token prefixes (`--mat-<prefix>-<token>`) and the mixins that set them. */
+const MATERIAL_COMPONENTS: Readonly<Record<string, string>> = {
+  autocomplete: 'autocomplete',
+  button: 'button',
+  'button-toggle': 'button-toggle',
+  checkbox: 'checkbox',
+  chip: 'chips',
+  dialog: 'dialog',
+  'form-field': 'form-field',
+  'icon-button': 'icon-button',
+  list: 'list',
+  menu: 'menu',
+  'progress-bar': 'progress-bar',
+  select: 'select',
+  sidenav: 'sidenav',
+  'slide-toggle': 'slide-toggle',
+  slider: 'slider',
+  tab: 'tabs',
+  table: 'table',
+  toolbar: 'toolbar',
+  tooltip: 'tooltip',
+  tree: 'tree',
+};
+
+/** bundle.css's Angular Material mapping as Sass: `mat.theme-overrides` and `mat.<component>-overrides`. */
+function materialTheme(css: string): string {
+  const tree = postcss.parse(css);
+  let rule: postcss.Rule | undefined;
+  tree.each((node) => {
+    if (node.type === 'comment' && node.text.includes(MATERIAL_MAPPING)) {
+      const next = node.next();
+      if (next?.type === 'rule') rule = next;
+    }
+  });
+  if (!rule) throw new Error("bundle.css has no Angular Material mapping");
+  const system: string[] = [];
+  const components = new Map<string, string[]>();
+  rule.walkDecls((decl) => {
+    const name = decl.prop.replace(/^--mat-/, '');
+    if (name.startsWith('sys-')) {
+      system.push(`${name.slice(4)}: ${decl.value}`);
+      return;
+    }
+    const prefix = Object.keys(MATERIAL_COMPONENTS)
+      .filter((p) => name.startsWith(`${p}-`))
+      .sort((a, b) => b.length - a.length)[0];
+    if (!prefix) throw new Error(`no Material component for ${decl.prop}`);
+    const mixin = MATERIAL_COMPONENTS[prefix]!;
+    components.set(mixin, [...(components.get(mixin) ?? []), `${name.slice(prefix.length + 1)}: ${decl.value}`]);
+  });
+  const map = (entries: readonly string[]) => `(\n${entries.map((e) => `    ${e},`).join('\n')}\n  )`;
+  const body = [
+    `  @include mat.theme-overrides(${map(system)});`,
+    ...[...components].map(([mixin, entries]) => `  @include mat.${mixin}-overrides(${map(entries)});`),
+  ];
+  return `${HEADER("HRS Nexus UI's Angular Material theme")}@use '@angular/material' as mat;\n\n${rule.selector} {\n${body.join('\n')}\n}\n`;
+}
+
 function bundleCss(css: string, textures: ReadonlyMap<string, string>): string {
   const tree = postcss.parse(css);
+  // the Material mapping goes into the Material theme instead
+  tree.each((node) => {
+    if (node.type === 'comment' && node.text.includes(MATERIAL_MAPPING)) {
+      node.next()?.remove();
+      node.remove();
+    }
+  });
   tree.walkAtRules('import', (rule) => {
     rule.remove();
   });
@@ -122,6 +199,27 @@ function bundleCss(css: string, textures: ReadonlyMap<string, string>): string {
   return `${HEADER('HRS Nexus UI components')}${tree.toString().trimStart()}`;
 }
 
+/**
+ * Each theme alias added to every selector that names its theme (`[theme='self']` gains
+ * `[theme='blue-self']`, also inside a longer selector), so an alias has the theme's rules and no
+ * values of its own.
+ */
+function withAliases(css: string, aliases: Tokens['color']['aliases']): string {
+  const tree = postcss.parse(css);
+  tree.walkRules((rule) => {
+    const selectors = rule.selectors.flatMap((selector) => [
+      selector,
+      ...aliases.flatMap(({ id, of }) => {
+        const named = new RegExp(`\\[theme=(['"])${of}\\1\\]`, 'g');
+        const aliased = selector.replace(named, `[theme='${id}']`);
+        return aliased === selector ? [] : [aliased];
+      }),
+    ]);
+    if (selectors.length !== rule.selectors.length) rule.selectors = selectors;
+  });
+  return tree.toString();
+}
+
 async function format(file: string, css: string): Promise<string> {
   const options = await prettier.resolveConfig(file);
   return prettier.format(css, { ...options, filepath: file });
@@ -137,8 +235,9 @@ const bundle = await readFile(join(source, 'components', 'bundle.css'), 'utf8');
 
 await mkdir(out, { recursive: true });
 for (const [name, css] of [
-  ['tokens.css', tokensCss(tokens)],
-  ['nexus.css', bundleCss(bundle, textures)],
+  ['tokens.css', withAliases(tokensCss(tokens), tokens.color.aliases)],
+  ['nexus.css', withAliases(bundleCss(bundle, textures), tokens.color.aliases)],
+  ['_material-theme.scss', materialTheme(bundle)],
 ] as const) {
   const file = join(out, name);
   await writeFile(file, await format(file, css));

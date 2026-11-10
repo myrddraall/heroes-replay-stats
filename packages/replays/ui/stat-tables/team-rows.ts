@@ -8,9 +8,10 @@ export function teamName(color: TeamColor): string {
   return color === 'blue' ? 'Blue team' : 'Red team';
 }
 
-/** Who a team stats row is: the team and its name from your point of view. */
+/** Who a team stats row is: the team, and its colour and name from your point of view. */
 export interface TeamRowData {
   readonly team: Team;
+  readonly color: TeamColor;
   readonly name: string;
 }
 
@@ -31,13 +32,13 @@ export function teamRows(
         key: row.team,
         group: null,
         values: statValues(row, columns),
-        class: `hrs-glass-${color}`,
-        data: { team: row.team, name: teamName(color) },
+        theme: color,
+        data: { team: row.team, color, name: teamName(color) },
       };
     })
     .sort(
       (a, b) =>
-        Number(a.class !== 'hrs-glass-blue') - Number(b.class !== 'hrs-glass-blue') ||
+        Number(a.theme !== 'blue') - Number(b.theme !== 'blue') ||
         a.key - b.key,
     );
 }

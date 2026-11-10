@@ -1,0 +1,22 @@
+:host {
+  position: relative;
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  flex: none;
+}
+
+// each state's picture covering the icon; normal or hovered as the container says
+.layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.layer--normal {
+  display: var(--stat-icon-normal, block);
+}
+
+.layer--hover {
+  display: var(--stat-icon-hover, none);
+}

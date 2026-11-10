@@ -1,0 +1,86 @@
+// The picture (164 square) in its own units (`--u`), its inside 130 across the frame's 1.5em: the
+// border solid from 8 to 17 in from each edge, a soft shadow falling inward from there to 24, clear
+// past it. The frame reaches out to the picture's edges (17 past the inside on each side).
+:host {
+  --u: calc(1.5em / 130);
+  --hrs-frame-inset: calc(var(--u) * 17);
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+}
+
+:host([state='disabled']) {
+  filter: grayscale(0.8) brightness(0.85);
+}
+
+// The inside: the border's inner edge and one unit more each side (132), everything in it cut to
+// it, its layers one over another: its edge under the border, so nothing shows between them. It
+// lays out as the 130 one (the margin takes the extra back), so the frame's size and its content's
+// centre stay.
+.inside {
+  display: grid;
+  grid-template: 100% / 100%;
+  width: calc(var(--u) * 132);
+  height: calc(var(--u) * 132);
+  margin: calc(var(--u) * -1);
+  overflow: hidden;
+
+  > * {
+    grid-area: 1 / 1;
+  }
+}
+
+// the background: the theme's dark tint, a little of its glow in the middle
+.inside__background {
+  background: radial-gradient(
+    circle,
+    color-mix(in oklab, var(--hrs-tint) 70%, var(--hrs-glow)),
+    var(--hrs-tint)
+  );
+}
+
+// the content, centred, the inside's size (a portrait fills it, its edge under the border)
+.inside__content {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+// selected: the inner glow in the theme's glow colour at 69%, over the content. The glow's art is a
+// square border of light (its bright line 20.5 in from the edge of its 80, fading both ways); drawn
+// about twice the inside's size (266 across), its line falls on the inside's edge, under the
+// border, and its inward fade reaches a fifth of the way in.
+.inside__glow {
+  position: relative;
+  place-self: unsafe center;
+  width: calc(var(--u) * 266);
+  height: calc(var(--u) * 266);
+  visibility: hidden;
+  background: var(--hrs-glow);
+  opacity: 0.69;
+  pointer-events: none;
+}
+
+:host([state='selected']) .inside__glow {
+  visibility: visible;
+}
+
+// The border, over it all: the theme's glow colour in its shape, its own light over it in
+// luminosity (the texture's light and dark, the theme's hue), in a group of its own so it blends
+// with nothing behind the frame.
+.border {
+  isolation: isolate;
+}
+
+.border__colour {
+  position: absolute;
+  inset: 0;
+  background: var(--hrs-glow);
+}
+
+.border__light {
+  position: absolute;
+  inset: 0;
+  filter: grayscale(1);
+  mix-blend-mode: luminosity;
+}

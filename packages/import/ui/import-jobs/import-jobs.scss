@@ -16,18 +16,16 @@
   margin-bottom: 6px;
   color: var(--mat-sys-on-surface-variant);
 }
-// One glass panel (hrs-glass): the jobs lie flat in it, a faint line between each. The panel does
-// not clip (its edge's light leaks outside it); the list in it does.
+// One panel (hrs-panel): the jobs lie flat in it, a line between each; the list in it clips.
 .jobs__list {
   display: block;
   overflow: hidden;
-  border-radius: var(--hrs-glass-radius);
   --mat-expansion-container-background-color: transparent;
   --mat-expansion-container-shape: 0;
   --mat-expansion-container-elevation-shadow: none;
 
   .mat-expansion-panel + .mat-expansion-panel {
-    border-top: 1px solid var(--hrs-glass-line);
+    border-top: 1px solid var(--mat-sys-outline-variant);
   }
 }
 mat-panel-title {
@@ -46,7 +44,7 @@ mat-panel-title {
   white-space: nowrap;
 }
 .job--complete .job__icon {
-  color: rgb(var(--hrs-glass-edge));
+  color: var(--mat-sys-primary);
 }
 .job--failed .job__icon,
 .job--failed .job__phase {
@@ -93,7 +91,7 @@ mat-panel-description {
 }
 .analyser--done .analyser__icon,
 .analyser--cached .analyser__icon {
-  color: rgb(var(--hrs-glass-edge));
+  color: var(--mat-sys-primary);
 }
 .analyser--failed .analyser__icon,
 .analyser--failed .analyser__state {

@@ -1,12 +1,12 @@
 @use '@angular/material' as mat;
-@use 'glass';
+// The HRS Nexus UI theme as Angular Material's (generated from packages/common/design-system by
+// `pnpm run generate.theme`): its system tokens and each component's, on `:root` and every
+// `[theme]`, so nested themes (a team's) re-theme Material inside them. Its tokens and its own
+// components (nexus/tokens.css, nexus.css) load before this file.
+@use 'nexus/material-theme';
 
-// The HRS Nexus UI theme (packages/common/design-system) is loaded before this file, generated into
-// packages/common/assets/styles/nexus (`pnpm run generate.theme`): its tokens, its components and,
-// at its end, Angular Material's system tokens realised from them (on `:root` and every
-// `[data-theme]`, so they win over what `mat.theme` sets on `html` and follow nested themes).
-// Material's theme here gives the type scale, the density and the system tokens the mapping leaves
-// alone.
+// Material's base theme: the type scale, the density, and the system tokens the theme above
+// leaves alone.
 html {
   @include mat.theme(
     (
@@ -18,7 +18,7 @@ html {
       // declaration is invalid and headings fall back to body size.
       typography: (
           plain-family: "'Source Sans 3', sans-serif",
-          brand-family: "'Exo 2', sans-serif",
+          brand-family: "'Saira', sans-serif",
           bold-weight: 600,
         ),
       density: 0,
@@ -43,19 +43,16 @@ body {
 h1,
 h2,
 h3 {
-  font-family: var(--font-brand);
-  font-weight: 700;
-  color: var(--hrs-text);
+  color: var(--mat-sys-on-surface);
   margin: 0 0 0.5em;
 }
 h1 {
-  font: var(--hrs-font-display);
-  letter-spacing: var(--hrs-tracking-display);
+  font: var(--mat-sys-headline-medium);
   text-transform: uppercase;
 }
 h2 {
-  font: var(--hrs-font-title);
+  font: var(--mat-sys-title-large);
 }
 h3 {
-  font: var(--hrs-font-section);
+  font: var(--mat-sys-title-medium);
 }

@@ -19,15 +19,15 @@ describe('team rows', () => {
         key: 1,
         group: null,
         values: { total: 20 },
-        class: 'hrs-glass-blue',
-        data: { team: 1, name: 'Blue team' },
+        theme: 'blue',
+        data: { team: 1, color: 'blue', name: 'Blue team' },
       },
       {
         key: 0,
         group: null,
         values: { total: 10 },
-        class: 'hrs-glass-red',
-        data: { team: 0, name: 'Red team' },
+        theme: 'red',
+        data: { team: 0, color: 'red', name: 'Red team' },
       },
     ]);
   });

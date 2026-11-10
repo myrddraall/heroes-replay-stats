@@ -7,11 +7,16 @@ export const STAT_SECTION_IDS = [
   'pve',
   'cc',
   'healing',
-  'misc',
+  'connection',
   'activity',
 ] as const;
 
 export type StatSectionId = (typeof STAT_SECTION_IDS)[number];
+
+/** Sections' earlier ids, for the presets and addresses saved under them. */
+export const OLD_STAT_SECTION_IDS: Readonly<Partial<Record<StatSectionId, string>>> = {
+  connection: 'misc',
+};
 
 /** The preset every section opens with. */
 export const DEFAULT_PRESET = 'Default';
@@ -271,16 +276,16 @@ export const STAT_SECTIONS: Readonly<Record<StatSectionId, StatSection>> = {
       [PER_MINUTE_PRESET]: shown('HealingPerMinute', 'SelfHealingPerMinute', 'ShieldingPerMinute'),
     },
   },
-  misc: {
-    id: 'misc',
-    title: 'Misc. Stats',
+  // was Misc. Stats (`misc`), whose votes received are in Activity
+  connection: {
+    id: 'connection',
+    title: 'Connection',
     presets: {
       [DEFAULT_PRESET]: [
         { id: 'Disconnects', shown: true },
         { id: 'Reconnects', shown: true },
         { id: 'TimeDisconnected', shown: true },
         { id: 'PercentOfGameDisconnected', shown: true },
-        { id: 'VotesReceived', shown: true },
       ],
     },
   },

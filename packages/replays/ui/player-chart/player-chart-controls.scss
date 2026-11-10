@@ -1,0 +1,45 @@
+@use '../charts/player-colours' as colours;
+
+:host {
+  @include colours.player-colours;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px;
+}
+
+mat-form-field {
+  inline-size: 100%;
+}
+
+.players {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.title {
+  margin: 0 0 4px;
+  font: var(--mat-sys-title-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+// the player's line on the chart: their colour, solid for your team, dashed for the other
+.line {
+  display: inline-block;
+  inline-size: 1.4em;
+  margin-inline-end: 0.5em;
+  vertical-align: middle;
+  border-block-start: 2px solid currentcolor;
+}
+
+.line--dashed {
+  border-block-start-style: dashed;
+}
+
+// the hero's name in their team's colour
+.hero {
+  color: var(--mat-sys-primary);
+}

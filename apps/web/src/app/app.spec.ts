@@ -55,7 +55,8 @@ describe('App shell', () => {
         provideSettingsFeature(),
         provideThemeFeature(),
         provideFakeSheets(),
-        provideShellArea({ path: '/game', label: 'Game', family: 'game', order: 10 }),
+        provideShellArea({ path: '/replays', label: 'Replays', order: 10 }),
+        provideShellArea({ path: '/game-info', label: 'Game Info', order: 20 }),
         provideRouter(routes),
         { provide: PLATFORM, useValue: fakePlatform },
         {
@@ -77,21 +78,14 @@ describe('App shell', () => {
     }).compileComponents();
   });
 
-  it('renders the areas on the top bar, the game family after a break, and the settings menu button', async () => {
+  it('renders the areas on the top bar, and the settings menu button', async () => {
     const fixture = TestBed.createComponent(Shell);
     await fixture.whenStable();
     const el: HTMLElement = fixture.nativeElement;
-    const areas = [...el.querySelectorAll('.hrs-nav1 > li')].map((li) => [
-      li.querySelector('a')?.getAttribute('href'),
-      li.classList.contains('hrs-nav1__family'),
-    ]);
-    expect(areas).toEqual([
-      ['/matches', false],
-      ['/players', false],
-      ['/game', true],
-    ]);
+    const areas = [...el.querySelectorAll('.hrs-nav1 > li a')].map((a) => a.getAttribute('href'));
+    expect(areas).toEqual(['/replays', '/game-info', '/about']);
     expect(el.querySelector('.hrs-topbar__tools button[aria-label="Settings"]')).not.toBeNull();
-    expect(el.querySelector('.import-pod a')?.getAttribute('href')).toBe('/import');
+    expect(el.querySelector('.import-pod a')?.getAttribute('href')).toBe('/replays/import');
   });
 
   it('shows a drop overlay while files are dragged over the page and imports dropped replays', async () => {
@@ -118,7 +112,7 @@ describe('App shell', () => {
   });
 
   it('frames the app pages, and leaves the renderer check and the background editor to fill the window', () => {
-    expect(routes.map((r) => r.path)).toEqual(['', 'game', '**']);
+    expect(routes.map((r) => r.path)).toEqual(['', 'replays', 'game-info', 'game', '**']);
     expect(DEV_ROUTES.find((r) => r.path === 'renderer-check')?.data?.['shell']).toBe(false);
     expect(BACKGROUND_EDITOR.routeData?.['shell']).toBe(false);
   });

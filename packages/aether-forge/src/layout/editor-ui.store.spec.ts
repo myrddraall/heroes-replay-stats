@@ -1,4 +1,3 @@
-import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -7,7 +6,7 @@ import { DOUBLE_CLICK, EditorUiStore } from './editor-ui.store';
 
 const options = {
   provide: FORGE_OPTIONS,
-  useValue: { path: 'editor', exit: '/', panelClass: signal(''), openSettings: null },
+  useValue: { path: 'editor', exit: '/', openSettings: null },
 };
 
 describe('the editor’s clicks in the lists', () => {

@@ -1,0 +1,51 @@
+// The team row head (see score-team-head.ts). Sized in em: the row's type sizes it; the logo from
+// the row's height.
+:host {
+  display: flex;
+  align-items: center;
+  gap: 0.25em 0.5em;
+  min-height: 100%;
+  flex: 1;
+}
+
+// The logo, kept off the bar as off the row's edges. On full-height rows in the hex frame, the
+// frame's rim (2em high at its font-size) 0.8 of the row's height; in a compact table alone, its
+// hexagon 0.75 of the row's height.
+.logo {
+  margin-left: calc(var(--hrs-grid-row-height) * 0.1);
+}
+
+.logo--framed {
+  font-size: calc(var(--hrs-grid-row-height) * 0.8 / 2);
+}
+
+.logo--alone {
+  display: none;
+  font-size: calc(var(--hrs-grid-row-height) * 0.75);
+}
+
+:host-context(.stat-table--dense) {
+  .logo--framed {
+    display: none;
+  }
+
+  .logo--alone {
+    display: inline-grid;
+  }
+}
+
+// lit while its row is hovered
+:host-context(.hrs-grid__row:hover) hrs-team-logo {
+  --team-logo-base: hidden;
+  --team-logo-bright: visible;
+}
+
+.names {
+  display: grid;
+  line-height: 1.2;
+}
+
+// the result against the team's name, as a player's name against the hero's
+.names__result {
+  font-size: var(--score-row-player-name-size, 0.75em);
+}

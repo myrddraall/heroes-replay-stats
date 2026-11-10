@@ -1,0 +1,10 @@
+@if (styled(); as look) {
+  <span class="glyph" [hrsStyledText]="look">
+    <span class="glyph__content"><ng-container [ngTemplateOutlet]="content" /></span>
+  </span>
+} @else {
+  <span class="glyph glyph--plain">
+    <span class="glyph__content"><ng-container [ngTemplateOutlet]="content" /></span>
+  </span>
+}
+<ng-template #content><ng-content /></ng-template>

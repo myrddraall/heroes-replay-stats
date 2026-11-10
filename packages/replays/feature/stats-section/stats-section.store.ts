@@ -54,6 +54,8 @@ export const StatsSectionStore = signalStore(
   withState({
     section: 'pvp' as StatSectionId,
     choices: choicesOf(STAT_SECTIONS.pvp.presets[DEFAULT_PRESET]!) as readonly StatColumnChoice[],
+    /** The preset last chosen (or saved), which a reset goes back to once the columns are changed. */
+    basePreset: DEFAULT_PRESET as string,
   }),
   withProps(({ choices }) => {
     const replay = inject(ReplayPageStore);
@@ -112,31 +114,44 @@ export const StatsSectionStore = signalStore(
       /** Whether shown activity columns are still being read. */
       activityLoading: _activity.isLoading,
       activityError: computed(() => errorMessage(_activity.error() ?? null)),
-      icons: _replay.icons,
+      /** Each player's leaderboard portrait, by slot. */
+      portraits: _replay.portraits,
+      /** Your slots: your rows in your side's self theme. */
+      you: computed(() => new Set(_replay.you().slots)),
     };
   }),
-  withMethods((store) => ({
-    /** Show this section, with its default columns. */
-    show: signalMethod<StatSectionId>((section) =>
-      patchState(store, {
-        section,
-        choices: choicesOf(STAT_SECTIONS[section].presets[DEFAULT_PRESET]!),
-      }),
-    ),
-    setChoices(choices: readonly StatColumnChoice[]): void {
-      patchState(store, { choices });
-    },
-    choosePreset(name: string): void {
+  withMethods((store) => {
+    const choosePreset = (name: string): void => {
       const section = store.section();
       const choices =
         STAT_SECTIONS[section].presets[name] ?? store._presets.saved()[section]?.[name];
-      if (choices) patchState(store, { choices: choicesOf(choices) });
-    },
-    savePreset(name: string): void {
-      store._presets.save(store.section(), name, store.choices());
-    },
-    deletePreset(name: string): void {
-      store._presets.remove(store.section(), name);
-    },
-  })),
+      if (choices) patchState(store, { choices: choicesOf(choices), basePreset: name });
+    };
+    return {
+      /** Show this section, with its default columns. */
+      show: signalMethod<StatSectionId>((section) =>
+        patchState(store, {
+          section,
+          choices: choicesOf(STAT_SECTIONS[section].presets[DEFAULT_PRESET]!),
+          basePreset: DEFAULT_PRESET,
+        }),
+      ),
+      setChoices(choices: readonly StatColumnChoice[]): void {
+        patchState(store, { choices });
+      },
+      choosePreset,
+      /** Back to the columns of the preset last chosen, the changes since dropped. */
+      resetChoices(): void {
+        choosePreset(store.basePreset());
+      },
+      savePreset(name: string): void {
+        store._presets.save(store.section(), name, store.choices());
+        patchState(store, { basePreset: name });
+      },
+      deletePreset(name: string): void {
+        store._presets.remove(store.section(), name);
+        if (store.basePreset() === name) patchState(store, { basePreset: DEFAULT_PRESET });
+      },
+    };
+  }),
 );

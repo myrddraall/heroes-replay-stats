@@ -1,0 +1,52 @@
+:host {
+  display: block;
+}
+
+// A panel (hrs-panel): its head (the preview, the name and mode over its foot), then the facts.
+.card {
+  overflow: hidden;
+}
+
+// The head: the preview across the card's top (a wide strip of it, fading into the panel at its
+// foot), the map's name and mode over that foot; without a preview, just the name and mode.
+.card__head {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+  padding: 12px 14px 4px;
+}
+
+.card__head--pictured {
+  min-height: 112px;
+  align-content: flex-end;
+}
+
+.card__preview {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  mask-image: linear-gradient(to bottom, black 35%, transparent);
+}
+
+.card__map {
+  flex-basis: 100%;
+  margin: 0;
+  font: var(--mat-sys-headline-small);
+  font-family: var(--font-brand);
+  font-weight: 600;
+  color: #fff;
+  text-shadow: 0 1px 6px rgb(0 0 0 / 0.8);
+}
+
+.card__mode {
+  color: var(--mat-sys-primary);
+  font: var(--mat-sys-label-large);
+}
+
+.card__facts {
+  padding: 8px 14px 12px;
+}

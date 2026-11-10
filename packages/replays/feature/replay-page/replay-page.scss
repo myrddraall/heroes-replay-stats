@@ -1,18 +1,13 @@
-// The header on top, the section under it; the page grows with what the section holds and the
-// window's page area (the shell's) is the one thing that scrolls.
+// The section under the header (a handset's only: elsewhere the header is in the shell's left-hand
+// drawer); the page grows with what the section holds, and the shell's page area scrolls.
 :host {
   display: block;
 }
 
-// The section's side nav (level 3, where it has one) in a column at the left; the section beside
-// it lays itself out.
-.match__body {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--hrs-space-2);
+.match__header {
+  display: none;
 }
 
-.match__section {
-  flex: 1;
-  min-width: 0;
+:host-context(.hrs-shell--handset) .match__header {
+  display: block;
 }

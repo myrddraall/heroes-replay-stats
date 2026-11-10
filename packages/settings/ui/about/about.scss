@@ -1,0 +1,27 @@
+:host {
+  display: grid;
+  gap: 16px;
+}
+
+.about {
+  padding: 20px;
+
+  h2 {
+    margin: 0 0 12px;
+  }
+
+  p {
+    margin: 0 0 12px;
+    max-width: 72ch;
+    font: var(--mat-sys-body-large);
+    color: var(--mat-sys-on-surface);
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+.about__version {
+  color: var(--mat-sys-on-surface-variant);
+}

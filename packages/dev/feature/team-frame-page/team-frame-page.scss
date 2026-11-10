@@ -1,0 +1,17 @@
+// the looks at the full-height rows' size: the frame's rim (2em high) 0.8 of a 56px row; alone, the
+// logo's hexagon the frame's inside (1.5em)
+.looks :is(hrs-hex-frame, hrs-circle-frame, hrs-square-frame) {
+  font-size: 1.4rem;
+}
+
+// its drawing (48 of its hexagon's 35.93) spills past its box: room for it above its caption
+.looks > * > hrs-team-logo {
+  font-size: 2.1rem;
+  margin-block: calc(1em * (48 / 35.93 - 1) / 2);
+}
+
+// pointed at, a frame's logo lights, as a hovered row's does
+:is(hrs-hex-frame, hrs-circle-frame, hrs-square-frame):hover hrs-team-logo {
+  --team-logo-base: hidden;
+  --team-logo-bright: visible;
+}

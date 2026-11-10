@@ -67,45 +67,50 @@ const RATE_COLUMNS: readonly StatColumn[] = [
   ccPerMinute('SoftCCSecondsPerMinute', 'Soft CC', 'slows'),
 ];
 
-/** The `activity` analyser's columns: how the player played and talked, from its own table. */
-const ACTIVITY_COLUMNS: readonly StatColumn[] = [
-  {
-    id: 'apm',
-    label: 'APM',
-    format: 'decimal',
-    digits: [0, 0],
-    description: 'Orders given per minute of the game.',
-  },
-  {
-    id: 'castsPerMinute',
-    label: 'Casts / min',
-    format: 'decimal',
-    digits: [0, 0],
-    description:
-      'Orders with an ability, such as attacks and hero abilities, per minute of the game.',
-  },
-  { id: 'pings', label: 'Pings', format: 'integer' },
-  {
-    id: 'minimapPings',
-    label: 'Minimap Pings',
-    format: 'integer',
-    description: 'Pings made on the minimap.',
-  },
-  {
-    id: 'chatMessages',
-    label: 'Chat Messages',
-    format: 'integer',
-    description: 'Lines typed in the chat.',
-  },
-  { id: 'sprays', label: 'Sprays', format: 'integer' },
-  { id: 'voiceLines', label: 'Voice Lines', format: 'integer' },
-  {
-    id: 'upvotesGiven',
-    label: 'Votes Given',
-    format: 'integer',
-    description: 'Votes the player gave other players at the end of the game.',
-  },
-];
+/**
+ * The `activity` analyser's columns: how the player played and talked, from its own table. The
+ * most of each is marked as the best.
+ */
+const ACTIVITY_COLUMNS: readonly StatColumn[] = (
+  [
+    {
+      id: 'apm',
+      label: 'APM',
+      format: 'decimal',
+      digits: [0, 0],
+      description: 'Orders given per minute of the game.',
+    },
+    {
+      id: 'castsPerMinute',
+      label: 'Casts / min',
+      format: 'decimal',
+      digits: [0, 0],
+      description:
+        'Orders with an ability, such as attacks and hero abilities, per minute of the game.',
+    },
+    { id: 'pings', label: 'Pings', format: 'integer' },
+    {
+      id: 'minimapPings',
+      label: 'Minimap Pings',
+      format: 'integer',
+      description: 'Pings made on the minimap.',
+    },
+    {
+      id: 'chatMessages',
+      label: 'Chat Messages',
+      format: 'integer',
+      description: 'Lines typed in the chat.',
+    },
+    { id: 'sprays', label: 'Sprays', format: 'integer' },
+    { id: 'voiceLines', label: 'Voice Lines', format: 'integer' },
+    {
+      id: 'upvotesGiven',
+      label: 'Votes Given',
+      format: 'integer',
+      description: 'Votes the player gave other players at the end of the game.',
+    },
+  ] satisfies StatColumn[]
+).map((c) => ({ ...c, better: 'higher' as const }));
 
 /** The columns read from the `activity` table rather than from the player stats. */
 export const ACTIVITY_COLUMN_IDS: ReadonlySet<string> = new Set(ACTIVITY_COLUMNS.map((c) => c.id));
@@ -136,12 +141,31 @@ export const STAT_SOURCES: Readonly<Record<string, string>> = {
   SoftCCSecondsPerMinute: 'TimeSlowedEnemyHeroes',
 };
 
+/** The stats where less is better: deaths, time dead, disconnects. */
+const LOWER_IS_BETTER: ReadonlySet<string> = new Set([
+  'Deaths',
+  'TimeSpentDead',
+  'OutnumberedDeaths',
+  'DeathsToNPCs',
+  'PercentGameSpentDead',
+  'Disconnects',
+  'Reconnects',
+  'TimeDisconnected',
+  'PercentOfGameDisconnected',
+  'DeathsPer10Minutes',
+]);
+
+/** A performance stat, with which way is better, so a table marks its best and sorts best first. */
+const ranked = (column: StatColumn): StatColumn => ({
+  ...column,
+  better: LOWER_IS_BETTER.has(column.id) ? 'lower' : 'higher',
+});
+
 /**
- * Every stat the player stats tables can show, by the `playerStats` analyser's column ids, with
- * the labels, descriptions and formats the 2018 viewer gave them, then the rates and the
- * `activity` analyser's columns.
+ * The player's performance stats, by the `playerStats` analyser's column ids, with the labels,
+ * descriptions and formats the 2018 viewer gave them, then the rates.
  */
-export const STAT_COLUMNS: readonly StatColumn[] = [
+const PERFORMANCE_COLUMNS: readonly StatColumn[] = [
   { id: 'Takedowns', label: 'Takedowns', format: 'integer' },
   { id: 'Deaths', label: 'Deaths', format: 'integer' },
   { id: 'TownKills', label: 'Town Kills', format: 'integer' },
@@ -339,5 +363,14 @@ export const STAT_COLUMNS: readonly StatColumn[] = [
   },
   { id: 'RegenGlobesCollected', label: 'Regen Globes Colleced', format: 'integer' },
   ...RATE_COLUMNS,
+];
+
+/**
+ * Every stat the player stats tables can show: the performance stats, each with which way is
+ * better, then the `activity` analyser's columns, which have no best (how much someone pinged or
+ * chatted).
+ */
+export const STAT_COLUMNS: readonly StatColumn[] = [
+  ...PERFORMANCE_COLUMNS.map(ranked),
   ...ACTIVITY_COLUMNS,
 ];

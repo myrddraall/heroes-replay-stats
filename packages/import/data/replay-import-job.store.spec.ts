@@ -154,6 +154,7 @@ describe('ReplayImportJobStore', () => {
 
     scripted[0]!.status(
       status({
+        replayId: 'r-a', // every snapshot after the first carries it, as the worker's do
         phase: 'analysing-ready',
         analysers: {
           x: { state: 'done', mode: 'ready', ms: 3 },
@@ -170,9 +171,16 @@ describe('ReplayImportJobStore', () => {
     ]);
     expect(a.progress).toBeCloseTo(0.7 + 0.15 * 0.5, 5);
 
+    // by replay id while it imports: what a match card shows
+    expect([...store.progressByReplay()]).toEqual([
+      ['r-a', { stage: 'importing', progress: a.progress }],
+    ]);
+
     scripted[0]!.ready('r-a');
     await tick();
     expect(byName('a.StormReplay').status).toBe('ready');
+    // it opens now; its background analysers still run
+    expect(store.progressByReplay().get('r-a')?.stage).toBe('analysing');
     scripted[0]!.complete('r-a');
     await tick();
     await tick();
@@ -181,6 +189,7 @@ describe('ReplayImportJobStore', () => {
       phase: 'complete',
       progress: 1,
     });
+    expect(store.progressByReplay().has('r-a')).toBe(false);
     expect(byName('b.StormReplay').status).toBe('running'); // b started only after a finished
     // a finished, so b (running) stays on top even though a was queued first.
     expect(store.jobs().map((j) => j.fileName)).toEqual(['b.StormReplay', 'a.StormReplay']);
@@ -410,14 +419,14 @@ describe('ReplayImportJobStore', () => {
     const byName = (name: string) => scripted.find((s) => s.fileName === `${name}.StormReplay`)!;
     // oldest first: a and b start, c and d wait
     expect(['a', 'b', 'c', 'd'].map(status)).toEqual(['running', 'running', 'queued', 'queued']);
-    expect(extra).toHaveLength(1); // the main worker plus one more
+    expect(extra).toHaveLength(2); // a worker each: the main one is the open replay's
     expect(store.overall()).toMatchObject({ running: 2, queued: 2 });
 
     // raising the limit starts the next job straight away, on a third worker
     settings.setParallelImports(3);
     await tick();
     expect(status('c')).toBe('running');
-    expect(extra).toHaveLength(2);
+    expect(extra).toHaveLength(3);
 
     // lowering it lets running jobs finish; nothing new starts until fewer are running
     settings.setParallelImports(1);
@@ -434,7 +443,8 @@ describe('ReplayImportJobStore', () => {
     await tick();
     await tick();
     expect(status('d')).toBe('running');
-    expect(extra.every((c) => c.closed)).toBe(true); // workers beyond the limit are closed
+    // workers beyond the limit are closed; slot 1, within it, stays
+    expect(extra.map((c) => c.closed)).toEqual([false, true, true]);
     byName('d').complete('rd');
     const jobs = await done;
     expect(jobs.map((j) => j.status)).toEqual(['complete', 'complete', 'complete', 'complete']);

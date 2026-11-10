@@ -6,11 +6,11 @@
   display: flex;
   justify-content: space-between;
   max-width: 480px;
-  font: var(--hrs-font-body);
-  color: var(--hrs-text);
+  font: var(--mat-sys-body-large);
+  color: var(--mat-sys-on-surface);
 }
 .setting__value {
-  color: var(--hrs-accent);
+  color: var(--mat-sys-primary);
   font-variant-numeric: tabular-nums;
 }
 .slider {
@@ -18,7 +18,7 @@
   max-width: 480px;
 }
 .hint {
-  color: var(--hrs-text-muted);
+  color: var(--mat-sys-on-surface-variant);
   margin: 0;
   max-width: 60ch;
 }

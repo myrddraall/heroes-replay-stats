@@ -1,47 +1,60 @@
-@if (menu()) {
-  <button
-    type="button"
-    class="hrs-btn hrs-btn--icon hrs-topbar__menu"
-    aria-label="Menu"
-    aria-controls="shell-nav"
-    [attr.aria-expanded]="menuOpen()"
-    (click)="menuRequested.emit()"
-  >
-    <mat-icon class="material-symbols-outlined" aria-hidden="true">menu</mat-icon>
-  </button>
-} @else {
-  <a class="hrs-topbar__brand" routerLink="/" aria-label="Heroes Replay Stats, home">
-    <img class="top-bar__logo" ngSrc="heroes-icon.svg" alt="" width="40" height="40" priority />
-  </a>
-  <nav class="top-bar__nav" aria-label="Main">
-    <ul class="hrs-nav1">
-      @for (area of areas(); track area.link) {
-        <li [class.hrs-nav1__family]="area.breaks">
-          <a
-            class="hrs-nav1__link"
-            [routerLink]="area.link"
-            [attr.aria-current]="area.active ? 'page' : null"
-          >
-            <span class="hrs-nav1__text">{{ area.label }}</span>
-            @if (area.count) {
-              <span class="hrs-badge hrs-badge--count">{{ area.count }}</span>
-            }
-            @if (area.active) {
-              <span class="hrs-nav1__sparks" aria-hidden="true">
-                @for (spark of sparks; track spark) {
-                  <i></i>
-                }
-              </span>
-            }
-          </a>
-        </li>
-      }
-    </ul>
-  </nav>
-}
-<div class="hrs-topbar__title">
-  @if (title(); as title) {
-    <span class="hrs-nav1__text">{{ title }}</span>
+<mat-toolbar class="hrs-topbar">
+  @if (menu()) {
+    <button
+      mat-icon-button
+      type="button"
+      class="hrs-topbar__menu"
+      aria-label="Menu"
+      aria-controls="shell-nav"
+      [attr.aria-expanded]="menuOpen()"
+      (click)="menuRequested.emit()"
+    >
+      <mat-icon class="material-symbols-outlined" aria-hidden="true">menu</mat-icon>
+    </button>
+  } @else {
+    <a class="hrs-topbar__brand" routerLink="/" aria-label="Heroes Replay Stats, home">
+      <!-- the game's home button: its icon, lit while pointed at -->
+      <span class="top-bar__logo">
+        <img hrsSprite="navigation#home" [spriteHeight]="42" loading="eager" alt="" />
+        <img
+          class="top-bar__logo-hover"
+          hrsSprite="navigation#home-hover"
+          [spriteHeight]="42"
+          loading="eager"
+          alt=""
+        />
+      </span>
+    </a>
+    <nav class="top-bar__nav" aria-label="Main">
+      <ul class="hrs-nav1">
+        @for (area of areas(); track area.link) {
+          <li>
+            <a
+              class="hrs-nav1__link"
+              [routerLink]="area.link"
+              [attr.aria-current]="area.active ? 'page' : null"
+            >
+              <span class="hrs-nav1__text">{{ area.label }}</span>
+              @if (area.count) {
+                <span class="hrs-badge hrs-badge--count">{{ area.count }}</span>
+              }
+              @if (area.active) {
+                <span class="hrs-nav1__sparks" aria-hidden="true">
+                  @for (spark of sparks; track spark) {
+                    <i></i>
+                  }
+                </span>
+              }
+            </a>
+          </li>
+        }
+      </ul>
+    </nav>
   }
-</div>
-<div class="hrs-topbar__tools"><ng-content /></div>
+  <div class="hrs-topbar__title">
+    @if (title(); as title) {
+      <span class="hrs-nav1__text">{{ title }}</span>
+    }
+  </div>
+  <div class="hrs-topbar__tools"><ng-content /></div>
+</mat-toolbar>

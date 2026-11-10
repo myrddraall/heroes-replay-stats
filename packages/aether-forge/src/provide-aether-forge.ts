@@ -1,9 +1,4 @@
-import {
-  type EnvironmentProviders,
-  makeEnvironmentProviders,
-  type Signal,
-  signal,
-} from '@angular/core';
+import { type EnvironmentProviders, makeEnvironmentProviders } from '@angular/core';
 import { type Data, ROUTES } from '@angular/router';
 import { FORGE_OPTIONS, type ForgeOptions } from './forge-options';
 import { forgeMatcher } from './page/forge-matcher';
@@ -18,8 +13,6 @@ export interface AetherForgeOptions {
   readonly title?: string;
   /** Data for the editor's route, read by what frames the app's pages (whether to frame this one). */
   readonly routeData?: Data;
-  /** The class the app's theme styles glass panels with, read where the editor is injected. */
-  readonly panelClass?: () => Signal<string>;
   /** Makes what opens the app's settings, where the editor is injected (none: no Settings item). */
   readonly openSettings?: () => () => void;
 }
@@ -48,7 +41,6 @@ export function provideAetherForge(options: AetherForgeOptions): EnvironmentProv
       useFactory: (): ForgeOptions => ({
         path: options.path,
         exit: options.exit ?? '/',
-        panelClass: options.panelClass?.() ?? signal(''),
         openSettings: options.openSettings?.() ?? null,
       }),
     },

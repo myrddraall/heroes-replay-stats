@@ -24,7 +24,7 @@ class Rows {
 class Screen {}
 
 function themes(el: HTMLElement): (string | null)[] {
-  return [...el.querySelectorAll('div')].map((d) => d.getAttribute('data-theme'));
+  return [...el.querySelectorAll('div')].map((d) => d.getAttribute('theme'));
 }
 
 describe('TeamTheme', () => {
@@ -47,5 +47,16 @@ describe('TeamTheme', () => {
     perspective.mode.set('fixed');
     await fixture.whenStable();
     expect(themes(fixture.nativeElement)).toEqual(['blue', 'red', null]);
+  });
+
+  it("gives the user's own the self theme on their team's side", async () => {
+    TestBed.overrideComponent(Rows, {
+      set: {
+        template: `<div [hrsTeam]="0" hrsTeamSelf></div><div [hrsTeam]="1" [hrsTeamSelf]="true"></div>`,
+      },
+    });
+    const fixture = TestBed.createComponent(Rows);
+    await fixture.whenStable();
+    expect(themes(fixture.nativeElement)).toEqual(['blue-self', 'red-self']);
   });
 });

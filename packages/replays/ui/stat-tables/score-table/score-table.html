@@ -3,69 +3,83 @@
     [columns]="columns()"
     [table]="cards()"
     [rankBy]="rankBy()"
+    [rankOrder]="rankOrder()"
     [rowHead]="rowHead()"
     (rankRequested)="rankByColumn($event)"
   />
 } @else {
-  <table class="score-table">
-    <thead>
-      <tr>
-        <th scope="col" class="score-table__head-col">
-          <span class="score-table__hidden">{{ rowHeadLabel() }}</span>
-        </th>
-        @for (column of columns(); track column.id) {
-          <th
-            scope="col"
-            [attr.aria-sort]="ariaSort(column.id)"
+  <!-- the header and the grid, one look (score-table.scss) -->
+  <div class="score-table">
+  <hrs-grid-header [for]="grid" />
+  <hrs-data-grid
+    #grid
+    [items]="table()"
+    [trackBy]="byKey"
+    [rowTheme]="themeOf"
+    [sort]="sort()"
+    (sortChange)="sort.set($event)"
+    sortStart="desc"
+  >
+    <hrs-grid-row *hrsRow />
+    <hrs-column name="head" [header]="rowHeadLabel()" width="max-content">
+      <ng-template hrsHeader><span class="score-table__hidden">{{ rowHeadLabel() }}</span></ng-template>
+      <ng-template hrsCell let-line>
+        <ui-score-row-bar />
+        @if (rowHead(); as head) {
+          <ng-container
+            [ngTemplateOutlet]="head.template"
+            [ngTemplateOutletContext]="{ $implicit: line.row.data, row: line.row }"
+          />
+        }
+      </ng-template>
+    </hrs-column>
+    @for (column of columns(); track column.id; let i = $index) {
+      <hrs-column
+        [name]="column.id"
+        [header]="column.label"
+        width="minmax(max-content, 1fr)"
+        sortable
+        [sortStart]="bestFirst(column)"
+      >
+        <ng-template hrsHeader>
+          <span
+            class="score-table__label"
             [matTooltip]="column.description ?? column.label"
             matTooltipPosition="above"
           >
-            <ui-stat-sort-header
-              [column]="column.id"
-              [sort]="sort()"
-              (sortRequested)="toggleSort(column.id)"
-            >
-              @if (column.icon) {
-                <mat-icon class="material-symbols-outlined score-table__icon" aria-hidden="true">{{
-                  column.icon
-                }}</mat-icon>
-                <span class="score-table__hidden">{{ column.label }}</span>
-              } @else {
-                {{ column.label }}
+            @if (column.icon; as icon) {
+              @let sorted = sort()?.column === column.id ? sort() : null;
+              <ui-stat-icon class="score-table__icon" [icon]="icon" [sorted]="!!sorted" />
+              @if (sorted) {
+                <!-- the order, in the game's sort arrows (in place of Material's) -->
+                <span class="score-table__order" aria-hidden="true">
+                  <img
+                    [hrsSprite]="sorted.direction === 'asc' ? 'score-screen#sort-up' : 'score-screen#sort-down'"
+                    spriteCover
+                    loading="eager"
+                    alt=""
+                  />
+                </span>
               }
-            </ui-stat-sort-header>
-          </th>
-        }
-      </tr>
-    </thead>
-    <tbody>
-      @for (line of table(); track line.row.key) {
-        <tr [class]="line.row.class ?? ''">
-          <th scope="row" class="score-table__head">
-            @if (rowHead(); as head) {
-              <ng-container
-                [ngTemplateOutlet]="head.template"
-                [ngTemplateOutletContext]="{ $implicit: line.row.data, row: line.row }"
-              />
+              <span class="score-table__hidden">{{ column.label }}</span>
+            } @else {
+              {{ column.label }}
             }
-          </th>
-          @for (cell of line.cells; track cell.column) {
-            <td
-              class="score-table__cell"
-              [class.score-table__cell--best]="cell.best"
-              [class.score-table__cell--best-in-group]="cell.bestInGroup"
-            >
-              <span class="score-table__full">{{ cell.text }}</span>
-              <span class="score-table__compact">{{ cell.compactText }}</span>
-              @if (cell.best) {
-                <span class="score-table__hidden">(best)</span>
-              } @else if (cell.bestInGroup) {
-                <span class="score-table__hidden">(best on the team)</span>
-              }
-            </td>
-          }
-        </tr>
-      }
-    </tbody>
-  </table>
+          </span>
+        </ng-template>
+        <ng-template hrsCell let-line>
+          @let cell = line.cells[i];
+          <hrs-number-cell
+            [value]="cell.text"
+            [shortValue]="cell.compactText"
+            [short]="fit() === 'squeezed'"
+            styled
+            [mark]="cell.best ? 'best' : cell.bestInGroup ? 'group-best' : null"
+            groupBestLabel="best on the team"
+          />
+        </ng-template>
+      </hrs-column>
+    }
+  </hrs-data-grid>
+  </div>
 }

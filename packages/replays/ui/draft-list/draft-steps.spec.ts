@@ -8,6 +8,9 @@ describe('draft steps', () => {
     heroIcon: (id) =>
       id === 'Barbarian' ? { picture: { src: 'sonya.png' }, name: 'Sonya' } : null,
     heroDataId: () => null,
+    heroPortrait: () => null,
+    heroArt: () => null,
+    award: () => null,
     mapPreview: () => null,
   };
   const step = (order: number, over: Partial<DraftStepRow>): DraftStepRow => ({

@@ -117,7 +117,7 @@ export class EditorLayout {
       const host = this.sceneHost().nativeElement as HTMLElement;
       // The markers drawn in the scene in the page's own colours.
       this.ui.setMarkerColours({
-        edge: themeColour(host, 'rgb(var(--hrs-glass-edge))'),
+        edge: themeColour(host, 'var(--mat-sys-secondary)'),
         selected: themeColour(host, 'var(--mat-sys-primary)'),
       });
       const sized = new ResizeObserver(() =>
@@ -199,7 +199,8 @@ export class EditorLayout {
 /** A colour of the page's theme (a CSS colour, its custom properties as `el` has them), each channel 0 to 1. */
 function themeColour(el: HTMLElement, css: string): Vec3 {
   const probe = el.ownerDocument.createElement('span');
-  probe.style.color = css;
+  // (Mixed in sRGB, so the browser gives it as sRGB whatever space the theme writes it in.)
+  probe.style.color = `color-mix(in srgb, ${css} 100%, transparent)`;
   el.append(probe);
   const colour = getComputedStyle(probe).color;
   probe.remove();

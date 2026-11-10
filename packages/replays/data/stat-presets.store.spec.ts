@@ -28,6 +28,13 @@ describe('StatPresetsStore', () => {
     });
   });
 
+  it("loads a renamed section's presets saved under its earlier id (Misc. Stats is Connection)", () => {
+    const old = [{ id: 'Disconnects', shown: true }];
+    expect(parseStatPresets(JSON.stringify({ misc: { Mine: old } }))).toEqual({
+      connection: { Mine: old },
+    });
+  });
+
   it('keeps only well-formed presets of known sections', () => {
     expect(parseStatPresets(null)).toEqual({});
     expect(parseStatPresets('not json')).toEqual({});

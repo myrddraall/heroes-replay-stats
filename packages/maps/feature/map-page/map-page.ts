@@ -5,7 +5,7 @@ import { showShellItem } from '@myrddraall/heroes-replay-stats-shell/feature';
 import { MapExplore } from '..';
 
 /**
- * One map, by its id in the address (`/game/maps/battlefield-of-eternity`), in explore mode; in
+ * One map, by its id in the address (`/game-info/maps/battlefield-of-eternity`), in explore mode; in
  * the shell's navigation under Game › Maps while it is open.
  */
 @Component({
@@ -24,7 +24,7 @@ export class MapPage {
     // the open map, once the catalog has loaded
     showShellItem(() => {
       const map = this.catalog.maps().find((m) => m.id === this.mapId());
-      return map ? { under: '/game/maps', label: map.name, link: `/game/maps/${map.id}` } : null;
+      return map ? { under: '/game-info/maps', label: map.name, link: `/game-info/maps/${map.id}` } : null;
     });
   }
 }

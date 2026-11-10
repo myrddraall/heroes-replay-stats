@@ -19,6 +19,18 @@
       }
     </mat-select>
   </mat-form-field>
+  @if (custom()) {
+    <!-- the changes dropped: back to the preset they came from -->
+    <button
+      mat-icon-button
+      type="button"
+      (click)="resetRequested.emit()"
+      [attr.aria-label]="'Reset the columns to ' + base()"
+      [matTooltip]="'Reset to ' + base()"
+    >
+      <mat-icon class="material-symbols-outlined" aria-hidden="true">restart_alt</mat-icon>
+    </button>
+  }
   @if (currentIsSaved()) {
     <button
       mat-icon-button

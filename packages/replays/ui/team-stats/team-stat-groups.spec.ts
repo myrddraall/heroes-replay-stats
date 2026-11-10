@@ -22,15 +22,15 @@ describe('team stat groups', () => {
           key: 1,
           group: null,
           values: { kills: 12, firstFortSeconds: null },
-          class: 'hrs-glass-blue',
-          data: { team: 1, name: 'Blue team', result: 'Defeat' },
+          theme: 'blue',
+          data: { team: 1, color: 'blue', name: 'Blue team', result: 'Defeat' },
         },
         {
           key: 0,
           group: null,
           values: { kills: 20, firstFortSeconds: 600 },
-          class: 'hrs-glass-red',
-          data: { team: 0, name: 'Red team', result: 'Victory' },
+          theme: 'red',
+          data: { team: 0, color: 'red', name: 'Red team', result: 'Victory' },
         },
       ]);
   });

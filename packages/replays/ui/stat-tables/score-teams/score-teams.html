@@ -1,0 +1,25 @@
+@for (team of shown(); track team.team; let first = $first) {
+  @if (!first) {
+    <span class="teams__vs">VS</span>
+  }
+  <section class="team" [class.team--red]="!team.blue" [hrsTeam]="team.team" [attr.aria-label]="team.name">
+    <span class="team__names">
+      <span class="team__name" hrsStyledText="glow">{{ team.name }}</span>
+      @if (team.level !== null) {
+        <span class="team__level" hrsStyledText="base">Level {{ team.level }}</span>
+      }
+    </span>
+    <span class="team__kills" hrsStyledText="glow" [attr.aria-label]="team.kills + (team.kills === 1 ? ' kill' : ' kills')">{{
+      team.kills
+    }}</span>
+    <!-- the game's kills icon (BattleIcon), in the side's colour -->
+    <span class="team__icon" aria-hidden="true">
+      <img
+        [hrsSprite]="team.blue ? 'score-screen#team-kills-blue' : 'score-screen#team-kills-red'"
+        spriteCover
+        loading="eager"
+        alt=""
+      />
+    </span>
+  </section>
+}

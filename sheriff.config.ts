@@ -13,6 +13,7 @@ const domains: Record<string, readonly string[]> = {
   dev: ['provide', 'feature', 'ui', 'data', 'model'],
   heroes: ['provide', 'data', 'ui', 'model', 'testing'],
   import: ['provide', 'feature', 'ui', 'data', 'model'],
+  'data-views': ['ui', 'data', 'model', 'testing'],
   layout: ['ui', 'model'],
   maps: ['provide', 'feature', 'ui', 'data', 'model', 'testing'],
   platform: ['provide', 'data', 'model'],
@@ -32,7 +33,16 @@ const domains: Record<string, readonly string[]> = {
 const featureModules: Record<string, readonly string[]> = {
   background: ['site-backdrop', 'graphics-section', 'theme-preview-page'],
   import: ['import-page', 'import-toolbar-action'],
-  dev: ['renderer-check-page'],
+  dev: [
+    'hero-frame-page',
+    'talent-frame-page',
+    'team-frame-page',
+    'circle-frame-page',
+    'standard-tooltip-page',
+    'talent-tooltip-page',
+    'lists-check-page',
+    'renderer-check-page',
+  ],
   maps: ['maps-page', 'map-page'],
   players: ['players-page'],
   replays: [
@@ -50,14 +60,24 @@ const featureModules: Record<string, readonly string[]> = {
 };
 
 /** Shared domains: any domain may use them; a shared domain uses another only through `uses`. */
-const shared = ['common', 'layout', 'platform', 'settings', 'sheets', 'shell', 'theme'];
+const shared = [
+  'common',
+  'data-views',
+  'layout',
+  'platform',
+  'settings',
+  'sheets',
+  'shell',
+  'theme',
+];
 
 /** The domains each domain may use besides itself, the shared ones and simple libraries; one way only. */
 const uses: Record<string, readonly string[]> = {
   // Everything else reaches aether through background.
   background: ['aether', 'aether-forge'],
-  // Developer tools for aether itself, which reach into its areas.
-  dev: ['aether'],
+  // Developer tools for aether itself, which reach into its areas; and the UI area's catalogue of
+  // components, which shows the heroes' (the hero frame).
+  dev: ['aether', 'heroes'],
   maps: ['background', 'heroes'],
   players: ['import'],
   replays: ['heroes', 'import', 'players'],

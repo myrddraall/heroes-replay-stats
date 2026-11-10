@@ -1,8 +1,15 @@
-<hrs-layout>
+<!-- padded, not constrained: its tables grow to the whole width -->
+<hrs-layout default="padded">
   @if (store.error(); as error) {
     <p role="alert">The unit kills could not be read: {{ error }}</p>
   } @else if (store.kills(); as kills) {
-    <hrs-unit-kill-tables [players]="kills.players" [teams]="kills.teams" [icons]="store.icons()" />
+    <hrs-unit-kill-tables
+      [players]="kills.players"
+      [teams]="kills.teams"
+      [portraits]="store.portraits()"
+      [you]="store.you()"
+      [table]="table()"
+    />
   } @else {
     <mat-progress-bar mode="indeterminate" aria-label="Loading the unit kills" />
   }
