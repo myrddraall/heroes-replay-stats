@@ -12,7 +12,7 @@ import { MatchDataService } from '../../data';
 
 /**
  * Asks before clearing all match data (opened from the settings menu), then clears it: every
- * imported replay and its stats. It stays open while that runs and closes when it is done.
+ * imported replay and its stats. It stays open while that runs; the app starts again when it is done.
  */
 @Component({
   selector: 'hrs-clear-match-data-dialog',
@@ -37,8 +37,8 @@ export class ClearMatchDataDialog {
     this.error.set(null);
     this.dialog.disableClose = true;
     try {
+      // the app starts again once it is done
       await this.data.clear();
-      this.dialog.close();
     } catch (e) {
       this.error.set(e instanceof Error ? e.message : String(e));
       this.clearing.set(false);
