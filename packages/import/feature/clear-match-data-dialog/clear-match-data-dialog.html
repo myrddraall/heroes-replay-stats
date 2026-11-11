@@ -1,0 +1,19 @@
+<h2 mat-dialog-title>Clear all match data?</h2>
+<mat-dialog-content>
+  <p>
+    Every imported replay and its stats will be deleted from this device. Your settings stay. The
+    replay files themselves are not touched: importing them again brings the matches back.
+  </p>
+  @if (clearing()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Clearing match data" />
+  }
+  @if (error(); as error) {
+    <p role="alert">The match data could not be cleared: {{ error }}</p>
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button type="button" mat-dialog-close [disabled]="clearing()">Cancel</button>
+  <button mat-flat-button type="button" [disabled]="clearing()" (click)="clear()">
+    Clear match data
+  </button>
+</mat-dialog-actions>

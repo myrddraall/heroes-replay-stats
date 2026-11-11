@@ -1,10 +1,12 @@
 import { InjectionToken, type Provider, type Signal, signal, type Type } from '@angular/core';
 import {
   SHELL_AREAS,
+  SHELL_MENU_ACTIONS,
   SHELL_MENU_ITEMS,
   SHELL_SECTIONS,
   SHELL_UTILITY_LINKS,
   type ShellArea,
+  type ShellMenuAction,
   type ShellMenuItem,
   type ShellSection,
   type ShellUtilityLink,
@@ -31,6 +33,14 @@ export function provideShellUtilityLink(link: ShellUtilityLink): Provider {
 /** An entry of the settings menu, added by the domain whose page it opens. */
 export function provideShellMenuItem(item: ShellMenuItem): Provider {
   return { provide: SHELL_MENU_ITEMS, useValue: item, multi: true };
+}
+
+/**
+ * An entry of the settings menu that does something (clears data, say), added by the domain that
+ * does it. `action`: made in an injection context, so it can inject what it needs.
+ */
+export function provideShellMenuAction(action: () => ShellMenuAction): Provider {
+  return { provide: SHELL_MENU_ACTIONS, useFactory: action, multi: true };
 }
 
 /** What other domains show in the top bar's utility cluster: components that inject what they show. */

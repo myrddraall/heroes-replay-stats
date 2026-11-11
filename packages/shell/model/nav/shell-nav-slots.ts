@@ -1,5 +1,11 @@
 import { InjectionToken } from '@angular/core';
-import type { ShellArea, ShellMenuItem, ShellSection, ShellUtilityLink } from './shell-nav';
+import type {
+  ShellArea,
+  ShellMenuAction,
+  ShellMenuItem,
+  ShellSection,
+  ShellUtilityLink,
+} from './shell-nav';
 
 /** The site's level-1 areas (`provideShellArea`). */
 export const SHELL_AREAS = new InjectionToken<readonly ShellArea[]>('hrs.shell-areas', {
@@ -21,3 +27,9 @@ export const SHELL_UTILITY_LINKS = new InjectionToken<readonly ShellUtilityLink[
 export const SHELL_MENU_ITEMS = new InjectionToken<readonly ShellMenuItem[]>('hrs.shell-menu-items', {
   factory: () => [],
 });
+
+/** The settings menu's entries that do something (`provideShellMenuAction`). */
+export const SHELL_MENU_ACTIONS = new InjectionToken<readonly ShellMenuAction[]>(
+  'hrs.shell-menu-actions',
+  { factory: () => [] },
+);

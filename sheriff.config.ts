@@ -32,7 +32,7 @@ const domains: Record<string, readonly string[]> = {
  */
 const featureModules: Record<string, readonly string[]> = {
   background: ['site-backdrop', 'graphics-section', 'theme-preview-page'],
-  import: ['import-page', 'import-toolbar-action'],
+  import: ['import-page', 'import-toolbar-action', 'clear-match-data-dialog'],
   dev: [
     'hero-frame-page',
     'talent-frame-page',
