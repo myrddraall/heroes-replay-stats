@@ -1,0 +1,109 @@
+// A panel (hrs-panel), the positioned box its preview and the link's cover sit in.
+.replay {
+  position: relative;
+  isolation: isolate;
+  padding: 16px 20px;
+  // hovered, it glows: strong border and the design system's strong glow (its 6px hover glow is
+  // lost around a card this size)
+  &:hover {
+    border-color: var(--mat-sys-secondary);
+    box-shadow: var(--hrs-glow-selected);
+  }
+}
+// the map's replay preview: full card height, square, fading out into the panel, clipped to the
+// card's corners
+.replay__preview {
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: -1;
+  aspect-ratio: 1;
+  overflow: hidden;
+  mask-image: linear-gradient(to right, black, transparent);
+}
+.replay__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin-bottom: 12px;
+}
+.replay__map {
+  margin: 0;
+  font: var(--mat-sys-title-large);
+  font-family: var(--font-brand);
+  font-weight: 600;
+  color: #fff;
+}
+.replay__link {
+  color: inherit;
+  text-decoration: none;
+  // the whole card opens the replay: over everything in it (the teams' bars are layers of their
+  // own, later in the card, and would take the click)
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+  &:hover,
+  &:focus-visible {
+    text-decoration: underline;
+  }
+}
+.replay__mode {
+  color: var(--mat-sys-primary);
+  font: var(--mat-sys-label-large);
+}
+.replay__length {
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-label-large);
+}
+// importing… or analysing…, after the chips
+.replay__activity {
+  color: var(--mat-sys-primary);
+  font: var(--mat-sys-label-large);
+}
+// small hairline chips on the title's baseline
+.replay__marks {
+  --mat-chip-container-height: 22px;
+  --mat-chip-label-text-size: var(--mat-sys-label-medium-size);
+  --mat-chip-label-text-weight: 600;
+}
+// New or Updated: in capitals, in the design system's emphasis gold (its cards' NEW)
+.replay__mark--new {
+  --mat-chip-label-text-color: var(--mat-sys-tertiary);
+  --mat-chip-outline-color: var(--mat-sys-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+// the import job's progress along the card's bottom edge, analysers included
+.replay__progress {
+  position: absolute;
+  inset: auto 0 0;
+}
+.replay__dates {
+  display: grid;
+  justify-items: end;
+  margin-left: auto;
+  color: var(--mat-sys-on-surface-variant);
+}
+.replay__played {
+  font: var(--mat-sys-body-medium);
+}
+.replay__imported {
+  font: var(--mat-sys-body-small);
+}
+.replay__teams {
+  display: grid;
+  gap: 8px;
+}
+@media (max-width: 600px) {
+  .replay {
+    padding: 12px 14px;
+  }
+  .replay__dates {
+    justify-items: start;
+    margin-left: 0;
+    width: 100%;
+  }
+}

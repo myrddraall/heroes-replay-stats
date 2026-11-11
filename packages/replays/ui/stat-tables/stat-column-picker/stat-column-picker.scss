@@ -1,0 +1,72 @@
+:host {
+  display: block;
+}
+
+.picker {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.picker__item {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--mat-sys-surface-container);
+  border-radius: 4px;
+  --mat-checkbox-label-text-size: var(--mat-sys-body-small-size);
+}
+
+.picker__handle {
+  all: unset;
+  display: flex;
+  flex: none;
+  cursor: grab;
+  border-radius: 4px;
+  color: var(--mat-sys-on-surface-variant);
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+  }
+}
+
+.picker__check {
+  flex: 1;
+  min-width: 0;
+}
+
+.picker__star {
+  font-weight: 700;
+}
+
+.picker__star--partial {
+  color: var(--mat-sys-primary);
+}
+
+.picker__star--flawed {
+  color: var(--mat-sys-tertiary);
+}
+
+.picker__star--none {
+  color: var(--mat-sys-error);
+}
+
+.picker__hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.cdk-drag-preview {
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.5);
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.3;
+}
+
+.cdk-drop-list-dragging .picker__item:not(.cdk-drag-placeholder) {
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}

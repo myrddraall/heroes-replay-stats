@@ -1,0 +1,32 @@
+@use '../controls/rows/property-row';
+
+// A light: its checkbox and name from the left, the buttons to go to it and take it out at the right.
+.light {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) property-row.$reset-column property-row.$reset-column;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+}
+
+.check {
+  @include property-row.check;
+}
+
+.name {
+  overflow: hidden;
+  font: var(--mat-sys-body-small);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+// What it is of, where not the body's own (the scene, another body), dim after its name.
+.from {
+  margin-inline-start: 4px;
+  opacity: 0.6;
+}
+
+.show {
+  @include property-row.reset;
+}

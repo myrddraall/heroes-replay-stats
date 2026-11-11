@@ -1,0 +1,114 @@
+@use '../plain-grid';
+
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.count {
+  color: var(--mat-sys-on-surface-variant);
+}
+.cta {
+  margin-top: 16px;
+}
+.error {
+  color: var(--mat-sys-error);
+}
+
+// A panel (hrs-panel): the grid's look.
+.players {
+  @include plain-grid.look;
+
+  ::ng-deep .players__me {
+    justify-content: center;
+  }
+}
+
+// a cell's name: only where the rows are cards (narrow)
+.players__label {
+  display: none;
+}
+
+.player__name {
+  color: #fff;
+  font: var(--mat-sys-title-small);
+}
+.player__region {
+  margin-left: 8px;
+  font: var(--mat-sys-label-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+@include plain-grid.record;
+time {
+  color: var(--mat-sys-on-surface-variant);
+}
+.heroes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.hero {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mat-sys-primary) 16%, transparent);
+  font: var(--mat-sys-body-small);
+  color: #fff;
+  white-space: nowrap;
+}
+.hero__games {
+  color: var(--mat-sys-primary);
+}
+.hero--more {
+  background: transparent;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+// Narrow: each player a card of named lines, no header row.
+@media (max-width: 700px) {
+  .players {
+    border: none;
+    background: none;
+    backdrop-filter: none;
+    --hrs-grid-row-gap: 12px;
+    --hrs-grid-row-line: none;
+
+    ::ng-deep .hrs-grid__head {
+      display: none;
+    }
+
+    // the rows one under the other, as wide as the page, still the gap apart
+    ::ng-deep .hrs-grid__body > div {
+      display: flex;
+      flex-direction: column;
+      row-gap: var(--hrs-grid-row-gap);
+      min-width: 0;
+    }
+
+    ::ng-deep .hrs-grid__body > div > .hrs-grid__row {
+      display: block;
+      padding: 12px 14px;
+      border: 1px solid var(--mat-sys-outline-variant);
+      background: var(--mat-sys-surface);
+    }
+
+    ::ng-deep .hrs-grid__body .hrs-grid__cell {
+      min-height: 0;
+      padding: 2px 0;
+      justify-content: flex-start;
+    }
+  }
+
+  .players__label {
+    display: inline-block;
+    min-width: 7rem;
+    text-align: start;
+    font: var(--mat-sys-label-small);
+    color: var(--mat-sys-on-surface-variant);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+}
+.search {
+  width: min(100%, 40ch);
+  margin-bottom: 16px;
+}

@@ -1,0 +1,29 @@
+<!-- padded, not constrained: the chart grows to the whole width -->
+<hrs-layout default="padded">
+  @if (store.error(); as error) {
+    <p role="alert">The XP could not be read: {{ error }}</p>
+  } @else if (store.points(); as points) {
+    <hrs-xp-chart
+      [points]="points"
+      [kind]="chart()"
+      [counted]="store.counted()"
+      [timeline]="store.timeline()"
+      [players]="store.players()"
+      [team]="team()"
+    />
+  } @else {
+    <mat-progress-bar mode="indeterminate" aria-label="Loading the XP" />
+  }
+</hrs-layout>
+<ng-template hrsShellPanel="Chart">
+  <ui-side-panel title="Chart" (closeRequested)="panels.setEndOpen(false)">
+    <hrs-xp-chart-controls
+      [teams]="teams()"
+      [team]="team()"
+      (teamChange)="store.showTeam($event)"
+      [counted]="store.counted()"
+      (countedChange)="store.count($event)"
+      (resetZoomRequested)="resetZoom()"
+    />
+  </ui-side-panel>
+</ng-template>

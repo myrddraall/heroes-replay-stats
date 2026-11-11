@@ -1,0 +1,22 @@
+<h1>Settings</h1>
+<section class="card hrs-panel">
+  <h2>Importing</h2>
+  <label class="setting" for="parallel-imports">
+    <span>Parallel imports</span>
+    <span class="setting__value">{{ parallelImports() }}</span>
+  </label>
+  <mat-slider class="slider" [min]="min()" [max]="max()" step="1" discrete showTickMarks>
+    <input
+      id="parallel-imports"
+      matSliderThumb
+      [value]="parallelImports()"
+      (valueChange)="parallelImportsChange.emit($event)"
+    />
+  </mat-slider>
+  <p class="hint">
+    How many replays are imported at the same time, each in its own worker. More is faster on a
+    machine with many cores but uses more memory. The default for this device is
+    {{ deviceDefault() }}{{ cores() ? ', a quarter of its ' + cores() + ' cores' : '' }}.
+  </p>
+</section>
+<ng-content />

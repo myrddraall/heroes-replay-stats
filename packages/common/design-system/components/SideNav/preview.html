@@ -1,0 +1,41 @@
+<!-- @dsCard group="Shell" height=600 width=900 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>SideNav — preview</title></head>
+<body>
+<div class="hrs-stage">
+<div style="display:flex;gap:24px;align-items:flex-start">
+<nav class="hrs-sidenav" aria-label="Replay">
+  <div class="hrs-sidenav__group">
+    <button class="hrs-sidenav__heading" aria-expanded="true"><span class="hrs-sidenav__chev">›</span>Replay</button>
+    <ul class="hrs-list">
+      <li><a class="hrs-list__item" href="#">Overview</a></li>
+      <li><a class="hrs-list__item" href="#">Draft</a></li>
+      <li><a class="hrs-list__item is-trail" href="#" aria-expanded="true">Score<span class="hrs-sidenav__chev">›</span></a>
+        <ul class="hrs-sidenav__sub">
+          <li><a href="#"><span>All columns</span></a></li>
+          <li><a href="#" aria-current="page"><span>Damage</span><span class="hrs-count">6</span></a></li>
+          <li><a href="#"><span>Healing</span><span class="hrs-count">3</span></a></li>
+          <li><a href="#"><span>Siege</span><span class="hrs-count">4</span></a></li>
+          <li><a href="#"><span>XP</span></a></li>
+        </ul></li>
+      <li><a class="hrs-list__item" href="#" aria-expanded="false">Talents<span class="hrs-sidenav__chev">›</span></a>
+        <ul class="hrs-sidenav__sub"><li><a href="#"><span>Blue team</span></a></li><li><a href="#"><span>Red team</span></a></li></ul></li>
+      <li><a class="hrs-list__item" href="#">Chat<span class="hrs-count">42</span></a></li>
+    </ul>
+  </div>
+  <div class="hrs-sidenav__group">
+    <button class="hrs-sidenav__heading" aria-expanded="false"><span class="hrs-sidenav__chev">›</span>Compare</button>
+    <ul class="hrs-list"><li><a class="hrs-list__item" href="#">With last match</a></li></ul>
+  </div>
+  <div class="hrs-sidenav__group">
+    <button class="hrs-sidenav__heading" aria-expanded="true"><span class="hrs-sidenav__chev">›</span>Map</button>
+    <ul class="hrs-list"><li><a class="hrs-list__item" href="#">Timeline</a></li><li><a class="hrs-list__item" href="#">Heatmap</a></li></ul>
+  </div>
+</nav>
+<section class="hrs-panel" style="flex:1;min-width:0"><div class="hrs-panel__header">Score · Damage</div><div class="hrs-panel__body" style="padding:0"><hrs-data-grid role="table" aria-rowcount="4" style="--hrs-grid-columns:minmax(8em,2fr) repeat(3,minmax(8ch,1fr))"><div class="hrs-grid__head" role="rowgroup"><div class="hrs-grid__row" role="row" aria-rowindex="1"><div class="hrs-grid__header" role="columnheader">Player</div><div class="hrs-grid__header hrs-num" role="columnheader" aria-sort="descending">Hero dmg</div><div class="hrs-grid__header hrs-num" role="columnheader">Siege</div><div class="hrs-grid__header hrs-num" role="columnheader">Taken</div></div></div>
+<div class="hrs-grid__body" role="rowgroup"><div class="hrs-grid__row" role="row" aria-rowindex="2"><div class="hrs-grid__cell hrs-team-blue" role="cell">Junkrat</div><div class="hrs-grid__cell hrs-num" role="cell">45,335</div><div class="hrs-grid__cell hrs-num" role="cell">53,846</div><div class="hrs-grid__cell hrs-num" role="cell">31,204</div></div><div class="hrs-grid__row" role="row" aria-rowindex="3" aria-selected="true"><div class="hrs-grid__cell hrs-self" role="cell">Erd</div><div class="hrs-grid__cell hrs-num" role="cell">37,538</div><div class="hrs-grid__cell hrs-num" role="cell">68,979</div><div class="hrs-grid__cell hrs-num" role="cell">22,010</div></div><div class="hrs-grid__row" role="row" aria-rowindex="4"><div class="hrs-grid__cell hrs-team-red" role="cell">Li-Ming</div><div class="hrs-grid__cell hrs-num" role="cell">90,203</div><div class="hrs-grid__cell hrs-num" role="cell">73,236</div><div class="hrs-grid__cell hrs-num" role="cell">40,118</div></div></div></hrs-data-grid></div></section>
+</div>
+</div>
+</body>
+</html>

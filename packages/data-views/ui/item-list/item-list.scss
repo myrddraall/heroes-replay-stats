@@ -1,0 +1,42 @@
+// The list is as tall as all its rows; only the drawn ones are in it, each placed where it
+// falls. The look is the theme's (hrs-items__*) and the page's custom properties.
+:host {
+  display: block;
+  position: relative;
+  min-width: 0;
+}
+
+// Reads what the custom properties come to: the narrowest column, the gap, a placeholder's height.
+.item-list__probe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  visibility: hidden;
+  pointer-events: none;
+  width: var(--hrs-list-item-min-width, 0px);
+  height: var(--hrs-list-placeholder-height, 120px);
+  margin-left: var(--hrs-list-gap, var(--hrs-space-3, 12px));
+}
+
+.item-list__row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  // the window spaces the rows: the theme's margins between rows would double it
+  margin: 0;
+}
+
+// The header of the group at the top of the view, over its items as they pass under it: at the
+// scroller's very top, over its padding (the list sets how far up that is).
+.item-list__stuck {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  height: 0;
+
+  .hrs-items__group {
+    position: relative;
+    margin: 0;
+  }
+}

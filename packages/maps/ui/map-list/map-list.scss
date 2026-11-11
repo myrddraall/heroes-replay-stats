@@ -1,0 +1,41 @@
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.error {
+  color: var(--mat-sys-error);
+}
+.maps {
+  --hrs-list-item-min-width: 260px;
+  --hrs-list-gap: 16px;
+}
+.map {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  color: inherit; // a panel (hrs-panel)
+  text-decoration: none;
+
+  &:hover .map__name,
+  &:focus-visible .map__name {
+    color: var(--mat-sys-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: 2px;
+  }
+}
+.map__picture {
+  width: 100%;
+  height: auto;
+}
+.map__name {
+  font: var(--mat-sys-title-small);
+}
+.map__details {
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}

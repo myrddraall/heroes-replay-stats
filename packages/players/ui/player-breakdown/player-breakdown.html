@@ -1,0 +1,40 @@
+@let b = breakdown();
+<!-- the side nav names the section on screen -->
+<h2 class="cdk-visually-hidden">{{ title() }}</h2>
+<div class="choices">
+  <mat-button-toggle-group
+    aria-label="Split by"
+    hideSingleSelectionIndicator
+    [value]="groupBy()"
+    (change)="groupBy.set($event.value)"
+  >
+    @for (choice of groupBys; track choice.value) {
+      <mat-button-toggle [value]="choice.value">{{ choice.label }}</mat-button-toggle>
+    }
+  </mat-button-toggle-group>
+  <mat-button-toggle-group
+    aria-label="Figures"
+    hideSingleSelectionIndicator
+    [value]="aggregate()"
+    (change)="aggregate.set($event.value)"
+  >
+    @for (choice of aggregates; track choice.value) {
+      <mat-button-toggle [value]="choice.value">{{ choice.label }}</mat-button-toggle>
+    }
+  </mat-button-toggle-group>
+</div>
+<ui-stat-table
+  [columns]="b.columns"
+  [rows]="b.rows"
+  [rowHeadLabel]="groupByLabels[groupBy()]"
+  [rowSize]="groupBy() === 'hero' ? 'tall' : 'compact'"
+  [(sort)]="sort"
+>
+  <ng-template [uiStatRowHead]="b.rows" let-data>
+    @if (data.hero) {
+      <ui-score-row-head [hero]="data.label" name="" [portrait]="data.portrait" />
+    } @else {
+      <span class="group" hrsStyledText="bright">{{ data.label }}</span>
+    }
+  </ng-template>
+</ui-stat-table>

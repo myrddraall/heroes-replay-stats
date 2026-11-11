@@ -1,0 +1,146 @@
+:host {
+  display: block;
+  height: 100%;
+  // The tool drawer's width, which the side panel inside it and the toggle on its edge read.
+  --ui-side-panel-width: min(320px, 90vw);
+}
+
+// The background, fixed behind everything; the pages scroll over it.
+.shell__backdrop {
+  position: fixed;
+  inset: 0;
+}
+
+.shell {
+  height: 100%;
+  background: transparent;
+  // the page shows the scene through it; the drawers keep the theme's (Material's sidenav colour)
+  --mat-sidenav-content-background-color: transparent;
+}
+
+// The bars, then the page and the tool drawer, for the rest of the window's height. Each bar's
+// texture shadow falls over the layer below it (nexus.css), so the bars stack above the page.
+.shell__content {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.shell__body {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-height: 0;
+}
+
+.shell__panels {
+  height: 100%;
+  background: transparent;
+}
+
+// The page scrolls up and down only, never sideways: pages fit its width.
+.shell__main {
+  overflow-x: hidden;
+}
+
+// Each page lays itself out (hrs-layout: the constraints are its).
+.shell__page {
+  display: block;
+}
+
+.shell__sections {
+  display: block;
+}
+
+.shell__page--panel-toggle {
+  // the toggle's strip, so nothing on the page runs under it
+  padding-inline-end: 48px;
+}
+
+// The page and its tool drawer: never scrolled sideways (Material's overflow: hidden lets focus and
+// scripts scroll it, which slid the whole page across as a drawer or menu opened); the page inside
+// scrolls up and down as before.
+.shell__panels {
+  overflow: clip;
+}
+
+// The tool drawer (the theme's Drawer, hrs-drawer--shell): flush against the window's right edge,
+// from under the bars to the bottom; only the side panel inside it scrolls.
+.shell__panel {
+  width: var(--ui-side-panel-width);
+  // its line along the page: Material's side drawer draws it (over the theme's) in its divider colour
+  --mat-sidenav-container-divider-color: var(--hrs-border);
+  min-height: 0;
+
+  ::ng-deep .mat-drawer-inner-container {
+    overflow: hidden;
+  }
+}
+
+// The sections' drawer: as wide as the side nav and its padding, from under the bars to the bottom,
+// with no fill, line or shade of its own (the scene shows through); its content scrolls inside it.
+.shell__side {
+  width: calc(var(--hrs-side-nav) + 2 * var(--hrs-space-4));
+  background: none;
+  border: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+
+  ::ng-deep .mat-drawer-inner-container {
+    overflow: hidden;
+  }
+}
+
+.shell__side-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hrs-space-4);
+  box-sizing: border-box;
+  height: 100%;
+  padding: var(--hrs-space-4);
+  overflow-y: auto;
+}
+
+// At the top of the page's right edge, over the page, while the panel is closed; it stays put as
+// the page scrolls.
+.shell__panel-toggle {
+  position: absolute;
+  top: 8px;
+  inset-inline-end: 8px;
+  z-index: 10;
+  background: var(--mat-sys-surface-container);
+}
+
+// The settings menu's Dev group: a small heading over its pages.
+.shell__menu-heading {
+  display: block;
+  padding: 8px 16px 4px;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+  font: var(--mat-sys-label-small);
+  text-transform: uppercase;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.shell__drop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  pointer-events: none;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--mat-sys-background) 60%, transparent);
+  outline: 2px dashed var(--mat-sys-secondary);
+  outline-offset: -16px;
+}
+
+.shell__drop-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 24px;
+  font: var(--mat-sys-title-medium);
+
+  mat-icon {
+    color: var(--mat-sys-primary);
+  }
+}

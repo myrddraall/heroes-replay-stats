@@ -1,0 +1,54 @@
+:host {
+  display: block;
+}
+
+
+.empty {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.log {
+  padding: 8px 0;
+  --hrs-list-gap: 0px;
+}
+
+// time, icon, sender, text; the text wraps under itself
+.line {
+  display: grid;
+  grid-template-columns: 3.5em max-content minmax(6em, max-content) 1fr;
+  align-items: center;
+  gap: 4px 10px;
+  padding: 3px 16px;
+  // the team's theme (hrsTeam) shows as a faint band and the sender's name
+  background: linear-gradient(90deg, color-mix(in srgb, var(--mat-sys-primary) 12%, transparent), transparent 40%);
+}
+
+.line__time {
+  font: var(--mat-sys-body-small);
+  font-variant-numeric: tabular-nums;
+  color: var(--mat-sys-on-surface-variant);
+  text-align: end;
+}
+
+// the icon 24px (its font-size the circle frame's 26/48 of it), its frame around it
+.line__icon {
+  font-size: calc(24px * 26 / 48);
+}
+
+.line__sender {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+  color: var(--mat-sys-primary);
+}
+
+.line__text {
+  overflow-wrap: anywhere;
+}
+
+// Emotes sit in the line like a large letter.
+.line__emote {
+  height: 1.75em;
+  width: auto;
+  vertical-align: middle;
+}

@@ -1,0 +1,32 @@
+<ng-template #list let-pieces>
+  @for (piece of asPieces(pieces); track $index) {
+    <!-- each text in an element of its own, so the template's whitespace around it is dropped -->
+    @if (piece.kind === 'text') {
+      <ng-container>{{ piece.text }}</ng-container>
+    } @else if (piece.kind === 'break') {
+      <br />
+    } @else if (piece.kind === 'scaling') {
+      <ng-container>{{ ' ' + scaling(piece.perLevel) }}</ng-container>
+    } @else if (piece.kind === 'icon') {
+      @if (icons[piece.path]; as picture) {
+        <span
+          class="icon"
+          [style.width.em]="(piece.width ?? 18) / 18"
+          [style.height.em]="(piece.height ?? 18) / 18"
+        >
+          <img [hrsSprite]="picture" spriteCover alt="" />
+        </span>
+      }
+    } @else {
+      <span
+        class="run"
+        [class.run--gradient]="piece.colour?.to"
+        [style.color]="piece.colour?.to ? null : piece.colour?.from"
+        [style.--from]="piece.colour?.from"
+        [style.--to]="piece.colour?.to"
+        ><ng-container [ngTemplateOutlet]="list" [ngTemplateOutletContext]="{ $implicit: piece.pieces }"
+      /></span>
+    }
+  }
+</ng-template>
+<ng-container [ngTemplateOutlet]="list" [ngTemplateOutletContext]="{ $implicit: pieces() }" />

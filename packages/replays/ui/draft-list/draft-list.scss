@@ -1,0 +1,56 @@
+:host {
+  display: block;
+}
+
+
+// A panel (hrs-panel) as wide as its columns, around the header and the grid.
+.draft {
+  width: fit-content;
+  max-width: 100%;
+  --hrs-grid-row-height: 0px;
+  --hrs-grid-cell-padding: 4px 12px;
+  --hrs-grid-font: var(--mat-sys-body-medium);
+  --hrs-grid-text: var(--mat-sys-on-surface);
+  --hrs-grid-first-text: var(--mat-sys-on-surface);
+  --hrs-grid-header-height: 0px;
+  --hrs-grid-header-font: var(--mat-sys-label-medium);
+  --hrs-grid-header-text: var(--mat-sys-on-surface-variant);
+  --hrs-grid-header-case: none;
+  --hrs-grid-header-tracking: var(--mat-sys-label-medium-tracking);
+  --hrs-grid-header-line: none;
+  --hrs-grid-row-line: none;
+
+  // the team's theme shows as a faint band: set on the rows, where their theme is
+  ::ng-deep .hrs-grid__body .hrs-grid__row {
+    --hrs-grid-themed-row-background: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--mat-sys-primary) 12%, transparent),
+      transparent 60%
+    );
+    --hrs-grid-row-hover: var(--hrs-grid-themed-row-background);
+  }
+
+  ::ng-deep .hrs-grid__header {
+    padding: 4px 12px;
+  }
+}
+
+.step__team {
+  color: var(--mat-sys-primary);
+}
+
+.step__hero {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+// a banned hero is out of the game: its row is quieter than a pick's
+.step--ban {
+  color: var(--mat-sys-on-surface-variant);
+
+  &.step__hero {
+    font-weight: normal;
+  }
+}

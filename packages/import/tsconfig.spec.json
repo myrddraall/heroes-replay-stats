@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "../..",
+    "paths": {
+      "@myrddraall/heroes-replay-stats-platform/*": [
+        "../platform/*/index.ts"
+      ],
+      "@myrddraall/heroes-replay-stats-settings/*": [
+        "../settings/*/index.ts"
+      ],
+      "@myrddraall/heroes-replay-stats-layout/*": [
+        "../layout/*/index.ts"
+      ],
+      "@myrddraall/heroes-replay-stats-shell/*": [
+        "../shell/*/index.ts"
+      ]
+    }
+  }
+}

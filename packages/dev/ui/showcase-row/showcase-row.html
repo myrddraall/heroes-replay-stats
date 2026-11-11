@@ -1,0 +1,6 @@
+@if (theme()) {
+  <span class="label" hrsStyledText="bright">{{ label() }}</span>
+} @else {
+  <span class="label">{{ label() }}</span>
+}
+<ng-content />

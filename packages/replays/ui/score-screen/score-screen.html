@@ -1,0 +1,34 @@
+<div class="score-screen hrs-panel">
+  <ui-score-table [columns]="columns" [rows]="rows()">
+    <ng-template [uiStatRowHead]="rows()" let-data>
+      <ui-score-row-head
+        [hero]="data.player.hero"
+        [name]="data.player.name"
+        [portrait]="portraits()[data.player.slot] ?? null"
+        [silenced]="data.player.silenced"
+        [voiceSilenced]="data.player.voiceSilenced"
+      >
+        @let awards = shownAwards()[data.player.slot] ?? [];
+        <!-- every row keeps room for a badge, so the column is wide enough wherever the awards fall -->
+        <div class="player__awards-slot">
+          @if (awards.length > 0) {
+            <ul class="player__awards" aria-label="Awards">
+              @for (award of awards; track award.id) {
+                <!-- the game's badge; its name in words until the data has loaded -->
+                <li class="award" [matTooltip]="award.tooltip">
+                  @if (award.picture) {
+                    <hrs-award-badge class="award__badge" [picture]="award.picture" [name]="award.name" />
+                  } @else {
+                    <span class="award__name" [class.award__name--mvp]="award.id === 'MVP'">{{ award.name }}</span>
+                  }
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      </ui-score-row-head>
+    </ng-template>
+  </ui-score-table>
+  <!-- the teams' totals across the bottom, as the game's score screen (GameStatsPanel's team stats) -->
+  <ui-score-teams [teams]="scoreScreen().teams" />
+</div>

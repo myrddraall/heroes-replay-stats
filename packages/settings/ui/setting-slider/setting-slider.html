@@ -1,0 +1,10 @@
+<label class="setting" [for]="inputId()">
+  <span>{{ label() }}</span>
+  <span class="setting__value">{{ shown() }}</span>
+</label>
+<mat-slider class="slider" [min]="min()" [max]="max()" [step]="step()">
+  <input matSliderThumb [id]="inputId()" [value]="value()" (valueChange)="valueChange.emit($event)" />
+</mat-slider>
+@if (hint()) {
+  <p class="hint">{{ hint() }}</p>
+}

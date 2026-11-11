@@ -1,0 +1,36 @@
+// A data grid (hrs-data-grid) on a panel in the app's plain look: body type, a quiet header row,
+// a line between rows. For the element around the grid and its header.
+@mixin look {
+  --hrs-grid-row-height: 0px;
+  --hrs-grid-cell-padding: 10px 16px;
+  --hrs-grid-cell-wrap: normal;
+  --hrs-grid-font: var(--mat-sys-body-medium);
+  --hrs-grid-text: var(--mat-sys-on-surface);
+  --hrs-grid-first-text: var(--mat-sys-on-surface);
+  --hrs-grid-header-height: 0px;
+  --hrs-grid-header-font: var(--mat-sys-label-medium);
+  --hrs-grid-header-text: var(--mat-sys-on-surface-variant);
+  --hrs-grid-header-tracking: 0.06em;
+  --hrs-grid-header-cell-background: var(--mat-sys-surface-container-high);
+  --hrs-grid-header-line: 1px solid var(--mat-sys-outline-variant);
+  --hrs-grid-row-line: 1px solid var(--mat-sys-outline-variant);
+
+  ::ng-deep .hrs-grid__header {
+    padding: 10px 16px;
+  }
+}
+
+// A win–loss record and the share won beside it, the share in the theme's good colour from half up.
+@mixin record {
+  .record {
+    display: inline-flex;
+    gap: 10px;
+    font-variant-numeric: tabular-nums;
+  }
+  .record__rate {
+    color: var(--mat-sys-on-surface-variant);
+  }
+  .record__rate--good {
+    color: var(--mat-sys-tertiary);
+  }
+}

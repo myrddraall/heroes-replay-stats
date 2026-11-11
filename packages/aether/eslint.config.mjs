@@ -1,0 +1,59 @@
+// @ts-check
+import eslint from '@eslint/js';
+import { defineConfig } from 'eslint/config';
+import tseslint from 'typescript-eslint';
+import angular from 'angular-eslint';
+import { packageBoundaries } from './tools/eslint-boundaries.mjs';
+import { sheriffBoundaries } from '../../tools/eslint-sheriff.mjs';
+
+export default defineConfig([
+  {
+    files: ['**/*.ts'],
+    extends: [
+      eslint.configs.recommended,
+      tseslint.configs.recommended,
+      tseslint.configs.stylistic,
+      angular.configs.tsRecommended,
+    ],
+    processor: angular.processInlineTemplates,
+    rules: {
+      '@angular-eslint/directive-selector': [
+        'error',
+        {
+          type: 'attribute',
+          prefix: 'aether',
+          style: 'camelCase',
+        },
+      ],
+      '@angular-eslint/component-selector': [
+        'error',
+        {
+          type: 'element',
+          prefix: 'aether',
+          style: 'kebab-case',
+        },
+      ],
+    },
+  },
+  {
+    files: ['**/*.html'],
+    extends: [angular.configs.templateRecommended, angular.configs.templateAccessibility],
+    rules: {},
+  },
+  ...packageBoundaries({
+    scope: '@myrddraall/heroes-replay-stats',
+    allowed: ['@myrddraall/heroes-replay-stats-signals'],
+    // Game data and maths, then the renderer, then the saved designs, then the view, then the
+    // graphics settings over it.
+    layers: [
+      ['formats', 'space', 'camera', 'materials', 'tints', 'lights', 'sky', 'effects', 'aids', 'storage'],
+      ['render'],
+      ['library', 'scenes', 'overlays', 'variants', 'planet-sets', 'design'],
+      ['view'],
+      ['graphics'],
+    ],
+  }),
+  ...sheriffBoundaries,
+  // Its areas import each other's files; an error once Aether is in its own repo.
+  { files: ['**/*.ts'], rules: { '@softarc/sheriff/encapsulation': 'warn' } },
+]);

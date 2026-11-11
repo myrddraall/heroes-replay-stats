@@ -1,0 +1,32 @@
+@if (view(); as v) { @if (v.row; as r) { @if (r.from !== undefined) {
+<p class="data-name">Added in {{ r.from }}</p>
+@if (r.switched) {
+<div class="buttons">
+  <button type="button" class="button" (click)="resetSwitch(r.tint.id)">
+    Back to what is under it
+  </button>
+</div>
+} } @else {
+<forge-tint-settings
+  [tint]="r.tint"
+  [grading]="grading()"
+  [themes]="themes"
+  (tintChange)="change($event)"
+/>
+} } @else {
+<forge-property-section [title]="title()">
+  <div class="buttons">
+    <forge-split-button
+      [options]="kinds()"
+      [menuLabel]="grading() ? 'Other kinds of grading' : 'Other kinds of colour adjustment'"
+      (chosen)="add($event)"
+    />
+  </div>
+  <forge-added-list
+    [title]="title()"
+    [items]="items()"
+    (itemShow)="show($event)"
+    (itemRemove)="remove($event)"
+  />
+</forge-property-section>
+} }

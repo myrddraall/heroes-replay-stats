@@ -1,0 +1,78 @@
+@use './pod';
+@use './rows/property-row';
+
+:host {
+  display: block;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.reset-slot {
+  @include property-row.reset-slot;
+}
+
+.heading {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  margin: 0;
+  padding: 4px 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: var(--mat-sys-label-medium);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.8;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    opacity: 1;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: -2px;
+  }
+}
+
+.heading--changed {
+  color: var(--mat-sys-primary);
+}
+
+.heading__chevron {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}
+
+.rows {
+  display: grid;
+  gap: 2px;
+  padding: 0 0 6px 4px;
+}
+
+// At the top of a panel: a pod (its heading the bar across its top).
+:host(.pod) {
+  @include pod.box;
+
+  .head {
+    @include pod.head;
+    padding: 0 pod.$inline 0 calc(#{pod.$inline} - 4px);
+  }
+
+  .head--open {
+    @include pod.head-line;
+  }
+
+  .rows {
+    padding: 6px pod.$inline;
+  }
+}

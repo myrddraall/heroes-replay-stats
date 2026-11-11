@@ -1,0 +1,23 @@
+<!-- the side nav names the page on screen -->
+<h2 class="cdk-visually-hidden">{{ title() }}</h2>
+@if (curves().length === 0) {
+  <p class="empty">This replay has no XP over time.</p>
+} @else {
+  <!-- one card, like the other sections' tables -->
+  <div class="card hrs-panel">
+    <ul class="legend" aria-label="Teams">
+      @for (curve of curves(); track curve.team) {
+        <li>
+          <span class="legend__line" [style.background]="'var(--hrs-team-' + curve.color + ')'"></span>
+          {{ curve.name }}
+        </li>
+      }
+    </ul>
+
+    @if (options(); as options) {
+      <div class="chart" echarts [options]="options" (chartInit)="chartReady($event)"></div>
+    } @else {
+      <div class="chart"></div>
+    }
+  </div>
+}

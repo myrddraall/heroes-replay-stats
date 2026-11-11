@@ -1,0 +1,68 @@
+@use '../stat-tables/score-row/score-row';
+
+// one card (hrs-panel) around the table and the teams' totals, as the score screen's; inside the
+// host, so the page layout's padding stays around it. Too wide for the card, it scrolls sideways
+// inside it.
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.talent-screen {
+  display: grid;
+  gap: 16px;
+  padding: 16px 20px;
+  overflow-x: auto;
+  // the teams' totals scale with the card's width on narrow screens
+  container-type: inline-size;
+}
+
+// the game's score rows (_score-row.scss)
+.talents {
+  @include score-row.grid;
+}
+
+// the levels over the tiers in the rows' type, as the game's talent screen heads them (their colour
+// their theme's styled text: purple, the heroic tier's legendary)
+.talents__level {
+  font: 700 calc(var(--hrs-grid-row-height) * var(--hrs-grid-row-type-scale)) / 1 var(--font-brand);
+}
+
+// The game's talent frames (hrs-talent-frame): the icon 44 of the game's 70 high row, a little over
+// the layout's 40 (TalentsOverviewPanel's TalentTreeIcon) so the frame shows as large in the row as
+// on the game's screen; its frame (68 for 40, so a little over the row's height) overhangs the row
+// into the gaps between rows rather than making the row taller than the score screen's.
+.talent {
+  font-size: calc(var(--hrs-grid-row-height) * 44 / 70);
+  margin-block: calc(var(--hrs-grid-row-height) * (1 - 44 * 68 / (70 * 40)) / 2);
+}
+
+// the build's button: the game's link icon (its Copy Link buttons'), at its 24, the button's icon
+// size so Material centres it
+.build {
+  --mat-icon-button-icon-size: 24px;
+}
+
+// no ring (the theme's on every icon button), here or hovered: just the game's icon
+.build,
+.build:hover {
+  box-shadow: none;
+}
+
+.build__icon {
+  display: block;
+  // a little under the row's middle, to sit with the talents' frames
+  translate: 0 2px;
+  width: 24px;
+  height: 24px;
+  overflow: hidden;
+}
+
+.talents__hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

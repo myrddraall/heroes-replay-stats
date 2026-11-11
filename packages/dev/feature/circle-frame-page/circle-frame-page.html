@@ -1,0 +1,120 @@
+<hrs-layout>
+  <hrs-showcase [heading]="heading()">
+    <ng-container ngProjectAs="[about]">
+      <code>{{ selector() }}</code>: a shaped frame in the theme's colour around what is put in it: a
+      glyph (<code>hrs-glyph</code>: a Material icon or a capital letter) or a portrait
+      (<code>hrs-portrait</code>). The frame owns the layers, the mask (its content cut to its
+      inside) and its <code>state</code>, only what it draws itself: <code>selected</code> (an inner
+      glow) or <code>disabled</code>. What is in it has its own inputs. At its <code>font-size</code> its
+      inside is 1.5em, a glyph 1em in it (a letter a little smaller, centred on its capitals), a
+      portrait filling it. A glyph takes the theme's styled looks (<code>styled</code>), <code>base</code> unless set.
+    </ng-container>
+    @for (theme of themes; track theme.id) {
+      <hrs-showcase-row class="themed" [label]="theme.label" [theme]="theme.id">
+        @for (item of themed(); track $index) {
+          <ng-container [ngTemplateOutlet]="framed" [ngTemplateOutletContext]="{ $implicit: item }" />
+        }
+      </hrs-showcase-row>
+    }
+    @if (shape() === 'hex') {
+      @for (theme of themes; track theme.id) {
+        <hrs-showcase-row class="themed" [label]="theme.label + ', pointy'" [theme]="theme.id">
+          @for (item of themed(); track $index) {
+            <ng-container
+              [ngTemplateOutlet]="framed"
+              [ngTemplateOutletContext]="{ $implicit: { kind: item.kind, text: item.text, sources: item.sources, orientation: 'pointy' } }"
+            />
+          }
+        </hrs-showcase-row>
+      }
+      <hrs-showcase-row class="themed" label="States, Blue, pointy" theme="blue">
+        @for (state of states; track state.label) {
+          <hrs-showcase-item [caption]="state.label">
+            @for (sample of samples(); track $index) {
+              <ng-container
+                [ngTemplateOutlet]="framed"
+                [ngTemplateOutletContext]="{ $implicit: { kind: sample.kind, text: sample.text, sources: sample.sources, state: state.state, orientation: 'pointy' } }"
+              />
+            }
+          </hrs-showcase-item>
+        }
+      </hrs-showcase-row>
+    }
+    @for (theme of themes.slice(0, 2); track theme.id) {
+      <hrs-showcase-row class="themed" [label]="'States, ' + theme.label" [theme]="theme.id">
+        @for (state of states; track state.label) {
+          <hrs-showcase-item [caption]="state.label">
+            @for (sample of samples(); track $index) {
+              <ng-container
+                [ngTemplateOutlet]="framed"
+                [ngTemplateOutletContext]="{ $implicit: { kind: sample.kind, text: sample.text, sources: sample.sources, state: state.state } }"
+              />
+            }
+          </hrs-showcase-item>
+        }
+      </hrs-showcase-row>
+    }
+    <hrs-showcase-row class="themed" label="Glyph looks" theme="blue">
+      @for (look of looks; track look.label) {
+        <hrs-showcase-item [caption]="look.label">
+          <ng-container [ngTemplateOutlet]="framed" [ngTemplateOutletContext]="{ $implicit: { kind: 'icon', text: 'shield', styled: look.styled } }" />
+          <ng-container [ngTemplateOutlet]="framed" [ngTemplateOutletContext]="{ $implicit: { kind: 'letter', text: 'M', styled: look.styled } }" />
+        </hrs-showcase-item>
+      }
+    </hrs-showcase-row>
+    <hrs-showcase-row label="Sizes" theme="blue">
+      @for (size of sizes; track size) {
+        <hrs-showcase-item [caption]="'font-size: ' + size">
+          @for (sample of samples(); track $index) {
+            <span [style.font-size]="size">
+              <ng-container [ngTemplateOutlet]="framed" [ngTemplateOutletContext]="{ $implicit: sample }" />
+            </span>
+          }
+        </hrs-showcase-item>
+      }
+    </hrs-showcase-row>
+  </hrs-showcase>
+</hrs-layout>
+
+<!-- one frame of the page's shape, what it holds put in it -->
+<ng-template #framed let-item>
+  @switch (shape()) {
+    @case ('hex') {
+      <hrs-hex-frame [state]="item.state ?? null" [orientation]="item.orientation ?? 'flat'">
+        <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: item }" />
+      </hrs-hex-frame>
+    }
+    @case ('square') {
+      <hrs-square-frame [state]="item.state ?? null">
+        <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: item }" />
+      </hrs-square-frame>
+    }
+    @default {
+      <hrs-circle-frame [state]="item.state ?? null">
+        <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: item }" />
+      </hrs-circle-frame>
+    }
+  }
+</ng-template>
+
+<!-- what a frame holds: a glyph (an icon, a letter), in its own look unless one is given, or a portrait -->
+<ng-template #content let-item>
+  @if (item.kind === 'portrait') {
+    <hrs-portrait [sources]="item.sources ?? []" [name]="item.text" />
+  } @else if (item.styled === undefined) {
+    <hrs-glyph><ng-container [ngTemplateOutlet]="glyphed" [ngTemplateOutletContext]="{ $implicit: item }" /></hrs-glyph>
+  } @else {
+    <hrs-glyph [styled]="item.styled">
+      <ng-container [ngTemplateOutlet]="glyphed" [ngTemplateOutletContext]="{ $implicit: item }" />
+    </hrs-glyph>
+  }
+</ng-template>
+
+<!-- a glyph's content: a Material icon or a letter -->
+<ng-template #glyphed let-item>
+  @if (item.kind === 'icon') {
+    <mat-icon class="material-symbols-outlined" [attr.aria-label]="item.text">{{ item.text }}</mat-icon>
+  } @else {
+    {{ item.text }}
+  }
+</ng-template>

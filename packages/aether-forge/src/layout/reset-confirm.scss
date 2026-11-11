@@ -1,0 +1,19 @@
+@use '../controls/rows/property-row';
+
+.confirm {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 8px;
+  padding: 6px 8px;
+  border: 1px solid color-mix(in srgb, var(--mat-sys-primary) 50%, transparent);
+  font: var(--mat-sys-body-small);
+}
+
+.confirm__buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.button {
+  @include property-row.button;
+}

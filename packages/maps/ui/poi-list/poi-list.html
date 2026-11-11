@@ -1,0 +1,58 @@
+<hrs-item-list
+  class="pois"
+  aria-label="Points of interest"
+  selectable
+  [items]="pois()"
+  [trackBy]="byKey"
+  [groupBy]="groupOf"
+  [selected]="picked()"
+  (selectedChange)="$event && poiSelect.emit($event.key)"
+>
+  <ng-template hrsGroupHeader let-key>
+    @if (heads().get(key); as head) {
+      @if (head.first) {
+        <div
+          class="pois__team-heading"
+          [class.pois__team-heading--top]="head.top"
+          [class.pois__team-heading--order]="head.team.owner === 'order'"
+          [class.pois__team-heading--chaos]="head.team.owner === 'chaos'"
+          [class.pois__team-heading--neutral]="head.team.owner === null"
+        >
+          {{ head.team.label }}
+        </div>
+      }
+      <div class="pois__group">{{ head.group.label }}</div>
+    }
+  </ng-template>
+
+  <ng-template hrsItem let-poi>
+    @let state = states()[poi.key];
+    <div class="poi-row" [class.poi-row--picked]="poi.key === selected()">
+      <button
+        hrsItemFocus
+        type="button"
+        class="poi"
+        [class.poi--order]="poi.owner === 'order'"
+        [class.poi--chaos]="poi.owner === 'chaos'"
+        [class.poi--neutral]="poi.owner === null"
+        [class.poi--off]="state === 'off'"
+        [attr.aria-pressed]="poi.key === selected()"
+      >
+        <span class="poi__label">{{ poi.label }}</span>
+      </button>
+      <button
+        type="button"
+        class="poi-toggle"
+        [attr.aria-label]="toggleLabel(poi, state)"
+        [title]="toggleLabel(poi, state)"
+        (click)="stateToggle.emit(poi.key)"
+      >
+        <mat-icon class="material-symbols-outlined" aria-hidden="true">{{ stateIcon(state) }}</mat-icon>
+      </button>
+    </div>
+  </ng-template>
+
+  <ng-template hrsEmpty>
+    <p class="pois__none">This render has no structures or camps on their own.</p>
+  </ng-template>
+</hrs-item-list>

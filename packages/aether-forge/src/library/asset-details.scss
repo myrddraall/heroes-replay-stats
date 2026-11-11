@@ -1,0 +1,74 @@
+:host {
+  display: grid;
+  gap: 10px;
+  font: var(--mat-sys-body-small);
+}
+
+.kind {
+  margin: 0;
+  font: var(--mat-sys-label-medium);
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+// Facts as label and value side by side.
+.facts {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 4px 6px;
+  margin: 0;
+
+  dt {
+    opacity: 0.75;
+  }
+
+  dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.list__title {
+  margin: 0 0 4px;
+  font: var(--mat-sys-label-medium);
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.list__items {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-wrap: anywhere;
+}
+
+.textures {
+  gap: 6px;
+}
+
+.texture {
+  display: grid;
+  gap: 1px;
+
+  &__path,
+  &__source {
+    font-family: var(--mat-sys-body-small-font), monospace;
+    font-size: 0.85em;
+  }
+
+  &__path {
+    color: var(--mat-sys-primary);
+  }
+
+  &__source {
+    opacity: 0.75;
+  }
+}
+
+.none,
+.hint {
+  margin: 0;
+  opacity: 0.75;
+}

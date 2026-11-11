@@ -1,0 +1,139 @@
+:host {
+  display: grid;
+  gap: 16px;
+}
+
+.block {
+  overflow: hidden;
+}
+
+.hrs-panel__header {
+  margin: 0;
+}
+
+// the headline figures: a name over its value, as many across as fit
+.figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: 16px 12px;
+  margin: 0;
+}
+
+.figure {
+  display: grid;
+  gap: 2px;
+}
+
+dt {
+  font: var(--mat-sys-label-medium);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+dd {
+  margin: 0;
+  font: var(--mat-sys-headline-small);
+  font-family: var(--font-brand);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+}
+
+// the latest results: a mark each, the most recent first
+.recent {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  padding: 0 16px 16px;
+  list-style: none;
+}
+
+.recent__game {
+  width: 10px;
+  height: 18px;
+  background: var(--mat-sys-outline-variant);
+}
+
+.recent__game--won {
+  background: var(--mat-sys-tertiary);
+}
+
+.recent__game--lost {
+  background: var(--mat-sys-error);
+}
+
+.heroes {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 16px;
+  list-style: none;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) repeat(3, auto);
+  align-items: center;
+  gap: 4px 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.hero__portrait {
+  font-size: 36px;
+}
+
+.hero__name {
+  font: var(--mat-sys-title-small);
+  color: #fff;
+}
+
+.hero__games,
+.hero__rate {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.hero__rate {
+  min-width: 3.5em;
+  text-align: end;
+}
+
+.hero__rate--good {
+  color: var(--mat-sys-tertiary);
+}
+
+.more {
+  margin: 0;
+  padding: 0 16px 16px;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-small);
+}
+
+.awards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 8px 16px;
+  margin: 0;
+  padding-left: 16px;
+  list-style: none;
+}
+
+.award {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.award__badge {
+  font-size: 40px;
+}
+
+.award__name {
+  color: #fff;
+}
+
+.award__count {
+  color: var(--mat-sys-primary);
+  font-variant-numeric: tabular-nums;
+}

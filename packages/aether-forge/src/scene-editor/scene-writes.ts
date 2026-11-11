@@ -1,0 +1,236 @@
+import {
+  type BodyPath,
+  type CameraPlacement,
+  changedLight,
+  changeSettings,
+  GAME_CAMERA,
+  type GroupPlacement,
+  pathKey,
+  pathOf,
+  removeAt,
+  type SceneBody,
+  setOverlays,
+  storedBodies,
+  without,
+  indexOfKey,
+} from '@myrddraall/heroes-replay-stats-aether/scenes';
+import type { SceneCameraSet } from '@myrddraall/heroes-replay-stats-aether/formats';
+import type { MaterialSettings } from '@myrddraall/heroes-replay-stats-aether/materials';
+import type { LightSettings } from '@myrddraall/heroes-replay-stats-aether/lights';
+import { patchState } from '@ngrx/signals';
+import { wornIds, wornKeyOf } from '../bodies/body';
+import {
+  CAMERAS,
+  EDITOR_CAMERA,
+  SCENE,
+  SCENE_LIGHTS,
+  SKY,
+  type Target,
+  atBody,
+  bodyKey,
+  lightsKey,
+  moonsKey,
+  overlaysKey,
+  partRowKey,
+  shapesKey,
+  skyPartKey,
+  targetOf,
+  variantsKey,
+} from './scene-targets';
+import type { SceneMethodsStore } from './scene-editor.store';
+import type { Vec3 } from '@myrddraall/heroes-replay-stats-aether/space';
+import type { BodySettings } from '@myrddraall/heroes-replay-stats-aether/bodies';
+import { variantsOnOf, switched } from '@myrddraall/heroes-replay-stats-aether/variants';
+import { BodyLevel, bodyEdits } from '../editing/body-edits';
+import { parentRowOf } from '../tree/select-parent-when-gone';
+
+/** What the scene editor's methods change the scene through: its bodies, a body's settings, its lights, groups and cameras, and what is selected. */
+export function sceneWrites(store: SceneMethodsStore) {
+  /** Where the pole being dragged is (see `dragPole`). */
+  const dragging = { pole: null as Vec3 | null, light: null as Vec3 | null };
+  const d = store._draft;
+  /** The scene's planets changed (the random sets' have none of their own). */
+  const edit = (change: (bodies: readonly SceneBody[]) => readonly SceneBody[]) => {
+    if (store.hasPlanets())
+      d.setSceneBodies(store.scene(), storedBodies(change(store.sceneBodies()), d.library()));
+  };
+  /** The selected body's path, if a body (or one of its materials) is selected. */
+  const selectedPath = (): BodyPath | null => {
+    const t = store.target();
+    return 'path' in t ? t.path : null;
+  };
+  /** The key of what a body wears (a planet's settings are kept by it). */
+  const wornAt = (path: BodyPath) => {
+    const b = store.bodyByKey().get(bodyKey(path));
+    return b ? wornKeyOf(b) : '';
+  };
+  const settings = (path: BodyPath, change: (s: BodySettings) => BodySettings | undefined) =>
+    edit((b) => changeSettings(b, path, wornAt(path), change));
+  /** Where a body's edits land: this scene's copy of it (see `BodyLevel`); none: it isn't there. */
+  const levelAt = (path: BodyPath): BodyLevel | null => {
+    const body = store.bodyByKey().get(bodyKey(path));
+    return body ? { body, change: (change) => settings(path, change) } : null;
+  };
+  /** Where the selected body's edits land (one of its materials, parts or lights selected too). */
+  const selectedLevel = (): BodyLevel | null => {
+    const path = selectedPath();
+    return path && levelAt(path);
+  };
+  /** What the selected body wears changed (the later over the earlier). */
+  const wear = (change: (worn: readonly string[]) => readonly string[]) => {
+    const path = selectedPath();
+    const b = path && store.bodyByKey().get(bodyKey(path));
+    if (path && b) edit((bodies) => setOverlays(bodies, path, change(wornIds(b)), wornKeyOf(b)));
+  };
+  /** A light changed: the scene's own, or a body's (one added there itself, else what is set for it). */
+  const lightChange = (t: Target, change: Partial<LightSettings>) => {
+    if (t.kind === 'scene-light')
+      d.setSceneLights(store.scene(), changedLight(store.sceneLights(), t.id, change));
+    else if (t.kind === 'light') {
+      const level = levelAt(t.path);
+      if (level) bodyEdits.setLight(level, t.id, change);
+    }
+  };
+  /** A group put in the scene changed (a setting given as none: taken back). */
+  const changePlacement = (key: string, change: Partial<GroupPlacement>) => {
+    const placements = store.placements();
+    const index = indexOfKey(placements, key);
+    const p = placements[index];
+    if (!p) return;
+    const next = { ...p, ...change } as Record<string, unknown>;
+    for (const k of Object.keys(change)) if (next[k] === undefined) delete next[k];
+    d.setSceneGroups(
+      store.scene(),
+      placements.map((x, i) => (i === index ? (next as unknown as GroupPlacement) : x)),
+    );
+  };
+  /**
+   * The rows above a row unfolded: the scene's, each body it is under (with their Moons), and the
+   * category of its body it is in.
+   */
+  const openTo = (key: string) => {
+    const t = targetOf(key);
+    store.expand(SCENE);
+    if (t.kind === 'camera') store.reopen(CAMERAS);
+    if (t.kind === 'scene-light') store.reopen(SCENE_LIGHTS);
+    if (t.kind === 'sky-part') store.expand(SKY);
+    if (!('path' in t) || !t.path.length) return;
+    const { path } = t;
+    // (A body's own row: under each body it is a moon of; anything of a body's, under it too.)
+    const under = t.kind === 'body' ? path.length - 1 : path.length;
+    for (let i = 1; i <= under; i++) {
+      store.expand(bodyKey(path.slice(0, i)));
+      if (i < path.length) store.reopen(moonsKey(path.slice(0, i)));
+    }
+    if (t.kind === 'part') store.reopen(shapesKey(path));
+    if (t.kind === 'light') store.expand(lightsKey(path));
+    if (t.kind === 'overlay') store.reopen(overlaysKey(path));
+    if (t.kind === 'variant') store.expand(variantsKey(path));
+  };
+  /** One of a body's variants switched where it is: into the scene, or the scene's variant edited. */
+  const variantOn = (path: BodyPath, id: string, on: boolean) => {
+    const open = store.sceneVariantOpen();
+    if (open) {
+      const key = pathKey(path);
+      d.changeSceneVariant(store.scene(), open, (v) => ({
+        ...v,
+        switches: { ...v.switches, [key]: { ...v.switches?.[key], [id]: on } },
+      }));
+      return;
+    }
+    const b = store.bodyByKey().get(bodyKey(path));
+    settings(path, (s) => {
+      const now = variantsOnOf(s, b?.inherited?.settings, d.library().planets[b?.id ?? '']);
+      return { ...s, variantsOn: switched(now, { [id]: on }) };
+    });
+  };
+  /** Something selected by its row's key, the rows above it unfolded to it. */
+  const reveal = (key: string) => {
+    openTo(key);
+    patchState(store, { selected: key });
+  };
+  /** A camera added to the scene taken out; the view through it back to the editor's. */
+  const dropCamera = (id: string) => {
+    d.setSceneCameras(
+      store.scene(),
+      store.addedCameras().filter((a) => a.id !== id),
+    );
+    if (store.look() === id) patchState(store, { look: EDITOR_CAMERA });
+  };
+  /**
+   * A body taken out (a planet with its moons, a moon with its own): what was selected of it, the
+   * row above it selected (its planet's Moons; the scene, for a planet); the view off it.
+   */
+  const removeBody = (path: BodyPath) => {
+    const up = parentRowOf(store.rows(), bodyKey(path));
+    edit((b) => removeAt(b, path));
+    const inside = (key: string | null) =>
+      key !== null && path.every((v, i) => pathOf(key)[i] === v);
+    const t = store.target();
+    const selected = 'path' in t && t.path.length >= path.length && inside(pathKey(t.path));
+    const focus = store.focus();
+    patchState(store, {
+      ...(selected
+        ? { selected: up ?? (path.length > 1 ? bodyKey(path.slice(0, -1)) : SCENE) }
+        : {}),
+      focus: inside(focus) ? null : focus,
+    });
+  };
+  /** One of the scene's cameras moved or set: the game's over the data's, one added as it is. */
+  const changeCamera = (id: string, set: SceneCameraSet & { placement?: CameraPlacement }) => {
+    if (id === GAME_CAMERA) {
+      const game = store.cameraList().find((c) => c.id === GAME_CAMERA);
+      const placement = 'placement' in set ? set.placement : game?.placement;
+      d.setSceneCamera(store.scene(), {
+        ...game?.set,
+        ...without(set, ['placement']),
+        ...(placement ? { placement } : {}),
+      });
+    } else
+      d.setSceneCameras(
+        store.scene(),
+        store.addedCameras().map((a) => (a.id === id ? { ...a, ...set } : a)),
+      );
+  };
+  /** A part just added onto the body or sky selected selected, its row shown. */
+  const selectAdded = (id: string) => {
+    const t = store.target();
+    if (atBody(t)) {
+      reveal(partRowKey(t.path, `own:${id}`));
+    } else {
+      store.expand(SKY);
+      patchState(store, { selected: skyPartKey(`own:${id}`) });
+    }
+  };
+  const materialChange = (key: string, change: Partial<MaterialSettings>) => {
+    const t = targetOf(key);
+    if (t.kind === 'sky-material') d.setSkyMaterial(store.scene(), t.key, change);
+    else if (t.kind === 'material') {
+      const level = levelAt(t.path);
+      if (level) bodyEdits.setMaterial(level, t.key, change);
+    }
+  };
+  return {
+    d,
+    edit,
+    selectedPath,
+    wornAt,
+    settings,
+    levelAt,
+    selectedLevel,
+    wear,
+    lightChange,
+    changePlacement,
+    variantOn,
+    openTo,
+    reveal,
+    dropCamera,
+    removeBody,
+    changeCamera,
+    selectAdded,
+    materialChange,
+    dragging,
+  };
+}
+
+export type SceneWrites = ReturnType<typeof sceneWrites>;
