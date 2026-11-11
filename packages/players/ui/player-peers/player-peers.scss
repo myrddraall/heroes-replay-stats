@@ -1,0 +1,23 @@
+@use '../plain-grid';
+
+:host {
+  display: block;
+}
+
+.peers {
+  @include plain-grid.look;
+  @include plain-grid.record;
+}
+
+.peers__name {
+  color: #fff;
+  font: var(--mat-sys-title-small);
+}
+
+.peers__games {
+  font-variant-numeric: tabular-nums;
+}
+
+time {
+  color: var(--mat-sys-on-surface-variant);
+}

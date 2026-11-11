@@ -76,7 +76,7 @@ Replays are how HRS gets match data; the site is organised around what the repla
 
 | Area | Level 2 (SubBar) | Inside an item: its SideNav (level 3) |
 |---|---|---|
-| Replays | Matches · Players · Maps (disabled until built) · Import | a match: Score, Teams, Draft, Talents, Chat, Stats (its stat sections as sub-items), Unit Kills, XP; the SubBar stays on Matches |
+| Replays | Matches · Players · Maps (disabled until built) · Import | a match: Score, Teams, Draft, Talents, Chat, Stats (its stat sections as sub-items), Unit Kills, XP; the SubBar stays on Matches. A player: Overview, Stats (its sections as sub-items), Records, Players (Teammates, Opponents), Matches; the SubBar stays on Players |
 | Game Info | Maps · Heroes (disabled until built) | a map: none yet |
 | About | — | — |
 
@@ -84,7 +84,7 @@ Replays are how HRS gets match data; the site is organised around what the repla
 - Import is Replays' last section; the UtilityPod in the TopBar leads to it as well.
 - The settings menu: Settings, then a Dev group (UI, Background, Renderer check). Dev has no place in the top bar: UI is a hidden area, reached from the menu, whose sections (Theme, Components, Tests) and their pages show in the sub-bar and side nav while it is open.
 - The SubBar slides up behind the TopBar and hides where there are no sections (About, Settings). Breadcrumbs follow the same path: Replays › Matches › Blackheart's Bay › Stats › PvP; Game Info › Maps › Cursed Hollow.
-- Routes follow the areas: `/replays/matches/:id/…`, `/replays/players`, `/replays/import`, `/game-info/maps/:id`, `/about`. Older URLs redirect (`/matches/…`, `/players`, `/import`, `/game/maps/…`, `/maps/…`, `/replays/:id/…`).
+- Routes follow the areas: `/replays/matches/:id/…`, `/replays/players`, `/replays/players/:id/…`, `/replays/import`, `/game-info/maps/:id`, `/about`. Older URLs redirect (`/matches/…`, `/players`, `/import`, `/game/maps/…`, `/maps/…`, `/replays/:id/…`).
 - Navigation is data, not templates: each area is declared with its order; fixed sections come with the area (from the domains whose pages they open); a page whose sections depend on what is open (a match) hands the shell its SideNav as data. The TopBar and SubBar, the page's SideNav and the handset NavTree all draw from that one model.
 
 ## Components

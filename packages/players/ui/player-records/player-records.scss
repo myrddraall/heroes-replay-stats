@@ -1,0 +1,47 @@
+@use '../plain-grid';
+
+:host {
+  display: block;
+}
+
+.records {
+  @include plain-grid.look;
+}
+
+.records__stat {
+  color: #fff;
+  font: var(--mat-sys-title-small);
+}
+
+.records__value {
+  font: var(--mat-sys-title-small);
+  font-variant-numeric: tabular-nums;
+  color: var(--mat-sys-primary);
+}
+
+.records__hero {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.records__match {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+
+  a {
+    color: #fff;
+  }
+}
+
+.records__mode,
+time {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.records__won {
+  color: var(--mat-sys-tertiary);
+}

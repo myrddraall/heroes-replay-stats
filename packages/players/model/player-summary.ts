@@ -31,7 +31,11 @@ export interface PlayerRows {
   readonly players: readonly PlayerRecord[];
 }
 
-export function playerId(p: Pick<PlayerRecord, 'toon' | 'name'>): string {
+/** A player's id across replays: their account's handle, or `name:<name>` without one. */
+export function playerId(p: {
+  readonly toon: Pick<NonNullable<PlayerRecord['toon']>, 'handle'> | null;
+  readonly name: string;
+}): string {
   return p.toon?.handle ?? `name:${p.name}`;
 }
 

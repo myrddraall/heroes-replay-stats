@@ -1,0 +1,19 @@
+<!-- padded, not constrained: its table grows to the whole width -->
+<hrs-layout default="padded">
+  @if (store.breakdown().rows.length === 0) {
+    <hrs-empty-state icon="filter_alt_off" title="No matches fit">
+      None of this player's matches fit these choices.
+    </hrs-empty-state>
+  } @else {
+    <hrs-player-breakdown
+      [title]="store.title()"
+      [breakdown]="store.breakdown()"
+      [groupBy]="store.groupBy()"
+      (groupByChange)="store.setGroupBy($event)"
+      [aggregate]="store.aggregate()"
+      (aggregateChange)="store.setAggregate($event)"
+      [sort]="store.sort()"
+      (sortChange)="store.setSort($event)"
+    />
+  }
+</hrs-layout>

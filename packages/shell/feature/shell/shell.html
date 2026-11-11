@@ -63,13 +63,21 @@
       }
       <mat-menu #settingsMenu="matMenu" xPosition="before">
         @for (item of menu; track item.label) {
-          <a mat-menu-item [routerLink]="item.link" [fragment]="item.fragment">{{ item.label }}</a>
+          @if (item.link !== undefined) {
+            <a mat-menu-item [routerLink]="item.link" [fragment]="item.fragment">{{ item.label }}</a>
+          } @else {
+            <button mat-menu-item type="button" (click)="item.run?.()">{{ item.label }}</button>
+          }
         }
         @if (devMenu.length) {
           <div class="shell__menu-group" role="group" aria-labelledby="shell-menu-dev">
             <span class="shell__menu-heading" id="shell-menu-dev">Dev</span>
             @for (item of devMenu; track item.label) {
-              <a mat-menu-item [routerLink]="item.link" [fragment]="item.fragment">{{ item.label }}</a>
+              @if (item.link !== undefined) {
+                <a mat-menu-item [routerLink]="item.link" [fragment]="item.fragment">{{ item.label }}</a>
+              } @else {
+                <button mat-menu-item type="button" (click)="item.run?.()">{{ item.label }}</button>
+              }
             }
           </div>
         }

@@ -5,6 +5,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { RouterLink } from '@angular/router';
 import { EmptyState } from '@myrddraall/heroes-replay-stats-common/ui';
 import {
   CellTemplate,
@@ -18,7 +19,7 @@ import type { PlayerRow } from './players-table.presenter';
 
 /**
  * Everyone in the stored replays (presentational, on the data grid): a row each, which accounts are
- * me, and a search by name.
+ * me, and a search by name. A player's name opens their page.
  */
 @Component({
   selector: 'hrs-players-table',
@@ -36,6 +37,7 @@ import type { PlayerRow } from './players-table.presenter';
     MatIconModule,
     MatInputModule,
     MatProgressBarModule,
+    RouterLink,
     RowTemplate,
   ],
   templateUrl: './players-table.html',

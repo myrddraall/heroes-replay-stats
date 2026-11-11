@@ -66,8 +66,13 @@ export class StatTable<T> {
     source: () => [this.columns(), this.rows()],
     computation: () => null,
   });
-  /** Compact rows: some team (its rows' theme, yours counted with your side) has more than one. */
+  /**
+   * Its rows' height: `auto` by its rows (compact where some team, its rows' theme with yours counted
+   * with your side, has more than one), or always `compact` or `tall` (the score table's).
+   */
+  readonly rowSize = input<'auto' | 'compact' | 'tall'>('auto');
   protected readonly dense = computed(() => {
+    if (this.rowSize() !== 'auto') return this.rowSize() === 'compact';
     const perTeam = new Map<string, number>();
     for (const row of this.rows()) {
       const team = row.theme?.replace('-self', '') ?? `${row.key}`;

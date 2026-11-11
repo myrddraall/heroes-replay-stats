@@ -1,7 +1,7 @@
 import type { Picture } from '@myrddraall/hero-data';
 import type { HeroIcon, HeroLookup } from '@myrddraall/heroes-replay-stats-heroes/model';
 import { replayViewed, type ReplaySummary, type ReplayViewed } from '../../model';
-import { resolveYou, type You } from '@myrddraall/heroes-replay-stats-players/model';
+import { resolveYou, type You } from '../../model';
 
 /**
  * What is happening to a replay: `importing` until it can be opened, then `analysing` while its

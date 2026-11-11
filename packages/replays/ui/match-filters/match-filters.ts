@@ -41,6 +41,8 @@ const PLAYED_LABELS: Readonly<Record<PlayedWithin, string>> = {
 export class MatchFilters {
   readonly options = input.required<MatchOptions>();
   readonly filter = model<MatchFilter>(ANY_MATCH);
+  /** What the hero choice is called: yours in your matches, the hero's in one player's. */
+  readonly heroLabel = input('Your hero');
 
   protected readonly modeLabels = MODE_LABELS;
   protected readonly played = PLAYED_WITHIN.map((value) => ({ value, label: PLAYED_LABELS[value] }));

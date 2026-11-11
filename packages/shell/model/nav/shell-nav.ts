@@ -57,6 +57,15 @@ export interface ShellMenuItem {
   readonly group?: 'dev';
 }
 
+/** An entry of the settings menu that does something instead of opening a page. */
+export interface ShellMenuAction {
+  readonly label: string;
+  /** Among the menu's entries, as a {@link ShellMenuItem}'s. */
+  readonly order: number;
+  readonly group?: 'dev';
+  run(): void;
+}
+
 /**
  * What a page has open (a match, a map), under an area or one of its sections: a step in the
  * breadcrumb and a node of the tree, with its own sections when it has them (the page's side nav

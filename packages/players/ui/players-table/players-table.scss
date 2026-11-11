@@ -1,3 +1,5 @@
+@use '../plain-grid';
+
 .head {
   display: flex;
   align-items: baseline;
@@ -15,23 +17,7 @@
 
 // A panel (hrs-panel): the grid's look.
 .players {
-  --hrs-grid-row-height: 0px;
-  --hrs-grid-cell-padding: 10px 16px;
-  --hrs-grid-cell-wrap: normal;
-  --hrs-grid-font: var(--mat-sys-body-medium);
-  --hrs-grid-text: var(--mat-sys-on-surface);
-  --hrs-grid-first-text: var(--mat-sys-on-surface);
-  --hrs-grid-header-height: 0px;
-  --hrs-grid-header-font: var(--mat-sys-label-medium);
-  --hrs-grid-header-text: var(--mat-sys-on-surface-variant);
-  --hrs-grid-header-tracking: 0.06em;
-  --hrs-grid-header-cell-background: var(--mat-sys-surface-container-high);
-  --hrs-grid-header-line: 1px solid var(--mat-sys-outline-variant);
-  --hrs-grid-row-line: 1px solid var(--mat-sys-outline-variant);
-
-  ::ng-deep .hrs-grid__header {
-    padding: 10px 16px;
-  }
+  @include plain-grid.look;
 
   ::ng-deep .players__me {
     justify-content: center;
@@ -52,17 +38,7 @@
   font: var(--mat-sys-label-small);
   color: var(--mat-sys-on-surface-variant);
 }
-.record {
-  display: inline-flex;
-  gap: 10px;
-  font-variant-numeric: tabular-nums;
-}
-.record__rate {
-  color: var(--mat-sys-on-surface-variant);
-}
-.record__rate--good {
-  color: var(--mat-sys-tertiary);
-}
+@include plain-grid.record;
 time {
   color: var(--mat-sys-on-surface-variant);
 }
