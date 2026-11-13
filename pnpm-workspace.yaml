@@ -17,6 +17,8 @@ minimumReleaseAgeExclude:
   # The heroprotocol libraries release through git-flow and are consumed the same
   # day; the release-age policy would block every bump.
   - '@myrddraall/*'
+  # cp-theming is adopted at its first alpha, a day after it was published.
+  - '@cpangular/*'
   - electron@44.4.5
   - '@cpdevtools/schematics'
   - '@tanstack/angular-virtual@6.1.12'
