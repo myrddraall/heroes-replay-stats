@@ -29,8 +29,8 @@ body {
   --hrs-film-modal: oklch(from var(--color--surface--high) l c h / var(--hrs-surface-alpha-modal));
   --hrs-film-hover: oklch(from var(--color--primary--bg) l c h / var(--hrs-hover-alpha));
   --hrs-scrim: oklch(from var(--color--background) l c h / var(--hrs-scrim-alpha));
-  --hrs-line: 1px solid var(--color--primary--stroke);
-  --hrs-line-strong: 1px solid var(--color--primary--stroke--high);
+  --hrs-line: 1px solid var(--color--surface--stroke--low);
+  --hrs-line-strong: 1px solid var(--color--surface--stroke);
   /* quieter text on a film: the film's contrast tinted toward primary (--weight--text-primary-tint), at the theme's two text weights; in OKLab, so the hue stays the theme's */
   --hrs-text-tinted: color-mix(
     in oklab,
@@ -141,7 +141,7 @@ a:hover {
 }
 .hrs-popover::before {
   bottom: -17px;
-  border-top-color: var(--color--primary--stroke);
+  border-top-color: var(--color--surface--stroke--low);
 }
 .hrs-popover::after {
   bottom: -15px;
@@ -151,7 +151,7 @@ a:hover {
   top: -17px;
   bottom: auto;
   border-top-color: transparent;
-  border-bottom-color: var(--color--primary--stroke);
+  border-bottom-color: var(--color--surface--stroke--low);
 }
 .hrs-popover--top::after {
   top: -15px;
@@ -194,7 +194,7 @@ a:hover {
 .hrs-menu__item:hover,
 .hrs-menu__item.is-active {
   background: var(--hrs-film-hover);
-  border-color: var(--color--primary--stroke);
+  border-color: var(--color--surface--stroke--low);
 }
 .hrs-menu__item.is-disabled {
   color: var(--hrs-text-dim);
@@ -203,7 +203,7 @@ a:hover {
 .hrs-menu__sep {
   height: 1px;
   margin: var(--hrs-space-1) var(--hrs-space-2);
-  background: var(--color--primary--stroke);
+  background: var(--color--surface--stroke--low);
 }
 
 /* Tooltip: the game's shape (StandardTooltip, Storm_UI_Tooltip_TopBorder) in the theme's colours: the
@@ -214,7 +214,7 @@ a:hover {
 .mat-mdc-tooltip .mat-mdc-tooltip-surface {
   max-width: calc(1em * 480 / 18);
   padding: calc(1em * 20 / 18);
-  border: 2px solid oklch(from var(--color--primary--stroke) l c h / calc(179 / 255));
+  border: 2px solid oklch(from var(--color--surface--stroke--low) l c h / calc(179 / 255));
   border-radius: 0;
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
@@ -298,15 +298,15 @@ a:hover {
   background: linear-gradient(
     in oklab 90deg,
     transparent,
-    var(--color--primary--stroke--high) 30%,
+    var(--color--surface--stroke) 30%,
     var(--color--primary) 50%,
-    var(--color--primary--stroke--high) 70%,
+    var(--color--surface--stroke) 70%,
     transparent
   );
   box-shadow: 0 0 8px var(--color--brand);
 }
 .hrs-divider--plain {
-  background: var(--color--primary--stroke);
+  background: var(--color--surface--stroke--low);
   box-shadow: none;
 }
 
@@ -746,7 +746,7 @@ a:hover {
   padding: 0 4px;
   color: var(--color--primary--bg--contrast);
   background: var(--color--primary--bg);
-  border: 2px solid var(--color--primary--stroke);
+  border: 2px solid var(--color--surface--stroke--low);
   border-radius: 0;
 }
 .hrs-badge {
@@ -776,7 +776,7 @@ a:hover {
 .hrs-badge--count {
   color: var(--color--primary--bg--contrast);
   background: var(--color--primary--bg);
-  border: 2px solid var(--color--primary--stroke);
+  border: 2px solid var(--color--surface--stroke--low);
   border-radius: 0;
 }
 
@@ -848,7 +848,7 @@ a:hover {
   height: 12px;
   width: 1px;
   transform: translateY(-50%);
-  background: var(--color--primary--stroke);
+  background: var(--color--surface--stroke--low);
 }
 .hrs-tab:hover {
   color: var(--color--surface--contrast);
@@ -1021,14 +1021,14 @@ a:hover {
   flex: 1;
 }
 .hrs-list__item:hover {
-  border-color: var(--color--primary--stroke--high);
+  border-color: var(--color--surface--stroke);
   box-shadow: var(--hrs-glow-hover);
   text-decoration: none;
 }
 .hrs-list__item[aria-current='true'],
 .hrs-list__item.is-selected {
   background: var(--color--primary--bg);
-  border-color: var(--color--primary--stroke--high);
+  border-color: var(--color--surface--stroke);
   box-shadow: var(--hrs-glow-selected);
 }
 .hrs-list__item .hrs-count {
@@ -1081,7 +1081,7 @@ a:hover {
   height: 1px;
   background: linear-gradient(
     90deg,
-    oklch(from var(--color--primary--stroke) l c h / 0.6),
+    oklch(from var(--color--surface--stroke--low) l c h / 0.6),
     transparent
   );
 }
@@ -1102,7 +1102,7 @@ a:hover {
 }
 /* a parent whose sub-item is current: lit border and label, no fill */
 .hrs-list__item.is-trail {
-  border-color: var(--color--primary--stroke--high);
+  border-color: var(--color--surface--stroke);
   color: var(--color--surface--contrast);
 }
 /* page-attached sub-items: plain links on a hairline guide, the current one as in the NavTree (upright glow line, fill flush to it) */
@@ -1110,7 +1110,7 @@ a:hover {
   margin: calc(-1 * var(--hrs-space-1)) 0 var(--hrs-space-1) var(--hrs-space-4);
   padding: var(--hrs-space-1) 0 var(--hrs-space-1) var(--hrs-space-2);
   list-style: none;
-  border-left: 1px solid oklch(from var(--color--primary--stroke) l c h / 0.6);
+  border-left: 1px solid oklch(from var(--color--surface--stroke--low) l c h / 0.6);
 }
 .hrs-sidenav__sub a {
   position: relative;
@@ -1210,7 +1210,7 @@ a:hover {
   right: 0;
   bottom: 0;
   height: 2px;
-  background: var(--color--primary--stroke);
+  background: var(--color--surface--stroke--low);
 }
 .hrs-pod__bar > span {
   display: block;
@@ -1224,7 +1224,7 @@ a:hover {
   position: relative;
   width: 3em;
   height: 3em;
-  border: 0.125em solid var(--color--primary--stroke--high);
+  border: 0.125em solid var(--color--surface--stroke);
   background: var(--color--surface--high);
   box-shadow: 0 0 0.4em oklch(from var(--color--brand) l c h / 0.5);
   display: grid;
@@ -1290,7 +1290,7 @@ a:hover {
   border-radius: var(--hrs-radius-0);
 }
 .hrs-btn:hover {
-  border-color: var(--color--primary--stroke--high);
+  border-color: var(--color--surface--stroke);
   box-shadow: var(--hrs-glow-hover);
   text-decoration: none;
 }
@@ -1299,7 +1299,7 @@ a:hover {
 }
 .hrs-btn--primary {
   color: var(--color--surface--contrast);
-  border-color: var(--color--primary--stroke--high);
+  border-color: var(--color--surface--stroke);
   box-shadow: var(--hrs-glow-selected);
   background: linear-gradient(
     in oklab oklch(from var(--color--brand) l c h / 0.45),
@@ -1316,7 +1316,7 @@ a:hover {
   color: var(--color--primary);
 }
 .hrs-btn--quiet:hover {
-  border-color: var(--color--primary--stroke);
+  border-color: var(--color--surface--stroke--low);
   box-shadow: none;
 }
 .hrs-btn--sm {
@@ -1346,7 +1346,7 @@ a:hover {
 .hrs-btn[disabled],
 .hrs-btn.is-disabled {
   color: var(--hrs-text-dim);
-  border-color: var(--color--primary--stroke);
+  border-color: var(--color--surface--stroke--low);
   background: var(--hrs-film);
   box-shadow: none;
   cursor: default;
@@ -1386,13 +1386,13 @@ a:hover {
 }
 .hrs-toggle:hover {
   color: var(--color--surface--contrast);
-  border-color: var(--color--primary--stroke--high);
+  border-color: var(--color--surface--stroke);
 }
 .hrs-toggle[aria-pressed='true'],
 .hrs-toggle[aria-checked='true'] {
   color: var(--color--surface--contrast);
   background: var(--color--primary--bg);
-  border-color: var(--color--primary--stroke--high);
+  border-color: var(--color--surface--stroke);
   box-shadow: var(--hrs-glow-selected);
 }
 
@@ -1499,7 +1499,7 @@ a:hover {
   min-height: 36px;
   padding-right: var(--hrs-space-3);
   background: var(--hrs-film);
-  border: 1px solid oklch(from var(--color--primary--stroke) l c h / 0.5);
+  border: 1px solid oklch(from var(--color--surface--stroke--low) l c h / 0.5);
   color: var(--color--surface--contrast);
   font-size: 14px;
 }
@@ -1507,7 +1507,7 @@ a:hover {
   width: 36px;
   align-self: stretch;
   background: oklch(from var(--color--primary--bg) l c h / 0.7);
-  border-right: 1px solid oklch(from var(--color--primary--stroke) l c h / 0.5);
+  border-right: 1px solid oklch(from var(--color--surface--stroke--low) l c h / 0.5);
   display: grid;
   place-items: center;
   font: 700 12px var(--font-brand);
@@ -1520,11 +1520,11 @@ a:hover {
   flex: 1;
 }
 .hrs-row:hover {
-  border-color: var(--color--primary--stroke);
+  border-color: var(--color--surface--stroke--low);
 }
 .hrs-row.is-selected {
   background: var(--color--primary--bg);
-  border-color: var(--color--primary--stroke--high);
+  border-color: var(--color--surface--stroke);
 }
 
 .hrs-card {
@@ -1563,17 +1563,17 @@ a:hover {
   color: var(--color--gold);
 }
 .hrs-card:hover {
-  border-color: var(--color--primary--stroke--high);
+  border-color: var(--color--surface--stroke);
   box-shadow: var(--hrs-glow-hover);
   text-decoration: none;
 }
 .hrs-card.is-selected {
-  border-color: var(--color--primary--stroke--high);
+  border-color: var(--color--surface--stroke);
   box-shadow: var(--hrs-glow-selected);
 }
 .hrs-card--empty {
   border-style: solid;
-  border-color: oklch(from var(--color--primary--stroke) l c h / 0.4);
+  border-color: oklch(from var(--color--surface--stroke--low) l c h / 0.4);
   background: oklch(from var(--color--surface) l c h / 0.4);
   cursor: default;
 }
@@ -1646,7 +1646,7 @@ hrs-data-grid {
   color: var(--hrs-grid-text, var(--hrs-text-muted));
   border-bottom: var(
     --hrs-grid-row-line,
-    1px solid oklch(from var(--color--primary--stroke) l c h / 0.35)
+    1px solid oklch(from var(--color--surface--stroke--low) l c h / 0.35)
   );
 }
 .hrs-grid__row > .hrs-grid__cell:first-child {
@@ -1674,18 +1674,18 @@ hrs-data-grid {
 }
 .hrs-grid__header[aria-sort='descending']:not(.mat-sort-header)::after {
   content: '▾';
-  color: var(--color--primary--stroke--high);
+  color: var(--color--surface--stroke);
 }
 .hrs-grid__header[aria-sort='ascending']:not(.mat-sort-header)::after {
   content: '▴';
-  color: var(--color--primary--stroke--high);
+  color: var(--color--surface--stroke);
 }
 .hrs-grid__body .hrs-grid__row:hover {
   background: var(--hrs-grid-row-hover, var(--hrs-film-hover));
 }
 .hrs-grid__body .hrs-grid__row[aria-selected='true'] {
   background: var(--hrs-grid-row-selected, var(--color--primary--bg));
-  box-shadow: inset 0 0 0 1px var(--color--primary--stroke--high);
+  box-shadow: inset 0 0 0 1px var(--color--surface--stroke);
 }
 .hrs-grid__group {
   grid-column: 1 / -1;
@@ -1705,7 +1705,7 @@ hrs-data-grid {
   left: 0;
   z-index: 1;
   background: var(--hrs-grid-sticky-background, var(--hrs-film-raised));
-  box-shadow: 1px 0 var(--color--primary--stroke);
+  box-shadow: 1px 0 var(--color--surface--stroke--low);
 }
 
 /* ItemList (hrs-item-list): every list of cards or rows, drawn only where the page's view is; the page sets its look through the custom properties below. Columns: as many as --hrs-list-item-min-width allows (the component sets --hrs-list-columns) */
@@ -1752,7 +1752,7 @@ hrs-item-list {
   height: 1px;
   background: linear-gradient(
     90deg,
-    oklch(from var(--color--primary--stroke) l c h / 0.6),
+    oklch(from var(--color--surface--stroke--low) l c h / 0.6),
     transparent
   );
 }
@@ -1818,7 +1818,7 @@ hrs-item-list {
   font-variant-numeric: tabular-nums;
 }
 .hrs-product:hover {
-  border-color: var(--color--primary--stroke--high);
+  border-color: var(--color--surface--stroke);
   box-shadow: var(--hrs-glow-hover);
 }
 
@@ -1838,11 +1838,11 @@ hrs-item-list {
 .hrs-chip.is-selected {
   color: var(--color--surface--contrast);
   background: var(--color--primary--bg);
-  border-color: var(--color--primary--stroke--high);
+  border-color: var(--color--surface--stroke);
 }
 .hrs-chip--accent {
   color: var(--color--primary);
-  border-color: var(--color--primary--stroke--high);
+  border-color: var(--color--surface--stroke);
 }
 
 .hrs-progress {
@@ -1894,16 +1894,16 @@ hrs-item-list {
   border: solid transparent;
   border-width: 5px 2px 5px 5px;
   border-radius: 0;
-  background: oklch(from var(--color--primary--stroke) l c h / 0.7) padding-box;
+  background: oklch(from var(--color--surface--stroke--low) l c h / 0.7) padding-box;
 }
 ::-webkit-scrollbar-thumb:horizontal {
   border-width: 5px 5px 2px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background-color: oklch(from var(--color--primary--stroke) l c h / 0.85);
+  background-color: oklch(from var(--color--surface--stroke--low) l c h / 0.85);
 }
 ::-webkit-scrollbar-thumb:active {
-  background-color: var(--color--primary--stroke--high);
+  background-color: var(--color--surface--stroke);
 }
 ::-webkit-scrollbar-corner {
   background: transparent;
@@ -1915,7 +1915,8 @@ hrs-item-list {
 @supports not selector(::-webkit-scrollbar) {
   :root,
   [theme] {
-    scrollbar-color: oklch(from var(--color--primary--stroke) l c h / 0.7) var(--color--surface);
+    scrollbar-color: oklch(from var(--color--surface--stroke--low) l c h / 0.7)
+      var(--color--surface);
   }
 }
 
@@ -1938,12 +1939,12 @@ hrs-item-list {
 .hrs-field:hover,
 .hrs-select:hover,
 .hrs-search:hover {
-  border-color: var(--color--primary--stroke--high);
+  border-color: var(--color--surface--stroke);
 }
 .hrs-field:focus-within,
 .hrs-select:focus-within,
 .hrs-search:focus-within {
-  border-color: var(--color--primary--stroke--high);
+  border-color: var(--color--surface--stroke);
   box-shadow: var(--hrs-glow-selected);
 }
 .hrs-field input,
@@ -2027,7 +2028,7 @@ hrs-item-list {
   cursor: pointer;
 }
 .hrs-check input:hover {
-  border-color: var(--color--primary--stroke--high);
+  border-color: var(--color--surface--stroke);
 }
 .hrs-check input:checked {
   background: var(--color--primary);
@@ -2081,7 +2082,7 @@ hrs-item-list {
     background 0.15s;
 }
 .hrs-switch input:checked {
-  border-color: var(--color--primary--stroke--high);
+  border-color: var(--color--surface--stroke);
   box-shadow: var(--hrs-glow-hover);
 }
 .hrs-switch input:checked::before {
@@ -2116,7 +2117,7 @@ hrs-item-list {
   width: 12px;
   height: 18px;
   background: var(--color--surface--contrast);
-  border: 1px solid var(--color--primary--stroke--high);
+  border: 1px solid var(--color--surface--stroke);
   border-radius: var(--hrs-radius-1);
   box-shadow: var(--hrs-glow-hover);
 }
@@ -2124,7 +2125,7 @@ hrs-item-list {
   width: 12px;
   height: 18px;
   background: var(--color--surface--contrast);
-  border: 1px solid var(--color--primary--stroke--high);
+  border: 1px solid var(--color--surface--stroke);
   border-radius: var(--hrs-radius-1);
 }
 .hrs-slider output {
@@ -2239,11 +2240,11 @@ hrs-item-list {
 }
 /* IconButton's hairline, which Material's icon button has no token for: the ring; strong with the hover glow */
 .mat-mdc-icon-button {
-  box-shadow: inset 0 0 0 1px var(--color--primary--stroke);
+  box-shadow: inset 0 0 0 1px var(--color--surface--stroke--low);
 }
 .mat-mdc-icon-button:hover {
   box-shadow:
-    inset 0 0 0 1px var(--color--primary--stroke--high),
+    inset 0 0 0 1px var(--color--surface--stroke),
     var(--hrs-glow-hover);
 }
 /* a mat-icon glyph takes the icon size as Material's images and svgs do (the button's font-size is the icon-size token); the icon font's class would hold it at 24px */
@@ -2389,7 +2390,7 @@ hrs-item-list {
 .hrs-tree :is(ul, [role='group']) {
   margin: 0 0 var(--hrs-space-1) var(--hrs-space-5);
   padding-left: var(--hrs-space-2);
-  border-left: 1px solid oklch(from var(--color--primary--stroke) l c h / 0.6);
+  border-left: 1px solid oklch(from var(--color--surface--stroke--low) l c h / 0.6);
 }
 .hrs-tree__item {
   position: relative;

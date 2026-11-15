@@ -7,20 +7,31 @@
 @use 'sass:map';
 
 // The guidelines give every theme one lightness and chroma per role and the theme's own hue
-// ("Colour system: OKLCH"). A theme passes three of them: its accent as the brand colour, and the
+// ("Colour system: OKLCH"). A theme passes four of them: its accent as the brand colour, the
 // page's ground and the films' tint as its background and surface, which keep their hue (core's
-// generated neutrals carry only a trace of it).
+// generated neutrals carry only a trace of it), and the films' strong border as the surface's
+// stroke: every line is that stroke (hovered, selected) or its low step (at rest), the app's and
+// Material's outline-variant alike.
 @function accent($hue, $lightness: 78%, $chroma: 0.13) {
   @return oklch($lightness $chroma $hue);
 }
-@function grounds($hue, $chroma-k: 1) {
+@function grounds($hue, $chroma-k: 1, $stroke: oklch(68% 0.18 * $chroma-k $hue)) {
   @return (
     background: t.palette(oklch(16% 0.045 * $chroma-k $hue)),
-    surface: t.palette(oklch(19.5% 0.06 * $chroma-k $hue))
+    surface: t.palette(oklch(19.5% 0.06 * $chroma-k $hue), $stroke: $stroke)
   );
 }
-@function nexus($hue, $brand: accent($hue), $chroma-k: 1, $palettes: ()) {
-  @return t.theme($brand: $brand, $palettes: map.merge(grounds($hue, $chroma-k), $palettes));
+@function nexus(
+  $hue,
+  $brand: accent($hue),
+  $chroma-k: 1,
+  $stroke: oklch(68% 0.18 * $chroma-k $hue),
+  $palettes: ()
+) {
+  @return t.theme(
+    $brand: $brand,
+    $palettes: map.merge(grounds($hue, $chroma-k, $stroke), $palettes)
+  );
 }
 
 // The colours that mean the same in every theme ("Colour means something"): palettes of the app's
@@ -91,16 +102,16 @@ $hrs: t.theme(
 // The user's own row in a team's table: the team's page and films, the self colour for the rest
 // (its brand, so its glow too), green on the blue side and gold on the red, as the game's score
 // screens draw it.
-@include t.define-theme('blue-self', nexus(266, $self));
-@include t.define-theme('red-self', nexus(18, $gold));
+@include t.define-theme('blue-self', nexus(266, $self, $stroke: oklch(68% 0.18 137)));
+@include t.define-theme('red-self', nexus(18, $gold, $stroke: oklch(74% 0.15 79)));
 
 // The item tiers, on the WoW item-quality hues; poor and common carry no chroma.
-@include t.define-theme('poor', nexus(286, accent(286, 68%, 0), $chroma-k: 0));
-@include t.define-theme('common', nexus(286, accent(286, 97%, 0), $chroma-k: 0));
-@include t.define-theme('uncommon', nexus(142, accent(142, 84%, 0.22)));
-@include t.define-theme('rare', nexus(250, accent(250, 72%, 0.15)));
-@include t.define-theme('epic', nexus(306, accent(306, 74%, 0.17)));
-@include t.define-theme('legendary', nexus(53, accent(53, 78%, 0.145)));
+@include t.define-theme('poor', nexus(286, accent(286, 68%, 0), 0, oklch(60% 0 286)));
+@include t.define-theme('common', nexus(286, accent(286, 97%, 0), 0, oklch(88% 0 286)));
+@include t.define-theme('uncommon', nexus(142, accent(142, 84%, 0.22), 1, oklch(72% 0.21 142)));
+@include t.define-theme('rare', nexus(250, accent(250, 72%, 0.15), 1, oklch(66% 0.18 250)));
+@include t.define-theme('epic', nexus(306, accent(306, 74%, 0.17), 1, oklch(68% 0.21 306)));
+@include t.define-theme('legendary', nexus(53, accent(53, 78%, 0.145), 1, oklch(70% 0.175 53)));
 
 // Angular Material: every --mat-sys-* variable its components read, worked out from the themes
 // above, and the adapter's measured corrections.

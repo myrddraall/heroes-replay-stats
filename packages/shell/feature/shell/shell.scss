@@ -69,7 +69,7 @@
 .shell__panel {
   width: var(--ui-side-panel-width);
   // its line along the page: Material's side drawer draws it (over the theme's) in its divider colour
-  --mat-sidenav-container-divider-color: var(--color--primary--stroke);
+  --mat-sidenav-container-divider-color: var(--color--surface--stroke--low);
   min-height: 0;
 
   ::ng-deep .mat-drawer-inner-container {
