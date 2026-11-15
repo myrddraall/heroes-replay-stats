@@ -2,7 +2,7 @@
 
 // The XP sources' colours (the sources chart's areas): categorical hues checked for colour-blind
 // separation between neighbours in the stacking order (XP_STACK) on the theme's dark panels, none
-// the teams' blue or red.
+// the teams' blue or red. Data colours of the chart, the same in every theme: not the theme's.
 :host {
   --xp-source-trickleXP: #199e70;
   --xp-source-creepXP: #d95926;
@@ -36,10 +36,12 @@
   gap: 0.5em;
 }
 
+// a team's line: its theme's own colour (the element carries the team's theme)
 .legend__line {
   inline-size: 1.5em;
   block-size: 2px;
   border-radius: 1px;
+  background: var(--color--brand);
 }
 
 .chart {

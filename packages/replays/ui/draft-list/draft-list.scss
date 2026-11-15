@@ -24,7 +24,7 @@
   ::ng-deep .hrs-grid__body .hrs-grid__row {
     --hrs-grid-themed-row-background: linear-gradient(
       90deg,
-      color-mix(in srgb, var(--mat-sys-primary) 12%, transparent),
+      var(--color--primary--tint-1),
       transparent 60%
     );
     --hrs-grid-row-hover: var(--hrs-grid-themed-row-background);

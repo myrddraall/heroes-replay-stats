@@ -72,8 +72,8 @@
 
     &:hover,
     &:focus-visible {
-      border-color: color-mix(in srgb, var(--mat-sys-primary) 50%, transparent);
-      background: color-mix(in srgb, var(--mat-sys-primary) 15%, transparent);
+      border-color: var(--color--primary--tint-4);
+      background: var(--color--primary--tint-2);
     }
 
     &:focus-visible {

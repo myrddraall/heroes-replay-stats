@@ -6,7 +6,6 @@
   "scripts": {
     "build": "devutil run build",
     "check": "wireit",
-    "check.contrast": "pnpm --filter @myrddraall/heroes-replay-stats-common check.contrast",
     "check.boundaries": "sheriff verify web,replay-worker,desktop-main,desktop-preload",
     "clean": "wireit",
     "fix": "wireit",

@@ -58,7 +58,7 @@
   cursor: pointer;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: color-mix(in oklch, var(--color--surface--contrast) var(--weight--state-hover), transparent);
   }
 
   &:focus-visible {

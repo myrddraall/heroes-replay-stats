@@ -23,7 +23,7 @@
   flex: none;
   width: 48px;
   height: 48px;
-  border: 1px solid color-mix(in srgb, var(--mat-sys-primary) 50%, transparent);
+  border: 1px solid var(--color--primary--tint-4);
   border-radius: 50%;
   background: radial-gradient(
     circle at 50% 50%,
@@ -48,14 +48,14 @@
 .cross {
   position: absolute;
   inset: 50% 0 auto;
-  border-top: 1px solid color-mix(in srgb, var(--mat-sys-primary) 35%, transparent);
+  border-top: 1px solid var(--color--primary--tint-3);
 
   &::after {
     position: absolute;
     top: -24px;
     left: 50%;
     height: 48px;
-    border-left: 1px solid color-mix(in srgb, var(--mat-sys-primary) 35%, transparent);
+    border-left: 1px solid var(--color--primary--tint-3);
     content: '';
   }
 }
@@ -67,7 +67,7 @@
   border-radius: 50%;
   background: repeating-conic-gradient(
     from -1.25deg,
-    color-mix(in srgb, var(--mat-sys-primary) 95%, transparent) 0deg 2.5deg,
+    var(--color--primary) 0deg 2.5deg,
     transparent 2.5deg 45deg
   );
   pointer-events: none;
@@ -103,7 +103,7 @@
   width: 16px;
   height: 16px;
   padding: 0;
-  border: 1px solid color-mix(in srgb, var(--mat-sys-primary) 30%, transparent);
+  border: 1px solid var(--color--primary--tint-3);
   background: var(--mat-sys-surface-container-low);
   color: inherit;
   font-size: 9px;
@@ -131,7 +131,7 @@
 
   &:hover,
   &:focus-visible {
-    border-color: color-mix(in srgb, var(--mat-sys-primary) 80%, transparent);
+    border-color: var(--color--primary--tint-5);
     outline: none;
   }
 

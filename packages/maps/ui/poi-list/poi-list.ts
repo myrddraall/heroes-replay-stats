@@ -79,6 +79,11 @@ export class PoiList {
   protected readonly byKey = (poi: Poi) => poi.key;
   protected readonly groupOf = (poi: Poi) => this.groupKeys().get(poi.key) ?? null;
 
+  /** The theme of the team a side's points belong to (order is blue, chaos red); none for neutral. */
+  protected sideTheme(owner: Poi['owner']): 'blue' | 'red' | null {
+    return owner === 'order' ? 'blue' : owner === 'chaos' ? 'red' : null;
+  }
+
   protected stateIcon(state: ElementShown | undefined): string {
     return state ? STATE_ICONS[state] : '';
   }

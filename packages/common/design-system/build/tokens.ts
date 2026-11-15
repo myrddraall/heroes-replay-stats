@@ -1,61 +1,8 @@
 /**
- * The design tokens, as tokens.json holds them: the base themes' colour roles from the role table
- * (themes.ts), the theme-independent colours (given in hex, written in OKLCH), shadows, type,
- * spacing, radius, opacity and effects.
+ * The design tokens, as tokens.json holds them: type, spacing, radius, opacity and effects. Colours
+ * and shadows are not tokens here: they are the cp-theming theme's (apps/web/src/theme.scss), which
+ * names the themes below and passes each its brand colour.
  */
-import { formatOklch, hexToOklch } from './oklab.ts';
-import { BASE_THEMES, type Role, roleValue, THEME_ALIASES, themeShadows } from './themes.ts';
-
-interface Token {
-  readonly name: string;
-  readonly value: string | Readonly<Record<string, string>>;
-  readonly usage: string;
-}
-
-const perTheme = (value: (theme: (typeof BASE_THEMES)[number]) => string) =>
-  Object.fromEntries(BASE_THEMES.map((t) => [t, value(t)]));
-const role = (r: Role) => perTheme((t) => roleValue(t, r));
-const glow = (name: string) => perTheme((t) => themeShadows(t)[name]!);
-/** A colour given in hex, written as OKLCH. */
-const hex = (h: string) => formatOklch(hexToOklch(h));
-
-const color: Token[] = [
-  { name: 'hrs-ground', value: role('hrs-ground'), usage: 'Page ground under the Play scene, and what shows if the scene is off. Never a panel fill.' },
-  { name: 'hrs-tint', value: role('hrs-tint'), usage: 'Base colour of every panel film: composed with hrs-surface-alpha over the scene (oklch(from) syntax). Panels, side nav, table rows.' },
-  { name: 'hrs-tint-raised', value: role('hrs-tint-raised'), usage: 'Film base for raised surfaces: popovers, menus, select panels, drawers, tooltips, the top bar. Composed with hrs-surface-alpha-raised.' },
-  { name: 'hrs-selection', value: role('hrs-selection'), usage: 'Selected row / active list item fill, hovered row at hrs-hover-alpha. Always under hrs-text.' },
-  { name: 'hrs-border', value: role('hrs-border'), usage: 'The 1px line on every panel, button, field, card and divider. 3:1 against hrs-tint in every theme.' },
-  { name: 'hrs-border-strong', value: role('hrs-border-strong'), usage: 'Border of hovered, focused and selected things; the sub-bar active underline; sort arrow.' },
-  { name: 'hrs-accent', value: role('hrs-accent'), usage: 'Accent text and icons: active nav label glow, links, chevron on section headings, primary button text. 4.5:1 on hrs-tint and hrs-tint-raised.' },
-  { name: 'hrs-glow', value: role('hrs-glow'), usage: 'Colour of every outer glow (box-shadow, drop-shadow) on hover/selected/primary and StyledText. 66% lightness in every theme with the chroma sRGB holds at that hue (cyan lifted to 72%), so no theme glows louder. Never a fill or text.' },
-  { name: 'hrs-text', value: hex('#f3f0ff'), usage: 'Titles, names, values, button labels. On hrs-tint, hrs-tint-raised, hrs-selection and hrs-ground in every theme.' },
-  { name: 'hrs-text-muted', value: role('hrs-text-muted'), usage: 'Body copy, labels, column headers, placeholders, secondary values. On hrs-tint and hrs-tint-raised; 4.5:1 in every theme.' },
-  { name: 'hrs-text-dim', value: role('hrs-text-dim'), usage: 'Disabled text and empty-slot labels only (decorative, 3:1 on hrs-tint). Never for content that must be read.' },
-  { name: 'hrs-on-accent', value: role('hrs-on-accent'), usage: 'Text on a solid hrs-accent fill (filled checkbox, slider thumb, count badge). Dark, never white.' },
-  { name: 'hrs-focus', value: hex('#ffd166'), usage: "Keyboard focus ring (2px solid, 2px offset) on every surface in every theme; the game has none, this is the web's." },
-  // semantic, theme independent
-  { name: 'hrs-team-blue', value: hex('#4a95ff'), usage: 'Ally / team-1 player names and markers (lifted from game LabelYourTeam #3184ff for 4.5:1 on hrs-selection). Text on hrs-tint. Pair with theme="blue" for whole panels.' },
-  { name: 'hrs-team-red', value: hex('#ff6471'), usage: 'Enemy / team-2 player names and markers (lifted from game LabelEnemyTeam #f70b21 for 4.5:1 on hrs-tint). Panels: theme="red".' },
-  { name: 'hrs-self', value: hex('#7bde4a'), usage: 'The user\'s own player wherever they appear in a list (the game\'s self green, hue 137: the profile frame\'s _self, the score screen\'s self overlay). Panels about the user: theme="self".' },
-  { name: 'hrs-gold', value: hex('#f2b632'), usage: 'Ownership and heroic marks: OWNED lines, heroic key outlines, the active section heading, the portrait frame fallback.' },
-  { name: 'hrs-error', value: hex('#ff6b6b'), usage: "Error lines and failed imports (the chat's red). Text on hrs-tint; always with a word, never colour alone." },
-  { name: 'hrs-info', value: hex('#6ca7ff'), usage: "System and informational lines (the chat's blue): 'has come online', import finished." },
-  { name: 'hrs-warning', value: hex('#f0a830'), usage: 'Warnings and partial states. Text on hrs-tint.' },
-  // the game's tooltip (StandardTooltip: Storm_UI_Tooltip_TopBorder, a 9-slice of flat colours over a
-  // blurred backdrop), theme independent as the game's: every tooltip looks the same
-  { name: 'hrs-tooltip-fill', value: hex('#130936'), usage: "Tooltip fill, at 242/255 over the blurred page (the game's tooltip texture's centre)." },
-  { name: 'hrs-tooltip-edge', value: hex('#8d94e7'), usage: "Tooltip border, 2px at 179/255 (the game's tooltip texture's edge)." },
-  { name: 'hrs-tooltip-text', value: hex('#8783e6'), usage: "Tooltip body text (the game's TooltipBody). On hrs-tooltip-fill." },
-];
-
-const shadow: Token[] = [
-  { name: 'hrs-glow-hover', value: glow('hrs-glow-hover'), usage: 'Hovered button, card, row and nav item.' },
-  { name: 'hrs-glow-selected', value: glow('hrs-glow-selected'), usage: 'Selected list item, active toggle, focused field, primary button at rest.' },
-  { name: 'hrs-glow-panel', value: glow('hrs-glow-panel'), usage: "Popovers, menus and the modal panel: the panel 'lifts' with a wide faint glow." },
-  { name: 'hrs-glow-modal', value: glow('hrs-glow-modal'), usage: "The modal dialog's halo over the blurred page." },
-  { name: 'hrs-shade', value: '0 2px 8px oklch(0% 0 0 / 0.5)', usage: 'Raised surfaces also drop a plain shadow under the glow so they read over bright art.' },
-];
-
 /** tokens.json. */
 export const DESIGN_TOKENS = {
   name: 'HRS Nexus UI',
@@ -72,8 +19,9 @@ export const DESIGN_TOKENS = {
       { id: 'red-self', name: 'Self on red (gold)' },
     ],
     /** Other names for a theme (no values of their own): the generated CSS gives them its rules. */
-    aliases: Object.entries(THEME_ALIASES).map(([id, of]) => ({ id, of })),
-    tokens: color,
+    aliases: [] as { id: string; of: string }[],
+    note: 'Colours are the cp-theming theme (apps/web/src/theme.scss): each theme passes a brand colour and core generates its palettes, roles and text colours for light and dark. Components read --color--<palette> and its roles.',
+    tokens: [] as { name: string; value: string; usage: string }[],
   },
   type: {
     fonts: [],
@@ -146,7 +94,10 @@ export const DESIGN_TOKENS = {
       { name: 'hrs-radius-1', value: '2px', usage: "Only badges, chips and the slider thumb, so they don't look like tiny panels." },
     ],
   },
-  shadow: { tokens: shadow },
+  shadow: {
+    note: "Shadows are the theme's elevation levels (--elevation-N--shadow); the glows are composed in components/bundle.css from the theme's brand colour.",
+    tokens: [] as { name: string; value: string; usage: string }[],
+  },
   opacity: {
     note: 'The film over the Play scene. These are the floors: the Opacity setting (Settings → Theme) raises all of them together towards solid, never below.',
     tokens: [

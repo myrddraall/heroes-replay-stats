@@ -1,0 +1,108 @@
+// HRS's theme, as cp-theming themes (https://cpangular.github.io/cp-theming/learn). It passes
+// what the HRS Nexus UI guidelines give (packages/common/design-system/README.md) and core
+// generates the rest in the browser: the steps, the roles and the text colour of every fill. HRS
+// is dark only: index.html puts themeMode="dark" on <html>, so only the dark half is ever shown.
+@use '@cpangular/cp-theming-core/scss/_theme.scss' as t;
+@use '@cpangular/cp-theming-ng-material/scss/_material.scss' as m;
+@use 'sass:map';
+
+// The guidelines give every theme one lightness and chroma per role and the theme's own hue
+// ("Colour system: OKLCH"). A theme passes three of them: its accent as the brand colour, and the
+// page's ground and the films' tint as its background and surface, which keep their hue (core's
+// generated neutrals carry only a trace of it).
+@function accent($hue, $lightness: 78%, $chroma: 0.13) {
+  @return oklch($lightness $chroma $hue);
+}
+@function grounds($hue, $chroma-k: 1) {
+  @return (
+    background: t.palette(oklch(16% 0.045 * $chroma-k $hue)),
+    surface: t.palette(oklch(19.5% 0.06 * $chroma-k $hue))
+  );
+}
+@function nexus($hue, $brand: accent($hue), $chroma-k: 1, $palettes: ()) {
+  @return t.theme($brand: $brand, $palettes: map.merge(grounds($hue, $chroma-k), $palettes));
+}
+
+// The colours that mean the same in every theme ("Colour means something"): palettes of the app's
+// theme, so every theme nested in it inherits them. Error and warning are the guidelines' own
+// colours for the fixed palettes of those names.
+$team-blue: #4a95ff;
+$team-red: #ff6471;
+$self: #7bde4a;
+$gold: #f2b632;
+$marks: (
+  'team-blue': t.palette($team-blue),
+  'team-red': t.palette($team-red),
+  'self': t.palette($self),
+  'gold': t.palette($gold),
+  'info': t.palette(#6ca7ff),
+  'error': t.palette(#ff6b6b),
+  'warn': t.palette(#f0a830),
+);
+
+// The app's theme: the purple neutral, the game's menus.
+$hrs: t.theme(
+  $brand: accent(286),
+  $palettes: map.merge(grounds(286), $marks),
+  // Saira for chrome and headings, Source Sans 3 for text ("Type").
+  $typography: t.typography(
+      $plain-family: (
+        'Source Sans 3',
+        sans-serif,
+      ),
+      $brand-family: (
+        'Saira',
+        sans-serif,
+      ),
+      $bold-weight: 600,
+      // Chrome is Saira: the labels of controls and the titles of rows.
+      $scale-overrides: (
+        label-large: (
+          font: var(--text--brand-family),
+        ),
+        title-medium: (
+          font: var(--text--brand-family),
+        ),
+      ),
+    ),
+  // Quieter text keeps the theme's hue: its contrast tinted halfway to primary (bundle.css's
+  // --hrs-text-muted), as the guidelines' muted text is the theme's hue at 80% lightness.
+  $weights: t.weights($text-primary-tint: 50%),
+  // Square; 2px only on badges, chips and the slider thumb ("Principles").
+  $shape: t.shape($xxs: 0, $xs: 2px, $sm: 0, $md: 0, $lg: 0, $xl: 0, $xxl: 0, $full: 2px)
+);
+
+@include t.define-core-theme();
+@include t.define-theme('hrs', $hrs, $default: true);
+
+// The neutrals the user picks between (Settings → Theme); purple is the app's theme again, so an
+// element can ask for it inside another theme.
+@include t.define-theme('purple', nexus(286));
+@include t.define-theme('magenta', nexus(328));
+@include t.define-theme('cyan', nexus(230));
+
+// The teams and the user's own player: each on the colour the guidelines give it (the game's
+// LabelYourTeam and LabelEnemyTeam lifted to read on a film, and its self green), its grounds at
+// the team's hue.
+@include t.define-theme('blue', nexus(266, $team-blue));
+@include t.define-theme('red', nexus(18, $team-red));
+@include t.define-theme('self', nexus(137, $self));
+
+// The user's own row in a team's table: the team's page and films, the self colour for the rest
+// (its brand, so its glow too), green on the blue side and gold on the red, as the game's score
+// screens draw it.
+@include t.define-theme('blue-self', nexus(266, $self));
+@include t.define-theme('red-self', nexus(18, $gold));
+
+// The item tiers, on the WoW item-quality hues; poor and common carry no chroma.
+@include t.define-theme('poor', nexus(286, accent(286, 68%, 0), $chroma-k: 0));
+@include t.define-theme('common', nexus(286, accent(286, 97%, 0), $chroma-k: 0));
+@include t.define-theme('uncommon', nexus(142, accent(142, 84%, 0.22)));
+@include t.define-theme('rare', nexus(250, accent(250, 72%, 0.15)));
+@include t.define-theme('epic', nexus(306, accent(306, 74%, 0.17)));
+@include t.define-theme('legendary', nexus(53, accent(53, 78%, 0.145)));
+
+// Angular Material: every --mat-sys-* variable its components read, worked out from the themes
+// above, and the adapter's measured corrections.
+@include m.define-ng-material-core-theme();
+@include m.apply-material-overrides();

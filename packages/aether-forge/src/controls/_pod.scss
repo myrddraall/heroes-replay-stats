@@ -5,12 +5,12 @@
   overflow: hidden;
   margin: -1px calc(-1 * var(--hrs-panel-inline, 0px)) 0;
   border-block: 1px solid var(--mat-sys-outline-variant);
-  background: color-mix(in srgb, var(--mat-sys-surface-container) 40%, transparent);
+  background: var(--color--surface--tint-3);
 }
 
 // A pod's heading: a bar across it, a line under it while what it heads is shown.
 @mixin head {
-  background: color-mix(in srgb, var(--mat-sys-surface-container) 75%, transparent);
+  background: var(--color--surface--tint-5);
 }
 
 @mixin head-line {

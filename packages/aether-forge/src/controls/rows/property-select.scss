@@ -21,7 +21,7 @@
 
 // A divider between groups of choices, in the panel's edge colour.
 .select hr {
-  border-color: color-mix(in srgb, var(--mat-sys-primary) 40%, transparent);
+  border-color: var(--color--primary--tint-3);
 }
 
 .reset-slot {

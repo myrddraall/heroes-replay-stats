@@ -32,7 +32,7 @@
   padding: 0;
   border: 0;
   background: none;
-  color: #fff;
+  color: var(--color--surface--contrast);
   cursor: pointer;
   pointer-events: auto;
   opacity: 0;
@@ -44,7 +44,7 @@
     height: 28px;
     font-size: 18px;
     border-radius: 50%;
-    background: rgb(0 0 0 / 0.65);
+    background: var(--color--surface--tint-5);
   }
 
   .label {
@@ -98,8 +98,8 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: rgb(0 0 0 / 0.7);
-  color: #fff;
+  background: var(--color--surface--tint-5);
+  color: var(--color--surface--contrast);
   pointer-events: auto;
 
   mat-icon {
@@ -112,7 +112,7 @@
 .label {
   padding: 2px 8px;
   border-radius: 4px;
-  background: rgb(0 0 0 / 0.55);
+  background: var(--color--surface--tint-4);
   font: var(--mat-sys-label-medium);
   white-space: nowrap;
 }
@@ -123,7 +123,7 @@
   position: absolute;
   translate: -50% -50%;
   padding: 2px 10px;
-  color: #fff;
+  color: var(--color--surface--contrast);
   font: var(--mat-sys-title-large);
   cursor: grab;
   pointer-events: auto;

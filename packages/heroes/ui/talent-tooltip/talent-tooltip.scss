@@ -4,17 +4,18 @@
   width: calc(1em * (450 - 40) / 18);
 }
 
-// StandardTooltipHeader: the header font, light blue to white top to bottom, a blue glow
+// StandardTooltipHeader: the header font, from the theme's primary to the tooltip's text colour top to
+// bottom, with a glow in the theme's colour
 .name {
   font-family: var(--font-brand);
   font-weight: 700;
-  background: linear-gradient(#cbe8ff, #ffffff);
+  background: linear-gradient(var(--color--primary--higher), var(--color--surface--highest--contrast));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   // the tooltip's text shadow would show through the clear letters: the glow instead
   text-shadow: none;
-  filter: drop-shadow(0 0 3px #0063c8);
+  filter: drop-shadow(0 0 3px var(--color--brand));
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -23,7 +24,7 @@
 // StandardTooltipDetails, 5 under the name
 .details {
   margin-top: calc(1em * 5 / 18);
-  color: #bfd4fd;
+  color: var(--color--surface--highest--contrast);
 }
 
 // StandardTooltip (the tooltip's own body text), 8 under the details

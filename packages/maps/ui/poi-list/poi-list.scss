@@ -30,16 +30,13 @@
     padding-top: 0;
   }
 
-  &.pois__team-heading--order::before {
-    background: var(--hrs-team-blue);
-  }
-
-  &.pois__team-heading--chaos::before {
-    background: var(--hrs-team-red);
+  // a side's heading carries its team's theme: the bar is that theme's own colour
+  &[theme]::before {
+    background: var(--color--brand);
   }
 
   &.pois__team-heading--neutral::before {
-    background: #ffdc6e;
+    background: var(--color--gold);
   }
 }
 
@@ -63,12 +60,12 @@
   border-radius: 8px;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.06);
+    background: color-mix(in oklch, var(--color--surface--contrast) var(--weight--state-hover), transparent);
   }
 
   &.poi-row--picked {
-    background: color-mix(in srgb, var(--mat-sys-primary) 16%, transparent);
-    outline: 1px solid color-mix(in srgb, var(--mat-sys-primary) 50%, transparent);
+    background: var(--color--primary--tint-2);
+    outline: 1px solid var(--color--primary--tint-4);
   }
 }
 
@@ -96,16 +93,13 @@
     flex: none;
   }
 
-  &.poi--order::before {
-    background: var(--hrs-team-blue);
-  }
-
-  &.poi--chaos::before {
-    background: var(--hrs-team-red);
+  // a side's point carries its team's theme: the dot is that theme's own colour
+  &[theme]::before {
+    background: var(--color--brand);
   }
 
   &.poi--neutral::before {
-    background: #ffdc6e;
+    background: var(--color--gold);
   }
 
   &.poi--off .poi__label {
@@ -140,7 +134,7 @@
   }
 
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: color-mix(in oklch, var(--color--surface--contrast) var(--weight--state-hover), transparent);
     color: var(--mat-sys-on-surface);
   }
 

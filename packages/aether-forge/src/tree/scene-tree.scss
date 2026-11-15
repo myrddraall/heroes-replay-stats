@@ -18,7 +18,7 @@
   padding-inline-end: pod.$inline;
 
   &--selected {
-    background: color-mix(in srgb, var(--mat-sys-primary) 18%, transparent);
+    background: var(--color--primary--tint-2);
     box-shadow: inset 2px 0 0 var(--mat-sys-primary);
   }
 

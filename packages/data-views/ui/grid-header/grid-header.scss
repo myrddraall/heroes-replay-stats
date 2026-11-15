@@ -22,7 +22,7 @@
   cursor: pointer;
 
   &:focus-visible {
-    outline: 2px solid var(--hrs-focus);
+    outline: 2px solid var(--color--primary--focus);
     outline-offset: -2px;
   }
 }
@@ -47,10 +47,10 @@
 
 .hrs-grid__header[aria-sort='descending'] .grid-header__arrow-room::after {
   content: '▾';
-  color: var(--hrs-border-strong);
+  color: var(--color--primary--stroke--high);
 }
 
 .hrs-grid__header[aria-sort='ascending'] .grid-header__arrow-room::after {
   content: '▴';
-  color: var(--hrs-border-strong);
+  color: var(--color--primary--stroke--high);
 }
