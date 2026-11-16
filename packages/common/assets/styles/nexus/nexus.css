@@ -21,12 +21,17 @@ body {
 /* What the app composes from the theme, in every theme: a theme colour with a number of the app's own. */
 :root,
 [theme] {
-  /* the films: the theme's surface at the alpha the user controls */
-  --hrs-film: oklch(from var(--color--surface) l c h / var(--hrs-surface-alpha));
-  --hrs-film-raised: oklch(
-    from var(--color--surface--high) l c h / var(--hrs-surface-alpha-raised)
+  /* a raised surface (popovers, menus, drawers, tooltips, the top bar): the theme's surface with primary mixed in at
+     the theme's elevation tint, level 2 (--elevation-2--tint: "% of primary mixed into a surface") */
+  --hrs-raised: color-mix(
+    in oklab,
+    var(--color--primary) var(--elevation-2--tint),
+    var(--color--surface)
   );
-  --hrs-film-modal: oklch(from var(--color--surface--high) l c h / var(--hrs-surface-alpha-modal));
+  /* the films: the theme's surface, or the raised one, at the alpha the user controls (the Opacity setting) */
+  --hrs-film: oklch(from var(--color--surface) l c h / var(--hrs-surface-alpha));
+  --hrs-film-raised: oklch(from var(--hrs-raised) l c h / var(--hrs-surface-alpha-raised));
+  --hrs-film-modal: oklch(from var(--hrs-raised) l c h / var(--hrs-surface-alpha-modal));
   --hrs-film-hover: oklch(from var(--color--primary--bg) l c h / var(--hrs-hover-alpha));
   --hrs-scrim: oklch(from var(--color--background) l c h / var(--hrs-scrim-alpha));
   --hrs-line: 1px solid var(--color--surface--stroke--low);
@@ -145,7 +150,7 @@ a:hover {
 }
 .hrs-popover::after {
   bottom: -15px;
-  border-top-color: var(--color--surface--high);
+  border-top-color: var(--hrs-raised);
 }
 .hrs-popover--top::before {
   top: -17px;
@@ -157,7 +162,7 @@ a:hover {
   top: -15px;
   bottom: auto;
   border-top-color: transparent;
-  border-bottom-color: var(--color--surface--high);
+  border-bottom-color: var(--hrs-raised);
 }
 .hrs-popover__header {
   display: flex;
@@ -207,7 +212,7 @@ a:hover {
 }
 
 /* Tooltip: the game's shape (StandardTooltip, Storm_UI_Tooltip_TopBorder) in the theme's colours: the
-   highest surface at 242/255 over the page blurred (its BlurFrame), a 2px border at 179/255, square.
+   raised surface at 242/255 over the page blurred (its BlurFrame), a 2px border at 179/255, square.
    Insets 20 and a 480 widest for its 18 high type. Material's tooltip takes the shape and keeps its own
    colours (the Material adapter's). */
 .hrs-tooltip,
@@ -224,11 +229,11 @@ a:hover {
   text-align: left;
 }
 .hrs-tooltip {
-  background: oklch(from var(--color--surface--highest) l c h / calc(242 / 255));
+  background: oklch(from var(--hrs-raised) l c h / calc(242 / 255));
   color: color-mix(
     in oklch,
-    var(--color--surface--highest--contrast) var(--weight--text-blend),
-    var(--color--surface--highest)
+    var(--color--surface--contrast) var(--weight--text-blend),
+    var(--hrs-raised)
   );
   box-shadow: var(--elevation-2--shadow);
 }
@@ -236,7 +241,7 @@ a:hover {
   display: inline-block;
 }
 .hrs-tooltip b {
-  color: var(--color--surface--highest--contrast);
+  color: var(--color--surface--contrast);
   font-weight: 600;
 }
 
@@ -758,7 +763,7 @@ a:hover {
   font: 700 1em/1 var(--font-brand);
   font-size: 0.72em;
   color: var(--color--surface--contrast);
-  background: var(--color--surface--high);
+  background: var(--hrs-raised);
   border: var(--hrs-line-strong);
   border-radius: var(--hrs-radius-1);
 }
@@ -1225,7 +1230,7 @@ a:hover {
   width: 3em;
   height: 3em;
   border: 0.125em solid var(--color--surface--stroke);
-  background: var(--color--surface--high);
+  background: var(--hrs-raised);
   box-shadow: 0 0 0.4em oklch(from var(--color--brand) l c h / 0.5);
   display: grid;
   place-items: center;
@@ -1983,7 +1988,7 @@ hrs-item-list {
   cursor: pointer;
 }
 .hrs-select select option {
-  background: var(--color--surface--high);
+  background: var(--hrs-raised);
   color: var(--color--surface--contrast);
 }
 .hrs-search::before {
@@ -2546,7 +2551,7 @@ hrs-item-list {
   border-right: var(--hrs-line);
   width: min(320px, 86vw);
   isolation: isolate;
-  background: oklch(from var(--color--surface--high) l c h / 0.97);
+  background: oklch(from var(--hrs-raised) l c h / 0.97);
 }
 .hrs-drawer--nav .hrs-drawer__body {
   padding: var(--hrs-space-2) 0;

@@ -9,7 +9,7 @@
 .name {
   font-family: var(--font-brand);
   font-weight: 700;
-  background: linear-gradient(var(--color--primary--higher), var(--color--surface--highest--contrast));
+  background: linear-gradient(var(--color--primary--higher), var(--color--surface--contrast));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -24,7 +24,7 @@
 // StandardTooltipDetails, 5 under the name
 .details {
   margin-top: calc(1em * 5 / 18);
-  color: var(--color--surface--highest--contrast);
+  color: var(--color--surface--contrast);
 }
 
 // StandardTooltip (the tooltip's own body text), 8 under the details

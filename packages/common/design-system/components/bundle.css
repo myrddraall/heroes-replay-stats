@@ -9,10 +9,13 @@
 body { margin: 0; font-family: var(--font-plain); font-size: 15px; line-height: 22px; color: var(--color--background--contrast); background: var(--color--background); }
 /* What the app composes from the theme, in every theme: a theme colour with a number of the app's own. */
 :root, [theme] {
-  /* the films: the theme's surface at the alpha the user controls */
+  /* a raised surface (popovers, menus, drawers, tooltips, the top bar): the theme's surface with primary mixed in at
+     the theme's elevation tint, level 2 (--elevation-2--tint: "% of primary mixed into a surface") */
+  --hrs-raised: color-mix(in oklab, var(--color--primary) var(--elevation-2--tint), var(--color--surface));
+  /* the films: the theme's surface, or the raised one, at the alpha the user controls (the Opacity setting) */
   --hrs-film: oklch(from var(--color--surface) l c h / var(--hrs-surface-alpha));
-  --hrs-film-raised: oklch(from var(--color--surface--high) l c h / var(--hrs-surface-alpha-raised));
-  --hrs-film-modal: oklch(from var(--color--surface--high) l c h / var(--hrs-surface-alpha-modal));
+  --hrs-film-raised: oklch(from var(--hrs-raised) l c h / var(--hrs-surface-alpha-raised));
+  --hrs-film-modal: oklch(from var(--hrs-raised) l c h / var(--hrs-surface-alpha-modal));
   --hrs-film-hover: oklch(from var(--color--primary--bg) l c h / var(--hrs-hover-alpha));
   --hrs-scrim: oklch(from var(--color--background) l c h / var(--hrs-scrim-alpha));
   --hrs-line: 1px solid var(--color--surface--stroke--low);
@@ -65,9 +68,9 @@ a:hover { text-decoration: underline; }
   box-shadow: var(--hrs-glow-panel), var(--elevation-2--shadow); backdrop-filter: var(--hrs-backdrop-raised); }
 .hrs-popover::before, .hrs-popover::after { content: ""; position: absolute; left: 50%; border: 8px solid transparent; transform: translateX(-50%); }
 .hrs-popover::before { bottom: -17px; border-top-color: var(--color--surface--stroke--low); }
-.hrs-popover::after { bottom: -15px; border-top-color: var(--color--surface--high); }
+.hrs-popover::after { bottom: -15px; border-top-color: var(--hrs-raised); }
 .hrs-popover--top::before { top: -17px; bottom: auto; border-top-color: transparent; border-bottom-color: var(--color--surface--stroke--low); }
-.hrs-popover--top::after { top: -15px; bottom: auto; border-top-color: transparent; border-bottom-color: var(--color--surface--high); }
+.hrs-popover--top::after { top: -15px; bottom: auto; border-top-color: transparent; border-bottom-color: var(--hrs-raised); }
 .hrs-popover__header { display: flex; align-items: center; padding: var(--hrs-space-2) var(--hrs-space-2) var(--hrs-space-2) var(--hrs-space-3);
   font: 700 12px/16px var(--font-brand); letter-spacing: 0.08em; text-transform: uppercase; }
 .hrs-popover__body { padding: var(--hrs-space-2) var(--hrs-space-3) var(--hrs-space-3); display: flex; flex-direction: column; gap: var(--hrs-space-2); }
@@ -80,7 +83,7 @@ a:hover { text-decoration: underline; }
 .hrs-menu__sep { height: 1px; margin: var(--hrs-space-1) var(--hrs-space-2); background: var(--color--surface--stroke--low); }
 
 /* Tooltip: the game's shape (StandardTooltip, Storm_UI_Tooltip_TopBorder) in the theme's colours: the
-   highest surface at 242/255 over the page blurred (its BlurFrame), a 2px border at 179/255, square.
+   raised surface at 242/255 over the page blurred (its BlurFrame), a 2px border at 179/255, square.
    Insets 20 and a 480 widest for its 18 high type. Material's tooltip takes the shape and keeps its own
    colours (the Material adapter's). */
 .hrs-tooltip, .mat-mdc-tooltip .mat-mdc-tooltip-surface {
@@ -88,11 +91,11 @@ a:hover { text-decoration: underline; }
   border: 2px solid oklch(from var(--color--surface--stroke--low) l c h / calc(179 / 255)); border-radius: 0;
   -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
   font-family: var(--font-plain); font-size: 14px; line-height: 18px; text-align: left; }
-.hrs-tooltip { background: oklch(from var(--color--surface--highest) l c h / calc(242 / 255));
-  color: color-mix(in oklch, var(--color--surface--highest--contrast) var(--weight--text-blend), var(--color--surface--highest));
+.hrs-tooltip { background: oklch(from var(--hrs-raised) l c h / calc(242 / 255));
+  color: color-mix(in oklch, var(--color--surface--contrast) var(--weight--text-blend), var(--hrs-raised));
   box-shadow: var(--elevation-2--shadow); }
 .hrs-tooltip { display: inline-block; }
-.hrs-tooltip b { color: var(--color--surface--highest--contrast); font-weight: 600; }
+.hrs-tooltip b { color: var(--color--surface--contrast); font-weight: 600; }
 
 .hrs-modal-scrim { position: relative; display: grid; place-items: center; padding: var(--hrs-space-8);
   background: var(--hrs-scrim); backdrop-filter: var(--hrs-backdrop-modal); }
@@ -203,7 +206,7 @@ a:hover { text-decoration: underline; }
 .hrs-nav1__link .hrs-badge { position: relative; z-index: 3; align-self: flex-start; margin: calc(var(--hrs-bar-1) * 0.12) 0 0 4px; font: 700 14px/1 var(--font-brand); min-width: 22px; height: 22px; padding: 0 4px;
   color: var(--color--primary--bg--contrast); background: var(--color--primary--bg); border: 2px solid var(--color--surface--stroke--low); border-radius: 0; }
 .hrs-badge { display: inline-grid; place-items: center; min-width: 1.6em; height: 1.6em; padding: 0 0.35em; font: 700 1em/1 var(--font-brand); font-size: 0.72em;
-  color: var(--color--surface--contrast); background: var(--color--surface--high); border: var(--hrs-line-strong); border-radius: var(--hrs-radius-1); }
+  color: var(--color--surface--contrast); background: var(--hrs-raised); border: var(--hrs-line-strong); border-radius: var(--hrs-radius-1); }
 .hrs-badge--filled { color: var(--color--primary--contrast); background: var(--color--primary); border-color: var(--color--primary); }
 .hrs-badge--corner { position: absolute; top: -0.6em; left: -0.6em; font-size: 0.65em; }
 .hrs-badge--count { color: var(--color--primary--bg--contrast); background: var(--color--primary--bg); border: 2px solid var(--color--surface--stroke--low); border-radius: 0; }
@@ -287,7 +290,7 @@ a:hover { text-decoration: underline; }
 .hrs-pod__bar > span { display: block; height: 100%; background: var(--color--primary); box-shadow: 0 0 6px var(--color--brand); }
 
  /* sized by font-size: 1em = the initials; the frame is 3em square (16px → 48px). Frame colour = the theme's strong border (a team frame when themed). */
-.hrs-portrait { position: relative; width: 3em; height: 3em; border: 0.125em solid var(--color--surface--stroke); background: var(--color--surface--high);
+.hrs-portrait { position: relative; width: 3em; height: 3em; border: 0.125em solid var(--color--surface--stroke); background: var(--hrs-raised);
   box-shadow: 0 0 0.4em oklch(from var(--color--brand) l c h / 0.5); display: grid; place-items: center; color: var(--hrs-text-muted); font: 700 1em/1 var(--font-brand); }
 .hrs-portrait__level { position: absolute; left: 50%; bottom: -0.5em; transform: translateX(-50%); padding: 0 0.4em; font: 700 0.65em/1.5 var(--font-brand);
   color: var(--color--primary--contrast); background: var(--color--primary); border-radius: var(--hrs-radius-1); font-variant-numeric: tabular-nums; }
@@ -446,7 +449,7 @@ hrs-item-list { display: block; }
 .hrs-field input::placeholder, .hrs-search input::placeholder { color: var(--hrs-text-dim); }
 .hrs-select { cursor: pointer; justify-content: space-between; } .hrs-select::after { content: "⌄"; color: var(--color--primary); font-size: 18px; line-height: 0; margin-top: -6px; }
 .hrs-select select { appearance: none; background: none; border: 0; color: inherit; font: inherit; outline: 0; flex: 1; cursor: pointer; }
-.hrs-select select option { background: var(--color--surface--high); color: var(--color--surface--contrast); }
+.hrs-select select option { background: var(--hrs-raised); color: var(--color--surface--contrast); }
 .hrs-search::before { content: "⌕"; font-size: 18px; line-height: 1; color: var(--hrs-text-muted); transform: scaleX(-1); }
 .hrs-field.is-invalid, .hrs-select.is-invalid { border-color: var(--color--error); }
 .hrs-help { display: block; margin-top: var(--hrs-space-1); font-size: 12px; line-height: 16px; color: var(--hrs-text-muted); } .hrs-help.is-error { color: var(--color--error); }
@@ -591,7 +594,7 @@ hrs-item-list { display: block; }
 .hrs-tree [role="treeitem"] { display: block; }
 .hrs-tree > .hrs-tree__family { margin-top: var(--hrs-space-2); padding-top: var(--hrs-space-2); border-top: var(--hrs-line); }
 .hrs-drawer--shell { align-self: stretch; min-height: 0; margin: 0; }
-.hrs-drawer--nav { align-self: stretch; margin: 0; border-left: 0; border-right: var(--hrs-line); width: min(320px, 86vw); isolation: isolate; background: oklch(from var(--color--surface--high) l c h / 0.97); }
+.hrs-drawer--nav { align-self: stretch; margin: 0; border-left: 0; border-right: var(--hrs-line); width: min(320px, 86vw); isolation: isolate; background: oklch(from var(--hrs-raised) l c h / 0.97); }
 .hrs-drawer--nav .hrs-drawer__body { padding: var(--hrs-space-2) 0; }
 
 /* The bars' backdrop blur sits on each bar's own box, never on its texture layer: that layer reaches below the bar for the drop shadow, and a blur there smears whatever is at the bar's edge (the scene, a bright planet) into those rows, a line of light under the bar */
