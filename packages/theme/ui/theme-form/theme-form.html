@@ -1,0 +1,32 @@
+@let s = settings();
+<section class="card hrs-panel" aria-labelledby="theme-heading">
+  <h2 id="theme-heading">Theme</h2>
+
+  <span class="label" id="theme-label">Colour</span>
+  <mat-button-toggle-group
+    class="choice"
+    aria-labelledby="theme-label"
+    hideSingleSelectionIndicator
+    [value]="s.theme"
+    (change)="changed.emit({ theme: $event.value })"
+  >
+    @for (theme of themes; track theme.value) {
+      <mat-button-toggle [value]="theme.value">{{ theme.label }}</mat-button-toggle>
+    }
+  </mat-button-toggle-group>
+
+  <hrs-setting-slider
+    inputId="theme-opacity"
+    label="Opacity"
+    [value]="s.opacity"
+    [shown]="opacity()"
+    [min]="0"
+    [max]="1"
+    [step]="0.01"
+    (valueChange)="changed.emit({ opacity: $event })"
+  />
+
+  <mat-slide-toggle class="toggle" [checked]="s.blur" (change)="changed.emit({ blur: $event.checked })">
+    Blur the background behind panels
+  </mat-slide-toggle>
+</section>

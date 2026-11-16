@@ -1,0 +1,77 @@
+@use '../score-row/score-row';
+
+// Colours are Material's system tokens, so a row re-themed by its team follows it. It never
+// scrolls sideways: the component measures the grid and squeezes it (below) or shows ranking
+// cards when it doesn't fit (see score-table.ts).
+:host {
+  display: block;
+  min-width: 0;
+}
+
+// The grid's look, the game's score rows (_score-row.scss); hides the one frame in which a
+// too-wide table is measured, on the grid only, so the ranking cards (and their chips' outline and
+// glow) are never cut.
+.score-table {
+  @include score-row.grid;
+  overflow-x: clip;
+
+  // the figures a step lighter than the theme's styled text (bold): semibold
+  ::ng-deep .hrs-grid__body hrs-number-cell {
+    font-weight: 600;
+  }
+}
+
+// Squeezed: short numbers (the number cells), tighter cells, smaller header icons.
+:host(.score-table--squeezed) {
+  .score-table {
+    --hrs-grid-cell-padding: 0.35em;
+
+    ::ng-deep .hrs-grid__header {
+      padding: 4px;
+    }
+  }
+
+  .score-table__icon {
+    font-size: 26px;
+  }
+}
+
+// a header's icon and, sorted by, its order arrow, on one line
+.score-table__label {
+  display: inline-flex;
+  align-items: center;
+}
+
+// the game's icons at its size (32 for its 56 high rows, as ours are), the hover state while the
+// header is hovered
+.score-table__icon {
+  font-size: 32px;
+}
+
+.score-table ::ng-deep .hrs-grid__header:hover {
+  --stat-icon-normal: none;
+  --stat-icon-hover: block;
+}
+
+// the sort order in the game's arrows (26 × 18, at half its size) beside the icon; Material's arrow
+// and the room kept for it hidden
+.score-table__order {
+  display: inline-block;
+  width: 13px;
+  height: 9px;
+  margin-left: 3px;
+  overflow: hidden;
+}
+
+.score-table ::ng-deep .grid-header__arrow-room {
+  display: none;
+}
+
+.score-table__hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

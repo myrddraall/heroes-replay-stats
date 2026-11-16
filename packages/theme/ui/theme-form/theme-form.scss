@@ -1,0 +1,18 @@
+.card {
+  padding: 20px;
+  margin-bottom: 16px; // a panel (hrs-panel)
+}
+.label {
+  display: block;
+  margin-top: 16px;
+  margin-bottom: 8px;
+  font: var(--mat-sys-body-large);
+  color: var(--mat-sys-on-surface);
+}
+.choice {
+  flex-wrap: wrap;
+}
+.toggle {
+  display: block;
+  margin-top: 16px;
+}

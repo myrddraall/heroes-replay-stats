@@ -1,0 +1,25 @@
+<h2>{{ table().title }}</h2>
+<div class="scroll">
+  <table>
+    <thead>
+      <tr>
+        @for (c of table().columns; track $index) {
+          <th scope="col">{{ c }}</th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of table().rows; track $index) {
+        <tr>
+          @for (cell of row; track $index; let first = $first) {
+            @if (first) {
+              <th scope="row">{{ cell }}</th>
+            } @else {
+              <td>{{ cell }}</td>
+            }
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

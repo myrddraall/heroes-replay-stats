@@ -1,0 +1,8 @@
+# SideNav
+Level 3: the page's own navigation as a column at the left of the content, with no backdrop behind it (the game's Collection categories). The page fills it through the shell's slot, the way pages attach nav children today.
+- **Groups** (`.hrs-sidenav__group`): a small uppercase heading (`.hrs-sidenav__heading`, a button) with a fading hairline, over a SelectionList of bordered buttons. A heading folds its group (`aria-expanded`).
+- **Items**: bordered buttons (`.hrs-list__item`); the current one has the selection fill, strong border and selected glow. Counts sit at the right end.
+- **Page-attached sub-items** (`.hrs-sidenav__sub`): a parent button with sub-items gets a chevron and folds them (`aria-expanded`). The sub-items are plain links on a hairline guide under it. The current sub-item uses the NavTree's current look (white label, the game's underline turned upright on the guide, fill flush to it), and its parent shows the trail (`is-trail`: strong border, no fill). Only the branch holding the current page starts open.
+- **Sticky** (`hrs-sidenav--sticky`): the column stays in view while a long page scrolls, and scrolls itself if taller than the window.
+- Handset: the column disappears; the same groups and items become the deepest levels of the NavTree in the nav Drawer.
+**Consumer provides:** groups, items, sub-items, the current route, counts, through the shell's side-nav slot. The page keeps the column inside its own layout (hrs-layout), never the shell. **Material:** none; buttons and anchors styled as these classes, `aria-expanded` from a signal per branch.

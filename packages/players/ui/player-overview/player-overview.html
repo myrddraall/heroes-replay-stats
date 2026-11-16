@@ -1,0 +1,97 @@
+@let o = overview();
+<h2 class="cdk-visually-hidden">Overview</h2>
+@if (o.games === 0) {
+  <hrs-empty-state icon="filter_alt_off" title="No matches fit">
+    None of this player's matches fit these choices.
+  </hrs-empty-state>
+} @else {
+  <section class="block hrs-panel" aria-labelledby="overview-matches">
+    <h3 id="overview-matches" class="hrs-panel__header">Matches</h3>
+    <dl class="figures hrs-panel__body">
+      @for (figure of o.matches; track figure.id) {
+        <div class="figure">
+          <dt>{{ figure.label }}</dt>
+          <dd>{{ format(figure) }}</dd>
+        </div>
+      }
+    </dl>
+    <ol class="recent" aria-label="Latest results, the most recent first">
+      @for (won of o.recent; track $index) {
+        <li
+          class="recent__game"
+          [class.recent__game--won]="won === true"
+          [class.recent__game--lost]="won === false"
+        >
+          <span class="cdk-visually-hidden">{{
+            won === null ? 'No result' : won ? 'Won' : 'Lost'
+          }}</span>
+        </li>
+      }
+    </ol>
+  </section>
+
+  <section class="block hrs-panel" aria-labelledby="overview-averages">
+    <h3 id="overview-averages" class="hrs-panel__header">Average Match</h3>
+    <dl class="figures hrs-panel__body">
+      @for (figure of o.averages; track figure.id) {
+        <div class="figure">
+          <dt>{{ figure.label }}</dt>
+          <dd>{{ format(figure) }}</dd>
+        </div>
+      }
+    </dl>
+  </section>
+
+  <section class="block hrs-panel" aria-labelledby="overview-connection">
+    <h3 id="overview-connection" class="hrs-panel__header">Connection</h3>
+    <dl class="figures hrs-panel__body">
+      @for (figure of o.connection; track figure.id) {
+        <div class="figure">
+          <dt>{{ figure.label }}</dt>
+          <dd>{{ format(figure) }}</dd>
+        </div>
+      }
+    </dl>
+  </section>
+
+  <section class="block hrs-panel" aria-labelledby="overview-heroes">
+    <h3 id="overview-heroes" class="hrs-panel__header">Heroes</h3>
+    <ul class="heroes hrs-panel__body">
+      @for (h of o.heroes; track h.hero) {
+        <li class="hero">
+          <hrs-hero-portrait
+            class="hero__portrait"
+            [picture]="h.portrait?.picture ?? null"
+            [name]="h.portrait?.name ?? h.hero"
+          />
+          <span class="hero__name">{{ h.hero }}</span>
+          <span class="hero__games">{{ h.games }} {{ h.games === 1 ? 'match' : 'matches' }}</span>
+          <span class="hero__record">{{ h.wins }}–{{ h.losses }}</span>
+          <span class="hero__rate" [class.hero__rate--good]="h.winRate !== null && h.winRate >= 0.5">
+            @if (h.winRate !== null) {
+              {{ h.winRate | percent: '1.0-0' }}
+            }
+          </span>
+        </li>
+      }
+    </ul>
+    @if (o.moreHeroes > 0) {
+      <p class="more">and {{ o.moreHeroes }} more</p>
+    }
+  </section>
+
+  @if (o.awards.length > 0) {
+    <section class="block hrs-panel" aria-labelledby="overview-awards">
+      <h3 id="overview-awards" class="hrs-panel__header">Awards</h3>
+      <ul class="awards hrs-panel__body">
+        @for (a of o.awards; track a.id) {
+          <li class="award" [matTooltip]="a.description ?? ''">
+            <hrs-award-badge class="award__badge" [picture]="a.badge" [name]="a.name" />
+            <span class="award__name">{{ a.name }}</span>
+            <span class="award__count">×{{ a.count }}</span>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+}

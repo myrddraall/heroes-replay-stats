@@ -1,0 +1,61 @@
+@let added = editor.added();
+@let anchor = editor.skyAnchor();
+<forge-property-section
+  title="Placement"
+  [changed]="anchor.set !== undefined"
+  (resetRequested)="editor.clearSkyAnchor()"
+>
+  <forge-property-select
+    label="Anchor"
+    [value]="anchor.value"
+    [options]="skyAnchors"
+    [changed]="anchor.set !== undefined"
+    [origin]="anchor.origin"
+    (resetRequested)="editor.clearSkyAnchor()"
+    (valueChange)="setSkyAnchor($event)"
+  />
+</forge-property-section>
+<forge-pick-list
+  title="Overlays"
+  addLabel="Add overlay"
+  removeLabel="Take off"
+  [picked]="editor.skyWorn()"
+  [choices]="editor.skyOverlayOptions()"
+  [changed]="editor.skyOverlaysSet()"
+  icon="style"
+  [linkable]="true"
+  newLabel="New overlay"
+  (itemShow)="editor.showSkyOverlay($event)"
+  (created)="newOverlay()"
+  (added)="editor.addSkyOverlay($event)"
+  (removed)="editor.removeSkyOverlay($event)"
+  (resetRequested)="editor.resetSkyOverlays()"
+/>
+@if (editor.partShapes().length) {
+<forge-property-section title="Parts">
+  <forge-add-part
+    [shapes]="editor.partShapes()"
+    [existing]="editor.reusableParts()"
+    [savable]="editor.canSaveAsOverlay()"
+    (added)="editor.addPart($event)"
+    (reused)="editor.reusePart($event)"
+    (saved)="editor.saveAsOverlay()"
+  />
+  <forge-added-list
+    title="Parts"
+    [items]="added.parts ?? []"
+    (itemShow)="editor.showAdded($event)"
+    (itemRemove)="editor.removeAdded($event)"
+  />
+</forge-property-section>
+}
+<div class="buttons">
+  <button
+    type="button"
+    class="button"
+    (click)="editor.resetSky()"
+    [disabled]="!editor.skyChanged()"
+  >
+    Reset sky
+  </button>
+</div>

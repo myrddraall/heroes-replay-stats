@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // The workspace packages this package's specs render, from their sources, so the test build
+    // compiles them as it does this package (it leaves packages it resolves from node_modules
+    // uncompiled, for Vitest, and their signal inputs would never be set).
+    "rootDir": "../..",
+    "paths": {
+      "@myrddraall/heroes-replay-stats-common/*": ["../common/*/index.ts"],
+      "@myrddraall/heroes-replay-stats-sheets/*": ["../sheets/*/index.ts"]
+    }
+  }
+}

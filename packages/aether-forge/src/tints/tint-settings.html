@@ -1,0 +1,244 @@
+@let t = tint();
+<forge-property-text
+  label="Name"
+  [value]="t.name ?? ''"
+  [placeholder]="kindLabel()"
+  (valueChange)="rename($event)"
+/>
+@switch (t.kind) { @case ('colour') {
+<forge-property-colour label="Colour" [value]="t.colour" (valueChange)="change({ colour: $event })" />
+<forge-property-select
+  label="Blend"
+  [value]="t.blend"
+  [options]="blends"
+  (valueChange)="blend($event)"
+/>
+} @case ('hsl') {
+<forge-property-number
+  label="Hue"
+  [value]="t.hue"
+  [min]="-180"
+  [max]="180"
+  [step]="1"
+  (valueChange)="change({ hue: $event })"
+/>
+<forge-property-number
+  label="Saturation"
+  [value]="t.saturation"
+  [min]="-1"
+  [max]="1"
+  [step]="0.01"
+  (valueChange)="change({ saturation: $event })"
+/>
+<forge-property-number
+  label="Lightness"
+  [value]="t.lightness"
+  [min]="-1"
+  [max]="1"
+  [step]="0.01"
+  (valueChange)="change({ lightness: $event })"
+/>
+} @case ('white-balance') {
+<forge-property-number
+  label="Temperature"
+  [value]="t.temperature"
+  [min]="2500"
+  [max]="15000"
+  [step]="50"
+  (valueChange)="change({ temperature: $event })"
+/>
+<forge-property-number
+  label="Tint"
+  [value]="t.tint"
+  [min]="-1"
+  [max]="1"
+  [step]="0.01"
+  (valueChange)="change({ tint: $event })"
+/>
+} @case ('brightness-contrast') {
+<forge-property-number
+  label="Brightness"
+  [value]="t.brightness"
+  [min]="-4"
+  [max]="4"
+  [step]="0.05"
+  (valueChange)="change({ brightness: $event })"
+/>
+<forge-property-number
+  label="Contrast"
+  [value]="t.contrast"
+  [min]="0"
+  [max]="3"
+  [step]="0.01"
+  (valueChange)="change({ contrast: $event })"
+/>
+} @case ('lift-gamma-gain') {
+<forge-property-number
+  label="Lift"
+  [value]="t.lift.amount"
+  [min]="-0.5"
+  [max]="0.5"
+  [step]="0.01"
+  (valueChange)="rangeChange('lift', { amount: $event })"
+/>
+<forge-property-colour
+  label="Lift colour"
+  [value]="t.lift.colour"
+  (valueChange)="rangeChange('lift', { colour: $event })"
+/>
+<forge-property-number
+  label="Gamma"
+  [value]="t.gamma.amount"
+  [min]="0.2"
+  [max]="3"
+  [step]="0.01"
+  (valueChange)="rangeChange('gamma', { amount: $event })"
+/>
+<forge-property-colour
+  label="Gamma colour"
+  [value]="t.gamma.colour"
+  (valueChange)="rangeChange('gamma', { colour: $event })"
+/>
+<forge-property-number
+  label="Gain"
+  [value]="t.gain.amount"
+  [min]="0"
+  [max]="4"
+  [step]="0.01"
+  (valueChange)="rangeChange('gain', { amount: $event })"
+/>
+<forge-property-colour
+  label="Gain colour"
+  [value]="t.gain.colour"
+  (valueChange)="rangeChange('gain', { colour: $event })"
+/>
+} @case ('levels') {
+<forge-property-number
+  label="Input low"
+  [value]="t.inputLow"
+  [min]="0"
+  [max]="1"
+  [step]="0.01"
+  (valueChange)="change({ inputLow: $event })"
+/>
+<forge-property-number
+  label="Input high"
+  [value]="t.inputHigh"
+  [min]="0"
+  [max]="1"
+  [step]="0.01"
+  (valueChange)="change({ inputHigh: $event })"
+/>
+<forge-property-number
+  label="Gamma"
+  [value]="t.gamma"
+  [min]="0.1"
+  [max]="5"
+  [step]="0.01"
+  (valueChange)="change({ gamma: $event })"
+/>
+<forge-property-number
+  label="Output low"
+  [value]="t.outputLow"
+  [min]="0"
+  [max]="1"
+  [step]="0.01"
+  (valueChange)="change({ outputLow: $event })"
+/>
+<forge-property-number
+  label="Output high"
+  [value]="t.outputHigh"
+  [min]="0"
+  [max]="1"
+  [step]="0.01"
+  (valueChange)="change({ outputHigh: $event })"
+/>
+} @case ('theme') {
+<forge-property-select
+  label="Colour"
+  [value]="t.preset"
+  [options]="themes()"
+  (valueChange)="change({ preset: $event })"
+/>
+} @case ('gradient') { @for (stop of t.stops; track $index; let i = $index) {
+<forge-property-colour
+  [label]="'Stop ' + (i + 1)"
+  [value]="stop.colour"
+  (valueChange)="stopChange(i, { colour: $event })"
+/>
+<forge-property-number
+  label="At"
+  [value]="stop.at"
+  [min]="0"
+  [max]="1"
+  [step]="0.01"
+  (valueChange)="stopChange(i, { at: $event })"
+/>
+@if (t.stops.length > 2) {
+<div class="buttons">
+  <button type="button" class="button" (click)="removeStop(i)">Remove stop {{ i + 1 }}</button>
+</div>
+} } @if (t.stops.length < maxStops) {
+<div class="buttons">
+  <button type="button" class="button" (click)="addStop()">Add stop</button>
+</div>
+} } }
+<forge-property-number
+  label="Strength"
+  [value]="t.strength"
+  [min]="0"
+  [max]="1"
+  [step]="0.01"
+  (valueChange)="change({ strength: $event })"
+/>
+@if (!grading()) {
+<forge-property-select
+  label="When"
+  [value]="t.stage ?? 'result'"
+  [options]="stages"
+  (valueChange)="stage($event)"
+/>
+<forge-property-select
+  label="Mask"
+  [value]="t.mask?.by ?? 'none'"
+  [options]="masks"
+  (valueChange)="maskKind($event)"
+/>
+@if (t.mask; as mask) { @if (mask.by === 'layer') {
+<forge-property-select
+  label="Layer"
+  [value]="mask.layer"
+  [options]="layers"
+  (valueChange)="maskLayer($event)"
+/>
+<forge-property-select
+  label="Channel"
+  [value]="mask.channel"
+  [options]="channels"
+  (valueChange)="maskChannel($event)"
+/>
+} @else {
+<forge-property-number
+  label="From"
+  [value]="mask.from"
+  [min]="0"
+  [max]="1"
+  [step]="0.01"
+  (valueChange)="maskChange({ from: $event })"
+/>
+<forge-property-number
+  label="To"
+  [value]="mask.to"
+  [min]="0"
+  [max]="1"
+  [step]="0.01"
+  (valueChange)="maskChange({ to: $event })"
+/>
+}
+<forge-property-check
+  label="Invert"
+  [checked]="!!mask.invert"
+  (checkedChange)="maskChange({ invert: $event })"
+/>
+}
+}

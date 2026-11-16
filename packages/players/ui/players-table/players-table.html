@@ -1,0 +1,112 @@
+<header class="head">
+  <h1>Players</h1>
+  @if (total() > 0) {
+    <span class="count">
+      @if (rows().length === total()) {
+        {{ total() }} {{ total() === 1 ? 'player' : 'players' }}
+      } @else {
+        {{ rows().length }} of {{ total() }} {{ total() === 1 ? 'player' : 'players' }}
+      }
+    </span>
+  }
+</header>
+@if (error(); as error) {
+  <p class="error" role="alert">The replay database could not be read: {{ error }}</p>
+} @else if (!loaded()) {
+  <mat-progress-bar mode="indeterminate" aria-label="Loading players" />
+} @else if (total() === 0) {
+  <hrs-empty-state icon="groups" title="Nobody here yet">
+    Players appear once replays are imported.
+    <br /><button mat-stroked-button class="cta" (click)="importRequested.emit()">
+      Import replays
+    </button>
+  </hrs-empty-state>
+} @else {
+  <mat-form-field class="search" appearance="outline" subscriptSizing="dynamic">
+    <mat-icon matPrefix class="material-symbols-outlined" aria-hidden="true">search</mat-icon>
+    <input
+      #field
+      matInput
+      type="search"
+      placeholder="Search players"
+      aria-label="Search players"
+      [value]="search()"
+      (input)="search.set(field.value)"
+      (keydown.escape)="search.set('')"
+    />
+  </mat-form-field>
+  @if (rows().length === 0) {
+    <hrs-empty-state icon="person_search" title="Nobody fits">
+      No player's name has all of these words.
+    </hrs-empty-state>
+  } @else {
+  <!-- one panel (hrs-panel) for the header and the rows -->
+  <div class="players hrs-panel">
+  <hrs-grid-header [for]="grid" />
+  <hrs-data-grid #grid [items]="rows()" [trackBy]="byId">
+    <hrs-grid-row *hrsRow />
+    <hrs-column name="player" header="Player" width="minmax(max-content, 3fr)">
+      <ng-template hrsCell let-p>
+        <span class="player">
+          <a class="player__name" [routerLink]="['/replays/players', p.id]">{{ p.name }}</a>
+          @if (p.region; as r) {
+            <span class="player__region">{{ r }}</span>
+          }
+        </span>
+      </ng-template>
+    </hrs-column>
+    <hrs-column name="games" header="Games" width="minmax(max-content, 0.7fr)" align="end">
+      <ng-template hrsCell let-p><span class="players__label">Games</span><span class="players__games">{{ p.games }}</span></ng-template>
+    </hrs-column>
+    <hrs-column name="record" header="Record" width="minmax(max-content, 1.75fr)">
+      <ng-template hrsCell let-p>
+        <span class="players__label">Record</span>
+        <span class="record">
+          <span class="record__wl">{{ p.wins }}–{{ p.losses }}</span>
+          @if (p.winRate !== null) {
+            <span class="record__rate" [class.record__rate--good]="p.winRate >= 0.5">{{
+              p.winRate | percent: '1.0-0'
+            }}</span>
+          }
+        </span>
+      </ng-template>
+    </hrs-column>
+    <hrs-column name="lastPlayed" header="Last played" width="minmax(max-content, 1.9fr)">
+      <ng-template hrsCell let-p>
+        <span class="players__label">Last played</span>
+        <time [attr.datetime]="p.lastPlayedAt">{{ p.lastPlayedAt | date: 'MMM d, y' }}</time>
+      </ng-template>
+    </hrs-column>
+    <hrs-column name="heroes" header="Heroes" width="minmax(12em, 5.5fr)">
+      <ng-template hrsCell let-p>
+        <div class="heroes">
+          @for (h of p.topHeroes; track h.hero) {
+            <span class="hero"
+              >{{ h.hero }}
+              @if (h.games > 1) {
+                <span class="hero__games">×{{ h.games }}</span>
+              }
+            </span>
+          }
+          @if (p.moreHeroes > 0) {
+            <span class="hero hero--more">+{{ p.moreHeroes }} more</span>
+          }
+        </div>
+      </ng-template>
+    </hrs-column>
+    <hrs-column name="me" header="Me" width="max-content" cellClass="players__me">
+      <ng-template hrsCell let-p>
+        <span class="players__label">Me</span>
+        @if (p.canBeMe) {
+          <mat-checkbox
+            [checked]="p.isMe"
+            (change)="meChange.emit({ id: p.id, isMe: $event.checked })"
+            [aria-label]="p.name + ' is me'"
+          />
+        }
+      </ng-template>
+    </hrs-column>
+  </hrs-data-grid>
+  </div>
+}
+}

@@ -1,0 +1,35 @@
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.count {
+  color: var(--mat-sys-on-surface-variant);
+}
+.cta {
+  margin-top: 16px;
+}
+.outdated {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  margin-bottom: 16px;
+  padding: 12px 20px;
+  p {
+    flex: 1 1 32ch;
+    margin: 0;
+  }
+}
+.list {
+  --hrs-list-gap: 12px;
+}
+.error {
+  color: var(--mat-sys-error);
+}
+.filters {
+  margin-bottom: 16px;
+  &:empty {
+    display: none;
+  }
+}

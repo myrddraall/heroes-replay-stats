@@ -1,0 +1,16 @@
+{
+  "extends": "../../../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "paths": {},
+    "noEmit": true,
+    // The theme generator, run by Node.
+    "lib": ["ES2022"],
+    "types": ["node"],
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "allowImportingTsExtensions": true
+  },
+  "include": ["*.ts"],
+  "exclude": []
+}

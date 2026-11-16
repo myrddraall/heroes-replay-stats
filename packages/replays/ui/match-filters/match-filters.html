@@ -1,0 +1,65 @@
+@let f = filter();
+@let o = options();
+<div class="filters" role="search" aria-label="Filter matches">
+  <mat-form-field class="filters__search" appearance="outline" subscriptSizing="dynamic">
+    <mat-icon matPrefix class="material-symbols-outlined" aria-hidden="true">search</mat-icon>
+    <input
+      #search
+      matInput
+      type="search"
+      placeholder="Search matches"
+      aria-label="Search matches"
+      [value]="f.text"
+      (input)="set({ text: search.value })"
+      (keydown.escape)="set({ text: '' })"
+    />
+  </mat-form-field>
+
+  <mat-form-field class="filters__select" appearance="outline" subscriptSizing="dynamic">
+    <mat-label>Map</mat-label>
+    <mat-select [value]="f.map" (valueChange)="set({ map: $event })">
+      <mat-option value="">Any map</mat-option>
+      @for (map of o.maps; track map) {
+        <mat-option [value]="map">{{ map }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field class="filters__select" appearance="outline" subscriptSizing="dynamic">
+    <mat-label>Mode</mat-label>
+    <mat-select [value]="f.mode" (valueChange)="set({ mode: $event })">
+      <mat-option value="">Any mode</mat-option>
+      @for (mode of o.modes; track mode) {
+        <mat-option [value]="mode">{{ modeLabels[mode] }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  @if (o.heroes.length) {
+    <mat-form-field class="filters__select" appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ heroLabel() }}</mat-label>
+      <mat-select [value]="f.hero" (valueChange)="set({ hero: $event })">
+        <mat-option value="">Any hero</mat-option>
+        @for (hero of o.heroes; track hero) {
+          <mat-option [value]="hero">{{ hero }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  }
+
+  <mat-button-toggle-group
+    class="filters__played"
+    aria-label="Played"
+    hideSingleSelectionIndicator
+    [value]="f.played"
+    (change)="set({ played: $event.value })"
+  >
+    @for (p of played; track p.value) {
+      <mat-button-toggle [value]="p.value">{{ p.label }}</mat-button-toggle>
+    }
+  </mat-button-toggle-group>
+
+  @if (filtering()) {
+    <button mat-button class="filters__clear" (click)="clear()">Clear</button>
+  }
+</div>

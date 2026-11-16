@@ -1,0 +1,42 @@
+@use '../controls/pod';
+
+// One line over the tree: the levels above as links, the one it is at as plain text.
+.crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  padding: 6px pod.$inline;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  font: var(--mat-sys-body-small);
+}
+
+.crumb {
+  padding: 0 2px;
+  border: none;
+  background: none;
+  color: var(--mat-sys-primary);
+  font: inherit;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: 1px;
+  }
+
+  &--here {
+    color: inherit;
+    font-weight: 600;
+  }
+}
+
+.sep {
+  width: 14px;
+  height: 14px;
+  font-size: 14px;
+  opacity: 0.6;
+}

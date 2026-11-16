@@ -1,0 +1,99 @@
+@let added = editor.added(); @switch (editor.kind()) { @case ('scene') { @if (scene; as s) {
+<forge-scene-properties
+  [sets]="s.sets()"
+  [own]="s.own()"
+  [group]="s.groupOpen()"
+  [planets]="s.hasPlanets()"
+  [name]="s.sceneName()"
+  [planet]="s.sceneLabel()"
+  (nameChange)="s.rename($event)"
+  (deleteRequested)="s.deleteScene()"
+  (anotherSet)="s.anotherSet()"
+>
+  <forge-property-section planetsPod title="Planets">
+    <div class="buttons">
+      <forge-add-planet
+        [groups]="s.groupOptions()"
+        (picked)="s.addPlanet($event)"
+        (groupPicked)="s.addGroup($event)"
+      />
+    </div>
+    <forge-added-list
+      title="Planets"
+      [items]="added.planets ?? []"
+      (itemShow)="editor.showAdded($event)"
+      (itemRemove)="editor.removeAdded($event)"
+    />
+  </forge-property-section>
+</forge-scene-properties>
+@if (!s.sets()) {
+<forge-variant-list
+  [rows]="s.sceneVariantRows()"
+  [edited]="s.sceneVariantOpen()"
+  [changed]="s.sceneVariantsOnSet()"
+  (toggled)="s.setSceneVariantOn($event.id, $event.on)"
+  (edit)="s.editSceneVariant($event)"
+  (renamed)="s.renameSceneVariant($event.id, $event.name)"
+  (removed)="s.deleteSceneVariant($event)"
+  (created)="s.newSceneVariant()"
+  (resetRequested)="s.resetSceneVariantsOn()"
+/>
+} @if (s.cameraList().length) {
+<forge-property-section title="Cameras">
+  <forge-add-camera (added)="s.addCamera()" />
+  <forge-added-list
+    title="Cameras"
+    [items]="added.cameras ?? []"
+    (itemShow)="editor.showAdded($event)"
+    (itemRemove)="editor.removeAdded($event)"
+  />
+</forge-property-section>
+}
+<forge-property-section title="Lights">
+  <forge-add-light (added)="editor.addLight($event)" />
+  <forge-added-list
+    title="Lights"
+    [items]="added.lights ?? []"
+    (itemShow)="editor.showAdded($event)"
+    (itemRemove)="editor.removeAdded($event)"
+  />
+</forge-property-section>
+} } @case ('placement') { @if (scene; as s) { @if (s.selectedPlacement(); as p) {
+<forge-group-placement-properties
+  [placement]="p"
+  [groupName]="s.placementLabel()({ group: p.group, position: p.position })"
+  (placementChange)="s.setPlacement($event)"
+  (editRequested)="s.editPlacedGroup()"
+  (removeRequested)="s.removePlacement()"
+/>
+} } } @case ('cameras') { @if (scene; as s) {
+<forge-property-section title="Cameras">
+  <forge-add-camera (added)="s.addCamera()" />
+  <forge-added-list
+    title="Cameras"
+    [items]="added.cameras ?? []"
+    (itemShow)="editor.showAdded($event)"
+    (itemRemove)="editor.removeAdded($event)"
+  />
+</forge-property-section>
+} } @case ('camera') { @if (scene; as s) { @if (s.selectedCamera(); as c) { @if (s.cameraValues();
+as v) {
+<forge-camera-properties
+  [page]="pages.page()"
+  [name]="c.name"
+  [values]="v"
+  [game]="c.game"
+  [changed]="c.game && !!draft.scenes().planets[s.scene()]?.camera"
+  [primary]="c.id === s.primaryCamera()"
+  [lookingThrough]="c.id === s.look()"
+  (nameChange)="s.renameCamera($event)"
+  [planets]="s.cameraPlanets()"
+  [placement]="c.placement"
+  (placementChange)="s.setCameraPlacement($event)"
+  (cameraChange)="s.setCamera($event)"
+  (cameraReset)="s.resetCamera()"
+  (primaryRequested)="s.makePrimary()"
+  (lookRequested)="s.lookThrough(c.id)"
+  (removeRequested)="s.removeCamera()"
+/>
+} } } } }

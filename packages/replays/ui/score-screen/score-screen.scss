@@ -1,0 +1,64 @@
+// one card (hrs-panel) around the table and the teams' totals, as the match list's cards; inside the
+// host, so the page layout's padding stays around it
+:host {
+  display: block;
+}
+
+.score-screen {
+  display: grid;
+  gap: 16px;
+  padding: 16px 20px;
+  // the teams' totals scale with the card's width on narrow screens
+  container-type: inline-size;
+}
+
+// at the row head's right end, a badge wide in every row (empty where there is none), so the
+// column sizes to the names plus a badge whichever rows have awards
+.player__awards-slot {
+  display: flex;
+  justify-content: flex-end;
+  flex: none;
+  min-width: calc(var(--hrs-grid-row-height) * 72 / 70);
+  margin-left: auto;
+}
+
+.player__awards {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+// The game's badges (GameStatsPanel's AwardsContainer, EndOfMatchAwardIconTemplate): 72 high on the
+// game's 70 high row texture, centred on the row, each next one 30 along (AwardIconStackingOffset),
+// over the one before.
+.award {
+  display: flex;
+}
+
+.award + .award {
+  margin-left: calc(var(--hrs-grid-row-height) * (30 - 72) / 70);
+}
+
+.award__badge {
+  font-size: calc(var(--hrs-grid-row-height) * 72 / 70);
+  margin-block: calc(var(--hrs-grid-row-height) * -1 / 70);
+}
+
+// its name in words, until the data has loaded or for an award it doesn't know
+.award__name {
+  padding: 0.2em 0.7em;
+  border-radius: 999px;
+  box-shadow: 0 0 0 1px var(--mat-sys-outline-variant);
+  font-family: var(--mat-sys-label-small-font);
+  font-weight: var(--mat-sys-label-small-weight);
+  font-size: 0.7em;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.award__name--mvp {
+  color: var(--mat-sys-tertiary);
+  box-shadow: 0 0 0 1px var(--mat-sys-tertiary);
+}

@@ -1,0 +1,319 @@
+@let p = part(); @let v = p.values; @if (p.overlayName && on('part')) {
+<p class="data-name">From the {{ p.overlayName }} overlay</p>
+} @if (on('part')) {
+<forge-property-section
+  title="General"
+  [changed]="isSet('label')"
+  (resetRequested)="clear.emit(['label'])"
+>
+  <forge-property-text
+    label="Name"
+    [value]="p.set?.label ?? ''"
+    [placeholder]="p.labelBelow"
+    [changed]="isSet('label')"
+    [origin]="p.origins.label"
+    [overridden]="p.overrides?.label"
+    (resetRequested)="clear.emit(['label'])"
+    (valueChange)="rename($event)"
+  />
+  @if (removable()) {
+  <div class="buttons">
+    <button type="button" class="button" (click)="removeRequested.emit()">Remove part</button>
+  </div>
+  }
+</forge-property-section>
+} @if (p.kind !== 'sky' && on('part')) {
+<forge-property-section
+  title="Orientation"
+  [changed]="isSet('orientation')"
+  (resetRequested)="clear.emit(['orientation'])"
+>
+  <forge-property-select
+    label="Orientation"
+    [value]="v.orientation"
+    [options]="orientations"
+    [changed]="isSet('orientation')"
+    [origin]="p.origins.orientation"
+    [overridden]="p.overrides?.orientation"
+    (resetRequested)="clear.emit(['orientation'])"
+    (valueChange)="orient($event)"
+  />
+</forge-property-section>
+} @if (on('shape')) {
+<forge-property-section
+  title="Shape"
+  [changed]="changed()"
+  (resetRequested)="clear.emit(shapeKeys)"
+>
+  <forge-property-number
+    label="Size"
+    [value]="v.size"
+    [min]="0.01"
+    [step]="0.01"
+    [changed]="isSet('size')"
+    [origin]="p.origins.size"
+    [overridden]="p.overrides?.size"
+    (resetRequested)="clear.emit(['size'])"
+    (valueChange)="settingsChange.emit({ size: $event })"
+  />
+  @if (p.kind === 'plane') {
+  <forge-property-number
+    label="Width"
+    [value]="v.width"
+    [min]="0.01"
+    [step]="0.01"
+    [changed]="isSet('width')"
+    [origin]="p.origins.width"
+    [overridden]="p.overrides?.width"
+    (resetRequested)="clear.emit(['width'])"
+    (valueChange)="settingsChange.emit({ width: $event })"
+  />
+  <forge-property-number
+    label="Height"
+    [value]="v.height"
+    [min]="0.01"
+    [step]="0.01"
+    [changed]="isSet('height')"
+    [origin]="p.origins.height"
+    [overridden]="p.overrides?.height"
+    (resetRequested)="clear.emit(['height'])"
+    (valueChange)="settingsChange.emit({ height: $event })"
+  />
+  <forge-property-number
+    label="Tilt"
+    [value]="v.tilt"
+    [step]="1"
+    [changed]="isSet('tilt')"
+    [origin]="p.origins.tilt"
+    [overridden]="p.overrides?.tilt"
+    (resetRequested)="clear.emit(['tilt'])"
+    (valueChange)="settingsChange.emit({ tilt: $event })"
+  />
+  <forge-property-number
+    label="Turn"
+    [value]="v.turn"
+    [step]="1"
+    [changed]="isSet('turn')"
+    [origin]="p.origins.turn"
+    [overridden]="p.overrides?.turn"
+    (resetRequested)="clear.emit(['turn'])"
+    (valueChange)="settingsChange.emit({ turn: $event })"
+  />
+  <forge-property-number
+    label="Repeats"
+    [value]="v.repeat"
+    [min]="0.01"
+    [step]="0.1"
+    [changed]="isSet('repeat')"
+    [origin]="p.origins.repeat"
+    [overridden]="p.overrides?.repeat"
+    (resetRequested)="clear.emit(['repeat'])"
+    (valueChange)="settingsChange.emit({ repeat: $event })"
+  />
+  <forge-property-check
+    label="Mirror"
+    [checked]="v.flip"
+    [changed]="isSet('flip')"
+    [origin]="p.origins.flip"
+    [overridden]="p.overrides?.flip"
+    (resetRequested)="clear.emit(['flip'])"
+    (checkedChange)="settingsChange.emit({ flip: $event })"
+  />
+  } @else if (p.kind === 'tube' || p.kind === 'cone' || p.kind === 'disc' || p.kind === 'capsule') {
+  @if (p.kind !== 'disc') {
+  <forge-property-select
+    label="Seen from"
+    [value]="v.side"
+    [options]="sides"
+    [changed]="isSet('side')"
+    [origin]="p.origins.side"
+    [overridden]="p.overrides?.side"
+    (resetRequested)="clear.emit(['side'])"
+    (valueChange)="settingsChange.emit({ side: $event === 'far' ? 'far' : 'near' })"
+  />
+  <forge-property-number
+    label="Length"
+    [value]="v.height"
+    [min]="0.01"
+    [step]="0.01"
+    [changed]="isSet('height')"
+    [origin]="p.origins.height"
+    [overridden]="p.overrides?.height"
+    (resetRequested)="clear.emit(['height'])"
+    (valueChange)="settingsChange.emit({ height: $event })"
+  />
+  } @else {
+  <forge-property-number
+    label="Width"
+    [value]="v.width"
+    [min]="0"
+    [step]="0.01"
+    [changed]="isSet('width')"
+    [origin]="p.origins.width"
+    [overridden]="p.overrides?.width"
+    (resetRequested)="clear.emit(['width'])"
+    (valueChange)="settingsChange.emit({ width: $event })"
+  />
+  }
+  <forge-property-number
+    label="Tilt"
+    [value]="v.tilt"
+    [step]="1"
+    [changed]="isSet('tilt')"
+    [origin]="p.origins.tilt"
+    [overridden]="p.overrides?.tilt"
+    (resetRequested)="clear.emit(['tilt'])"
+    (valueChange)="settingsChange.emit({ tilt: $event })"
+  />
+  <forge-property-number
+    label="Texture turn"
+    [value]="v.turn"
+    [step]="1"
+    [changed]="isSet('turn')"
+    [origin]="p.origins.turn"
+    [overridden]="p.overrides?.turn"
+    (resetRequested)="clear.emit(['turn'])"
+    (valueChange)="settingsChange.emit({ turn: $event })"
+  />
+  <forge-property-number
+    label="Repeats"
+    [value]="v.repeat"
+    [min]="0.01"
+    [step]="0.1"
+    [changed]="isSet('repeat')"
+    [origin]="p.origins.repeat"
+    [overridden]="p.overrides?.repeat"
+    (resetRequested)="clear.emit(['repeat'])"
+    (valueChange)="settingsChange.emit({ repeat: $event })"
+  />
+  <forge-property-check
+    label="Mirror"
+    [checked]="v.flip"
+    [changed]="isSet('flip')"
+    [origin]="p.origins.flip"
+    [overridden]="p.overrides?.flip"
+    (resetRequested)="clear.emit(['flip'])"
+    (checkedChange)="settingsChange.emit({ flip: $event })"
+  />
+  } @else if (p.kind === 'sphere' || p.kind === 'sky') {
+  <forge-property-number
+    label="Turn"
+    [value]="v.turn"
+    [step]="1"
+    [changed]="isSet('turn')"
+    [origin]="p.origins.turn"
+    [overridden]="p.overrides?.turn"
+    (resetRequested)="clear.emit(['turn'])"
+    (valueChange)="settingsChange.emit({ turn: $event })"
+  />
+  <forge-property-number
+    label="Tilt"
+    [value]="v.tilt"
+    [step]="1"
+    [changed]="isSet('tilt')"
+    [origin]="p.origins.tilt"
+    [overridden]="p.overrides?.tilt"
+    (resetRequested)="clear.emit(['tilt'])"
+    (valueChange)="settingsChange.emit({ tilt: $event })"
+  />
+  @if (p.kind === 'sphere') {
+  <forge-property-check
+    label="Mirror"
+    [checked]="v.flip"
+    [changed]="isSet('flip')"
+    [origin]="p.origins.flip"
+    [overridden]="p.overrides?.flip"
+    (resetRequested)="clear.emit(['flip'])"
+    (checkedChange)="settingsChange.emit({ flip: $event })"
+  />
+  } @if (p.band) {
+  <forge-property-number
+    label="Width"
+    [value]="v.width"
+    [min]="0.01"
+    [step]="0.01"
+    [changed]="isSet('width')"
+    [origin]="p.origins.width"
+    [overridden]="p.overrides?.width"
+    (resetRequested)="clear.emit(['width'])"
+    (valueChange)="settingsChange.emit({ width: $event })"
+  />
+  <forge-property-number
+    label="Height"
+    [value]="v.height"
+    [min]="0.01"
+    [step]="0.01"
+    [changed]="isSet('height')"
+    [origin]="p.origins.height"
+    [overridden]="p.overrides?.height"
+    (resetRequested)="clear.emit(['height'])"
+    (valueChange)="settingsChange.emit({ height: $event })"
+  />
+  } } @else {
+  <forge-property-number
+    label="Width"
+    [value]="v.width"
+    [min]="0"
+    [step]="0.01"
+    [changed]="isSet('width')"
+    [origin]="p.origins.width"
+    [overridden]="p.overrides?.width"
+    (resetRequested)="clear.emit(['width'])"
+    (valueChange)="settingsChange.emit({ width: $event })"
+  />
+  <forge-property-number
+    label="Depth"
+    [value]="v.depth"
+    [step]="0.01"
+    [changed]="isSet('depth')"
+    [origin]="p.origins.depth"
+    [overridden]="p.overrides?.depth"
+    (resetRequested)="clear.emit(['depth'])"
+    (valueChange)="settingsChange.emit({ depth: $event })"
+  />
+  <forge-property-number
+    label="Brightest at"
+    [value]="v.mid"
+    [min]="0"
+    [max]="1"
+    [step]="0.01"
+    [changed]="isSet('mid')"
+    [origin]="p.origins.mid"
+    [overridden]="p.overrides?.mid"
+    (resetRequested)="clear.emit(['mid'])"
+    (valueChange)="settingsChange.emit({ mid: $event })"
+  />
+  <forge-property-number
+    label="Texture turn"
+    [value]="v.from"
+    [step]="1"
+    [changed]="isSet('from')"
+    [origin]="p.origins.from"
+    [overridden]="p.overrides?.from"
+    (resetRequested)="clear.emit(['from'])"
+    (valueChange)="settingsChange.emit({ from: $event })"
+  />
+  <forge-property-number
+    label="Repeats"
+    [value]="v.repeat"
+    [min]="0.01"
+    [step]="0.1"
+    [changed]="isSet('repeat')"
+    [origin]="p.origins.repeat"
+    [overridden]="p.overrides?.repeat"
+    (resetRequested)="clear.emit(['repeat'])"
+    (valueChange)="settingsChange.emit({ repeat: $event })"
+  />
+  @if (p.canKeepToLimb) {
+  <forge-property-check
+    label="Keep to the limb"
+    [checked]="v.keepToLimb"
+    [changed]="isSet('keepToLimb')"
+    [origin]="p.origins.keepToLimb"
+    [overridden]="p.overrides?.keepToLimb"
+    (resetRequested)="clear.emit(['keepToLimb'])"
+    (checkedChange)="settingsChange.emit({ keepToLimb: $event })"
+  />
+  } }
+</forge-property-section>
+}

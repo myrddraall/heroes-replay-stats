@@ -1,0 +1,81 @@
+<!-- one card (hrs-panel) around its title (given as `uiStatTableTitle`), the legend and the
+     table, as the score screen's -->
+<div #card class="stat-card hrs-panel">
+<div class="stat-card__title"><ng-content select="[uiStatTableTitle]" /></div>
+@if (limits().length > 0) {
+  <ul class="stat-table__legend" aria-label="Starred stats">
+    @for (kind of limits(); track kind) {
+      <li>
+        <span class="stat-table__star" [class]="'stat-table__star--' + kind" aria-hidden="true"
+          >*</span
+        >
+        {{ supportLabels[kind] }}
+      </li>
+    }
+  </ul>
+}
+<!-- the header and the grid, one look (stat-table.scss) -->
+<div class="stat-table" [class.stat-table--dense]="dense()">
+<hrs-grid-header [for]="grid" />
+<hrs-data-grid
+  #grid
+  [items]="table()"
+  [trackBy]="byKey"
+  [rowTheme]="themeOf"
+  [sort]="sort()"
+  (sortChange)="sort.set($event)"
+  sortStart="desc"
+>
+  <hrs-grid-row *hrsRow />
+  <hrs-column name="head" [header]="rowHeadLabel()" width="minmax(max-content, 1fr)">
+    <ng-template hrsCell let-line>
+      <ui-score-row-bar />
+      <!-- the row's head, the row's full height, its content centred in it -->
+      <span class="stat-table__head">
+        @if (rowHead(); as head) {
+          <ng-container
+            [ngTemplateOutlet]="head.template"
+            [ngTemplateOutletContext]="{ $implicit: line.row.data, row: line.row }"
+          />
+        }
+      </span>
+    </ng-template>
+  </hrs-column>
+  @for (column of columns(); track column.id; let i = $index) {
+    <hrs-column
+      [name]="column.id"
+      [header]="column.label"
+      width="minmax(min-content, max-content)"
+      sortable
+      [sortStart]="bestFirst(column)"
+    >
+      <ng-template hrsHeader>
+        <span class="stat-table__label" [matTooltip]="tooltip(column)" matTooltipPosition="above">
+          {{ column.label }}
+          @if (isLimited(column.support)) {
+            <span class="stat-table__star" [class]="'stat-table__star--' + column.support" aria-hidden="true"
+              >*</span
+            >
+            <span class="stat-table__hidden">({{ supportLabels[column.support] }})</span>
+          }
+        </span>
+      </ng-template>
+      <ng-template hrsCell let-line>
+        @let cell = line.cells[i];
+        <!-- as the score table's: in the row's colour, the bests glowing; shortened, the exact
+             figure in a tooltip -->
+        <hrs-number-cell
+          [value]="cell.text"
+          [shortValue]="cell.compactText"
+          [short]="compact()"
+          styled
+          [mark]="cell.best ? 'best' : cell.bestInGroup ? 'group-best' : null"
+          groupBestLabel="best on the team"
+          [matTooltip]="compact() && cell.compactText !== cell.text ? cell.text : ''"
+        />
+      </ng-template>
+    </hrs-column>
+  }
+</hrs-data-grid>
+</div>
+</div>

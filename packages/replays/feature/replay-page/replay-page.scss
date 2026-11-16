@@ -1,0 +1,13 @@
+// The section under the header (a handset's only: elsewhere the header is in the shell's left-hand
+// drawer); the page grows with what the section holds, and the shell's page area scrolls.
+:host {
+  display: block;
+}
+
+.match__header {
+  display: none;
+}
+
+:host-context(.hrs-shell--handset) .match__header {
+  display: block;
+}

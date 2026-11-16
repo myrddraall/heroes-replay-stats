@@ -1,0 +1,16 @@
+<span class="mark mark--base" hrsStyledText="base"><ng-container [ngTemplateOutlet]="drawing" /></span>
+<span class="mark mark--bright" hrsStyledText="bright"><ng-container [ngTemplateOutlet]="drawing" /></span>
+
+<!-- heroes-of-the-storm.svg (48 × 48): its hexagon (or, `square`, the drawing's whole square), the
+     swirl's blades cut out of it (even-odd), turned a quarter about the hexagon's centre; the view
+     moved so that centre (23.965, 24.283) is the box's -->
+<ng-template #drawing>
+  <svg viewBox="-0.035 0.283 48 48" focusable="false">
+    <path
+      fill="currentColor"
+      fill-rule="evenodd"
+      transform="rotate(90 23.965 24.283)"
+      [attr.d]="(shape() === 'square' ? square : hexagon) + ' ' + blades"
+    />
+  </svg>
+</ng-template>

@@ -1,0 +1,26 @@
+<!-- padded, not constrained: the chart grows to the whole width -->
+<hrs-layout default="padded">
+  <hrs-player-chart
+    [kind]="chart()"
+    [players]="store.players()"
+    [column]="store.shownColumn()"
+    [stats]="store.stats()"
+    [actions]="store.actions()"
+    [hidden]="store.hidden()"
+    [durationSeconds]="store.durationSeconds()"
+  />
+</hrs-layout>
+<ng-template hrsShellPanel="Chart">
+  <ui-side-panel title="Chart" (closeRequested)="panels.setEndOpen(false)">
+    <hrs-player-chart-controls
+      [columns]="chart() === 'compare' ? store.columns : []"
+      [column]="store.column()"
+      (columnChange)="store.choose($event)"
+      [players]="choosablePlayers()"
+      [hidden]="store.hidden()"
+      (hiddenChange)="store.hide($event)"
+      [zooms]="chart() === 'apm'"
+      (resetZoomRequested)="resetZoom()"
+    />
+  </ui-side-panel>
+</ng-template>

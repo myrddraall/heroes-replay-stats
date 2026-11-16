@@ -1,0 +1,40 @@
+<div
+  class="hrs-grid__row"
+  role="row"
+  aria-rowindex="1"
+  [id]="rowId"
+  [style.grid-template-columns]="for().columnTracks() || null"
+  [style.width.px]="for().rowsWidth() || null"
+>
+  @for (column of for().shownColumns(); track column.name()) {
+    <div
+      role="columnheader"
+      class="hrs-grid__header"
+      [class]="column.cellClass()"
+      [class.hrs-num]="column.align() === 'end'"
+      [attr.aria-sort]="ariaSort(column)"
+    >
+      @if (column.sortable()) {
+        <button type="button" class="grid-header__sort" (click)="sortBy(column)">
+          <span #content class="grid-header__content">
+            <ng-container [ngTemplateOutlet]="label" [ngTemplateOutletContext]="{ $implicit: column }" />
+            <!-- what the theme's sort arrow takes, so the column fits it -->
+            <span class="grid-header__arrow-room"></span>
+          </span>
+        </button>
+      } @else {
+        <span #content class="grid-header__content">
+          <ng-container [ngTemplateOutlet]="label" [ngTemplateOutletContext]="{ $implicit: column }" />
+        </span>
+      }
+    </div>
+  }
+</div>
+
+<ng-template #label let-column>
+  @if (column.headerTemplate(); as header) {
+    <ng-container [ngTemplateOutlet]="header" />
+  } @else {
+    {{ column.header() }}
+  }
+</ng-template>

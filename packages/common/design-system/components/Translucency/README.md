@@ -1,0 +1,3 @@
+# Translucency
+Every surface is a film: hrs-tint at hrs-surface-alpha (panels), hrs-tint-raised at hrs-surface-alpha-raised (floating things), hrs-tint-raised at hrs-surface-alpha-modal (dialogs). One Opacity setting in the Theme settings section (Settings → Theme) raises all three together from these floors towards solid (alpha = floor + opacity × (1 − floor)), never below; text contrast is checked at the default against a bright patch of the scene, so the default is the floor, not a suggestion.
+Backdrop blur is a separate setting, off by default (CPU cost over the animated scene). On, it sets hrs-backdrop / -raised / -modal to the blur values in the tokens. Here: the same panel at opacity 0, 0.5 and 1, and with blur on.

@@ -1,0 +1,31 @@
+@if (teams().length > 0) {
+  <mat-button-toggle-group
+    [value]="team() ?? teams()[0]!.team"
+    (change)="team.set($event.value)"
+    aria-label="Team"
+    hideSingleSelectionIndicator
+  >
+    @for (t of teams(); track t.team) {
+      <mat-button-toggle [value]="t.team" [attr.theme]="t.color">{{ t.name }}</mat-button-toggle>
+    }
+  </mat-button-toggle-group>
+}
+
+<section class="sources" aria-labelledby="xp-sources-title">
+  <h3 id="xp-sources-title" class="title">Sources</h3>
+  <mat-checkbox [checked]="allCounted()" [indeterminate]="!allCounted()" (click)="countAll()"
+    >All</mat-checkbox
+  >
+  @for (source of sources; track source.id) {
+    <mat-checkbox
+      [checked]="isCounted(source.id)"
+      (click)="choose(source.id, $event)"
+      matTooltip="Ctrl-click to count only this source"
+      matTooltipShowDelay="800"
+      matTooltipPosition="left"
+      >{{ source.label }}</mat-checkbox
+    >
+  }
+</section>
+
+<button type="button" matButton="outlined" (click)="resetZoomRequested.emit()">Reset zoom</button>

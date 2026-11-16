@@ -1,0 +1,29 @@
+// Two columns whatever the test: a test drawing alone draws as many pixels as each of both.
+.pictures {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+figure {
+  margin: 0;
+}
+
+.hidden {
+  visibility: hidden;
+}
+
+.box {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: #000;
+
+  ::ng-deep aether-scene-view,
+  ::ng-deep canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+}

@@ -1,0 +1,58 @@
+<!-- @dsCard height=300 -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>HRS Nexus UI</title>
+<style>
+  html, body { margin:0; height:100%; }
+  body { background:var(--hrs-ground); color:var(--hrs-text); font-family:var(--font-brand); overflow:hidden; }
+  .cover { position:relative; height:300px; overflow:hidden; }
+  .art { position:absolute; top:0; left:480px; width:480px; height:300px; overflow:hidden; }
+  .art svg { display:block; width:480px; height:300px; }
+  .tint { fill:var(--hrs-tint-raised); }
+  .sel { fill:var(--hrs-selection); }
+  .accent { fill:var(--hrs-accent); }
+  .glow { fill:var(--hrs-glow); }
+  .gold { fill:var(--hrs-gold); }
+  .line { fill:none; stroke:var(--hrs-border); stroke-width:1; }
+  .line-strong { fill:none; stroke:var(--hrs-border-strong); stroke-width:1; }
+  .blk { rx:var(--hrs-radius-0); }
+  .words { position:absolute; left:var(--hrs-space-6); right:var(--hrs-space-6); bottom:var(--hrs-space-6); max-width:440px; }
+  .name { margin:0; font-size:96px; line-height:.95; font-weight:700; letter-spacing:.02em; text-transform:uppercase; color:var(--hrs-text); }
+  .tag { margin:var(--hrs-space-2) 0 0 4px; font-family:var(--font-plain); font-size:14px; line-height:20px; color:var(--hrs-text-muted); }
+</style>
+</head>
+<body>
+<div class="cover">
+<div class="art" aria-hidden="true">
+<svg viewBox="0 0 480 300" width="480" height="300">
+<!--
+  blocks      hrs-tint-raised 240×300 bled off the right (the film, largest) · hrs-selection 144×192 (the selected fill) · hrs-glow 96×96 · hrs-accent 48×48 · hrs-gold 48×16 once (it only ever means ownership) — about a third of 960×300
+  arrangement a flush modular grid of square panels, gutters hrs-space-4, bottoms on one line hrs-space-6 above the edge, the film slab bleeding off the right edge
+  pattern     hairline rules, from "One hairline, glow for state": every block outlined in hrs-border at 1px; the selected block outlined in hrs-border-strong; a 3-rule nav divider stack — square, bordered, dense UI
+  scales      sides in hrs-space-4 multiples (16/48/96/144/240); gutters hrs-space-4; corners hrs-radius-0 (square system)
+-->
+<rect class="tint blk" x="240" y="-16" width="256" height="292"/>
+<rect class="line" x="240.5" y="-15.5" width="255" height="291"/>
+<rect class="sel blk" x="80" y="84" width="144" height="192"/>
+<rect class="line-strong" x="80.5" y="84.5" width="143" height="191"/>
+<rect class="glow blk" x="112" y="-16" width="96" height="84"/>
+<rect class="line" x="112.5" y="-15.5" width="95" height="83"/>
+<rect class="accent blk" x="16" y="228" width="48" height="48"/>
+<rect class="gold blk" x="16" y="196" width="48" height="16"/>
+<rect class="line" x="16.5" y="132.5" width="47" height="47"/>
+<rect class="line" x="16.5" y="68.5" width="47" height="47"/>
+<rect class="line" x="256.5" y="20.5" width="207" height="47"/>
+<rect class="line" x="256.5" y="84.5" width="207" height="47"/>
+<rect class="line-strong" x="256.5" y="148.5" width="207" height="47"/>
+<rect class="line" x="256.5" y="212.5" width="207" height="47"/>
+</svg>
+</div>
+<div class="words">
+<h1 class="name">HRS Nexus</h1>
+<p class="tag">Films over the Nexus, one hairline, glow for state.</p>
+</div>
+</div>
+</body>
+</html>

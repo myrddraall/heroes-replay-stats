@@ -1,0 +1,4 @@
+// the themes', states' and looks' frames at 1.5rem, whichever shape
+.themed :is(hrs-circle-frame, hrs-hex-frame, hrs-square-frame) {
+  font-size: 1.5rem;
+}

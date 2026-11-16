@@ -1,0 +1,309 @@
+import type { StatColumnChoice } from './stat-column';
+
+/** The player stats sections, in the order the replay's navigation lists them. */
+export const STAT_SECTION_IDS = [
+  'pvp',
+  'tanking',
+  'pve',
+  'cc',
+  'healing',
+  'connection',
+  'activity',
+] as const;
+
+export type StatSectionId = (typeof STAT_SECTION_IDS)[number];
+
+/** Sections' earlier ids, for the presets and addresses saved under them. */
+export const OLD_STAT_SECTION_IDS: Readonly<Partial<Record<StatSectionId, string>>> = {
+  connection: 'misc',
+};
+
+/** The preset every section opens with. */
+export const DEFAULT_PRESET = 'Default';
+
+/** The built-in preset of a section's rates (per minute, per 10 minutes). */
+export const PER_MINUTE_PRESET = 'Per Minute';
+
+/** These columns, all shown, in this order. */
+const shown = (...ids: string[]): StatColumnChoice[] => ids.map((id) => ({ id, shown: true }));
+
+export interface StatSection {
+  readonly id: StatSectionId;
+  readonly title: string;
+  /** Built-in column choices by name; every section has {@link DEFAULT_PRESET}. */
+  readonly presets: Readonly<Record<string, readonly StatColumnChoice[]>>;
+}
+
+/**
+ * The sections and their built-in presets, as the 2018 viewer had them, with a preset of rates
+ * where the section has them, and the activity section.
+ */
+export const STAT_SECTIONS: Readonly<Record<StatSectionId, StatSection>> = {
+  pvp: {
+    id: 'pvp',
+    title: 'PvP Combat',
+    presets: {
+      [DEFAULT_PRESET]: [
+        { id: 'KDARatio', shown: true },
+        { id: 'KDRatio', shown: false },
+        { id: 'ADRatio', shown: false },
+        { id: 'KillParticipation', shown: true },
+        { id: 'HighestKillStreak', shown: true },
+        { id: 'Deaths', shown: true },
+        { id: 'Takedowns', shown: true },
+        { id: 'Assists', shown: true },
+        { id: 'Kills', shown: true },
+        { id: 'SoloKill', shown: true },
+        { id: 'Multikill', shown: false },
+        { id: 'TeamTakedowns', shown: false },
+        { id: 'TimeSpentDead', shown: true },
+        { id: 'PercentGameSpentDead', shown: false },
+        { id: 'HeroDamage', shown: true },
+        { id: 'AverageHeroDamagePerLife', shown: false },
+        { id: 'PercentHeroDamage', shown: false },
+        { id: 'AverageTeamfightHeroDamagePerLife', shown: false },
+        { id: 'PercentTeamfightHeroDamage', shown: false },
+        { id: 'SummonDamage', shown: false },
+        { id: 'PhysicalDamage', shown: false },
+        { id: 'SpellDamage', shown: false },
+        { id: 'DamageSoaked', shown: true },
+        { id: 'AverageDamageSoakedPerLife', shown: false },
+        { id: 'PercentDamageSoaked', shown: false },
+        { id: 'DamageTaken', shown: true },
+        { id: 'AverageDamageTakenPerLife', shown: false },
+        { id: 'PercentDamageTaken', shown: false },
+        { id: 'TeamfightDamageTaken', shown: false },
+        { id: 'AverageTeamfightDamageTakenPerLife', shown: false },
+        { id: 'PercentTeamfightDamageTaken', shown: false },
+        { id: 'OutnumberedDeaths', shown: false },
+        { id: 'EscapesPerformed', shown: false },
+        { id: 'TeamfightEscapesPerformed', shown: false },
+        { id: 'VengeancesPerformed', shown: false },
+        { id: 'OnFireTimeOnFire', shown: true },
+        { id: 'PercentTimeOnFire', shown: false },
+      ],
+      'Per Life Stats': [
+        { id: 'KDARatio', shown: true },
+        { id: 'KDRatio', shown: false },
+        { id: 'ADRatio', shown: false },
+        { id: 'KillParticipation', shown: true },
+        { id: 'HighestKillStreak', shown: true },
+        { id: 'Deaths', shown: true },
+        { id: 'Takedowns', shown: true },
+        { id: 'Assists', shown: false },
+        { id: 'Kills', shown: false },
+        { id: 'SoloKill', shown: false },
+        { id: 'Multikill', shown: false },
+        { id: 'TeamTakedowns', shown: false },
+        { id: 'TimeSpentDead', shown: false },
+        { id: 'PercentGameSpentDead', shown: false },
+        { id: 'HeroDamage', shown: true },
+        { id: 'AverageHeroDamagePerLife', shown: true },
+        { id: 'PercentHeroDamage', shown: false },
+        { id: 'AverageTeamfightHeroDamagePerLife', shown: false },
+        { id: 'PercentTeamfightHeroDamage', shown: false },
+        { id: 'SummonDamage', shown: false },
+        { id: 'PhysicalDamage', shown: false },
+        { id: 'SpellDamage', shown: false },
+        { id: 'DamageSoaked', shown: true },
+        { id: 'AverageDamageSoakedPerLife', shown: true },
+        { id: 'PercentDamageSoaked', shown: false },
+        { id: 'DamageTaken', shown: true },
+        { id: 'AverageDamageTakenPerLife', shown: true },
+        { id: 'PercentDamageTaken', shown: false },
+        { id: 'TeamfightDamageTaken', shown: false },
+        { id: 'AverageTeamfightDamageTakenPerLife', shown: false },
+        { id: 'PercentTeamfightDamageTaken', shown: false },
+        { id: 'OutnumberedDeaths', shown: false },
+        { id: 'EscapesPerformed', shown: false },
+        { id: 'TeamfightEscapesPerformed', shown: false },
+        { id: 'VengeancesPerformed', shown: false },
+        { id: 'OnFireTimeOnFire', shown: false },
+        { id: 'PercentTimeOnFire', shown: false },
+      ],
+      'Percent Stats': [
+        { id: 'KDARatio', shown: true },
+        { id: 'KDRatio', shown: false },
+        { id: 'ADRatio', shown: false },
+        { id: 'KillParticipation', shown: true },
+        { id: 'HighestKillStreak', shown: true },
+        { id: 'Deaths', shown: true },
+        { id: 'Takedowns', shown: true },
+        { id: 'Assists', shown: false },
+        { id: 'Kills', shown: false },
+        { id: 'SoloKill', shown: false },
+        { id: 'Multikill', shown: false },
+        { id: 'TeamTakedowns', shown: false },
+        { id: 'TimeSpentDead', shown: true },
+        { id: 'PercentGameSpentDead', shown: true },
+        { id: 'HeroDamage', shown: true },
+        { id: 'AverageHeroDamagePerLife', shown: false },
+        { id: 'PercentHeroDamage', shown: true },
+        { id: 'AverageTeamfightHeroDamagePerLife', shown: false },
+        { id: 'PercentTeamfightHeroDamage', shown: false },
+        { id: 'SummonDamage', shown: false },
+        { id: 'PhysicalDamage', shown: false },
+        { id: 'SpellDamage', shown: false },
+        { id: 'DamageSoaked', shown: true },
+        { id: 'AverageDamageSoakedPerLife', shown: false },
+        { id: 'PercentDamageSoaked', shown: true },
+        { id: 'DamageTaken', shown: true },
+        { id: 'AverageDamageTakenPerLife', shown: false },
+        { id: 'PercentDamageTaken', shown: true },
+        { id: 'TeamfightDamageTaken', shown: false },
+        { id: 'AverageTeamfightDamageTakenPerLife', shown: false },
+        { id: 'PercentTeamfightDamageTaken', shown: false },
+        { id: 'OutnumberedDeaths', shown: false },
+        { id: 'EscapesPerformed', shown: false },
+        { id: 'TeamfightEscapesPerformed', shown: false },
+        { id: 'VengeancesPerformed', shown: false },
+        { id: 'OnFireTimeOnFire', shown: true },
+        { id: 'PercentTimeOnFire', shown: true },
+      ],
+      [PER_MINUTE_PRESET]: shown(
+        'KDARatio',
+        'KillParticipation',
+        'TakedownsPer10Minutes',
+        'KillsPer10Minutes',
+        'DeathsPer10Minutes',
+        'HeroDamagePerMinute',
+        'TeamfightHeroDamagePerMinute',
+        'DamageRatio',
+        'DamageSoakedPerMinute',
+        'DamageTakenPerMinute',
+      ),
+    },
+  },
+  tanking: {
+    id: 'tanking',
+    title: 'Tanking',
+    presets: {
+      [DEFAULT_PRESET]: [
+        { id: 'AverageDamageTakenPerLife', shown: true },
+        { id: 'DamageTaken', shown: true },
+        { id: 'DamageSoaked', shown: true },
+        { id: 'AverageDamageSoakedPerLife', shown: true },
+        { id: 'TeamfightDamageTaken', shown: true },
+        { id: 'KillParticipation', shown: true },
+        { id: 'TimeSpentDead', shown: true },
+        { id: 'Deaths', shown: true },
+        { id: 'AverageTeamfightDamageTakenPerLife', shown: true },
+        { id: 'PercentDamageTaken', shown: true },
+        { id: 'PercentDamageSoaked', shown: true },
+        { id: 'PercentTeamfightDamageTaken', shown: true },
+        { id: 'PercentGameSpentDead', shown: true },
+      ],
+      [PER_MINUTE_PRESET]: shown(
+        'DamageTakenPerMinute',
+        'DamageSoakedPerMinute',
+        'DamageRatio',
+        'SelfHealingPerMinute',
+        'DeathsPer10Minutes',
+        'KillParticipation',
+      ),
+    },
+  },
+  pve: {
+    id: 'pve',
+    title: 'PvE Combat',
+    presets: {
+      [DEFAULT_PRESET]: [
+        { id: 'ExperienceContribution', shown: true },
+        { id: 'RegenGlobesCollected', shown: true },
+        { id: 'SiegeDamage', shown: true },
+        { id: 'StructureDamage', shown: true },
+        { id: 'MinionDamage', shown: true },
+        { id: 'MinionsKilled', shown: true },
+        { id: 'MercCampCaptures', shown: true },
+        { id: 'MercsKilledCamp', shown: true },
+        { id: 'MercsKilledLane', shown: true },
+        { id: 'BossKilledCamp', shown: true },
+        { id: 'BossKilledLane', shown: true },
+        { id: 'WatchTowerCaptures', shown: true },
+        { id: 'CreepDamage', shown: true },
+        { id: 'AverageSiegeDamagePerLife', shown: true },
+        { id: 'PercentSiegeDamage', shown: true },
+        { id: 'PercentStructureDamage', shown: true },
+        { id: 'PercentMinionDamage', shown: true },
+        { id: 'PercentCreepDamage', shown: true },
+        { id: 'PercentXPContribution', shown: true },
+        { id: 'DeathsToNPCs', shown: true },
+      ],
+      [PER_MINUTE_PRESET]: shown(
+        'XPPerMinute',
+        'SiegeDamagePerMinute',
+        'StructureDamagePerMinute',
+        'MinionDamagePerMinute',
+        'MercCampCapturesPer10Minutes',
+      ),
+    },
+  },
+  cc: {
+    id: 'cc',
+    title: 'Crowd Control',
+    presets: {
+      [DEFAULT_PRESET]: [
+        { id: 'TimeStunningEnemyHeroes', shown: true },
+        { id: 'TimeRootingEnemyHeroes', shown: true },
+        { id: 'TimeSilencingEnemyHeroes', shown: true },
+        { id: 'TimeSlowedEnemyHeroes', shown: true },
+        { id: 'TimeCCdEnemyHeroes', shown: true },
+      ],
+      [PER_MINUTE_PRESET]: shown(
+        'CCSecondsPerMinute',
+        'HardCCSecondsPerMinute',
+        'SoftCCSecondsPerMinute',
+      ),
+    },
+  },
+  healing: {
+    id: 'healing',
+    title: 'Healing',
+    presets: {
+      [DEFAULT_PRESET]: [
+        { id: 'Healing', shown: true },
+        { id: 'SelfHealing', shown: true },
+        { id: 'ClutchHealsPerformed', shown: true },
+        { id: 'TeamfightHealingDone', shown: true },
+        { id: 'PercentDamageHealed', shown: true },
+        { id: 'ProtectionGivenToAllies', shown: true },
+        { id: 'AverageHealingPerLife', shown: true },
+        { id: 'AverageTeamfightHealingPerLife', shown: true },
+        { id: 'PercentHealing', shown: true },
+        { id: 'PercentProtection', shown: true },
+        { id: 'PercentTeamfightHealing', shown: true },
+      ],
+      [PER_MINUTE_PRESET]: shown('HealingPerMinute', 'SelfHealingPerMinute', 'ShieldingPerMinute'),
+    },
+  },
+  // was Misc. Stats (`misc`), whose votes received are in Activity
+  connection: {
+    id: 'connection',
+    title: 'Connection',
+    presets: {
+      [DEFAULT_PRESET]: [
+        { id: 'Disconnects', shown: true },
+        { id: 'Reconnects', shown: true },
+        { id: 'TimeDisconnected', shown: true },
+        { id: 'PercentOfGameDisconnected', shown: true },
+      ],
+    },
+  },
+  activity: {
+    id: 'activity',
+    title: 'Activity',
+    presets: {
+      [DEFAULT_PRESET]: shown(
+        'apm',
+        'castsPerMinute',
+        'pings',
+        'minimapPings',
+        'chatMessages',
+        'sprays',
+        'voiceLines',
+        'upvotesGiven',
+        'VotesReceived',
+      ),
+    },
+  },
+};

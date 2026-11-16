@@ -1,0 +1,68 @@
+@let added = editor.added(); @switch (editor.kind()) { @case ('shapes') { @if
+(editor.bodyView()?.info?.settings?.order) {
+<forge-property-section
+  title="Draw order"
+  [changed]="true"
+  (resetRequested)="editor.clearBody(['order'])"
+/>
+} @if (editor.partShapes().length) {
+<forge-property-section title="Parts">
+  <forge-add-part
+    [shapes]="editor.partShapes()"
+    [existing]="editor.reusableParts()"
+    [savable]="editor.canSaveAsOverlay()"
+    (added)="editor.addPart($event)"
+    (reused)="editor.reusePart($event)"
+    (saved)="editor.saveAsOverlay()"
+  />
+  <forge-added-list
+    title="Parts"
+    [items]="added.parts ?? []"
+    (itemShow)="editor.showAdded($event)"
+    (itemRemove)="editor.removeAdded($event)"
+  />
+</forge-property-section>
+} } @case ('lights') {
+<forge-property-section title="Lights">
+  @if (editor.bodyView()?.lights) {
+  <forge-add-light (added)="editor.addLight($event)" />
+  }
+  <forge-added-list
+    title="Lights"
+    [items]="added.lights ?? []"
+    (itemShow)="editor.showAdded($event)"
+    (itemRemove)="editor.removeAdded($event)"
+  />
+</forge-property-section>
+} @case ('overlays') { @if (editor.bodyView(); as b) { @if (b.styled) {
+<forge-pick-list
+  title="Overlays"
+  addLabel="Add overlay"
+  removeLabel="Take off"
+  [picked]="b.values.overlays"
+  [choices]="editor.overlayOptions()"
+  [changed]="b.info.overlaysSet"
+  icon="style"
+  [linkable]="true"
+  newLabel="New overlay"
+  (added)="editor.addOverlay($event)"
+  (removed)="editor.removeOverlay($event)"
+  (itemShow)="editor.showOverlay($event)"
+  (created)="newOverlay()"
+  (resetRequested)="editor.resetOverlays()"
+/>
+} } } @case ('moons') {
+<forge-property-section title="Moons">
+  @if (editor.bodyView()?.canHaveMoons) {
+  <div class="buttons">
+    <forge-add-planet label="Add moon" (picked)="editor.addMoon($event)" />
+  </div>
+  }
+  <forge-added-list
+    title="Moons"
+    [items]="added.moons ?? []"
+    (itemShow)="editor.showAdded($event)"
+    (itemRemove)="editor.removeAdded($event)"
+  />
+</forge-property-section>
+} }

@@ -1,0 +1,56 @@
+<hrs-layout>
+  <hrs-showcase heading="Team frame">
+    <ng-container ngProjectAs="[about]">
+      A team in a shaped frame as a hero's portrait is (<code>hrs-hex-frame</code>,
+      <code>hrs-circle-frame</code>, <code>hrs-square-frame</code>) around
+      <code>hrs-team-logo shape="square"</code>, the game's logo's blades cut out of a square in the
+      theme's styled text, <code>lit</code> in its bright style, which the frame cuts to its shape.
+      Alone, the logo is its own hexagon (<code>shape="hexagon"</code>, its default). Point at a team's
+      frame to light it, as a row does.
+    </ng-container>
+    <hrs-showcase-row class="looks" label="Framed">
+      @for (look of looks; track look.label) {
+        <hrs-showcase-item [caption]="look.label" [theme]="look.theme">
+          <hrs-hex-frame><hrs-team-logo shape="square" [lit]="look.lit" /></hrs-hex-frame>
+        </hrs-showcase-item>
+      }
+    </hrs-showcase-row>
+    <hrs-showcase-row class="looks" label="Framed, pointy">
+      @for (look of looks; track look.label) {
+        <hrs-showcase-item [caption]="look.label" [theme]="look.theme">
+          <hrs-hex-frame orientation="pointy"
+            ><hrs-team-logo shape="square" [lit]="look.lit"
+          /></hrs-hex-frame>
+        </hrs-showcase-item>
+      }
+    </hrs-showcase-row>
+    <hrs-showcase-row class="looks" label="Framed, circle">
+      @for (look of looks; track look.label) {
+        <hrs-showcase-item [caption]="look.label" [theme]="look.theme">
+          <hrs-circle-frame><hrs-team-logo shape="square" [lit]="look.lit" /></hrs-circle-frame>
+        </hrs-showcase-item>
+      }
+    </hrs-showcase-row>
+    <hrs-showcase-row class="looks" label="Framed, square">
+      @for (look of looks; track look.label) {
+        <hrs-showcase-item [caption]="look.label" [theme]="look.theme">
+          <hrs-square-frame><hrs-team-logo shape="square" [lit]="look.lit" /></hrs-square-frame>
+        </hrs-showcase-item>
+      }
+    </hrs-showcase-row>
+    <hrs-showcase-row class="looks" label="Alone">
+      @for (look of looks; track look.label) {
+        <hrs-showcase-item [caption]="look.label" [theme]="look.theme">
+          <hrs-team-logo [lit]="look.lit" />
+        </hrs-showcase-item>
+      }
+    </hrs-showcase-row>
+    <hrs-showcase-row label="Sizes">
+      @for (size of sizes; track size) {
+        <hrs-showcase-item [caption]="'font-size: ' + size">
+          <hrs-hex-frame theme="blue" [style.font-size]="size"><hrs-team-logo shape="square" /></hrs-hex-frame>
+        </hrs-showcase-item>
+      }
+    </hrs-showcase-row>
+  </hrs-showcase>
+</hrs-layout>

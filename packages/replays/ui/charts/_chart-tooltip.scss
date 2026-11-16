@@ -1,0 +1,141 @@
+// A chart's tooltip: ECharts writes it inside the chart, outside the component's view, as a raised
+// panel (`hrs-panel hrs-panel--raised chart-tip`); its layout is here. ECharts sets a background
+// inline, so the panel's is restored over it. Include it in the chart component's stylesheet.
+@mixin chart-tooltip {
+  :host ::ng-deep .chart-tip {
+    background: var(--mat-sys-surface-container) !important;
+    min-inline-size: 16em;
+    max-inline-size: 28em;
+    // ECharts keeps it on one line inline
+    white-space: normal !important;
+    color: var(--mat-sys-on-surface);
+    font: var(--mat-sys-body-medium);
+
+    // before its first showing ECharts leaves it unstyled and empty: the panel's border would draw
+    &:empty {
+      display: none;
+    }
+
+    .chart-tip__time {
+      color: var(--mat-sys-on-surface-variant);
+      margin-block-end: 4px;
+    }
+
+    // a tooltip's first line: what it is, and when at its right end
+    .chart-tip__head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 16px;
+      margin-block-end: 4px;
+
+      .chart-tip__time {
+        margin: 0;
+      }
+    }
+
+    // a line's main part, and less important lines under it
+    .chart-tip__main {
+      color: var(--mat-sys-on-surface);
+    }
+
+    .chart-tip__minor {
+      color: var(--mat-sys-on-surface-variant);
+    }
+
+    .chart-tip__lead {
+      color: var(--mat-sys-primary);
+      margin-block-end: 4px;
+    }
+
+    .chart-tip__row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 12px;
+      margin-block-start: 4px;
+    }
+
+    .chart-tip__name {
+      color: var(--mat-sys-primary);
+    }
+
+    .chart-tip__value {
+      text-align: end;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .chart-tip__events {
+      margin: 6px 0 0;
+      padding: 6px 0 0;
+      border-block-start: 1px solid var(--mat-sys-outline-variant);
+      list-style: none;
+    }
+
+    .chart-tip__event {
+      margin-block-start: 2px;
+    }
+
+    // a tooltip's table: names in the first column, counts after it; a team's rows under its name
+    .chart-tip__table {
+      inline-size: 100%;
+      border-collapse: collapse;
+      font-variant-numeric: tabular-nums;
+
+      th,
+      td {
+        padding: 2px 0;
+        text-align: end;
+        font-weight: normal;
+
+        &:first-child {
+          text-align: start;
+          padding-inline-end: 12px;
+        }
+
+        & + th,
+        & + td {
+          padding-inline-start: 12px;
+        }
+      }
+
+      thead th {
+        color: var(--mat-sys-on-surface-variant);
+        border-block-end: 1px solid var(--mat-sys-outline-variant);
+      }
+
+      tbody th {
+        padding-block-start: 6px;
+        color: var(--mat-sys-primary);
+      }
+
+      td {
+        color: var(--mat-sys-on-surface);
+      }
+    }
+
+    // a list of players (or units) under a small title: one a line
+    .chart-tip__list-title {
+      margin-block-start: 6px;
+      color: var(--mat-sys-on-surface-variant);
+      font: var(--mat-sys-label-medium);
+    }
+
+    .chart-tip__list {
+      margin: 2px 0 0;
+      padding: 0;
+      list-style: none;
+
+      li {
+        margin-block-start: 1px;
+      }
+    }
+
+    .chart-tip__swatch {
+      display: inline-block;
+      inline-size: 0.7em;
+      block-size: 0.7em;
+      margin-inline-end: 0.4em;
+      border-radius: 2px;
+    }
+  }
+}

@@ -1,0 +1,6 @@
+@use '../panel/panel-parts';
+
+// Its rows in the selection panel's column, as if they were the panel's own.
+:host {
+  display: contents;
+}

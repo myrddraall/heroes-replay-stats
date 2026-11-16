@@ -1,0 +1,33 @@
+// Sized against the tooltip's 18 high type (1em): the game's 450 wide less its 20 insets each side.
+:host {
+  display: grid;
+  width: calc(1em * (450 - 40) / 18);
+}
+
+// StandardTooltipHeader: the header font, from the theme's primary to the tooltip's text colour top to
+// bottom, with a glow in the theme's colour
+.name {
+  font-family: var(--font-brand);
+  font-weight: 700;
+  background: linear-gradient(var(--color--primary--higher), var(--color--surface--contrast));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  // the tooltip's text shadow would show through the clear letters: the glow instead
+  text-shadow: none;
+  filter: drop-shadow(0 0 3px var(--color--brand));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// StandardTooltipDetails, 5 under the name
+.details {
+  margin-top: calc(1em * 5 / 18);
+  color: var(--color--surface--contrast);
+}
+
+// StandardTooltip (the tooltip's own body text), 8 under the details
+.description {
+  margin-top: calc(1em * 8 / 18);
+}

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en" theme="hrs" themeMode="dark">
+  <head>
+    <meta charset="utf-8" />
+    <!-- themeHeadSnippet from @cpangular/cp-theming-core, pasted as it is: puts the saved theme and
+         mode on <html> before the first paint. -->
+    <script>(function(){try{var d=document.documentElement,p=localStorage.getItem("cp-theming--persist"),s=p==="local"?localStorage:p==="session"?sessionStorage:null;if(!s)return;var t=s.getItem("cp-theming--theme"),m=s.getItem("cp-theming--mode");if(t)d.setAttribute("theme",t);if(m==="auto"||m==="light"||m==="dark"||m==="invert")d.setAttribute("themeMode",m)}catch(e){}})();</script>
+    <title>Heroes Replay Stats</title>
+    <base href="/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- HRS is dark only (themeMode="dark" above): dark before the stylesheets arrive too, and the
+         browser's own bars in the page's ground -->
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#070b16" />
+    <!-- the game's home button icon (Storm_UI_MainNavigation_Home), from our own extraction -->
+    <link rel="icon" type="image/png" href="heroes-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- heroes-assets and heroes-maps: the first pictures a page shows come from there -->
+    <link rel="preconnect" href="https://myrddraall.github.io" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Saira:wght@500;600;700&family=Source+Sans+3:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <hrs-root></hrs-root>
+  </body>
+</html>

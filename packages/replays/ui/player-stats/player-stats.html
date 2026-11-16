@@ -1,0 +1,7 @@
+<!-- the side nav names the section on screen -->
+<h2 class="cdk-visually-hidden">{{ title() }}</h2>
+<ui-stat-table [columns]="shownColumns()" [rows]="rows()">
+  <ng-template [uiStatRowHead]="rows()" let-data>
+    <ui-score-row-head [hero]="data.player.hero" [name]="data.player.name" [portrait]="data.icon" />
+  </ng-template>
+</ui-stat-table>

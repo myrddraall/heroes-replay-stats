@@ -1,0 +1,81 @@
+<div class="talent-screen hrs-panel">
+  <!-- the header and the grid, one look (talent-table.scss) -->
+  <div class="talents">
+  <hrs-grid-header [for]="grid" />
+  <hrs-data-grid #grid [items]="rows()" [trackBy]="byKey" [rowTheme]="themeOf">
+    <hrs-grid-row *hrsRow />
+    <hrs-column name="player" header="Player" width="max-content">
+      <ng-template hrsHeader><span class="talents__hidden">Player</span></ng-template>
+      <ng-template hrsCell let-row>
+        <ui-score-row-bar />
+        <ui-score-row-head
+          [hero]="row.player.hero"
+          [name]="row.player.name"
+          [portrait]="row.portrait"
+          [silenced]="row.player.silenced"
+          [voiceSilenced]="row.player.voiceSilenced"
+        />
+      </ng-template>
+    </hrs-column>
+    @for (tier of tiers; track tier; let i = $index) {
+      <hrs-column [name]="'tier-' + tier" [header]="'Level ' + levels[i]" width="minmax(max-content, 1fr)">
+        <ng-template hrsHeader>
+          <!-- bright in the purple theme; the heroic tier glowing in the legendary -->
+          @let heroic = tier === heroicTier;
+          <span
+            class="talents__level"
+            [attr.theme]="heroic ? 'legendary' : 'purple'"
+            [hrsStyledText]="heroic ? 'glow' : 'bright'"
+            aria-hidden="true"
+          >{{ levels[i] }}</span
+          >
+          <span class="talents__hidden">Level {{ levels[i] }}</span>
+        </ng-template>
+        <ng-template hrsCell let-row>
+          @let slot = row.tiers[i];
+          @if (slot.talent; as talent) {
+            <!-- a talent the data has no icon for shows the game's question mark -->
+            <hrs-talent-frame
+              class="talent"
+              tabindex="0"
+              [state]="slot.heroic ? 'heroic' : 'talent'"
+              [picture]="talent.icon ?? 'talents#unknown'"
+              [name]="talent.name + ', level ' + talent.level"
+              [hrsTooltip]="tip"
+              hrsTooltipPosition="above"
+            />
+            <!-- the game's talent tooltip: its name, the level it was picked at, its full text -->
+            <ng-template #tip>
+              <hrs-talent-tooltip [name]="talent.name" [details]="'Level ' + talent.level" [text]="talent.text" />
+            </ng-template>
+          } @else {
+            <hrs-talent-frame class="talent" [state]="slot.heroic ? 'heroic-empty' : 'empty'" />
+            <span class="talents__hidden">None</span>
+          }
+        </ng-template>
+      </hrs-column>
+    }
+    <!-- tools, as the game's score screen has at the end of a row: the build, to paste into the game -->
+    <hrs-column name="build" header="Talent build" width="max-content">
+      <ng-template hrsHeader><span class="talents__hidden">Talent build</span></ng-template>
+      <ng-template hrsCell let-row>
+        @if (row.build; as build) {
+          <button
+            mat-icon-button
+            type="button"
+            class="build"
+            [attr.aria-label]="'Copy ' + row.player.hero + '\'s talent build'"
+            [matTooltip]="copied() === row.key ? 'Copied ' + build : 'Copy the talent build, to paste into the game: ' + build"
+            #tip="matTooltip"
+            (click)="copy(row.key, build, tip)"
+          >
+            <span class="build__icon"><img hrsSprite="talents#link" spriteCover loading="eager" alt="" /></span>
+          </button>
+        }
+      </ng-template>
+    </hrs-column>
+  </hrs-data-grid>
+  </div>
+  <!-- the teams' totals across the bottom, as the score screen's -->
+  <ui-score-teams [teams]="teams()" />
+</div>

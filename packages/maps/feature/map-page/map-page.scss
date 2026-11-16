@@ -1,0 +1,13 @@
+// The map fills the page below the bars (the height the shell gives it), edge to edge.
+.title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.map {
+  height: var(--hrs-page-height, 100dvh);
+  min-height: 360px;
+}

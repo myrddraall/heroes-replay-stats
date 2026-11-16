@@ -1,0 +1,39 @@
+<!-- padded, not constrained: its tables grow to the whole width -->
+<hrs-layout default="padded">
+  @if (store.activityError(); as error) {
+    <p role="alert">The activity could not be read: {{ error }}</p>
+  } @else if (store.activityLoading()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Loading the activity" />
+  }
+  @if (store.players(); as players) {
+    <hrs-player-stats
+      [title]="store.title()"
+      [players]="players"
+      [portraits]="store.portraits()"
+      [you]="store.you()"
+      [shownColumns]="store.shownColumns()"
+    />
+  } @else {
+    <mat-progress-bar mode="indeterminate" aria-label="Loading the player stats" />
+  }
+</hrs-layout>
+<ng-template hrsShellPanel="Columns">
+  <ui-side-panel title="Columns" (closeRequested)="panels.setEndOpen(false)">
+    <ui-stat-presets
+      uiSidePanelPinned
+      [builtIn]="store.builtInPresets()"
+      [saved]="store.savedPresets()"
+      [current]="store.preset()"
+      [base]="store.basePreset()"
+      (chosen)="store.choosePreset($event)"
+      (resetRequested)="store.resetChoices()"
+      (saveRequested)="store.savePreset($event)"
+      (deleteRequested)="store.deletePreset($event)"
+    />
+    <ui-stat-column-picker
+      [columns]="store.columns()"
+      [choices]="store.choices()"
+      (choicesChange)="store.setChoices($event)"
+    />
+  </ui-side-panel>
+</ng-template>

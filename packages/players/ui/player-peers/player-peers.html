@@ -1,0 +1,38 @@
+<h2 class="cdk-visually-hidden">{{ title() }}</h2>
+@if (peers().length === 0) {
+  <hrs-empty-state icon="groups" title="Nobody here">
+    No other players are in these matches.
+  </hrs-empty-state>
+} @else {
+  <div class="peers hrs-panel">
+    <hrs-grid-header [for]="grid" />
+    <hrs-data-grid #grid [items]="peers()" [trackBy]="byId">
+      <hrs-grid-row *hrsRow />
+      <hrs-column name="player" header="Player" width="minmax(max-content, 3fr)">
+        <ng-template hrsCell let-p>
+          <a class="peers__name" [routerLink]="['/replays/players', p.id]">{{ p.name }}</a>
+        </ng-template>
+      </hrs-column>
+      <hrs-column name="games" header="Matches" width="minmax(max-content, 1fr)" align="end">
+        <ng-template hrsCell let-p><span class="peers__games">{{ p.games }}</span></ng-template>
+      </hrs-column>
+      <hrs-column name="record" [header]="recordLabel()" width="minmax(max-content, 2fr)">
+        <ng-template hrsCell let-p>
+          <span class="record">
+            <span class="record__wl">{{ p.wins }}–{{ p.losses }}</span>
+            @if (p.winRate !== null) {
+              <span class="record__rate" [class.record__rate--good]="p.winRate >= 0.5">{{
+                p.winRate | percent: '1.0-0'
+              }}</span>
+            }
+          </span>
+        </ng-template>
+      </hrs-column>
+      <hrs-column name="lastPlayed" header="Last played" width="minmax(max-content, 2fr)">
+        <ng-template hrsCell let-p>
+          <time [attr.datetime]="p.lastPlayedAt">{{ p.lastPlayedAt | date: 'MMM d, y' }}</time>
+        </ng-template>
+      </hrs-column>
+    </hrs-data-grid>
+  </div>
+}

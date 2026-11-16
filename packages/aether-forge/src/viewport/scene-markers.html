@@ -1,0 +1,68 @@
+@for (m of shown(); track m.id) { @if (m.kind === 'pole') {
+<span
+  class="pole label"
+  [style.--x]="m.x"
+  [style.--y]="m.y"
+  [title]="m.label === 'N' ? 'North pole' : 'South pole'"
+  (pointerdown)="poleDown($event, m)"
+  (pointermove)="poleMove($event)"
+  (pointerup)="poleUp($event)"
+  (pointercancel)="poleUp($event)"
+  >{{ m.label }}</span
+>
+} @else if (m.kind === 'aim') {
+<span
+  class="aim"
+  role="img"
+  [style.--x]="m.x"
+  [style.--y]="m.y"
+  [attr.aria-label]="m.label"
+  title="Aim"
+  (pointerdown)="lightDown($event, m)"
+  (pointermove)="lightMove($event)"
+  (pointerup)="lightUp($event)"
+  (pointercancel)="lightUp($event)"
+></span>
+} @else if (m.kind === 'body') {
+<span class="marker marker--body" [class.open]="m.open" [style.--x]="m.x" [style.--y]="m.y">
+  <mat-icon class="material-symbols-outlined" aria-hidden="true">{{ m.icon }}</mat-icon>
+  <span class="label">{{ m.label }}</span>
+</span>
+} @else {
+<button
+  type="button"
+  class="marker"
+  [class.open]="m.open"
+  [class.selected]="m.selected"
+  [class.off]="m.off"
+  [class.draggable]="!!m.handle"
+  [style.--x]="m.x"
+  [style.--y]="m.y"
+  [style.--shift.px]="m.shift"
+  [attr.aria-label]="m.label"
+  [attr.aria-pressed]="m.selected"
+  (click)="pick(m)"
+  (pointerdown)="lightDown($event, m)"
+  (pointermove)="lightMove($event)"
+  (pointerup)="lightUp($event)"
+  (pointercancel)="lightUp($event)"
+  (pointerenter)="hoverOn(m.key)"
+  (pointerleave)="hoverOn(null)"
+  (focus)="hoverOn(m.key)"
+  (blur)="hoverOn(null)"
+>
+  <mat-icon class="material-symbols-outlined" aria-hidden="true">{{ m.icon }}</mat-icon>
+  <span class="label">{{ m.label }}</span>
+</button>
+} @if (m.left) {
+<span
+  class="left"
+  role="img"
+  [style.--x]="m.x"
+  [style.--y]="m.y"
+  [attr.aria-label]="m.label + ' left out'"
+  [title]="m.label + ' left out'"
+>
+  <mat-icon class="material-symbols-outlined" aria-hidden="true">light_off</mat-icon>
+</span>
+} }

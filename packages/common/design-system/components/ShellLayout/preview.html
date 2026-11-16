@@ -1,0 +1,25 @@
+<!-- @dsCard group="Shell" height=420 width=1000 page -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>ShellLayout — preview</title></head>
+<body>
+<div class="hrs-stage hrs-stage--flush" style="height:420px;display:flex;flex-direction:column">
+<header class="hrs-topbar">
+
+  <a class="hrs-topbar__brand" href="#" aria-label="Home"><span class="hrs-mark">◆</span></a>
+  <ul class="hrs-nav1"><li><a class="hrs-nav1__link" href="#" aria-current="page"><span class="hrs-nav1__text">Matches</span><span class="hrs-nav1__sparks" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></a></li><li><a class="hrs-nav1__link" href="#"><span class="hrs-nav1__text">Players</span></a></li><li class="hrs-nav1__family"><a class="hrs-nav1__link" href="#"><span class="hrs-nav1__text">Game</span></a></li></ul>
+  <div class="hrs-topbar__tools"><span class="hrs-pod"><span class="hrs-badge hrs-badge--corner hrs-badge--filled">+</span><span class="hrs-pod__icon"></span>570</span><button class="hrs-btn hrs-btn--icon" aria-label="Settings">⚙</button></div>
+</header>
+<nav class="hrs-subbar"><a class="hrs-tab" href="#">Overview</a><a class="hrs-tab" href="#" aria-current="page">Score</a><a class="hrs-tab" href="#">Talents</a><a class="hrs-tab" href="#">Chat</a></nav>
+<div style="flex:1;display:flex;min-height:0">
+<div style="flex:1;display:flex;gap:24px;padding:24px;min-width:0;align-items:flex-start">
+  <ul class="hrs-list" style="width:200px;flex:none"><li><button class="hrs-list__item" aria-current="true">Overview</button></li><li><button class="hrs-list__item">Damage</button></li><li><button class="hrs-list__item">Healing</button></li><li><button class="hrs-list__item">Siege</button></li></ul>
+  <section class="hrs-panel" style="flex:1"><div class="hrs-panel__header">Score <span class="hrs-spacer"></span><button class="hrs-btn hrs-btn--icon hrs-btn--sm" aria-label="Columns">☰</button></div>
+    <div class="hrs-panel__body"><hrs-data-grid role="table" aria-rowcount="4" style="--hrs-grid-columns:minmax(8em,2fr) repeat(3,minmax(8ch,1fr))"><div class="hrs-grid__head" role="rowgroup"><div class="hrs-grid__row" role="row" aria-rowindex="1"><div class="hrs-grid__header" role="columnheader">Player</div><div class="hrs-grid__header" role="columnheader">Hero</div><div class="hrs-grid__header hrs-num" role="columnheader" aria-sort="descending">Kills</div><div class="hrs-grid__header hrs-num" role="columnheader">Deaths</div></div></div>
+<div class="hrs-grid__body" role="rowgroup"><div class="hrs-grid__row" role="row" aria-rowindex="2"><div class="hrs-grid__cell hrs-team-blue" role="cell">TwilightNova</div><div class="hrs-grid__cell" role="cell">Xal'atath</div><div class="hrs-grid__cell hrs-num" role="cell">7</div><div class="hrs-grid__cell hrs-num" role="cell">2</div></div><div class="hrs-grid__row" role="row" aria-rowindex="3" aria-selected="true"><div class="hrs-grid__cell hrs-self" role="cell">Erd</div><div class="hrs-grid__cell" role="cell">Tracer</div><div class="hrs-grid__cell hrs-num" role="cell">12</div><div class="hrs-grid__cell hrs-num" role="cell">1</div></div><div class="hrs-grid__row" role="row" aria-rowindex="4"><div class="hrs-grid__cell hrs-team-red" role="cell">dreamatnight</div><div class="hrs-grid__cell" role="cell">Abathur</div><div class="hrs-grid__cell hrs-num" role="cell">1</div><div class="hrs-grid__cell hrs-num" role="cell">4</div></div></div></hrs-data-grid></div></section>
+  </div>
+  <aside class="hrs-drawer hrs-drawer--shell" style="width:260px;flex:none"><div class="hrs-drawer__header">Columns <span class="hrs-spacer"></span><button class="hrs-btn hrs-btn--icon hrs-btn--sm" aria-label="Close">×</button></div><div class="hrs-drawer__body hrs-col"><label class="hrs-check"><input type="checkbox" checked>Kills</label><label class="hrs-check"><input type="checkbox" checked>Deaths</label><label class="hrs-check"><input type="checkbox">Assists</label></div></aside>
+</div>
+</div>
+</body>
+</html>

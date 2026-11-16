@@ -1,0 +1,17 @@
+:host {
+  display: block;
+  min-height: 100dvh;
+  background: var(--color--background);
+  color: var(--color--background--contrast);
+}
+
+.page {
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 16px;
+  font: var(--mat-sys-body-medium);
+}
+
+h1 {
+  font: var(--mat-sys-headline-small);
+}

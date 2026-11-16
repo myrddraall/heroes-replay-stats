@@ -1,0 +1,160 @@
+@if (!bare() && backdropComponent(); as backdrop) {
+  <div class="shell__backdrop"><ng-container *ngComponentOutlet="backdrop" /></div>
+}
+@let shellNav = nav();
+<mat-sidenav-container class="shell">
+  @if (!bare()) {
+    <!-- a handset's navigation: every level as one tree -->
+    <mat-sidenav
+      #navDrawer
+      id="shell-nav"
+      class="hrs-drawer hrs-drawer--nav"
+      mode="over"
+      fixedInViewport
+      aria-label="Navigation"
+      (openedChange)="navOpen.set($event)"
+    >
+      <div class="hrs-drawer__header">
+        Heroes Replay Stats
+        <span class="hrs-spacer"></span>
+        <button
+          mat-icon-button
+          type="button"
+          aria-label="Close navigation"
+          (click)="navDrawer.close()"
+        >
+          <mat-icon class="material-symbols-outlined" aria-hidden="true">close</mat-icon>
+        </button>
+      </div>
+      <nav class="hrs-drawer__body hrs-scroll" aria-label="All pages">
+        <hrs-nav-tree [nodes]="shellNav.tree" />
+      </nav>
+    </mat-sidenav>
+  }
+
+  <mat-sidenav-content class="shell__content">
+    @if (!bare()) {
+      <hrs-top-bar
+        [areas]="shellNav.areas"
+        [menu]="handset()"
+        [title]="title()"
+        [menuOpen]="navOpen()"
+        (menuRequested)="toggleNav()"
+      >
+        @for (action of toolbarActions; track $index) {
+          <ng-container *ngComponentOutlet="action" />
+        }
+        <button
+          mat-icon-button
+          type="button"
+          aria-label="Settings"
+          matTooltip="Settings"
+          [matMenuTriggerFor]="settingsMenu"
+        >
+          <mat-icon class="material-symbols-outlined" aria-hidden="true">settings</mat-icon>
+        </button>
+      </hrs-top-bar>
+      <!-- the band under the top bar: the breadcrumb on a handset, else the area's sections (sliding up
+           behind the top bar where the page has none) -->
+      @if (handset()) {
+        <hrs-crumbs [crumbs]="shellNav.crumbs" />
+      } @else {
+        <hrs-sub-bar [sections]="shellNav.level2" [panel]="sectionPanel" />
+      }
+      <mat-menu #settingsMenu="matMenu" xPosition="before">
+        @for (item of menu; track item.label) {
+          @if (item.link !== undefined) {
+            <a mat-menu-item [routerLink]="item.link" [fragment]="item.fragment">{{ item.label }}</a>
+          } @else {
+            <button mat-menu-item type="button" (click)="item.run?.()">{{ item.label }}</button>
+          }
+        }
+        @if (devMenu.length) {
+          <div class="shell__menu-group" role="group" aria-labelledby="shell-menu-dev">
+            <span class="shell__menu-heading" id="shell-menu-dev">Dev</span>
+            @for (item of devMenu; track item.label) {
+              @if (item.link !== undefined) {
+                <a mat-menu-item [routerLink]="item.link" [fragment]="item.fragment">{{ item.label }}</a>
+              } @else {
+                <button mat-menu-item type="button" (click)="item.run?.()">{{ item.label }}</button>
+              }
+            }
+          </div>
+        }
+      </mat-menu>
+    }
+    <!-- Below the bars: the page between its two drawers, its sections' on the left and its tools' on
+         the right, each from under the bars to the window's bottom. -->
+    <div class="shell__body">
+      <mat-drawer-container class="shell__panels">
+        <!-- the page's sections, its own content over and under them -->
+        <mat-drawer
+          id="shell-side"
+          class="shell__side"
+          position="start"
+          mode="side"
+          disableClose
+          [opened]="sideShown()"
+        >
+          <div class="shell__side-body hrs-scroll">
+            @if (panels.sideHeader(); as header) {
+              <ng-container [ngTemplateOutlet]="header" />
+            }
+            @if (shellNav.level3Of; as of) {
+              <hrs-side-nav [title]="of.label" [sections]="shellNav.level3" />
+            }
+            @if (panels.sideFooter(); as footer) {
+              <ng-container [ngTemplateOutlet]="footer" />
+            }
+          </div>
+        </mat-drawer>
+        <mat-drawer
+          id="shell-panel"
+          class="hrs-drawer hrs-drawer--shell shell__panel"
+          position="end"
+          disableClose
+          [mode]="handset() ? 'over' : 'side'"
+          [opened]="panels.endShown()"
+          [attr.aria-label]="panels.end()?.label"
+        >
+          @if (panels.end(); as panel) {
+            <ng-container [ngTemplateOutlet]="panel.template" />
+          }
+        </mat-drawer>
+        <mat-drawer-content #main class="shell__main">
+          <main class="shell__page" [class.shell__page--panel-toggle]="panels.end() !== null && !panels.endShown()">
+            <!-- the panel the sub-bar's sections show the page in -->
+            <mat-tab-nav-panel #sectionPanel="matTabNavPanel" class="shell__sections">
+              <router-outlet />
+            </mat-tab-nav-panel>
+          </main>
+        </mat-drawer-content>
+      </mat-drawer-container>
+      @if (!bare() && !panels.endShown() && panels.end(); as panel) {
+        <!-- only while the panel is closed (open, it has its own close): at the top of the page's edge -->
+        <button
+          #panelToggle
+          mat-icon-button
+          type="button"
+          class="shell__panel-toggle"
+          aria-controls="shell-panel"
+          aria-expanded="false"
+          [attr.aria-label]="'Show ' + panel.label"
+          [matTooltip]="'Show ' + panel.label"
+          matTooltipPosition="left"
+          (click)="openPanel()"
+        >
+          <mat-icon class="material-symbols-outlined" aria-hidden="true">right_panel_open</mat-icon>
+        </button>
+      }
+    </div>
+  </mat-sidenav-content>
+</mat-sidenav-container>
+@if (dragging() && drop) {
+  <div class="shell__drop" aria-hidden="true">
+    <div class="shell__drop-card hrs-panel hrs-panel--raised">
+      <mat-icon class="material-symbols-outlined">{{ drop.icon }}</mat-icon>
+      <span>{{ drop.label }}</span>
+    </div>
+  </div>
+}

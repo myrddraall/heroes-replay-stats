@@ -1,0 +1,149 @@
+// The list: no gaps between rows; a group's header (the team's over its first group) has no
+// padding of its own.
+.pois {
+  margin-bottom: 20px;
+  --hrs-list-gap: 0px;
+  --hrs-list-group-padding: 0;
+}
+
+// A team's heading carries the team's colour; its groups sit under it.
+.pois__team-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  padding: 20px 0 4px;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  font: var(--mat-sys-title-small);
+  color: var(--mat-sys-on-surface);
+
+  &::before {
+    content: '';
+    width: 4px;
+    height: 14px;
+    border-radius: 2px;
+    background: var(--mat-sys-outline-variant);
+    flex: none;
+  }
+
+  &.pois__team-heading--top {
+    padding-top: 0;
+  }
+
+  // a side's heading carries its team's theme: the bar is that theme's own colour
+  &[theme]::before {
+    background: var(--color--brand);
+  }
+
+  &.pois__team-heading--neutral::before {
+    background: var(--color--gold);
+  }
+}
+
+.pois__group {
+  padding: 8px 0 4px 12px;
+  font: var(--mat-sys-label-large);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.pois__none {
+  margin: 0;
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+// A row: the point's button (it picks it) and its state toggle, highlighted together.
+.poi-row {
+  display: flex;
+  margin-inline-start: 12px;
+  align-items: center;
+  border-radius: 8px;
+
+  &:hover {
+    background: color-mix(in oklch, var(--color--surface--contrast) var(--weight--state-hover), transparent);
+  }
+
+  &.poi-row--picked {
+    background: var(--color--primary--tint-2);
+    outline: 1px solid var(--color--primary--tint-4);
+  }
+}
+
+.poi {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: var(--mat-sys-body-medium);
+  text-align: start;
+  cursor: pointer;
+
+  &::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--mat-sys-outline-variant);
+    flex: none;
+  }
+
+  // a side's point carries its team's theme: the dot is that theme's own colour
+  &[theme]::before {
+    background: var(--color--brand);
+  }
+
+  &.poi--neutral::before {
+    background: var(--color--gold);
+  }
+
+  &.poi--off .poi__label {
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: -2px;
+  }
+}
+
+// The state toggle: a small icon button at the row's end.
+.poi-toggle {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  margin-inline-end: 4px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--mat-sys-corner-small);
+  background: transparent;
+  color: var(--mat-sys-on-surface-variant);
+  cursor: pointer;
+
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+  }
+
+  &:hover {
+    background: color-mix(in oklch, var(--color--surface--contrast) var(--weight--state-hover), transparent);
+    color: var(--mat-sys-on-surface);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: -2px;
+  }
+}
+
+.poi__label {
+  flex: 1;
+}

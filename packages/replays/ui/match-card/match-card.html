@@ -1,0 +1,12 @@
+<article class="card hrs-panel">
+  <header class="card__head" [class.card__head--pictured]="preview()">
+    @if (preview(); as src) {
+      <div class="card__preview">
+        <img [hrsSprite]="src" spriteCover loading="eager" alt="" />
+      </div>
+    }
+    <h1 class="card__map">{{ replay().map }}</h1>
+    <span class="card__mode">{{ mode() }}</span>
+  </header>
+  <hrs-replay-facts class="card__facts" [replay]="replay()" />
+</article>

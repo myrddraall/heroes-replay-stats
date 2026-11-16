@@ -1,0 +1,16 @@
+:host {
+  display: grid;
+  gap: 8px;
+}
+
+.presets__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.presets__select,
+.presets__name {
+  flex: 1;
+  min-width: 0;
+}

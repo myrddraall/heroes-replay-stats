@@ -1,0 +1,77 @@
+// The rows: one grid whose columns every drawn row shares (subgrid), the rows not drawn standing
+// in as space above and below. No look: rows and cells are plain containers unless the page's row
+// look (`*hrsRow`) and the theme make them more.
+:host {
+  position: relative;
+  min-width: 0;
+}
+
+// Reads what the custom properties come to: a row's height and the gap between rows.
+.data-grid__probe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  visibility: hidden;
+  pointer-events: none;
+  height: var(--hrs-grid-row-height, 40px);
+  margin-left: var(--hrs-grid-row-gap, 0px);
+}
+
+.hrs-grid__body {
+  // sideways only: the page scrolls it up and down
+  overflow-y: hidden;
+}
+
+.data-grid__rows {
+  display: grid;
+  align-content: start;
+  row-gap: var(--hrs-grid-row-gap, 0px);
+  box-sizing: border-box;
+  // its space's width: the columns shrink towards their narrowest (as a table's do) before it
+  // grows wider than its space and scrolls sideways
+  width: 100%;
+  min-width: min-content;
+
+  > .hrs-grid__row {
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+    width: auto;
+  }
+}
+
+// An item's row: its cells in the columns (a row look inside takes no column: it hides itself or
+// stands out of the flow). Its type follows its height where the page sets a scale (everything
+// inside is sized in em); without a scale the declaration drops and the type is inherited.
+.data-grid__row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  width: auto;
+  font-size: calc(var(--hrs-grid-row-height) * var(--hrs-grid-row-type-scale));
+}
+
+// The attached headers' widths: a row taking no room and showing nothing, its boxes sizing the
+// columns as wrapping labels would.
+.data-grid__sizes {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  height: 0;
+  margin-bottom: calc(-1 * var(--hrs-grid-row-gap, 0px));
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.data-grid__size > span {
+  display: inline-block;
+  height: 0;
+  vertical-align: top;
+}
+
+.hrs-grid__group {
+  display: flex;
+}
+
+.data-grid__group-cell {
+  display: contents;
+}

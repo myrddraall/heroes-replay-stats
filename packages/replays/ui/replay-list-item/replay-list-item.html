@@ -1,0 +1,71 @@
+<article class="replay hrs-panel" [attr.aria-label]="label()">
+  @if (preview(); as src) {
+    <div class="replay__preview">
+      <img
+        [hrsSprite]="src"
+        spriteCover
+        [loading]="priority() ? 'eager' : 'lazy'"
+        [attr.fetchpriority]="priority() ? 'high' : null"
+        alt=""
+      />
+    </div>
+  }
+  <header class="replay__head">
+    <h2 class="replay__map">
+      @if (opens()) {
+        <a class="replay__link" hrsItemFocus [routerLink]="['/replays/matches', replay().id]">{{ replay().map }}</a>
+      } @else {
+        <!-- it opens once imported -->
+        {{ replay().map }}
+      }
+    </h2>
+    <span class="replay__mode">{{ mode() }}</span>
+    <span class="replay__length">{{ duration() }}</span>
+    @if (viewed() || replay().outdated) {
+      <mat-chip-set class="replay__marks">
+        @if (viewed(); as viewed) {
+          <mat-chip class="replay__mark--new">{{ viewed }}</mat-chip>
+        }
+        @if (replay().outdated) {
+          <mat-chip>Out of date</mat-chip>
+        }
+      </mat-chip-set>
+    }
+    @if (activity(); as activity) {
+      <span class="replay__activity">{{ activity }}</span>
+    }
+    <span class="replay__dates">
+      <span class="replay__played">
+        Played:
+        <time [attr.datetime]="replay().playedAt">{{
+          replay().playedAt | date: 'MMM d, y, HH:mm'
+        }}</time>
+        · Build: {{ replay().build }}
+      </span>
+      <span class="replay__imported">
+        Imported:
+        <time [attr.datetime]="replay().importedAt">{{
+          replay().importedAt | date: 'MMM d, y, HH:mm'
+        }}</time>
+      </span>
+    </span>
+  </header>
+  <div class="replay__teams">
+    @for (team of teams(); track team.team) {
+      <hrs-match-team
+        [team]="team.team"
+        [name]="team.name"
+        [won]="team.won"
+        [players]="team.players"
+      />
+    }
+  </div>
+  @if (progress() !== null) {
+    <mat-progress-bar
+      class="replay__progress"
+      mode="determinate"
+      [value]="progress()"
+      [attr.aria-label]="(opens() ? 'Analysing ' : 'Importing ') + replay().map"
+    />
+  }
+</article>

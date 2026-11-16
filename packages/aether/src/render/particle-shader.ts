@@ -1,0 +1,76 @@
+import { NodeMaterial, type Texture } from 'three/webgpu';
+import {
+  attribute,
+  float,
+  Fn,
+  int,
+  mix,
+  positionGeometry,
+  select,
+  texture,
+  varying,
+  vec3,
+  vec4,
+} from 'three/tsl';
+import { channelOn, tintRun } from './materials/tint-shader';
+import type { ShaderUniforms } from './uniforms/shader-uniforms';
+import { cold, coldVertex } from './cold-shaders';
+import { type ToClip, setBlend } from './passes/pass-shaders';
+
+/**
+ * The particles: each a square facing the camera, streaked
+ * as the view sweeps; light added, hidden behind what is opaque at its depth.
+ */
+export function particleMaterial(
+  u: ShaderUniforms,
+  tex: Texture,
+  toClip: ToClip,
+  depthTest: boolean,
+): NodeMaterial {
+  const m = new NodeMaterial();
+  m.name = 'particle';
+  setBlend(m, 'add');
+  m.depthTest = depthTest;
+  m.depthWrite = false;
+  const STREAK_LENGTH = 14;
+  const streak = u.float('uStreak');
+  const particle = attribute<'vec4'>('particle', 'vec4');
+  const colourIn = attribute<'vec4'>('particleColor', 'vec4');
+  const corner = positionGeometry.xy;
+  m.vertexNode = Fn(() => {
+    const at = u.mat4('uView').mul(vec4(particle.xyz, 1)).toVar();
+    const moved = vec4(
+      at.x.add(corner.x.mul(particle.w).mul(streak.mul(STREAK_LENGTH).add(1))),
+      at.y.add(corner.y.mul(particle.w).mul(mix(1, 0.3, streak))),
+      at.z,
+      at.w,
+    );
+    return toClip(u.mat4('uProjection').mul(moved));
+  })();
+  const vUv = varying(corner.add(0.5));
+  const vColor = varying(vec4(colourIn.rgb, colourIn.a.mul(mix(1, 0.55, streak))));
+  m.fragmentNode = Fn(() => {
+    const tt = texture(tex, vUv).toVar();
+    const ch = u.int('uChannel');
+    const one = select(
+      ch.equal(2),
+      tt.a,
+      select(ch.equal(3), tt.r, select(ch.equal(4), tt.g, tt.b)),
+    );
+    const c = select(ch.lessThanEqual(1), tt.rgb, vec3(one));
+    // The sky's tints, before lighting or after alike (a star is unlit); a mask by a layer read
+    // as its texel, one by facing all on (a star faces the eye).
+    const star = c.mul(u.float('uBright')).mul(vColor.rgb).toVar();
+    tintRun(
+      u.int('uBodyTintCount'),
+      (i, r) => u.row('bodyTints', i, r),
+      null,
+      (d) => select(int(d.x).equal(1), channelOn(tt, int(d.z)), float(1)),
+      [star],
+    );
+    // (Dimmed outside what an editor is in: 1, as it is.)
+    return cold(vec4(star.mul(vColor.a).mul(u.float('uDim', 1)), 0));
+  })();
+  coldVertex(m);
+  return m;
+}

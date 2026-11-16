@@ -1,0 +1,20 @@
+<section class="events" aria-labelledby="timeline-events-title">
+  <h3 id="timeline-events-title" class="title">Events</h3>
+  <mat-checkbox [checked]="allShown()" [indeterminate]="!allShown() && !noneShown()" (click)="toggleAll()">All</mat-checkbox>
+  @for (e of events; track e.kind) {
+    <mat-checkbox
+      [checked]="isShown(e.kind)"
+      (click)="choose(e.kind, $event)"
+      matTooltip="Ctrl-click to show only these"
+      matTooltipShowDelay="800"
+      matTooltipPosition="left"
+    >
+      @if (e.text; as text) {
+        <span class="text">{{ text }}</span>
+      } @else {
+        <span class="mark" [style.clip-path]="e.clip"></span>
+      }
+      {{ e.label }}
+    </mat-checkbox>
+  }
+</section>

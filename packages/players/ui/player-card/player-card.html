@@ -1,0 +1,27 @@
+@let p = player();
+<article class="card hrs-panel">
+  <header class="card__head">
+    <h1 class="card__name">{{ p.name }}</h1>
+    @if (p.region; as region) {
+      <span class="card__region">{{ region }}</span>
+    }
+    @if (p.isMe) {
+      <span class="card__me">Me</span>
+    }
+  </header>
+  <dl class="facts">
+    <dt>Matches</dt>
+    <dd>{{ p.games }}</dd>
+    <dt>Record</dt>
+    <dd>
+      {{ p.wins }}–{{ p.losses }}
+      @if (p.winRate !== null) {
+        <span class="facts__rate">{{ p.winRate | percent: '1.0-0' }}</span>
+      }
+    </dd>
+    <dt>Last played</dt>
+    <dd>
+      <time [attr.datetime]="p.lastPlayedAt">{{ p.lastPlayedAt | date: 'MMM d, y' }}</time>
+    </dd>
+  </dl>
+</article>

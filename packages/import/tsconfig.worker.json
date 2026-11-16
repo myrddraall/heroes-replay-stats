@@ -1,0 +1,10 @@
+// The ingest worker, which the app's Angular builder bundles (its web worker support).
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "WebWorker"],
+    "types": []
+  },
+  "include": ["**/*.worker.ts"],
+  "exclude": ["node_modules"]
+}

@@ -1,0 +1,7 @@
+<span class="name">{{ name() }}</span>
+@if (details()) {
+  <span class="details">{{ details() }}</span>
+}
+@if (text(); as text) {
+  <span class="description"><hrs-game-text [text]="text" /></span>
+}

@@ -1,0 +1,8 @@
+<main>
+  <h1>Play screen background</h1>
+  @let target = opened(); @if (isAsset(target)) {
+  <forge-asset-editor [asset]="target" />
+  } @else {
+  <forge-scene-editor [scene]="target.id" />
+  }
+</main>

@@ -1,0 +1,6 @@
+// The table (its title for screen readers only); the page around it pads it. It grows with its
+// rows (the page scrolls, not the table).
+:host {
+  display: block;
+}
+

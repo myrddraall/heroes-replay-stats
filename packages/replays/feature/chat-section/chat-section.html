@@ -1,0 +1,9 @@
+<hrs-layout>
+  @if (store.error(); as error) {
+    <p role="alert">The chat could not be read: {{ error }}</p>
+  } @else if (store.lines(); as lines) {
+    <hrs-chat-log [lines]="lines" />
+  } @else {
+    <mat-progress-bar mode="indeterminate" aria-label="Loading the chat" />
+  }
+</hrs-layout>

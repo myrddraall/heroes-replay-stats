@@ -1,0 +1,15 @@
+<!-- the side nav names the section on screen -->
+<h2 class="cdk-visually-hidden">Unit Kills</h2>
+@if (table() === 'players') {
+  <ui-stat-table [columns]="columns" [rows]="playerRows()">
+    <ng-template [uiStatRowHead]="playerRows()" let-data>
+      <ui-score-row-head [hero]="data.player.hero" [name]="data.player.name" [portrait]="data.icon" />
+    </ng-template>
+  </ui-stat-table>
+} @else {
+  <ui-stat-table [columns]="columns" [rows]="teamRows()" rowHeadLabel="Team">
+    <ng-template [uiStatRowHead]="teamRows()" let-data>
+      <ui-score-team-head [name]="data.name" />
+    </ng-template>
+  </ui-stat-table>
+}

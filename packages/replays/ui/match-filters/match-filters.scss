@@ -1,0 +1,12 @@
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.filters__search {
+  flex: 1 1 24ch;
+}
+.filters__select {
+  flex: 0 1 18ch;
+}

@@ -1,0 +1,47 @@
+@use '@angular/material' as mat;
+// The colours are the cp-theming theme's (theme.scss, loaded before this file), and Material's
+// system tokens the Material adapter's. This is what HRS Nexus UI adds for Material (generated from
+// packages/common/design-system by `pnpm run generate.theme`): the films and the sizes and shapes
+// of its components, on `:root` and every `[theme]`. Its tokens and its own
+// components (nexus/tokens.css, nexus.css) load before this file.
+@use 'nexus/material-theme';
+
+// Material's density. Its colours and its type scale are the theme's (theme.scss).
+html {
+  @include mat.theme(
+    (
+      density: 0,
+    )
+  );
+
+  // A blue for the background (--hrs-background-tint): the colour the game multiplies its Play
+  // screen's sky by for vs A.I. (Storm_UI_Play_AI_ColorShift, its sky's average).
+  --hrs-background-tint-blue: #8aecff;
+  // More tints for it, picked by eye on /play-background.
+  --hrs-background-tint-gold: #ffcc00;
+  --hrs-background-tint-green: #00ff00;
+  --hrs-background-tint-red: #ff0000;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+h1,
+h2,
+h3 {
+  color: var(--mat-sys-on-surface);
+  margin: 0 0 0.5em;
+}
+h1 {
+  font: var(--mat-sys-headline-medium);
+  text-transform: uppercase;
+}
+h2 {
+  font: var(--mat-sys-title-large);
+}
+h3 {
+  font: var(--mat-sys-title-medium);
+}

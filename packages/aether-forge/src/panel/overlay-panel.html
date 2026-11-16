@@ -1,0 +1,8 @@
+@if (editor.overlayView(); as o) {
+<forge-overlay-properties
+  [overlay]="o"
+  (enabledChange)="editor.setEnabled({ key: editor.selected(), enabled: $event })"
+  (openRequested)="open(o.id)"
+  (takeOffRequested)="editor.removeOverlay(o.id)"
+/>
+}

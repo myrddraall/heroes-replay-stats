@@ -1,0 +1,26 @@
+<span class="result">
+  @if (won() === null) {
+    <span class="result__none">No result</span>
+  } @else {
+    <span [hrsStyledText]="won() ? 'glow' : 'base'" [attr.theme]="won() ? 'legendary' : null">{{
+      won() ? 'Victory' : 'Defeat'
+    }}</span>
+  }
+</span>
+@if (players().length === 0) {
+  <p class="empty">No players</p>
+} @else {
+  <ul class="players">
+    @for (p of players(); track p.slot) {
+      <li>
+        <hrs-player-cell
+          [team]="team()"
+          [self]="p.you"
+          [hero]="p.hero"
+          [name]="p.name"
+          [icon]="p.icon"
+        />
+      </li>
+    }
+  </ul>
+}

@@ -1,0 +1,67 @@
+
+// The drawer container fills the host; the viewer fills the content between the panels. Nothing
+// here may scroll sideways: the panels keep to their width, the map clips.
+:host {
+  position: relative;
+  display: block;
+  overflow: hidden;
+}
+
+.explore {
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+}
+
+.explore__drawer {
+  width: var(--ui-side-panel-width, min(360px, 90vw));
+  overflow: hidden;
+  // Material rounds a side drawer's inner corners; these run the full height, flush with the map.
+  border-radius: 0;
+
+  // Material's own inner container scrolls by default; only the panel's body may, or a
+  // scrollbar appears for the border's pixel.
+  :host ::ng-deep &.mat-drawer .mat-drawer-inner-container {
+    overflow: hidden;
+  }
+
+  // Material's drawer (its film from the theme), blurring what is behind it as the theme says, with a
+  // hairline on the edge facing the map.
+  backdrop-filter: var(--hrs-backdrop-raised);
+
+  &.mat-drawer-end {
+    border-left: 1px solid var(--mat-sys-outline-variant);
+  }
+
+  // (Material marks only an end drawer: a start one is any other.)
+  &:not(.mat-drawer-end) {
+    border-right: 1px solid var(--mat-sys-outline-variant);
+  }
+}
+
+.explore__content {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+
+.explore__viewer {
+  position: absolute;
+  inset: 0;
+}
+
+// Over the map's top corners, above the viewer's own status line: one toggle per panel, each on
+// its panel's side.
+.explore__toggle {
+  position: absolute;
+  top: 8px;
+  inset-inline-end: 8px;
+  z-index: 10001;
+  background: var(--mat-sys-surface-container);
+  backdrop-filter: var(--hrs-backdrop-raised);
+
+  &.explore__toggle--start {
+    inset-inline-end: auto;
+    inset-inline-start: 8px;
+  }
+}

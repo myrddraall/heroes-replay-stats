@@ -1,0 +1,40 @@
+@if (editor.bodyView(); as b) {
+<forge-body-properties
+  [page]="pages.page()"
+  [values]="b.values"
+  [origins]="b.origins"
+  [overrides]="b.overrides"
+  [orbit]="b.info.orbit ?? null"
+  [orbitBase]="b.orbitBase"
+  [inherited]="b.inherited"
+  [place]="b.info.place ?? null"
+  [changed]="b.changed"
+  [focused]="b.focused"
+  [set]="b.info.settings"
+  [overlay]="b.info.file?.kind === 'style'"
+  [bodySettings]="!editor.skyOverlayOpen()"
+  [label]="b.label"
+  [labelBelow]="b.labelBelow"
+  [focusable]="b.focusable"
+  (settingsChange)="editor.setBody($event)"
+  (clear)="editor.clearBody($event)"
+  (orbitChange)="editor.setOrbit($event)"
+  (placeChange)="editor.setPlace($event)"
+  (removeRequested)="editor.removeMoon()"
+  (focusToggle)="editor.toggleFocus()"
+  (resetRequested)="editor.resetBody()"
+  [deletable]="editor.deletable()"
+  [lit]="!editor.skyOverlayOpen() && b.lights"
+  (deleteRequested)="editor.deleteAsset()"
+>
+  @if (editor.litBy(); as lit) {
+  <forge-lit-by
+    litBy
+    [lights]="lit"
+    (litChange)="editor.setLitBy($event)"
+    (lightShow)="editor.showLight($event)"
+    (lightRemove)="editor.removeLight($event)"
+  />
+  }
+</forge-body-properties>
+}

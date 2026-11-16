@@ -1,0 +1,14 @@
+// The section under the filter; the page grows with what the section holds, and the shell's page
+// area scrolls. The card is in the page on a handset only: elsewhere it is in the shell's left-hand
+// drawer.
+:host {
+  display: block;
+}
+
+.player__card {
+  display: none;
+}
+
+:host-context(.hrs-shell--handset) .player__card {
+  display: block;
+}

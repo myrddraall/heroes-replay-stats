@@ -1,0 +1,316 @@
+import {
+  gameSeconds,
+  type StatEventRecord,
+  type Team,
+  type UnitRecord,
+} from '@myrddraall/heroprotocol-db';
+import { structureKind, type StructureKind } from './structure-kind';
+
+/** A stretch a camp spent one way: up for the taking, or captured by a team until it came back. */
+export interface CampSpan {
+  readonly start: number;
+  readonly end: number;
+  /** The team that captured it; null while it was up. */
+  readonly team: Team | null;
+  /**
+   * Captured: the mercenaries the capture sent into lane, each from the capture until it died (or
+   * the game's end); none while it was up.
+   */
+  readonly mercs: readonly { readonly start: number; readonly end: number }[];
+}
+
+/** A mercenary camp over the game. */
+export interface CampState {
+  readonly id: number;
+  /** The game's name for it (`Siege Camp`); null when it was never captured. */
+  readonly type: string | null;
+  /** The unit types that defend it (`MercDefenderMeleeKnight`), as the replay saw them born. */
+  readonly defenders: readonly string[];
+  /** Where it is: its third of the map top to bottom, and the side of the team whose half it's in (null in the middle). */
+  readonly place: 'top' | 'middle' | 'bottom';
+  readonly side: Team | null;
+  readonly spans: readonly CampSpan[];
+}
+
+/** A structure that fell in a town. */
+export interface TownLoss {
+  readonly seconds: number;
+  readonly kind: StructureKind;
+  /** Whose it was: on Towers of Doom, whoever held the town when it was built. */
+  readonly team: Team;
+}
+
+/** A stretch a team held a town: from the start or from taking it, until it fell or was taken. */
+export interface TownHold {
+  readonly start: number;
+  readonly end: number;
+  readonly team: Team;
+}
+
+/** A town (a fort's or a keep's, with its towers, walls, gates and wells) over the game. */
+export interface TownState {
+  readonly id: number;
+  readonly team: Team;
+  /** The game's lane number. */
+  readonly lane: number;
+  /** Where the lane runs, top to bottom on the map; null on a map with one lane. */
+  readonly place: 'top' | 'middle' | 'bottom' | null;
+  /** The town's hall: a fort or a keep; null when the replay has no hall for it. */
+  readonly hall: 'fort' | 'keep' | null;
+  /** When its hall fell for good; null when it stood to the end or was taken (Towers of Doom). */
+  readonly fell: number | null;
+  /** Who held it over the game: one team until it fell, except where towns are taken. */
+  readonly holds: readonly TownHold[];
+  /** Its other structures that fell, in order. */
+  readonly losses: readonly TownLoss[];
+}
+
+/** A team's core over the game. */
+export interface CoreState {
+  readonly team: Team;
+  /** Its unit type (`KingsCore`; Alterac Pass' generals `VanndarStormpike`, `DrekThar`). */
+  readonly type: string;
+  /** When it fell; null when it stood to the end. */
+  readonly fell: number | null;
+}
+
+/** The map's camps, towns and cores over the game; times are seconds on the game's clock. */
+export interface MapState {
+  readonly camps: readonly CampState[];
+  readonly towns: readonly TownState[];
+  readonly cores: readonly CoreState[];
+}
+
+/** How near (map units) a unit's birth is to a camp or town for it to be that camp's or town's. */
+const NEAR = 12;
+
+/** The game's `Team`/`TeamID` (1, 2) as a team (0, 1). */
+const teamOf = (v: unknown): Team | null => (v === 1 ? 0 : v === 2 ? 1 : null);
+/** The game's team players (11, 12), as `Town Captured` names a town's new owner, as a team. */
+const teamPlayerOf = (v: unknown): Team | null => (v === 11 ? 0 : v === 12 ? 1 : null);
+const num = (e: StatEventRecord, key: string): number | null => {
+  const v = e.values[key];
+  return typeof v === 'number' ? v : null;
+};
+
+/**
+ * The map over the game, from the replay's stat events and units:
+ * - each camp's stretches: up from when its defenders are born (at the start, and each time it
+ *   comes back) until a team captures it, then the team's until its next defenders are born, with
+ *   the mercenaries the capture sent into lane (its team's lane units born at the camp as it was
+ *   captured) and when each died;
+ * - each town (`TownStructureInit`), with its hall and its other structures (the units born nearest
+ *   it) and when each fell: a tower when it turned into its ruin, the rest when they died;
+ * - who held each town: on Towers of Doom a town is taken, not destroyed: its hall's death
+ *   (`TownStructureDeath`) comes with a `Town Captured` naming the new owner at the same moment,
+ *   and the hall is rebuilt for them;
+ * - each team's core and when it fell.
+ *
+ * `defenderTypes` are the units the map's camps are defended by, from its game data (Hanamura's
+ * turret camp's `OverwatchTurret`); null for a map without it, whose camps' defenders are then the
+ * neutral units named for defending (`MercDefenderMeleeKnight`).
+ */
+export function mapState(
+  stats: readonly StatEventRecord[],
+  units: readonly UnitRecord[],
+  startLoop: number,
+  durationSeconds: number,
+  defenderTypes: ReadonlySet<string> | null,
+): MapState {
+  const seconds = (loop: number) => gameSeconds(loop, startLoop);
+
+  // the map's size, and each team's half by where its towns are
+  const start = stats.find((e) => e.eventName === 'GameStart');
+  const mapHeight = (start && num(start, 'MapSizeY')) ?? 0;
+  const townX = (team: number) => {
+    const xs = stats
+      .filter((e) => e.eventName === 'TownStructureInit' && e.values['Team'] === team)
+      .map((e) => num(e, 'PositionX') ?? 0);
+    return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
+  };
+  const [orderX, chaosX] = [townX(1), townX(2)];
+  /** Whose half a point is in: the team whose towns are nearer, none in the middle tenth between them. */
+  const sideAt = (x: number): Team | null => {
+    if (orderX === null || chaosX === null) return null;
+    const middle = (orderX + chaosX) / 2;
+    if (Math.abs(x - middle) < Math.abs(chaosX - orderX) * 0.1) return null;
+    return Math.abs(x - orderX) < Math.abs(x - chaosX) ? 0 : 1;
+  };
+  const placeAt = (y: number): CampState['place'] =>
+    !mapHeight
+      ? 'middle'
+      : y > (mapHeight * 2) / 3
+        ? 'top'
+        : y < mapHeight / 3
+          ? 'bottom'
+          : 'middle';
+
+  // camps
+  const captures = stats.filter((e) => e.eventName === 'JungleCampCapture');
+  const camps = stats
+    .filter((e) => e.eventName === 'JungleCampInit')
+    .map((init): CampState => {
+      const id = num(init, 'CampID') ?? -1;
+      const x = num(init, 'PositionX') ?? 0;
+      const y = num(init, 'PositionY') ?? 0;
+      // its defenders, and their births, a few seconds apart for one spawn
+      const defenders = units.filter(
+        (u) =>
+          u.ownerTeam === null &&
+          (defenderTypes
+            ? defenderTypes.has(u.type)
+            : /Defender/.test(u.type) && !/Cowering|Dummy/.test(u.type)) &&
+          Math.hypot(u.bornAt.x - x, u.bornAt.y - y) < NEAR,
+      );
+      const spawns = defenders
+        .map((u) => seconds(u.bornAtLoop))
+        .sort((a, b) => a - b)
+        .filter((s, i, all) => i === 0 || s - all[i - 1]! > 10);
+      const mine = captures.filter((c) => num(c, 'CampID') === id);
+      /** A capture's mercenaries: its team's lane units born at the camp as it was captured. */
+      const mercsOf = (capture: StatEventRecord, team: Team | null) =>
+        units
+          .filter(
+            (u) =>
+              u.ownerTeam === team &&
+              /Laner/.test(u.type) &&
+              !/Missile/.test(u.type) &&
+              Math.abs(u.bornAtLoop - capture.gameloop) <= 16 &&
+              Math.hypot(u.bornAt.x - x, u.bornAt.y - y) < NEAR,
+          )
+          .map((u) => ({
+            start: seconds(u.bornAtLoop),
+            end: u.diedAtLoop === null ? durationSeconds : seconds(u.diedAtLoop),
+          }));
+      const marks = [
+        ...spawns.map((s) => ({
+          at: s,
+          team: null as Team | null,
+          mercs: [] as CampSpan['mercs'],
+        })),
+        ...mine.map((c) => {
+          const team = teamOf(c.values['TeamID']);
+          return { at: c.seconds, team, mercs: mercsOf(c, team) };
+        }),
+      ].sort((a, b) => a.at - b.at);
+      const spans = marks.map((m, i) => ({
+        start: m.at,
+        end: marks[i + 1]?.at ?? durationSeconds,
+        team: m.team,
+        mercs: m.mercs,
+      }));
+      const type = mine.map((c) => c.values['CampType']).find((t) => typeof t === 'string');
+      return {
+        id,
+        type: typeof type === 'string' ? type : null,
+        defenders: [...new Set(defenders.map((u) => u.type))].sort(),
+        place: placeAt(y),
+        side: sideAt(x),
+        spans,
+      };
+    })
+    .sort((a, b) => a.id - b.id);
+
+  // towns
+  const inits = stats.filter((e) => e.eventName === 'TownStructureInit');
+  const towns = inits.map((e) => ({
+    id: num(e, 'TownID') ?? -1,
+    team: teamOf(e.values['Team']),
+    lane: num(e, 'Lane') ?? 0,
+    x: num(e, 'PositionX') ?? 0,
+    y: num(e, 'PositionY') ?? 0,
+  }));
+  // the nearest town of either team: on Towers of Doom a taken town's new hall and wells are its
+  // new owner's
+  const nearestTown = (u: UnitRecord) =>
+    [...towns].sort(
+      (a, b) =>
+        Math.hypot(a.x - u.bornAt.x, a.y - u.bornAt.y) -
+        Math.hypot(b.x - u.bornAt.x, b.y - u.bornAt.y),
+    )[0];
+  const structures = units.flatMap((u) => {
+    const kind = structureKind(u.bornType ?? u.type) ?? structureKind(u.type);
+    if (kind === null || kind === 'core' || u.ownerTeam === null) return [];
+    const loop =
+      kind === 'tower'
+        ? (u.typeChanges.find((c) => c.type === 'TownCannonTowerDead')?.gameloop ?? null)
+        : u.diedAtLoop;
+    const town = nearestTown(u);
+    return town
+      ? [
+          {
+            town: town.id,
+            kind,
+            team: u.ownerTeam,
+            born: u.bornAtLoop,
+            fell: loop === null ? null : seconds(loop),
+          },
+        ]
+      : [];
+  });
+  // the towns taken: each `Town Captured` with the hall's death at the same moment
+  const deaths = stats.filter((e) => e.eventName === 'TownStructureDeath');
+  const taken = stats
+    .filter((e) => e.eventName === 'Town Captured')
+    .flatMap((e) => {
+      const same = stats.filter((c) => c.eventName === e.eventName && c.gameloop === e.gameloop);
+      const death = deaths.filter((d) => d.gameloop === e.gameloop)[same.indexOf(e)];
+      const team = teamPlayerOf(e.values['New Owner']);
+      const town = death ? num(death, 'TownID') : null;
+      return town === null || team === null ? [] : [{ town, team, seconds: e.seconds }];
+    });
+  // the lanes' places, by where their towns are: higher on the map is the top
+  const lanes = [...new Set(towns.map((t) => t.lane))]
+    .map((lane) => {
+      const ys = towns.filter((t) => t.lane === lane).map((t) => t.y);
+      return { lane, y: ys.reduce((a, b) => a + b, 0) / ys.length };
+    })
+    .sort((a, b) => b.y - a.y);
+  const places: Record<number, TownState['place']> = Object.fromEntries(
+    lanes.map(({ lane }, i) => [
+      lane,
+      lanes.length === 1 ? null : i === 0 ? 'top' : i === lanes.length - 1 ? 'bottom' : 'middle',
+    ]),
+  );
+  const townStates = towns.flatMap((t): TownState[] => {
+    if (t.team === null) return [];
+    const own = structures.filter((s) => s.town === t.id);
+    const isHall = (s: (typeof own)[number]) => s.kind === 'fort' || s.kind === 'keep';
+    // the first hall: on Towers of Doom the later ones are rebuilt for whoever took the town
+    const hall = own.filter(isHall).sort((a, b) => a.born - b.born)[0];
+    const takes = taken.filter((x) => x.town === t.id).sort((a, b) => a.seconds - b.seconds);
+    const fell = takes.length > 0 ? null : (hall?.fell ?? null);
+    const starts = [{ seconds: 0, team: t.team }, ...takes];
+    return [
+      {
+        id: t.id,
+        team: t.team,
+        lane: t.lane,
+        place: places[t.lane] ?? null,
+        hall: hall ? (hall.kind as 'fort' | 'keep') : null,
+        fell,
+        holds: starts.map((s, i) => ({
+          start: s.seconds,
+          end: starts[i + 1]?.seconds ?? fell ?? durationSeconds,
+          team: s.team,
+        })),
+        losses: own
+          .filter((s) => !isHall(s) && s.fell !== null)
+          .map((s) => ({ seconds: s.fell!, kind: s.kind, team: s.team }))
+          .sort((a, b) => a.seconds - b.seconds),
+      },
+    ];
+  });
+
+  // cores
+  const cores = units
+    .filter((u) => structureKind(u.type) === 'core' && u.ownerTeam !== null)
+    .map((u) => ({
+      team: u.ownerTeam!,
+      type: u.type,
+      fell: u.diedAtLoop === null ? null : seconds(u.diedAtLoop),
+    }))
+    .sort((a, b) => a.team - b.team);
+
+  return { camps, towns: townStates, cores };
+}

@@ -1,0 +1,25 @@
+<hrs-layout>
+  <hrs-showcase heading="Talent tooltip">
+    <ng-container ngProjectAs="[about]">
+      <code>hrs-talent-tooltip</code> in <code>[hrsTooltip]</code>: the game's talent tooltip, its name,
+      a details line and its full text in the game's markup (<code>hrs-game-text</code>). The first is
+      shown when the page opens; hover or focus the others.
+    </ng-container>
+    <hrs-showcase-row class="talents" label="Talents">
+      @for (talent of talents(); track talent.caption) {
+        <hrs-showcase-item [caption]="talent.caption">
+          <hrs-talent-frame
+            tabindex="0"
+            [state]="talent.state"
+            [picture]="talent.picture"
+            [name]="talent.name"
+            [hrsTooltip]="tip"
+          />
+          <ng-template #tip>
+            <hrs-talent-tooltip [name]="talent.name" [details]="talent.details" [text]="talent.text" />
+          </ng-template>
+        </hrs-showcase-item>
+      }
+    </hrs-showcase-row>
+  </hrs-showcase>
+</hrs-layout>

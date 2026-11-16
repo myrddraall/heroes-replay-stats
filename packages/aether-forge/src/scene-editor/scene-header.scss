@@ -1,0 +1,18 @@
+@use '../controls/rows/property-row';
+
+:host {
+  display: grid;
+  gap: 4px;
+}
+
+.button {
+  @include property-row.button;
+}
+
+.focus {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font: var(--mat-sys-body-small);
+}

@@ -1,0 +1,16 @@
+export {
+  type LayerSettings,
+  type LayerSlot,
+  layerSlots,
+  MATERIAL_DEFAULTS,
+  type MaterialDepth,
+  type MaterialDrawAs,
+  materialKey,
+  type MaterialSettings,
+  type MaterialSettingsMap,
+  type MaterialValues,
+  materialValues,
+  mergeMaterialSettings,
+  mergeSettings,
+  withLayer,
+} from './material-settings';

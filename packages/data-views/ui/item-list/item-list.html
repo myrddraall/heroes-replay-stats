@@ -1,0 +1,71 @@
+<div #probe class="item-list__probe" aria-hidden="true"></div>
+
+@if (count() === 0) {
+  @if (emptyTemplate(); as empty) {
+    <div class="item-list__empty" role="listitem">
+      <ng-container [ngTemplateOutlet]="empty.template" />
+    </div>
+  }
+} @else {
+  @if (stuck(); as stuck) {
+    <div class="item-list__stuck" aria-hidden="true" [style.top.px]="-window.inset()">
+      <div #stuckHeader class="hrs-items__group" [style.transform]="'translateY(' + stuck.push + 'px)'">
+        <ng-container
+          [ngTemplateOutlet]="groupTemplate()?.template ?? plainGroup"
+          [ngTemplateOutletContext]="{ $implicit: stuck.group }"
+        />
+      </div>
+    </div>
+  }
+
+  @for (drawnRow of drawn(); track drawnRow.key) {
+    @let row = drawnRow.row;
+    @if (row.kind === 'group') {
+      <div
+        #rowElement
+        class="hrs-items__group item-list__row"
+        role="none"
+        [attr.row-index]="drawnRow.index"
+        [style.transform]="'translateY(' + drawnRow.y + 'px)'"
+      >
+        <ng-container
+          [ngTemplateOutlet]="groupTemplate()?.template ?? plainGroup"
+          [ngTemplateOutletContext]="{ $implicit: row.group }"
+        />
+      </div>
+    } @else {
+      <div
+        #rowElement
+        class="hrs-items__row item-list__row"
+        role="none"
+        [attr.row-index]="drawnRow.index"
+        [style.transform]="'translateY(' + drawnRow.y + 'px)'"
+      >
+        @for (entry of drawnRow.items; track entry.track) {
+          <div
+            class="hrs-items__item"
+            role="listitem"
+            [attr.item-index]="entry.index"
+            [attr.aria-posinset]="entry.index + 1"
+            [attr.aria-setsize]="count()"
+            [attr.aria-current]="isSelected(entry) ? 'true' : null"
+            (click)="onClick($event, entry)"
+          >
+            @if (entry.item !== null) {
+              <ng-container
+                [ngTemplateOutlet]="itemTemplate().template"
+                [ngTemplateOutletContext]="{ $implicit: entry.item, index: entry.index, count: count(), columns: columns() }"
+              />
+            } @else if (placeholderTemplate(); as placeholder) {
+              <ng-container [ngTemplateOutlet]="placeholder.template" [ngTemplateOutletContext]="{ $implicit: entry.index }" />
+            } @else {
+              <div class="hrs-items__placeholder"></div>
+            }
+          </div>
+        }
+      </div>
+    }
+  }
+}
+
+<ng-template #plainGroup let-group><span class="hrs-items__group-label">{{ group }}</span></ng-template>

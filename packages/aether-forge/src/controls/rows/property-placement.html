@@ -1,0 +1,91 @@
+<forge-property-select
+  label="Placement"
+  [value]="mode()"
+  [options]="modes"
+  [changed]="changed()"
+  [origin]="origin()"
+  [overridden]="overridden()"
+  (resetRequested)="resetRequested.emit()"
+  (valueChange)="chooseMode($event)"
+/>
+@switch (mode()) { @case ('over') { @let o = over();
+<forge-property-direction
+  label="Over"
+  [value]="o.at"
+  [changed]="changed()"
+  [origin]="origin()"
+  [overridden]="overridden()"
+  (resetRequested)="resetRequested.emit()"
+  (valueChange)="overChange({ at: $event })"
+/>
+<forge-property-number
+  label="Distance"
+  [value]="o.distance"
+  [min]="least()"
+  [step]="step()"
+  [changed]="changed()"
+  [origin]="origin()"
+  [overridden]="overridden()"
+  (resetRequested)="resetRequested.emit()"
+  (valueChange)="overChange({ distance: $event })"
+/>
+} @case ('orbit') { @let o = orbit();
+<forge-property-number
+  label="Distance"
+  [value]="o.radius"
+  [min]="least()"
+  [step]="step()"
+  [changed]="changed()"
+  [origin]="origin()"
+  [overridden]="overridden()"
+  (resetRequested)="resetRequested.emit()"
+  (valueChange)="orbitChange({ radius: $event })"
+/>
+<forge-property-number
+  label="Progress"
+  [value]="o.progress"
+  [min]="0"
+  [max]="1"
+  [step]="0.01"
+  [changed]="changed()"
+  [origin]="origin()"
+  [overridden]="overridden()"
+  (resetRequested)="resetRequested.emit()"
+  (valueChange)="orbitChange({ progress: $event })"
+/>
+<forge-property-number
+  label="Tilt"
+  [value]="o.tilt"
+  [min]="-90"
+  [max]="90"
+  [step]="1"
+  [changed]="changed()"
+  [origin]="origin()"
+  [overridden]="overridden()"
+  (resetRequested)="resetRequested.emit()"
+  (valueChange)="orbitChange({ tilt: $event })"
+/>
+<forge-property-number
+  label="Turn"
+  [value]="o.turn"
+  [min]="-180"
+  [max]="180"
+  [step]="1"
+  [changed]="changed()"
+  [origin]="origin()"
+  [overridden]="overridden()"
+  (resetRequested)="resetRequested.emit()"
+  (valueChange)="orbitChange({ turn: $event })"
+/>
+} @default { @for (a of axes(); track a.axis) {
+<forge-property-number
+  [label]="a.label"
+  [value]="position()[a.axis] * a.sign || 0"
+  [step]="step()"
+  [changed]="changed()"
+  [origin]="origin()"
+  [overridden]="overridden()"
+  (resetRequested)="resetRequested.emit()"
+  (valueChange)="move(a, $event)"
+/>
+} } }

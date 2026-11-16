@@ -1,0 +1,60 @@
+{
+  "name": "@myrddraall/heroes-replay-stats-data-views",
+  "version": "0.0.0-MAIN",
+  "private": true,
+  "description": "Data views: the data grid and the item list every table and list is drawn with, drawing only what is in the page's view",
+  "types": "./index.ts",
+  "sideEffects": false,
+  "scripts": {
+    "format": "prettier --write \"**/*.ts\"",
+    "github.actions.test": "pnpm test",
+    "lint": "eslint .",
+    "test": "ng test --watch=false",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^22.2.5",
+    "@angular/cdk": "^22.1.0",
+    "@angular/cli": "^22.2.5",
+    "@angular/common": "^22.1.0",
+    "@angular/compiler": "^22.1.0",
+    "@angular/compiler-cli": "^22.1.0",
+    "@angular/core": "^22.1.0",
+    "@angular/material": "^22.1.0",
+    "@angular/platform-browser": "^22.1.0",
+    "@angular/router": "^22.1.0",
+    "@eslint/js": "^10.0.1",
+    "@ngrx/signals": "^22.0.1",
+    "@tanstack/angular-virtual": "^6.1.12",
+    "angular-eslint": "^22.5.0",
+    "eslint": "^10.9.1",
+    "jsdom": "^28.0.0",
+    "prettier": "^3.8.1",
+    "rxjs": "^7.8.0",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "^8.69.0",
+    "vitest": "^4.0.8"
+  },
+  "peerDependencies": {
+    "@angular/cdk": "^22.1.0",
+    "@angular/common": "^22.1.0",
+    "@angular/core": "^22.1.0",
+    "@angular/material": "^22.1.0",
+    "@angular/router": "^22.1.0",
+    "@ngrx/signals": "^22.0.1",
+    "@tanstack/angular-virtual": "^6.1.12",
+    "rxjs": "^7.8.0"
+  },
+  "license": "MIT",
+  "exports": {
+    ".": "./index.ts",
+    "./ui": "./ui/index.ts",
+    "./data": "./data/index.ts",
+    "./model": "./model/index.ts",
+    "./testing": "./testing/index.ts"
+  },
+  "type": "module"
+}

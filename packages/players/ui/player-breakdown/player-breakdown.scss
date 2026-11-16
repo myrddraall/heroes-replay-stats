@@ -1,0 +1,18 @@
+:host {
+  display: block;
+}
+
+// the choices over the table, centred as its card is
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 16px;
+  margin-bottom: 16px;
+}
+
+// a row head that is a name alone (a map, a mode, a role)
+.group {
+  padding-left: 0.5em;
+  white-space: nowrap;
+}

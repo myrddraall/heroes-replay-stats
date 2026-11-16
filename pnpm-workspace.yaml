@@ -1,4 +1,6 @@
 packages:
+  - 'apps/*'
+  - 'libs/*'
   - 'packages/*'
 
 # The git-flow toolchain ships on a prerelease cadence, so its packages are
@@ -15,7 +17,12 @@ minimumReleaseAgeExclude:
   # The heroprotocol libraries release through git-flow and are consumed the same
   # day; the release-age policy would block every bump.
   - '@myrddraall/*'
+  # cp-theming is adopted at its first alpha, a day after it was published.
+  - '@cpangular/*'
   - electron@44.4.5
+  - '@cpdevtools/schematics'
+  - '@tanstack/angular-virtual@6.1.12'
+  - '@tanstack/virtual-core@3.19.11'
 
 # pnpm blocks dependency install scripts by default and fails the install until
 # each one is answered explicitly. esbuild (pulled in by tsup) is answered

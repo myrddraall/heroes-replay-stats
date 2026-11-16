@@ -1,0 +1,21 @@
+<hrs-layout>
+  @if (store.error(); as error) {
+    <p role="alert">The draft could not be read: {{ error }}</p>
+  } @else if (store.steps(); as steps) {
+    @if (steps.length > 0) {
+      <hrs-draft-list [steps]="steps" />
+    } @else {
+      @if (store.picking() === 'standard') {
+        <hrs-empty-state icon="how_to_reg" title="No draft">
+          There was no draft in this game.
+        </hrs-empty-state>
+      } @else {
+        <hrs-empty-state icon="how_to_reg" title="No draft">
+          This replay doesn't record how the heroes were picked.
+        </hrs-empty-state>
+      }
+    }
+  } @else {
+    <mat-progress-bar mode="indeterminate" aria-label="Loading the draft" />
+  }
+</hrs-layout>

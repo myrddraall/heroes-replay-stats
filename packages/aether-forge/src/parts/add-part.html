@@ -1,0 +1,13 @@
+<div class="buttons">
+  <forge-split-button
+    [options]="options()"
+    menuLabel="Other parts"
+    (chosen)="add($event)"
+    (picked)="reuse($event)"
+  />
+</div>
+@if (savable()) {
+<div class="buttons">
+  <button type="button" class="button" (click)="saved.emit()">Save as overlay</button>
+</div>
+}

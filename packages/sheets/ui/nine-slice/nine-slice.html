@@ -1,0 +1,35 @@
+@if (back(); as layer) {
+  <ng-container [ngTemplateOutlet]="frame" [ngTemplateOutletContext]="{ $implicit: layer, place: 'back' }" />
+}
+<span class="content"><ng-content /></span>
+@if (front(); as layer) {
+  <ng-container [ngTemplateOutlet]="frame" [ngTemplateOutletContext]="{ $implicit: layer, place: 'front' }" />
+}
+
+<ng-template #frame let-layer let-place="place">
+  <span
+    [class]="'layer layer--' + place"
+    [class.layer--tint]="layer.tint"
+    [class.layer--debug]="layer.debug"
+    [style.grid-template-columns]="layer.columns"
+    [style.grid-template-rows]="layer.rows"
+    [style.inset]="layer.inset"
+    [style.--hrs-slice-tint]="layer.tint"
+    aria-hidden="true"
+  >
+    @for (part of layer.parts; track $index) {
+      <span
+        class="part"
+        [style.--hrs-slice-size]="part.size"
+        [style.--hrs-slice-repeat]="part.repeat"
+        [style.scale]="part.scale"
+        [style.--hrs-slice-normal]="part.images.normal"
+        [style.--hrs-slice-selected]="part.images.selected"
+        [style.--hrs-slice-focus]="part.images.focus"
+        [style.--hrs-slice-hover]="part.images.hover"
+        [style.--hrs-slice-pressed]="part.images.pressed"
+        [style.--hrs-slice-disabled]="part.images.disabled"
+      ></span>
+    }
+  </span>
+</ng-template>

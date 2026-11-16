@@ -1,0 +1,26 @@
+:host {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+// the best within its row's group: its theme's accent (a team's)
+:host(.number-cell--group-best) {
+  color: var(--mat-sys-primary);
+  font-weight: 600;
+}
+
+// the best of its column: gold
+:host(.number-cell--best) {
+  color: var(--mat-sys-tertiary);
+  font-weight: 700;
+}
+
+// for screen readers; the colour shows it on screen
+.number-cell__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

@@ -1,0 +1,38 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "../..",
+    "paths": {
+      "@myrddraall/heroes-replay-stats-data-views/*": [
+        "../data-views/*/index.ts"
+      ],
+      "@myrddraall/heroes-replay-stats-common/*": [
+        "../common/*/index.ts"
+      ],
+      "@myrddraall/heroes-replay-stats-heroes/*": [
+        "../heroes/*/index.ts"
+      ],
+      "@myrddraall/heroes-replay-stats-layout/*": [
+        "../layout/*/index.ts"
+      ],
+      "@myrddraall/heroes-replay-stats-shell/*": [
+        "../shell/*/index.ts"
+      ],
+      "@myrddraall/heroes-replay-stats-platform/*": [
+        "../platform/*/index.ts"
+      ],
+      "@myrddraall/heroes-replay-stats-background/*": [
+        "../background/*/index.ts"
+      ],
+      "@myrddraall/heroes-replay-stats-theme/*": [
+        "../theme/*/index.ts"
+      ],
+      "@myrddraall/heroes-replay-stats-settings/*": [
+        "../settings/*/index.ts"
+      ],
+      "@myrddraall/heroes-replay-stats-sheets/*": [
+        "../sheets/*/index.ts"
+      ]
+    }
+  }
+}

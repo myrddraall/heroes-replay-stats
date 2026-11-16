@@ -1,0 +1,51 @@
+<h2 class="cdk-visually-hidden">Records</h2>
+@if (rows().length === 0) {
+  <hrs-empty-state icon="trophy" title="No records yet">
+    Records appear once these matches' stats have been worked out.
+  </hrs-empty-state>
+} @else {
+  <div class="records hrs-panel">
+    <hrs-grid-header [for]="grid" />
+    <hrs-data-grid #grid [items]="rows()" [trackBy]="byStat">
+      <hrs-grid-row *hrsRow />
+      <hrs-column name="stat" header="Stat" width="minmax(max-content, 2fr)">
+        <ng-template hrsCell let-r>
+          <span class="records__stat">{{ r.column.label }}</span>
+        </ng-template>
+      </hrs-column>
+      <hrs-column name="record" header="Record" width="minmax(max-content, 1fr)" align="end">
+        <ng-template hrsCell let-r>
+          <span class="records__value">{{ format(r) }}</span>
+        </ng-template>
+      </hrs-column>
+      <hrs-column name="hero" header="Hero" width="minmax(max-content, 2fr)">
+        <ng-template hrsCell let-r>
+          <span class="records__hero">
+            <hrs-hero-minimap-icon [picture]="r.icon?.picture ?? null" [name]="r.hero" />
+            {{ r.hero }}
+          </span>
+        </ng-template>
+      </hrs-column>
+      <hrs-column name="match" header="Match" width="minmax(max-content, 3fr)">
+        <ng-template hrsCell let-r>
+          <span class="records__match">
+            <a [routerLink]="['/replays/matches', r.replayId]">{{ r.map }}</a>
+            <span class="records__mode">{{ r.mode }}</span>
+          </span>
+        </ng-template>
+      </hrs-column>
+      <hrs-column name="result" header="Result" width="max-content">
+        <ng-template hrsCell let-r>
+          @if (r.won !== null) {
+            <span [class.records__won]="r.won">{{ r.won ? 'Won' : 'Lost' }}</span>
+          }
+        </ng-template>
+      </hrs-column>
+      <hrs-column name="played" header="Played" width="minmax(max-content, 1.5fr)">
+        <ng-template hrsCell let-r>
+          <time [attr.datetime]="r.playedAt">{{ r.playedAt | date: 'MMM d, y' }}</time>
+        </ng-template>
+      </hrs-column>
+    </hrs-data-grid>
+  </div>
+}

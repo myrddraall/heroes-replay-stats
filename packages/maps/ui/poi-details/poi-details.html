@@ -1,0 +1,52 @@
+<section class="details" aria-labelledby="poi-details-heading">
+  <h3 id="poi-details-heading" class="details__heading">Selected</h3>
+  @if (poi(); as p) {
+    <p class="details__name">{{ p.poi.label }}</p>
+    <dl class="details__facts">
+      <dt>Side</dt>
+      <dd>{{ ownerLabel(p.poi.owner) }}</dd>
+      @if (p.poi.town !== null) {
+        <dt>Town</dt>
+        <dd>{{ p.poi.town }}</dd>
+      }
+      @if (p.poi.outpost !== null) {
+        <dt>Outpost</dt>
+        <dd>{{ p.poi.outpost }}</dd>
+      }
+      <dt>Cell</dt>
+      <dd>{{ cellLabel(p.poi.cell) }}</dd>
+      <dt>Type</dt>
+      <dd>{{ p.poi.type }}</dd>
+    </dl>
+    <div class="details__state" role="group" aria-label="Shown as">
+      <button
+        type="button"
+        class="details__state-main"
+        [attr.aria-label]="'Shown as ' + stateLabel(p.state) + ', next ' + stateLabel(nextState(p))"
+        (click)="stateChange.emit(nextState(p))"
+      >
+        {{ stateLabel(p.state) }}
+      </button>
+      <button
+        type="button"
+        class="details__state-arrow"
+        aria-label="Choose what it shows"
+        [matMenuTriggerFor]="stateMenu"
+      >
+        <mat-icon class="material-symbols-outlined" aria-hidden="true">arrow_drop_down</mat-icon>
+      </button>
+    </div>
+    <mat-menu #stateMenu="matMenu" xPosition="before" class="details__state-menu">
+      @for (state of p.states; track state) {
+        <button mat-menu-item type="button" (click)="stateChange.emit(state)">
+          <mat-icon class="material-symbols-outlined" aria-hidden="true">
+            {{ state === p.state ? 'check' : '' }}
+          </mat-icon>
+          <span>{{ stateLabel(state) }}</span>
+        </button>
+      }
+    </mat-menu>
+  } @else {
+    <p class="details__hint">Click a structure or camp on the map, or pick one from the list.</p>
+  }
+</section>

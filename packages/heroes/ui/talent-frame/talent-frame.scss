@@ -1,0 +1,32 @@
+// the frame 68 of the game's for the icon's 40: 14 out on each side
+:host {
+  --hrs-frame-inset: calc(1em * 14 / 40);
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+}
+
+// the content: the icon, 1em square
+.icon {
+  display: block;
+  width: 1em;
+  height: 1em;
+  overflow: hidden;
+}
+
+// the background 3 in from the frame's edge (11 of its 68), faint in an empty tier (the game's
+// 100 of 255)
+.background {
+  position: absolute;
+  inset: calc(1em * 11 / 40);
+}
+
+:host(:is([state='empty'], [state='heroic-empty'])) .background {
+  opacity: calc(100 / 255);
+}
+
+// each picture covers its box (spriteCover), which hides any overflow
+.background,
+.border {
+  overflow: hidden;
+}

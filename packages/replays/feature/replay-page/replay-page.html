@@ -1,0 +1,19 @@
+<hrs-layout>
+  @if (store.error(); as error) {
+    <p role="alert">The replay could not be read: {{ error }}</p>
+  } @else if (!store.loaded()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Loading the match" />
+  } @else if (store.replay(); as replay) {
+    <!-- in the shell's left-hand drawer, over its sections: its card (the map's preview, its name,
+         mode and facts) -->
+    <ng-template hrsShellSide="header"><hrs-match-card [replay]="replay" [preview]="preview()" /></ng-template>
+    <!-- a handset has no such drawer: the header (with the facts) over the section instead -->
+    <hrs-replay-header class="match__header" hrsLayoutItem="padded" [replay]="replay" />
+    <!-- edge to edge: each section lays itself out -->
+    <div hrsLayoutItem="edge-to-edge"><router-outlet /></div>
+  } @else {
+    <hrs-empty-state icon="search_off" title="Match not found">
+      It is not in the replay database, or it is still being imported.
+    </hrs-empty-state>
+  }
+</hrs-layout>
