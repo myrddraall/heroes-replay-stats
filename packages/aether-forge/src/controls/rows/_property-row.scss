@@ -64,7 +64,7 @@ $reset-column: 16px;
   box-sizing: border-box;
   height: 24px;
   padding: 0 4px;
-  border: 1px solid color-mix(in srgb, var(--mat-sys-primary) 30%, transparent);
+  border: 1px solid var(--color--primary--tint-3);
   border-radius: 0;
   background: var(--mat-sys-surface-container-low);
   color: inherit;
@@ -92,7 +92,7 @@ $reset-column: 16px;
   gap: 4px;
   height: 24px;
   padding: 0 8px;
-  border: 1px solid color-mix(in srgb, var(--mat-sys-primary) 40%, transparent);
+  border: 1px solid var(--color--primary--tint-3);
   border-radius: 0;
   background: var(--mat-sys-surface-container-low);
   color: inherit;
@@ -106,7 +106,7 @@ $reset-column: 16px;
   }
 
   &:hover:not(:disabled) {
-    border-color: color-mix(in srgb, var(--mat-sys-primary) 80%, transparent);
+    border-color: var(--color--primary--tint-5);
   }
 
   &:disabled {

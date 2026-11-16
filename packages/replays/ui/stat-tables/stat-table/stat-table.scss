@@ -82,9 +82,9 @@
 
   ::ng-deep hrs-data-grid.is-scrolled .hrs-grid__body .hrs-grid__cell:first-child {
     background:
-      linear-gradient(rgb(255 255 255 / 0.035), rgb(255 255 255 / 0.035)) 17px 0 / calc(100% - 17px) 100% no-repeat,
+      linear-gradient(oklch(from var(--color--surface--contrast) l c h / 0.035), oklch(from var(--color--surface--contrast) l c h / 0.035)) 17px 0 / calc(100% - 17px) 100% no-repeat,
       var(--score-row),
-      linear-gradient(var(--hrs-ground), var(--hrs-ground)) 17px 0 / calc(100% - 17px) 100% no-repeat;
+      linear-gradient(var(--color--background), var(--color--background)) 17px 0 / calc(100% - 17px) 100% no-repeat;
   }
 
   // the row heads and their header to the left, the figures and theirs to the right

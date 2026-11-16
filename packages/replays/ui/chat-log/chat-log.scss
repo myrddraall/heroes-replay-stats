@@ -20,7 +20,7 @@
   gap: 4px 10px;
   padding: 3px 16px;
   // the team's theme (hrsTeam) shows as a faint band and the sender's name
-  background: linear-gradient(90deg, color-mix(in srgb, var(--mat-sys-primary) 12%, transparent), transparent 40%);
+  background: linear-gradient(90deg, var(--color--primary--tint-1), transparent 40%);
 }
 
 .line__time {

@@ -10,9 +10,9 @@
   @if $grey {
     $c: 0;
   }
-  --#{$name}-top: oklch(from color-mix(in oklab, var(--hrs-glow) #{$top}, var(--hrs-tint)) l #{$c} h / #{$alpha});
-  --#{$name}-bottom: oklch(from color-mix(in oklab, var(--hrs-glow) #{$bottom}, var(--hrs-tint)) l #{$c} h / #{$alpha});
-  --#{$name}-line: oklch(from color-mix(in oklab, var(--hrs-glow) #{$line}, var(--hrs-tint)) l #{$c} h / #{$alpha + 0.05});
+  --#{$name}-top: oklch(from color-mix(in oklab, var(--color--brand) #{$top}, var(--color--surface)) l #{$c} h / #{$alpha});
+  --#{$name}-bottom: oklch(from color-mix(in oklab, var(--color--brand) #{$bottom}, var(--color--surface)) l #{$c} h / #{$alpha});
+  --#{$name}-line: oklch(from color-mix(in oklab, var(--color--brand) #{$line}, var(--color--surface)) l #{$c} h / #{$alpha + 0.05});
 }
 
 // on elements in a team's theme: the chart reads them from hidden ones (`.row-look--probe`), the key
@@ -59,10 +59,12 @@
   gap: 0.5em;
 }
 
+// a team's swatch: its theme's own colour (the element carries the team's theme)
 .legend__swatch {
   inline-size: 0.9em;
   block-size: 0.9em;
   border-radius: 2px;
+  background: var(--color--brand);
 }
 
 // a state's stretch for both teams, side by side: each half its team's row look, over its line

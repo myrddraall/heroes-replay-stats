@@ -72,7 +72,7 @@
     left: -1px;
     z-index: 1;
     inline-size: 2px;
-    background: var(--score-row-bar, var(--hrs-glow));
+    background: var(--score-row-bar, var(--color--brand));
     filter: drop-shadow(0 0 2px var(--score-row-glow, transparent));
     transform: skewX(-30deg);
     transform-origin: bottom left;

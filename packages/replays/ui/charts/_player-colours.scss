@@ -1,7 +1,8 @@
 // The colours of a team's players on a chart of every player (`--player-colour-0` … `-4`, by
 // their place in the team): the categorical palette's first five, checked against the theme's dark
 // panels. The two teams share them; a chart tells the teams apart another way (the other team's
-// lines dashed). Include it where a player's colour is drawn or shown.
+// lines dashed). Data colours of the chart, the same in every theme: not the theme's. Include it
+// where a player's colour is drawn or shown.
 @mixin player-colours {
   --player-colour-0: #3987e5;
   --player-colour-1: #d95926;

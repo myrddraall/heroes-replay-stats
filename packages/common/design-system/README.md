@@ -2,11 +2,10 @@ The Heroes of the Storm menus, rebuilt as a web UI for heroes-replay-stats (HRS)
 
 ## Building
 
-Written by hand: `components/bundle.css` (apart from its rarity block) and each component's `README.md` and `preview.html`. Generated, TypeScript in `build/`, run from the repository root:
+Written by hand: `components/bundle.css` and each component's `README.md` and `preview.html`. The colours are the app's cp-theming theme (`apps/web/src/theme.scss`), built from the guidelines below: each theme passes its accent as the brand colour and its ground and tint as the background and surface palettes; `bundle.css` reads `--color--<palette>` and its roles. Generated, TypeScript in `build/`, run from the repository root:
 
-- `pnpm run generate.design-system`: `tokens.json` (from `build/tokens.ts` and the role table in `build/themes.ts`) and the rarity block of `bundle.css`.
-- `pnpm run generate.design-system-previews`: the previews as pages in `tmp/design-system-harness`.
-- `pnpm run check.contrast`: every text, line and focus colour against its surfaces, in every theme.
+- `pnpm run generate.design-system`: `tokens.json` (from `build/tokens.ts`): type, spacing, radius, opacity and effects.
+- `pnpm run generate.design-system-previews`: the previews as pages in `tmp/design-system-harness`, with the theme compiled beside them.
 - `pnpm run generate.theme`: the app's copy in `packages/common/assets/styles/nexus`.
 
 ## Principles
@@ -95,7 +94,7 @@ Each component's README says what the consumer provides, its states, and the Ang
 
 ## Angular Material mapping
 
-`bundle.css` ends with the M3 system tokens realised from HRS tokens (`--mat-sys-surface*` → the films, `--mat-sys-outline*` → `hrs-border`, `--mat-sys-primary` → `hrs-accent`, every `--mat-sys-corner-*` → 0 except extra-small and full → 2px, elevation levels → `hrs-shade`) plus per-component overrides (menu, select, dialog, sidenav, tooltip, tabs, form field, buttons, slider, checkbox, slide toggle, progress bar, table, chips, list, button toggle). In the app these go through `mat.theme()` for the base and `mat.<component>-overrides()` for the rest; the `.hrs-*` classes cover what Material has no component for (panel, selection list, badge, pod, player portrait, rows, cards, dividers, section headings).
+Material's colours are the Material adapter's (`@cpangular/cp-theming-ng-material`), worked out from the theme. `bundle.css` ends with what the app adds: the films (`--mat-sys-surface*`, menu, select, autocomplete, dialog and sidenav containers) and Material's sizes and shapes; `generate.theme` writes them as `mat.theme-overrides()` and `mat.<component>-overrides()`. The `.hrs-*` classes cover what Material has no component for (panel, selection list, badge, pod, player portrait, rows, cards, dividers, section headings).
 
 ## Iconography
 
