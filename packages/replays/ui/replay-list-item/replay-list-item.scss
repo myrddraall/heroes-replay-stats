@@ -32,7 +32,7 @@
   font: var(--mat-sys-title-large);
   font-family: var(--font-brand);
   font-weight: 600;
-  color: #fff;
+  color: var(--color--surface--contrast);
 }
 .replay__link {
   color: inherit;
@@ -71,8 +71,8 @@
 }
 // New or Updated: in capitals, in the design system's emphasis gold (its cards' NEW)
 .replay__mark--new {
-  --mat-chip-label-text-color: var(--mat-sys-tertiary);
-  --mat-chip-outline-color: var(--mat-sys-tertiary);
+  --mat-chip-label-text-color: var(--color--gold);
+  --mat-chip-outline-color: var(--color--gold);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }

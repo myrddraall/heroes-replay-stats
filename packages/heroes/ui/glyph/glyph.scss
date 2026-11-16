@@ -18,7 +18,7 @@
 
 // plain: the theme's text colour (a styled look's class sets its own)
 .glyph--plain {
-  color: var(--hrs-text);
+  color: var(--color--surface--contrast);
 }
 
 // the content in a box of its own, for a letter trimmed to its capitals (from the cap height to the

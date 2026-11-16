@@ -16,23 +16,34 @@ export interface ChartLook {
 
 /**
  * A chart's colours and font, from the custom properties on `element`: the theme's Material
- * tokens and team colours, and any `extra` custom properties its stylesheet sets. The canvas
- * can't read custom properties, so each is resolved to the `rgba()` it draws.
+ * tokens, the teams' colours (the theme's team palettes), and any `extra` custom properties
+ * its stylesheet sets. The canvas can't read custom properties, and a theme's variable holds a
+ * formula (a light and a dark value, a colour worked out from another), so each is given to a
+ * hidden element inside `element` as its colour and the colour it computes to is read back, as the
+ * `rgba()` the canvas draws.
  */
 export function readChartLook(element: HTMLElement, extra: readonly string[] = []): ChartLook {
-  const style = getComputedStyle(element);
   const color = colorResolver();
-  const read = (property: string) => color(style.getPropertyValue(property).trim());
-  return {
-    font: style.fontFamily,
+  const probe = element.ownerDocument.createElement('span');
+  probe.hidden = true;
+  element.append(probe);
+  /** The colour a custom property has here. */
+  const read = (property: string) => {
+    probe.style.color = `var(${property})`;
+    return color(getComputedStyle(probe).color);
+  };
+  const look: ChartLook = {
+    font: getComputedStyle(element).fontFamily,
     label: read('--mat-sys-on-surface-variant'),
     line: read('--mat-sys-outline-variant'),
     teams: {
-      blue: read('--hrs-team-blue'),
-      red: read('--hrs-team-red'),
+      blue: read('--color--team-blue'),
+      red: read('--color--team-red'),
     } satisfies Record<TeamColor, string>,
     extra: Object.fromEntries(extra.map((name) => [name, read(`--${name}`)])),
   };
+  probe.remove();
+  return look;
 }
 
 /**

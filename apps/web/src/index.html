@@ -1,10 +1,15 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" theme="hrs" themeMode="dark">
   <head>
     <meta charset="utf-8" />
+    <!-- themeHeadSnippet from @cpangular/cp-theming-core, pasted as it is: puts the saved theme and
+         mode on <html> before the first paint. -->
+    <script>(function(){try{var d=document.documentElement,p=localStorage.getItem("cp-theming--persist"),s=p==="local"?localStorage:p==="session"?sessionStorage:null;if(!s)return;var t=s.getItem("cp-theming--theme"),m=s.getItem("cp-theming--mode");if(t)d.setAttribute("theme",t);if(m==="auto"||m==="light"||m==="dark"||m==="invert")d.setAttribute("themeMode",m)}catch(e){}})();</script>
     <title>Heroes Replay Stats</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- HRS is dark only (themeMode="dark" above): dark before the stylesheets arrive too, and the
+         browser's own bars in the page's ground -->
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#070b16" />
     <!-- the game's home button icon (Storm_UI_MainNavigation_Home), from our own extraction -->

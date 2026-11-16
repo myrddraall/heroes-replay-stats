@@ -1,19 +1,20 @@
 /**
  * The app's copy of the HRS Nexus UI theme, generated from its one source, the design system
- * (../design-system: tokens.json and components/bundle.css), into ../assets/styles/nexus:
+ * (../design-system: tokens.json and components/bundle.css), into ../assets/styles/nexus. The
+ * colours are not here: they are the cp-theming theme's (apps/web/src/theme.scss), which these
+ * files read as `--color--<palette>` and its roles.
  *
- * - `tokens.css`: every token as a CSS custom property. The colour and shadow roles per theme
- *   (`:root` and `[theme="purple"]` first, then one block per base theme), the rest once on
- *   `:root`; the type styles as font shorthands (`--hrs-font-<style>`) and trackings
+ * - `tokens.css`: every token as a CSS custom property on `:root` (spacing, radius, opacity,
+ *   effects); the type styles as font shorthands (`--hrs-font-<style>`) and trackings
  *   (`--hrs-tracking-<style>`), not classes, so they never clash with the app's own class names.
  * - `nexus.css`: bundle.css without the preview-only helpers (the scene stand-in and the preview
  *   rows), without its font import (the app's index.html loads the fonts), without its Angular
  *   Material mapping (below), and with the game textures it embeds as data URIs read from custom
  *   properties instead (`--hrs-tex-<texture>`), which the shell sets from the interface sheet.
  * - Both carry the theme aliases (tokens.json): each alias added to every selector naming its theme.
- * - `_material-theme.scss`: bundle.css's Angular Material mapping as a Material theme, on `:root`
- *   and every `[theme]`: the system tokens through `mat.theme-overrides`, each component's
- *   through its `mat.<component>-overrides` (Material checks every name as it compiles).
+ * - `_material-theme.scss`: bundle.css's Angular Material mapping (the films, sizes and shapes;
+ *   Material's colours are the Material adapter's) through `mat.theme-overrides` and each
+ *   component's `mat.<component>-overrides` (Material checks every name as it compiles).
  *
  *   pnpm run generate.theme
  *
@@ -47,12 +48,9 @@ interface TypeStyle {
 interface Tokens {
   readonly name: string;
   readonly color: {
-    readonly themes: readonly { readonly id: string }[];
     /** Other names for a theme: each gets the rules of the theme it names. */
     readonly aliases: readonly { readonly id: string; readonly of: string }[];
-    readonly tokens: readonly Token[];
   };
-  readonly shadow: { readonly tokens: readonly Token[] };
   readonly spacing: { readonly tokens: readonly Token[] };
   readonly radius: { readonly tokens: readonly Token[] };
   readonly opacity: { readonly tokens: readonly Token[] };
@@ -72,19 +70,10 @@ function textureProperty(texture: string): string {
 }
 
 function tokensCss(t: Tokens): string {
-  const themes = t.color.themes.map((x) => x.id);
-  const first = themes[0]!;
-  const value = (token: Token, theme: string) =>
-    typeof token.value === 'string' ? token.value : (token.value[theme] ?? token.value[first]);
-  const blocks = themes.map((theme) => {
-    const selector = theme === first ? `:root, [theme="${theme}"]` : `[theme="${theme}"]`;
-    const lines = [...t.color.tokens, ...t.shadow.tokens].map(
-      (token) => `  --${token.name}: ${value(token, theme)};`,
-    );
-    return `${selector} {\n${lines.join('\n')}\n}`;
-  });
+  const value = (token: Token) =>
+    typeof token.value === 'string' ? token.value : Object.values(token.value)[0];
   const once = [t.spacing, t.radius, t.opacity, t.effect].flatMap((family) =>
-    family.tokens.map((token) => `  --${token.name}: ${value(token, first)};`),
+    family.tokens.map((token) => `  --${token.name}: ${value(token)};`),
   );
   const families = Object.entries(t.type.families).map(([k, v]) => `  --font-${k}: ${v};`);
   const styles = t.type.groups.flatMap((group) =>
@@ -95,7 +84,7 @@ function tokensCss(t: Tokens): string {
       return lines;
     }),
   );
-  return `${HEADER(`${t.name} tokens`)}${blocks.join('\n')}\n:root {\n${[...once, ...families, ...styles].join('\n')}\n}\n`;
+  return `${HEADER(`${t.name} tokens`)}:root {\n${[...once, ...families, ...styles].join('\n')}\n}\n`;
 }
 
 /** Where bundle.css's Angular Material mapping starts: a comment, then one rule. */

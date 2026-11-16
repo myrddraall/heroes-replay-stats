@@ -61,12 +61,6 @@
   height: 10px;
   border-radius: 50%;
   flex: none;
-
-  &--order {
-    background: var(--hrs-team-blue);
-  }
-
-  &--chaos {
-    background: var(--hrs-team-red);
-  }
+  // its team's own colour: the dot carries the team's theme
+  background: var(--color--brand);
 }

@@ -9,7 +9,7 @@
 }
 
 .records__stat {
-  color: #fff;
+  color: var(--color--surface--contrast);
   font: var(--mat-sys-title-small);
 }
 
@@ -33,7 +33,7 @@
   gap: 2px 10px;
 
   a {
-    color: #fff;
+    color: var(--color--surface--contrast);
   }
 }
 

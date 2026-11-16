@@ -114,14 +114,14 @@ importers:
         specifier: ^22.1.0
         version: 22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/platform-browser@22.1.7(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)))(rxjs@7.8.2)
       '@cpangular/cp-theming-core':
-        specifier: 0.1.0-alpha.0
-        version: 0.1.0-alpha.0
+        specifier: 0.2.0-alpha.0
+        version: 0.2.0-alpha.0
       '@cpangular/cp-theming-ng-core':
-        specifier: 0.1.0-alpha.0
-        version: 0.1.0-alpha.0(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@cpangular/cp-theming-core@0.1.0-alpha.0)
+        specifier: 0.2.0-alpha.0
+        version: 0.2.0-alpha.0(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@cpangular/cp-theming-core@0.2.0-alpha.0)
       '@cpangular/cp-theming-ng-material':
-        specifier: 0.1.0-alpha.0
-        version: 0.1.0-alpha.0(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/material@22.1.7(98d61717a67593c786c69e18d869e5f4))(@cpangular/cp-theming-core@0.1.0-alpha.0)(@cpangular/cp-theming-ng-core@0.1.0-alpha.0(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@cpangular/cp-theming-core@0.1.0-alpha.0))
+        specifier: 0.2.0-alpha.0
+        version: 0.2.0-alpha.0(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/material@22.1.7(98d61717a67593c786c69e18d869e5f4))(@cpangular/cp-theming-core@0.2.0-alpha.0)(@cpangular/cp-theming-ng-core@0.2.0-alpha.0(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@cpangular/cp-theming-core@0.2.0-alpha.0))
       '@myrddraall/hero-data':
         specifier: ^0.7.0
         version: 0.7.0
@@ -642,6 +642,9 @@ importers:
       rxjs:
         specifier: ^7.8.0
         version: 7.8.2
+      sass:
+        specifier: ^1.104.1
+        version: 1.104.1
       typescript:
         specifier: ~6.0.2
         version: 6.0.3
@@ -2032,24 +2035,24 @@ packages:
   '@cacheable/utils@2.5.0':
     resolution: {integrity: sha512-buipgOVDkkPXNR5+xBpDw7Zk2n1EvU7qBJCNUcL7rhQ//kfpOXPAvQ511Os0vpLYJ1pZnvudNytkQt2hst3wqA==}
 
-  '@cpangular/cp-theming-core@0.1.0-alpha.0':
-    resolution: {integrity: sha512-8x7f+6PPB75YWUQvimSLpKaKBrsWxs3MQgknRAdrG4Ld0bp9XMgHgtXvHOCdwLmAzYOGz0crAsPb0KUKaWWh1w==, tarball: https://npm.pkg.github.com/download/@cpangular/cp-theming-core/0.1.0-alpha.0/943e881a0b04bb82cc5c26c493e95c431a57ec61}
+  '@cpangular/cp-theming-core@0.2.0-alpha.0':
+    resolution: {integrity: sha512-wEZkv8kcv9kJ2lQWClT13LvslYFZmbkSazNJoVOt9zFuBQQmHRnGAneC0RVVpDhuFNMg5KULDuGZqUwbxNNksg==, tarball: https://npm.pkg.github.com/download/@cpangular/cp-theming-core/0.2.0-alpha.0/241407c31ecde91aca55b275d557cb65bd5a3e46}
 
-  '@cpangular/cp-theming-ng-core@0.1.0-alpha.0':
-    resolution: {integrity: sha512-0suqjCFujNtNKewh844k2mcW/PxJ2IMOjTTfLcfPTnlqxGECfBmsRfq06b9mb89ZX0El+wfjls8K/0xiJ/tWrQ==, tarball: https://npm.pkg.github.com/download/@cpangular/cp-theming-ng-core/0.1.0-alpha.0/b4ec91f0741f01b4e39b0af14deee2f42c4ca535}
+  '@cpangular/cp-theming-ng-core@0.2.0-alpha.0':
+    resolution: {integrity: sha512-SWZpgwXKyhGlwsljRTcrTOfUJTfVhpeIFvZaUh1WksSuBGMOBXqNTzede/BoBm+cGALabFfeKRUL0lTvo4NZxw==, tarball: https://npm.pkg.github.com/download/@cpangular/cp-theming-ng-core/0.2.0-alpha.0/b3d027825a0490afc2a53c6f3aeea2a65d88cc87}
     peerDependencies:
       '@angular/common': ^22.0.0
       '@angular/core': ^22.0.0
-      '@cpangular/cp-theming-core': ^0.1.0-alpha.0
+      '@cpangular/cp-theming-core': ^0.2.0-alpha.0
 
-  '@cpangular/cp-theming-ng-material@0.1.0-alpha.0':
-    resolution: {integrity: sha512-mk5pgzrnc16DI8NOV3MVSY8TOltHyDYCXK7wXRcCmLv5XDbF26i0Yos78HnMlN9Ho8t+M9DsjWAWQRwYuzR6kw==, tarball: https://npm.pkg.github.com/download/@cpangular/cp-theming-ng-material/0.1.0-alpha.0/95328b37cef6775815db6ec81ab2ac21085bba43}
+  '@cpangular/cp-theming-ng-material@0.2.0-alpha.0':
+    resolution: {integrity: sha512-D8xQGWdGZUGKiQ+I0F5db+/5VtxQ5ZLYoszSNQ9ohmRUUn8QKInEZZPPx2Qde/IFEND0cR3msDmKqfZjBju/EQ==, tarball: https://npm.pkg.github.com/download/@cpangular/cp-theming-ng-material/0.2.0-alpha.0/834ac9e58c14261ab157f63bdc97cfc3d55b3d7e}
     peerDependencies:
       '@angular/common': ^22.0.0
       '@angular/core': ^22.0.0
       '@angular/material': ^22.0.0
-      '@cpangular/cp-theming-core': 0.1.0-alpha.0
-      '@cpangular/cp-theming-ng-core': 0.1.0-alpha.0
+      '@cpangular/cp-theming-core': 0.2.0-alpha.0
+      '@cpangular/cp-theming-ng-core': 0.2.0-alpha.0
 
   '@cpdevtools/git-flow-cli@1.1.1':
     resolution: {integrity: sha512-bo7ptdulSmSqMztX9JcL8NNlJ+PFZXitk0BKSgx1BYPL1rXjoggP3eXjBksH7m52SvWkYTseFwM3iRxJ9vb2ww==, tarball: https://npm.pkg.github.com/download/@cpdevtools/git-flow-cli/1.1.1/aff7258d53a4d41ec2444d557340af66003b7eba}
@@ -6860,22 +6863,22 @@ snapshots:
       hashery: 1.5.1
       keyv: 5.6.0
 
-  '@cpangular/cp-theming-core@0.1.0-alpha.0': {}
+  '@cpangular/cp-theming-core@0.2.0-alpha.0': {}
 
-  '@cpangular/cp-theming-ng-core@0.1.0-alpha.0(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@cpangular/cp-theming-core@0.1.0-alpha.0)':
+  '@cpangular/cp-theming-ng-core@0.2.0-alpha.0(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@cpangular/cp-theming-core@0.2.0-alpha.0)':
     dependencies:
       '@angular/common': 22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2)
       '@angular/core': 22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)
-      '@cpangular/cp-theming-core': 0.1.0-alpha.0
+      '@cpangular/cp-theming-core': 0.2.0-alpha.0
       tslib: 2.8.1
 
-  '@cpangular/cp-theming-ng-material@0.1.0-alpha.0(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/material@22.1.7(98d61717a67593c786c69e18d869e5f4))(@cpangular/cp-theming-core@0.1.0-alpha.0)(@cpangular/cp-theming-ng-core@0.1.0-alpha.0(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@cpangular/cp-theming-core@0.1.0-alpha.0))':
+  '@cpangular/cp-theming-ng-material@0.2.0-alpha.0(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@angular/material@22.1.7(98d61717a67593c786c69e18d869e5f4))(@cpangular/cp-theming-core@0.2.0-alpha.0)(@cpangular/cp-theming-ng-core@0.2.0-alpha.0(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@cpangular/cp-theming-core@0.2.0-alpha.0))':
     dependencies:
       '@angular/common': 22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2)
       '@angular/core': 22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2)
       '@angular/material': 22.1.7(dc20dbc5de65617d3ba614f3080c025f)
-      '@cpangular/cp-theming-core': 0.1.0-alpha.0
-      '@cpangular/cp-theming-ng-core': 0.1.0-alpha.0(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@cpangular/cp-theming-core@0.1.0-alpha.0)
+      '@cpangular/cp-theming-core': 0.2.0-alpha.0
+      '@cpangular/cp-theming-ng-core': 0.2.0-alpha.0(@angular/common@22.1.7(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.7(@angular/compiler@22.1.7)(rxjs@7.8.2))(@cpangular/cp-theming-core@0.2.0-alpha.0)
       tslib: 2.8.1
 
   '@cpdevtools/git-flow-cli@1.1.1':

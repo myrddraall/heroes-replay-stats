@@ -34,6 +34,7 @@
               }
             ],
             "styles": [
+              "src/theme.scss",
               "../../packages/common/assets/styles/nexus/tokens.css",
               "../../packages/common/assets/styles/nexus/nexus.css",
               "src/styles.scss"
@@ -59,7 +60,15 @@
                   "maximumError": "8kB"
                 }
               ],
-              "outputHashing": "all"
+              "outputHashing": "all",
+              "optimization": {
+                "scripts": true,
+                "fonts": true,
+                "styles": {
+                  "minify": true,
+                  "inlineCritical": false
+                }
+              }
             },
             "development": {
               "optimization": false,

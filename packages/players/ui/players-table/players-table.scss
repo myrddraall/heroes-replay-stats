@@ -30,7 +30,7 @@
 }
 
 .player__name {
-  color: #fff;
+  color: var(--color--surface--contrast);
   font: var(--mat-sys-title-small);
 }
 .player__region {
@@ -50,9 +50,9 @@ time {
 .hero {
   padding: 2px 8px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--mat-sys-primary) 16%, transparent);
+  background: var(--color--primary--tint-2);
   font: var(--mat-sys-body-small);
-  color: #fff;
+  color: var(--color--surface--contrast);
   white-space: nowrap;
 }
 .hero__games {

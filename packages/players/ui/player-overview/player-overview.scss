@@ -37,7 +37,7 @@ dd {
   font-family: var(--font-brand);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  color: #fff;
+  color: var(--color--surface--contrast);
 }
 
 // the latest results: a mark each, the most recent first
@@ -86,7 +86,7 @@ dd {
 
 .hero__name {
   font: var(--mat-sys-title-small);
-  color: #fff;
+  color: var(--color--surface--contrast);
 }
 
 .hero__games,
@@ -130,7 +130,7 @@ dd {
 }
 
 .award__name {
-  color: #fff;
+  color: var(--color--surface--contrast);
 }
 
 .award__count {

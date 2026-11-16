@@ -1,0 +1,18 @@
+{
+  "extraKnownMarketplaces": {
+    "cpdevtools": {
+      "source": {
+        "source": "github",
+        "repo": "cpdevtools/ai-skills"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "typescript@cpdevtools": true,
+    "angular@cpdevtools": true,
+    "angular-signal-store@cpdevtools": true,
+    "angular-material@cpdevtools": true,
+    "domain-packages@cpdevtools": true,
+    "cpdevtools-gitflow@cpdevtools": true
+  }
+}

@@ -17,6 +17,7 @@
           [class.pois__team-heading--order]="head.team.owner === 'order'"
           [class.pois__team-heading--chaos]="head.team.owner === 'chaos'"
           [class.pois__team-heading--neutral]="head.team.owner === null"
+          [attr.theme]="sideTheme(head.team.owner)"
         >
           {{ head.team.label }}
         </div>
@@ -35,6 +36,7 @@
         [class.poi--order]="poi.owner === 'order'"
         [class.poi--chaos]="poi.owner === 'chaos'"
         [class.poi--neutral]="poi.owner === null"
+        [attr.theme]="sideTheme(poi.owner)"
         [class.poi--off]="state === 'off'"
         [attr.aria-pressed]="poi.key === selected()"
       >

@@ -8,7 +8,7 @@
     <ul class="legend" aria-label="Teams">
       @for (curve of curves(); track curve.team) {
         <li>
-          <span class="legend__line" [style.background]="'var(--hrs-team-' + curve.color + ')'"></span>
+          <span class="legend__line" [attr.theme]="curve.color"></span>
           {{ curve.name }}
         </li>
       }

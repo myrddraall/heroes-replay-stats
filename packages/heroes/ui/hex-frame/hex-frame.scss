@@ -32,8 +32,8 @@
   clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
   background: radial-gradient(
     circle,
-    color-mix(in oklab, var(--hrs-tint) 70%, var(--hrs-glow)),
-    var(--hrs-tint)
+    color-mix(in oklab, var(--color--surface) 70%, var(--color--brand)),
+    var(--color--surface)
   );
 }
 
@@ -65,7 +65,7 @@
 .inside__glow {
   position: relative;
   visibility: hidden;
-  background: var(--hrs-glow);
+  background: var(--color--brand);
   opacity: 0.69;
   pointer-events: none;
 }
@@ -88,7 +88,7 @@
 .rim__colour {
   position: absolute;
   inset: 0;
-  background: var(--hrs-glow);
+  background: var(--color--brand);
 }
 
 .rim__light {

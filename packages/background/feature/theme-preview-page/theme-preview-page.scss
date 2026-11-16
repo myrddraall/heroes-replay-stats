@@ -85,7 +85,7 @@ table {
   }
 
   tbody tr {
-    background: color-mix(in srgb, var(--mat-sys-primary) 16%, transparent);
+    background: var(--color--primary--tint-2);
     box-shadow: inset 2px 0 var(--mat-sys-primary);
   }
 

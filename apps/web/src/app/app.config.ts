@@ -5,6 +5,7 @@ import {
   withComponentInputBinding,
   withViewTransitions,
 } from '@angular/router';
+import { provideTheme } from '@cpangular/cp-theming-ng-core';
 import {
   BACKGROUND_EDITOR_PATH,
   provideBackgroundFeature,
@@ -36,6 +37,8 @@ export const appConfig: ApplicationConfig = {
   providers: [
     { provide: DEV_REPORTS_URL, useValue: environment.devReportsUrl },
     provideBrowserGlobalErrorListeners(),
+    // cp-theming: keeps the theme and mode chosen on this device, and restores them at startup.
+    provideTheme(),
     // Before the router: the featuresets' routes come before the app's own (and their catch-all).
     provideBackgroundFeature(),
     provideDevFeature(),

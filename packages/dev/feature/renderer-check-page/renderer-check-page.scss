@@ -1,8 +1,8 @@
 :host {
   display: block;
   min-height: 100dvh;
-  background: #101218;
-  color: #e8e8ee;
+  background: var(--color--background);
+  color: var(--color--background--contrast);
 }
 
 .page {

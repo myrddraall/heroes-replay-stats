@@ -40,10 +40,12 @@
   border-block-start-style: dashed;
 }
 
+// a team's swatch: its theme's own colour (the element carries the team's theme)
 .legend__swatch {
   inline-size: 0.9em;
   block-size: 0.9em;
   border-radius: 2px;
+  background: var(--color--brand);
 }
 
 .chart {
