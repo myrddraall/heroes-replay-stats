@@ -11,14 +11,17 @@
 // page's ground and the films' tint as its background and surface, which keep their hue (core's
 // generated neutrals carry only a trace of it), and the films' strong border as the surface's
 // stroke: every line is that stroke (hovered, selected) or its low step (at rest), the app's and
-// Material's outline-variant alike.
+// Material's outlines alike. The strong border is also the secondary palette (Material's
+// secondary, as the Nexus theme mapped it), so selected toggles and tonal fills keep the theme's
+// hue (core's generated secondary has a third of primary's chroma and reads as grey).
 @function accent($hue, $lightness: 78%, $chroma: 0.13) {
   @return oklch($lightness $chroma $hue);
 }
 @function grounds($hue, $chroma-k: 1, $stroke: oklch(68% 0.18 * $chroma-k $hue)) {
   @return (
     background: t.palette(oklch(16% 0.045 * $chroma-k $hue)),
-    surface: t.palette(oklch(19.5% 0.06 * $chroma-k $hue), $stroke: $stroke)
+    surface: t.palette(oklch(19.5% 0.06 * $chroma-k $hue), $stroke: $stroke),
+    secondary: t.palette($stroke)
   );
 }
 @function nexus(
